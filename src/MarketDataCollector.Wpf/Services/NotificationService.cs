@@ -20,6 +20,14 @@ public sealed class NotificationService : INotificationService
     private readonly object _historyLock = new();
     private const int MaxHistoryItems = 100;
 
+    // Smart suppression: deduplication and rate limiting
+    private readonly Dictionary<string, DateTime> _recentNotifications = new();
+    private readonly Dictionary<string, int> _groupedCounts = new();
+    private static readonly TimeSpan DeduplicationWindow = TimeSpan.FromSeconds(30);
+    private const int MaxNotificationsPerMinute = 10;
+    private int _notificationsThisMinute;
+    private DateTime _minuteWindowStart = DateTime.UtcNow;
+
     /// <summary>
     /// Gets the singleton instance of the NotificationService.
     /// </summary>
@@ -49,6 +57,8 @@ public sealed class NotificationService : INotificationService
 
     /// <summary>
     /// Shows a notification with the specified parameters.
+    /// Applies smart suppression: deduplication (same title within 30s window)
+    /// and rate limiting (max 10 notifications per minute).
     /// </summary>
     /// <param name="title">The notification title.</param>
     /// <param name="message">The notification message.</param>
@@ -58,6 +68,51 @@ public sealed class NotificationService : INotificationService
     {
         if (!_settings.Enabled) return;
         if (IsQuietHours()) return;
+
+        var dedupeKey = $"{title}:{type}";
+
+        lock (_historyLock)
+        {
+            // Deduplication: suppress identical notifications within the window
+            if (_recentNotifications.TryGetValue(dedupeKey, out var lastSeen))
+            {
+                if (DateTime.UtcNow - lastSeen < DeduplicationWindow)
+                {
+                    // Update grouped count instead of showing duplicate
+                    _groupedCounts.TryGetValue(dedupeKey, out var count);
+                    _groupedCounts[dedupeKey] = count + 1;
+
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[NotificationService] Suppressed duplicate: {title} (count: {count + 1})");
+                    return;
+                }
+            }
+
+            // Rate limiting: prevent notification storms
+            var now = DateTime.UtcNow;
+            if (now - _minuteWindowStart > TimeSpan.FromMinutes(1))
+            {
+                _minuteWindowStart = now;
+                _notificationsThisMinute = 0;
+            }
+
+            if (_notificationsThisMinute >= MaxNotificationsPerMinute && type < NotificationType.Error)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[NotificationService] Rate limited: {title}");
+                return;
+            }
+
+            _notificationsThisMinute++;
+            _recentNotifications[dedupeKey] = now;
+
+            // Check if this is a grouped notification (had duplicates)
+            if (_groupedCounts.TryGetValue(dedupeKey, out var groupedCount) && groupedCount > 0)
+            {
+                message = $"{message} (+{groupedCount} similar)";
+                _groupedCounts.Remove(dedupeKey);
+            }
+        }
 
         var historyItem = new NotificationHistoryItem
         {

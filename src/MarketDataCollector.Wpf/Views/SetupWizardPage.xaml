@@ -46,7 +46,50 @@
 
             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
                 <StackPanel>
-                    <TextBlock Text="Step 2 · Configure providers and storage" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
+                    <TextBlock Text="Step 2 · Choose your workflow (optional)" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
+                    <TextBlock Text="Select a preset that matches your use case. This pre-configures symbols, providers, and settings for your workflow."
+                               Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="0,0,0,16" />
+
+                    <ItemsControl x:Name="PresetsList">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="0,0,8,8"
+                                        Click="PresetCard_Click"
+                                        Tag="{Binding Id}"
+                                        HorizontalContentAlignment="Stretch">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                            <Setter Property="Padding" Value="16,12" />
+                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <TextBlock Text="{Binding Icon}" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                       FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock x:Name="PresetStatusText"
+                               Foreground="{StaticResource ConsoleTextMutedBrush}" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <TextBlock Text="Step 3 · Configure providers and storage" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
                     <TextBlock Text="Choose your default data provider and where data will be stored."
                                Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="0,0,0,16" />
 
@@ -85,7 +128,7 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Step 3 · Add API keys (optional)" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
+                    <TextBlock Text="Step 4 · Add API keys (optional)" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
                     <TextBlock Text="Provide API keys for premium providers. Keys are stored in your user environment variables."
                                Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="0,0,0,16" />
 
