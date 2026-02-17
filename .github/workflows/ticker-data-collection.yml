@@ -91,9 +91,9 @@ jobs:
             exit 1
           fi
 
-          if printf '%s' "$normalized_symbols" | tr ',' '\n' | grep -qEv '^[A-Z0-9.\-^=]+$'; then
+          if printf '%s' "$normalized_symbols" | tr ',' '\n' | grep -qEv '^[A-Z0-9.^=-]+$'; then
             echo "Input validation failed: one or more symbols contain unsupported characters."
-            echo "Allowed pattern per symbol: [A-Z0-9.\-^=]+"
+            echo "Allowed pattern per symbol: [A-Z0-9.^=-]+"
             exit 1
           fi
 
