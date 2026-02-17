@@ -2,12 +2,18 @@
 # Pre-commit hook: enforce code formatting via dotnet format.
 # Install by running: build/scripts/hooks/install-hooks.sh
 # or manually: cp build/scripts/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# Behavior:
+#   1. Checks if any C#/F# files are staged.
+#   2. Runs 'dotnet format' to auto-fix formatting issues on staged files.
+#   3. Re-stages any files that were modified by the formatter.
+#   4. Verifies no remaining formatting issues before allowing the commit.
 
 set -e
 
 # Only check staged C#/F# files
-STAGED_CS=$(git diff --cached --name-only --diff-filter=ACM -- '*.cs' '*.fs' | head -1)
-if [ -z "$STAGED_CS" ]; then
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM -- '*.cs' '*.fs')
+if [ -z "$STAGED_FILES" ]; then
     exit 0
 fi
 
@@ -17,11 +23,22 @@ if ! command -v dotnet >/dev/null 2>&1; then
     exit 0
 fi
 
-echo "Running dotnet format --verify-no-changes..."
+# Auto-format staged files
+echo "Running dotnet format on staged files..."
+dotnet format --verbosity quiet 2>/dev/null || true
+
+# Re-stage any files that were modified by the formatter
+for file in $STAGED_FILES; do
+    if [ -f "$file" ]; then
+        git add "$file"
+    fi
+done
+
+# Final verification
 if ! dotnet format --verify-no-changes --verbosity quiet 2>/dev/null; then
     echo ""
-    echo "Code formatting issues detected."
-    echo "Please run 'dotnet format' to fix formatting, then re-stage your changes."
+    echo "Code formatting issues remain after auto-fix."
+    echo "Please run 'dotnet format' manually, review the changes, then re-stage."
     exit 1
 fi
 
