@@ -77,7 +77,7 @@ public sealed class ProviderDegradationScorer : IDisposable
     /// </summary>
     public ProviderDegradationScore GetScore(string providerName)
     {
-        var connectionStatus = _healthMonitor.GetConnectionStatus(providerName);
+        var connectionStatus = _healthMonitor.GetConnectionStatusByProvider(providerName);
         var latencyHistogram = _latencyService.GetHistogram(providerName);
         _errorTrackers.TryGetValue(providerName, out var errorTracker);
 
