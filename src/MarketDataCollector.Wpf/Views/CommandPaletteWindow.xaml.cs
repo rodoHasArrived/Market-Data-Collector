@@ -54,8 +54,8 @@ public partial class CommandPaletteWindow : Window
         ResultsList.ItemsSource = results;
 
         CategoryLabel.Text = string.IsNullOrWhiteSpace(query)
-            ? "Recent"
-            : $"Results ({results.Count})";
+            ? "RECENT"
+            : $"RESULTS ({results.Count})";
 
         if (results.Count > 0)
         {
