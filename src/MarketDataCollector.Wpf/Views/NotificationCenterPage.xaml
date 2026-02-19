@@ -44,7 +44,7 @@
                                        FontWeight="SemiBold" />
                         </Border>
                     </StackPanel>
-                    <TextBlock Text="View and manage notifications about connection status, data quality, and system events"
+                    <TextBlock Text="View and manage notifications, alerts, and remediation playbooks"
                                Style="{StaticResource CardDescriptionStyle}"
                                Margin="0" />
                 </StackPanel>
@@ -76,6 +76,147 @@
                     </Button>
                 </StackPanel>
             </Grid>
+
+            <!-- Alert Summary Bar -->
+            <Border x:Name="AlertSummaryBar" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="&#xE7BA;"
+                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="16"
+                                   Foreground="{StaticResource WarningColorBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="Active Alerts"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"
+                                   Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="24,0,0,0">
+                        <Border x:Name="CriticalBadge" Background="#F44336" CornerRadius="4" Padding="8,2" Margin="0,0,8,0" Visibility="Collapsed">
+                            <TextBlock x:Name="CriticalCountText" Text="0 Critical" FontSize="11" Foreground="White" FontWeight="SemiBold" />
+                        </Border>
+                        <Border x:Name="ErrorBadge" Background="#FF5722" CornerRadius="4" Padding="8,2" Margin="0,0,8,0" Visibility="Collapsed">
+                            <TextBlock x:Name="ErrorCountText" Text="0 Errors" FontSize="11" Foreground="White" FontWeight="SemiBold" />
+                        </Border>
+                        <Border x:Name="WarningBadge" Background="#FFC107" CornerRadius="4" Padding="8,2" Margin="0,0,8,0" Visibility="Collapsed">
+                            <TextBlock x:Name="WarningCountText" Text="0 Warnings" FontSize="11" Foreground="#333" FontWeight="SemiBold" />
+                        </Border>
+                        <TextBlock x:Name="SnoozedCountText" Text=""
+                                   FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="2" x:Name="AlertTotalText"
+                               Text="0 active"
+                               FontSize="13"
+                               Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Grouped Alerts Section -->
+            <Border x:Name="GroupedAlertsSection" Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="&#xE7BA;"
+                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="16"
+                                   Foreground="{StaticResource WarningColorBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="Grouped Alerts"
+                                   Style="{StaticResource SectionHeaderStyle}"
+                                   Margin="0" />
+                        <TextBlock Text="  Alerts are grouped by category to reduce noise"
+                                   FontSize="12"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel x:Name="GroupedAlertsPanel" />
+
+                    <StackPanel x:Name="NoGroupedAlertsPanel" Margin="0,12,0,12">
+                        <TextBlock Text="No active alerts"
+                                   FontSize="13"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Playbook Detail Panel (shown when an alert group is clicked) -->
+            <Border x:Name="PlaybookPanel" Style="{StaticResource CardStyle}" Margin="0,0,0,24" Visibility="Collapsed">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="&#xE82D;"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="16"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+                            <TextBlock x:Name="PlaybookTitle" Text="Remediation Playbook"
+                                       Style="{StaticResource SectionHeaderStyle}"
+                                       Margin="0" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="Close" Click="ClosePlaybook_Click"
+                                Style="{StaticResource GhostButtonStyle}" />
+                    </Grid>
+
+                    <!-- What happened -->
+                    <TextBlock x:Name="PlaybookWhatHappened" TextWrapping="Wrap"
+                               FontSize="13"
+                               Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                               Margin="0,0,0,16" />
+
+                    <!-- Possible causes -->
+                    <TextBlock Text="Possible Causes" FontWeight="SemiBold" FontSize="13"
+                               Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                               Margin="0,0,0,8" />
+                    <StackPanel x:Name="PlaybookCausesPanel" Margin="0,0,0,16" />
+
+                    <!-- Remediation steps -->
+                    <TextBlock Text="Remediation Steps" FontWeight="SemiBold" FontSize="13"
+                               Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                               Margin="0,0,0,8" />
+                    <StackPanel x:Name="PlaybookStepsPanel" Margin="0,0,0,16" />
+
+                    <!-- What happens if ignored -->
+                    <Border Background="#2D1B1B" CornerRadius="6" Padding="12,8" Margin="0,0,0,4">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7BA;"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="14"
+                                       Foreground="{StaticResource WarningColorBrush}"
+                                       VerticalAlignment="Top"
+                                       Margin="0,2,8,0" />
+                            <StackPanel>
+                                <TextBlock Text="If Ignored" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{StaticResource WarningColorBrush}" />
+                                <TextBlock x:Name="PlaybookIgnoredText" TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
 
             <!-- Notification Count -->
             <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
@@ -151,7 +292,7 @@
                                    Foreground="{StaticResource InfoColorBrush}"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0" />
-                        <TextBlock Text="Notifications"
+                        <TextBlock Text="Notification History"
                                    Style="{StaticResource SectionHeaderStyle}"
                                    Margin="0" />
                     </StackPanel>

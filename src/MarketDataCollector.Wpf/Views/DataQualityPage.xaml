@@ -322,6 +322,18 @@
                                     <GridViewColumn Header="Status" Width="90" DisplayMemberBinding="{Binding Status}" />
                                     <GridViewColumn Header="Issues" Width="160" DisplayMemberBinding="{Binding Issues}" />
                                     <GridViewColumn Header="Last Update" Width="120" DisplayMemberBinding="{Binding LastUpdateFormatted}" />
+                                    <GridViewColumn Header="" Width="80">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Compare"
+                                                        Tag="{Binding Symbol}"
+                                                        Click="CompareProviders_Click"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        Padding="6,2"
+                                                        FontSize="11" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                 </GridView>
                             </ListView.View>
                         </ListView>

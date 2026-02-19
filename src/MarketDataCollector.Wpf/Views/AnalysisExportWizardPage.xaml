@@ -115,6 +115,37 @@
                             <CheckBox Content="Include charts in export package" IsChecked="{Binding IncludeCharts}" Margin="0,12,0,0" />
                             <CheckBox Content="Attach summary PDF" IsChecked="{Binding IncludeSummary}" />
                         </StackPanel>
+
+                        <!-- Pre-Export Validation Report -->
+                        <Border Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,16,0,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="&#xE9D5;"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="16"
+                                               Foreground="{StaticResource InfoColorBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,8,0" />
+                                    <TextBlock Text="Pre-Export Validation"
+                                               FontWeight="SemiBold"
+                                               FontSize="14"
+                                               Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding EstimatedSize, StringFormat='  |  Estimated: {0}'}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="8,0,0,0" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding PreExportReport}"
+                                           FontFamily="Cascadia Code, Consolas"
+                                           FontSize="12"
+                                           Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
