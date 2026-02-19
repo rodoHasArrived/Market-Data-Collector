@@ -7,6 +7,7 @@ using System.Windows.Shapes;
 using System.Windows.Controls;
 using System.Windows.Media;
 using WpfServices = MarketDataCollector.Wpf.Services;
+using Path = System.IO.Path;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -350,7 +351,7 @@ public partial class DiagnosticsPage : Page
                 _notificationService.ShowNotification(
                     "Error",
                     $"Could not create logs directory: {ex.Message}",
-                    NotificationType.Error);
+                    WpfServices.NotificationType.Error);
                 return;
             }
         }
@@ -368,7 +369,7 @@ public partial class DiagnosticsPage : Page
             _notificationService.ShowNotification(
                 "Error",
                 $"Could not open logs folder: {ex.Message}",
-                NotificationType.Error);
+                WpfServices.NotificationType.Error);
         }
     }
 

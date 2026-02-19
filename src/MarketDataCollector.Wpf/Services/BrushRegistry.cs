@@ -77,7 +77,7 @@ public static class BrushRegistry
 
     #region State-Based Brush Lookups
 
-    public static SolidColorBrush GetNotificationBrush(NotificationType type) => FromArgb(Palette.GetNotificationColor(type));
+    public static SolidColorBrush GetNotificationBrush(NotificationType type) => FromArgb(Palette.GetNotificationColor((MarketDataCollector.Ui.Services.NotificationType)(int)type));
     public static SolidColorBrush GetSeverityBrush(IntegritySeverity severity) => FromArgb(Palette.GetSeverityColor(severity));
 
     public static Color GetSeverityColor(IntegritySeverity severity)
