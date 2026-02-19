@@ -6,7 +6,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for notification services used by shared UI services.
-/// Implemented by platform-specific notification services (WPF, UWP).
+/// Implemented by platform-specific notification services (WPF).
 /// </summary>
 public interface INotificationService
 {

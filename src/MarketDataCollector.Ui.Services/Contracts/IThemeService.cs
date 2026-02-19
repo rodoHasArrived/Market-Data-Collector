@@ -2,7 +2,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Application theme options.
-/// Shared between WPF and UWP desktop applications.
+/// Shared between WPF desktop applications.
 /// </summary>
 public enum AppTheme
 {
@@ -13,8 +13,7 @@ public enum AppTheme
 
 /// <summary>
 /// Interface for managing application themes.
-/// Shared between WPF and UWP desktop applications.
-/// Part of C1 improvement (WPF/UWP service deduplication).
+/// Shared between WPF desktop applications.
 /// </summary>
 public interface IThemeService
 {

@@ -28,7 +28,7 @@
     <AssemblyName>MarketDataCollector.Ui.Services</AssemblyName>
     <Version>1.0.0</Version>
     <Authors>MarketDataCollector Team</Authors>
-    <Description>Shared desktop UI services for Market Data Collector UWP and WPF applications</Description>
+    <Description>Shared desktop UI services for Market Data Collector WPF application</Description>
     <Product>Market Data Collector UI Services</Product>
     <Copyright>Copyright 2024-2026 MarketDataCollector Team</Copyright>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -45,7 +45,7 @@
 
   <!--
     Include shared source files from Contracts (Windows only).
-    Same pattern used by UWP/WPF projects to avoid XAML compiler issues.
+    Same pattern used by WPF project to avoid XAML compiler issues.
     Consumer projects get Contracts types transitively through this library.
   -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">

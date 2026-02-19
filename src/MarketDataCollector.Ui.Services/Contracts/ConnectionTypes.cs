@@ -1,7 +1,7 @@
 namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
-/// Connection states shared between WPF and UWP desktop applications.
+/// Connection states shared between WPF desktop applications.
 /// Part of Phase 6C.2 service deduplication.
 /// </summary>
 public enum ConnectionState

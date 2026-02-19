@@ -7,7 +7,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for credential management services used by shared UI services.
-/// Implemented by platform-specific credential services (WPF, UWP).
+/// Implemented by platform-specific credential services (WPF).
 /// </summary>
 public interface ICredentialService
 {
