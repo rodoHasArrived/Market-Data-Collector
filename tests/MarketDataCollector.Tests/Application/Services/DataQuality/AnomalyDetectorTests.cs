@@ -42,7 +42,7 @@ public sealed class AnomalyDetectorTests : IDisposable
 
         // Build up sample history with natural price variation
         // Varying prices between 449.80 and 450.20 (0.40 range)
-        var prices = new[] { 449.90m, 450.05m, 449.95m, 450.10m, 450.00m, 
+        var prices = new[] { 449.90m, 450.05m, 449.95m, 450.10m, 450.00m,
                             449.85m, 450.15m, 449.92m, 450.08m, 450.02m };
         for (int i = 0; i < prices.Length; i++)
         {
