@@ -11,8 +11,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Credentials;
-using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.Services.HttpClientFactoryProvider;
-using HttpClientNames = MarketDataCollector.Ui.Services.Services.HttpClientNames;
+using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.HttpClientFactoryProvider;
+using HttpClientNames = MarketDataCollector.Ui.Services.HttpClientNames;
 
 namespace MarketDataCollector.Wpf.Services;
 
