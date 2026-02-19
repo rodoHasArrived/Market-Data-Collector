@@ -199,6 +199,9 @@ public sealed class VerificationJob
     [JsonPropertyName("processedFiles")]
     public int ProcessedFiles { get; set; }
 
+    [JsonPropertyName("verifiedFiles")]
+    public int VerifiedFiles { get; set; }
+
     [JsonPropertyName("failedFiles")]
     public int FailedFiles { get; set; }
 

@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
+using NotificationType = MarketDataCollector.Wpf.Services.NotificationType;
 using MarketDataCollector.Wpf.Views;
 using MarketDataCollector.Ui.Services;
 using SysNavigation = System.Windows.Navigation;

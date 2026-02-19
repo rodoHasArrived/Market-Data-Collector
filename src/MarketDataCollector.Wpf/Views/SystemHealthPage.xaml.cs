@@ -64,7 +64,7 @@ public partial class SystemHealthPage : Page
             if (bundle != null)
             {
                 MessageBox.Show(
-                    $"Diagnostic bundle created:\n{bundle.FilePath}\nSize: {FormatBytes(bundle.SizeBytes)}",
+                    $"Diagnostic bundle created:\n{bundle.FilePath}\nSize: {FormatBytes(bundle.FileSizeBytes)}",
                     "Diagnostics",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -118,16 +118,16 @@ public partial class SystemHealthPage : Page
             {
                 Dispatcher.Invoke(() =>
                 {
-                    CpuText.Text = $"{metrics.CpuPercent:F0}%";
-                    CpuText.Foreground = metrics.CpuPercent > 80
+                    CpuText.Text = $"{metrics.CpuUsagePercent:F0}%";
+                    CpuText.Foreground = metrics.CpuUsagePercent > 80
                         ? (Brush)FindResource("ErrorColorBrush")
-                        : metrics.CpuPercent > 50
+                        : metrics.CpuUsagePercent > 50
                             ? (Brush)FindResource("WarningColorBrush")
                             : (Brush)FindResource("SuccessColorBrush");
 
-                    MemoryText.Text = FormatBytes(metrics.MemoryBytes);
+                    MemoryText.Text = FormatBytes(metrics.MemoryUsedBytes);
                     ThreadsText.Text = metrics.ThreadCount.ToString("N0");
-                    UptimeText.Text = FormatUptime(metrics.Uptime);
+                    UptimeText.Text = FormatUptime(DateTime.UtcNow - _startTime);
                 });
             }
             else
@@ -163,14 +163,14 @@ public partial class SystemHealthPage : Page
                     var hasUnhealthy = false;
                     foreach (var p in providers)
                     {
-                        var isHealthy = string.Equals(p.ConnectionState, "Connected", StringComparison.OrdinalIgnoreCase)
-                                     || string.Equals(p.ConnectionState, "Healthy", StringComparison.OrdinalIgnoreCase);
+                        var isHealthy = string.Equals(p.Status, "Connected", StringComparison.OrdinalIgnoreCase)
+                                     || string.Equals(p.Status, "Healthy", StringComparison.OrdinalIgnoreCase);
                         if (!isHealthy) hasUnhealthy = true;
 
                         _providers.Add(new ProviderHealthItem
                         {
-                            Name = p.ProviderName,
-                            Status = p.ConnectionState,
+                            Name = p.Provider,
+                            Status = p.Status,
                             StatusColor = isHealthy
                                 ? (Brush)FindResource("SuccessColorBrush")
                                 : (Brush)FindResource("ErrorColorBrush"),
@@ -206,7 +206,7 @@ public partial class SystemHealthPage : Page
                 if (storage != null)
                 {
                     StorageTotalText.Text = FormatBytes(storage.TotalBytes);
-                    StorageFilesText.Text = storage.TotalFileCount.ToString("N0");
+                    StorageFilesText.Text = storage.TotalFiles.ToString("N0");
 
                     if (storage.TotalBytes > 0 && storage.AvailableBytes > 0)
                     {

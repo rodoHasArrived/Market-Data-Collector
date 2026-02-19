@@ -517,7 +517,7 @@ public sealed class ConfigService
         await SaveConfigAsync(config);
     }
 
-    private async Task<AppConfigDto?> LoadConfigAsync()
+    internal async Task<AppConfigDto?> LoadConfigAsync()
     {
         try
         {
