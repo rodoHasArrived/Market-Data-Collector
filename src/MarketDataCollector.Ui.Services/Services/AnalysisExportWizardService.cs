@@ -1220,18 +1220,7 @@ public class ExportEstimate
     public string EstimatedSizeFormatted => FormatBytes(EstimatedSizeBytes);
     public string EstimatedDurationFormatted => FormatDuration(EstimatedDurationSeconds);
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        int order = 0;
-        double size = bytes;
-        while (size >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            size /= 1024;
-        }
-        return $"{size:F1} {sizes[order]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     private static string FormatDuration(int seconds)
     {

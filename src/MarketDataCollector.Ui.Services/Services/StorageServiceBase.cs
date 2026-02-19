@@ -94,18 +94,7 @@ public class StorageServiceBase
     /// <summary>
     /// Formats a byte count into a human-readable string (e.g., "1.5 GB").
     /// </summary>
-    public static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        double len = bytes;
-        int order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:F1} {sizes[order]}";
-    }
+    public static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     /// <summary>
     /// Gets the icon glyph for a data type.

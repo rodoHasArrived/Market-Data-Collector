@@ -161,17 +161,25 @@ public sealed class WriteAheadLog : IAsyncDisposable
     /// </summary>
     public async Task FlushAsync(CancellationToken ct = default)
     {
-        if (_currentWriter == null || _currentWalFile == null) return;
-
-        await _currentWriter.FlushAsync();
-
-        if (_options.SyncMode != WalSyncMode.NoSync)
+        await _writeLock.WaitAsync(ct);
+        try
         {
-            await _currentWalFile.FlushAsync(ct);
-        }
+            if (_currentWriter == null || _currentWalFile == null) return;
 
-        _uncommittedRecords = 0;
-        _lastFlushTime = DateTime.UtcNow;
+            await _currentWriter.FlushAsync();
+
+            if (_options.SyncMode != WalSyncMode.NoSync)
+            {
+                await _currentWalFile.FlushAsync(ct);
+            }
+
+            _uncommittedRecords = 0;
+            _lastFlushTime = DateTime.UtcNow;
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
     }
 
     /// <summary>

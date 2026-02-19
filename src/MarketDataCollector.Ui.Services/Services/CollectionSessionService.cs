@@ -519,18 +519,7 @@ Verification: {(session.ManifestPath != null ? "✓ Manifest generated" : "Pendi
         return $"{duration.Seconds}s";
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        double len = bytes;
-        int order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:F1} {sizes[order]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     // Events
     public event EventHandler<CollectionSessionEventArgs>? SessionCreated;

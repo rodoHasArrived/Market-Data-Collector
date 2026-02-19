@@ -70,9 +70,9 @@ public static class BackfillEndpoints
             {
                 return Results.BadRequest(new { error = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Results.BadRequest(new { error = "Backfill preview failed. Check provider name and symbol format." });
+                return Results.BadRequest(new { error = $"Backfill preview failed: {ex.Message}" });
             }
         })
         .WithName("PreviewBackfill")
@@ -102,9 +102,9 @@ public static class BackfillEndpoints
             {
                 return Results.BadRequest(new { error = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Results.BadRequest(new { error = "Backfill execution failed. Check provider name and symbol format." });
+                return Results.BadRequest(new { error = $"Backfill execution failed: {ex.Message}" });
             }
         })
         .WithName("RunBackfill")

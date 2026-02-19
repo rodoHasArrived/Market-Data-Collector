@@ -193,13 +193,21 @@ public sealed class PortablePackagerService
                 TotalSizeBytes = manifest.TotalBytesOriginal
             };
         }
-        catch
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (InvalidDataException)
         {
             return null;
         }
         finally
         {
-            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); } catch { }
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); } catch (IOException) { }
         }
     }
 
@@ -306,7 +314,7 @@ public sealed class PortablePackagerService
         finally
         {
             // Cleanup temp directory
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch (IOException) { }
         }
     }
 
@@ -357,7 +365,7 @@ public sealed class PortablePackagerService
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch (IOException) { }
         }
     }
 
@@ -731,18 +739,7 @@ Refer to your data provider's terms of service for data usage rights.
         return originalSize > 0 ? (double)originalSize / compressedSize : 1;
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        int order = 0;
-        double size = bytes;
-        while (size >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            size /= 1024;
-        }
-        return $"{size:0.##} {sizes[order]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
 
 #region Models

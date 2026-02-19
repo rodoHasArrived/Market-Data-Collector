@@ -895,8 +895,9 @@ public sealed class CredentialService : IDisposable
             await UpdateMetadataAsync(resource, m => m.RefreshFailureCount++);
             return false;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"OAuth refresh failed for {resource}: {ex.Message}");
             await UpdateMetadataAsync(resource, m => m.RefreshFailureCount++);
             return false;
         }

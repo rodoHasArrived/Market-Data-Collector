@@ -299,7 +299,8 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
             if (_readerLoop is not null)
             {
                 try { await _readerLoop.ConfigureAwait(false); }
-                catch { }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { _log.Debug(ex, "Reader loop cleanup failed"); }
             }
 
             if (IsConnected)

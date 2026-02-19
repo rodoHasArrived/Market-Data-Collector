@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Shapes;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Ui.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -481,16 +482,5 @@ public partial class DiagnosticsPage : Page
         text.Text = message;
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
-        var len = (double)bytes;
-        var order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:F1} {sizes[order]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
