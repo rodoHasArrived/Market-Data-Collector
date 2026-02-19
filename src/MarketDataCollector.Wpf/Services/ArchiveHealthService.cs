@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Archive;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
