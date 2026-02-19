@@ -10,6 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Archive;
 using MarketDataCollector.Ui.Services;
+using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.Services.HttpClientFactoryProvider;
+using HttpClientNames = MarketDataCollector.Ui.Services.Services.HttpClientNames;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -31,7 +33,7 @@ public sealed class ArchiveHealthService
 
     private ArchiveHealthService()
     {
-        _httpClient = HttpClientFactoryProvider.CreateClient();
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.Default);
         _healthStatusPath = Path.Combine(AppContext.BaseDirectory, "_catalog", "archive_health.json");
     }
 

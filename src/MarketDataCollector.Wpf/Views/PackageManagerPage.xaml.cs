@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Services;
+using PackageCreationOptions = MarketDataCollector.Ui.Services.PackageCreationOptions;
+using PackageImportOptions = MarketDataCollector.Ui.Services.PackageImportOptions;
 using PortablePackagerService = MarketDataCollector.Ui.Services.PortablePackagerService;
 
 namespace MarketDataCollector.Wpf.Views;
