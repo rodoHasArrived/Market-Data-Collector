@@ -106,27 +106,27 @@ public partial class IndexSubscriptionPage : Page
         try
         {
             var constituents = await _portfolioService.GetIndexConstituentsAsync(symbol);
-            if (constituents != null && constituents.Count > 0)
+            if (constituents != null && constituents.Symbols.Count > 0)
             {
                 var result = MessageBox.Show(
-                    $"Found {constituents.Count} constituents for {displayName}.\n\n" +
+                    $"Found {constituents.Symbols.Count} constituents for {displayName}.\n\n" +
                     $"Subscribe to {(SubscribeTradesCheck.IsChecked == true ? "trades" : "")}" +
                     $"{(SubscribeDepthCheck.IsChecked == true ? " + depth" : "")} data?\n\n" +
-                    $"Symbols: {string.Join(", ", constituents.Take(10))}" +
-                    (constituents.Count > 10 ? $"... and {constituents.Count - 10} more" : ""),
+                    $"Symbols: {string.Join(", ", constituents.Symbols.Take(10))}" +
+                    (constituents.Symbols.Count > 10 ? $"... and {constituents.Symbols.Count - 10} more" : ""),
                     "Confirm Subscription",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    ShowStatus($"Subscribing to {constituents.Count} symbols...", true);
-                    await _portfolioService.ImportSymbolsAsync(constituents);
-                    ShowStatus($"Successfully subscribed to {constituents.Count} symbols from {displayName}.", false);
+                    ShowStatus($"Subscribing to {constituents.Symbols.Count} symbols...", true);
+                    await _portfolioService.ImportSymbolsAsync(constituents.Symbols);
+                    ShowStatus($"Successfully subscribed to {constituents.Symbols.Count} symbols from {displayName}.", false);
 
                     WpfServices.MessagingService.Instance.SendNamed(
                         WpfServices.MessageTypes.SymbolsUpdated,
-                        new { Source = displayName, Count = constituents.Count });
+                        new { Source = displayName, Count = constituents.Symbols.Count });
                 }
                 else
                 {

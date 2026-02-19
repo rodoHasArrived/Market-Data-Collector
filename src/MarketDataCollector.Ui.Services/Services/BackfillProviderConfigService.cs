@@ -156,10 +156,11 @@ public sealed class BackfillProviderConfigService
         {
             var options = GetProviderOptionsFromConfig(config, meta.ProviderId);
             var effectiveSource = DetermineConfigSource(options, meta);
+            meta.ConfigSource = effectiveSource;
 
             result.Add(new BackfillProviderStatusDto
             {
-                Metadata = meta with { ConfigSource = effectiveSource },
+                Metadata = meta,
                 Options = options ?? new BackfillProviderOptionsDto
                 {
                     Enabled = true,

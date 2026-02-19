@@ -66,12 +66,12 @@
             <!-- Category label -->
             <TextBlock Grid.Row="1"
                        x:Name="CategoryLabel"
-                       Text="Recent"
+                       Text="RECENT"
                        FontSize="11"
                        Foreground="#FF6C7086"
                        FontWeight="SemiBold"
                        Margin="16,8,16,4"
-                       TextTransform="Uppercase" />
+                       />
 
             <!-- Results list -->
             <ListBox x:Name="ResultsList"

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Models;
 
 namespace MarketDataCollector.Wpf.Services;

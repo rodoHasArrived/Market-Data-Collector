@@ -260,6 +260,20 @@ public sealed class PortfolioImportService
         return GetHardcodedIndex(indexName);
     }
 
+    /// <summary>
+    /// Imports a list of symbols as subscriptions.
+    /// </summary>
+    public Task<PortfolioImportResult> ImportSymbolsAsync(
+        IEnumerable<string> symbols,
+        bool enableTrades = true,
+        bool enableDepth = false,
+        int depthLevels = 5,
+        CancellationToken ct = default)
+    {
+        var entries = symbols.Select(s => new PortfolioEntry { Symbol = s });
+        return ImportAsSubscriptionsAsync(entries, enableTrades, enableDepth, depthLevels, ct);
+    }
+
     private static IndexConstituentsResult GetHardcodedIndex(string indexName)
     {
         return indexName.ToUpperInvariant() switch

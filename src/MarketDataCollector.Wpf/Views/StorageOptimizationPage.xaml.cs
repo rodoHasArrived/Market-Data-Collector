@@ -6,19 +6,20 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Ui.Services;
+using WpfNotificationService = MarketDataCollector.Wpf.Services.NotificationService;
 
 namespace MarketDataCollector.Wpf.Views;
 
 public partial class StorageOptimizationPage : Page
 {
     private readonly NavigationService _navigationService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfNotificationService _notificationService;
     private readonly StorageAnalyticsService _analyticsService;
     private readonly StorageOptimizationAdvisorService _optimizationService;
 
     public StorageOptimizationPage(
         NavigationService navigationService,
-        NotificationService notificationService)
+        WpfNotificationService notificationService)
     {
         InitializeComponent();
 

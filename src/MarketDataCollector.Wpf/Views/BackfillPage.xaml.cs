@@ -12,6 +12,7 @@ using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
 using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
 using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
 using WpfServices = MarketDataCollector.Wpf.Services;
+using NotificationType = MarketDataCollector.Wpf.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -84,7 +85,7 @@ public partial class BackfillPage : Page
                 _scheduledJobs.Add(new ScheduledJobInfo
                 {
                     Name = $"{exec.Status}: {exec.SymbolsProcessed} symbols",
-                    NextRun = exec.CompletedAt?.ToString("g") ?? exec.StartedAt?.ToString("g") ?? "Unknown"
+                    NextRun = exec.CompletedAt?.ToString("g") ?? exec.StartedAt.ToString("g")
                 });
             }
         }

@@ -82,7 +82,7 @@ public partial class App : Application
         HttpClientFactoryProvider.Initialize();
 
         // Provide the DI container to NavigationService so it can resolve pages
-        NavigationService.Instance.SetServiceProvider(Services);
+        WpfServices.NavigationService.Instance.SetServiceProvider(Services);
 
         // Handle unhandled exceptions gracefully
         DispatcherUnhandledException += OnDispatcherUnhandledException;
@@ -133,7 +133,7 @@ public partial class App : Application
         services.AddSingleton(_ => WpfServices.SchemaService.Instance);
         services.AddSingleton(_ => WpfServices.AdminMaintenanceService.Instance);
         services.AddSingleton(_ => WpfServices.AdvancedAnalyticsService.Instance);
-        services.AddSingleton(_ => WpfServices.SearchService.Instance);
+        services.AddSingleton(_ => SearchService.Instance);
 
         // ── Background / infrastructure services ────────────────────────────
         services.AddSingleton(_ => WpfServices.BackgroundTaskSchedulerService.Instance);
@@ -183,7 +183,7 @@ public partial class App : Application
         services.AddTransient<AdminMaintenancePage>();
         services.AddTransient<LeanIntegrationPage>();
         services.AddTransient<MessagingHubPage>();
-        services.AddTransient<WorkspacePage>();
+        services.AddTransient<MarketDataCollector.Wpf.Views.WorkspacePage>();
         services.AddTransient<NotificationCenterPage>();
         services.AddTransient<HelpPage>();
         services.AddTransient<WelcomePage>();
