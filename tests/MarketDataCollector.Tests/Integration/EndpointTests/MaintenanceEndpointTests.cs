@@ -36,12 +36,12 @@ public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture
     public async Task GetMaintenanceSchedules_ReturnsValidJson()
     {
         var response = await _client.GetAsync("/api/maintenance/schedules");
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Should return array of schedules or object with schedules array
         doc.RootElement.ValueKind.Should().BeOneOf(JsonValueKind.Array, JsonValueKind.Object);
     }
@@ -203,10 +203,10 @@ public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture
         if (response.StatusCode == HttpStatusCode.OK)
         {
             response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
-            
+
             var content = await response.Content.ReadAsStringAsync();
             var doc = JsonDocument.Parse(content);
-            
+
             // History should be an array or object with array property
             doc.RootElement.ValueKind.Should().BeOneOf(JsonValueKind.Array, JsonValueKind.Object);
         }
@@ -317,7 +317,7 @@ public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture
         {
             var content = await response.Content.ReadAsStringAsync();
             var doc = JsonDocument.Parse(content);
-            
+
             // Should return array of next run times or object with array
             doc.RootElement.ValueKind.Should().BeOneOf(JsonValueKind.Array, JsonValueKind.Object);
         }

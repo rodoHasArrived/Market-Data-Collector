@@ -41,13 +41,13 @@ public sealed class PreflightChecker
         // Run all checks
         checks.Add(CheckDiskSpace(dataRoot));
         checks.Add(CheckFilePermissions(dataRoot));
-        
+
         // Run network connectivity check if configured
         if (_config.CheckNetworkConnectivity)
         {
             checks.Add(await CheckNetworkConnectivityAsync(ct));
         }
-        
+
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());

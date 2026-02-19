@@ -59,7 +59,7 @@ public class ConfigValidationPipelineTests
         var config = CreateValidConfig();
         // DataSource is an enum, so we can't set an invalid value directly
         // This test validates that enum validation works
-        
+
         // Act
         var results = pipeline.Validate(config);
 

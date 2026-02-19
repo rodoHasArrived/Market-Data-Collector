@@ -516,7 +516,7 @@ public sealed class TradingCalendar
         // Check by month and weekday patterns
         if (month == 1 && date.DayOfWeek == DayOfWeek.Monday) return "Martin Luther King Jr. Day";
         if (month == 2 && date.DayOfWeek == DayOfWeek.Monday) return "Presidents' Day";
-        
+
         // Good Friday - calculate precisely for the year
         if ((month == 3 || month == 4) && date.DayOfWeek == DayOfWeek.Friday)
         {
@@ -524,7 +524,7 @@ public sealed class TradingCalendar
             if (date == goodFriday)
                 return "Good Friday";
         }
-        
+
         if (month == 5 && date.DayOfWeek == DayOfWeek.Monday) return "Memorial Day";
         if (month == 9 && date.DayOfWeek == DayOfWeek.Monday) return "Labor Day";
         if (month == 11 && date.DayOfWeek == DayOfWeek.Thursday) return "Thanksgiving Day";
