@@ -10,8 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Archive;
 using MarketDataCollector.Ui.Services;
-using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.Services.HttpClientFactoryProvider;
-using HttpClientNames = MarketDataCollector.Ui.Services.Services.HttpClientNames;
+using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.HttpClientFactoryProvider;
+using HttpClientNames = MarketDataCollector.Ui.Services.HttpClientNames;
 
 namespace MarketDataCollector.Wpf.Services;
 
