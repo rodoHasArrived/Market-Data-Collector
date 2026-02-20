@@ -2144,6 +2144,67 @@ See [Central Package Management Guide](docs/development/central-package-manageme
 
 ---
 
+## AI Repository Updater
+
+The `build/scripts/ai-repo-updater.py` script is a purpose-built toolkit that gives AI agents structured, machine-readable insight into the repository's health. It replaces ad-hoc file searching with deterministic auditors that check for convention violations, documentation gaps, test coverage holes, and CI/CD issues.
+
+**Full guide:** [`docs/ai/claude/CLAUDE.repo-updater.md`](docs/ai/claude/CLAUDE.repo-updater.md)
+
+### Recommended Workflow
+
+When asked to "update", "improve", or "audit" the repository, follow this loop:
+
+1. **Audit** — `python3 build/scripts/ai-repo-updater.py audit` (full audit, JSON output with findings grouped by severity)
+2. **Review known errors** — `python3 build/scripts/ai-repo-updater.py known-errors` (avoid repeating past AI mistakes)
+3. **Fix** — Work through findings by category, starting with `critical` severity
+4. **Verify** — `python3 build/scripts/ai-repo-updater.py verify` (runs build + test + lint)
+5. **Repeat** — Re-audit until clean or time-boxed
+
+### Commands
+
+| Command | Purpose | Output |
+|---------|---------|--------|
+| `audit` | Full repository audit (all analysers) | JSON with findings + plan |
+| `audit-code` | C#/F# convention violations | JSON |
+| `audit-docs` | Documentation quality analysis | JSON |
+| `audit-tests` | Test coverage gap detection | JSON |
+| `audit-config` | CI/CD and configuration issues | JSON |
+| `audit-providers` | Provider implementation completeness | JSON |
+| `verify` | Build + test + lint validation | JSON with pass/fail |
+| `report` | Generate markdown improvement report | Markdown file |
+| `known-errors` | Load known AI error entries | JSON |
+| `diff-summary` | Summarise uncommitted git changes | JSON |
+
+### What Each Auditor Checks
+
+- **Code** (`audit-code`) — Missing `CancellationToken`, string interpolation in logger calls, direct `new HttpClient()`, blocking async (`.Result`/`.Wait()`), `Task.Run` for I/O, public classes not `sealed`
+- **Docs** (`audit-docs`) — Broken internal markdown links, stub files, outdated timestamps, ADR files missing required sections
+- **Tests** (`audit-tests`) — Important classes (Services, Providers, Clients) without corresponding test classes
+- **Config** (`audit-config`) — Hardcoded secrets in workflows, deprecated GitHub Action versions, CPM violations (`PackageReference` with `Version=`)
+- **Providers** (`audit-providers`) — Provider classes missing `[ImplementsAdr]` or `[DataSource]` attributes
+
+### Makefile Integration
+
+```bash
+make ai-audit            # Full audit
+make ai-audit-code       # Code conventions only
+make ai-audit-docs       # Documentation only
+make ai-audit-tests      # Test coverage gaps
+make ai-verify           # Build + test + lint
+make ai-report           # Generate improvement report
+```
+
+### Common Flags
+
+| Flag | Short | Purpose |
+|------|-------|---------|
+| `--root PATH` | `-r` | Override repository root |
+| `--output PATH` | `-o` | Write markdown output |
+| `--json-output PATH` | `-j` | Write JSON output |
+| `--summary` | `-s` | Print summary to stdout |
+
+---
+
 ## Desktop Application Architecture
 
 ### WPF Desktop App (Recommended)
