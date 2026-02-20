@@ -122,7 +122,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          WORKFLOW_FILE=".github/workflows/${{ steps.resolve.outputs.workflow }}"
+          WORKFLOW_NAME="${{ steps.resolve.outputs.workflow }}"
+
+          # Ensure the workflow input is a plain file name from .github/workflows.
+          if [[ "$WORKFLOW_NAME" == *"/"* || "$WORKFLOW_NAME" == *".."* || "$WORKFLOW_NAME" != *.yml ]]; then
+            echo "::error::Invalid workflow name '$WORKFLOW_NAME'. Provide a .yml file name from .github/workflows/."
+            exit 1
+          fi
+
+          WORKFLOW_FILE=".github/workflows/$WORKFLOW_NAME"
           if [ ! -f "$WORKFLOW_FILE" ]; then
             echo "::error::Workflow file '$WORKFLOW_FILE' does not exist."
             exit 1
@@ -188,9 +196,7 @@ jobs:
           set -euo pipefail
 
           {
-            echo "table<<EOF"
-            echo "| File | Purpose |"
-            echo "|------|---------|"
+            echo "rows<<EOF"
 
             if [ -d .github/prompts ]; then
               shopt -s nullglob
@@ -340,7 +346,7 @@ jobs:
 
             | File | Purpose |
             |------|---------|
-            ${{ steps.changed-prompts.outputs.table }}
+            ${{ steps.changed-prompts.outputs.rows }}
 
             ### How to Use
 
@@ -361,7 +367,11 @@ jobs:
       - name: Direct commit fallback
         if: |
           steps.check-changes.outputs.has_changes == 'true' &&
-          (steps.create-pr.outcome == 'failure' || steps.create-pr.outcome == 'skipped')
+          (steps.create-pr.outcome == 'failure' ||
+            (
+              steps.create-pr.outcome == 'skipped' &&
+              github.event_name == 'workflow_run'
+            ))
         run: |
           set -euo pipefail
           echo "::warning::PR creation failed or skipped. Checking if direct commit is needed."
