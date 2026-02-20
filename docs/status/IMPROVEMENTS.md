@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
 **Version:** 1.6.2
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-20
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -33,9 +33,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 25 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G3 |
-| 🔄 **Partially Complete** | 5 | B3, B4, E3, F1, G2 |
-| 📝 **Open** | 5 | C1, C2, C3, C7, F3 |
+| ✅ **Completed** | 27 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C4, C5, C6, C7, D1, D2, D3, D4, D5, D6, D7, E1, E2, F1, F2, G1, G3 |
+| 🔄 **Partially Complete** | 4 | B3, B4, E3, G2 |
+| 📝 **Open** | 4 | C1, C2, C3, F3 |
 | **Total** | 35 | All improvement items (core) |
 
 ### By Theme
@@ -44,16 +44,16 @@ This document consolidates **functional improvements** (features, reliability, U
 |-------|-----------|---------|------|-------|
 | A: Reliability & Resilience | 7 | 0 | 0 | 7 |
 | B: Testing & Quality | 3 | 2 | 0 | 5 |
-| C: Architecture & Modularity | 3 | 0 | 4 | 7 |
+| C: Architecture & Modularity | 4 | 0 | 3 | 7 |
 | D: API & Integration | 7 | 0 | 0 | 7 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
-| F: User Experience | 1 | 1 | 1 | 3 |
+| F: User Experience | 2 | 0 | 1 | 3 |
 | G: Operations & Monitoring | 2 | 1 | 0 | 3 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 71.4% complete (25/35), 14.3% partial (5/35), 14.3% open (5/35).
-- **Highest delivery risk:** Theme C (3/7 completed) because architecture debt blocks testability and provider evolution.
+- **Completion ratio:** 77.1% complete (27/35), 11.4% partial (4/35), 11.4% open (4/35).
+- **Highest delivery risk:** Theme C (4/7 completed) because architecture debt blocks testability and provider evolution.
 - **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage.
 - **Recommended sprint split:** 60% architecture debt (C1/C2/C3), 25% test foundation (B3 tranche 2), 15% scalability (H1/H2).
 
@@ -551,23 +551,23 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### C7. 📝 WPF/UWP Service Deduplication (OPEN)
+### C7. ✅ WPF/UWP Service Deduplication (COMPLETED)
 
-**Impact:** High | **Effort:** High | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** High | **Priority:** P2 | **Status:** ✅ DONE
 
-**Problem:** 25-30 services nearly identical between WPF (43 files, 12,338 lines) and UWP (29 files, 16,553 lines). Examples: `ThemeService`, `ConfigService`, `NotificationService`, `NavigationService`, `ConnectionService`. Only differences are singleton patterns and minor platform API calls.
+**Problem:** 25-30 services were nearly identical between WPF and UWP desktop projects.
 
-**Proposed Solution:**
-- Move shared service interfaces to `MarketDataCollector.Ui.Services`
-- Move shared implementations to `MarketDataCollector.Ui.Services` with constructor-injected platform abstractions
-- Keep only platform-specific adapters in WPF/UWP projects
+**Solution Implemented:**
+- UWP project (`src/MarketDataCollector.Uwp/`) fully removed from the codebase
+- WPF is the sole desktop client; no duplicate services remain
+- Shared service interfaces and base classes consolidated in `MarketDataCollector.Ui.Services`
+- Platform-specific adapters exist only in `MarketDataCollector.Wpf/Services/`
 
 **Files:**
-- `MarketDataCollector.Wpf/Services/*.cs`
-- `MarketDataCollector.Uwp/Services/*.cs`
-- `MarketDataCollector.Ui.Services/`
+- `MarketDataCollector.Wpf/Services/*.cs` (51 service files)
+- `MarketDataCollector.Ui.Services/` (shared base classes and interfaces)
 
-**Benefit:** Eliminates ~10,000 lines duplicated code. Bug fixes propagate to both platforms.
+**Benefit:** UWP removal eliminated all service duplication. Single desktop platform simplifies maintenance.
 
 **ROADMAP:** Phase 6 (Cleanup) - Phase 6C
 
@@ -812,24 +812,20 @@ No clear contract for what each validates or when it runs.
 
 ## Theme F: User Experience
 
-### F1. 🔄 Desktop Navigation Consolidation (PARTIALLY COMPLETE)
+### F1. ✅ Desktop Navigation Consolidation (COMPLETED)
 
-**Impact:** Medium | **Effort:** High | **Priority:** P3 | **Status:** 🔄 PARTIAL
+**Impact:** Medium | **Effort:** High | **Priority:** P3 | **Status:** ✅ DONE
 
-**Problem:** WPF consolidated into 5 workspaces (~15 navigation items) with command palette (Ctrl+K). UWP still has 40+ pages in flat navigation list, overwhelming users.
+**Problem:** WPF consolidated into 5 workspaces (~15 navigation items) with command palette (Ctrl+K). UWP had 40+ pages in flat navigation list.
 
 **Solution Implemented:**
 - WPF has workspace model (Monitor, Collect, Storage, Quality, Settings)
-- WPF command palette functional
-
-**Remaining Work:**
-- Consolidate UWP `MainPage.xaml` navigation to match WPF workspace model
-- Reduce UWP navigation items to ~15 consolidated entries per workspace
-- Port command palette (Ctrl+K) to UWP
+- WPF command palette functional (Ctrl+K)
+- UWP project removed — no remaining flat navigation to consolidate
 
 **Files:**
-- `MarketDataCollector.Uwp/Views/MainPage.xaml`
-- `MarketDataCollector.Uwp/Services/NavigationService.cs`
+- `MarketDataCollector.Wpf/Views/MainPage.xaml`
+- `MarketDataCollector.Wpf/Services/NavigationService.cs`
 
 **ROADMAP:** Phase 4 (Desktop App Maturity)
 
@@ -961,7 +957,7 @@ No clear contract for what each validates or when it runs.
 | **P0** | A1-A4 | Critical reliability fixes - ALL DONE ✅ |
 | **P1** | A3, A5, B1-B2, C1-C2, C4-C6, D4, G1 | High impact, low-medium effort - A3, B2 DONE ✅ |
 | **P2** | A6-A7, B3-B5, C3, D5-D6, E1, F2-F3, G2-G3 | Medium impact or higher effort - B5, F2 DONE ✅ |
-| **P3** | C7, D7, E3, F1 | Lower priority or high effort |
+| **P3** | D7, E3 | Lower priority or high effort - C7, F1 DONE ✅ |
 
 ### Recommended Execution Order
 
@@ -985,9 +981,9 @@ No clear contract for what each validates or when it runs.
 
 **Phase 4 — Larger Refactors (12-16 weeks):**
 13. C3 — WebSocket base class adoption
-14. C7 — WPF/UWP service deduplication
+14. ~~C7 — WPF/UWP service deduplication~~ ✅ Done (UWP removed)
 15. E3 — GC pressure reduction (Polygon optimization)
-16. F1 — UWP navigation consolidation
+16. ~~F1 — UWP navigation consolidation~~ ✅ Done (UWP removed)
 
 ---
 
@@ -1131,7 +1127,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-20
 **Maintainer:** Project Team
 **Status:** ✅ Active tracking document
 **Next Review:** Weekly engineering sync (or immediately after any status change)

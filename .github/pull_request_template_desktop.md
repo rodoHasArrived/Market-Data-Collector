@@ -2,15 +2,12 @@
 
 Use this checklist for PRs that touch:
 - `src/MarketDataCollector.Wpf/**`
-- `src/MarketDataCollector.Uwp/**`
 - `src/MarketDataCollector.Ui.Services/**`
 
 ### Validation
 
 - [ ] Ran `make test-desktop-services`
 - [ ] Ran `make build-wpf` (or CI equivalent)
-- [ ] Ran `make build-uwp` for UWP-affecting changes (or CI equivalent)
-- [ ] Ran `make uwp-xaml-diagnose` for UWP XAML/build config changes
 
 ### Reliability and lifecycle
 
