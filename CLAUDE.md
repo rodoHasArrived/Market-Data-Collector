@@ -496,6 +496,7 @@ Market-Data-Collector/
 │   ├── generated/
 │   │   ├── adr-index.md
 │   │   ├── configuration-schema.md
+│   │   ├── documentation-coverage.md
 │   │   ├── project-context.md
 │   │   ├── provider-registry.md
 │   │   ├── README.md

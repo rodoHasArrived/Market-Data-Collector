@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 04:50:30 UTC
+> Auto-generated on 2026-02-20 05:09:09 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -319,6 +319,7 @@ Market-Data-Collector/
 │   ├── generated/
 │   │   ├── adr-index.md
 │   │   ├── configuration-schema.md
+│   │   ├── documentation-coverage.md
 │   │   ├── project-context.md
 │   │   ├── provider-registry.md
 │   │   ├── README.md
