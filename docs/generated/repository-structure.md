@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 12:26:47 UTC
+> Auto-generated on 2026-02-20 18:26:07 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1190,9 +1190,11 @@ Market-Data-Collector/
 │   │   │   ├── AlertServiceTests.cs
 │   │   │   ├── ApiClientServiceTests.cs
 │   │   │   ├── BackfillApiServiceTests.cs
+│   │   │   ├── BackfillCheckpointServiceTests.cs
 │   │   │   ├── BackfillProviderConfigServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── ChartingServiceTests.cs
+│   │   │   ├── CommandPaletteServiceTests.cs
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceBaseTests.cs
 │   │   │   ├── CredentialServiceTests.cs
@@ -1203,6 +1205,7 @@ Market-Data-Collector/
 │   │   │   ├── EventReplayServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
+│   │   │   ├── IntegrityEventsServiceTests.cs
 │   │   │   ├── LeanIntegrationServiceTests.cs
 │   │   │   ├── LiveDataServiceTests.cs
 │   │   │   ├── NotificationServiceTests.cs
@@ -1211,7 +1214,9 @@ Market-Data-Collector/
 │   │   │   ├── ProviderHealthServiceTests.cs
 │   │   │   ├── ProviderManagementServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
+│   │   │   ├── SmartRecommendationsServiceTests.cs
 │   │   │   ├── StorageAnalyticsServiceTests.cs
+│   │   │   ├── SymbolMappingServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
 │   │   │   ├── TimeSeriesAlignmentServiceTests.cs
 │   │   │   └── WatchlistServiceTests.cs
