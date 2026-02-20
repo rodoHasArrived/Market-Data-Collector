@@ -332,6 +332,6 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `echo "PCG-PA" | grep -E '^[A-Z0-9.^=-]+$' && echo "OK" || echo "FAIL"`
   - `printf 'PCG-PA\nPCG-PB\nBRK.A\n^GSPC\n=SPX' | grep -Ev '^[A-Z0-9.^=-]+$' | wc -l` (should return 0)
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22083541882/job/64238547291
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21857738217/job/64242040198 (original, Feb 10) and https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22083541882/job/64238547291 (recurrence, Feb 20)
 - **Status**: fixed
-- **Fixed in**: `.github/workflows/ticker-data-collection.yml` line 94 — changed `[A-Z0-9.\-^=]` to `[A-Z0-9.^=-]` (hyphen moved to end of character class)
+- **Fixed in**: `.github/workflows/ticker-data-collection.yml` line 97 — changed `grep -qEv '^[A-Z0-9.\-^=]+$'` to `grep -Ev '^[A-Z0-9.^=-]+$'` (hyphen moved to end of character class); also improved to capture and display the invalid symbols before rejecting
