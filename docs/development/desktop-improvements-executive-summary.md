@@ -1,7 +1,7 @@
 # Desktop Platform Development Improvements - Executive Summary
 
 **Date**: 2026-02-20
-**Status**: Phase 1 Complete, Phase 2 Partially Complete, Active Development
+**Status**: Phase 1 Complete (Fixture Mode Wired), Phase 2 In Progress, Active Development
 **Author**: GitHub Copilot Analysis (updated 2026-02-20)
 
 ## Overview
@@ -19,7 +19,7 @@ The repository has strong developer experience infrastructure in place:
 3. **Documentation** (`docs/development/wpf-implementation-notes.md`, `desktop-testing-guide.md`)
 4. **Policies** (`docs/development/policies/desktop-support-policy.md`)
 5. **PR Templates** (`.github/pull_request_template_desktop.md`)
-6. **Test Infrastructure** - 272 tests across two test projects
+6. **Test Infrastructure** - 435+ tests across two test projects
 7. **DI Modernization** - Microsoft.Extensions.DependencyInjection with 73 service registrations
 8. **Architecture Documentation** - Comprehensive `desktop-layers.md` with layer diagrams and dependency rules
 
@@ -29,8 +29,8 @@ These align with Priority 1-4 items from the original improvement plan (now [arc
 
 | Gap | Impact | Effort | Priority |
 |-----|--------|--------|----------|
-| **~80% of desktop services lack tests** (18 of 90 covered) | Regression risk for untested services | Medium | P0 |
-| **Fixture mode not wired into startup** | `FixtureDataService` exists but `--fixture` / `MDC_FIXTURE_MODE` not parsed in `App.xaml.cs` | Low | P1 |
+| **~71% of desktop services lack tests** (26 of 90 covered) | Regression risk for untested services | Medium | P0 |
+| ~~Fixture mode not wired into startup~~ | ~~`--fixture` / `MDC_FIXTURE_MODE` not parsed~~ | | ~~Resolved (wired into App.xaml.cs)~~ |
 | **No service extraction to shared layer** (Phase 2-4) | WPF services contain mixed platform + business logic | High | P2 |
 | ~~No unit tests for desktop services~~ | ~~High regression risk~~ | | ~~Resolved (272 tests)~~ |
 | ~~100% service duplication between WPF/UWP~~ | ~~2x maintenance burden~~ | | ~~Resolved (UWP removed)~~ |
@@ -43,39 +43,47 @@ These align with Priority 1-4 items from the original improvement plan (now [arc
 ### Phase 1: Test Infrastructure (Complete)
 
 Created test projects with comprehensive coverage:
-- **MarketDataCollector.Ui.Tests**: 171 tests across 15 test files
-- **MarketDataCollector.Wpf.Tests**: 101 tests across 5 test files
-- **Total**: 272 tests with platform detection and CI integration
+- **MarketDataCollector.Ui.Tests**: 277 tests across 20 test files
+- **MarketDataCollector.Wpf.Tests**: 158 tests across 8 test files
+- **Total**: 435 tests with platform detection and CI integration
 - **Platform detection** (Windows-only, graceful skip on Linux/macOS)
 - **Test patterns** demonstrating best practices
 - **Makefile integration** (`make test-desktop-services`)
 
-**Ui.Tests Breakdown (171 tests):**
+**Ui.Tests Breakdown (277 tests):**
 
 | Test File | Count |
 |-----------|-------|
 | BoundedObservableCollectionTests | 8 |
 | CircularBufferTests | 11 |
+| AlertServiceTests | 25 |
 | ApiClientServiceTests | 14 |
 | BackfillProviderConfigServiceTests | 20 |
 | BackfillServiceTests | 18 |
 | ChartingServiceTests | 16 |
+| ConnectionServiceBaseTests | 22 |
+| DiagnosticsServiceTests | 24 |
+| ErrorHandlingServiceTests | 20 |
 | FixtureDataServiceTests | 13 |
 | FormValidationServiceTests | 4 |
 | LeanIntegrationServiceTests | 12 |
 | OrderBookVisualizationServiceTests | 4 |
 | PortfolioImportServiceTests | 4 |
 | SchemaServiceTests | 6 |
+| StorageAnalyticsServiceTests | 15 |
 | SystemHealthServiceTests | 21 |
 | TimeSeriesAlignmentServiceTests | 14 |
 | WatchlistServiceTests | 22 |
 
-**Wpf.Tests Breakdown (101 tests):**
+**Wpf.Tests Breakdown (158 tests):**
 
 | Test File | Count |
 |-----------|-------|
+| BackgroundTaskSchedulerServiceTests | 19 |
 | ConfigServiceTests | 12 |
 | ConnectionServiceTests | 21 |
+| InfoBarServiceTests | 19 |
+| MessagingServiceTests | 19 |
 | NavigationServiceTests | 12 |
 | StatusServiceTests | 12 |
 | WpfDataQualityServiceTests | 28 |
@@ -94,11 +102,13 @@ The WPF application (`App.xaml.cs`) uses modern Microsoft.Extensions.DependencyI
 - Graceful shutdown coordination with 5-second timeout
 - Structured initialization order: first-run, config, theme, connection monitoring, offline tracking, background services
 
-### Phase 1: Fixture Mode Service (Partial)
+### Phase 1: Fixture Mode Service (Complete)
 
 - `FixtureDataService.cs` exists with comprehensive mock data generation
 - `docs/development/ui-fixture-mode-guide.md` documents intended usage
-- **Gap**: `--fixture` flag and `MDC_FIXTURE_MODE` environment variable are not wired into `App.xaml.cs` startup logic
+- `App.xaml.cs` now parses `--fixture` command-line arg and `MDC_FIXTURE_MODE` environment variable
+- `FixtureDataService.Instance` registered in the DI container
+- Warning notification shown at startup when fixture mode is active
 
 ## Impact Analysis
 
@@ -125,9 +135,9 @@ Development Experience
 
 ```
 Test Coverage
-- Desktop Services: ~20% (272 tests across 18 service test files)
-- Ui.Services: 171 tests (collections, validation, charting, backfill, etc.)
-- Wpf.Services: 101 tests (navigation, config, status, connection, data quality)
+- Desktop Services: ~29% (435 tests across 26 service test files)
+- Ui.Services: 277 tests (collections, validation, charting, backfill, alerts, diagnostics, etc.)
+- Wpf.Services: 158 tests (navigation, config, status, connection, messaging, scheduling, etc.)
 - Clear test patterns for contributors
 - CI-integrated testing (make test-desktop-services)
 
@@ -153,51 +163,50 @@ Documentation
 
 ### Ui.Services (`src/MarketDataCollector.Ui.Services/Services/`)
 
-59 main service files providing shared desktop logic. 13 have dedicated test files (22% coverage).
+59 main service files providing shared desktop logic. 18 have dedicated test files (31% coverage).
 
-**Tested services**: ApiClient, BackfillProviderConfig, Backfill, Charting, FixtureData, FormValidation, LeanIntegration, OrderBookVisualization, PortfolioImport, Schema, SystemHealth, TimeSeriesAlignment, Watchlist
+**Tested services**: Alert, ApiClient, BackfillProviderConfig, Backfill, Charting, ConnectionServiceBase, Diagnostics, ErrorHandling, FixtureData, FormValidation, LeanIntegration, OrderBookVisualization, PortfolioImport, Schema, StorageAnalytics, SystemHealth, TimeSeriesAlignment, Watchlist
 
-**Notable untested services**: ActivityFeed, AdminMaintenance, AdvancedAnalytics, Alert, AnalysisExportWizard, ArchiveBrowser, ArchiveHealth, BackfillApi, BackfillCheckpoint, BatchExportScheduler, CollectionSession, CommandPalette, Config, Connection, Credential, DataCalendar, DataCompleteness, DataSampling, Diagnostics, ErrorHandling, EventReplay, ExportPreset, IntegrityEvents, LiveData, Manifest, Notification, OAuthRefresh, OnboardingTour, ProviderHealth, ProviderManagement, ScheduleManager, ScheduledMaintenance, SetupWizard, SmartRecommendations, StorageAnalytics, StorageOptimizationAdvisor, SymbolGroup, SymbolManagement, SymbolMapping
+**Notable untested services**: ActivityFeed, AdminMaintenance, AdvancedAnalytics, AnalysisExportWizard, ArchiveBrowser, ArchiveHealth, BackfillApi, BackfillCheckpoint, BatchExportScheduler, CollectionSession, CommandPalette, Config, Credential, DataCalendar, DataCompleteness, DataSampling, EventReplay, ExportPreset, IntegrityEvents, LiveData, Manifest, Notification, OAuthRefresh, OnboardingTour, ProviderHealth, ProviderManagement, ScheduleManager, ScheduledMaintenance, SetupWizard, SmartRecommendations, StorageOptimizationAdvisor, SymbolGroup, SymbolManagement, SymbolMapping
 
 ### Wpf Services (`src/MarketDataCollector.Wpf/Services/`)
 
-31 service files providing WPF-specific logic. 5 have dedicated test files (16% coverage).
+31 service files providing WPF-specific logic. 8 have dedicated test files (26% coverage).
 
-**Tested services**: Config, Connection, Navigation, Status, WpfDataQuality
+**Tested services**: BackgroundTaskScheduler, Config, Connection, InfoBar, Messaging, Navigation, Status, WpfDataQuality
 
-**Notable untested services**: AdminMaintenance, ArchiveHealth, BackendServiceManager, BackgroundTaskScheduler, BrushRegistry, ContextMenu, Credential, ExportPreset, FirstRun, FormValidation, InfoBar, KeyboardShortcut, Logging, Messaging, Notification, OfflineTrackingPersistence, PendingOperationsQueue, RetentionAssurance, Schema, Storage, Tooltip, WatchlistService, Workspace, WpfAnalysisExport
+**Notable untested services**: AdminMaintenance, ArchiveHealth, BackendServiceManager, BrushRegistry, ContextMenu, Credential, ExportPreset, FirstRun, FormValidation, KeyboardShortcut, Logging, Notification, OfflineTrackingPersistence, PendingOperationsQueue, RetentionAssurance, Schema, Storage, Tooltip, WatchlistService, Workspace, WpfAnalysisExport
 
 ## Recommended Next Steps
 
-### Priority 1: Wire Fixture Mode into Startup
+### ~~Priority 1: Wire Fixture Mode into Startup~~ (Complete)
 
-**Goal**: Enable offline UI development via `--fixture` flag or `MDC_FIXTURE_MODE` environment variable.
+Fixture mode is now wired into `App.xaml.cs`:
+- [x] `--fixture` command-line arg parsed at startup
+- [x] `MDC_FIXTURE_MODE` environment variable (`1` or `true`) parsed at startup
+- [x] `FixtureDataService.Instance` registered in DI container
+- [x] Warning notification displayed when fixture mode is active
 
-The `FixtureDataService` already exists. Wire it into `App.xaml.cs`:
-1. Parse `--fixture` command-line arg or `MDC_FIXTURE_MODE` env var at startup
-2. When active, register fixture-backed service implementations in the DI container
-3. Update `docs/development/ui-fixture-mode-guide.md` with verified activation instructions
-
-**Impact**: High (unblocks UI development without backend)
-
-### Priority 2: Expand Test Coverage
+### Priority 2: Expand Test Coverage (In Progress)
 
 **Goal**: Reach 40% desktop service coverage (~36 of 90 services tested)
+**Current**: 29% (26 of 90 services tested)
 
 High-value targets for new tests:
+- [x] ConnectionServiceBase - connection state logic
+- [x] ErrorHandlingService - error processing
+- [x] AlertService - alert triggering
+- [x] DiagnosticsService - system diagnostics
+- [x] StorageAnalyticsService - storage metrics
+- [x] BackgroundTaskSchedulerService (Wpf) - task scheduling
+- [x] MessagingService (Wpf) - inter-component messaging
+- [x] InfoBarService (Wpf) - notification bar
 - [ ] ConfigService (Ui.Services) - configuration management
-- [ ] ConnectionServiceBase - connection state logic
 - [ ] CredentialService - credential handling
 - [ ] NotificationService - user notifications
-- [ ] ErrorHandlingService - error processing
-- [ ] AlertService - alert triggering
-- [ ] DiagnosticsService - system diagnostics
 - [ ] DataCompletenessService - data gap detection
-- [ ] StorageAnalyticsService - storage metrics
 - [ ] LiveDataService - real-time data handling
 - [ ] AdminMaintenanceService (Wpf) - maintenance operations
-- [ ] BackgroundTaskSchedulerService (Wpf) - task scheduling
-- [ ] MessagingService (Wpf) - inter-component messaging
 - [ ] StorageService (Wpf) - storage operations
 
 **Impact**: High (catches regressions early, serves as documentation)
@@ -239,15 +248,15 @@ Target 60%+ desktop service test coverage. Prioritize services with complex busi
 Track these KPIs to measure improvement:
 
 ### Code Quality
-- [x] Desktop service test infrastructure: **Done** (272 tests)
-- [ ] Desktop service test coverage: **Current 20%, Target 60%+**
+- [x] Desktop service test infrastructure: **Done** (435 tests)
+- [ ] Desktop service test coverage: **Current 29%, Target 60%+**
 - [ ] Regression bugs caught pre-merge: **Target 80%+**
 - [x] UWP code duplication: **Resolved** (UWP removed)
 
 ### Architecture
 - [x] DI modernization: **Done** (73 service registrations)
 - [x] Architecture documentation: **Done** (desktop-layers.md)
-- [ ] Fixture mode activation: **Service exists, startup wiring pending**
+- [x] Fixture mode activation: **Done** (`--fixture` / `MDC_FIXTURE_MODE` wired into App.xaml.cs)
 
 ### CI/CD
 - [x] Desktop test execution in CI: **Done** (make test-desktop-services)
@@ -280,8 +289,8 @@ Track these KPIs to measure improvement:
 - Phase 1 (Test infrastructure, DI, architecture docs): Complete
 
 ### Investment Remaining
-- Fixture mode wiring: ~4 hours
-- Expanded test coverage (to 40%): ~32 hours
+- ~~Fixture mode wiring~~: Complete
+- Expanded test coverage (from 29% to 40%): ~16 hours
 - Service extraction (Phase 2): ~60 hours
 - Full test coverage (Phase 3): ~80 hours
 
@@ -294,13 +303,13 @@ Track these KPIs to measure improvement:
 
 Significant progress has been made on desktop platform improvements:
 
-1. **Test infrastructure** - 272 tests across 2 projects (up from 0)
+1. **Test infrastructure** - 435 tests across 2 projects, 26 service test files (up from 0)
 2. **DI modernization** - Modern container with 73 registrations
 3. **Architecture documentation** - Comprehensive layer design document
-4. **Fixture mode service** - Mock data service implemented
+4. **Fixture mode** - Mock data service implemented and wired into startup (`--fixture` / `MDC_FIXTURE_MODE`)
 5. **CI integration** - Automated testing via Makefile
 
-The primary remaining gap is **test coverage breadth** — only 20% of desktop services have dedicated tests. The next recommended actions are wiring fixture mode into startup and expanding test coverage to the 36 highest-value untested services.
+The primary remaining gap is **test coverage breadth** — 29% of desktop services have dedicated tests (up from 20%). The next recommended action is expanding test coverage to reach 40% by adding tests for the remaining high-value untested services (ConfigService, CredentialService, NotificationService, DataCompletenessService, LiveDataService, AdminMaintenanceService, StorageService).
 
 ---
 
@@ -314,8 +323,8 @@ The primary remaining gap is **test coverage breadth** — only 20% of desktop s
 - **UI Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
 - **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
 - **Test Projects**:
-  - `tests/MarketDataCollector.Ui.Tests/` (171 tests)
-  - `tests/MarketDataCollector.Wpf.Tests/` (101 tests)
+  - `tests/MarketDataCollector.Ui.Tests/` (277 tests, 20 files)
+  - `tests/MarketDataCollector.Wpf.Tests/` (158 tests, 8 files)
 
 ## Related Documentation
 
