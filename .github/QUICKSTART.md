@@ -16,7 +16,6 @@ Your Market Data Collector repository now has **professional-grade CI/CD automat
 | `benchmark.yml` | Performance benchmarks |
 | `docker.yml` | Docker image building and publishing |
 | `dotnet-desktop.yml` | Desktop application builds |
-| `desktop-app.yml` | UWP app builds |
 | `documentation.yml` | Documentation generation, AI instruction sync, TODO scanning |
 | `release.yml` | Release automation |
 | `pr-checks.yml` | PR validation checks |

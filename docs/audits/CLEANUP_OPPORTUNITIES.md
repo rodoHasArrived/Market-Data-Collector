@@ -19,7 +19,7 @@ The focus is to make each cleanup item directly actionable by naming **where** t
 | **UiServer Endpoint Extraction (S1)** | ✅ Complete | 3030 LOC → 260 LOC, 32 endpoint modules |
 | **UWP Platform Removal (P1-P4)** | ✅ Complete | Project deleted, solution cleaned, tests removed |
 | **UWP Service Migration (P6)** | ✅ Complete | UWP services removed; WPF is sole desktop client |
-| **Residual UWP References (P5-R)** | ⚠️ Pending | Stale references in config files, docs, code comments |
+| **Residual UWP References (P5-R)** | ✅ Complete | All 9 items (R1-R9) cleaned up |
 | **HtmlTemplates Split (S2)** | ✅ Partially Complete | Split into 3 partial class files (2,533 LOC total) |
 | **Storage Services Split (S3)** | ✅ Complete | PortableDataPackager split into 5 files; AnalysisExportService split into 6 files |
 | **Architecture Debt (A1-A2)** | ✅ Complete | DataGapRepair DI resolved; SubscriptionManager renamed to SubscriptionOrchestrator |
@@ -36,11 +36,9 @@ The focus is to make each cleanup item directly actionable by naming **where** t
 - AnalysisExportService split into 6 partial class files (1,683 LOC total)
 
 **Remaining Work:**
-- Clean stale UWP references from config files (`.github/labeler.yml`, PR templates)
-- Update documentation files still mentioning UWP as active platform
-- Update WPF code comments that still reference UWP
-- Update `docs/status/IMPROVEMENTS.md` C7 item from OPEN to COMPLETED
 - Consider archiving `docs/development/uwp-to-wpf-migration.md`
+- Consider moving `HtmlTemplateGenerator` static CSS/JS to versioned `wwwroot/` files
+- Regenerate repository structure docs and diagrams to reflect post-UWP state
 
 ## 1) Scan methods and evidence sources
 
@@ -118,73 +116,45 @@ UWP has been fully removed from the codebase. The project directory, solution re
 - **Evidence:** `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` no longer exists.
 - **Verification:** No UWP-specific test files remain in the test suite.
 
-### P5-R. Residual UWP reference cleanup — ⚠️ PENDING
+### P5-R. Residual UWP reference cleanup — ✅ COMPLETE
 
-Despite structural removal, stale UWP references persist in configuration files, documentation, and code comments. These do not affect builds or functionality but create confusion.
+All stale UWP references in configuration files, documentation, and code comments have been cleaned up.
 
-#### R1. `.github/labeler.yml` line 49 — ⚠️ PENDING
+#### R1. `.github/labeler.yml` — ✅ DONE
 
-- **Issue:** References non-existent path `src/MarketDataCollector.Uwp/**/*` in the `ui` label.
-- **Action:** Remove line 49.
-- **Validation:** Label rules reference only existing paths.
+- **Fix:** Replaced `src/MarketDataCollector.Uwp/**/*` with `src/MarketDataCollector.Wpf/**/*` in the `ui` label.
 
-#### R2. `.github/pull_request_template_desktop.md` lines 5, 12-13 — ⚠️ PENDING
+#### R2. `.github/pull_request_template_desktop.md` — ✅ DONE
 
-- **Issue:** PR template lists `src/MarketDataCollector.Uwp/**` as a triggering path and includes UWP build checklist items (`make build-uwp`, `make uwp-xaml-diagnose`).
-- **Action:**
-  1. Remove `src/MarketDataCollector.Uwp/**` from the path list (line 5).
-  2. Remove `make build-uwp` and `make uwp-xaml-diagnose` checklist items (lines 12-13).
-- **Validation:** Desktop PR template references only WPF paths and build targets.
+- **Fix:** Removed `src/MarketDataCollector.Uwp/**` path and UWP build checklist items (`make build-uwp`, `make uwp-xaml-diagnose`).
 
-#### R3. `.github/QUICKSTART.md` line 19 — ⚠️ PENDING
+#### R3. `.github/QUICKSTART.md` — ✅ DONE
 
-- **Issue:** Lists `desktop-app.yml | UWP app builds` as an active workflow. This workflow does not exist.
-- **Action:** Remove line 19 entry entirely.
-- **Validation:** Workflow table matches actual `.github/workflows/` contents.
+- **Fix:** Removed `desktop-app.yml | UWP app builds` workflow entry.
 
-#### R4. `docs/operations/operator-runbook.md` lines 501-532 — ⚠️ PENDING
+#### R4. `docs/operations/operator-runbook.md` — ✅ DONE
 
-- **Issue:** Contains a full "UWP Desktop Application" section with startup commands and page reference table for a project that no longer exists.
-- **Action:** Remove the entire UWP section or move to `docs/archived/`.
-- **Validation:** Operator runbook only references WPF desktop application.
+- **Fix:** Replaced "UWP Desktop Application" section with "WPF Desktop Application" pointing to correct project path.
 
-#### R5. `docs/status/production-status.md` lines 29, 77 — ⚠️ PENDING
+#### R5. `docs/status/production-status.md` — ✅ DONE
 
-- **Issue:** Lists `UWP Desktop App` as an implemented component and shows `DESKTOP APPLICATIONS (WPF / UWP)` heading.
-- **Action:**
-  1. Update line 29 to: `| WPF Desktop App | ✅ Implemented | Windows 7+ companion UI |`
-  2. Update line 77 heading to reference WPF only.
-- **Validation:** Production status consistently describes WPF-only desktop support.
+- **Fix:** Removed UWP Desktop App row; updated WPF description to sole desktop client. Updated diagram heading to WPF-only.
 
-#### R6. `docs/status/IMPROVEMENTS.md` C7 item (lines 554-572) — ⚠️ PENDING
+#### R6. `docs/status/IMPROVEMENTS.md` C7 and F1 items — ✅ DONE
 
-- **Issue:** C7 "WPF/UWP Service Deduplication" is marked OPEN but references `MarketDataCollector.Uwp/Services/*.cs` which no longer exists. UWP removal makes this item effectively completed.
-- **Action:**
-  1. Update C7 status from OPEN to COMPLETED.
-  2. Update problem statement to note UWP has been removed.
-  3. Remove stale UWP file references.
-  4. Update progress summary table (line 38): change Open count from 5 to 4, remove C7 from open list.
-- **Validation:** Improvement tracking accurately reflects current state.
+- **Fix:** Updated C7 from OPEN to COMPLETED (UWP removed, no duplicate services). Updated F1 from PARTIAL to COMPLETED (UWP navigation no longer applies). Updated all summary tables and progress ratios.
 
-#### R7. `docs/ai/copilot/instructions.md` — ⚠️ PENDING
+#### R7. `docs/ai/copilot/instructions.md` — ✅ DONE
 
-- **Issue:** Directory tree diagram includes `MarketDataCollector.Uwp/` entry.
-- **Action:** Remove the UWP line from the structure diagram.
-- **Validation:** AI instruction docs show only existing projects.
+- **Fix:** Removed `MarketDataCollector.Uwp/` from directory tree; updated desktop apps description to WPF-only.
 
-#### R8. `docs/operations/msix-packaging.md` line 3 — ⚠️ PENDING
+#### R8. `docs/operations/msix-packaging.md` — ✅ DONE
 
-- **Issue:** References `MarketDataCollector.Uwp.csproj` in certificate subject example.
-- **Action:** Update to reference `MarketDataCollector.Wpf.csproj`.
-- **Validation:** Packaging docs reference the correct project file.
+- **Fix:** Updated `MarketDataCollector.Uwp.csproj` reference to `MarketDataCollector.Wpf.csproj`.
 
-#### R9. WPF code comments referencing UWP — ⚠️ PENDING
+#### R9. WPF code comments referencing UWP — ✅ DONE
 
-- **Files:**
-  - `src/MarketDataCollector.Wpf/Models/AppConfig.cs` lines 6, 11 — says "UWP-Specific Models" (this is a WPF file)
-  - `src/MarketDataCollector.Wpf/Services/RetentionAssuranceService.cs` line 17 — says "UWP-specific features" (this is a WPF service)
-- **Action:** Update comments to reference WPF instead of UWP.
-- **Validation:** No misleading UWP references in active WPF source code.
+- **Fix:** Updated `AppConfig.cs` header from "UWP-Specific" to "WPF-Specific"; updated `RetentionAssuranceService.cs` doc comment from "UWP-specific" to "WPF-specific".
 
 ### P6. Service migration — ✅ COMPLETE
 
@@ -302,16 +272,7 @@ Despite structural removal, stale UWP references persist in configuration files,
    - ✅ A1: DataGapRepair DI TODO resolved (no remaining markers)
    - ✅ A2: SubscriptionManager renamed to SubscriptionOrchestrator (naming collision resolved)
 
-7. **PR-7 Residual reference cleanup:** ⚠️ **NOT STARTED** — 9 items identified (R1-R9 in section 3, P5-R above)
-   - `.github/labeler.yml` — remove UWP path (R1)
-   - `.github/pull_request_template_desktop.md` — remove UWP checklist items (R2)
-   - `.github/QUICKSTART.md` — remove `desktop-app.yml` entry (R3)
-   - `docs/operations/operator-runbook.md` — remove UWP section (R4)
-   - `docs/status/production-status.md` — update to WPF-only (R5)
-   - `docs/status/IMPROVEMENTS.md` — mark C7 as COMPLETED (R6)
-   - `docs/ai/copilot/instructions.md` — remove UWP from directory tree (R7)
-   - `docs/operations/msix-packaging.md` — update project reference (R8)
-   - WPF source comments — update UWP references to WPF (R9)
+7. **PR-7 Residual reference cleanup:** ✅ **COMPLETED** — All 9 items (R1-R9) cleaned up
 
 8. **PR-8 Generated docs refresh:** ⚠️ **NOT STARTED** — regenerate inventories/diagrams after structural changes.
 
@@ -335,13 +296,13 @@ Despite structural removal, stale UWP references persist in configuration files,
 - ✅ SubscriptionManager naming collision resolved (renamed to SubscriptionOrchestrator)
 
 ### ⚠️ Remaining:
-- ⚠️ Stale UWP references in 9 config/documentation/code comment locations (see R1-R9)
-- ⚠️ `docs/status/IMPROVEMENTS.md` C7 item incorrectly marked OPEN (should be COMPLETED)
 - ⚠️ Generated docs not yet refreshed to reflect post-UWP repository structure
 - ⚠️ HtmlTemplateGenerator still embeds CSS/JS inline (2,533 LOC total across 3 files) — could benefit from moving static assets to `wwwroot/`
 
+### ✅ Recently Completed:
+- ✅ All 9 residual UWP reference items (R1-R9) cleaned up
+- ✅ `docs/status/IMPROVEMENTS.md` C7 and F1 marked COMPLETED
+
 **Next Steps:**
-1. Clean residual UWP references (R1-R9) — straightforward find-and-update work
-2. Update IMPROVEMENTS.md C7 status
-3. Regenerate repository structure docs and diagrams
-4. Consider moving HtmlTemplateGenerator static CSS/JS to versioned `wwwroot/` files
+1. Regenerate repository structure docs and diagrams
+2. Consider moving HtmlTemplateGenerator static CSS/JS to versioned `wwwroot/` files

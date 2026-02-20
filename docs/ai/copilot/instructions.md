@@ -31,7 +31,7 @@ Use PR review comments to iterate in batches so the agent can address full feedb
 **Languages:** C# 13, F# 8.0
 **Size:** 770 C# source files, 144 test files across 14 main projects + 4 test projects
 **Architecture:** Event-driven, monolithic core with optional UI projects
-**Desktop Apps:** WPF (recommended), UWP (legacy)
+**Desktop Apps:** WPF (Windows)
 
 
 ## AI Error Registry Workflow
@@ -143,8 +143,7 @@ MarketDataCollector/
 │   ├── MarketDataCollector.Ui/           # Web dashboard UI (Blazor/Razor)
 │   ├── MarketDataCollector.Ui.Services/  # Shared UI services (cross-platform)
 │   ├── MarketDataCollector.Ui.Shared/    # Shared UI endpoints & contracts
-│   ├── MarketDataCollector.Wpf/          # WPF desktop app (recommended, Windows)
-│   └── MarketDataCollector.Uwp/          # UWP desktop app (legacy, Windows)
+│   └── MarketDataCollector.Wpf/          # WPF desktop app (Windows)
 ├── tests/
 │   ├── MarketDataCollector.Tests/        # Core C# unit tests (98+ test files)
 │   ├── MarketDataCollector.FSharp.Tests/ # F# unit tests (5 files)

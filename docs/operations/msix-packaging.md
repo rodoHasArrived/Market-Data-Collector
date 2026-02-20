@@ -122,7 +122,7 @@ For production distribution, use a trusted code-signing certificate from a CA:
 
 1. Purchase a code-signing certificate (standard or EV).
 2. Ensure the **Publisher** in `Package.appxmanifest` and
-   `MarketDataCollector.Uwp.csproj` matches the certificate subject exactly.
+   `MarketDataCollector.Wpf.csproj` matches the certificate subject exactly.
 3. Provide the PFX path and password via environment variables:
 
 ```powershell

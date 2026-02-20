@@ -498,12 +498,12 @@ dotnet run -- --backfill --fill-gaps-only --symbols SPY,QQQ
 
 ---
 
-## UWP Desktop Application
+## WPF Desktop Application
 
 ### Starting the Desktop App
 
 ```bash
-dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 ```
 
 ### Desktop App Pages

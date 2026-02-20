@@ -14,7 +14,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// Service for retention policy assurance with guardrails, legal holds, and verification.
 /// Implements Feature Refinement #23 - File Retention Assurance.
 ///
-/// This service provides UWP-specific features (legal holds, guardrails, UI persistence)
+/// This service provides WPF-specific features (legal holds, guardrails, UI persistence)
 /// and delegates file operations to the core service via HTTP API endpoints:
 /// - /api/storage/health/check - File health checks with checksum validation
 /// - /api/storage/health/orphans - Find orphaned files

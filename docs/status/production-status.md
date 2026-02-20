@@ -25,8 +25,7 @@ The Market Data Collector is a feature-rich system with a working CLI, backfill 
 | Polygon Provider | ⚠️ Partial | Stub mode unless configured; WebSocket parsing in progress |
 | StockSharp Provider | ⚠️ Integration scaffold | Requires StockSharp setup |
 | Monitoring | ✅ Implemented | HTTP server + Prometheus metrics |
-| WPF Desktop App | ⚠️ Partial UX parity | Recommended Windows desktop UI; several navigable pages still show placeholder "Coming Soon" content |
-| UWP Desktop App | ✅ Implemented | Legacy Windows 10+ companion UI |
+| WPF Desktop App | ⚠️ Partial UX parity | Windows desktop UI (sole desktop client); several navigable pages still show placeholder "Coming Soon" content |
 | QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
 | Symbol Search Providers | ✅ Implemented | 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp) |
 | Architecture | ✅ Monolithic | Single-process runtime |
@@ -74,7 +73,7 @@ Multiple storage strategies:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│              DESKTOP APPLICATIONS (WPF / UWP)                       │
+│              DESKTOP APPLICATION (WPF)                               │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
 │  │ ConfigService│  │StatusService │  │ BackfillService          │   │
 │  └─────────────┘  └──────────────┘  └──────────────────────────┘   │
