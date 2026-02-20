@@ -42,6 +42,7 @@ public sealed class BackfillApiService
         string[] symbols,
         string? from,
         string? to,
+        string granularity = "Daily",
         CancellationToken ct = default)
     {
         var request = new BackfillRequest
@@ -49,7 +50,8 @@ public sealed class BackfillApiService
             Provider = provider,
             Symbols = symbols,
             From = from,
-            To = to
+            To = to,
+            Granularity = granularity
         };
 
         var backfillClient = _apiClient.GetBackfillClient();

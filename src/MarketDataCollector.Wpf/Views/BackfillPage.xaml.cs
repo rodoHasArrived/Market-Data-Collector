@@ -62,6 +62,9 @@ public partial class BackfillPage : Page
         ToDatePicker.SelectedDate = DateTime.Today;
         FromDatePicker.SelectedDate = DateTime.Today.AddDays(-30);
 
+        UpdateProviderPrioritySummary();
+        UpdateGranularityHint();
+
         await LoadScheduledJobsAsync();
         await RefreshStatusFromApiAsync();
     }
@@ -217,6 +220,81 @@ public partial class BackfillPage : Page
     {
         var symbols = SymbolsBox.Text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
         SymbolCountText.Text = $"{symbols.Length} symbols";
+        DateRangeHintText.Text = "Smart range uses symbol count + granularity to keep request sizes practical.";
+    }
+
+    private void ProviderPriority_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateProviderPrioritySummary();
+    }
+
+    private void GranularityCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateGranularityHint();
+    }
+
+    private void ApplySmartRange_Click(object sender, RoutedEventArgs e)
+    {
+        var granularity = (GranularityCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Daily";
+        var symbolCount = SymbolsBox.Text?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Length ?? 0;
+
+        var lookbackDays = granularity switch
+        {
+            "1Min" => symbolCount > 20 ? 3 : symbolCount > 5 ? 7 : 14,
+            "15Min" => symbolCount > 20 ? 14 : symbolCount > 5 ? 30 : 60,
+            "Hourly" => symbolCount > 50 ? 30 : symbolCount > 10 ? 90 : 180,
+            _ => symbolCount > 100 ? 365 : symbolCount > 30 ? 365 * 2 : 365 * 5
+        };
+
+        ToDatePicker.SelectedDate = DateTime.Today;
+        FromDatePicker.SelectedDate = DateTime.Today.AddDays(-lookbackDays);
+
+        DateRangeHintText.Text = $"Smart range applied: last {lookbackDays} days for {Math.Max(symbolCount, 1)} symbol(s) at {GetGranularityDisplay(granularity)} granularity.";
+    }
+
+    private void UpdateProviderPrioritySummary()
+    {
+        var primary = GetProviderName(PrimaryProviderCombo);
+        var secondary = GetProviderName(SecondaryProviderCombo);
+        var tertiary = GetProviderName(TertiaryProviderCombo);
+
+        var sequence = new[] { primary, secondary, tertiary }
+            .Where(v => !string.IsNullOrWhiteSpace(v) && v != "No fallback")
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        ProviderPrioritySummaryText.Text = sequence.Length > 0
+            ? $"Priority: {string.Join(" → ", sequence)}"
+            : "Priority: No providers selected";
+    }
+
+    private void UpdateGranularityHint()
+    {
+        var granularity = (GranularityCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Daily";
+        GranularityHintText.Text = granularity switch
+        {
+            "1Min" => "1-minute data is best for short tactical windows (typically days to a few weeks).",
+            "15Min" => "15-minute data balances detail and request size for multi-week to multi-month backfills.",
+            "Hourly" => "Hourly data is well-suited for trend/rotation systems over months.",
+            _ => "Daily is recommended for broad symbol lists and long history windows."
+        };
+    }
+
+    private static string GetProviderName(ComboBox combo)
+    {
+        return (combo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+    }
+
+    private static string GetGranularityDisplay(string granularity)
+    {
+        return granularity switch
+        {
+            "1Min" => "1 minute",
+            "15Min" => "15 minute",
+            _ => granularity
+        };
     }
 
     private void ValidateData_Click(object sender, RoutedEventArgs e)
@@ -319,6 +397,21 @@ public partial class BackfillPage : Page
 
         SymbolsValidationError.Visibility = Visibility.Collapsed;
 
+        var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddDays(-30);
+        var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
+
+        if (fromDate > toDate)
+        {
+            FromDateValidationError.Text = "From date must be earlier than To date";
+            FromDateValidationError.Visibility = Visibility.Visible;
+            ToDateValidationError.Text = "To date must be on or after From date";
+            ToDateValidationError.Visibility = Visibility.Visible;
+            return;
+        }
+
+        FromDateValidationError.Visibility = Visibility.Collapsed;
+        ToDateValidationError.Visibility = Visibility.Collapsed;
+
         StartBackfillButton.Visibility = Visibility.Collapsed;
         PauseBackfillButton.Visibility = Visibility.Visible;
         CancelBackfillButton.Visibility = Visibility.Visible;
@@ -351,8 +444,7 @@ public partial class BackfillPage : Page
 
         // Get provider from combo or default to "composite"
         var provider = (ProviderCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "composite";
-        var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddDays(-30);
-        var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
+        var granularity = (GranularityCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Daily";
 
         // Start progress polling
         _progressPollTimer.Start();
@@ -365,7 +457,8 @@ public partial class BackfillPage : Page
                 symbols.Select(s => s.Trim().ToUpper()).ToArray(),
                 provider,
                 fromDate,
-                toDate);
+                toDate,
+                granularity);
         }
         catch (Exception ex)
         {

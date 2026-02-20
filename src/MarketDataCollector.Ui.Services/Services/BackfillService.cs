@@ -105,6 +105,7 @@ public sealed class BackfillService
         string provider,
         DateTime fromDate,
         DateTime toDate,
+        string granularity = "Daily",
         Action<BackfillProgress>? progressCallback = null)
     {
         if (IsRunning)
@@ -143,7 +144,7 @@ public sealed class BackfillService
 
         try
         {
-            await RunBackfillAsync(symbols, provider, fromDate, toDate, progressCallback, _cancellationTokenSource.Token);
+            await RunBackfillAsync(symbols, provider, fromDate, toDate, granularity, progressCallback, _cancellationTokenSource.Token);
 
             _currentProgress.Status = "Completed";
             _currentProgress.CompletedAt = DateTime.UtcNow;
@@ -223,6 +224,7 @@ public sealed class BackfillService
         string provider,
         DateTime fromDate,
         DateTime toDate,
+        string granularity,
         Action<BackfillProgress>? progressCallback,
         CancellationToken cancellationToken)
     {
@@ -240,6 +242,7 @@ public sealed class BackfillService
             symbols,
             fromStr,
             toStr,
+            granularity,
             cancellationToken);
 
         if (result == null)
@@ -768,6 +771,7 @@ public sealed class BackfillService
             checkpoint.Provider,
             checkpoint.FromDate,
             checkpoint.ToDate,
+            "Daily",
             progressCallback);
     }
 
