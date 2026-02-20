@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 06:41:13 UTC
+> Auto-generated on 2026-02-20 10:08:26 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -917,6 +917,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── CronEndpoints.cs
 │   │   │   ├── DiagnosticsEndpoints.cs
+│   │   │   ├── EndpointHelpers.cs
 │   │   │   ├── ExportEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
 │   │   │   ├── HealthEndpoints.cs
