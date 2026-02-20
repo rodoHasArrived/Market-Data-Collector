@@ -211,19 +211,19 @@ Documentation
 
 **Tested services (43 concrete + 7 base classes)**: ActivityFeed, Alert, AnalysisExportServiceBase, ApiClient, ArchiveBrowser, BackendServiceManagerBase, BackfillApi, BackfillCheckpoint, BackfillProviderConfig, Backfill, Charting, CollectionSession, CommandPalette, Config, ConfigServiceBase, ConnectionServiceBase, Credential, DataCalendar, DataCompleteness, DataQualityServiceBase, DataSampling, Diagnostics, ErrorHandling, EventReplay, FixtureData, FormValidation, IntegrityEvents, LeanIntegration, LiveData, LoggingServiceBase, Manifest, Notification, NotificationServiceBase, OrderBookVisualization, PortfolioImport, ProviderHealth, ProviderManagement, ScheduleManager, ScheduledMaintenance, Schema, Search, SmartRecommendations, StatusServiceBase, StorageAnalytics, SymbolGroup, SymbolManagement, SymbolMapping, SystemHealth, TimeSeriesAlignment, Watchlist
 
-**Untested concrete services** (9 services):
+**Untested concrete services** (9 services, ~6,200 LOC total):
 
-| Service | Priority for Testing | Reason |
-|---------|---------------------|--------|
-| `StorageOptimizationAdvisorService` | **High** | Complex recommendation engine with rule evaluation |
-| `AnalysisExportWizardService` | **High** | Multi-step wizard state machine |
-| `SetupWizardService` | **Medium** | Configuration steps and validation |
-| `BatchExportSchedulerService` | **Medium** | Cron scheduling and execution tracking |
-| `PortablePackagerService` | **Medium** | Package creation and validation |
-| `OAuthRefreshService` | **Medium** | Token lifecycle and refresh timing |
-| `OnboardingTourService` | Low | UI-centric tour steps |
-| `ArchiveHealthService` | Low | Thin delegation to backend |
-| `LoggingService` | Low | `LoggingServiceBase` now tested; concrete service is mostly configuration glue |
+| Service | LOC | Priority | Reason |
+|---------|-----|----------|--------|
+| `StorageOptimizationAdvisorService` | 1,563 | **Critical** | Very large recommendation engine with rule evaluation |
+| `AnalysisExportWizardService` | 1,290 | **Critical** | Very large multi-step wizard state machine |
+| `PortablePackagerService` | 893 | **High** | Package creation, validation, and import logic |
+| `SetupWizardService` | 774 | **High** | Multi-step configuration wizard with validation |
+| `BatchExportSchedulerService` | 735 | **High** | Cron scheduling, execution tracking, retry logic |
+| `OnboardingTourService` | 556 | **Medium** | Tour step management and progress tracking |
+| `OAuthRefreshService` | 377 | **Medium** | Token lifecycle, refresh timing, and expiry handling |
+| `LoggingService` | 31 | Low | `LoggingServiceBase` now tested; concrete service is configuration glue |
+| `ArchiveHealthService` | 13 | Low | Thin delegation to backend |
 
 **Untested base classes** (7 of 15; 8 base classes now have direct tests):
 
@@ -245,22 +245,22 @@ Documentation
 
 **Tested services (20)**: AdminMaintenance, BackgroundTaskScheduler, Config, Connection, ExportPreset, FirstRun, InfoBar, KeyboardShortcut, Messaging, Navigation, Notification, OfflineTrackingPersistence, PendingOperationsQueue, RetentionAssurance, Status, Storage, Tooltip, Watchlist, Workspace, WpfDataQuality
 
-**Untested services:**
+**Untested services** (~2,400 LOC of testable logic):
 
-| Service | Priority for Testing | Reason |
-|---------|---------------------|--------|
-| `WpfAnalysisExportService` | **High** | Format-specific export logic with column mapping |
-| `FormValidationService` | **Medium** | Field validation rules (partially covered by Ui.Services `FormValidationRules`) |
-| `CredentialService` | **Medium** | Thin adapter; shared logic tested via Ui.Services `CredentialServiceTests` |
-| `BackendServiceManager` | Low | Service lifecycle management; base class tested via `BackendServiceManagerBaseTests` |
-| `SchemaService` | Low | Thin wrapper; `SchemaServiceBase` partially covered by Ui.Services `SchemaServiceTests` |
-| `ArchiveHealthService` | Low | Backend delegation |
-| `ContextMenuService` | Low | UI-specific command registry |
-| `LoggingService` | Low | Configuration glue; `LoggingServiceBase` now tested via `LoggingServiceBaseTests` |
-| `ThemeService` | Low | Thin WPF adapter; minimal standalone logic |
-| `BrushRegistry` | Low | Static WPF resource lookup (utility) |
-| `ExportFormat` | Low | Enum/model file |
-| `TypeForwards` | Low | Type alias file; no logic to test |
+| Service | LOC | Priority | Reason |
+|---------|-----|----------|--------|
+| `CredentialService` | 960 | **Critical** | Large service with secure storage, validation, and encryption logic; Ui.Services `CredentialServiceTests` covers shared contract only |
+| `ArchiveHealthService` | 503 | **High** | Substantial WPF-specific health monitoring with metric aggregation |
+| `ContextMenuService` | 467 | **Medium** | Command registry, dynamic menu construction, shortcut binding |
+| `ThemeService` | 156 | **Medium** | Theme switching, resource dictionary management |
+| `BackendServiceManager` | 125 | Low | Service lifecycle; base class tested via `BackendServiceManagerBaseTests` |
+| `FormValidationService` | 116 | Low | Field validation rules; partially covered by Ui.Services `FormValidationRules` |
+| `WpfAnalysisExportService` | 37 | Low | Thin wrapper delegating to `AnalysisExportServiceBase` |
+| `SchemaService` | ~30 | Low | Thin wrapper; `SchemaServiceBase` covered by `SchemaServiceTests` |
+| `LoggingService` | ~30 | Low | Configuration glue; `LoggingServiceBase` tested via `LoggingServiceBaseTests` |
+| `BrushRegistry` | ~20 | Low | Static WPF resource lookup (utility) |
+| `ExportFormat` | ~15 | Low | Enum/model file |
+| `TypeForwards` | ~10 | Low | Type alias file; no logic to test |
 
 ## Recommended Next Steps
 
@@ -418,23 +418,34 @@ Each week concludes with:
 
 #### Ui.Services — Concrete Services to Target (6 remaining)
 
-| Service | Complexity | Estimated Tests | Effort | Notes |
-|---------|-----------|-----------------|--------|-------|
-| `StorageOptimizationAdvisorService` | High | 15–20 | 5h | Recommendation engine with rule evaluation |
-| `AnalysisExportWizardService` | High | 12–18 | 5h | Multi-step wizard state machine |
-| `SetupWizardService` | Medium | 10–15 | 4h | Configuration steps and validation |
-| `BatchExportSchedulerService` | Medium | 10–12 | 3h | Cron scheduling and execution tracking |
-| `PortablePackagerService` | Medium | 8–12 | 3h | Package creation and validation |
-| `OAuthRefreshService` | Medium | 8–10 | 3h | Token lifecycle and refresh timing |
+| Service | LOC | Complexity | Estimated Tests | Effort | Notes |
+|---------|-----|-----------|-----------------|--------|-------|
+| `StorageOptimizationAdvisorService` | 1,563 | Critical | 20–25 | 6h | Very large recommendation engine with rule evaluation |
+| `AnalysisExportWizardService` | 1,290 | Critical | 15–20 | 6h | Very large multi-step wizard state machine |
+| `PortablePackagerService` | 893 | High | 12–15 | 4h | Package creation, validation, and import |
+| `SetupWizardService` | 774 | High | 10–15 | 4h | Multi-step configuration wizard |
+| `BatchExportSchedulerService` | 735 | High | 10–12 | 4h | Cron scheduling and execution tracking |
+| `OAuthRefreshService` | 377 | Medium | 8–10 | 3h | Token lifecycle and refresh timing |
 
-#### Wpf Services — Services to Target (2 high-priority remaining)
+#### Wpf Services — Services to Target (3 high-priority remaining)
 
-| Service | Complexity | Estimated Tests | Effort | Notes |
-|---------|-----------|-----------------|--------|-------|
-| `WpfAnalysisExportService` | High | 12–15 | 4h | Format-specific export logic |
-| `FormValidationService` | Medium | 6–8 | 2h | Field validation rules |
+| Service | LOC | Complexity | Estimated Tests | Effort | Notes |
+|---------|-----|-----------|-----------------|--------|-------|
+| `CredentialService` | 960 | Critical | 15–20 | 5h | Secure storage, validation, encryption (not a thin adapter) |
+| `ArchiveHealthService` | 503 | High | 10–12 | 3h | WPF-specific health monitoring with metric aggregation |
+| `ContextMenuService` | 467 | Medium | 8–10 | 3h | Command registry, dynamic menu construction |
 
-*Lower-priority WPF services (CredentialService, BackendServiceManager, SchemaService, ArchiveHealthService, ContextMenuService, LoggingService, ThemeService) have partial coverage through Ui.Services base class tests and can be deferred.*
+*Lower-priority WPF services (FormValidationService 116 LOC, BackendServiceManager 125 LOC, ThemeService 156 LOC, WpfAnalysisExportService 37 LOC, SchemaService ~30 LOC, LoggingService ~30 LOC) have partial coverage through Ui.Services base class tests and/or are thin wrappers.*
+
+#### Existing Stub Tests to Expand
+
+Three test files exist but have minimal coverage and should be expanded:
+
+| Test File | Current Tests | Target | Gap |
+|-----------|--------------|--------|-----|
+| `OrderBookVisualizationServiceTests` | 4 (78 LOC) | 12–15 | Missing edge cases, state transitions, error handling |
+| `FormValidationServiceTests` | 4 (94 LOC) | 10–12 | Tests static rules only; no service class or comprehensive rule coverage |
+| `ExportPresetServiceTests` (Wpf) | 4 (73 LOC) | 10–12 | Only singleton pattern tests; missing preset CRUD, serialization |
 
 #### Coverage Progression
 
@@ -522,11 +533,11 @@ Track these KPIs to measure improvement:
 ### Investment Remaining
 | Phase | Work | Hours |
 |-------|------|-------|
-| Phase 3c | Test coverage 78% → 80% (2 high-priority services) | ~9h |
-| Phase 3d | Test remaining concrete services 80% → 89% (8 more services) | ~21h |
+| Phase 3c | Test coverage 78% → 80% (2 critical services: StorageOptimizationAdvisor, CredentialService WPF) | ~11h |
+| Phase 3d | Test remaining services 80% → 89% (7 more services + expand 3 stubs) | ~27h |
 | Phase 2 | Service extraction (10 services × ~4–5h) | ~60h |
 | Phase 4 | Integration/advanced testing (evaluation only) | ~10h |
-| **Total Remaining** | | **~100h** |
+| **Total Remaining** | | **~108h** |
 
 ### Expected Returns
 - **Development velocity**: +30% (faster testing, offline development)
@@ -555,8 +566,8 @@ Two clear workstreams remain, each with a concrete plan:
 
 | Workstream | Target | Effort | Key Deliverable |
 |------------|--------|--------|-----------------|
-| **Phase 3 continued** — 80%+ coverage | 72+ of 90 services | ~9h | Tests for 2 high-priority services (StorageOptimizationAdvisor, WpfAnalysisExport) to reach 80% threshold |
-| **Phase 3 extended** — 89%+ coverage | 80+ of 90 services | ~21h | Tests for remaining concrete services (AnalysisExportWizard, SetupWizard, BatchExportScheduler, PortablePackager, OAuthRefresh, FormValidation, CredentialService WPF, BackendServiceManager) |
+| **Phase 3 continued** — 80%+ coverage | 72+ of 90 services | ~11h | Tests for 2 critical services (StorageOptimizationAdvisor 1,563 LOC, CredentialService WPF 960 LOC) to reach 80% threshold |
+| **Phase 3 extended** — 89%+ coverage | 80+ of 90 services | ~27h | Tests for remaining large services (AnalysisExportWizard, PortablePackager, SetupWizard, BatchExportScheduler, ArchiveHealthService WPF, ContextMenuService, OAuthRefresh) + expand 3 stub test files |
 | **Phase 2** — Service extraction | 10 new base classes | ~60h | Shared logic in `Ui.Services`, WPF adapters <50 lines, cross-platform test validation |
 
 Both workstreams are additive and low-to-medium risk. Phase 3 coverage expansion can proceed independently of Phase 2 extraction. Together they bring the desktop platform to production-grade testability and cross-platform readiness.
