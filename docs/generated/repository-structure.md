@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 11:32:38 UTC
+> Auto-generated on 2026-02-20 11:49:23 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1186,8 +1186,10 @@ Market-Data-Collector/
 │   │   │   ├── BoundedObservableCollectionTests.cs
 │   │   │   └── CircularBufferTests.cs
 │   │   ├── Services/
+│   │   │   ├── ActivityFeedServiceTests.cs
 │   │   │   ├── AlertServiceTests.cs
 │   │   │   ├── ApiClientServiceTests.cs
+│   │   │   ├── BackfillApiServiceTests.cs
 │   │   │   ├── BackfillProviderConfigServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── ChartingServiceTests.cs
@@ -1195,8 +1197,10 @@ Market-Data-Collector/
 │   │   │   ├── ConnectionServiceBaseTests.cs
 │   │   │   ├── CredentialServiceTests.cs
 │   │   │   ├── DataCompletenessServiceTests.cs
+│   │   │   ├── DataSamplingServiceTests.cs
 │   │   │   ├── DiagnosticsServiceTests.cs
 │   │   │   ├── ErrorHandlingServiceTests.cs
+│   │   │   ├── EventReplayServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
 │   │   │   ├── LeanIntegrationServiceTests.cs
@@ -1204,6 +1208,8 @@ Market-Data-Collector/
 │   │   │   ├── NotificationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
+│   │   │   ├── ProviderHealthServiceTests.cs
+│   │   │   ├── ProviderManagementServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
 │   │   │   ├── StorageAnalyticsServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
@@ -1218,10 +1224,12 @@ Market-Data-Collector/
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceTests.cs
 │   │   │   ├── InfoBarServiceTests.cs
+│   │   │   ├── KeyboardShortcutServiceTests.cs
 │   │   │   ├── MessagingServiceTests.cs
 │   │   │   ├── NavigationServiceTests.cs
 │   │   │   ├── StatusServiceTests.cs
 │   │   │   ├── StorageServiceTests.cs
+│   │   │   ├── WorkspaceServiceTests.cs
 │   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
