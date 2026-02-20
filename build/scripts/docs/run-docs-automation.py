@@ -81,6 +81,26 @@ SCRIPT_CONFIG: Dict[str, Dict[str, Sequence[str] | str]] = {
         "args": ["--rules", "build/rules/doc-rules.yaml", "--output", "docs/status/rules-report.md"],
         "output": "docs/status/rules-report.md",
     },
+    "validate-api-docs": {
+        "script": "validate-api-docs.py",
+        "args": ["--output", "docs/status/api-docs-report.md"],
+        "output": "docs/status/api-docs-report.md",
+    },
+    "generate-dependency-graph": {
+        "script": "generate-dependency-graph.py",
+        "args": ["--output", "docs/generated/project-dependencies.md", "--format", "markdown"],
+        "output": "docs/generated/project-dependencies.md",
+    },
+    "sync-readme-badges": {
+        "script": "sync-readme-badges.py",
+        "args": ["--output", "docs/status/badge-sync-report.md"],
+        "output": "docs/status/badge-sync-report.md",
+    },
+    "generate-metrics-dashboard": {
+        "script": "generate-metrics-dashboard.py",
+        "args": ["--output", "docs/status/metrics-dashboard.md"],
+        "output": "docs/status/metrics-dashboard.md",
+    },
     "create-todo-issues": {
         "script": "create-todo-issues.py",
         "args": ["--scan-json", TODO_SCAN_JSON_PATH, "--output-json", TODO_ISSUE_SUMMARY_PATH],
@@ -106,6 +126,10 @@ PROFILE_CONFIG: Dict[str, List[str]] = {
         "generate-coverage",
         "generate-changelog",
         "rules-engine",
+        "validate-api-docs",
+        "generate-dependency-graph",
+        "sync-readme-badges",
+        "generate-metrics-dashboard",
     ],
 }
 
