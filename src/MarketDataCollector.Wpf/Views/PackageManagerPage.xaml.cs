@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Services;
+using NotificationService = MarketDataCollector.Wpf.Services.NotificationService;
 using PackageCreationOptions = MarketDataCollector.Ui.Services.PackageCreationOptions;
 using PackageImportOptions = MarketDataCollector.Ui.Services.PackageImportOptions;
 using PortablePackagerService = MarketDataCollector.Ui.Services.PortablePackagerService;
