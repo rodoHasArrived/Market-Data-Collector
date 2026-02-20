@@ -1,172 +1,215 @@
 # Desktop Platform Development Improvements - Executive Summary
 
-**Date**: 2026-02-13  
-**Status**: Phase 1 Complete, Active Development  
-**Author**: GitHub Copilot Analysis
+**Date**: 2026-02-20
+**Status**: Phase 1 Complete, Phase 2 Partially Complete, Active Development
+**Author**: GitHub Copilot Analysis (updated 2026-02-20)
 
 ## Overview
 
-This document summarizes the analysis and initial implementation of high-value improvements for Market Data Collector desktop platform development. WPF is the sole desktop client (UWP has been fully removed).
+This document summarizes the analysis and implementation progress of high-value improvements for Market Data Collector desktop platform development. WPF is the sole desktop client (UWP has been fully removed).
 
 ## Current State Assessment
 
-### ✅ What's Already Great
+### What's Working Well
 
-The repository already has excellent developer experience infrastructure in place:
+The repository has strong developer experience infrastructure in place:
 
 1. **Build Infrastructure** (`make build-wpf`, `make desktop-dev-bootstrap`)
 2. **Developer Tooling** (`scripts/dev/desktop-dev.ps1`)
 3. **Documentation** (`docs/development/desktop-dev-workflow.md`, `wpf-implementation-notes.md`)
 4. **Policies** (`docs/development/policies/desktop-support-policy.md`)
 5. **PR Templates** (`.github/pull_request_template_desktop.md`)
+6. **Test Infrastructure** - 272 tests across two test projects
+7. **DI Modernization** - Microsoft.Extensions.DependencyInjection with 73 service registrations
+8. **Architecture Documentation** - Comprehensive `desktop-layers.md` with layer diagrams and dependency rules
 
-These align with Priority 1 items from the original `desktop-devex-high-value-improvements.md`.
+These align with Priority 1-4 items from the original `desktop-devex-high-value-improvements.md`.
 
-### ❌ Critical Gaps Identified
-
-Despite strong infrastructure, several high-impact gaps remain:
+### Remaining Gaps
 
 | Gap | Impact | Effort | Priority |
 |-----|--------|--------|----------|
-| **No unit tests** for 30+ desktop services | High regression risk, slow development | Medium | P0 |
-| ~~100% service duplication between WPF/UWP~~ | ~~2x maintenance burden~~ | ~~High~~ | ~~Resolved (UWP removed)~~ |
-| **No UI fixture mode** | Requires backend for UI dev, blocks offline work | Low | P1 |
-| **No architecture diagram** | Easy to introduce unwanted coupling | Low | P2 |
-| **Manual singleton pattern** in WPF | Hard to test, tight coupling | Medium | P2 |
-| **No test examples** | Developers don't know how to test services | Low | P0 |
+| **~80% of desktop services lack tests** (18 of 90 covered) | Regression risk for untested services | Medium | P0 |
+| **Fixture mode not wired into startup** | `FixtureDataService` exists but `--fixture` / `MDC_FIXTURE_MODE` not parsed in `App.xaml.cs` | Low | P1 |
+| **No service extraction to shared layer** (Phase 2-4) | WPF services contain mixed platform + business logic | High | P2 |
+| ~~No unit tests for desktop services~~ | ~~High regression risk~~ | | ~~Resolved (272 tests)~~ |
+| ~~100% service duplication between WPF/UWP~~ | ~~2x maintenance burden~~ | | ~~Resolved (UWP removed)~~ |
+| ~~No architecture diagram~~ | ~~Easy to introduce coupling~~ | | ~~Resolved (desktop-layers.md)~~ |
+| ~~Manual singleton pattern in WPF~~ | ~~Hard to test, tight coupling~~ | | ~~Resolved (DI modernization)~~ |
+| ~~No test examples~~ | ~~Developers don't know how to test~~ | | ~~Resolved (18 test files)~~ |
 
-## What We Delivered (Phase 1)
+## What We Delivered
 
-### 1. Test Infrastructure ✅
+### Phase 1: Test Infrastructure (Complete)
 
 Created test projects with comprehensive coverage:
-- **MarketDataCollector.Ui.Tests**: 71 tests covering shared services
-- **MarketDataCollector.Wpf.Tests**: 58 tests covering WPF-specific services
-- **Total**: 129 tests with platform detection and CI integration
+- **MarketDataCollector.Ui.Tests**: 171 tests across 15 test files
+- **MarketDataCollector.Wpf.Tests**: 101 tests across 5 test files
+- **Total**: 272 tests with platform detection and CI integration
 - **Platform detection** (Windows-only, graceful skip on Linux/macOS)
 - **Test patterns** demonstrating best practices
 - **Makefile integration** (`make test-desktop-services`)
 
-**Files Created:**
-- `tests/MarketDataCollector.Ui.Tests/` project (71 tests, multiple test files)
-- `tests/MarketDataCollector.Wpf.Tests/` project (58 tests, service tests)
-- Collection tests: `BoundedObservableCollection` (8), `CircularBuffer` (11)
-- Service tests: FormValidation (4), ApiClient (7), Backfill (9), Watchlist (9), SystemHealth (10), Fixtures (13)
-- WPF service tests: Navigation (14), Config (13), Status (13), Connection (18)
+**Ui.Tests Breakdown (171 tests):**
 
-### 2. Comprehensive Implementation Guide ✅
+| Test File | Count |
+|-----------|-------|
+| BoundedObservableCollectionTests | 8 |
+| CircularBufferTests | 11 |
+| ApiClientServiceTests | 14 |
+| BackfillProviderConfigServiceTests | 20 |
+| BackfillServiceTests | 18 |
+| ChartingServiceTests | 16 |
+| FixtureDataServiceTests | 13 |
+| FormValidationServiceTests | 4 |
+| LeanIntegrationServiceTests | 12 |
+| OrderBookVisualizationServiceTests | 4 |
+| PortfolioImportServiceTests | 4 |
+| SchemaServiceTests | 6 |
+| SystemHealthServiceTests | 21 |
+| TimeSeriesAlignmentServiceTests | 14 |
+| WatchlistServiceTests | 22 |
 
-Created `desktop-platform-improvements-implementation-guide.md` with:
-- **Detailed code examples** for each improvement
-- **Step-by-step implementation plans**
-- **Success metrics and timelines**
-- **Risk mitigation strategies**
+**Wpf.Tests Breakdown (101 tests):**
 
-**Covers:**
-- Priority 1: Desktop services unit test baseline (DONE)
-- Priority 2: UI fixture mode for offline development
-- Priority 3: Desktop architecture diagram
-- Priority 4: Dependency injection modernization
-- Priority 5: Code duplication elimination roadmap
-- Priority 6: Enhanced developer documentation
+| Test File | Count |
+|-----------|-------|
+| ConfigServiceTests | 12 |
+| ConnectionServiceTests | 21 |
+| NavigationServiceTests | 12 |
+| StatusServiceTests | 12 |
+| WpfDataQualityServiceTests | 28 |
+
+### Phase 1: Architecture Documentation (Complete)
+
+- **`docs/architecture/desktop-layers.md`** - 400+ line document covering layer diagram, dependency rules, service classification, migration path, and compliance strategies.
+- **`desktop-platform-improvements-implementation-guide.md`** - Detailed code examples, step-by-step plans, success metrics, and risk mitigation.
+
+### Phase 1: DI Modernization (Complete)
+
+The WPF application (`App.xaml.cs`) uses modern Microsoft.Extensions.DependencyInjection:
+- **73 service registrations** organized by category
+- IHost-based container with proper lifetime management (Singleton/Transient)
+- Interface-based registration where applicable
+- Graceful shutdown coordination with 5-second timeout
+- Structured initialization order: first-run, config, theme, connection monitoring, offline tracking, background services
+
+### Phase 1: Fixture Mode Service (Partial)
+
+- `FixtureDataService.cs` exists with comprehensive mock data generation
+- `docs/development/ui-fixture-mode-guide.md` documents intended usage
+- **Gap**: `--fixture` flag and `MDC_FIXTURE_MODE` environment variable are not wired into `App.xaml.cs` startup logic
 
 ## Impact Analysis
 
-### Before This PR
+### Before These Improvements
 
 ```
-📊 Test Coverage
+Test Coverage
 - Desktop Services: 0%
 - No test examples for developers
 - Manual testing only
 
-🏗️ Architecture
+Architecture
 - No visual documentation
 - Implicit layer boundaries
 - Easy to introduce coupling
 
-🔧 Development Experience
+Development Experience
 - Must run backend for UI work
 - Cannot test services in isolation
-- UWP fully removed (WPF is sole desktop client)
+- DI via manual singleton pattern
 ```
 
-### After This PR (Phase 1)
+### Current State
 
 ```
-📊 Test Coverage
-- Desktop Services: ~15% (129 tests, strong baseline)
-- Ui.Services: 71 tests (collections, validation, services)
-- Wpf.Services: 58 tests (navigation, config, status, connection)
-- Clear test patterns for developers
-- CI-integrated testing
+Test Coverage
+- Desktop Services: ~20% (272 tests across 18 service test files)
+- Ui.Services: 171 tests (collections, validation, charting, backfill, etc.)
+- Wpf.Services: 101 tests (navigation, config, status, connection, data quality)
+- Clear test patterns for contributors
+- CI-integrated testing (make test-desktop-services)
 
-📖 Documentation
-- Comprehensive implementation guide
-- Expanded testing guide with fixture mode
-- Code examples for each improvement
-- Clear roadmap for next phases
-- Cross-referenced documentation
+Architecture
+- Comprehensive desktop-layers.md with diagrams
+- Dependency rules documented (allowed/forbidden)
+- Layer boundary enforcement guidelines
 
-🚀 Next Steps Defined
-- Priorities clearly ranked
-- Effort estimates provided
-- Success criteria established
+DI & Services
+- Modern Microsoft.Extensions.DependencyInjection (73 registrations)
+- Proper lifetime management
+- Graceful shutdown with cancellation
+- Interface-based registrations
+
+Documentation
+- Implementation guide with code examples
+- Testing guide with fixture mode
+- Desktop development workflow
+- Support policy for contributions
 ```
 
-## Recommended Immediate Actions
+## Service Inventory
 
-### Week 1-2: Expand Test Coverage
+### Ui.Services (`src/MarketDataCollector.Ui.Services/Services/`)
 
-**Goal**: Reach 30% coverage with 150+ tests
+59 main service files providing shared desktop logic. 13 have dedicated test files (22% coverage).
 
-Add tests for additional critical services (examples provided in implementation guide):
-- [ ] OrderBookVisualizationService
-- [ ] PortfolioImportService  
-- [ ] SchemaService
-- [ ] Additional WPF platform services
+**Tested services**: ApiClient, BackfillProviderConfig, Backfill, Charting, FixtureData, FormValidation, LeanIntegration, OrderBookVisualization, PortfolioImport, Schema, SystemHealth, TimeSeriesAlignment, Watchlist
 
-**Time**: ~16 hours  
-**Impact**: High (catches regressions early)
-**Current**: 129 tests completed, targeting 150+
+**Notable untested services**: ActivityFeed, AdminMaintenance, AdvancedAnalytics, Alert, AnalysisExportWizard, ArchiveBrowser, ArchiveHealth, BackfillApi, BackfillCheckpoint, BatchExportScheduler, CollectionSession, CommandPalette, Config, Connection, Credential, DataCalendar, DataCompleteness, DataSampling, Diagnostics, ErrorHandling, EventReplay, ExportPreset, IntegrityEvents, LiveData, Manifest, Notification, OAuthRefresh, OnboardingTour, ProviderHealth, ProviderManagement, ScheduleManager, ScheduledMaintenance, SetupWizard, SmartRecommendations, StorageAnalytics, StorageOptimizationAdvisor, SymbolGroup, SymbolManagement, SymbolMapping
 
-### Week 3: Add UI Fixture Mode
+### Wpf Services (`src/MarketDataCollector.Wpf/Services/`)
 
-**Goal**: Enable offline UI development
+31 service files providing WPF-specific logic. 5 have dedicated test files (16% coverage).
 
-**Implementation** (detailed in guide):
-1. Create `FixtureDataService` with canned responses
-2. Update services to support `UseFixtureMode` flag
-3. Add `--fixture` command-line arg to WPF/UWP
-4. Document usage in quick start guide
+**Tested services**: Config, Connection, Navigation, Status, WpfDataQuality
 
-**Time**: ~8 hours  
+**Notable untested services**: AdminMaintenance, ArchiveHealth, BackendServiceManager, BackgroundTaskScheduler, BrushRegistry, ContextMenu, Credential, ExportPreset, FirstRun, FormValidation, InfoBar, KeyboardShortcut, Logging, Messaging, Notification, OfflineTrackingPersistence, PendingOperationsQueue, RetentionAssurance, Schema, Storage, Tooltip, WatchlistService, Workspace, WpfAnalysisExport
+
+## Recommended Next Steps
+
+### Priority 1: Wire Fixture Mode into Startup
+
+**Goal**: Enable offline UI development via `--fixture` flag or `MDC_FIXTURE_MODE` environment variable.
+
+The `FixtureDataService` already exists. Wire it into `App.xaml.cs`:
+1. Parse `--fixture` command-line arg or `MDC_FIXTURE_MODE` env var at startup
+2. When active, register fixture-backed service implementations in the DI container
+3. Update `docs/development/ui-fixture-mode-guide.md` with verified activation instructions
+
 **Impact**: High (unblocks UI development without backend)
 
-### Week 4: Create Architecture Diagram
+### Priority 2: Expand Test Coverage
 
-**Goal**: Visualize layer boundaries
+**Goal**: Reach 40% desktop service coverage (~36 of 90 services tested)
 
-**Deliverables:**
-- C4 diagram showing: Platform UI → Platform Services → Shared Services → Contracts
-- Dependency rules documentation (allowed/forbidden)
-- Integration into onboarding docs
+High-value targets for new tests:
+- [ ] ConfigService (Ui.Services) - configuration management
+- [ ] ConnectionServiceBase - connection state logic
+- [ ] CredentialService - credential handling
+- [ ] NotificationService - user notifications
+- [ ] ErrorHandlingService - error processing
+- [ ] AlertService - alert triggering
+- [ ] DiagnosticsService - system diagnostics
+- [ ] DataCompletenessService - data gap detection
+- [ ] StorageAnalyticsService - storage metrics
+- [ ] LiveDataService - real-time data handling
+- [ ] AdminMaintenanceService (Wpf) - maintenance operations
+- [ ] BackgroundTaskSchedulerService (Wpf) - task scheduling
+- [ ] MessagingService (Wpf) - inter-component messaging
+- [ ] StorageService (Wpf) - storage operations
 
-**Time**: ~4 hours  
-**Impact**: Medium (prevents architectural violations)
+**Impact**: High (catches regressions early, serves as documentation)
 
-## Long-Term Roadmap (Months 2-3)
+### Priority 3: Service Extraction to Shared Layer
 
-### Phase 2: Service Extraction to Shared Layer
+**Goal**: Extract reusable logic from WPF services into `Ui.Services` base classes
 
-**Goal**: Extract reusable logic from WPF services into `Ui.Services`
-
-With UWP removed, the focus shifts from deduplication to clean separation of shared vs. platform-specific logic.
-
-**Strategy**:
+Several WPF services contain business logic that could be shared:
 1. Identify WPF services with logic that isn't platform-specific
 2. Extract shared base classes into `Ui.Services`
-3. Keep WPF-specific adapters thin
+3. Keep WPF-specific adapters thin (30-50 lines)
 
 **Before:**
 ```csharp
@@ -181,110 +224,109 @@ With UWP removed, the focus shifts from deduplication to clean separation of sha
 
 **Impact**: Improves testability and enables logic reuse across desktop and web
 
-### Phase 3: DI Modernization
+## Long-Term Roadmap
 
-**Goal**: Standardize on Microsoft.Extensions.DependencyInjection
+### Phase 2: Service Extraction (Not Started)
 
-**Benefits:**
-- Testable services (easy mocking)
-- Automatic lifetime management
-- Consistent patterns across the codebase
-- Reduces boilerplate singleton code
+Extract shared logic from WPF services into `Ui.Services` base classes. Several base classes already exist (`ConnectionServiceBase`, `NavigationServiceBase`, `SchemaServiceBase`, `ThemeServiceBase`, `StorageServiceBase`, `AdminMaintenanceServiceBase`, `AdvancedAnalyticsServiceBase`, `ExportPresetServiceBase`) — extend this pattern to remaining services.
 
-**Time**: ~40 hours  
-**Impact**: Medium (improves testability and consistency)
+### Phase 3: Full Test Coverage (Ongoing)
+
+Target 60%+ desktop service test coverage. Prioritize services with complex business logic, error handling, and state management.
 
 ## Success Metrics
 
 Track these KPIs to measure improvement:
 
-### Developer Velocity
-- [ ] Time to first successful desktop build: **Target < 20 minutes**
-- [ ] Time to add a new service: **Target < 30 minutes** (with tests)
-- [ ] Time to fix a service bug: **Target < 1 hour** (with test coverage)
-
 ### Code Quality
-- [ ] Desktop service test coverage: **Target 60%+**
+- [x] Desktop service test infrastructure: **Done** (272 tests)
+- [ ] Desktop service test coverage: **Current 20%, Target 60%+**
 - [ ] Regression bugs caught pre-merge: **Target 80%+**
 - [x] UWP code duplication: **Resolved** (UWP removed)
 
+### Architecture
+- [x] DI modernization: **Done** (73 service registrations)
+- [x] Architecture documentation: **Done** (desktop-layers.md)
+- [ ] Fixture mode activation: **Service exists, startup wiring pending**
+
 ### CI/CD
+- [x] Desktop test execution in CI: **Done** (make test-desktop-services)
 - [ ] Desktop test execution time: **Target <2 minutes**
-- [ ] PR feedback latency: **Target <5 minutes**
 
 ### Documentation
-- [ ] Onboarding time for new contributor: **Target <4 hours**
-- [ ] "Cannot reproduce" issues: **Target <10%** (with fixture mode)
+- [x] Desktop testing guide: **Done**
+- [x] Desktop development workflow: **Done**
+- [x] Desktop support policy: **Done**
 
 ## Risk Assessment
 
-### Low Risk ✅
-- Test infrastructure (already completed)
-- Fixture mode (isolated change)
-- Architecture diagram (documentation only)
+### Low Risk
+- Expanding test coverage (additive, no behavioral changes)
+- Fixture mode wiring (isolated startup change)
+- Documentation updates
 
-### Medium Risk ⚠️
-- Service consolidation (requires careful migration)
-- DI modernization (touches many files)
+### Medium Risk
+- Service extraction to shared layer (requires careful migration)
+- Changing service registrations (may affect startup order)
 
 ### Mitigation Strategies
 1. **Incremental changes**: One service at a time
 2. **Test coverage first**: Ensure tests pass before refactoring
-3. **Feature flags**: Use for gradual rollout
-4. **Rollback plan**: Keep old implementations until new ones proven
+3. **Rollback plan**: Keep old implementations until new ones proven
 
 ## Cost-Benefit Analysis
 
-### Investment Required
-- Phase 1 (Complete): ~24 hours ✅
-- Phase 2 (Weeks 1-4): ~30 hours
-- Phase 3 (Months 2-3): ~120 hours
-- **Total**: ~174 hours
+### Investment Completed
+- Phase 1 (Test infrastructure, DI, architecture docs): Complete
+
+### Investment Remaining
+- Fixture mode wiring: ~4 hours
+- Expanded test coverage (to 40%): ~32 hours
+- Service extraction (Phase 2): ~60 hours
+- Full test coverage (Phase 3): ~80 hours
 
 ### Expected Returns
-- **Development velocity**: +30% (faster testing, no duplicate changes)
+- **Development velocity**: +30% (faster testing, offline development)
 - **Bug reduction**: -50% (test coverage catches issues early)
 - **Onboarding time**: -60% (clear patterns, good docs)
-- **Maintenance burden**: -50% (half the duplicated code)
-
-**ROI**: 3-4x within 6 months for a team of 3+ desktop developers
 
 ## Conclusion
 
-This analysis identified **6 high-value improvements** for desktop platform development. Phase 1 delivered the foundation:
+Significant progress has been made on desktop platform improvements:
 
-1. ✅ **Test infrastructure** with 29 initial tests
-2. ✅ **Implementation guide** with detailed roadmap
-3. ✅ **CI integration** for automated testing
+1. **Test infrastructure** - 272 tests across 2 projects (up from 0)
+2. **DI modernization** - Modern container with 73 registrations
+3. **Architecture documentation** - Comprehensive layer design document
+4. **Fixture mode service** - Mock data service implemented
+5. **CI integration** - Automated testing via Makefile
 
-The remaining improvements are well-documented with code examples, timelines, and success criteria. The next recommended action is to expand test coverage to 50+ tests (Weeks 1-2), followed by adding UI fixture mode (Week 3).
-
-**The path forward is clear, actionable, and backed by concrete examples.**
+The primary remaining gap is **test coverage breadth** — only 20% of desktop services have dedicated tests. The next recommended actions are wiring fixture mode into startup and expanding test coverage to the 36 highest-value untested services.
 
 ---
 
 ## References
 
 - **Full Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)
-- **Desktop Testing Guide**: [desktop-testing-guide.md](./desktop-testing-guide.md) - Comprehensive testing procedures
-- **Original Plan**: [desktop-devex-high-value-improvements.md](./desktop-devex-high-value-improvements.md) - Historical reference
+- **Desktop Testing Guide**: [desktop-testing-guide.md](./desktop-testing-guide.md)
+- **Architecture Layers**: [desktop-layers.md](../architecture/desktop-layers.md)
+- **Original Plan**: [desktop-devex-high-value-improvements.md](./desktop-devex-high-value-improvements.md)
 - **WPF Notes**: [wpf-implementation-notes.md](./wpf-implementation-notes.md)
-- **UI Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md) - Offline development
+- **UI Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
 - **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
-- **Test Projects**: 
-  - `tests/MarketDataCollector.Ui.Tests/` (71 tests)
-  - `tests/MarketDataCollector.Wpf.Tests/` (58 tests)
+- **Test Projects**:
+  - `tests/MarketDataCollector.Ui.Tests/` (171 tests)
+  - `tests/MarketDataCollector.Wpf.Tests/` (101 tests)
 
 ## Related Documentation
 
 - **Development Guides:**
-  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick commands
-  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure
-  - [Provider Implementation Guide](./provider-implementation.md) - Adding providers
-  
+  - [Desktop Development Workflow](./desktop-dev-workflow.md)
+  - [Repository Organization Guide](./repository-organization-guide.md)
+  - [Provider Implementation Guide](./provider-implementation.md)
+
 - **Status and Planning:**
-  - [Project Roadmap](../status/ROADMAP.md) - Overall project timeline
-  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Technical debt reduction
+  - [Project Roadmap](../status/ROADMAP.md)
+  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md)
 
 ## Questions?
 
