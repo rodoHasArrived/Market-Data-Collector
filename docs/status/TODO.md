@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-19T22:38:27.384253+00:00
+> Last updated: 2026-02-20T00:24:59.373735+00:00
 
 ## Summary
 
@@ -47,7 +47,7 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Ui.Services/Services/DataCompletenessService.cs:631`
   > SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
 
-- [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:519`
+- [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:530`
   > ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison ProviderHealthComparison below is for overall provider ranking
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:154`
