@@ -12,20 +12,10 @@ namespace MarketDataCollector.Infrastructure.Shared;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This helper consolidates the three divergent reconnection algorithms:
-/// - <c>WebSocketProviderBase</c>: Polly pipeline with circuit breaker
+/// This helper consolidates the divergent reconnection algorithms used by:
 /// - <c>PolygonMarketDataClient</c>: Manual exponential + jitter
 /// - <c>NYSEDataSource</c>: Linear multiply backoff
 /// - <c>StockSharpMarketDataClient</c>: Exponential + jitter with connector recreation
-/// </para>
-/// <para>
-/// <b>Migration path for full WebSocketProviderBase adoption (ADR-005):</b>
-/// 1. NYSE (simplest): Create inner <c>NYSEStreamingClient : WebSocketProviderBase</c>,
-///    delegate streaming operations from <c>NYSEDataSource</c>.
-/// 2. Polygon: Convert <c>PolygonMarketDataClient</c> to extend <c>WebSocketProviderBase</c>,
-///    override <c>ConnectionUri</c>, <c>AuthenticateAsync</c>, <c>HandleMessageAsync</c>.
-/// 3. StockSharp: Convert after removing <c>#if STOCKSHARP</c> guard, use connector
-///    as internal detail within <c>HandleMessageAsync</c>.
 /// </para>
 /// </remarks>
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]

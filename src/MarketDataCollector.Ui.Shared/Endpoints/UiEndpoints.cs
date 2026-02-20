@@ -194,8 +194,6 @@ public static class UiEndpoints
         // Historical data query endpoints (Phase 9A.1)
         app.MapHistoricalEndpoints(jsonOptions);
 
-        app.MapStubEndpoints();
-
         // Map quality drops endpoints (C3/#16)
         var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();
         app.MapQualityDropsEndpoints(auditTrail, jsonOptions);
@@ -265,8 +263,6 @@ public static class UiEndpoints
         
         // Historical data query endpoints (Phase 9A.1)
         app.MapHistoricalEndpoints(jsonOptions);
-
-        app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16 - DroppedEventAuditTrail exposure)
         var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();

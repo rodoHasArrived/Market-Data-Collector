@@ -23,11 +23,8 @@ public static class UiApiRoutes
     public const string ConfigAlpaca = "/api/config/alpaca";
     public const string ConfigStorage = "/api/config/storage";
     public const string ConfigSymbols = "/api/config/symbols";
-    public const string ConfigSymbolsById = "/api/config/symbols/{symbol}";
     public const string ConfigDataSources = "/api/config/datasources";
     public const string ConfigDataSourcesDefaults = "/api/config/datasources/defaults";
-    public const string ConfigDataSourcesById = "/api/config/datasources/{id}";
-    public const string ConfigDataSourcesToggle = "/api/config/datasources/{id}/toggle";
     public const string ConfigDataSourcesFailover = "/api/config/datasources/failover";
     public const string ConfigDerivatives = "/api/config/derivatives";
 
@@ -50,14 +47,11 @@ public static class UiApiRoutes
     public const string BackfillSchedulesHistory = "/api/backfill/schedules/{id}/history";
     public const string BackfillSchedulesTemplates = "/api/backfill/schedules/templates";
 
-    // Backfill provider configuration endpoints
-    public const string BackfillProviderConfig = "/api/backfill/providers/config";
-    public const string BackfillProviderConfigById = "/api/backfill/providers/{providerId}/config";
+    // Backfill provider metadata and status endpoints
     public const string BackfillProviderMetadata = "/api/backfill/providers/metadata";
     public const string BackfillProviderStatuses = "/api/backfill/providers/statuses";
     public const string BackfillFallbackChain = "/api/backfill/providers/fallback-chain";
     public const string BackfillDryRunPlan = "/api/backfill/providers/dry-run-plan";
-    public const string BackfillProviderConfigReset = "/api/backfill/providers/{providerId}/reset";
     public const string BackfillProviderConfigAudit = "/api/backfill/providers/audit";
 
     // Provider endpoints
