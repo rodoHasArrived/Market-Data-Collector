@@ -1,4 +1,3 @@
-using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
@@ -328,7 +327,7 @@ public sealed class BackfillCoordinator : IDisposable
     private HistoricalBackfillService CreateService()
     {
         var providers = GetProviders();
-        return new HistoricalBackfillService(providers, _log);
+        return new MarketDataCollector.Application.Backfill.HistoricalBackfillService(providers, _log);
     }
 
     /// <summary>
