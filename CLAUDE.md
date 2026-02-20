@@ -322,7 +322,6 @@ Market-Data-Collector/
 │       │   ├── update-claude-md.py
 │       │   ├── validate-api-docs.py
 │       │   └── validate-examples.py
-│       ├── ai-repo-updater.py
 │       ├── hooks/
 │       │   ├── install-hooks.sh
 │       │   └── pre-commit
@@ -331,11 +330,12 @@ Market-Data-Collector/
 │       │   └── install.sh
 │       ├── lib/
 │       │   └── BuildNotification.psm1
-│       └── run/
-│           ├── start-collector.ps1
-│           ├── start-collector.sh
-│           ├── stop-collector.ps1
-│           └── stop-collector.sh
+│       ├── run/
+│       │   ├── start-collector.ps1
+│       │   ├── start-collector.sh
+│       │   ├── stop-collector.ps1
+│       │   └── stop-collector.sh
+│       └── ai-repo-updater.py
 ├── config/  # Configuration files
 │   ├── appsettings.json
 │   └── appsettings.sample.json

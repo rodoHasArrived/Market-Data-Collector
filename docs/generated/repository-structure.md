@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 04:41:36 UTC
+> Auto-generated on 2026-02-20 04:50:30 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -153,11 +153,12 @@ Market-Data-Collector/
 │       │   └── install.sh
 │       ├── lib/
 │       │   └── BuildNotification.psm1
-│       └── run/
-│           ├── start-collector.ps1
-│           ├── start-collector.sh
-│           ├── stop-collector.ps1
-│           └── stop-collector.sh
+│       ├── run/
+│       │   ├── start-collector.ps1
+│       │   ├── start-collector.sh
+│       │   ├── stop-collector.ps1
+│       │   └── stop-collector.sh
+│       └── ai-repo-updater.py
 ├── config/  # Configuration files
 │   ├── appsettings.json
 │   └── appsettings.sample.json
@@ -197,6 +198,7 @@ Market-Data-Collector/
 │   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
 │   │   │   ├── CLAUDE.providers.md
+│   │   │   ├── CLAUDE.repo-updater.md
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
