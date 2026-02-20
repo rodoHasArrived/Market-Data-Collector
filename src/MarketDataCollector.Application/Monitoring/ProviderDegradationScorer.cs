@@ -27,7 +27,9 @@ public sealed class ProviderDegradationScorer : IDisposable
     /// <summary>
     /// Raised when a provider recovers from a degraded state.
     /// </summary>
+#pragma warning disable CS0067 // Event will be raised when recovery detection is implemented
     public event Action<ProviderRecoveredEvent>? OnProviderRecovered;
+#pragma warning restore CS0067
 
     public ProviderDegradationScorer(
         ConnectionHealthMonitor healthMonitor,
@@ -77,7 +79,7 @@ public sealed class ProviderDegradationScorer : IDisposable
     /// </summary>
     public ProviderDegradationScore GetScore(string providerName)
     {
-        var connectionStatus = _healthMonitor.GetConnectionStatus(providerName);
+        var connectionStatus = _healthMonitor.GetConnectionStatusByProvider(providerName);
         var latencyHistogram = _latencyService.GetHistogram(providerName);
         _errorTrackers.TryGetValue(providerName, out var errorTracker);
 

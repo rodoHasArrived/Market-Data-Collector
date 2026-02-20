@@ -85,6 +85,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// <param name="wal">Optional Write-Ahead Log for crash-safe durability. When provided, events
     /// are written to the WAL before the primary sink. Call <see cref="RecoverAsync"/> on startup
     /// to replay any uncommitted records from a prior crash.</param>
+    /// <param name="metrics">Optional event metrics for tracking pipeline throughput.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,

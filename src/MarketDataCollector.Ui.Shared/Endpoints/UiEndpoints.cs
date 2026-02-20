@@ -190,7 +190,7 @@ public static class UiEndpoints
         app.MapMessagingEndpoints(jsonOptions);
         app.MapProviderExtendedEndpoints(jsonOptions);
         app.MapIndexEndpoints(jsonOptions);
-        
+
         // Historical data query endpoints (Phase 9A.1)
         app.MapHistoricalEndpoints(jsonOptions);
 
@@ -260,7 +260,7 @@ public static class UiEndpoints
         app.MapMessagingEndpoints(jsonOptions);
         app.MapProviderExtendedEndpoints(jsonOptions);
         app.MapIndexEndpoints(jsonOptions);
-        
+
         // Historical data query endpoints (Phase 9A.1)
         app.MapHistoricalEndpoints(jsonOptions);
 

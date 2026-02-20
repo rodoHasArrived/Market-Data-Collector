@@ -313,10 +313,10 @@ public class ConfigurationServiceTests : IAsyncDisposable
         // Assert - Either switched to alternative OR warning generated
         // In CI, no IB gateway is available. If alternative credentials exist,
         // it will switch (appliedFixes). If not, it will warn.
-        var hasFixOrWarning = 
+        var hasFixOrWarning =
             appliedFixes.Any(f => f.Contains("IB") || f.Contains("alternative")) ||
             warnings.Any(w => w.Contains("IB Gateway") || w.Contains("alternative"));
-        
+
         hasFixOrWarning.Should().BeTrue(
             "Should either apply fix to switch providers OR generate warning about IB Gateway");
     }

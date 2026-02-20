@@ -282,7 +282,8 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
             "/api/config/datasource", "/api/config/alpaca",
             "/api/config/datasources", "/api/config/datasources/{id}",
             "/api/config/datasources/{id}/toggle", "/api/config/datasources/defaults",
-            "/api/config/datasources/failover"
+            "/api/config/datasources/failover",
+            "/api/config/symbols/{symbol}" // DELETE endpoint mapped via route concatenation
         };
 
         var staleRoutes = MappedEndpointRoutes

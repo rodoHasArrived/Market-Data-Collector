@@ -195,7 +195,7 @@ public sealed class TechnicalIndicatorService : IDisposable
                     results.Add(new IndicatorDataPoint(
                         quotes[i].Date,
                         $"ATR_{_config.AtrPeriod}",
-                        (decimal)atr[i].Atr.Value));
+                        (decimal)atr[i].Atr.GetValueOrDefault()));
                 }
             }
         }
@@ -208,9 +208,9 @@ public sealed class TechnicalIndicatorService : IDisposable
             {
                 if (stoch[i].K.HasValue)
                 {
-                    results.Add(new IndicatorDataPoint(quotes[i].Date, "Stoch_K", (decimal)stoch[i].K.Value));
+                    results.Add(new IndicatorDataPoint(quotes[i].Date, "Stoch_K", (decimal)stoch[i].K.GetValueOrDefault()));
                     if (stoch[i].D.HasValue)
-                        results.Add(new IndicatorDataPoint(quotes[i].Date, "Stoch_D", (decimal)stoch[i].D.Value));
+                        results.Add(new IndicatorDataPoint(quotes[i].Date, "Stoch_D", (decimal)stoch[i].D.GetValueOrDefault()));
                 }
             }
         }
@@ -226,7 +226,7 @@ public sealed class TechnicalIndicatorService : IDisposable
                     results.Add(new IndicatorDataPoint(
                         quotes[i].Date,
                         "VWAP",
-                        (decimal)vwap[i].Vwap.Value));
+                        (decimal)vwap[i].Vwap.GetValueOrDefault()));
                 }
             }
         }
@@ -239,11 +239,11 @@ public sealed class TechnicalIndicatorService : IDisposable
             {
                 if (adx[i].Adx.HasValue)
                 {
-                    results.Add(new IndicatorDataPoint(quotes[i].Date, $"ADX_{_config.AdxPeriod}", (decimal)adx[i].Adx.Value));
+                    results.Add(new IndicatorDataPoint(quotes[i].Date, $"ADX_{_config.AdxPeriod}", (decimal)adx[i].Adx.GetValueOrDefault()));
                     if (adx[i].Pdi.HasValue)
-                        results.Add(new IndicatorDataPoint(quotes[i].Date, "DI_Plus", (decimal)adx[i].Pdi.Value));
+                        results.Add(new IndicatorDataPoint(quotes[i].Date, "DI_Plus", (decimal)adx[i].Pdi.GetValueOrDefault()));
                     if (adx[i].Mdi.HasValue)
-                        results.Add(new IndicatorDataPoint(quotes[i].Date, "DI_Minus", (decimal)adx[i].Mdi.Value));
+                        results.Add(new IndicatorDataPoint(quotes[i].Date, "DI_Minus", (decimal)adx[i].Mdi.GetValueOrDefault()));
                 }
             }
         }

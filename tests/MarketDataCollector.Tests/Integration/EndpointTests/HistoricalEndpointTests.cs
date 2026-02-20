@@ -44,12 +44,12 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
     public async Task QueryHistoricalData_WithSymbol_ReturnsValidJson()
     {
         var response = await _client.GetAsync("/api/historical?symbol=SPY");
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Should have standard response structure
         doc.RootElement.TryGetProperty("success", out _).Should().BeTrue();
         doc.RootElement.TryGetProperty("symbol", out _).Should().BeTrue();
@@ -66,7 +66,7 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Verify date range is reflected in response
         doc.RootElement.TryGetProperty("from", out _).Should().BeTrue();
         doc.RootElement.TryGetProperty("to", out _).Should().BeTrue();
@@ -88,7 +88,7 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         doc.RootElement.TryGetProperty("dataType", out _).Should().BeTrue();
     }
 
@@ -109,12 +109,12 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
     public async Task GetAvailableSymbols_ReturnsValidJson()
     {
         var response = await _client.GetAsync("/api/historical/symbols");
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Should return object with symbols array and count
         doc.RootElement.TryGetProperty("symbols", out var symbols).Should().BeTrue();
         symbols.ValueKind.Should().Be(JsonValueKind.Array);
@@ -148,12 +148,12 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
     public async Task GetSymbolDateRange_WithSymbol_ReturnsValidJson()
     {
         var response = await _client.GetAsync("/api/historical/SPY/daterange");
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Should have date range structure
         doc.RootElement.TryGetProperty("symbol", out _).Should().BeTrue();
         doc.RootElement.TryGetProperty("hasData", out _).Should().BeTrue();
@@ -164,12 +164,12 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
     public async Task GetSymbolDateRange_WithInvalidSymbol_ReturnsOkWithHasDataFalse()
     {
         var response = await _client.GetAsync("/api/historical/NONEXISTENT/daterange");
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Should indicate no data available
         doc.RootElement.TryGetProperty("hasData", out var hasData).Should().BeTrue();
         hasData.GetBoolean().Should().BeFalse();
@@ -215,10 +215,10 @@ public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
         var response = await _client.GetAsync("/api/historical?symbol=SPY&skip=10&limit=20");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
-        
+
         // Verify pagination-related fields are present
         doc.RootElement.TryGetProperty("totalRecords", out _).Should().BeTrue();
     }
