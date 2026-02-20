@@ -1,8 +1,8 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-02-06
+**Last Updated:** 2026-02-20
 **Version:** 1.6.1
-**Status:** Production Ready
+**Status:** Development / Pilot Ready
 
 This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
 
@@ -16,19 +16,22 @@ The Market Data Collector is a feature-rich system with a working CLI, backfill 
 
 | Category | Status | Notes |
 |----------|--------|-------|
-| Core Event Pipeline | ✅ Implemented | Channel-based processing with backpressure |
-| Storage Layer | ✅ Implemented | JSONL/Parquet outputs with WAL support |
+| Core Event Pipeline | ✅ Implemented | Channel-based processing with backpressure, injectable metrics |
+| Storage Layer | ✅ Implemented | JSONL/Parquet composite sink with WAL support |
 | Backfill Providers | ✅ Implemented | Multiple providers; credentials required for some |
 | Alpaca Provider (Streaming) | ✅ Implemented | Requires Alpaca credentials |
 | NYSE Provider | ⚠️ Needs credentials | NYSE Connect credentials required |
 | Interactive Brokers | ⚠️ Requires build flag | Compile with `IBAPI` and reference IBApi |
 | Polygon Provider | ⚠️ Partial | Stub mode unless configured; WebSocket parsing in progress |
 | StockSharp Provider | ⚠️ Integration scaffold | Requires StockSharp setup |
-| Monitoring | ✅ Implemented | HTTP server + Prometheus metrics |
+| Monitoring | ✅ Implemented | HTTP server + Prometheus metrics + OpenTelemetry |
+| Data Quality | ✅ Implemented | Completeness, gap analysis, anomaly detection, SLA monitoring |
 | WPF Desktop App | ⚠️ Partial UX parity | Windows desktop UI (sole desktop client); several navigable pages still show placeholder "Coming Soon" content |
 | QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
 | Symbol Search Providers | ✅ Implemented | 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp) |
+| API Surface | ✅ Implemented | ~136 endpoints with typed OpenAPI annotations |
 | Architecture | ✅ Monolithic | Single-process runtime |
+| Improvement Tracking | 🔄 In progress | 27/35 items completed (77.1%), see [IMPROVEMENTS.md](IMPROVEMENTS.md) |
 
 ---
 
@@ -253,7 +256,16 @@ When `IBAPI` is NOT defined:
 
 ## Testing Notes
 
-The project has 85 test files (80 C#, 5 F#) across `tests/MarketDataCollector.Tests/` and `tests/MarketDataCollector.FSharp.Tests/`. Coverage spans backfill, storage, pipeline, monitoring, providers, credentials, serialization, integration, and domain model tests. Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
+The project has 164 test files (160 C#, 4 F#) across 4 test projects:
+
+| Test Project | Focus | Tests |
+|--------------|-------|-------|
+| `MarketDataCollector.Tests` | Core unit/integration tests (backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain) | ~130+ test classes |
+| `MarketDataCollector.FSharp.Tests` | F# domain validation, calculations, pipeline transforms | 4 test files |
+| `MarketDataCollector.Wpf.Tests` | WPF desktop service tests (navigation, config, status, connection) | 58 tests |
+| `MarketDataCollector.Ui.Tests` | Desktop UI service tests (API client, backfill, fixtures, forms, health, watchlist, collections) | 71 tests |
+
+Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
 
 ---
 
@@ -268,4 +280,4 @@ The project has 85 test files (80 C#, 5 F#) across `tests/MarketDataCollector.Te
 
 ---
 
-*Last Updated: 2026-02-06*
+*Last Updated: 2026-02-20*
