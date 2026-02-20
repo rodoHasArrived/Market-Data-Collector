@@ -94,7 +94,7 @@ jobs:
           # Validate each symbol against allowed characters.
           # Hyphen must be at end of character class ([A-Z0-9.^=-]) to be literal;
           # placing it in the middle (e.g. [\-^]) creates an unintended range.
-          invalid_symbols=$(printf '%s' "$normalized_symbols" | tr ',' '\n' | grep -Ev '^[A-Z0-9.^=-]+$' | paste -sd, -)
+          invalid_symbols=$(printf '%s' "$normalized_symbols" | tr ',' '\n' | grep -Ev '^[A-Z0-9.^=-]+$' | paste -sd, - || true)
           if [ -n "$invalid_symbols" ]; then
             echo "Input validation failed: one or more symbols contain unsupported characters."
             echo "Invalid symbols: $invalid_symbols"
