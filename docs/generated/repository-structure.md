@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 18:26:07 UTC
+> Auto-generated on 2026-02-20 18:59:07 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1189,15 +1189,18 @@ Market-Data-Collector/
 │   │   │   ├── ActivityFeedServiceTests.cs
 │   │   │   ├── AlertServiceTests.cs
 │   │   │   ├── ApiClientServiceTests.cs
+│   │   │   ├── ArchiveBrowserServiceTests.cs
 │   │   │   ├── BackfillApiServiceTests.cs
 │   │   │   ├── BackfillCheckpointServiceTests.cs
 │   │   │   ├── BackfillProviderConfigServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── ChartingServiceTests.cs
+│   │   │   ├── CollectionSessionServiceTests.cs
 │   │   │   ├── CommandPaletteServiceTests.cs
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceBaseTests.cs
 │   │   │   ├── CredentialServiceTests.cs
+│   │   │   ├── DataCalendarServiceTests.cs
 │   │   │   ├── DataCompletenessServiceTests.cs
 │   │   │   ├── DataSamplingServiceTests.cs
 │   │   │   ├── DiagnosticsServiceTests.cs
@@ -1208,14 +1211,20 @@ Market-Data-Collector/
 │   │   │   ├── IntegrityEventsServiceTests.cs
 │   │   │   ├── LeanIntegrationServiceTests.cs
 │   │   │   ├── LiveDataServiceTests.cs
+│   │   │   ├── ManifestServiceTests.cs
 │   │   │   ├── NotificationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
 │   │   │   ├── ProviderHealthServiceTests.cs
 │   │   │   ├── ProviderManagementServiceTests.cs
+│   │   │   ├── ScheduledMaintenanceServiceTests.cs
+│   │   │   ├── ScheduleManagerServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
+│   │   │   ├── SearchServiceTests.cs
 │   │   │   ├── SmartRecommendationsServiceTests.cs
 │   │   │   ├── StorageAnalyticsServiceTests.cs
+│   │   │   ├── SymbolGroupServiceTests.cs
+│   │   │   ├── SymbolManagementServiceTests.cs
 │   │   │   ├── SymbolMappingServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
 │   │   │   ├── TimeSeriesAlignmentServiceTests.cs
@@ -1228,12 +1237,20 @@ Market-Data-Collector/
 │   │   │   ├── BackgroundTaskSchedulerServiceTests.cs
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceTests.cs
+│   │   │   ├── ExportPresetServiceTests.cs
+│   │   │   ├── FirstRunServiceTests.cs
 │   │   │   ├── InfoBarServiceTests.cs
 │   │   │   ├── KeyboardShortcutServiceTests.cs
 │   │   │   ├── MessagingServiceTests.cs
 │   │   │   ├── NavigationServiceTests.cs
+│   │   │   ├── NotificationServiceTests.cs
+│   │   │   ├── OfflineTrackingPersistenceServiceTests.cs
+│   │   │   ├── PendingOperationsQueueServiceTests.cs
+│   │   │   ├── RetentionAssuranceServiceTests.cs
 │   │   │   ├── StatusServiceTests.cs
 │   │   │   ├── StorageServiceTests.cs
+│   │   │   ├── TooltipServiceTests.cs
+│   │   │   ├── WatchlistServiceTests.cs
 │   │   │   ├── WorkspaceServiceTests.cs
 │   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
