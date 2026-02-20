@@ -1,11 +1,10 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
-using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 

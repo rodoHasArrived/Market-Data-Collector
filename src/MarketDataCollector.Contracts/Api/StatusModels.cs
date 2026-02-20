@@ -180,9 +180,9 @@ public class BackfillProviderInfo
 }
 
 /// <summary>
-/// Backfill operation result.
+/// Backfill operation result DTO for API responses.
 /// </summary>
-public class BackfillResult
+public class BackfillResultDto
 {
     [JsonPropertyName("success")]
     public bool Success { get; set; }

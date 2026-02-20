@@ -305,7 +305,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
     {
         resp.ContentType = "application/json";
         // Return empty status when no backfill is running
-        var status = new BackfillResult
+        var status = new BackfillResultDto
         {
             Success = true,
             BarsWritten = 0
