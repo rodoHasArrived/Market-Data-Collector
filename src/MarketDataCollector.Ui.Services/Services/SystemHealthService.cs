@@ -10,23 +10,8 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SystemHealthService
 {
-    private static SystemHealthService? _instance;
-    private static readonly object _lock = new();
-
-    public static SystemHealthService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SystemHealthService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<SystemHealthService> _instance = new(() => new SystemHealthService());
+    public static SystemHealthService Instance => _instance.Value;
 
     private SystemHealthService() { }
 

@@ -5,6 +5,11 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public static class FormatHelpers
 {
+    /// <summary>
+    /// Standard ISO date format string (yyyy-MM-dd).
+    /// </summary>
+    public const string IsoDateFormat = "yyyy-MM-dd";
+
     private static readonly string[] ByteSizes = { "B", "KB", "MB", "GB", "TB" };
 
     /// <summary>

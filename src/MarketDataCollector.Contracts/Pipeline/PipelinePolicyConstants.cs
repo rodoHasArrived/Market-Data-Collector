@@ -2,19 +2,11 @@ namespace MarketDataCollector.Contracts.Pipeline;
 
 /// <summary>
 /// Constants for pipeline policy configuration.
-/// Shared between the main application and UWP to ensure consistent channel settings.
+/// Shared between the main application and desktop projects to ensure consistent channel settings.
 /// </summary>
 /// <remarks>
 /// These constants are used by <c>EventPipelinePolicy</c> in the main application
-/// and directly by UWP services that cannot reference the main assembly due to
-/// WinRT metadata constraints.
-/// <para>
-/// When modifying these values, ensure both usages remain synchronized:
-/// <list type="bullet">
-///   <item>Main: <c>src/MarketDataCollector/Application/Pipeline/EventPipelinePolicy.cs</c></item>
-///   <item>UWP: <c>src/MarketDataCollector.Uwp/Services/LoggingService.cs</c></item>
-/// </list>
-/// </para>
+/// and by desktop service projects that cannot reference the main assembly directly.
 /// </remarks>
 public static class PipelinePolicyConstants
 {

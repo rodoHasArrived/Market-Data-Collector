@@ -11,24 +11,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class EventReplayService
 {
-    private static EventReplayService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<EventReplayService> _instance = new(() => new EventReplayService());
     private readonly ApiClientService _apiClient;
 
-    public static EventReplayService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new EventReplayService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static EventReplayService Instance => _instance.Value;
 
     private EventReplayService()
     {
@@ -98,8 +84,8 @@ public sealed class EventReplayService
             {
                 filePath = options.FilePath,
                 symbol = options.Symbol,
-                fromDate = options.FromDate?.ToString("yyyy-MM-dd"),
-                toDate = options.ToDate?.ToString("yyyy-MM-dd"),
+                fromDate = options.FromDate?.ToString(FormatHelpers.IsoDateFormat),
+                toDate = options.ToDate?.ToString(FormatHelpers.IsoDateFormat),
                 eventTypes = options.EventTypes,
                 speedMultiplier = options.SpeedMultiplier,
                 publishToEventBus = options.PublishToEventBus,

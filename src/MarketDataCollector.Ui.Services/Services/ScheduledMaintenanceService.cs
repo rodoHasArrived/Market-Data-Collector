@@ -12,9 +12,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ScheduledMaintenanceService
 {
-    private static ScheduledMaintenanceService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<ScheduledMaintenanceService> _instance = new(() => new ScheduledMaintenanceService());
     private readonly NotificationService _notificationService;
     private readonly List<MaintenanceTask> _tasks = new();
     private readonly List<MaintenanceExecutionLog> _executionLog = new();
@@ -22,20 +20,7 @@ public sealed class ScheduledMaintenanceService
     private Timer? _schedulerTimer;
     private const int MaxLogEntries = 100;
 
-    public static ScheduledMaintenanceService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ScheduledMaintenanceService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static ScheduledMaintenanceService Instance => _instance.Value;
 
     private ScheduledMaintenanceService()
     {

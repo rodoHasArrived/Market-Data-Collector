@@ -13,23 +13,8 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class FormValidationService
 {
-    private static FormValidationService? _instance;
-    private static readonly object _lock = new();
-
-    public static FormValidationService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new FormValidationService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<FormValidationService> _instance = new(() => new FormValidationService());
+    public static FormValidationService Instance => _instance.Value;
 
     private FormValidationService() { }
 

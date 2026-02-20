@@ -10,30 +10,9 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class LoggingService
 {
-    private static LoggingService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<LoggingService> _instance = new(() => new LoggingService());
 
-    public static LoggingService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new LoggingService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static LoggingService Instance => _instance.Value;
 
     public virtual void LogError(string message, Exception? exception = null, params (string key, string value)[] properties)
     {

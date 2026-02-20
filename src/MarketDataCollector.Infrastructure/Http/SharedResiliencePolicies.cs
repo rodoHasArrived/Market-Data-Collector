@@ -6,9 +6,8 @@ using Polly.Extensions.Http;
 namespace MarketDataCollector.Infrastructure.Http;
 
 /// <summary>
-/// Shared resilience policies for HTTP clients to eliminate duplicate policy definitions
-/// across main project and UWP. Both projects were defining identical retry and circuit
-/// breaker policies.
+/// Shared resilience policies for HTTP clients to eliminate duplicate policy definitions.
+/// Provides consistent retry and circuit breaker policies across all projects.
 /// </summary>
 public static class SharedResiliencePolicies
 {
@@ -29,8 +28,7 @@ public static class SharedResiliencePolicies
 
     /// <summary>
     /// Adds standard resilience policies (retry with exponential backoff, circuit breaker)
-    /// to an HttpClient builder. This consolidates the duplicate AddStandardResiliencePolicy
-    /// methods from HttpClientConfiguration in both main and UWP projects.
+    /// to an HttpClient builder.
     /// </summary>
     public static IHttpClientBuilder AddSharedResiliencePolicy(this IHttpClientBuilder builder)
     {

@@ -24,23 +24,8 @@ public enum InfoBarSeverity
 /// </summary>
 public sealed class InfoBarService
 {
-    private static InfoBarService? _instance;
-    private static readonly object _lock = new();
-
-    public static InfoBarService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new InfoBarService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<InfoBarService> _instance = new(() => new InfoBarService());
+    public static InfoBarService Instance => _instance.Value;
 
     private InfoBarService() { }
 

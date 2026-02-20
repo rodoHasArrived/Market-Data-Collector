@@ -14,26 +14,12 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class BackfillProviderConfigService
 {
-    private static BackfillProviderConfigService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<BackfillProviderConfigService> _instance = new(() => new BackfillProviderConfigService());
     private readonly ApiClientService _apiClient;
     private readonly List<ProviderConfigAuditEntryDto> _auditLog = new();
     private readonly object _auditLock = new();
 
-    public static BackfillProviderConfigService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new BackfillProviderConfigService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static BackfillProviderConfigService Instance => _instance.Value;
 
     private BackfillProviderConfigService()
     {

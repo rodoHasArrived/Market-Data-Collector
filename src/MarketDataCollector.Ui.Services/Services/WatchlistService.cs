@@ -11,30 +11,9 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class WatchlistService
 {
-    private static WatchlistService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<WatchlistService> _instance = new(() => new WatchlistService());
 
-    public static WatchlistService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new WatchlistService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static WatchlistService Instance => _instance.Value;
 
     public virtual Task<WatchlistData> LoadWatchlistAsync()
         => Task.FromResult(new WatchlistData());

@@ -11,24 +11,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class LeanIntegrationService
 {
-    private static LeanIntegrationService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<LeanIntegrationService> _instance = new(() => new LeanIntegrationService());
     private readonly ApiClientService _apiClient;
 
-    public static LeanIntegrationService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new LeanIntegrationService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static LeanIntegrationService Instance => _instance.Value;
 
     private LeanIntegrationService()
     {
@@ -146,8 +132,8 @@ public sealed class LeanIntegrationService
             new
             {
                 symbols = options.Symbols,
-                fromDate = options.FromDate?.ToString("yyyy-MM-dd"),
-                toDate = options.ToDate?.ToString("yyyy-MM-dd"),
+                fromDate = options.FromDate?.ToString(FormatHelpers.IsoDateFormat),
+                toDate = options.ToDate?.ToString(FormatHelpers.IsoDateFormat),
                 resolution = options.Resolution,
                 overwrite = options.Overwrite
             },
@@ -197,8 +183,8 @@ public sealed class LeanIntegrationService
             {
                 algorithmPath = options.AlgorithmPath,
                 algorithmName = options.AlgorithmName,
-                startDate = options.StartDate?.ToString("yyyy-MM-dd"),
-                endDate = options.EndDate?.ToString("yyyy-MM-dd"),
+                startDate = options.StartDate?.ToString(FormatHelpers.IsoDateFormat),
+                endDate = options.EndDate?.ToString(FormatHelpers.IsoDateFormat),
                 initialCapital = options.InitialCapital,
                 parameters = options.Parameters
             },

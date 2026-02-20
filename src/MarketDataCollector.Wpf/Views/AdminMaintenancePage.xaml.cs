@@ -224,7 +224,7 @@ public partial class AdminMaintenancePage : Page
                 {
                     Name = t.TierName,
                     Path = "",
-                    SizeText = FormatBytes(t.SizeBytes),
+                    SizeText = FormatHelpers.FormatBytes(t.SizeBytes),
                     FileCountText = $"{t.FileCount:N0} files",
                     RetentionText = $"{t.PercentOfTotal:F1}% of total"
                 }).ToList();
@@ -263,7 +263,7 @@ public partial class AdminMaintenancePage : Page
 
             if (migrationResult.Success)
             {
-                ShowSuccess($"Migration complete. {migrationResult.FilesProcessed} files migrated, {FormatBytes(migrationResult.SpaceSavedBytes)} saved.");
+                ShowSuccess($"Migration complete. {migrationResult.FilesProcessed} files migrated, {FormatHelpers.FormatBytes(migrationResult.SpaceSavedBytes)} saved.");
                 await LoadTierUsageAsync();
             }
             else
@@ -372,7 +372,7 @@ public partial class AdminMaintenancePage : Page
             var applyResult = await _adminService.ApplyRetentionPoliciesAsync(dryRun: false);
             if (applyResult.Success)
             {
-                ShowSuccess($"Retention applied. {applyResult.FilesDeleted} files deleted, {FormatBytes(applyResult.BytesFreed)} freed.");
+                ShowSuccess($"Retention applied. {applyResult.FilesDeleted} files deleted, {FormatHelpers.FormatBytes(applyResult.BytesFreed)} freed.");
             }
             else
             {
@@ -399,12 +399,12 @@ public partial class AdminMaintenancePage : Page
             {
                 CleanupResultsCard.Visibility = Visibility.Visible;
                 CleanupFilesText.Text = result.TotalFiles.ToString();
-                CleanupSizeText.Text = FormatBytes(result.TotalBytes);
+                CleanupSizeText.Text = FormatHelpers.FormatBytes(result.TotalBytes);
 
                 var items = result.FilesToDelete.Select(f => new CleanupFileDisplayItem
                 {
                     Path = f.Path,
-                    SizeText = FormatBytes(f.SizeBytes),
+                    SizeText = FormatHelpers.FormatBytes(f.SizeBytes),
                     Reason = f.Reason
                 }).ToList();
 
@@ -441,7 +441,7 @@ public partial class AdminMaintenancePage : Page
 
             if (cleanupResult.Success)
             {
-                ShowSuccess($"Cleanup complete. {cleanupResult.FilesDeleted} files deleted, {FormatBytes(cleanupResult.BytesFreed)} freed.");
+                ShowSuccess($"Cleanup complete. {cleanupResult.FilesDeleted} files deleted, {FormatHelpers.FormatBytes(cleanupResult.BytesFreed)} freed.");
                 CleanupResultsCard.Visibility = Visibility.Collapsed;
             }
             else
@@ -528,7 +528,6 @@ public partial class AdminMaintenancePage : Page
         StatusInfoBar.Visibility = Visibility.Collapsed;
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     #endregion
 }

@@ -13,29 +13,14 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class CollectionSessionService
 {
-    private static CollectionSessionService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<CollectionSessionService> _instance = new(() => new CollectionSessionService());
     private readonly ConfigService _configService;
     private readonly NotificationService _notificationService;
     private readonly string _sessionsFilePath;
     private CollectionSessionsConfig? _sessionsConfig;
     private CollectionSession? _activeSession;
 
-    public static CollectionSessionService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new CollectionSessionService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static CollectionSessionService Instance => _instance.Value;
 
     private CollectionSessionService()
     {
@@ -159,7 +144,7 @@ public sealed class CollectionSessionService
     {
         var config = await LoadSessionsAsync();
         var pattern = config.SessionNamingPattern ?? "{date}-{mode}";
-        var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var date = DateTime.UtcNow.ToString(FormatHelpers.IsoDateFormat);
         var mode = "regular-hours";
 
         var name = pattern

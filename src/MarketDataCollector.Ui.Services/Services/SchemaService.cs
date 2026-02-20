@@ -7,28 +7,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SchemaService : SchemaServiceBase
 {
-    private static SchemaService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<SchemaService> _instance = new(() => new SchemaService());
 
-    public static SchemaService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SchemaService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static SchemaService Instance => _instance.Value;
 }

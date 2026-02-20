@@ -7,8 +7,8 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Base class for storage services providing platform-agnostic API delegation methods.
-/// WPF and UWP StorageService implementations inherit from this class and add
-/// platform-specific functionality (e.g., Brush-based styling).
+/// WPF StorageService inherits from this class and adds platform-specific functionality
+/// (e.g., Brush-based styling).
 /// </summary>
 public class StorageServiceBase
 {

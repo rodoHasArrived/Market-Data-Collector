@@ -13,23 +13,8 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class ExportPresetService : ExportPresetServiceBase
 {
-    private static ExportPresetService? _instance;
-    private static readonly object _lock = new();
-
-    public static ExportPresetService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ExportPresetService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<ExportPresetService> _instance = new(() => new ExportPresetService());
+    public static ExportPresetService Instance => _instance.Value;
 
     private ExportPresetService() { }
 

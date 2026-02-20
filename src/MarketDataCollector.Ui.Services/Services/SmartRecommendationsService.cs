@@ -12,9 +12,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SmartRecommendationsService
 {
-    private static SmartRecommendationsService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<SmartRecommendationsService> _instance = new(() => new SmartRecommendationsService());
     private readonly DataCompletenessService _completenessService;
     private readonly StorageAnalyticsService _storageService;
     private readonly ConfigService _configService;
@@ -22,20 +20,7 @@ public sealed class SmartRecommendationsService
     /// <summary>
     /// Gets the singleton instance.
     /// </summary>
-    public static SmartRecommendationsService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SmartRecommendationsService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static SmartRecommendationsService Instance => _instance.Value;
 
     private SmartRecommendationsService()
     {

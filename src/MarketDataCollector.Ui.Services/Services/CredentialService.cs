@@ -11,35 +11,14 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class CredentialService
 {
-    private static CredentialService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<CredentialService> _instance = new(() => new CredentialService());
 
     /// <summary>
     /// Resource key prefix for OAuth tokens.
     /// </summary>
     public const string OAuthTokenResource = "oauth_token";
 
-    public static CredentialService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new CredentialService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static CredentialService Instance => _instance.Value;
 
     public event EventHandler<CredentialExpirationEventArgs>? CredentialExpiring;
 

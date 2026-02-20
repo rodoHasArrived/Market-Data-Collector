@@ -12,24 +12,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ProviderManagementService
 {
-    private static ProviderManagementService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<ProviderManagementService> _instance = new(() => new ProviderManagementService());
     private readonly ApiClientService _apiClient;
 
-    public static ProviderManagementService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ProviderManagementService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static ProviderManagementService Instance => _instance.Value;
 
     private ProviderManagementService()
     {

@@ -13,27 +13,13 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class TooltipService
 {
-    private static TooltipService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<TooltipService> _instance = new(() => new TooltipService());
 
     private readonly HashSet<string> _shownTips = new();
     private readonly HashSet<string> _dismissedTips = new();
     private const string DismissedTipsFileName = "dismissed-tooltips.txt";
 
-    public static TooltipService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new TooltipService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static TooltipService Instance => _instance.Value;
 
     private TooltipService()
     {

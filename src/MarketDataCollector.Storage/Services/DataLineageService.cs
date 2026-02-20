@@ -216,11 +216,13 @@ public sealed class DataLineageService : IDataLineageService
 
     private void ScheduleSave()
     {
-        _ = Task.Run(async () =>
-        {
-            try { await SaveAsync(); }
-            catch { /* Background save failure is non-critical */ }
-        });
+        _ = SaveInBackgroundAsync();
+    }
+
+    private async Task SaveInBackgroundAsync()
+    {
+        try { await SaveAsync(); }
+        catch { /* Background save failure is non-critical */ }
     }
 
     private sealed class LineageStore

@@ -6,7 +6,6 @@ namespace MarketDataCollector.Ui.Services.Services;
 /// <summary>
 /// Base class containing shared export preset management logic.
 /// Platform-specific storage is delegated to subclasses via abstract methods.
-/// Both WPF and UWP ExportPresetService derive from this to eliminate ~400 lines of duplicate code.
 /// </summary>
 public abstract class ExportPresetServiceBase
 {

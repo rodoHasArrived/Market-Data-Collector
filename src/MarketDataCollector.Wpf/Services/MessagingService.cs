@@ -10,8 +10,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class MessagingService
 {
-    private static MessagingService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<MessagingService> _instance = new(() => new MessagingService());
 
     private readonly ConcurrentDictionary<string, List<WeakReference<Action<object?>>>> _typedSubscriptions = new();
     private readonly object _subscriptionLock = new();
@@ -19,20 +18,7 @@ public sealed class MessagingService
     /// <summary>
     /// Gets the singleton instance of the MessagingService.
     /// </summary>
-    public static MessagingService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new MessagingService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static MessagingService Instance => _instance.Value;
 
     private MessagingService()
     {

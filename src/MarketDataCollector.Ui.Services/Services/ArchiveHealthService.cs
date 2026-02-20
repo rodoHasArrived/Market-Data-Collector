@@ -7,28 +7,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class ArchiveHealthService
 {
-    private static ArchiveHealthService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<ArchiveHealthService> _instance = new(() => new ArchiveHealthService());
 
-    public static ArchiveHealthService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ArchiveHealthService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static ArchiveHealthService Instance => _instance.Value;
 }

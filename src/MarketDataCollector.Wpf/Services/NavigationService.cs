@@ -17,8 +17,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class NavigationService : NavigationServiceBase, INavigationService
 {
-    private static NavigationService? _instance;
-    private static readonly object _singletonLock = new();
+    private static readonly Lazy<NavigationService> _instance = new(() => new NavigationService());
 
     private Frame? _frame;
     private IServiceProvider? _serviceProvider;
@@ -26,20 +25,7 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
     /// <summary>
     /// Gets the singleton instance of the NavigationService.
     /// </summary>
-    public static NavigationService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_singletonLock)
-                {
-                    _instance ??= new NavigationService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static NavigationService Instance => _instance.Value;
 
     /// <inheritdoc />
     public override bool CanGoBack => _frame?.CanGoBack ?? false;

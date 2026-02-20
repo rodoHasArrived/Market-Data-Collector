@@ -13,9 +13,8 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ApiClientService : IDisposable
 {
-    private static ApiClientService? _instance;
+    private static readonly Lazy<ApiClientService> _instance = new(() => new ApiClientService());
     private static readonly object _lock = new();
-
     private HttpClient _httpClient;
     private HttpClient? _backfillHttpClient;
     private string _baseUrl;
@@ -30,20 +29,7 @@ public sealed class ApiClientService : IDisposable
     /// <summary>
     /// Gets the singleton instance of the ApiClientService.
     /// </summary>
-    public static ApiClientService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ApiClientService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static ApiClientService Instance => _instance.Value;
 
     private ApiClientService()
     {

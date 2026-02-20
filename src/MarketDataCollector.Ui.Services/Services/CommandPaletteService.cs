@@ -6,27 +6,12 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class CommandPaletteService
 {
-    private static CommandPaletteService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<CommandPaletteService> _instance = new(() => new CommandPaletteService());
     private readonly List<PaletteCommand> _commands = new();
     private readonly List<string> _recentCommands = new();
     private const int MaxRecentCommands = 10;
 
-    public static CommandPaletteService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new CommandPaletteService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static CommandPaletteService Instance => _instance.Value;
 
     private CommandPaletteService()
     {

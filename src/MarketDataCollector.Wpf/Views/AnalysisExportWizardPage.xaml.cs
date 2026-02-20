@@ -335,7 +335,7 @@ public sealed class AnalysisExportWizardViewModel : BindableBase, IDataErrorInfo
 
                     EstimatedSize = $"{estimatedMb:F1} MB";
                 }
-                catch (Exception)
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or DriveNotFoundException)
                 {
                     checks.Add("[WARN] Unable to determine free disk space.");
                     EstimatedSize = EstimateExportSizeMb().ToString("F1") + " MB (estimated)";

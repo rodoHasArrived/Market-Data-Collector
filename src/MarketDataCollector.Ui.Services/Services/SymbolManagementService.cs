@@ -13,25 +13,11 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SymbolManagementService
 {
-    private static SymbolManagementService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<SymbolManagementService> _instance = new(() => new SymbolManagementService());
     private readonly ApiClientService _apiClient;
     private readonly ConfigService _configService;
 
-    public static SymbolManagementService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SymbolManagementService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static SymbolManagementService Instance => _instance.Value;
 
     private SymbolManagementService()
     {

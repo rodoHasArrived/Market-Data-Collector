@@ -10,8 +10,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SymbolGroupService
 {
-    private static SymbolGroupService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<SymbolGroupService> _instance = new(() => new SymbolGroupService());
 
     private readonly ConfigService _configService;
     private SymbolGroupsConfig? _groupsConfig;
@@ -29,20 +28,7 @@ public sealed class SymbolGroupService
         ["Energy"] = ("Energy", new[] { "XOM", "CVX", "COP", "SLB", "EOG", "PSX" }, "#FF5722", "\uE945")
     };
 
-    public static SymbolGroupService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SymbolGroupService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static SymbolGroupService Instance => _instance.Value;
 
     private SymbolGroupService()
     {

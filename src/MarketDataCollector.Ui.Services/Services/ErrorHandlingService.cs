@@ -12,28 +12,13 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ErrorHandlingService : IDisposable
 {
-    private static ErrorHandlingService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<ErrorHandlingService> _instance = new(() => new ErrorHandlingService());
     private readonly BoundedObservableCollection<ErrorRecord> _recentErrors = new(50);
     private readonly NotificationService _notificationService;
     private readonly LoggingService _loggingService;
     private bool _disposed;
 
-    public static ErrorHandlingService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ErrorHandlingService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static ErrorHandlingService Instance => _instance.Value;
 
     private ErrorHandlingService()
     {

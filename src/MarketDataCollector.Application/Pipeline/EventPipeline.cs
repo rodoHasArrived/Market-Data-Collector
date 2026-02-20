@@ -149,7 +149,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         // Start periodic flusher if enabled
         if (_enablePeriodicFlush)
         {
-            _flusher = Task.Run(PeriodicFlushAsync);
+            _flusher = PeriodicFlushAsync();
         }
 
         Interlocked.Exchange(ref _lastFlushTimestamp, Stopwatch.GetTimestamp());

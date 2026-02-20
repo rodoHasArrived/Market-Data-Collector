@@ -539,8 +539,8 @@ public sealed class DataCompletenessService
             var result = await backfillApi.RunBackfillAsync(
                 "composite",
                 new[] { symbol },
-                startDate.ToString("yyyy-MM-dd"),
-                endDate.ToString("yyyy-MM-dd"),
+                startDate.ToString(FormatHelpers.IsoDateFormat),
+                endDate.ToString(FormatHelpers.IsoDateFormat),
                 ct);
 
             return result?.Success == true;
