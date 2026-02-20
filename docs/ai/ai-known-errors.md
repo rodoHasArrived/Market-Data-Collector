@@ -301,3 +301,20 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22047221887/job/63698175553
 - **Status**: fixed
 - **Fixed in**: `.github/workflows/reusable-dotnet-build.yml` line 121 — added `shell: bash` to the Build step
+
+### AI-20260220-cs0104-backfill-result-ambiguity
+- **ID**: AI-20260220-cs0104-backfill-result-ambiguity
+- **Area**: build/namespaces
+- **Symptoms**: Build fails with CS0104: "'BackfillResult' is an ambiguous reference between 'MarketDataCollector.Contracts.Api.BackfillResult' and 'MarketDataCollector.Application.Backfill.BackfillResult'". Using alias directives (`using BackfillResult = ...`) fail to resolve the ambiguity when the conflicting namespace is also imported via a `using` namespace directive.
+- **Root cause**: Both `MarketDataCollector.Contracts.Api` and `MarketDataCollector.Application.Backfill` define types named `BackfillResult` and `BackfillRequest`. When both namespaces are imported via `using` directives alongside `using` alias directives for disambiguation, the compiler still reports CS0104. The fix is to remove the `using MarketDataCollector.Application.Backfill;` namespace directive entirely, keeping only the explicit aliases for the specific types needed.
+- **Prevention checklist**:
+  - [ ] When two imported namespaces contain types with the same name, do NOT import both namespaces — import only one and use aliases for types from the other
+  - [ ] Search for duplicate type names across namespaces before adding new `using` directives: `grep -rn "class TypeName\|record TypeName" src/ --include="*.cs"`
+  - [ ] When adding a new type to `Contracts.Api`, check if a type with the same name exists in `Application.Backfill` (or vice versa)
+  - [ ] Prefer fully qualified names or using aliases over importing both conflicting namespaces
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Ui.Shared/MarketDataCollector.Ui.Shared.csproj -c Release`
+  - `grep -rn "using MarketDataCollector.Application.Backfill;" src/MarketDataCollector.Ui.Shared --include="*.cs"` (should return no results after fix)
+- **Source issue**: CI build failure
+- **Status**: fixed
+- **Fixed in**: `BackfillEndpoints.cs` and `BackfillCoordinator.cs` — removed `using MarketDataCollector.Application.Backfill;` namespace directive, kept explicit `using` aliases for `BackfillRequest` and `BackfillResult`, and fully qualified `HistoricalBackfillService`
