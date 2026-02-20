@@ -857,7 +857,6 @@ Market-Data-Collector/
 │   │   │   ├── ISymbolStateStore.cs
 │   │   │   ├── SubscriptionManager.cs
 │   │   │   ├── TaskSafetyExtensions.cs
-│   │   │   ├── WebSocketProviderBase.cs
 │   │   │   └── WebSocketReconnectionHelper.cs
 │   │   ├── Utilities/
 │   │   │   ├── HttpResponseHandler.cs
@@ -1086,7 +1085,6 @@ Market-Data-Collector/
 │   │   │   ├── StatusEndpoints.cs
 │   │   │   ├── StorageEndpoints.cs
 │   │   │   ├── StorageQualityEndpoints.cs
-│   │   │   ├── StubEndpoints.cs
 │   │   │   ├── SubscriptionEndpoints.cs
 │   │   │   ├── SymbolEndpoints.cs
 │   │   │   ├── SymbolMappingEndpoints.cs
