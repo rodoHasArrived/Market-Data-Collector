@@ -118,17 +118,14 @@ public sealed class WatchlistServiceTests
     }
 
     [Fact]
-    public void Instance_CanBeReplaced()
+    public void Instance_IsAlwaysSameReference()
     {
-        // Arrange
-        var customService = new CustomWatchlistService();
-
         // Act
-        WatchlistService.Instance = customService;
-        var retrievedInstance = WatchlistService.Instance;
+        var instance1 = WatchlistService.Instance;
+        var instance2 = WatchlistService.Instance;
 
-        // Assert
-        retrievedInstance.Should().BeSameAs(customService);
+        // Assert — singleton backed by Lazy<T> is immutable
+        instance1.Should().BeSameAs(instance2);
     }
 
     [Fact]

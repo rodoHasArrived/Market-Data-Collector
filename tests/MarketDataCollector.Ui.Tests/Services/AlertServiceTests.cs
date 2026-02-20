@@ -248,7 +248,7 @@ public sealed class AlertServiceTests
         var groups = svc.GetGroupedAlerts();
         if (groups.Count >= 2)
         {
-            groups[0].Severity.Should().BeGreaterThanOrEqualTo(groups[1].Severity);
+            ((int)groups[0].Severity).Should().BeGreaterThanOrEqualTo((int)groups[1].Severity);
         }
     }
 
