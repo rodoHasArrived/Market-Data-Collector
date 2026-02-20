@@ -403,6 +403,7 @@ Market-Data-Collector/
 │   ├── audits/
 │   │   ├── CLEANUP_OPPORTUNITIES.md
 │   │   ├── CLEANUP_SUMMARY.md
+│   │   ├── FURTHER_SIMPLIFICATION_OPPORTUNITIES.md
 │   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   ├── README.md
 │   │   └── UWP_COMPREHENSIVE_AUDIT.md
