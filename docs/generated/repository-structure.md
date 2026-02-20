@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 10:55:29 UTC
+> Auto-generated on 2026-02-20 11:12:52 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1186,16 +1186,21 @@ Market-Data-Collector/
 │   │   │   ├── BoundedObservableCollectionTests.cs
 │   │   │   └── CircularBufferTests.cs
 │   │   ├── Services/
+│   │   │   ├── AlertServiceTests.cs
 │   │   │   ├── ApiClientServiceTests.cs
 │   │   │   ├── BackfillProviderConfigServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── ChartingServiceTests.cs
+│   │   │   ├── ConnectionServiceBaseTests.cs
+│   │   │   ├── DiagnosticsServiceTests.cs
+│   │   │   ├── ErrorHandlingServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
 │   │   │   ├── LeanIntegrationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
+│   │   │   ├── StorageAnalyticsServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
 │   │   │   ├── TimeSeriesAlignmentServiceTests.cs
 │   │   │   └── WatchlistServiceTests.cs
@@ -1203,8 +1208,11 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── MarketDataCollector.Wpf.Tests/
 │   │   ├── Services/
+│   │   │   ├── BackgroundTaskSchedulerServiceTests.cs
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceTests.cs
+│   │   │   ├── InfoBarServiceTests.cs
+│   │   │   ├── MessagingServiceTests.cs
 │   │   │   ├── NavigationServiceTests.cs
 │   │   │   ├── StatusServiceTests.cs
 │   │   │   └── WpfDataQualityServiceTests.cs
