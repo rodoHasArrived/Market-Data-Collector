@@ -306,3 +306,4 @@ All stale UWP references in configuration files, documentation, and code comment
 **Next Steps:**
 1. Regenerate repository structure docs and diagrams
 2. Consider moving HtmlTemplateGenerator static CSS/JS to versioned `wwwroot/` files
+3. Review further simplification opportunities in [`FURTHER_SIMPLIFICATION_OPPORTUNITIES.md`](FURTHER_SIMPLIFICATION_OPPORTUNITIES.md)
