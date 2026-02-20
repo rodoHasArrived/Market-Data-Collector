@@ -378,6 +378,8 @@ Market-Data-Collector/
 │   │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   │   ├── CHANGES_SUMMARY.md
 │   │   ├── consolidation.md
+│   │   ├── desktop-app-xaml-compiler-errors.md
+│   │   ├── desktop-devex-high-value-improvements.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── DUPLICATE_CODE_ANALYSIS.md
 │   │   ├── IMPROVEMENTS_2026-02.md
@@ -385,9 +387,11 @@ Market-Data-Collector/
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
+│   │   ├── ROADMAP_UPDATE_SUMMARY.md
 │   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
 │   │   ├── uwp-development-roadmap.md
-│   │   └── uwp-release-checklist.md
+│   │   ├── uwp-release-checklist.md
+│   │   └── uwp-to-wpf-migration.md
 │   ├── audits/
 │   │   ├── CLEANUP_OPPORTUNITIES.md
 │   │   ├── CLEANUP_SUMMARY.md
@@ -400,9 +404,6 @@ Market-Data-Collector/
 │   │   │   └── desktop-support-policy.md
 │   │   ├── build-observability.md
 │   │   ├── central-package-management.md
-│   │   ├── desktop-app-xaml-compiler-errors.md
-│   │   ├── desktop-dev-workflow.md
-│   │   ├── desktop-devex-high-value-improvements.md
 │   │   ├── desktop-improvements-executive-summary.md
 │   │   ├── desktop-improvements-quick-reference.md
 │   │   ├── desktop-platform-improvements-implementation-guide.md
@@ -414,9 +415,7 @@ Market-Data-Collector/
 │   │   ├── refactor-map.md
 │   │   ├── repository-cleanup-action-plan.md
 │   │   ├── repository-organization-guide.md
-│   │   ├── ROADMAP_UPDATE_SUMMARY.md
 │   │   ├── ui-fixture-mode-guide.md
-│   │   ├── uwp-to-wpf-migration.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/
 │   │   ├── c4-level1-context.dot
