@@ -24,12 +24,18 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 │ └─ Polygon          │              │ ├─ Finnhub              │
 └─────────────────────┘              │ ├─ Alpha Vantage        │
                                      │ ├─ Nasdaq Data Link     │
-┌─────────────────────┐              │ └─ Polygon              │
-│ Symbol Search       │              └─────────────────────────┘
+┌─────────────────────┐              │ ├─ Polygon              │
+│ Failover            │              │ └─ StockSharp           │
+│ └─ FailoverAware    │              └─────────────────────────┘
+│    MarketDataClient │
+└─────────────────────┘
+┌─────────────────────┐
+│ Symbol Search       │
 │ ├─ Alpaca           │
 │ ├─ Polygon          │
 │ ├─ Finnhub          │
-│ └─ OpenFIGI         │
+│ ├─ OpenFIGI         │
+│ └─ StockSharp       │
 └─────────────────────┘
 ```
 
@@ -37,45 +43,116 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 
 ## File Locations
 
-### Core Abstractions
+### Core Abstractions (ProviderSdk)
 | File | Purpose |
 |------|---------|
-| `Infrastructure/DataSources/IDataSource.cs` | Base interface for all data sources |
-| `Infrastructure/DataSources/IRealtimeDataSource.cs` | Real-time streaming extension |
-| `Infrastructure/DataSources/IHistoricalDataSource.cs` | Historical data retrieval |
-| `Infrastructure/DataSources/DataSourceAttribute.cs` | Attribute for auto-discovery |
-| `Infrastructure/DataSources/DataSourceManager.cs` | Provider lifecycle management |
+| `ProviderSdk/IDataSource.cs` | Base interface for all data sources |
+| `ProviderSdk/IRealtimeDataSource.cs` | Real-time streaming extension |
+| `ProviderSdk/IHistoricalDataSource.cs` | Historical data retrieval |
+| `ProviderSdk/IMarketDataClient.cs` | Market data client interface |
+| `ProviderSdk/DataSourceAttribute.cs` | Attribute for auto-discovery |
+| `ProviderSdk/DataSourceRegistry.cs` | Registry for data source discovery |
+| `ProviderSdk/IProviderMetadata.cs` | Provider metadata interface |
+| `ProviderSdk/IProviderModule.cs` | Provider module interface |
+| `ProviderSdk/IHistoricalBarWriter.cs` | Historical bar data writer |
+| `ProviderSdk/CredentialValidator.cs` | Credential validation |
+| `ProviderSdk/HistoricalDataCapabilities.cs` | Historical capability flags |
+| `ProviderSdk/ImplementsAdrAttribute.cs` | ADR implementation tracking |
+| `ProviderSdk/ProviderHttpUtilities.cs` | HTTP utility methods |
+
+### Infrastructure Base Classes
+| File | Purpose |
+|------|---------|
+| `Infrastructure/DataSources/DataSourceBase.cs` | Base class for data sources |
+| `Infrastructure/DataSources/DataSourceConfiguration.cs` | Data source configuration |
+
+### Provider Core Framework
+| File | Purpose |
+|------|---------|
+| `Infrastructure/Providers/Core/ProviderFactory.cs` | Factory for creating providers |
+| `Infrastructure/Providers/Core/ProviderRegistry.cs` | Registry of available providers |
+| `Infrastructure/Providers/Core/ProviderServiceExtensions.cs` | DI service extensions |
+| `Infrastructure/Providers/Core/ProviderSubscriptionRanges.cs` | Subscription range management |
+| `Infrastructure/Providers/Core/ProviderTemplate.cs` | Provider template/base |
 
 ### Streaming Providers
 | Provider | Location | Files |
 |----------|----------|-------|
-| Alpaca | `Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs` | 1 |
-| Interactive Brokers | `Infrastructure/Providers/InteractiveBrokers/` | 8 |
-| StockSharp | `Infrastructure/Providers/StockSharp/` | 4 |
-| NYSE | `Infrastructure/Providers/NYSE/` | 3 |
-| Polygon | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` | 1 |
+| Alpaca | `Infrastructure/Providers/Streaming/Alpaca/` | 1 |
+| Interactive Brokers | `Infrastructure/Providers/Streaming/InteractiveBrokers/` | 8 |
+| StockSharp | `Infrastructure/Providers/Streaming/StockSharp/` | 6 |
+| NYSE | `Infrastructure/Providers/Streaming/NYSE/` | 3 |
+| Polygon | `Infrastructure/Providers/Streaming/Polygon/` | 1 |
+| Failover | `Infrastructure/Providers/Streaming/Failover/` | 3 |
 
 **Interactive Brokers files:**
 - `IBMarketDataClient.cs` - Main streaming client
 - `IBConnectionManager.cs` - Connection lifecycle
 - `IBCallbackRouter.cs` - Callback handling
 - `ContractFactory.cs` - IB contract creation
-- `IBHistoricalDataProvider.cs` - Historical data
 - `EnhancedIBConnectionManager.cs` - Enhanced connection management
+- `EnhancedIBConnectionManager.IBApi.cs` - IB API partial class
 - `IBApiLimits.cs` - API rate limiting
+- `IBSimulationClient.cs` - IB testing without live connection
+
+**StockSharp files:**
+- `StockSharpMarketDataClient.cs` - Main streaming client
+- `StockSharpConnectorFactory.cs` - Connector creation
+- `StockSharpConnectorCapabilities.cs` - Capability flags
+- `StockSharpSymbolSearchProvider.cs` - Symbol search
+- `Converters/MessageConverter.cs` - Message conversion
+- `Converters/SecurityConverter.cs` - Security conversion
+
+**Failover files:**
+- `FailoverAwareMarketDataClient.cs` - Automatic provider failover wrapper
+- `StreamingFailoverRegistry.cs` - Failover routing registry
+- `StreamingFailoverService.cs` - Failover orchestration
 
 ### Historical Providers
 | Provider | Location |
 |----------|----------|
-| Composite (failover) | `Infrastructure/Providers/Backfill/CompositeHistoricalDataProvider.cs` |
-| Alpaca | `Infrastructure/Providers/Backfill/AlpacaHistoricalDataProvider.cs` |
-| Yahoo Finance | `Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs` |
-| Stooq | `Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs` |
-| Tiingo | `Infrastructure/Providers/Backfill/TiingoHistoricalDataProvider.cs` |
-| Finnhub | `Infrastructure/Providers/Backfill/FinnhubHistoricalDataProvider.cs` |
-| Alpha Vantage | `Infrastructure/Providers/Backfill/AlphaVantageHistoricalDataProvider.cs` |
-| Nasdaq Data Link | `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs` |
-| Polygon | `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs` |
+| Base class | `Infrastructure/Providers/Historical/BaseHistoricalDataProvider.cs` |
+| Interface | `Infrastructure/Providers/Historical/IHistoricalDataProvider.cs` |
+| Composite (failover) | `Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` |
+| Alpaca | `Infrastructure/Providers/Historical/Alpaca/AlpacaHistoricalDataProvider.cs` |
+| Yahoo Finance | `Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` |
+| Stooq | `Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` |
+| Tiingo | `Infrastructure/Providers/Historical/Tiingo/TiingoHistoricalDataProvider.cs` |
+| Finnhub | `Infrastructure/Providers/Historical/Finnhub/FinnhubHistoricalDataProvider.cs` |
+| Alpha Vantage | `Infrastructure/Providers/Historical/AlphaVantage/AlphaVantageHistoricalDataProvider.cs` |
+| Nasdaq Data Link | `Infrastructure/Providers/Historical/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` |
+| Polygon | `Infrastructure/Providers/Historical/Polygon/PolygonHistoricalDataProvider.cs` |
+| StockSharp | `Infrastructure/Providers/Historical/StockSharp/StockSharpHistoricalDataProvider.cs` |
+| Interactive Brokers | `Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` |
+
+### Historical Support Modules
+| Module | Location | Purpose |
+|--------|----------|---------|
+| Gap Analysis | `Infrastructure/Providers/Historical/GapAnalysis/` | Data gap detection and repair |
+| Rate Limiting | `Infrastructure/Providers/Historical/RateLimiting/` | Per-provider rate limit tracking |
+| Queue | `Infrastructure/Providers/Historical/Queue/` | Backfill job queue and workers |
+| Symbol Resolution | `Infrastructure/Providers/Historical/SymbolResolution/` | Cross-provider symbol resolution |
+| Core | `Infrastructure/Providers/Historical/Core/` | Response handling utilities |
+
+**Gap Analysis files:**
+- `DataGapAnalyzer.cs` - Gap analysis and reporting
+- `DataGapRepair.cs` - Automatic gap detection/repair
+- `DataQualityMonitor.cs` - Multi-dimensional quality scoring
+
+**Rate Limiting files:**
+- `RateLimiter.cs` - Per-provider rate limiting
+- `ProviderRateLimitTracker.cs` - Rate limit tracking across providers
+
+**Queue files:**
+- `BackfillJob.cs` - Backfill job model
+- `BackfillJobManager.cs` - Job lifecycle management
+- `BackfillRequestQueue.cs` - Request queue implementation
+- `BackfillWorkerService.cs` - Background worker service
+- `PriorityBackfillQueue.cs` - Priority-based queue
+
+**Symbol Resolution files:**
+- `ISymbolResolver.cs` - Symbol resolution interface
+- `OpenFigiSymbolResolver.cs` - OpenFIGI implementation
 
 ### Symbol Search Providers
 | Provider | Location |
@@ -93,13 +170,12 @@ Supporting files:
 ### Resilience Infrastructure
 | File | Purpose |
 |------|---------|
-| `Infrastructure/Providers/Resilience/CircuitBreaker.cs` | Open/Closed/HalfOpen states |
-| `Infrastructure/Providers/Resilience/ConcurrentProviderExecutor.cs` | Parallel provider operations |
-| `Infrastructure/Providers/Backfill/RateLimiter.cs` | Per-provider rate limiting |
-| `Infrastructure/Providers/Backfill/DataGapRepair.cs` | Automatic gap detection/repair |
-| `Infrastructure/Providers/Backfill/DataGapAnalyzer.cs` | Gap analysis and reporting |
-| `Infrastructure/Providers/Backfill/DataQualityMonitor.cs` | Multi-dimensional quality scoring |
-| `Infrastructure/Providers/Backfill/ProviderRateLimitTracker.cs` | Rate limit tracking across providers |
+| `Infrastructure/Resilience/HttpResiliencePolicy.cs` | HTTP resilience with Polly |
+| `Infrastructure/Resilience/WebSocketResiliencePolicy.cs` | WebSocket resilience |
+| `Infrastructure/Resilience/WebSocketConnectionManager.cs` | WebSocket connection lifecycle |
+| `Infrastructure/Resilience/WebSocketConnectionConfig.cs` | WebSocket configuration |
+| `Infrastructure/Http/SharedResiliencePolicies.cs` | Shared Polly policies |
+| `Infrastructure/Providers/Backfill/BackfillProgressTracker.cs` | Backfill progress tracking |
 
 ---
 
@@ -679,4 +755,4 @@ export TIINGO__APIKEY=your-key
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-20*

@@ -22,11 +22,13 @@ This document provides guidance for AI assistants working with tests in Market D
 
 | Project | Location | Files | Purpose |
 |---------|----------|-------|---------|
-| C# Unit Tests | `tests/MarketDataCollector.Tests/` | 48 | Main test suite |
-| F# Tests | `tests/MarketDataCollector.FSharp.Tests/` | 5 | F# domain tests |
+| C# Unit Tests | `tests/MarketDataCollector.Tests/` | 134 | Main test suite |
+| F# Tests | `tests/MarketDataCollector.FSharp.Tests/` | 4 | F# domain tests |
+| UI Service Tests | `tests/MarketDataCollector.Ui.Tests/` | 15 | Desktop UI service tests |
+| WPF Tests | `tests/MarketDataCollector.Wpf.Tests/` | 5 | WPF desktop service tests |
 | Benchmarks | `benchmarks/MarketDataCollector.Benchmarks/` | - | Performance benchmarks |
 
-**Total: 53 test files**
+**Total: 158 test files (154 C# + 4 F#)**
 
 ---
 
@@ -35,9 +37,6 @@ This document provides guidance for AI assistants working with tests in Market D
 ### Basic Commands
 
 ```bash
-# Navigate to solution directory
-cd MarketDataCollector
-
 # Run all tests
 dotnet test
 
@@ -46,6 +45,15 @@ dotnet test tests/MarketDataCollector.Tests
 
 # Run F# tests
 dotnet test tests/MarketDataCollector.FSharp.Tests
+
+# Run WPF desktop service tests (Windows only)
+dotnet test tests/MarketDataCollector.Wpf.Tests
+
+# Run desktop UI service tests (Windows only)
+dotnet test tests/MarketDataCollector.Ui.Tests
+
+# Run all desktop tests
+make test-desktop-services
 
 # Run with verbose output
 dotnet test --logger "console;verbosity=detailed"
@@ -88,52 +96,73 @@ make test-coverage
 ### Test Directory Structure
 
 ```
-tests/MarketDataCollector.Tests/
-├── Backfill/                          # 4 files
-│   ├── BackfillWorkerServiceTests.cs
-│   ├── RateLimiterTests.cs
-│   ├── HistoricalProviderContractTests.cs
-│   └── ScheduledBackfillTests.cs
-├── Credentials/                       # 3 files
-│   ├── OAuthTokenTests.cs
-│   ├── CredentialTestingServiceTests.cs
-│   └── CredentialStatusTests.cs
-├── Indicators/                        # 1 file
-│   └── TechnicalIndicatorTests.cs
-├── Infrastructure/                    # 2 files
-├── Integration/                       # 1 file
-├── Models/                            # 2 files
-│   ├── HistoricalBarTests.cs
-│   └── AggregateBarTests.cs
-├── Monitoring/                        # 10 files
-│   ├── BadTickFilterTests.cs
-│   ├── SchemaValidationServiceTests.cs
-│   ├── ErrorRingBufferTests.cs
-│   ├── TickSizeValidatorTests.cs
-│   ├── SpreadMonitorTests.cs
-│   ├── BackpressureAlertServiceTests.cs
-│   ├── ProviderLatencyServiceTests.cs
-│   ├── PriceContinuityCheckerTests.cs
-│   └── DataQuality/                   # 2 files
-├── Pipeline/                          # 1 file
-├── Providers/                         # 1 file
-├── Serialization/                     # 1 file
-├── Storage/                           # 4 files
-│   ├── AnalysisExportServiceTests.cs
-│   ├── PortableDataPackagerTests.cs
-│   ├── JsonlBatchWriteTests.cs
-│   └── MemoryMappedJsonlReaderTests.cs
-├── SymbolSearch/                      # 2 files
-│   ├── SymbolSearchServiceTests.cs
-│   └── OpenFigiClientTests.cs
-└── (root level tests)                 # 15+ files
+tests/MarketDataCollector.Tests/           # 134 C# test files
+├── Application/                           # 52 files
+│   ├── Backfill/                          # 8 files
+│   │   ├── AdditionalProviderContractTests.cs
+│   │   ├── BackfillStatusStoreTests.cs
+│   │   ├── BackfillWorkerServiceTests.cs
+│   │   ├── CompositeHistoricalDataProviderTests.cs
+│   │   ├── HistoricalProviderContractTests.cs
+│   │   ├── PriorityBackfillQueueTests.cs
+│   │   ├── RateLimiterTests.cs
+│   │   └── ScheduledBackfillTests.cs
+│   ├── Commands/                          # 8 files
+│   ├── Config/                            # 3 files
+│   ├── Credentials/                       # 3 files
+│   ├── Indicators/                        # 1 file
+│   ├── Monitoring/                        # 13 files
+│   ├── Pipeline/                          # 7 files
+│   └── Services/                          # 12 files
+├── Domain/                                # 16 files
+│   ├── Collectors/                        # 4 files
+│   └── Models/                            # 12 files
+├── Infrastructure/                        # 16 files
+│   ├── DataSources/                       # 1 file
+│   ├── Providers/                         # 12 files
+│   ├── Resilience/                        # 2 files
+│   └── Shared/                            # 1 file
+├── Integration/                           # 21 files
+│   ├── EndpointTests/                     # 17 files
+│   └── (root integration tests)           # 4 files
+├── ProviderSdk/                           # 4 files
+├── Serialization/                         # 1 file
+├── Storage/                               # 19 files
+├── SymbolSearch/                          # 2 files
+└── TestHelpers/                           # 1 file
 
-tests/MarketDataCollector.FSharp.Tests/
-├── Program.fs
+tests/MarketDataCollector.FSharp.Tests/    # 4 F# test files
 ├── CalculationTests.fs
 ├── ValidationTests.fs
 ├── DomainTests.fs
 └── PipelineTests.fs
+
+tests/MarketDataCollector.Ui.Tests/        # 15 C# test files
+├── Services/                              # 13 files
+│   ├── ApiClientServiceTests.cs
+│   ├── BackfillProviderConfigServiceTests.cs
+│   ├── BackfillServiceTests.cs
+│   ├── ChartingServiceTests.cs
+│   ├── FixtureDataServiceTests.cs
+│   ├── FormValidationServiceTests.cs
+│   ├── LeanIntegrationServiceTests.cs
+│   ├── OrderBookVisualizationServiceTests.cs
+│   ├── PortfolioImportServiceTests.cs
+│   ├── SchemaServiceTests.cs
+│   ├── SystemHealthServiceTests.cs
+│   ├── TimeSeriesAlignmentServiceTests.cs
+│   └── WatchlistServiceTests.cs
+└── Collections/                           # 2 files
+    ├── BoundedObservableCollectionTests.cs
+    └── CircularBufferTests.cs
+
+tests/MarketDataCollector.Wpf.Tests/       # 5 C# test files
+└── Services/                              # 5 files
+    ├── ConfigServiceTests.cs
+    ├── ConnectionServiceTests.cs
+    ├── NavigationServiceTests.cs
+    ├── StatusServiceTests.cs
+    └── WpfDataQualityServiceTests.cs
 ```
 
 ### Test Class Naming
@@ -536,7 +565,7 @@ public class AlpacaIntegrationTests
 // Location: benchmarks/MarketDataCollector.Benchmarks/EventPipelineBenchmarks.cs
 
 [MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net80)]
+[SimpleJob(RuntimeMoniker.Net90)]
 public class EventPipelineBenchmarks
 {
     private EventPipeline _pipeline = null!;
@@ -792,4 +821,4 @@ public void PerformanceTest() { }
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-20*

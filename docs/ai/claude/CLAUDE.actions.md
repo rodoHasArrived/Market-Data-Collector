@@ -4,7 +4,7 @@ This guide covers the CI/CD pipeline for the Market Data Collector, including wo
 
 ## Workflow Inventory
 
-The project uses 17 GitHub Actions workflows in `.github/workflows/`:
+The project uses 22 GitHub Actions workflows in `.github/workflows/`:
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
@@ -13,7 +13,7 @@ The project uses 17 GitHub Actions workflows in `.github/workflows/`:
 | Code Quality | `code-quality.yml` | Push/PRs (source changes) | Formatting, analyzers, AI quality suggestions |
 | Security | `security.yml` | PRs to main, weekly (Mon), manual | CodeQL, dependency review, secret detection, SAST |
 | Validate Workflows | `validate-workflows.yml` | PRs (workflow changes), manual | YAML validation, action ref checks, permission audit |
-| Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths), manual | UWP + WPF builds, MSIX packaging |
+| Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths), manual | WPF builds, MSIX packaging |
 | Build & Release | `dotnet-desktop.yml` | Manual dispatch | Multi-platform publish (Linux/Windows/macOS) |
 | Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, GHCR push |
 | Release | `release.yml` | Manual dispatch | Semver validation, changelog, GitHub release |
@@ -24,6 +24,11 @@ The project uses 17 GitHub Actions workflows in `.github/workflows/`:
 | Stale | `stale.yml` | Daily (midnight UTC), manual | Stale issue/PR management |
 | Build Observability | `build-observability.yml` | Manual dispatch | Build diagnostics, metrics, fingerprints |
 | Scheduled Maintenance | `scheduled-maintenance.yml` | Weekly (Sun), manual | Tests, cache cleanup, dependency health, AI recommendations |
+| Copilot Setup | `copilot-setup-steps.yml` | Called by Copilot | Copilot environment setup |
+| Prompt Generation | `prompt-generation.yml` | Push/PRs (prompt files), manual | AI prompt template generation |
+| Ticker Data Collection | `ticker-data-collection.yml` | Scheduled, manual | Automated ticker data collection |
+| Update Diagrams | `update-diagrams.yml` | Push/PRs (source changes), manual | Architecture diagram generation |
+| Update UML Diagrams | `update-uml-diagrams.yml` | Push/PRs (source changes), manual | UML diagram generation |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | Called by other workflows | Shared build/test steps |
 
 ## Key Locations
@@ -60,8 +65,7 @@ The project standardizes on `actions/upload-artifact@v4` and `actions/download-a
 
 ### Desktop build targets
 The consolidated `desktop-builds.yml` supports selective builds via workflow dispatch:
-- `all` - Build both UWP and WPF
-- `uwp` - UWP only (x64/arm64, MSIX)
+- `all` - Build all desktop targets
 - `wpf` - WPF only (self-contained + framework-dependent)
 - `wpf-smoke-test` - WPF startup validation only
 
@@ -101,3 +105,7 @@ done
 - [`docs/development/github-actions-summary.md`](../../development/github-actions-summary.md) - Workflow summary
 - [`docs/development/github-actions-testing.md`](../../development/github-actions-testing.md) - CI testing tips
 - [`docs/development/build-observability.md`](../../development/build-observability.md) - Build metrics system
+
+---
+
+*Last Updated: 2026-02-20*
