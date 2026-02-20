@@ -70,6 +70,16 @@ make docker                  # Build and run Docker container
 make docs                    # Generate documentation
 make help                    # Show all available commands
 
+# AI Repository Updater (for AI agents with shell access)
+make ai-audit                # Full repository audit (all analysers)
+make ai-audit-code           # Code convention violations
+make ai-audit-docs           # Documentation quality analysis
+make ai-audit-tests          # Test coverage gaps
+make ai-verify               # Build + test + lint verification
+make ai-report               # Generate improvement report
+python3 build/scripts/ai-repo-updater.py known-errors   # Known AI errors to avoid
+python3 build/scripts/ai-repo-updater.py diff-summary    # Summarise uncommitted changes
+
 # Desktop Development (via Makefile)
 make desktop-dev-bootstrap   # Validate desktop development environment
 make build-wpf               # Build WPF desktop app (Windows only)
@@ -312,6 +322,7 @@ Market-Data-Collector/
 │       │   ├── update-claude-md.py
 │       │   ├── validate-api-docs.py
 │       │   └── validate-examples.py
+│       ├── ai-repo-updater.py
 │       ├── hooks/
 │       │   ├── install-hooks.sh
 │       │   └── pre-commit
@@ -364,6 +375,7 @@ Market-Data-Collector/
 │   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
 │   │   │   ├── CLAUDE.providers.md
+│   │   │   ├── CLAUDE.repo-updater.md
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
@@ -2136,6 +2148,7 @@ The UWP desktop application (`MarketDataCollector.Uwp`) was deprecated and fully
 | `docs/ai/claude/CLAUDE.storage.md` | Storage system |
 | `docs/ai/claude/CLAUDE.fsharp.md` | F# domain library |
 | `docs/ai/claude/CLAUDE.testing.md` | Testing guide |
+| `docs/ai/claude/CLAUDE.repo-updater.md` | AI Repository Updater script guide |
 | `.github/agents/documentation-agent.md` | Documentation maintenance |
 
 ### Reference Materials

@@ -21,7 +21,8 @@
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
         build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
         icons desktop desktop-publish install-hooks \
-        build-wpf build-uwp test-desktop-services desktop-dev-bootstrap uwp-xaml-diagnose
+        build-wpf build-uwp test-desktop-services desktop-dev-bootstrap uwp-xaml-diagnose \
+        ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-verify ai-report
 
 # Default target
 .DEFAULT_GOAL := help
@@ -468,3 +469,34 @@ desktop-dev-bootstrap: ## Run desktop development bootstrap checks (PowerShell)
 uwp-xaml-diagnose: ## Run UWP XAML preflight diagnostics (PowerShell)
 	@echo "$(BLUE)Running UWP XAML diagnostics...$(NC)"
 	pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/diagnose-uwp-xaml.ps1
+
+# =============================================================================
+# AI Repository Updater
+# =============================================================================
+
+AI_UPDATER := python3 build/scripts/ai-repo-updater.py
+
+ai-audit: ## Run full AI repository audit (all analysers)
+	@echo "$(BLUE)Running full repository audit...$(NC)"
+	@$(AI_UPDATER) audit --summary
+
+ai-audit-code: ## Run AI code conventions audit
+	@echo "$(BLUE)Auditing code conventions...$(NC)"
+	@$(AI_UPDATER) audit-code --summary
+
+ai-audit-docs: ## Run AI documentation quality audit
+	@echo "$(BLUE)Auditing documentation quality...$(NC)"
+	@$(AI_UPDATER) audit-docs --summary
+
+ai-audit-tests: ## Run AI test coverage gap audit
+	@echo "$(BLUE)Auditing test coverage gaps...$(NC)"
+	@$(AI_UPDATER) audit-tests --summary
+
+ai-verify: ## Run build + test + lint verification
+	@echo "$(BLUE)Running verification (build + test + lint)...$(NC)"
+	@$(AI_UPDATER) verify
+
+ai-report: ## Generate AI improvement report
+	@echo "$(BLUE)Generating improvement report...$(NC)"
+	@$(AI_UPDATER) report --output docs/generated/improvement-report.md
+	@echo "$(GREEN)Report written to docs/generated/improvement-report.md$(NC)"
