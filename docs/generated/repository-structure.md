@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 19:09:51 UTC
+> Auto-generated on 2026-02-20 19:34:01 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -837,10 +837,12 @@ Market-Data-Collector/
 │   │   │   ├── AdvancedAnalyticsModels.cs
 │   │   │   ├── AdvancedAnalyticsServiceBase.cs
 │   │   │   ├── AlertService.cs
+│   │   │   ├── AnalysisExportServiceBase.cs
 │   │   │   ├── AnalysisExportWizardService.cs
 │   │   │   ├── ApiClientService.cs
 │   │   │   ├── ArchiveBrowserService.cs
 │   │   │   ├── ArchiveHealthService.cs
+│   │   │   ├── BackendServiceManagerBase.cs
 │   │   │   ├── BackfillApiService.cs
 │   │   │   ├── BackfillCheckpointService.cs
 │   │   │   ├── BackfillProviderConfigService.cs
@@ -851,10 +853,12 @@ Market-Data-Collector/
 │   │   │   ├── ColorPalette.cs
 │   │   │   ├── CommandPaletteService.cs
 │   │   │   ├── ConfigService.cs
+│   │   │   ├── ConfigServiceBase.cs
 │   │   │   ├── ConnectionServiceBase.cs
 │   │   │   ├── CredentialService.cs
 │   │   │   ├── DataCalendarService.cs
 │   │   │   ├── DataCompletenessService.cs
+│   │   │   ├── DataQualityServiceBase.cs
 │   │   │   ├── DataSamplingService.cs
 │   │   │   ├── DesktopJsonOptions.cs
 │   │   │   ├── DiagnosticsService.cs
@@ -871,9 +875,11 @@ Market-Data-Collector/
 │   │   │   ├── LeanIntegrationService.cs
 │   │   │   ├── LiveDataService.cs
 │   │   │   ├── LoggingService.cs
+│   │   │   ├── LoggingServiceBase.cs
 │   │   │   ├── ManifestService.cs
 │   │   │   ├── NavigationServiceBase.cs
 │   │   │   ├── NotificationService.cs
+│   │   │   ├── NotificationServiceBase.cs
 │   │   │   ├── OAuthRefreshService.cs
 │   │   │   ├── OnboardingTourService.cs
 │   │   │   ├── OperationResult.cs
@@ -890,6 +896,7 @@ Market-Data-Collector/
 │   │   │   ├── SearchService.cs
 │   │   │   ├── SetupWizardService.cs
 │   │   │   ├── SmartRecommendationsService.cs
+│   │   │   ├── StatusServiceBase.cs
 │   │   │   ├── StorageAnalyticsService.cs
 │   │   │   ├── StorageModels.cs
 │   │   │   ├── StorageOptimizationAdvisorService.cs
@@ -983,6 +990,7 @@ Market-Data-Collector/
 │       │   ├── StorageService.cs
 │       │   ├── ThemeService.cs
 │       │   ├── TooltipService.cs
+│       │   ├── TypeForwards.cs
 │       │   ├── WatchlistService.cs
 │       │   ├── WorkspaceService.cs
 │       │   ├── WpfAnalysisExportService.cs
@@ -1188,8 +1196,10 @@ Market-Data-Collector/
 │   │   ├── Services/
 │   │   │   ├── ActivityFeedServiceTests.cs
 │   │   │   ├── AlertServiceTests.cs
+│   │   │   ├── AnalysisExportServiceBaseTests.cs
 │   │   │   ├── ApiClientServiceTests.cs
 │   │   │   ├── ArchiveBrowserServiceTests.cs
+│   │   │   ├── BackendServiceManagerBaseTests.cs
 │   │   │   ├── BackfillApiServiceTests.cs
 │   │   │   ├── BackfillCheckpointServiceTests.cs
 │   │   │   ├── BackfillProviderConfigServiceTests.cs
@@ -1197,11 +1207,13 @@ Market-Data-Collector/
 │   │   │   ├── ChartingServiceTests.cs
 │   │   │   ├── CollectionSessionServiceTests.cs
 │   │   │   ├── CommandPaletteServiceTests.cs
+│   │   │   ├── ConfigServiceBaseTests.cs
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceBaseTests.cs
 │   │   │   ├── CredentialServiceTests.cs
 │   │   │   ├── DataCalendarServiceTests.cs
 │   │   │   ├── DataCompletenessServiceTests.cs
+│   │   │   ├── DataQualityServiceBaseTests.cs
 │   │   │   ├── DataSamplingServiceTests.cs
 │   │   │   ├── DiagnosticsServiceTests.cs
 │   │   │   ├── ErrorHandlingServiceTests.cs
@@ -1211,7 +1223,9 @@ Market-Data-Collector/
 │   │   │   ├── IntegrityEventsServiceTests.cs
 │   │   │   ├── LeanIntegrationServiceTests.cs
 │   │   │   ├── LiveDataServiceTests.cs
+│   │   │   ├── LoggingServiceBaseTests.cs
 │   │   │   ├── ManifestServiceTests.cs
+│   │   │   ├── NotificationServiceBaseTests.cs
 │   │   │   ├── NotificationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
@@ -1222,6 +1236,7 @@ Market-Data-Collector/
 │   │   │   ├── SchemaServiceTests.cs
 │   │   │   ├── SearchServiceTests.cs
 │   │   │   ├── SmartRecommendationsServiceTests.cs
+│   │   │   ├── StatusServiceBaseTests.cs
 │   │   │   ├── StorageAnalyticsServiceTests.cs
 │   │   │   ├── SymbolGroupServiceTests.cs
 │   │   │   ├── SymbolManagementServiceTests.cs
