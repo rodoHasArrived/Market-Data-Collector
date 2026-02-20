@@ -111,7 +111,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
     [Fact]
     public async Task GetCompletenessReportAsync_EmptyDirectory_ShouldReturnReportWithNoSymbols()
     {
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var report = await svc.GetCompletenessReportAsync(
@@ -131,7 +131,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
         var symbolDir = Path.Combine(_tempDir, "SPY");
         Directory.CreateDirectory(symbolDir);
 
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var report = await svc.GetCompletenessReportAsync(
@@ -157,7 +157,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
         var filePath = Path.Combine(symbolDir, $"{tradingDay:yyyy-MM-dd}.jsonl");
         await File.WriteAllTextAsync(filePath, "{\"Timestamp\":\"2026-03-09T10:00:00Z\"}\n");
 
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var report = await svc.GetCompletenessReportAsync(
@@ -175,7 +175,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var act = async () => await svc.GetCompletenessReportAsync(
@@ -189,7 +189,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
     [Fact]
     public async Task GetDailyCompletenessAsync_Weekend_ShouldReturnNonTradingDay()
     {
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var result = await svc.GetDailyCompletenessAsync(_tempDir, new DateOnly(2026, 3, 14));
@@ -202,7 +202,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
     [Fact]
     public async Task GetDailyCompletenessAsync_Holiday_ShouldReturnNonTradingDay()
     {
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var result = await svc.GetDailyCompletenessAsync(_tempDir, new DateOnly(2026, 12, 25));
@@ -218,7 +218,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
         var symbolDir = Path.Combine(_tempDir, "AAPL");
         Directory.CreateDirectory(symbolDir);
 
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var result = await svc.GetDailyCompletenessAsync(_tempDir, new DateOnly(2026, 3, 10));
@@ -232,7 +232,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
     [Fact]
     public async Task GetBackfillableGapsAsync_EmptyDirectory_ShouldReturnEmpty()
     {
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var gaps = await svc.GetBackfillableGapsAsync(
@@ -248,7 +248,7 @@ public sealed class DataCompletenessServiceTests : IDisposable
         var symbolDir = Path.Combine(_tempDir, "TSLA");
         Directory.CreateDirectory(symbolDir);
 
-        var manifest = new ManifestService();
+        var manifest = ManifestService.Instance;
         var svc = new DataCompletenessService(manifest, _calendar);
 
         var gaps = await svc.GetBackfillableGapsAsync(

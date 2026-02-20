@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,9 +12,13 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class WatchlistService
 {
-    private static readonly Lazy<WatchlistService> _instance = new(() => new WatchlistService());
+    private static WatchlistService _instance = new WatchlistService();
 
-    public static WatchlistService Instance => _instance.Value;
+    public static WatchlistService Instance
+    {
+        get => _instance;
+        set => _instance = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     public virtual Task<WatchlistData> LoadWatchlistAsync()
         => Task.FromResult(new WatchlistData());
