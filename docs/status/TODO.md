@@ -1,39 +1,39 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-20T18:25:12.326584+00:00
+> Last updated: 2026-02-20T18:57:47.656780+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 17 |
+| **Total Items** | 20 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 17 |
+| **Untracked** | 20 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 17 | Important notes and documentation |
+| `NOTE` | 20 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 10 |
+| `tests/` | 13 |
 | `src/` | 5 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-17 items have no assignee and no issue tracking:
+20 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (17)
+### NOTE (20)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -83,8 +83,17 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `tests/MarketDataCollector.Ui.Tests/Services/BackfillServiceTests.cs:198`
   > Similar to IsRunning test, this verifies the property logic
 
+- [ ] `tests/MarketDataCollector.Ui.Tests/Services/ScheduledMaintenanceServiceTests.cs:85`
+  > since this is a singleton shared across tests, if StartScheduler was previously called, we stop it first to ensure test isolation.
+
 - [ ] `tests/MarketDataCollector.Wpf.Tests/Services/NavigationServiceTests.cs:57`
   > This test assumes NavigationService might not be initialized In production, Initialize should be called during app startup
+
+- [ ] `tests/MarketDataCollector.Wpf.Tests/Services/OfflineTrackingPersistenceServiceTests.cs:27`
+  > Singleton state may persist across tests. We explicitly shut down first to verify the default state transition.
+
+- [ ] `tests/MarketDataCollector.Wpf.Tests/Services/PendingOperationsQueueServiceTests.cs:30`
+  > This may not be false if other tests have run InitializeAsync. We test the lifecycle explicitly below.
 
 ---
 
