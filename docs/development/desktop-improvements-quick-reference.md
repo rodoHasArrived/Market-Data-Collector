@@ -1,7 +1,7 @@
 # Desktop Development Improvements - Quick Reference Card
 
 **Last Updated**: 2026-02-20
-**Status**: Phase 1 Complete, Phase 2 In Progress (816 tests, 45% coverage)
+**Status**: Phase 1 Complete, Phase 3 In Progress (1100+ tests, 70% coverage)
 
 ## 🎯 Problem Statement
 **Identify high-value improvements for desktop platform development ease**
@@ -16,15 +16,15 @@
 ├── Developer tooling (bootstrap, diagnostics)
 ├── Documentation (workflows, policies)
 ├── PR templates
-├── Test infrastructure (816 tests, 41 services)
+├── Test infrastructure (1100+ tests, 63 services)
 ├── DI modernization (73 registrations)
 ├── Architecture documentation (desktop-layers.md)
 └── Fixture mode (--fixture / MDC_FIXTURE_MODE)
 
 🔶 Remaining Gaps
-├── ~55% of desktop services still lack tests
+├── ~30% of desktop services still lack tests
 ├── No service extraction to shared layer (Phase 2)
-└── Target 60%+ coverage (Phase 3)
+└── Target 80%+ coverage (Phase 3 continued)
 ```
 
 ### Impact Ranking
@@ -42,18 +42,23 @@
 ### 1. Test Infrastructure ⚡
 
 ```bash
-tests/MarketDataCollector.Ui.Tests/     # ~551 tests (shared services)
-├── Services/ (29 test files)
+tests/MarketDataCollector.Ui.Tests/     # ~700 tests (shared services)
+├── Services/ (43 test files)
 │   ├── ActivityFeedServiceTests.cs        # 35 tests ✅
 │   ├── AlertServiceTests.cs               # 25 tests ✅
 │   ├── ApiClientServiceTests.cs           # 14 tests ✅
+│   ├── ArchiveBrowserServiceTests.cs      # 14 tests ✅ NEW
 │   ├── BackfillApiServiceTests.cs         # 14 tests ✅
+│   ├── BackfillCheckpointServiceTests.cs  # ~10 tests ✅
 │   ├── BackfillProviderConfigServiceTests # 20 tests ✅
 │   ├── BackfillServiceTests.cs            # 18 tests ✅
 │   ├── ChartingServiceTests.cs            # 16 tests ✅
+│   ├── CollectionSessionServiceTests.cs   # 12 tests ✅ NEW
+│   ├── CommandPaletteServiceTests.cs      # ~10 tests ✅
 │   ├── ConfigServiceTests.cs              # 25 tests ✅
 │   ├── ConnectionServiceBaseTests.cs      # 22 tests ✅
 │   ├── CredentialServiceTests.cs          # 18 tests ✅
+│   ├── DataCalendarServiceTests.cs        # 16 tests ✅ NEW
 │   ├── DataCompletenessServiceTests.cs    # 40 tests ✅
 │   ├── DataSamplingServiceTests.cs        # 30 tests ✅
 │   ├── DiagnosticsServiceTests.cs         # 24 tests ✅
@@ -61,15 +66,24 @@ tests/MarketDataCollector.Ui.Tests/     # ~551 tests (shared services)
 │   ├── EventReplayServiceTests.cs         # 22 tests ✅
 │   ├── FixtureDataServiceTests.cs         # 13 tests ✅
 │   ├── FormValidationServiceTests.cs      #  4 tests ✅
+│   ├── IntegrityEventsServiceTests.cs     # ~10 tests ✅
 │   ├── LeanIntegrationServiceTests.cs     # 12 tests ✅
 │   ├── LiveDataServiceTests.cs            # 21 tests ✅
+│   ├── ManifestServiceTests.cs            # 14 tests ✅ NEW
 │   ├── NotificationServiceTests.cs        # 24 tests ✅
 │   ├── OrderBookVisualizationServiceTests #  4 tests ✅
 │   ├── PortfolioImportServiceTests.cs     #  4 tests ✅
 │   ├── ProviderHealthServiceTests.cs      # 20 tests ✅
 │   ├── ProviderManagementServiceTests.cs  # 25 tests ✅
+│   ├── ScheduleManagerServiceTests.cs     # 14 tests ✅ NEW
+│   ├── ScheduledMaintenanceServiceTests   # 22 tests ✅ NEW
 │   ├── SchemaServiceTests.cs              #  6 tests ✅
+│   ├── SearchServiceTests.cs              # 14 tests ✅ NEW
+│   ├── SmartRecommendationsServiceTests   # ~10 tests ✅
 │   ├── StorageAnalyticsServiceTests.cs    # 15 tests ✅
+│   ├── SymbolGroupServiceTests.cs         # 16 tests ✅ NEW
+│   ├── SymbolManagementServiceTests.cs    # 13 tests ✅ NEW
+│   ├── SymbolMappingServiceTests.cs       # ~10 tests ✅
 │   ├── SystemHealthServiceTests.cs        # 21 tests ✅
 │   ├── TimeSeriesAlignmentServiceTests.cs # 14 tests ✅
 │   └── WatchlistServiceTests.cs           # 22 tests ✅
@@ -78,22 +92,30 @@ tests/MarketDataCollector.Ui.Tests/     # ~551 tests (shared services)
 │   └── CircularBufferTests.cs               # 11 tests ✅
 └── README.md
 
-tests/MarketDataCollector.Wpf.Tests/    # ~265 tests (WPF services)
-├── Services/ (12 test files)
+tests/MarketDataCollector.Wpf.Tests/    # ~400 tests (WPF services)
+├── Services/ (20 test files)
 │   ├── AdminMaintenanceServiceTests.cs    # 23 tests ✅
 │   ├── BackgroundTaskSchedulerTests.cs    # 19 tests ✅
 │   ├── ConfigServiceTests.cs              # 12 tests ✅
 │   ├── ConnectionServiceTests.cs          # 21 tests ✅
+│   ├── ExportPresetServiceTests.cs        #  4 tests ✅ NEW
+│   ├── FirstRunServiceTests.cs            #  8 tests ✅ NEW
 │   ├── InfoBarServiceTests.cs             # 19 tests ✅
 │   ├── KeyboardShortcutServiceTests.cs    # 30 tests ✅
 │   ├── MessagingServiceTests.cs           # 19 tests ✅
 │   ├── NavigationServiceTests.cs          # 12 tests ✅
+│   ├── NotificationServiceTests.cs        # 16 tests ✅ NEW
+│   ├── OfflineTrackingPersistenceTests    #  8 tests ✅ NEW
+│   ├── PendingOperationsQueueTests        # 17 tests ✅ NEW
+│   ├── RetentionAssuranceServiceTests     # 20 tests ✅ NEW
 │   ├── StatusServiceTests.cs              # 12 tests ✅
 │   ├── StorageServiceTests.cs             # 29 tests ✅
+│   ├── TooltipServiceTests.cs             # 10 tests ✅ NEW
+│   ├── WatchlistServiceTests.cs           #  8 tests ✅ NEW
 │   ├── WorkspaceServiceTests.cs           # 25 tests ✅
 │   └── WpfDataQualityServiceTests.cs      # 28 tests ✅
 
-Total: ~816 tests, 41 of 90 services (45%), CI-integrated
+Total: ~1100 tests, 63 of 90 services (70%), CI-integrated
 ```
 
 **Run tests:**
@@ -109,7 +131,7 @@ dotnet test tests/MarketDataCollector.Wpf.Tests  # Windows only
 **File:** `docs/development/desktop-platform-improvements-implementation-guide.md` (984 lines)
 
 **Contents:**
-- ✅ **Priority 1: Test Infrastructure** (COMPLETE - 816 tests)
+- ✅ **Priority 1: Test Infrastructure** (COMPLETE - 1100+ tests)
 - ✅ **Priority 2: UI Fixture Mode** (COMPLETE - wired into App.xaml.cs)
 - ✅ **Priority 3: Architecture Diagram** (COMPLETE - desktop-layers.md)
 - ✅ **Priority 4: DI Modernization** (COMPLETE - 73 registrations)
@@ -124,7 +146,7 @@ dotnet test tests/MarketDataCollector.Wpf.Tests  # Windows only
 
 **Highlights:**
 - Quick commands reference
-- Complete test coverage breakdown (816 tests, 41 services)
+- Complete test coverage breakdown (1100+ tests, 63 services)
 - Fixture mode usage guide
 - Platform-specific instructions
 - Troubleshooting procedures
@@ -139,17 +161,17 @@ dotnet test tests/MarketDataCollector.Wpf.Tests  # Windows only
 
 ## 🚀 Next Steps
 
-### Immediate: Expand Coverage to 60% (Phase 3)
+### Immediate: Expand Coverage to 80% (Phase 3 continued)
 ```
-[ ] Add tests for ~13 more services (targeting 54 of 90)
-    ├── Ui.Services: AdminMaintenance, ArchiveBrowser, CommandPalette,
-    │   ScheduleManager, SymbolManagement, CollectionSession,
-    │   BackfillCheckpoint, DataCalendar, OnboardingTour
-    └── WPF: FormValidation, RetentionAssurance, ExportPreset,
-        ContextMenu
+[x] 60%+ coverage target met (70%, 63 of 90 services) ✅
+[ ] Add tests for ~9 more services (targeting 72 of 90)
+    ├── Ui.Services: AdminMaintenance, AnalysisExportWizard,
+    │   BatchExportScheduler, SetupWizard,
+    │   StorageOptimizationAdvisor, PortablePackager
+    └── WPF: FormValidation, Schema, WpfAnalysisExport
 
-Target: 60%+ coverage (54+ of 90 services)
-Current: 45% (41 of 90 services, 816 tests)
+Target: 80%+ coverage (72+ of 90 services)
+Current: 70% (63 of 90 services, 1100+ tests)
 ```
 
 ### Medium-term: Service Extraction (Phase 2)
@@ -184,9 +206,9 @@ Before → After (6 months)
 ├── Time to fix bug:        4 hrs → 1 hr
 └── Onboarding time:        2 days → 4 hrs
 
-Current Status (Phase 2):
-├── Test baseline: 816 tests ✅
-├── Test coverage: ~45% (41 of 90 services) ✅
+Current Status (Phase 3):
+├── Test baseline: 1100+ tests ✅
+├── Test coverage: ~70% (63 of 90 services) ✅
 ├── DI modernization: 73 registrations ✅
 └── CI integration: Complete ✅
 ```
@@ -194,13 +216,13 @@ Current Status (Phase 2):
 ### Code Quality
 ```
 Before → After (6 months)
-├── Test coverage:          0% → 60%+
+├── Test coverage:          0% → 80%+
 ├── Duplicate code:         100% → <30%
 ├── Bugs caught pre-merge:  0% → 80%+
 └── "Cannot reproduce":     50% → <10%
 
-Current Status (Phase 2):
-├── Test coverage: 45% ✅ (816 tests, 41 services)
+Current Status (Phase 3):
+├── Test coverage: 70% ✅ (1100+ tests, 63 services)
 ├── Test quality: High (xUnit + FluentAssertions + Moq)
 ├── Architecture docs: Complete (desktop-layers.md) ✅
 └── CI validation: Active ✅
@@ -245,10 +267,10 @@ Current → Target
 
 Track these to measure progress:
 
-- [x] Test infrastructure established (816 tests complete)
-- [x] 150+ unit tests for desktop services (816 achieved)
+- [x] Test infrastructure established (1100+ tests complete)
+- [x] 150+ unit tests for desktop services (1100+ achieved)
 - [x] 40%+ test coverage on desktop services (45% achieved)
-- [ ] 60%+ test coverage on desktop services (in progress)
+- [x] 60%+ test coverage on desktop services (70% achieved)
 - [x] UI fixture mode implemented (--fixture / MDC_FIXTURE_MODE)
 - [x] Architecture diagram in docs (desktop-layers.md)
 - [ ] <30% code duplication (from 100%)
@@ -256,13 +278,13 @@ Track these to measure progress:
 - [ ] 80%+ bugs caught by tests pre-merge
 
 **Phase 1 Complete**: Test infrastructure + DI + architecture + fixture mode ✅
-**Phase 2 In Progress**: 45% coverage achieved, targeting 60%+
+**Phase 3 In Progress**: 70% coverage achieved, targeting 80%+
 
 ## 🔗 Quick Links
 
 - **Test Projects**:
-  - `tests/MarketDataCollector.Ui.Tests/` (~551 tests, 31 files)
-  - `tests/MarketDataCollector.Wpf.Tests/` (~265 tests, 12 files)
+  - `tests/MarketDataCollector.Ui.Tests/` (~700 tests, 43 files)
+  - `tests/MarketDataCollector.Wpf.Tests/` (~400 tests, 20 files)
 - **Run Tests**: `make test-desktop-services`
 - **Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)
 - **Executive Summary**: [desktop-improvements-executive-summary.md](./desktop-improvements-executive-summary.md)
@@ -282,6 +304,6 @@ Track these to measure progress:
 
 ---
 
-**Status**: Phase 2 In Progress ✅ (816 tests, 45% coverage) | Targeting 60%+
+**Status**: Phase 3 In Progress ✅ (1100+ tests, 70% coverage) | Targeting 80%+
 
-**Next Action**: Expand coverage to 60%+ (add tests for ~13 more services)
+**Next Action**: Expand coverage to 80%+ (add tests for ~9 more services)
