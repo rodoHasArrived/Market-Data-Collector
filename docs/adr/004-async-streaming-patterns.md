@@ -32,13 +32,13 @@ Use `System.Threading.Channels` for producer-consumer scenarios with backpressur
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Streaming Interface | `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs` | Event streaming |
-| Event Pipeline | `src/MarketDataCollector/Application/Pipeline/EventPipeline.cs` | Channel-based routing |
-| Trade Collector | `src/MarketDataCollector/Domain/Collectors/TradeDataCollector.cs` | Stream consumer |
-| Quote Collector | `src/MarketDataCollector/Domain/Collectors/QuoteCollector.cs` | Stream consumer |
-| Event Buffer | `src/MarketDataCollector/Storage/Services/EventBuffer.cs` | Bounded buffering |
-| Backfill Streaming | `src/MarketDataCollector/Infrastructure/Providers/Backfill/` | Historical streaming |
-| Async Tests | `tests/MarketDataCollector.Tests/Pipeline/` | Pattern verification |
+| Streaming Interface | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` | Event streaming |
+| Event Pipeline | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Channel-based routing |
+| Trade Collector | `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` | Stream consumer |
+| Quote Collector | `src/MarketDataCollector.Domain/Collectors/QuoteCollector.cs` | Stream consumer |
+| Event Buffer | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Bounded buffering |
+| Backfill Streaming | `src/MarketDataCollector.Infrastructure/Providers/Historical/` | Historical streaming |
+| Async Tests | `tests/MarketDataCollector.Tests/Application/Pipeline/` | Pattern verification |
 
 ## Rationale
 
@@ -206,7 +206,8 @@ await foreach (var item in stream.WithCancellation(ct))
 - [CLAUDE.md Critical Rules](../../CLAUDE.md#critical-rules)
 - [Configuration Reference](../HELP.md#configuration)
 - [Microsoft IAsyncEnumerable Docs](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/generate-consume-asynchronous-stream)
+- [ADR-013: Bounded Channel Policy](013-bounded-channel-policy.md) - Defines the `EventPipelinePolicy` presets referenced in the Channel Benefits section above
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-20*

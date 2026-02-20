@@ -34,14 +34,14 @@ Data flows through tiers automatically based on age and access patterns.
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Storage Configuration | `src/MarketDataCollector/Storage/StorageOptions.cs` | Tier configuration |
-| Event Pipeline | `src/MarketDataCollector/Application/Pipeline/EventPipeline.cs` | Bounded channel routing |
-| JSONL Sink | `src/MarketDataCollector/Storage/Sinks/JsonlStorageSink.cs` | Hot/warm tier writer |
-| Parquet Sink | `src/MarketDataCollector/Storage/Sinks/ParquetStorageSink.cs` | Cold tier Parquet writer |
-| WAL Implementation | `src/MarketDataCollector/Storage/Archival/WriteAheadLog.cs` | Durability layer |
-| Compression Profiles | `src/MarketDataCollector/Storage/Archival/CompressionProfileManager.cs` | Compression strategies |
-| Tier Migration | `src/MarketDataCollector/Storage/Services/TierMigrationService.cs` | Data lifecycle management |
-| Archival Service | `src/MarketDataCollector/Storage/Archival/ArchivalStorageService.cs` | Archive management |
+| Storage Configuration | `src/MarketDataCollector.Storage/StorageOptions.cs` | Tier configuration |
+| Event Pipeline | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Bounded channel routing |
+| JSONL Sink | `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs` | Hot/warm tier writer |
+| Parquet Sink | `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` | Cold tier Parquet writer |
+| WAL Implementation | `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs` | Durability layer |
+| Compression Profiles | `src/MarketDataCollector.Storage/Archival/CompressionProfileManager.cs` | Compression strategies |
+| Tier Migration | `src/MarketDataCollector.Storage/Services/TierMigrationService.cs` | Data lifecycle management |
+| Archival Service | `src/MarketDataCollector.Storage/Archival/ArchivalStorageService.cs` | Archive management |
 | Storage Tests | `tests/MarketDataCollector.Tests/Storage/` | Tier verification |
 
 ## Rationale
@@ -154,7 +154,9 @@ public sealed record CompressionProfile(
 - [Storage Design](../architecture/storage-design.md)
 - [Compression Guide](../HELP.md#configuration)
 - [Data Lifecycle](../operations/operator-runbook.md#storage-management)
+- [ADR-007: Write-Ahead Log](007-write-ahead-log-durability.md) - WAL provides crash-safe durability for hot-tier writes
+- [ADR-008: Multi-Format Composite Storage](008-multi-format-composite-storage.md) - CompositeSink fans out to JSONL and Parquet tiers simultaneously
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-20*
