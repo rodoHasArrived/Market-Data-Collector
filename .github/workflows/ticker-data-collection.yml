@@ -100,7 +100,7 @@ jobs:
           invalid_symbols=$(printf '%s' "$normalized_symbols" \
             | tr ',' '\n' \
             | grep -Ev '^[A-Z0-9.^/=_-]+$' \
-            | paste -sd, -)
+            | paste -sd, - || true)
           if [ -n "$invalid_symbols" ]; then
             echo "Input validation failed: one or more symbols contain unsupported characters."
             echo "Invalid symbols: $invalid_symbols"
