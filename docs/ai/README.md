@@ -11,6 +11,7 @@ Located in `claude/`:
 - **[CLAUDE.fsharp.md](claude/CLAUDE.fsharp.md)** - F# domain library guide
 - **[CLAUDE.testing.md](claude/CLAUDE.testing.md)** - Testing guide
 - **[CLAUDE.actions.md](claude/CLAUDE.actions.md)** - GitHub Actions/CI guide
+- **[CLAUDE.repo-updater.md](claude/CLAUDE.repo-updater.md)** - AI Repository Updater script guide
 
 ## Copilot Guides
 
