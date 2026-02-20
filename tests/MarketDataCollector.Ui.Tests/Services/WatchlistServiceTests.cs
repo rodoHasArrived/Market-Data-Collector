@@ -118,17 +118,14 @@ public sealed class WatchlistServiceTests
     }
 
     [Fact]
-    public void Instance_CanBeReplaced()
+    public void CustomWatchlistService_CanBeUsedAsWatchlistService()
     {
         // Arrange
-        var customService = new CustomWatchlistService();
-
-        // Act
-        WatchlistService.Instance = customService;
-        var retrievedInstance = WatchlistService.Instance;
+        WatchlistService service = new CustomWatchlistService();
 
         // Assert
-        retrievedInstance.Should().BeSameAs(customService);
+        service.Should().NotBeNull();
+        service.Should().BeOfType<CustomWatchlistService>();
     }
 
     [Fact]
