@@ -757,8 +757,7 @@ Console.WriteLine($"Buy volume: {breakdown.BuyVolume}, Sell volume: {breakdown.S
 
 ## Running F# Tests
 
-The F# test project contains 5 test files:
-- `Program.fs` - Test runner entry point
+The F# test project contains 4 test files:
 - `CalculationTests.fs` - Spread, imbalance, aggregation tests
 - `ValidationTests.fs` - Railway-oriented validation tests
 - `DomainTests.fs` - Domain model tests
@@ -859,4 +858,4 @@ let validate trade =
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-20*

@@ -22,16 +22,30 @@ The system implements an **archival-first storage strategy** with Write-Ahead Lo
 
 ## File Locations
 
-The storage system comprises **37 files** across multiple subsystems.
+The storage system comprises **61 files** across multiple subsystems.
 
 ### Core Storage Components
 | File | Purpose |
 |------|---------|
-| `Storage/Sinks/JsonlStorageSink.cs` | JSONL file persistence |
-| `Storage/Sinks/ParquetStorageSink.cs` | Parquet columnar storage |
-| `Storage/Policies/JsonlStoragePolicy.cs` | File naming and organization |
 | `Storage/StorageOptions.cs` | Configuration options |
 | `Storage/StorageProfiles.cs` | Pre-configured storage profiles |
+
+### Sinks (4 files)
+| File | Purpose |
+|------|---------|
+| `Storage/Sinks/JsonlStorageSink.cs` | JSONL file persistence |
+| `Storage/Sinks/ParquetStorageSink.cs` | Parquet columnar storage |
+| `Storage/Sinks/CompositeSink.cs` | Dual-write to multiple formats simultaneously |
+| `Storage/Sinks/CatalogSyncSink.cs` | Catalog synchronization sink |
+
+### Policies (1 file)
+| File | Purpose |
+|------|---------|
+| `Storage/Policies/JsonlStoragePolicy.cs` | File naming and organization |
+
+### Replay (2 files)
+| File | Purpose |
+|------|---------|
 | `Storage/Replay/JsonlReplayer.cs` | Historical data replay |
 | `Storage/Replay/MemoryMappedJsonlReader.cs` | High-performance memory-mapped reader |
 
@@ -44,50 +58,71 @@ The storage system comprises **37 files** across multiple subsystems.
 | `Storage/Archival/SchemaVersionManager.cs` | Schema versioning |
 | `Storage/Archival/CompressionProfileManager.cs` | Compression profiles |
 
-### Services (9 files)
+### Services (16 files)
 | File | Purpose |
 |------|---------|
-| `Storage/Services/FileMaintenanceService.cs` | File cleanup and maintenance |
-| `Storage/Services/TierMigrationService.cs` | Hot/warm/cold tier migration |
-| `Storage/Services/DataQualityService.cs` | Data quality scoring |
-| `Storage/Services/StorageSearchService.cs` | File search and discovery |
-| `Storage/Services/FilePermissionsService.cs` | File permission management |
-| `Storage/Services/MaintenanceScheduler.cs` | Maintenance scheduling |
-| `Storage/Services/SourceRegistry.cs` | Data source registration |
-| `Storage/Services/StorageChecksumService.cs` | Checksum verification |
+| `Storage/Services/DataLineageService.cs` | Data lineage tracking |
+| `Storage/Services/DataQualityScoringService.cs` | Data quality scoring |
+| `Storage/Services/DataQualityService.cs` | Data quality checks |
 | `Storage/Services/EventBuffer.cs` | Event buffering |
+| `Storage/Services/FileMaintenanceService.cs` | File cleanup and maintenance |
+| `Storage/Services/FilePermissionsService.cs` | File permission management |
+| `Storage/Services/LifecyclePolicyEngine.cs` | Lifecycle policy enforcement |
+| `Storage/Services/MaintenanceScheduler.cs` | Maintenance scheduling |
+| `Storage/Services/MetadataTagService.cs` | Metadata tagging |
+| `Storage/Services/QuotaEnforcementService.cs` | Quota enforcement |
+| `Storage/Services/SourceRegistry.cs` | Data source registration |
+| `Storage/Services/StorageCatalogService.cs` | Storage catalog management |
+| `Storage/Services/StorageChecksumService.cs` | Checksum verification |
+| `Storage/Services/StorageSearchService.cs` | File search and discovery |
+| `Storage/Services/SymbolRegistryService.cs` | Symbol registry management |
+| `Storage/Services/TierMigrationService.cs` | Hot/warm/cold tier migration |
 
-### Export System (5 files)
+### Export System (10 files)
 | File | Purpose |
 |------|---------|
-| `Storage/Export/AnalysisExportService.cs` | Export to various formats |
+| `Storage/Export/AnalysisExportService.cs` | Export orchestration |
+| `Storage/Export/AnalysisExportService.Formats.cs` | Format selection logic |
+| `Storage/Export/AnalysisExportService.Formats.Arrow.cs` | Apache Arrow export |
+| `Storage/Export/AnalysisExportService.Formats.Parquet.cs` | Parquet export |
+| `Storage/Export/AnalysisExportService.Formats.Xlsx.cs` | Excel export |
+| `Storage/Export/AnalysisExportService.IO.cs` | I/O operations |
+| `Storage/Export/AnalysisQualityReport.cs` | Quality report generation |
 | `Storage/Export/ExportProfile.cs` | Pre-built export profiles |
 | `Storage/Export/ExportRequest.cs` | Export request configuration |
 | `Storage/Export/ExportResult.cs` | Export result information |
-| `Storage/Export/AnalysisQualityReport.cs` | Quality report generation |
 
-### Packaging System (4 files)
+### Packaging System (9 files)
 | File | Purpose |
 |------|---------|
 | `Storage/Packaging/PortableDataPackager.cs` | Portable data package creation |
+| `Storage/Packaging/PortableDataPackager.Creation.cs` | Package creation logic |
+| `Storage/Packaging/PortableDataPackager.Scripts.cs` | Script generation |
+| `Storage/Packaging/PortableDataPackager.Scripts.Import.cs` | Import script generation |
+| `Storage/Packaging/PortableDataPackager.Scripts.Sql.cs` | SQL script generation |
+| `Storage/Packaging/PortableDataPackager.Validation.cs` | Package validation |
 | `Storage/Packaging/PackageManifest.cs` | Package manifest definition |
 | `Storage/Packaging/PackageOptions.cs` | Packaging configuration |
 | `Storage/Packaging/PackageResult.cs` | Packaging result information |
 
-### Maintenance System (4 files)
+### Maintenance System (6 files)
 | File | Purpose |
 |------|---------|
 | `Storage/Maintenance/ScheduledArchiveMaintenanceService.cs` | Scheduled maintenance |
 | `Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs` | Schedule management |
+| `Storage/Maintenance/IArchiveMaintenanceScheduleManager.cs` | Schedule manager interface |
 | `Storage/Maintenance/IArchiveMaintenanceService.cs` | Maintenance interface |
+| `Storage/Maintenance/IMaintenanceExecutionHistory.cs` | Execution history interface |
 | `Storage/Maintenance/ArchiveMaintenanceModels.cs` | Maintenance models |
 
-### Interfaces (3 files)
+### Interfaces (5 files)
 | File | Purpose |
 |------|---------|
-| `Storage/IStorageSink.cs` | Storage sink interface |
-| `Storage/IStoragePolicy.cs` | Storage policy interface |
-| `Storage/ISourceRegistry.cs` | Source registry interface |
+| `Storage/Interfaces/IStorageSink.cs` | Storage sink interface |
+| `Storage/Interfaces/IStoragePolicy.cs` | Storage policy interface |
+| `Storage/Interfaces/ISourceRegistry.cs` | Source registry interface |
+| `Storage/Interfaces/IStorageCatalogService.cs` | Storage catalog interface |
+| `Storage/Interfaces/ISymbolRegistryService.cs` | Symbol registry interface |
 
 ---
 
@@ -713,4 +748,4 @@ public async Task<HealthCheckResult> CheckStorageHealthAsync()
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-20*

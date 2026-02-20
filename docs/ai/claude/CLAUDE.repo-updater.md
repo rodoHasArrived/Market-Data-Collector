@@ -188,3 +188,7 @@ make ai-audit-docs       # Documentation only
 make ai-verify           # Build + test + lint
 make ai-report           # Generate improvement report
 ```
+
+---
+
+*Last Updated: 2026-02-20*
