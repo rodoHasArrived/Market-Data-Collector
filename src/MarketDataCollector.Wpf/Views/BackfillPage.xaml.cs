@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using MarketDataCollector.Contracts.Backfill;
+using MarketDataCollector.Ui.Services;
 using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
 using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
 using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
@@ -24,7 +25,7 @@ public partial class BackfillPage : Page
 {
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.NavigationService _navigationService;
-    private readonly WpfServices.BackfillApiService _backfillApiService;
+    private readonly BackfillApiService _backfillApiService;
     private readonly UiBackfillService _backfillService;
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
@@ -39,7 +40,7 @@ public partial class BackfillPage : Page
 
         _notificationService = notificationService;
         _navigationService = navigationService;
-        _backfillApiService = new WpfServices.BackfillApiService();
+        _backfillApiService = new BackfillApiService();
         _backfillService = UiBackfillService.Instance;
 
         SymbolProgressList.ItemsSource = _symbolProgress;
