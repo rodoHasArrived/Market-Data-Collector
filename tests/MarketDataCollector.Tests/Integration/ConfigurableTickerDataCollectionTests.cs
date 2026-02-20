@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Xunit;
@@ -13,10 +14,17 @@ namespace MarketDataCollector.Tests.Integration;
 /// Reads symbols from the YAHOO_TICKER_SYMBOLS environment variable (comma-separated).
 /// Defaults to "SPY" if the variable is not set.
 ///
+/// Optionally reads date range from YAHOO_TICKER_DATE_FROM and YAHOO_TICKER_DATE_TO
+/// environment variables (format: YYYY-MM-DD). If not set, fetches all available history.
+///
 /// Outputs are written as JSON files to the ArtifactOutput directory for CI artifact upload.
+///
+/// Preferred share tickers (e.g., PCG-PA, BRK.B) are supported — special characters
+/// in symbols are sanitized when used in output file names.
 ///
 /// Run locally:
 ///   YAHOO_TICKER_SYMBOLS=SPY,AAPL dotnet test --filter "FullyQualifiedName~ConfigurableTickerDataCollectionTests"
+///   YAHOO_TICKER_SYMBOLS=PCG-PA,BRK.B YAHOO_TICKER_DATE_FROM=2024-01-01 dotnet test --filter "FullyQualifiedName~ConfigurableTickerDataCollectionTests"
 /// </summary>
 [Trait("Category", "Integration")]
 [Trait("Category", "TickerArtifact")]
@@ -51,6 +59,37 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Select(s => s.ToUpperInvariant())
             .ToArray();
+    }
+
+    private static (DateOnly? from, DateOnly? to) GetConfiguredDateRange()
+    {
+        DateOnly? from = null;
+        DateOnly? to = null;
+
+        var fromEnv = Environment.GetEnvironmentVariable("YAHOO_TICKER_DATE_FROM");
+        if (!string.IsNullOrWhiteSpace(fromEnv) && DateOnly.TryParseExact(fromEnv.Trim(), "yyyy-MM-dd", out var parsedFrom))
+        {
+            from = parsedFrom;
+        }
+
+        var toEnv = Environment.GetEnvironmentVariable("YAHOO_TICKER_DATE_TO");
+        if (!string.IsNullOrWhiteSpace(toEnv) && DateOnly.TryParseExact(toEnv.Trim(), "yyyy-MM-dd", out var parsedTo))
+        {
+            to = parsedTo;
+        }
+
+        return (from, to);
+    }
+
+    /// <summary>
+    /// Sanitizes a ticker symbol for use in file names by replacing characters
+    /// that are invalid or problematic in file paths (/, \, :, *, ?, &lt;, &gt;, |)
+    /// with underscores. This allows preferred share tickers like PCG-PA, BRK.B,
+    /// and symbols with carets (^GSPC) to produce valid file names.
+    /// </summary>
+    private static string SanitizeForFileName(string symbol)
+    {
+        return Regex.Replace(symbol, @"[/\\:*?""<>|]", "_");
     }
 
     [Fact]
@@ -94,7 +133,10 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
         }
 
         var symbols = GetConfiguredSymbols();
+        var (dateFrom, dateTo) = GetConfiguredDateRange();
+
         _output.WriteLine($"Configured symbols: {string.Join(", ", symbols)}");
+        _output.WriteLine($"Date range: {dateFrom?.ToString("yyyy-MM-dd") ?? "all history"} → {dateTo?.ToString("yyyy-MM-dd") ?? "latest"}");
         _output.WriteLine($"Output directory: {_outputDir}");
         _output.WriteLine("");
 
@@ -103,6 +145,7 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
             "# Yahoo Finance Data Collection Report",
             $"Run Date: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC",
             $"Symbols: {string.Join(", ", symbols)}",
+            $"Date Range: {dateFrom?.ToString("yyyy-MM-dd") ?? "all history"} → {dateTo?.ToString("yyyy-MM-dd") ?? "latest"}",
             "",
             $"{"Symbol",-12} {"AdjBars",10} {"RawBars",10} {"From",14} {"To",14} {"Status",-20}",
             new string('-', 82),
@@ -114,27 +157,30 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
         {
             _output.WriteLine($"=== Fetching data for {symbol} ===");
 
+            // Sanitize the symbol for use in output file names (handles -, ., /, etc.)
+            var safeSymbol = SanitizeForFileName(symbol);
+
             var adjustedBarCount = 0;
             var rawBarCount = 0;
-            string dateFrom = "N/A";
-            string dateTo = "N/A";
+            string firstDate = "N/A";
+            string lastDate = "N/A";
             string status;
 
             try
             {
                 // Fetch adjusted bars (no OHLC validation, captures raw provider data)
                 var adjustedBars = await _provider.GetAdjustedDailyBarsAsync(
-                    symbol, from: null, to: null);
+                    symbol, from: dateFrom, to: dateTo);
                 adjustedBarCount = adjustedBars.Count;
 
                 if (adjustedBars.Count > 0)
                 {
-                    dateFrom = adjustedBars.First().SessionDate.ToString("yyyy-MM-dd");
-                    dateTo = adjustedBars.Last().SessionDate.ToString("yyyy-MM-dd");
+                    firstDate = adjustedBars.First().SessionDate.ToString("yyyy-MM-dd");
+                    lastDate = adjustedBars.Last().SessionDate.ToString("yyyy-MM-dd");
                 }
 
                 // Write adjusted bars to JSON
-                var adjustedPath = Path.Combine(_outputDir, $"{symbol}_adjusted_bars.json");
+                var adjustedPath = Path.Combine(_outputDir, $"{safeSymbol}_adjusted_bars.json");
                 var adjustedJson = JsonSerializer.Serialize(
                     adjustedBars.Select(b => new
                     {
@@ -164,10 +210,10 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
                 try
                 {
                     var rawBars = await _provider.GetDailyBarsAsync(
-                        symbol, from: null, to: null);
+                        symbol, from: dateFrom, to: dateTo);
                     rawBarCount = rawBars.Count;
 
-                    var rawPath = Path.Combine(_outputDir, $"{symbol}_daily_bars.json");
+                    var rawPath = Path.Combine(_outputDir, $"{safeSymbol}_daily_bars.json");
                     var rawJson = JsonSerializer.Serialize(
                         rawBars.Select(b => new
                         {
@@ -198,7 +244,7 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
                     status = $"Adjusted OK, Raw failed";
 
                     // Write error details
-                    var errorPath = Path.Combine(_outputDir, $"{symbol}_raw_bars_error.txt");
+                    var errorPath = Path.Combine(_outputDir, $"{safeSymbol}_raw_bars_error.txt");
                     await File.WriteAllTextAsync(errorPath, $"Error fetching raw bars for {symbol}:\n{ex}");
                 }
 
@@ -209,12 +255,12 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
                 _output.WriteLine($"  FAILED: {ex.Message}");
                 status = $"FAILED: {ex.Message}";
 
-                var errorPath = Path.Combine(_outputDir, $"{symbol}_error.txt");
+                var errorPath = Path.Combine(_outputDir, $"{safeSymbol}_error.txt");
                 await File.WriteAllTextAsync(errorPath, $"Error fetching data for {symbol}:\n{ex}");
             }
 
             summaryLines.Add(
-                $"{symbol,-12} {adjustedBarCount,10} {rawBarCount,10} {dateFrom,14} {dateTo,14} {status,-20}");
+                $"{symbol,-12} {adjustedBarCount,10} {rawBarCount,10} {firstDate,14} {lastDate,14} {status,-20}");
 
             _output.WriteLine("");
         }

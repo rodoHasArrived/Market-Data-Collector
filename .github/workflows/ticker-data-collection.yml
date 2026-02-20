@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       symbols:
-        description: 'Comma-separated ticker symbols (e.g., SPY,AAPL,MSFT)'
+        description: 'Comma-separated ticker symbols (e.g., SPY,AAPL,PCG-PA,BRK.B)'
         required: true
         default: 'SPY,AAPL'
         type: string
@@ -71,17 +71,19 @@ jobs:
 
       - name: Validate and normalize workflow inputs
         id: normalize-inputs
+        env:
+          INPUT_SYMBOLS: ${{ github.event.inputs.symbols }}
+          INPUT_DATE_FROM: ${{ github.event.inputs.date_from }}
+          INPUT_DATE_TO: ${{ github.event.inputs.date_to }}
         run: |
           set -euo pipefail
 
-          symbols_input='${{ github.event.inputs.symbols }}'
-          date_from='${{ github.event.inputs.date_from }}'
-          date_to='${{ github.event.inputs.date_to }}'
-
           # Normalize symbols: uppercase, trim, dedupe, and keep comma-separated format.
-          normalized_symbols=$(printf '%s' "$symbols_input" \
+          # Preferred share tickers may contain dots (BRK.B), hyphens (PCG-PA),
+          # carets (^GSPC), or equals signs (=SPX).
+          normalized_symbols=$(printf '%s' "$INPUT_SYMBOLS" \
             | tr ',' '\n' \
-            | sed 's/^\s*//;s/\s*$//' \
+            | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
             | awk 'NF { print toupper($0) }' \
             | awk '!seen[$0]++' \
             | paste -sd, -)
@@ -92,13 +94,17 @@ jobs:
           fi
 
           # Validate each symbol against allowed characters.
-          # Hyphen must be at end of character class ([A-Z0-9.^=-]) to be literal;
-          # placing it in the middle (e.g. [\-^]) creates an unintended range.
-          invalid_symbols=$(printf '%s' "$normalized_symbols" | tr ',' '\n' | grep -Ev '^[A-Z0-9.^=-]+$' | paste -sd, -)
+          # Hyphen MUST be at end of character class to be literal; placing it
+          # in the middle (e.g. [\-^]) creates an unintended range that excludes
+          # the literal hyphen — see AI-20260220-regex-hyphen-character-class.
+          invalid_symbols=$(printf '%s' "$normalized_symbols" \
+            | tr ',' '\n' \
+            | grep -Ev '^[A-Z0-9.^/=_-]+$' \
+            | paste -sd, -)
           if [ -n "$invalid_symbols" ]; then
             echo "Input validation failed: one or more symbols contain unsupported characters."
             echo "Invalid symbols: $invalid_symbols"
-            echo "Allowed pattern per symbol: [A-Z0-9.^=-]+"
+            echo "Allowed pattern per symbol: [A-Z0-9.^/=_-]+"
             exit 1
           fi
 
@@ -111,23 +117,29 @@ jobs:
             fi
           }
 
-          validate_date "date_from" "$date_from"
-          validate_date "date_to" "$date_to"
+          validate_date "date_from" "$INPUT_DATE_FROM"
+          validate_date "date_to" "$INPUT_DATE_TO"
 
-          if [ -n "$date_from" ] && [ -n "$date_to" ]; then
-            if [ "$(date -d "$date_from" '+%s')" -gt "$(date -d "$date_to" '+%s')" ]; then
+          if [ -n "$INPUT_DATE_FROM" ] && [ -n "$INPUT_DATE_TO" ]; then
+            if [ "$(date -d "$INPUT_DATE_FROM" '+%s')" -gt "$(date -d "$INPUT_DATE_TO" '+%s')" ]; then
               echo "Input validation failed: date_from must be less than or equal to date_to."
               exit 1
             fi
           fi
 
-          echo "normalized_symbols=$normalized_symbols" >> "$GITHUB_OUTPUT"
-          echo "validated_date_from=$date_from" >> "$GITHUB_OUTPUT"
-          echo "validated_date_to=$date_to" >> "$GITHUB_OUTPUT"
+          # Use heredoc delimiters for outputs to safely handle special characters
+          # in symbol names (dots, hyphens, carets, slashes).
+          {
+            echo "normalized_symbols<<SYMBOLS_EOF"
+            echo "$normalized_symbols"
+            echo "SYMBOLS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "validated_date_from=$INPUT_DATE_FROM" >> "$GITHUB_OUTPUT"
+          echo "validated_date_to=$INPUT_DATE_TO" >> "$GITHUB_OUTPUT"
 
           echo "Normalized symbols: $normalized_symbols"
-          echo "date_from: ${date_from:-<empty>}"
-          echo "date_to: ${date_to:-<empty>}"
+          echo "date_from: ${INPUT_DATE_FROM:-<empty>}"
+          echo "date_to: ${INPUT_DATE_TO:-<empty>}"
 
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -196,18 +208,23 @@ jobs:
 
       - name: Generate job summary
         if: always()
+        env:
+          SUMMARY_SYMBOLS: ${{ steps.normalize-inputs.outputs.normalized_symbols }}
+          SUMMARY_DATE_FROM: ${{ steps.normalize-inputs.outputs.validated_date_from || 'all history' }}
+          SUMMARY_DATE_TO: ${{ steps.normalize-inputs.outputs.validated_date_to || 'latest' }}
+          SUMMARY_RUN_NUMBER: ${{ github.run_number }}
+          SUMMARY_OUTPUT_DIR: ${{ steps.find-output.outputs.output_dir }}
         run: |
           echo "## Ticker Data Collection Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Symbols:** \`${{ steps.normalize-inputs.outputs.normalized_symbols }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Date range:** \`${{ steps.normalize-inputs.outputs.validated_date_from || 'all history' }} → ${{ steps.normalize-inputs.outputs.validated_date_to || 'latest' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Run:** #${{ github.run_number }} | **Commit:** \`${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Symbols:** \`${SUMMARY_SYMBOLS}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Date range:** \`${SUMMARY_DATE_FROM} → ${SUMMARY_DATE_TO}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Run:** #${SUMMARY_RUN_NUMBER} | **Commit:** \`${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          OUTPUT_DIR="${{ steps.find-output.outputs.output_dir }}"
-          if [ -n "$OUTPUT_DIR" ] && [ -f "$OUTPUT_DIR/collection_summary.txt" ]; then
+          if [ -n "$SUMMARY_OUTPUT_DIR" ] && [ -f "$SUMMARY_OUTPUT_DIR/collection_summary.txt" ]; then
             echo '```' >> $GITHUB_STEP_SUMMARY
-            cat "$OUTPUT_DIR/collection_summary.txt" >> $GITHUB_STEP_SUMMARY
+            cat "$SUMMARY_OUTPUT_DIR/collection_summary.txt" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           else
             echo "> No collection summary available." >> $GITHUB_STEP_SUMMARY
@@ -215,5 +232,5 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- **ticker-data-${{ github.run_number }}-${GITHUB_SHA}** — JSON files with historical bar data" >> $GITHUB_STEP_SUMMARY
-          echo "- **ticker-test-results-${{ github.run_number }}** — Test result (.trx) file" >> $GITHUB_STEP_SUMMARY
+          echo "- **ticker-data-${SUMMARY_RUN_NUMBER}-${GITHUB_SHA}** — JSON files with historical bar data" >> $GITHUB_STEP_SUMMARY
+          echo "- **ticker-test-results-${SUMMARY_RUN_NUMBER}** — Test result (.trx) file" >> $GITHUB_STEP_SUMMARY
