@@ -66,8 +66,8 @@ This document consolidates **functional improvements** (features, reliability, U
 | 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
 | 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
 | 5 | B2 tranche 1, D7 remainder | Negative-path + schema validation tests; typed annotations across all endpoint families | ✅ Done |
-| 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting | 📝 Pending |
-| 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 📝 Pending |
+| 6 | C1/C2, H1, H4, I1 | Provider registration unified under DI; per-provider backfill rate limiting; degradation scoring; test harness | 🔄 Partial (H1, H4, I1 done; C1/C2 pending) |
+| 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 🔄 Partial (B3 tranche 2 done; H2 pending) |
 | 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 📝 Pending |
 
 ---
@@ -1010,7 +1010,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 25/35 | 35/35 | All |
+| Completed Improvements | 27/35 | 35/35 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |

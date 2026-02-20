@@ -1,9 +1,9 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.1
-**Last Updated:** 2026-02-17
-**Status:** Production Ready (hardening and scale-up in progress)
-**Repository Snapshot:** `src/` files: **635** | `tests/` files: **163** | HTTP routes mapped in `Ui.Shared/Endpoints`: **244** | Remaining stub routes: **0**
+**Last Updated:** 2026-02-20
+**Status:** Development / Pilot Ready (hardening and scale-up in progress)
+**Repository Snapshot:** `src/` files: **647** | `tests/` files: **164** | HTTP routes mapped in `Ui.Shared/Endpoints`: **244** | Remaining stub routes: **0**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
@@ -27,10 +27,10 @@ This roadmap is refreshed to match the current repository state and focuses on t
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
 - **35 tracked improvement items total** (core themes A–G)
-  - ✅ Completed: 25
-  - 🔄 Partial: 5
-  - 📝 Open: 5
-- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** (3/7 completed).
+  - ✅ Completed: 27
+  - 🔄 Partial: 4
+  - 📝 Open: 4
+- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** (4/7 completed).
 
 ---
 
@@ -162,10 +162,10 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 25 / 35 | 30+ / 35 |
-| Improvement items still open | 5 / 35 | <3 / 35 |
+| Improvement items completed | 27 / 35 | 30+ / 35 |
+| Improvement items still open | 4 / 35 | <3 / 35 |
 | Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
-| Architecture debt (Theme C completed) | 3 / 7 | 5+ / 7 |
+| Architecture debt (Theme C completed) | 4 / 7 | 5+ / 7 |
 | Provider test coverage | Polygon + StockSharp + IB Sim + Alpaca | All 5 streaming providers |
 | OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
@@ -182,4 +182,4 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ---
 
-*Last Updated: 2026-02-15*
+*Last Updated: 2026-02-20*
