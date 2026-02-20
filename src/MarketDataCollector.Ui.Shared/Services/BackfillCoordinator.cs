@@ -324,7 +324,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// Creates the backfill service using providers from ProviderRegistry.
     /// Falls back to ProviderFactory or manual instantiation if registry is empty.
     /// </summary>
-    private HistoricalBackfillService CreateService()
+    private MarketDataCollector.Application.Backfill.HistoricalBackfillService CreateService()
     {
         var providers = GetProviders();
         return new MarketDataCollector.Application.Backfill.HistoricalBackfillService(providers, _log);
