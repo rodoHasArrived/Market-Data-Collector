@@ -29,7 +29,7 @@ public sealed class UiServer : IAsyncDisposable
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true
     };
-    
+
     private static readonly JsonSerializerOptions s_jsonOptionsCompact = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

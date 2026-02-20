@@ -25,7 +25,9 @@ public sealed class CredentialTestingService : IAsyncDisposable
     // Events for UI updates
     public event Action<CredentialTestResult>? OnCredentialTested;
     public event Action<string, string>? OnExpirationWarning;
+#pragma warning disable CS0067 // Event will be raised when OAuth refresh is implemented
     public event Action<string, OAuthRefreshResult>? OnTokenRefreshed;
+#pragma warning restore CS0067
 
     public CredentialTestingService(
         string dataRoot,

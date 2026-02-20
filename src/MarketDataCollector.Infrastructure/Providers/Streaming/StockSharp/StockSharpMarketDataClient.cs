@@ -83,7 +83,9 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// <summary>
     /// Event raised when connection state changes.
     /// </summary>
+#pragma warning disable CS0067 // Raised inside #if STOCKSHARP block
     public event Action<ConnectionState>? ConnectionStateChanged;
+#pragma warning restore CS0067
 
     /// <summary>
     /// Current connection state.

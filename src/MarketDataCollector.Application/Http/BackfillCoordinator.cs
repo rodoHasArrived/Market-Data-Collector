@@ -39,6 +39,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// <param name="store">Configuration store.</param>
     /// <param name="registry">Provider registry for unified provider discovery.</param>
     /// <param name="factory">Provider factory as fallback for creating providers if registry is empty.</param>
+    /// <param name="metrics">Event metrics for tracking backfill operations.</param>
     public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null, IEventMetrics? metrics = null)
     {
         _store = store;

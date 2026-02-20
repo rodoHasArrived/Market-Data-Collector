@@ -57,7 +57,7 @@ public sealed class TiingoHistoricalDataProvider : BaseHistoricalDataProvider
 
         // Content-Type is a content header, not a request header - it's set per-request on the Content object
         // No need to set it globally since each request will set it on its StringContent
-        
+
         if (!string.IsNullOrEmpty(_apiToken))
         {
             Http.DefaultRequestHeaders.Add("Authorization", $"Token {_apiToken}");

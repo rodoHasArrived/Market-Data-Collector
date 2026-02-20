@@ -20,7 +20,7 @@ public sealed class QualityDropsEndpointTests : EndpointIntegrationTestBase
     {
         var response = await GetAsync("/api/quality/drops");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
+
         var contentType = response.Content.Headers.ContentType?.ToString() ?? string.Empty;
         Assert.Contains("application/json", contentType);
     }
@@ -46,7 +46,7 @@ public sealed class QualityDropsEndpointTests : EndpointIntegrationTestBase
     {
         var response = await GetAsync("/api/quality/drops/AAPL");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
+
         var contentType = response.Content.Headers.ContentType?.ToString() ?? string.Empty;
         Assert.Contains("application/json", contentType);
     }

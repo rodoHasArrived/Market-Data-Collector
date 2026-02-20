@@ -205,9 +205,9 @@ public static class DiagnosticsEndpoints
             return Results.Json(new
             {
                 provider = providerName,
-                found = provider.Name is not null,
-                isEnabled = provider.IsEnabled,
-                reachable = provider.IsEnabled,
+                found = provider is not null,
+                isEnabled = provider?.IsEnabled ?? false,
+                reachable = provider?.IsEnabled ?? false,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
         })

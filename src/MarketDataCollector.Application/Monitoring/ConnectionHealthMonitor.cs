@@ -251,11 +251,31 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     }
 
     /// <summary>
-    /// Gets the status of a specific connection.
+    /// Gets the status of a specific connection by connection ID.
     /// </summary>
     public ConnectionStatus? GetConnectionStatus(string connectionId)
     {
         return _connections.TryGetValue(connectionId, out var state) ? state.GetStatus() : null;
+    }
+
+    /// <summary>
+    /// Gets the aggregate status for a provider by provider name.
+    /// Returns the first connected connection's status, or the first disconnected one if none are connected.
+    /// </summary>
+    public ConnectionStatus? GetConnectionStatusByProvider(string providerName)
+    {
+        ConnectionStatus? firstDisconnected = null;
+        foreach (var kvp in _connections)
+        {
+            if (string.Equals(kvp.Value.ProviderName, providerName, StringComparison.OrdinalIgnoreCase))
+            {
+                var status = kvp.Value.GetStatus();
+                if (status.IsConnected)
+                    return status;
+                firstDisconnected ??= status;
+            }
+        }
+        return firstDisconnected;
     }
 
     /// <summary>

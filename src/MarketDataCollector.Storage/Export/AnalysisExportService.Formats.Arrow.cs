@@ -152,83 +152,83 @@ public sealed partial class AnalysisExportService
         switch (dataType)
         {
             case Int32Type:
-            {
-                var builder = new Int32Array.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null) builder.AppendNull();
-                    else builder.Append(Convert.ToInt32(v));
+                    var builder = new Int32Array.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null) builder.AppendNull();
+                        else builder.Append(Convert.ToInt32(v));
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
             case Int64Type:
-            {
-                var builder = new Int64Array.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null) builder.AppendNull();
-                    else builder.Append(Convert.ToInt64(v));
+                    var builder = new Int64Array.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null) builder.AppendNull();
+                        else builder.Append(Convert.ToInt64(v));
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
             case FloatType:
-            {
-                var builder = new FloatArray.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null) builder.AppendNull();
-                    else builder.Append(Convert.ToSingle(v));
+                    var builder = new FloatArray.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null) builder.AppendNull();
+                        else builder.Append(Convert.ToSingle(v));
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
             case DoubleType:
-            {
-                var builder = new DoubleArray.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null) builder.AppendNull();
-                    else builder.Append(Convert.ToDouble(v));
+                    var builder = new DoubleArray.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null) builder.AppendNull();
+                        else builder.Append(Convert.ToDouble(v));
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
             case BooleanType:
-            {
-                var builder = new BooleanArray.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null) builder.AppendNull();
-                    else builder.Append(Convert.ToBoolean(v));
+                    var builder = new BooleanArray.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null) builder.AppendNull();
+                        else builder.Append(Convert.ToBoolean(v));
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
             case TimestampType:
-            {
-                var builder = new TimestampArray.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null)
-                        builder.AppendNull();
-                    else if (v is DateTimeOffset dto)
-                        builder.Append(dto);
-                    else if (v is DateTime dt)
-                        builder.Append(new DateTimeOffset(dt, TimeSpan.Zero));
-                    else if (v is string s && DateTimeOffset.TryParse(s, out var parsed))
-                        builder.Append(parsed);
-                    else
-                        builder.AppendNull();
+                    var builder = new TimestampArray.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null)
+                            builder.AppendNull();
+                        else if (v is DateTimeOffset dto)
+                            builder.Append(dto);
+                        else if (v is DateTime dt)
+                            builder.Append(new DateTimeOffset(dt, TimeSpan.Zero));
+                        else if (v is string s && DateTimeOffset.TryParse(s, out var parsed))
+                            builder.Append(parsed);
+                        else
+                            builder.AppendNull();
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
             default: // StringType
-            {
-                var builder = new StringArray.Builder();
-                foreach (var v in values)
                 {
-                    if (v is null) builder.AppendNull();
-                    else builder.Append(v.ToString() ?? string.Empty);
+                    var builder = new StringArray.Builder();
+                    foreach (var v in values)
+                    {
+                        if (v is null) builder.AppendNull();
+                        else builder.Append(v.ToString() ?? string.Empty);
+                    }
+                    return builder.Build();
                 }
-                return builder.Build();
-            }
         }
     }
 }

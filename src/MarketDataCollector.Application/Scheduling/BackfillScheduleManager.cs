@@ -37,7 +37,9 @@ public sealed class BackfillScheduleManager
     /// <summary>
     /// Event raised when a schedule is due for execution.
     /// </summary>
+#pragma warning disable CS0067 // Event will be raised when schedule timer is implemented
     public event EventHandler<BackfillSchedule>? ScheduleDue;
+#pragma warning restore CS0067
 
     public BackfillScheduleManager(
         ILogger<BackfillScheduleManager> logger,

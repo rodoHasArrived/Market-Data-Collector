@@ -6,7 +6,6 @@ using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -81,7 +80,7 @@ public static class HealthEndpoints
             var info = registry.GetAllProviders()
                 .FirstOrDefault(p => string.Equals(p.Name, provider, StringComparison.OrdinalIgnoreCase));
 
-            if (info.Name is null)
+            if (info is null)
                 return Results.NotFound(new { error = $"Provider '{provider}' not found" });
 
             return Results.Json(new
@@ -176,7 +175,7 @@ public static class HealthEndpoints
             var info = registry.GetAllProviders()
                 .FirstOrDefault(p => string.Equals(p.Name, provider, StringComparison.OrdinalIgnoreCase));
 
-            if (info.Name is null)
+            if (info is null)
                 return Results.NotFound(new { error = $"Provider '{provider}' not found" });
 
             return Results.Json(new

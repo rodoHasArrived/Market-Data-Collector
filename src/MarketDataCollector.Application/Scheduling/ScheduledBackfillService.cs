@@ -335,7 +335,6 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
             execution.Statistics.TotalSymbols = symbols.Count;
 
             // Analyze gaps if needed
-            List<DateOnly>? gapDates = null;
             if (schedule.BackfillType == ScheduledBackfillType.GapFill)
             {
                 _logger.LogDebug("Analyzing gaps for {Count} symbols", symbols.Count);

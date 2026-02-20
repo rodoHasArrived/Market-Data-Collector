@@ -85,6 +85,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
     /// <param name="symbol">The symbol that experienced the integrity event.</param>
     /// <param name="severity">Severity of the integrity event.</param>
     /// <param name="config">Current symbol configuration for resubscription.</param>
+    /// <param name="ct">Cancellation token.</param>
     /// <returns>True if resubscription was triggered, false if skipped.</returns>
     public async Task<bool> OnIntegrityEventAsync(
         string symbol,
