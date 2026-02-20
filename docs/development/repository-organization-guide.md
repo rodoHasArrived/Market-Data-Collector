@@ -732,7 +732,7 @@ This guide should evolve as the repository grows. To suggest improvements:
 - **Planning and Cleanup:**
   - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Technical debt reduction plan
   - [Refactor Map](./refactor-map.md) - Safe refactoring procedures
-  - [ROADMAP Update Summary](./ROADMAP_UPDATE_SUMMARY.md) - Recent organizational changes
+  - [Project Roadmap](../status/ROADMAP.md) - Project timeline and phases
 
 - **Implementation Guides:**
   - [Provider Implementation Guide](./provider-implementation.md) - Adding data providers

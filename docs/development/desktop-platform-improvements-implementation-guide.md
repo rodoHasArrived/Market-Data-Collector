@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive implementation guide for high-value improvements to the Market Data Collector desktop platform development experience. It builds upon the existing `desktop-devex-high-value-improvements.md` by providing concrete implementation steps, code examples, and prioritized action items.
+This document provides a comprehensive implementation guide for high-value improvements to the Market Data Collector desktop platform development experience. It provides concrete implementation steps, code examples, and prioritized action items.
 
 ### Current State Assessment (February 2026)
 
@@ -15,7 +15,7 @@ This document provides a comprehensive implementation guide for high-value impro
 - Focused desktop Make targets (`build-wpf`, `test-desktop-services`)
 - Desktop support policy (`docs/development/policies/desktop-support-policy.md`)
 - Desktop PR checklist template (`.github/pull_request_template_desktop.md`)
-- Desktop workflow documentation (`docs/development/desktop-dev-workflow.md`)
+- Desktop testing guide (`docs/development/desktop-testing-guide.md`)
 - UWP fully removed from codebase (WPF is sole desktop client)
 
 ❌ **Remaining Gaps**:
@@ -930,10 +930,9 @@ make test-desktop-services
 
 ## References
 
-- Original Plan: `docs/development/desktop-devex-high-value-improvements.md`
 - WPF Implementation: `docs/development/wpf-implementation-notes.md`
 - Support Policy: `docs/development/policies/desktop-support-policy.md`
-- Workflow Guide: `docs/development/desktop-dev-workflow.md`
+- Testing Guide: `docs/development/desktop-testing-guide.md`
 
 ---
 

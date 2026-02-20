@@ -178,7 +178,7 @@ This section supersedes the prior effort model and aligns with the current activ
 - `docs/status/production-status.md` — production readiness assessment narrative.
 - `docs/status/CHANGELOG.md` — change log by release snapshot.
 - `docs/status/TODO.md` — TODO/NOTE extraction for follow-up.
-- `docs/development/uwp-to-wpf-migration.md` — desktop strategy and UWP deprecation context.
+- `docs/archived/uwp-to-wpf-migration.md` — desktop strategy and UWP deprecation context (archived).
 
 ---
 

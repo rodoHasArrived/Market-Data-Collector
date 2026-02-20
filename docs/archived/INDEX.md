@@ -1,6 +1,6 @@
 # Archived Documentation Index
 
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-02-20
 
 This folder contains historical documentation that has been superseded by newer guides or is no longer actively maintained. These documents are preserved for historical reference and to understand the evolution of the project.
 
@@ -35,6 +35,15 @@ Documents are archived when:
 |----------|---------------|--------|-------------------|
 | **uwp-development-roadmap.md** | 2026-02-12 | UWP deprecated in favor of WPF | [WPF Implementation Notes](../development/wpf-implementation-notes.md) |
 | **uwp-release-checklist.md** | 2026-02-12 | UWP no longer primary desktop platform | — |
+| **uwp-to-wpf-migration.md** | 2026-02-20 | Migration complete, UWP fully removed | [WPF Implementation Notes](../development/wpf-implementation-notes.md) |
+| **desktop-app-xaml-compiler-errors.md** | 2026-02-20 | UWP XAML compiler issues, no longer applicable | — |
+
+### Desktop Development Planning Documents
+
+| Document | Date Archived | Reason | Current Reference |
+|----------|---------------|--------|-------------------|
+| **desktop-devex-high-value-improvements.md** | 2026-02-20 | Superseded by implementation guide and executive summary | [Desktop Platform Improvements](../development/desktop-platform-improvements-implementation-guide.md) |
+| **ROADMAP_UPDATE_SUMMARY.md** | 2026-02-20 | PR summary artifact, content in ROADMAP.md | [ROADMAP.md](../status/ROADMAP.md) |
 
 ### PR and Change Summaries
 

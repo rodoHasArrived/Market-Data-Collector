@@ -32,7 +32,7 @@ Documents are moved here when they:
 For current documentation, see:
 - [docs/README.md](../README.md) - Main documentation index
 - [docs/status/CHANGELOG.md](../status/CHANGELOG.md) - Current changelog
-- [docs/development/uwp-to-wpf-migration.md](../development/uwp-to-wpf-migration.md) - Active desktop UI migration guide
+- [docs/archived/uwp-to-wpf-migration.md](./uwp-to-wpf-migration.md) - UWP to WPF migration guide (archived)
 
 ## Note
 
