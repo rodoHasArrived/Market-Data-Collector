@@ -1145,73 +1145,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 << 'EOF'
-          import json
-          import subprocess
-          import os
+          set -euo pipefail
+          python3 build/scripts/docs/create-todo-issues.py \
+            --scan-json todo-scan-results.json \
+            --output-json todo-issue-creation-summary.json \
+            --max-issues 20
 
-          with open('todo-scan-results.json', 'r') as f:
+          if [ -f todo-issue-creation-summary.json ]; then
+            python3 -c "
+          import json, os
+          with open('todo-issue-creation-summary.json') as f:
               data = json.load(f)
-
-          created_count = 0
-
-          for todo in data.get('todos', []):
-
-              if todo.get('has_issue', False):
-                  continue
-
-              todo_type = todo.get('type', 'TODO')
-              file_path = todo.get('file', 'unknown')
-              line = todo.get('line', 0)
-              text = todo.get('text', 'No description')
-
-              # Determine labels
-              labels = ['todo-automation']
-              if todo_type == 'FIXME':
-                  labels.append('bug')
-              elif todo_type == 'HACK':
-                  labels.append('tech-debt')
-
-              title = f"[{todo_type}] {text[:60]}{'...' if len(text) > 60 else ''}"
-
-              body = f"""## TODO Item
-
-          **Type:** {todo_type}
-          **File:** `{file_path}`
-          **Line:** {line}
-
-          ### Description
-
-          {text}
-
-          ### Context
-
-          ```
-          {todo.get('context', 'No context available')}
-          ```
-
-          ---
-          *This issue was automatically created by the Documentation Automation workflow.*
-          """
-
-              try:
-                  result = subprocess.run([
-                      'gh', 'issue', 'create',
-                      '--title', title,
-                      '--body', body,
-                      '--label', ','.join(labels)
-                  ], capture_output=True, text=True, check=True)
-
-                  print(f"Created issue: {result.stdout.strip()}")
-                  created_count += 1
-              except subprocess.CalledProcessError as e:
-                  print(f"Failed to create issue: {e.stderr}")
-
-          print(f"\nCreated {created_count} issues")
-
+          created = data.get('created_count', 0)
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
-              f.write(f"\n\n## Issues Created\n\nCreated **{created_count}** new issues for untracked TODOs.\n")
-          EOF
+              f.write(f'\n\n## Issues Created\n\nCreated **{created}** new issues for untracked TODOs.\n')
+          "
+          fi
 
   # ─── Expansion: Link Repair ─────────────────────────────────────────
   link-repair:
@@ -1359,12 +1308,162 @@ jobs:
             echo "Changelog generation script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  # ─── Expansion: Validate API Documentation ────────────────────────
+  validate-api-docs:
+    name: Validate API Documentation
+    needs: [detect-changes, regenerate-docs]
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      needs.detect-changes.outputs.any_changed == 'true' &&
+      github.event_name != 'issues' && (
+        needs.detect-changes.outputs.src_changed == 'true' ||
+        needs.detect-changes.outputs.docs_changed == 'true' ||
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_expansion != 'false')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate API documentation coverage
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f "build/scripts/docs/validate-api-docs.py" ]; then
+            mkdir -p docs/status
+            python3 build/scripts/docs/validate-api-docs.py \
+              --output docs/status/api-docs-report.md \
+              --min-coverage 70 \
+              --summary >> "$GITHUB_STEP_SUMMARY" 2>&1
+          else
+            echo "API docs validation script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ─── Expansion: Generate Dependency Graph ────────────────────────
+  generate-dependency-graph:
+    name: Generate Dependency Graph
+    needs: [detect-changes]
+    if: |
+      needs.detect-changes.outputs.any_changed == 'true' &&
+      github.event_name != 'issues' && (
+        needs.detect-changes.outputs.structure_changed == 'true' ||
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_expansion != 'false')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate project dependency graph
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f "build/scripts/docs/generate-dependency-graph.py" ]; then
+            mkdir -p docs/generated
+            python3 build/scripts/docs/generate-dependency-graph.py \
+              --output docs/generated/project-dependencies.md \
+              --format markdown \
+              --summary >> "$GITHUB_STEP_SUMMARY" 2>&1
+          else
+            echo "Dependency graph script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ─── Expansion: Sync README Badges ──────────────────────────────
+  sync-readme-badges:
+    name: Sync README Badges
+    needs: [detect-changes, regenerate-docs]
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      needs.detect-changes.outputs.any_changed == 'true' &&
+      github.event_name != 'issues' && (
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_expansion != 'false')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Sync README badges with project metrics
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f "build/scripts/docs/sync-readme-badges.py" ]; then
+            mkdir -p docs/status
+            python3 build/scripts/docs/sync-readme-badges.py \
+              --output docs/status/badge-sync-report.md \
+              --summary >> "$GITHUB_STEP_SUMMARY" 2>&1
+          else
+            echo "Badge sync script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ─── Expansion: Metrics Dashboard ───────────────────────────────
+  generate-metrics-dashboard:
+    name: Generate Metrics Dashboard
+    needs: [detect-changes]
+    if: |
+      needs.detect-changes.outputs.any_changed == 'true' &&
+      github.event_name != 'issues' && (
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_expansion != 'false')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate metrics dashboard
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f "build/scripts/docs/generate-metrics-dashboard.py" ]; then
+            mkdir -p docs/status
+            python3 build/scripts/docs/generate-metrics-dashboard.py \
+              --output docs/status/metrics-dashboard.md \
+              --json-output docs-metrics.json \
+              --summary >> "$GITHUB_STEP_SUMMARY" 2>&1
+          else
+            echo "Metrics dashboard script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   # ─── Report ──────────────────────────────────────────────────────────
   report:
     name: Documentation Automation Report
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues, link-repair, validate-examples, coverage-report, generate-changelog]
+    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues, link-repair, validate-examples, coverage-report, generate-changelog, validate-api-docs, generate-dependency-graph, sync-readme-badges, generate-metrics-dashboard]
     if: github.event_name != 'issues' && always()
     steps:
       - name: Publish summary
@@ -1403,6 +1502,10 @@ jobs:
           echo "| Validate examples | ${{ needs.validate-examples.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage report | ${{ needs.coverage-report.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Generate changelog | ${{ needs.generate-changelog.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Validate API docs | ${{ needs.validate-api-docs.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency graph | ${{ needs.generate-dependency-graph.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Sync README badges | ${{ needs.sync-readme-badges.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Metrics dashboard | ${{ needs.generate-metrics-dashboard.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Generated Changes | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------------------|-------|" >> $GITHUB_STEP_SUMMARY
