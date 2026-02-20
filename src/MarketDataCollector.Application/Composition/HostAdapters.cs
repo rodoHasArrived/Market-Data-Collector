@@ -150,7 +150,7 @@ public sealed class ConsoleHostAdapter : IHostAdapter
 }
 
 /// <summary>
-/// Host adapter for desktop mode (UWP/WinUI).
+/// Host adapter for desktop mode (WPF).
 /// Provides both collector functionality and embedded HTTP server.
 /// </summary>
 public sealed class DesktopHostAdapter : IHostAdapter

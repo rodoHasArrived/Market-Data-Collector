@@ -23,8 +23,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class RetentionAssuranceService
 {
-    private static RetentionAssuranceService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<RetentionAssuranceService> _instance = new(() => new RetentionAssuranceService());
 
     private const string RetentionConfigKey = "RetentionConfig";
     private const string LegalHoldsKey = "LegalHolds";
@@ -35,20 +34,7 @@ public sealed class RetentionAssuranceService
     private readonly List<LegalHold> _legalHolds = new();
     private readonly List<RetentionAuditReport> _auditReports = new();
 
-    public static RetentionAssuranceService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new RetentionAssuranceService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static RetentionAssuranceService Instance => _instance.Value;
 
     private RetentionAssuranceService()
     {

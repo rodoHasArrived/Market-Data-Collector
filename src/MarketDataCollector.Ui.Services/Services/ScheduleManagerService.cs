@@ -10,23 +10,8 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ScheduleManagerService
 {
-    private static ScheduleManagerService? _instance;
-    private static readonly object _lock = new();
-
-    public static ScheduleManagerService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ScheduleManagerService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<ScheduleManagerService> _instance = new(() => new ScheduleManagerService());
+    public static ScheduleManagerService Instance => _instance.Value;
 
     private ScheduleManagerService() { }
 

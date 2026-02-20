@@ -8,9 +8,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class OnboardingTourService
 {
-    private static OnboardingTourService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<OnboardingTourService> _instance = new(() => new OnboardingTourService());
     private readonly Dictionary<string, TourDefinition> _tours = new();
     private readonly HashSet<string> _completedTours = new();
     private readonly HashSet<string> _dismissedTours = new();
@@ -21,20 +19,7 @@ public sealed class OnboardingTourService
         "MarketDataCollector",
         "onboarding-progress.json");
 
-    public static OnboardingTourService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new OnboardingTourService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static OnboardingTourService Instance => _instance.Value;
 
     private OnboardingTourService()
     {

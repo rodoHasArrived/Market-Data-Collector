@@ -13,8 +13,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class NotificationService : INotificationService
 {
-    private static NotificationService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<NotificationService> _instance = new(() => new NotificationService());
 
     private NotificationSettings _settings = new();
     private readonly List<NotificationHistoryItem> _history = new();
@@ -32,20 +31,7 @@ public sealed class NotificationService : INotificationService
     /// <summary>
     /// Gets the singleton instance of the NotificationService.
     /// </summary>
-    public static NotificationService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new NotificationService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static NotificationService Instance => _instance.Value;
 
     private NotificationService()
     {
@@ -321,7 +307,7 @@ public sealed class NotificationService : INotificationService
         if (!_settings.Enabled || !_settings.NotifyStorageWarnings) return;
         if (IsQuietHours()) return;
 
-        var freeSpaceFormatted = FormatBytes(freeSpaceBytes);
+        var freeSpaceFormatted = FormatHelpers.FormatBytes(freeSpaceBytes);
         var title = usedPercent >= 95 ? "Critical: Storage Almost Full" : "Storage Warning";
         var type = usedPercent >= 95 ? NotificationType.Error : NotificationType.Warning;
 
@@ -436,7 +422,6 @@ public sealed class NotificationService : INotificationService
         return $"{duration.Seconds}s";
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
 
 /// <summary>

@@ -15,8 +15,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class BackfillCheckpointService
 {
-    private static BackfillCheckpointService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<BackfillCheckpointService> _instance = new(() => new BackfillCheckpointService());
     private readonly string _checkpointDir;
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -25,20 +24,7 @@ public sealed class BackfillCheckpointService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static BackfillCheckpointService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new BackfillCheckpointService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static BackfillCheckpointService Instance => _instance.Value;
 
     private BackfillCheckpointService()
     {

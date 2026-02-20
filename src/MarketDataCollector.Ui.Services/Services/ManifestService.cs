@@ -14,26 +14,11 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ManifestService
 {
-    private static ManifestService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<ManifestService> _instance = new(() => new ManifestService());
     private readonly ConfigService _configService;
     private readonly string _catalogPath;
 
-    public static ManifestService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ManifestService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static ManifestService Instance => _instance.Value;
 
     private ManifestService()
     {

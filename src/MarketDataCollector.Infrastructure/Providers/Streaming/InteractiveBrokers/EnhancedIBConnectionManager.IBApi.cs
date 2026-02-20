@@ -270,7 +270,7 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
                 _reader?.processMsgs();
                 Interlocked.Exchange(ref _lastMessageTimestamp, Stopwatch.GetTimestamp());
             }
-            catch (Exception) when (!ct.IsCancellationRequested)
+            catch (Exception ex) when (!ct.IsCancellationRequested && ex is System.Net.WebSockets.WebSocketException or IOException or InvalidOperationException)
             {
                 // Connection may have been lost
                 if (EnableAutoReconnect && !_isReconnecting)

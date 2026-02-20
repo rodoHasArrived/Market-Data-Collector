@@ -11,24 +11,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class DiagnosticsService
 {
-    private static DiagnosticsService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<DiagnosticsService> _instance = new(() => new DiagnosticsService());
     private readonly ApiClientService _apiClient;
 
-    public static DiagnosticsService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new DiagnosticsService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static DiagnosticsService Instance => _instance.Value;
 
     private DiagnosticsService()
     {

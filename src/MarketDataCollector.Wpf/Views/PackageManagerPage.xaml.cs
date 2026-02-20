@@ -127,7 +127,7 @@ public partial class PackageManagerPage : Page
 
             if (result.IsValid)
             {
-                ValidatePackageResult.Text = $"Package is valid.\nValid files: {result.ValidFileCount}, Size: {FormatBytes(result.TotalSizeBytes)}";
+                ValidatePackageResult.Text = $"Package is valid.\nValid files: {result.ValidFileCount}, Size: {FormatHelpers.FormatBytes(result.TotalSizeBytes)}";
                 ValidatePackageResult.Foreground = (Brush)FindResource("SuccessColorBrush");
             }
             else
@@ -212,5 +212,4 @@ public partial class PackageManagerPage : Page
         }
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }

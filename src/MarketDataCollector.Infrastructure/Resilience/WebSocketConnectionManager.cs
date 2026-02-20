@@ -167,7 +167,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
             : CancellationTokenSource.CreateLinkedTokenSource(ct);
 
         var token = _receiveLoopCts.Token;
-        _receiveTask = Task.Run(() => ReceiveLoopAsync(messageHandler, token), CancellationToken.None);
+        _receiveTask = ReceiveLoopAsync(messageHandler, token);
     }
 
     /// <summary>

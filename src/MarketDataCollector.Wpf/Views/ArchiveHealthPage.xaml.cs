@@ -111,9 +111,9 @@ public sealed partial class ArchiveHealthPage : Page
         if (status.StorageHealthInfo != null)
         {
             var storage = status.StorageHealthInfo;
-            TotalCapacityText.Text = FormatBytes(storage.TotalCapacity);
-            UsedSpaceText.Text = FormatBytes(storage.TotalCapacity - storage.FreeSpace);
-            FreeSpaceText.Text = FormatBytes(storage.FreeSpace);
+            TotalCapacityText.Text = FormatHelpers.FormatBytes(storage.TotalCapacity);
+            UsedSpaceText.Text = FormatHelpers.FormatBytes(storage.TotalCapacity - storage.FreeSpace);
+            FreeSpaceText.Text = FormatHelpers.FormatBytes(storage.FreeSpace);
             DaysUntilFullText.Text = storage.DaysUntilFull?.ToString() ?? "--";
             DriveTypeText.Text = $"Drive Type: {storage.DriveType}";
 
@@ -378,7 +378,6 @@ public sealed partial class ArchiveHealthPage : Page
         });
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
 
 public sealed class IssueDisplayItem

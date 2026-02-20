@@ -23,9 +23,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class StorageOptimizationAdvisorService
 {
-    private static StorageOptimizationAdvisorService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<StorageOptimizationAdvisorService> _instance = new(() => new StorageOptimizationAdvisorService());
     // Small file threshold (1 MB)
     private const long SmallFileThreshold = 1024 * 1024;
 
@@ -35,20 +33,7 @@ public sealed class StorageOptimizationAdvisorService
 
     private readonly ApiClientService _apiClient;
 
-    public static StorageOptimizationAdvisorService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new StorageOptimizationAdvisorService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static StorageOptimizationAdvisorService Instance => _instance.Value;
 
     private StorageOptimizationAdvisorService()
     {

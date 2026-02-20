@@ -49,7 +49,7 @@ public partial class DiagnosticsPage : Page
         ProcessIdText.Text = Environment.ProcessId.ToString();
 
         var memoryBytes = GC.GetTotalMemory(forceFullCollection: false);
-        MemoryUsageText.Text = FormatBytes(memoryBytes);
+        MemoryUsageText.Text = FormatHelpers.FormatBytes(memoryBytes);
     }
 
     private void RunQuickCheck_Click(object sender, RoutedEventArgs e)
@@ -191,7 +191,7 @@ public partial class DiagnosticsPage : Page
         // Memory Information
         output.AppendLine("--- Memory ---");
         var memoryBytes = GC.GetTotalMemory(forceFullCollection: false);
-        output.AppendLine($"  Managed Heap:      {FormatBytes(memoryBytes)}");
+        output.AppendLine($"  Managed Heap:      {FormatHelpers.FormatBytes(memoryBytes)}");
         output.AppendLine($"  GC Gen0 Collections: {GC.CollectionCount(0)}");
         output.AppendLine($"  GC Gen1 Collections: {GC.CollectionCount(1)}");
         output.AppendLine($"  GC Gen2 Collections: {GC.CollectionCount(2)}");
@@ -199,8 +199,8 @@ public partial class DiagnosticsPage : Page
         try
         {
             using var currentProcess = Process.GetCurrentProcess();
-            output.AppendLine($"  Working Set:       {FormatBytes(currentProcess.WorkingSet64)}");
-            output.AppendLine($"  Private Memory:    {FormatBytes(currentProcess.PrivateMemorySize64)}");
+            output.AppendLine($"  Working Set:       {FormatHelpers.FormatBytes(currentProcess.WorkingSet64)}");
+            output.AppendLine($"  Private Memory:    {FormatHelpers.FormatBytes(currentProcess.PrivateMemorySize64)}");
             output.AppendLine($"  Thread Count:      {currentProcess.Threads.Count}");
             output.AppendLine($"  Handle Count:      {currentProcess.HandleCount}");
             output.AppendLine($"  Start Time:        {currentProcess.StartTime:yyyy-MM-dd HH:mm:ss}");
@@ -232,7 +232,7 @@ public partial class DiagnosticsPage : Page
                 try
                 {
                     var info = new FileInfo(path);
-                    output.AppendLine($"    Size: {FormatBytes(info.Length)}, Modified: {info.LastWriteTime:yyyy-MM-dd HH:mm:ss}");
+                    output.AppendLine($"    Size: {FormatHelpers.FormatBytes(info.Length)}, Modified: {info.LastWriteTime:yyyy-MM-dd HH:mm:ss}");
                 }
                 catch (Exception ex)
                 {
@@ -308,7 +308,7 @@ public partial class DiagnosticsPage : Page
                 if (logFiles.Length > 0)
                 {
                     var latestLog = new FileInfo(logFiles[^1]);
-                    output.AppendLine($"  Latest: {latestLog.Name} ({FormatBytes(latestLog.Length)}, {latestLog.LastWriteTime:yyyy-MM-dd HH:mm:ss})");
+                    output.AppendLine($"  Latest: {latestLog.Name} ({FormatHelpers.FormatBytes(latestLog.Length)}, {latestLog.LastWriteTime:yyyy-MM-dd HH:mm:ss})");
                 }
             }
             catch (Exception ex)
@@ -483,5 +483,4 @@ public partial class DiagnosticsPage : Page
         text.Text = message;
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }

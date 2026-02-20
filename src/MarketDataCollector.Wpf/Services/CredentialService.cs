@@ -104,7 +104,6 @@ public sealed class CredentialExpirationEventArgs : EventArgs
 
 /// <summary>
 /// Service for secure credential management using DPAPI-encrypted file storage.
-/// WPF replacement for UWP's Windows.Security.Credentials.PasswordVault.
 /// Enhanced with OAuth support, expiration tracking, and credential testing capabilities.
 /// </summary>
 public sealed class CredentialService : IDisposable

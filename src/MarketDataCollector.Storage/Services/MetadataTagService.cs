@@ -249,11 +249,13 @@ public sealed class MetadataTagService : IMetadataTagService
         if ((DateTime.UtcNow - _lastSaveTime) < TimeSpan.FromSeconds(5))
             return;
 
-        _ = Task.Run(async () =>
-        {
-            try { await SaveAsync(); }
-            catch { /* Background save failure is non-critical */ }
-        });
+        _ = SaveInBackgroundAsync();
+    }
+
+    private async Task SaveInBackgroundAsync()
+    {
+        try { await SaveAsync(); }
+        catch { /* Background save failure is non-critical */ }
     }
 
     private sealed class MetadataStore

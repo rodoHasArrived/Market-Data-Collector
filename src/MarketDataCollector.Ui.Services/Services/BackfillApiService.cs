@@ -7,7 +7,6 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Service for managing backfill operations via the core API.
-/// Shared implementation for both WPF and UWP desktop applications.
 /// </summary>
 public sealed class BackfillApiService
 {

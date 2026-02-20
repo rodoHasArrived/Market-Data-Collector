@@ -14,7 +14,6 @@ public sealed class SourceRegistry : ISourceRegistry
     private readonly ConcurrentDictionary<string, SymbolInfo> _symbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, string> _aliases = new(StringComparer.OrdinalIgnoreCase);
     private readonly string? _persistencePath;
-    private readonly object _saveLock = new();
 
     public SourceRegistry(string? persistencePath = null)
     {
@@ -194,31 +193,30 @@ public sealed class SourceRegistry : ISourceRegistry
     {
         if (string.IsNullOrEmpty(_persistencePath)) return;
 
-        _ = Task.Run(() =>
+        _ = SaveToDiskAsync();
+    }
+
+    private async Task SaveToDiskAsync()
+    {
+        try
         {
-            lock (_saveLock)
+            var data = new RegistryData
             {
-                try
-                {
-                    var data = new RegistryData
-                    {
-                        Sources = _sources.Values.ToList(),
-                        Symbols = _symbols.Values.ToList()
-                    };
+                Sources = _sources.Values.ToList(),
+                Symbols = _symbols.Values.ToList()
+            };
 
-                    var dir = Path.GetDirectoryName(_persistencePath);
-                    if (!string.IsNullOrEmpty(dir))
-                        Directory.CreateDirectory(dir);
+            var dir = Path.GetDirectoryName(_persistencePath);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
 
-                    var json = JsonSerializer.Serialize(data, MarketDataJsonContext.PrettyPrintOptions);
-                    File.WriteAllText(_persistencePath, json);
-                }
-                catch
-                {
-                    // Silently fail on save errors
-                }
-            }
-        });
+            var json = JsonSerializer.Serialize(data, MarketDataJsonContext.PrettyPrintOptions);
+            await File.WriteAllTextAsync(_persistencePath, json);
+        }
+        catch
+        {
+            // Silently fail on save errors
+        }
     }
 
     private sealed class RegistryData

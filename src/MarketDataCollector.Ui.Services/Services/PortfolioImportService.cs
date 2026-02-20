@@ -14,24 +14,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class PortfolioImportService
 {
-    private static PortfolioImportService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<PortfolioImportService> _instance = new(() => new PortfolioImportService());
     private readonly ApiClientService _apiClient;
 
-    public static PortfolioImportService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new PortfolioImportService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static PortfolioImportService Instance => _instance.Value;
 
     private PortfolioImportService()
     {

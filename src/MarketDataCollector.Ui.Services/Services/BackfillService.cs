@@ -15,9 +15,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class BackfillService
 {
-    private static BackfillService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<BackfillService> _instance = new(() => new BackfillService());
     private readonly NotificationService _notificationService;
     private readonly BackfillApiService _backfillApiService;
     private readonly BackfillCheckpointService _checkpointService;
@@ -32,20 +30,7 @@ public sealed class BackfillService
     private const int ProgressPollIntervalMs = 1000;
     private const int MaxPollAttempts = 3600; // 1 hour max at 1 second intervals
 
-    public static BackfillService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new BackfillService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static BackfillService Instance => _instance.Value;
 
     private BackfillService()
     {
@@ -246,8 +231,8 @@ public sealed class BackfillService
         _currentProgress!.TotalBars = symbols.Length * tradingDays;
 
         // Format dates for API
-        var fromStr = fromDate.ToString("yyyy-MM-dd");
-        var toStr = toDate.ToString("yyyy-MM-dd");
+        var fromStr = fromDate.ToString(FormatHelpers.IsoDateFormat);
+        var toStr = toDate.ToString(FormatHelpers.IsoDateFormat);
 
         // Call the real API to start the backfill
         var result = await _backfillApiService.RunBackfillAsync(
@@ -586,8 +571,8 @@ public sealed class BackfillService
             var result = await _backfillApiService.RunBackfillAsync(
                 "composite",
                 new[] { symbol },
-                fromDate.ToString("yyyy-MM-dd"),
-                toDate.ToString("yyyy-MM-dd"),
+                fromDate.ToString(FormatHelpers.IsoDateFormat),
+                toDate.ToString(FormatHelpers.IsoDateFormat),
                 ct);
 
             if (result?.Success == true && result.BarsWritten > 0)

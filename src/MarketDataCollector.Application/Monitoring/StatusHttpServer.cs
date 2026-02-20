@@ -81,7 +81,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
     public void Start()
     {
         _listener.Start();
-        _loop = Task.Run(HandleAsync);
+        _loop = HandleAsync();
         _log.Information("StatusHttpServer started");
     }
 
@@ -151,7 +151,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
 
             var path = ctx.Request.Url?.AbsolutePath?.Trim('/')?.ToLowerInvariant() ?? string.Empty;
 
-            // Support both /api/* and /* routes for UWP desktop app compatibility
+            // Support both /api/* and /* routes for desktop app compatibility
             if (path.StartsWith("api/"))
                 path = path.Substring(4);
 
@@ -299,7 +299,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
     }
 
     /// <summary>
-    /// Returns current backfill status for UWP app.
+    /// Returns current backfill status for the desktop app.
     /// </summary>
     private Task WriteBackfillStatusAsync(HttpListenerResponse resp)
     {

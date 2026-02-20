@@ -11,24 +11,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class TimeSeriesAlignmentService
 {
-    private static TimeSeriesAlignmentService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<TimeSeriesAlignmentService> _instance = new(() => new TimeSeriesAlignmentService());
     private readonly ApiClientService _apiClient;
 
-    public static TimeSeriesAlignmentService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new TimeSeriesAlignmentService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static TimeSeriesAlignmentService Instance => _instance.Value;
 
     private TimeSeriesAlignmentService()
     {
@@ -52,8 +38,8 @@ public sealed class TimeSeriesAlignmentService
             new
             {
                 symbols = options.Symbols,
-                fromDate = options.FromDate?.ToString("yyyy-MM-dd"),
-                toDate = options.ToDate?.ToString("yyyy-MM-dd"),
+                fromDate = options.FromDate?.ToString(FormatHelpers.IsoDateFormat),
+                toDate = options.ToDate?.ToString(FormatHelpers.IsoDateFormat),
                 interval = options.Interval.ToString(),
                 aggregation = options.Aggregation.ToString(),
                 gapStrategy = options.GapStrategy.ToString(),
@@ -317,8 +303,8 @@ public sealed class TimeSeriesAlignmentService
             new
             {
                 symbols = options.Symbols,
-                fromDate = options.FromDate?.ToString("yyyy-MM-dd"),
-                toDate = options.ToDate?.ToString("yyyy-MM-dd"),
+                fromDate = options.FromDate?.ToString(FormatHelpers.IsoDateFormat),
+                toDate = options.ToDate?.ToString(FormatHelpers.IsoDateFormat),
                 interval = options.Interval.ToString(),
                 gapStrategy = options.GapStrategy.ToString()
             },

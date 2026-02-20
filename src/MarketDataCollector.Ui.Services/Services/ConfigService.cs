@@ -16,30 +16,9 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class ConfigService : IConfigService
 {
-    private static ConfigService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<ConfigService> _instance = new(() => new ConfigService());
 
-    public static ConfigService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ConfigService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static ConfigService Instance => _instance.Value;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {

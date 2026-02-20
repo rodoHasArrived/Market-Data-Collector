@@ -20,8 +20,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class WorkspaceService
 {
-    private static WorkspaceService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<WorkspaceService> _instance = new(() => new WorkspaceService());
 
     private const string WorkspacesFileName = "workspace-data.json";
 
@@ -29,20 +28,7 @@ public sealed class WorkspaceService
     private SessionState? _lastSession;
     private readonly List<WorkspaceTemplate> _workspaces = new();
 
-    public static WorkspaceService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new WorkspaceService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static WorkspaceService Instance => _instance.Value;
 
     private WorkspaceService()
     {

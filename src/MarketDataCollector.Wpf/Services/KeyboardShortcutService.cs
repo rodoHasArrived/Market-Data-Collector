@@ -11,8 +11,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class KeyboardShortcutService
 {
-    private static KeyboardShortcutService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<KeyboardShortcutService> _instance = new(() => new KeyboardShortcutService());
 
     private readonly Dictionary<string, ShortcutAction> _shortcuts = new();
     private FrameworkElement? _rootElement;
@@ -21,20 +20,7 @@ public sealed class KeyboardShortcutService
     /// <summary>
     /// Gets the singleton instance of the KeyboardShortcutService.
     /// </summary>
-    public static KeyboardShortcutService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new KeyboardShortcutService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static KeyboardShortcutService Instance => _instance.Value;
 
     private KeyboardShortcutService()
     {

@@ -12,28 +12,13 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class IntegrityEventsService
 {
-    private static IntegrityEventsService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<IntegrityEventsService> _instance = new(() => new IntegrityEventsService());
     private readonly BoundedObservableCollection<IntegrityEvent> _events;
     private readonly NotificationService _notificationService;
     private const int MaxEvents = 100;
     private const int MaxRecentEvents = 10;
 
-    public static IntegrityEventsService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new IntegrityEventsService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static IntegrityEventsService Instance => _instance.Value;
 
     private IntegrityEventsService()
     {

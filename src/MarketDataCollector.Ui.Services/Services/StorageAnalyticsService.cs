@@ -11,29 +11,14 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class StorageAnalyticsService
 {
-    private static StorageAnalyticsService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<StorageAnalyticsService> _instance = new(() => new StorageAnalyticsService());
     private readonly ConfigService _configService;
     private readonly NotificationService _notificationService;
     private StorageAnalytics? _cachedAnalytics;
     private DateTime _lastAnalysisTime;
     private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
 
-    public static StorageAnalyticsService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new StorageAnalyticsService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static StorageAnalyticsService Instance => _instance.Value;
 
     private StorageAnalyticsService()
     {

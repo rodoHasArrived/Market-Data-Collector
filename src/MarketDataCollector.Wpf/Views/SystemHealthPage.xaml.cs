@@ -64,7 +64,7 @@ public partial class SystemHealthPage : Page
             if (bundle != null)
             {
                 MessageBox.Show(
-                    $"Diagnostic bundle created:\n{bundle.FilePath}\nSize: {FormatBytes(bundle.FileSizeBytes)}",
+                    $"Diagnostic bundle created:\n{bundle.FilePath}\nSize: {FormatHelpers.FormatBytes(bundle.FileSizeBytes)}",
                     "Diagnostics",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -125,7 +125,7 @@ public partial class SystemHealthPage : Page
                             ? (Brush)FindResource("WarningColorBrush")
                             : (Brush)FindResource("SuccessColorBrush");
 
-                    MemoryText.Text = FormatBytes(metrics.MemoryUsedBytes);
+                    MemoryText.Text = FormatHelpers.FormatBytes(metrics.MemoryUsedBytes);
                     ThreadsText.Text = metrics.ThreadCount.ToString("N0");
                     UptimeText.Text = FormatUptime(DateTime.UtcNow - _startTime);
                 });
@@ -138,7 +138,7 @@ public partial class SystemHealthPage : Page
                 Dispatcher.Invoke(() =>
                 {
                     CpuText.Text = "--";
-                    MemoryText.Text = FormatBytes(process.WorkingSet64);
+                    MemoryText.Text = FormatHelpers.FormatBytes(process.WorkingSet64);
                     ThreadsText.Text = process.Threads.Count.ToString("N0");
                     UptimeText.Text = FormatUptime(uptime);
                 });
@@ -205,7 +205,7 @@ public partial class SystemHealthPage : Page
             {
                 if (storage != null)
                 {
-                    StorageTotalText.Text = FormatBytes(storage.TotalBytes);
+                    StorageTotalText.Text = FormatHelpers.FormatBytes(storage.TotalBytes);
                     StorageFilesText.Text = storage.TotalFiles.ToString("N0");
 
                     if (storage.TotalBytes > 0 && storage.AvailableBytes > 0)
@@ -295,7 +295,6 @@ public partial class SystemHealthPage : Page
         };
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     private static string FormatUptime(TimeSpan uptime)
     {

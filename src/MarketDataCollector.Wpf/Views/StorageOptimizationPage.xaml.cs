@@ -103,14 +103,14 @@ public partial class StorageOptimizationPage : Page
 
             var text = $"Tier Statistics (as of {stats.GeneratedAt:yyyy-MM-dd HH:mm} UTC)\n";
             text += new string('-', 50) + "\n";
-            text += $"Total: {FormatBytes(stats.TotalBytes)} across {stats.TotalFiles} files\n\n";
+            text += $"Total: {FormatHelpers.FormatBytes(stats.TotalBytes)} across {stats.TotalFiles} files\n\n";
 
             if (stats.Hot != null)
-                text += $"Hot Tier:  {stats.Hot.FileCount} files, {FormatBytes(stats.Hot.TotalBytes)} ({stats.Hot.PercentageOfTotal:F1}%)\n";
+                text += $"Hot Tier:  {stats.Hot.FileCount} files, {FormatHelpers.FormatBytes(stats.Hot.TotalBytes)} ({stats.Hot.PercentageOfTotal:F1}%)\n";
             if (stats.Warm != null)
-                text += $"Warm Tier: {stats.Warm.FileCount} files, {FormatBytes(stats.Warm.TotalBytes)} ({stats.Warm.PercentageOfTotal:F1}%)\n";
+                text += $"Warm Tier: {stats.Warm.FileCount} files, {FormatHelpers.FormatBytes(stats.Warm.TotalBytes)} ({stats.Warm.PercentageOfTotal:F1}%)\n";
             if (stats.Cold != null)
-                text += $"Cold Tier: {stats.Cold.FileCount} files, {FormatBytes(stats.Cold.TotalBytes)} ({stats.Cold.PercentageOfTotal:F1}%)\n";
+                text += $"Cold Tier: {stats.Cold.FileCount} files, {FormatHelpers.FormatBytes(stats.Cold.TotalBytes)} ({stats.Cold.PercentageOfTotal:F1}%)\n";
 
             AnalysisResultText.Text = text;
             AnalysisResultText.Foreground = (Brush)FindResource("ConsoleTextPrimaryBrush");
@@ -128,16 +128,16 @@ public partial class StorageOptimizationPage : Page
         {
             var analytics = await _analyticsService.GetAnalyticsAsync(forceRefresh);
 
-            TotalSizeText.Text = FormatBytes(analytics.TotalSizeBytes);
+            TotalSizeText.Text = FormatHelpers.FormatBytes(analytics.TotalSizeBytes);
             TotalFilesText.Text = analytics.TotalFileCount.ToString("N0");
-            DailyGrowthText.Text = FormatBytes(analytics.DailyGrowthBytes) + "/day";
+            DailyGrowthText.Text = FormatHelpers.FormatBytes(analytics.DailyGrowthBytes) + "/day";
             DaysUntilFullText.Text = analytics.ProjectedDaysUntilFull?.ToString("N0") ?? "N/A";
 
-            TradeSizeText.Text = FormatBytes(analytics.TradeSizeBytes);
+            TradeSizeText.Text = FormatHelpers.FormatBytes(analytics.TradeSizeBytes);
             TradeFilesText.Text = $"{analytics.TradeFileCount} files";
-            DepthSizeText.Text = FormatBytes(analytics.DepthSizeBytes);
+            DepthSizeText.Text = FormatHelpers.FormatBytes(analytics.DepthSizeBytes);
             DepthFilesText.Text = $"{analytics.DepthFileCount} files";
-            HistoricalSizeText.Text = FormatBytes(analytics.HistoricalSizeBytes);
+            HistoricalSizeText.Text = FormatHelpers.FormatBytes(analytics.HistoricalSizeBytes);
             HistoricalFilesText.Text = $"{analytics.HistoricalFileCount} files";
 
             // Symbol breakdown (top 10)
@@ -174,7 +174,7 @@ public partial class StorageOptimizationPage : Page
             }
 
             DriveNameText.Text = $"{driveInfo.DriveName} ({driveInfo.DriveType})";
-            FreeSpaceText.Text = FormatBytes(driveInfo.FreeBytes);
+            FreeSpaceText.Text = FormatHelpers.FormatBytes(driveInfo.FreeBytes);
             UsedPercentText.Text = $"{driveInfo.UsedPercent:F1}%";
             DriveUsageBar.Value = driveInfo.UsedPercent;
 
@@ -191,5 +191,4 @@ public partial class StorageOptimizationPage : Page
         }
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }

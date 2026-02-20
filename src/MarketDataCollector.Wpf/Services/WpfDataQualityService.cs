@@ -12,23 +12,8 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class WpfDataQualityService
 {
-    private static WpfDataQualityService? _instance;
-    private static readonly object _lock = new();
-
-    public static WpfDataQualityService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new WpfDataQualityService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<WpfDataQualityService> _instance = new(() => new WpfDataQualityService());
+    public static WpfDataQualityService Instance => _instance.Value;
 
     private WpfDataQualityService() { }
 

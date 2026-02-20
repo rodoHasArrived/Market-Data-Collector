@@ -11,24 +11,10 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class DataSamplingService
 {
-    private static DataSamplingService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<DataSamplingService> _instance = new(() => new DataSamplingService());
     private readonly ApiClientService _apiClient;
 
-    public static DataSamplingService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new DataSamplingService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static DataSamplingService Instance => _instance.Value;
 
     private DataSamplingService()
     {
@@ -52,8 +38,8 @@ public sealed class DataSamplingService
             new
             {
                 symbols = options.Symbols,
-                fromDate = options.FromDate?.ToString("yyyy-MM-dd"),
-                toDate = options.ToDate?.ToString("yyyy-MM-dd"),
+                fromDate = options.FromDate?.ToString(FormatHelpers.IsoDateFormat),
+                toDate = options.ToDate?.ToString(FormatHelpers.IsoDateFormat),
                 strategy = options.Strategy.ToString(),
                 sampleSize = options.SampleSize,
                 samplePercent = options.SamplePercent,
@@ -248,8 +234,8 @@ public sealed class DataSamplingService
             new
             {
                 symbols = options.Symbols,
-                fromDate = options.FromDate?.ToString("yyyy-MM-dd"),
-                toDate = options.ToDate?.ToString("yyyy-MM-dd"),
+                fromDate = options.FromDate?.ToString(FormatHelpers.IsoDateFormat),
+                toDate = options.ToDate?.ToString(FormatHelpers.IsoDateFormat),
                 strategy = options.Strategy.ToString(),
                 sampleSize = options.SampleSize,
                 samplePercent = options.SamplePercent,

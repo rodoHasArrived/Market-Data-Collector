@@ -1117,7 +1117,7 @@ public sealed class AnalysisExportWizardService
             GeneratedAt = DateTime.UtcNow,
             Profile = config.Profile.Name,
             DataTypes = config.DataTypes,
-            DateRange = new { From = config.FromDate.ToString("yyyy-MM-dd"), To = config.ToDate.ToString("yyyy-MM-dd") },
+            DateRange = new { From = config.FromDate.ToString(FormatHelpers.IsoDateFormat), To = config.ToDate.ToString(FormatHelpers.IsoDateFormat) },
             Symbols = config.Symbols,
             Fields = new[]
             {

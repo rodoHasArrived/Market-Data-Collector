@@ -48,19 +48,19 @@ public partial class SymbolStoragePage : Page
             var analytics = await _analyticsService.GetAnalyticsAsync(forceRefresh);
 
             // Summary stats
-            TotalSizeText.Text = FormatBytes(analytics.TotalSizeBytes);
+            TotalSizeText.Text = FormatHelpers.FormatBytes(analytics.TotalSizeBytes);
             TotalFilesText.Text = analytics.TotalFileCount.ToString("N0");
             SymbolCountText.Text = analytics.SymbolBreakdown.Length.ToString("N0");
             DailyGrowthText.Text = analytics.DailyGrowthBytes > 0
-                ? FormatBytes(analytics.DailyGrowthBytes) + "/d"
+                ? FormatHelpers.FormatBytes(analytics.DailyGrowthBytes) + "/d"
                 : "--";
 
             // Data type breakdown
-            TradeSizeText.Text = FormatBytes(analytics.TradeSizeBytes);
+            TradeSizeText.Text = FormatHelpers.FormatBytes(analytics.TradeSizeBytes);
             TradeFilesText.Text = $"{analytics.TradeFileCount:N0} files";
-            DepthSizeText.Text = FormatBytes(analytics.DepthSizeBytes);
+            DepthSizeText.Text = FormatHelpers.FormatBytes(analytics.DepthSizeBytes);
             DepthFilesText.Text = $"{analytics.DepthFileCount:N0} files";
-            HistoricalSizeText.Text = FormatBytes(analytics.HistoricalSizeBytes);
+            HistoricalSizeText.Text = FormatHelpers.FormatBytes(analytics.HistoricalSizeBytes);
             HistoricalFilesText.Text = $"{analytics.HistoricalFileCount:N0} files";
 
             // Per-symbol breakdown
@@ -70,7 +70,7 @@ public partial class SymbolStoragePage : Page
                 _symbols.Add(new SymbolStorageItem
                 {
                     Symbol = symbolInfo.Symbol,
-                    SizeText = FormatBytes(symbolInfo.SizeBytes),
+                    SizeText = FormatHelpers.FormatBytes(symbolInfo.SizeBytes),
                     FileCountText = $"{symbolInfo.FileCount} files",
                     PercentOfTotal = symbolInfo.PercentOfTotal,
                     DateRangeText = $"{symbolInfo.OldestData:MMM dd} - {symbolInfo.NewestData:MMM dd}"
@@ -86,8 +86,8 @@ public partial class SymbolStoragePage : Page
                 ProjectionPanel.Visibility = Visibility.Visible;
                 var days = analytics.ProjectedDaysUntilFull.Value;
                 ProjectionText.Text = days > 365
-                    ? $"At current growth rate ({FormatBytes(analytics.DailyGrowthBytes)}/day), disk capacity is projected to last more than a year."
-                    : $"At current growth rate ({FormatBytes(analytics.DailyGrowthBytes)}/day), disk capacity is projected to be reached in approximately {days} days.";
+                    ? $"At current growth rate ({FormatHelpers.FormatBytes(analytics.DailyGrowthBytes)}/day), disk capacity is projected to last more than a year."
+                    : $"At current growth rate ({FormatHelpers.FormatBytes(analytics.DailyGrowthBytes)}/day), disk capacity is projected to be reached in approximately {days} days.";
             }
             else
             {
@@ -104,7 +104,6 @@ public partial class SymbolStoragePage : Page
         }
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     public sealed class SymbolStorageItem
     {

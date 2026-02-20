@@ -21,30 +21,9 @@ public enum NotificationType
 /// </summary>
 public class NotificationService
 {
-    private static NotificationService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<NotificationService> _instance = new(() => new NotificationService());
 
-    public static NotificationService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new NotificationService();
-                }
-            }
-            return _instance;
-        }
-        set
-        {
-            lock (_lock)
-            {
-                _instance = value;
-            }
-        }
-    }
+    public static NotificationService Instance => _instance.Value;
 
     public virtual Task NotifyErrorAsync(string title, string message, Exception? exception = null)
         => Task.CompletedTask;

@@ -7,9 +7,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class AlertService
 {
-    private static AlertService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<AlertService> _instance = new(() => new AlertService());
     private readonly List<Alert> _activeAlerts = new();
     private readonly List<Alert> _resolvedAlerts = new();
     private readonly List<AlertSuppressionRule> _suppressionRules = new();
@@ -20,20 +18,7 @@ public sealed class AlertService
     private static readonly TimeSpan FlappingWindow = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan TransientThreshold = TimeSpan.FromSeconds(30);
 
-    public static AlertService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new AlertService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static AlertService Instance => _instance.Value;
 
     private AlertService()
     {

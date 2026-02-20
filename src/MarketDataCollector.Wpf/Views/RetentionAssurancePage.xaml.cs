@@ -87,7 +87,7 @@ public partial class RetentionAssurancePage : Page
                 StatusText = report.Status.ToString(),
                 StatusColor = GetStatusBrush(report.Status),
                 Summary = $"{report.DeletedFiles.Count} files deleted",
-                SizeText = FormatBytes(report.ActualBytesDeleted),
+                SizeText = FormatHelpers.FormatBytes(report.ActualBytesDeleted),
                 TimeText = FormatTimestamp(report.ExecutedAt)
             });
         }
@@ -189,7 +189,7 @@ public partial class RetentionAssurancePage : Page
             else
             {
                 ResultsText.Text = $"Found {_lastDryRun.FilesToDelete.Count} files to delete " +
-                                   $"({FormatBytes(_lastDryRun.TotalBytesToDelete)})\n" +
+                                   $"({FormatHelpers.FormatBytes(_lastDryRun.TotalBytesToDelete)})\n" +
                                    $"Skipped: {_lastDryRun.SkippedFiles.Count} files (legal holds)\n" +
                                    $"Symbols affected: {_lastDryRun.BySymbol.Count}";
                 ExecuteCleanupButton.IsEnabled = _lastDryRun.FilesToDelete.Count > 0;
@@ -217,7 +217,7 @@ public partial class RetentionAssurancePage : Page
         }
 
         var confirm = MessageBox.Show(
-            $"This will permanently delete {_lastDryRun.FilesToDelete.Count} files ({FormatBytes(_lastDryRun.TotalBytesToDelete)}).\n\nContinue?",
+            $"This will permanently delete {_lastDryRun.FilesToDelete.Count} files ({FormatHelpers.FormatBytes(_lastDryRun.TotalBytesToDelete)}).\n\nContinue?",
             "Confirm Cleanup",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
@@ -237,7 +237,7 @@ public partial class RetentionAssurancePage : Page
             ResultsList.Visibility = Visibility.Collapsed;
             ResultsText.Text = $"Status: {report.Status}\n" +
                                $"Files deleted: {report.DeletedFiles.Count}\n" +
-                               $"Bytes freed: {FormatBytes(report.ActualBytesDeleted)}\n" +
+                               $"Bytes freed: {FormatHelpers.FormatBytes(report.ActualBytesDeleted)}\n" +
                                (report.Errors.Any() ? $"Errors: {string.Join(", ", report.Errors)}\n" : "") +
                                (report.Notes.Any() ? $"Notes: {string.Join(", ", report.Notes)}" : "");
 
@@ -348,7 +348,6 @@ public partial class RetentionAssurancePage : Page
         StatusPanel.Visibility = Visibility.Collapsed;
     }
 
-    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     private static string FormatTimestamp(DateTime timestamp)
     {

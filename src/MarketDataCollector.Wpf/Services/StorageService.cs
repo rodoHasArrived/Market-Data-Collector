@@ -15,23 +15,8 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class StorageService : StorageServiceBase
 {
-    private static StorageService? _instance;
-    private static readonly object _lock = new();
-
-    public static StorageService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new StorageService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<StorageService> _instance = new(() => new StorageService());
+    public static StorageService Instance => _instance.Value;
 
     private StorageService() { }
 

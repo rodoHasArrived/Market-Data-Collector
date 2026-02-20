@@ -7,29 +7,14 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SearchService
 {
-    private static SearchService? _instance;
-    private static readonly object _lock = new();
-
+    private static readonly Lazy<SearchService> _instance = new(() => new SearchService());
     private readonly ConfigService _configService;
     private readonly WatchlistService _watchlistService;
 
     /// <summary>
     /// Gets the singleton instance of the SearchService.
     /// </summary>
-    public static SearchService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SearchService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static SearchService Instance => _instance.Value;
 
     private SearchService()
     {

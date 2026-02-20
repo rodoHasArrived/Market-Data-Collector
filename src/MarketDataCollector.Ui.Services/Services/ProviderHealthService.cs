@@ -15,28 +15,14 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ProviderHealthService : IDisposable
 {
-    private static volatile ProviderHealthService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<ProviderHealthService> _instance = new(() => new ProviderHealthService());
     private readonly ApiClientService _apiClient;
     private readonly Timer _updateTimer;
     private readonly ConcurrentDictionary<string, ProviderHealthData> _providerHealth = new();
     private readonly ConcurrentDictionary<string, List<HealthHistoryPoint>> _healthHistory = new();
     private bool _disposed;
 
-    public static ProviderHealthService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ProviderHealthService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static ProviderHealthService Instance => _instance.Value;
 
     private ProviderHealthService()
     {

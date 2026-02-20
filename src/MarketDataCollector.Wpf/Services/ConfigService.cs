@@ -437,35 +437,6 @@ public sealed class ConfigService
         }
     }
 
-    /// <summary>
-    /// Gets configuration of the specified type.
-    /// </summary>
-    /// <typeparam name="T">The configuration type.</typeparam>
-    /// <returns>A task containing the configuration instance.</returns>
-    public Task<T?> GetConfigAsync<T>() where T : class, new()
-    {
-        return Task.FromResult<T?>(new T());
-    }
-
-    /// <summary>
-    /// Saves the current configuration.
-    /// </summary>
-    /// <returns>A task representing the async operation.</returns>
-    public Task SaveConfigAsync()
-    {
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Saves the specified configuration.
-    /// </summary>
-    /// <typeparam name="T">The configuration type.</typeparam>
-    /// <param name="config">The configuration to save.</param>
-    /// <returns>A task representing the async operation.</returns>
-    public Task SaveConfigAsync<T>(T config) where T : class
-    {
-        return Task.CompletedTask;
-    }
 
     /// <summary>
     /// Gets the configured symbols from appsettings.json.

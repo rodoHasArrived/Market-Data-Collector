@@ -10,23 +10,8 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class LiveDataService
 {
-    private static LiveDataService? _instance;
-    private static readonly object _lock = new();
-
-    public static LiveDataService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new LiveDataService();
-                }
-            }
-            return _instance;
-        }
-    }
+    private static readonly Lazy<LiveDataService> _instance = new(() => new LiveDataService());
+    public static LiveDataService Instance => _instance.Value;
 
     private LiveDataService() { }
 

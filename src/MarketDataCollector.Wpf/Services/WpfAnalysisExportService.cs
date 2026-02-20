@@ -13,24 +13,10 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class WpfAnalysisExportService
 {
-    private static WpfAnalysisExportService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lazy<WpfAnalysisExportService> _instance = new(() => new WpfAnalysisExportService());
     private readonly ApiClientService _apiClient;
 
-    public static WpfAnalysisExportService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new WpfAnalysisExportService();
-                }
-            }
-            return _instance;
-        }
-    }
+    public static WpfAnalysisExportService Instance => _instance.Value;
 
     private WpfAnalysisExportService()
     {

@@ -28,15 +28,17 @@ public sealed class StatusWriter : IAsyncDisposable
     public void Start(TimeSpan interval)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-        _loop = Task.Run(async () =>
+        _loop = WriteLoopAsync(interval);
+    }
+
+    private async Task WriteLoopAsync(TimeSpan interval)
+    {
+        while (!_cts.IsCancellationRequested)
         {
-            while (!_cts.IsCancellationRequested)
-            {
-                await WriteOnceAsync();
-                try { await Task.Delay(interval, _cts.Token); }
-                catch (TaskCanceledException) { }
-            }
-        });
+            await WriteOnceAsync();
+            try { await Task.Delay(interval, _cts.Token); }
+            catch (TaskCanceledException) { }
+        }
     }
 
     public async Task WriteOnceAsync(CancellationToken ct = default)
