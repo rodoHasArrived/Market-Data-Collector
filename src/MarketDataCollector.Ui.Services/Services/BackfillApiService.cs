@@ -30,15 +30,15 @@ public sealed class BackfillApiService
     /// <summary>
     /// Gets the last backfill operation status.
     /// </summary>
-    public async Task<BackfillResult?> GetLastStatusAsync(CancellationToken ct = default)
+    public async Task<BackfillResultDto?> GetLastStatusAsync(CancellationToken ct = default)
     {
-        return await _apiClient.GetAsync<BackfillResult>(UiApiRoutes.BackfillStatus, ct);
+        return await _apiClient.GetAsync<BackfillResultDto>(UiApiRoutes.BackfillStatus, ct);
     }
 
     /// <summary>
     /// Runs a backfill operation for the specified symbols.
     /// </summary>
-    public async Task<BackfillResult?> RunBackfillAsync(
+    public async Task<BackfillResultDto?> RunBackfillAsync(
         string provider,
         string[] symbols,
         string? from,
@@ -54,7 +54,7 @@ public sealed class BackfillApiService
         };
 
         var backfillClient = _apiClient.GetBackfillClient();
-        var response = await _apiClient.PostWithResponseAsync<BackfillResult>(
+        var response = await _apiClient.PostWithResponseAsync<BackfillResultDto>(
             UiApiRoutes.BackfillRun,
             request,
             ct,
@@ -65,7 +65,7 @@ public sealed class BackfillApiService
             return response.Data;
         }
 
-        return new BackfillResult
+        return new BackfillResultDto
         {
             Success = false,
             Error = response.ErrorMessage ?? "Backfill request failed"

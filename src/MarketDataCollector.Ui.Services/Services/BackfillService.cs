@@ -513,24 +513,24 @@ public sealed class BackfillService
     /// <summary>
     /// Gets the last backfill status.
     /// </summary>
-    public async Task<BackfillResult?> GetLastStatusAsync()
+    public async Task<BackfillResultDto?> GetLastStatusAsync()
     {
         // In real implementation, this would load from storage
         await Task.Delay(10);
         return _lastResult;
     }
 
-    private BackfillResult? _lastResult;
+    private BackfillResultDto? _lastResult;
 
     /// <summary>
     /// Runs a simple backfill operation (for UI compatibility).
     /// </summary>
-    public async Task<BackfillResult?> RunBackfillAsync(string provider, string[] symbols, string? from, string? to)
+    public async Task<BackfillResultDto?> RunBackfillAsync(string provider, string[] symbols, string? from, string? to)
     {
         var fromDate = from != null ? DateTime.Parse(from) : DateTime.Today.AddYears(-1);
         var toDate = to != null ? DateTime.Parse(to) : DateTime.Today;
 
-        var result = new BackfillResult
+        var result = new BackfillResultDto
         {
             Provider = provider,
             Symbols = symbols,

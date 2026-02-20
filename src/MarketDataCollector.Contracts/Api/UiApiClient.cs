@@ -53,11 +53,11 @@ public sealed class UiApiClient
     public async Task<List<BackfillProviderInfo>?> GetBackfillProvidersAsync(CancellationToken ct = default)
         => await GetAsync<List<BackfillProviderInfo>>(UiApiRoutes.BackfillProviders, ct).ConfigureAwait(false);
 
-    public async Task<BackfillResult?> GetBackfillStatusAsync(CancellationToken ct = default)
-        => await GetAsync<BackfillResult>(UiApiRoutes.BackfillStatus, ct).ConfigureAwait(false);
+    public async Task<BackfillResultDto?> GetBackfillStatusAsync(CancellationToken ct = default)
+        => await GetAsync<BackfillResultDto>(UiApiRoutes.BackfillStatus, ct).ConfigureAwait(false);
 
-    public async Task<BackfillResult?> RunBackfillAsync(BackfillRequest request, CancellationToken ct = default)
-        => await PostAsync<BackfillResult>(UiApiRoutes.BackfillRun, request, ct).ConfigureAwait(false);
+    public async Task<BackfillResultDto?> RunBackfillAsync(BackfillRequest request, CancellationToken ct = default)
+        => await PostAsync<BackfillResultDto>(UiApiRoutes.BackfillRun, request, ct).ConfigureAwait(false);
 
     public async Task<BackfillHealthResponse?> GetBackfillHealthAsync(CancellationToken ct = default)
         => await GetAsync<BackfillHealthResponse>(UiApiRoutes.BackfillHealth, ct).ConfigureAwait(false);
@@ -66,8 +66,8 @@ public sealed class UiApiClient
         => await GetAsync<SymbolResolutionResponse>(
             UiApiRoutes.WithParam(UiApiRoutes.BackfillResolve, "symbol", symbol), ct).ConfigureAwait(false);
 
-    public async Task<BackfillResult?> RunGapFillAsync(GapFillRequest request, CancellationToken ct = default)
-        => await PostAsync<BackfillResult>(UiApiRoutes.BackfillGapFill, request, ct).ConfigureAwait(false);
+    public async Task<BackfillResultDto?> RunGapFillAsync(GapFillRequest request, CancellationToken ct = default)
+        => await PostAsync<BackfillResultDto>(UiApiRoutes.BackfillGapFill, request, ct).ConfigureAwait(false);
 
     public async Task<List<BackfillPreset>?> GetBackfillPresetsAsync(CancellationToken ct = default)
         => await GetAsync<List<BackfillPreset>>(UiApiRoutes.BackfillPresets, ct).ConfigureAwait(false);
