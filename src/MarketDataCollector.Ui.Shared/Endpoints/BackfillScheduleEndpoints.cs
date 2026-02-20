@@ -7,6 +7,7 @@ using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
