@@ -19,12 +19,19 @@ namespace MarketDataCollector.Wpf;
 public partial class App : Application
 {
     private static bool _isFirstRun;
+    private static bool _isFixtureMode;
     private IHost? _host;
 
     /// <summary>
     /// Gets the service provider for dependency injection.
     /// </summary>
     public static IServiceProvider Services { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets whether the application is running in fixture mode (offline mock data).
+    /// Activated via --fixture command-line argument or MDC_FIXTURE_MODE=1 environment variable.
+    /// </summary>
+    public static bool IsFixtureMode => _isFixtureMode;
 
     /// <summary>
     /// Gets the main application window.
@@ -68,6 +75,9 @@ public partial class App : Application
 
     private async void OnStartup(object sender, StartupEventArgs e)
     {
+        // Detect fixture mode from --fixture arg or MDC_FIXTURE_MODE env var
+        _isFixtureMode = DetectFixtureMode(e.Args);
+
         // Configure the host with dependency injection
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
@@ -96,6 +106,22 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Detects whether fixture mode should be activated.
+    /// Checks for --fixture command-line argument or MDC_FIXTURE_MODE=1 environment variable.
+    /// </summary>
+    private static bool DetectFixtureMode(string[] args)
+    {
+        // Check command-line argument
+        if (Array.Exists(args, arg => string.Equals(arg, "--fixture", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        // Check environment variable
+        var envValue = Environment.GetEnvironmentVariable("MDC_FIXTURE_MODE");
+        return string.Equals(envValue, "1", StringComparison.Ordinal)
+            || string.Equals(envValue, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Configures services for dependency injection.
     /// C1: DI-first registration — services registered by interface where possible.
     /// Pages registered as transient for constructor injection via NavigationService.
@@ -104,6 +130,9 @@ public partial class App : Application
     {
         // Register HttpClient factory
         services.AddHttpClient();
+
+        // ── Fixture mode service (offline mock data) ────────────────────────
+        services.AddSingleton(_ => MarketDataCollector.Ui.Services.Services.FixtureDataService.Instance);
 
         // ── Core services (by interface + concrete type) ────────────────────
         services.AddSingleton<IConnectionService>(_ => WpfServices.ConnectionService.Instance);
@@ -218,6 +247,15 @@ public partial class App : Application
 
             // Start background task scheduler
             await InitializeBackgroundServicesAsync();
+
+            // Notify if running in fixture mode
+            if (_isFixtureMode)
+            {
+                WpfServices.LoggingService.Instance.LogWarning("Running in FIXTURE MODE — using offline mock data");
+                await WpfServices.NotificationService.Instance.NotifyWarningAsync(
+                    "Fixture Mode Active",
+                    "Application is using mock data for offline development");
+            }
 
             // Log successful startup
             WpfServices.LoggingService.Instance.LogInfo("Application started successfully");
