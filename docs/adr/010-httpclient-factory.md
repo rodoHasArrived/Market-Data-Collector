@@ -43,12 +43,11 @@ Use `IHttpClientFactory` from `Microsoft.Extensions.Http` for all HTTP client cr
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Client Names | `src/MarketDataCollector/Infrastructure/Http/HttpClientConfiguration.cs:16` | Named client identifiers |
-| Registration | `src/MarketDataCollector/Infrastructure/Http/HttpClientConfiguration.cs:75` | DI configuration |
-| Resilience Policies | `src/MarketDataCollector/Infrastructure/Http/HttpClientConfiguration.cs:311` | Retry/circuit breaker |
-| Factory Provider | `src/MarketDataCollector/Infrastructure/Http/HttpClientConfiguration.cs:357` | Backward compatibility |
-| Alpaca Provider | `src/MarketDataCollector/Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs` | Usage example |
-| Historical Providers | `src/MarketDataCollector/Infrastructure/Providers/Backfill/` | Provider implementations |
+| Client Names | `src/MarketDataCollector.Infrastructure/Http/HttpClientConfiguration.cs` | Named client identifiers |
+| Registration | `src/MarketDataCollector.Infrastructure/Http/HttpClientConfiguration.cs` | DI configuration |
+| Resilience Policies | `src/MarketDataCollector.Infrastructure/Http/SharedResiliencePolicies.cs` | Retry/circuit breaker |
+| Alpaca Provider | `src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Usage example |
+| Historical Providers | `src/MarketDataCollector.Infrastructure/Providers/Historical/` | Provider implementations |
 
 ## Rationale
 
@@ -232,4 +231,4 @@ New code should always inject `IHttpClientFactory` directly.
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-20*

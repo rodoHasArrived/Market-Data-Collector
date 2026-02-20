@@ -35,13 +35,13 @@ All providers must implement these interfaces, enabling provider-agnostic data c
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Streaming Interface | `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs:10` | Real-time data contract |
-| Historical Interface | `src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider.cs:9` | Historical data contract |
-| Alpaca Implementation | `src/MarketDataCollector/Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs` | Streaming provider |
-| IB Implementation | `src/MarketDataCollector/Infrastructure/Providers/InteractiveBrokers/IBMarketDataClient.cs` | Streaming provider |
-| Yahoo Finance | `src/MarketDataCollector/Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs` | Historical provider |
-| Stooq | `src/MarketDataCollector/Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs` | Historical provider |
-| Composite Provider | `src/MarketDataCollector/Infrastructure/Providers/Backfill/CompositeHistoricalDataProvider.cs` | Failover orchestration |
+| Streaming Interface | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` | Real-time data contract |
+| Historical Interface | `src/MarketDataCollector.Infrastructure/Providers/Historical/IHistoricalDataProvider.cs` | Historical data contract |
+| Alpaca Implementation | `src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Streaming provider |
+| IB Implementation | `src/MarketDataCollector.Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | Streaming provider |
+| Yahoo Finance | `src/MarketDataCollector.Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | Historical provider |
+| Stooq | `src/MarketDataCollector.Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` | Historical provider |
+| Composite Provider | `src/MarketDataCollector.Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` | Failover orchestration |
 | Interface Tests | `tests/MarketDataCollector.Tests/Infrastructure/` | Contract verification |
 
 ## Rationale
@@ -152,7 +152,9 @@ public interface IHistoricalDataProvider
 - [Provider Implementation Guide](../development/provider-implementation.md)
 - [Provider Comparison](../providers/provider-comparison.md)
 - [Data Sources Documentation](../providers/data-sources.md)
+- [ADR-005: Attribute-Based Discovery](005-attribute-based-discovery.md) - Automatic provider registration via `[DataSource]` attribute
+- [ADR-010: HttpClientFactory](010-httpclient-factory.md) - HTTP client lifecycle for provider API calls
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-20*

@@ -30,15 +30,14 @@ Use custom attributes to mark provider classes for automatic discovery and regis
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| DataSourceAttribute | `src/MarketDataCollector/Infrastructure/DataSources/DataSourceAttribute.cs:18` | Provider metadata |
-| DataSourceMetadata | `src/MarketDataCollector/Infrastructure/DataSources/DataSourceAttribute.cs:85` | Runtime metadata |
-| Extension Methods | `src/MarketDataCollector/Infrastructure/DataSources/DataSourceAttribute.cs:129` | Discovery helpers |
-| DataSourceManager | `src/MarketDataCollector/Infrastructure/DataSources/DataSourceManager.cs` | DI registration |
-| IDataSource | `src/MarketDataCollector/Infrastructure/DataSources/IDataSource.cs` | Base interface |
-| IRealtimeDataSource | `src/MarketDataCollector/Infrastructure/DataSources/IRealtimeDataSource.cs` | Streaming marker |
-| IHistoricalDataSource | `src/MarketDataCollector/Infrastructure/DataSources/IHistoricalDataSource.cs` | Historical marker |
-| Plugin Manager | `src/MarketDataCollector/Infrastructure/DataSources/DataSourcePluginManager.cs` | External plugins |
-| Attribute Tests | `tests/MarketDataCollector.Tests/Infrastructure/DataSources/` | Discovery tests |
+| DataSourceAttribute | `src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs` | Provider metadata and discovery helpers |
+| DataSourceRegistry | `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs` | DI registration and runtime discovery |
+| IDataSource | `src/MarketDataCollector.ProviderSdk/IDataSource.cs` | Base interface |
+| IRealtimeDataSource | `src/MarketDataCollector.ProviderSdk/IRealtimeDataSource.cs` | Streaming marker |
+| IHistoricalDataSource | `src/MarketDataCollector.ProviderSdk/IHistoricalDataSource.cs` | Historical marker |
+| IProviderMetadata | `src/MarketDataCollector.ProviderSdk/IProviderMetadata.cs` | Provider metadata contract |
+| DataSourceConfiguration | `src/MarketDataCollector.Infrastructure/DataSources/DataSourceConfiguration.cs` | Runtime configuration |
+| Attribute Tests | `tests/MarketDataCollector.Tests/ProviderSdk/` | Discovery and attribute tests |
 
 ## Rationale
 
@@ -193,7 +192,8 @@ public interface IDataSource { }
 - [DataSourceAttribute Source](../../src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs)
 - [Provider Implementation Guide](../development/provider-implementation.md)
 - [Microsoft Attribute Guidelines](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/attributes)
+- [ADR-001: Provider Abstraction](001-provider-abstraction.md) - Defines the interfaces that discovered providers implement
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-20*
