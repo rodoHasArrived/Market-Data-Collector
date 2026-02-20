@@ -1,7 +1,7 @@
 # Desktop Platform Development Improvements - Executive Summary
 
 **Date**: 2026-02-20
-**Status**: Phase 1 Complete (Fixture Mode Wired), Phase 2 In Progress, Active Development
+**Status**: Phase 1 Complete, Phase 2 In Progress (45% test coverage achieved), Active Development
 **Author**: GitHub Copilot Analysis (updated 2026-02-20)
 
 ## Overview
@@ -19,7 +19,7 @@ The repository has strong developer experience infrastructure in place:
 3. **Documentation** (`docs/development/wpf-implementation-notes.md`, `desktop-testing-guide.md`)
 4. **Policies** (`docs/development/policies/desktop-support-policy.md`)
 5. **PR Templates** (`.github/pull_request_template_desktop.md`)
-6. **Test Infrastructure** - 615+ tests across two test projects
+6. **Test Infrastructure** - 815+ tests across two test projects
 7. **DI Modernization** - Microsoft.Extensions.DependencyInjection with 73 service registrations
 8. **Architecture Documentation** - Comprehensive `desktop-layers.md` with layer diagrams and dependency rules
 
@@ -29,7 +29,7 @@ These align with Priority 1-4 items from the original improvement plan (now [arc
 
 | Gap | Impact | Effort | Priority |
 |-----|--------|--------|----------|
-| **~63% of desktop services lack tests** (33 of 90 covered) | Regression risk for untested services | Medium | P1 |
+| **~55% of desktop services lack tests** (41 of 90 covered) | Regression risk for untested services | Medium | P2 |
 | ~~Fixture mode not wired into startup~~ | ~~`--fixture` / `MDC_FIXTURE_MODE` not parsed~~ | | ~~Resolved (wired into App.xaml.cs)~~ |
 | **No service extraction to shared layer** (Phase 2-4) | WPF services contain mixed platform + business logic | High | P2 |
 | ~~No unit tests for desktop services~~ | ~~High regression risk~~ | | ~~Resolved (272 tests)~~ |
@@ -43,21 +43,23 @@ These align with Priority 1-4 items from the original improvement plan (now [arc
 ### Phase 1: Test Infrastructure (Complete)
 
 Created test projects with comprehensive coverage:
-- **MarketDataCollector.Ui.Tests**: ~405 tests across 25 test files
-- **MarketDataCollector.Wpf.Tests**: ~210 tests across 10 test files
-- **Total**: ~615 tests with platform detection and CI integration
+- **MarketDataCollector.Ui.Tests**: ~551 tests across 31 test files
+- **MarketDataCollector.Wpf.Tests**: ~265 tests across 12 test files
+- **Total**: ~816 tests with platform detection and CI integration
 - **Platform detection** (Windows-only, graceful skip on Linux/macOS)
 - **Test patterns** demonstrating best practices
 - **Makefile integration** (`make test-desktop-services`)
 
-**Ui.Tests Breakdown (~405 tests):**
+**Ui.Tests Breakdown (~551 tests):**
 
 | Test File | Count |
 |-----------|-------|
 | BoundedObservableCollectionTests | 8 |
 | CircularBufferTests | 11 |
+| ActivityFeedServiceTests | 35 |
 | AlertServiceTests | 25 |
 | ApiClientServiceTests | 14 |
+| BackfillApiServiceTests | 14 |
 | BackfillProviderConfigServiceTests | 20 |
 | BackfillServiceTests | 18 |
 | ChartingServiceTests | 16 |
@@ -65,8 +67,10 @@ Created test projects with comprehensive coverage:
 | ConnectionServiceBaseTests | 22 |
 | CredentialServiceTests | 18 |
 | DataCompletenessServiceTests | 40 |
+| DataSamplingServiceTests | 30 |
 | DiagnosticsServiceTests | 24 |
 | ErrorHandlingServiceTests | 20 |
+| EventReplayServiceTests | 22 |
 | FixtureDataServiceTests | 13 |
 | FormValidationServiceTests | 4 |
 | LeanIntegrationServiceTests | 12 |
@@ -74,13 +78,15 @@ Created test projects with comprehensive coverage:
 | NotificationServiceTests | 24 |
 | OrderBookVisualizationServiceTests | 4 |
 | PortfolioImportServiceTests | 4 |
+| ProviderHealthServiceTests | 20 |
+| ProviderManagementServiceTests | 25 |
 | SchemaServiceTests | 6 |
 | StorageAnalyticsServiceTests | 15 |
 | SystemHealthServiceTests | 21 |
 | TimeSeriesAlignmentServiceTests | 14 |
 | WatchlistServiceTests | 22 |
 
-**Wpf.Tests Breakdown (~210 tests):**
+**Wpf.Tests Breakdown (~265 tests):**
 
 | Test File | Count |
 |-----------|-------|
@@ -89,10 +95,12 @@ Created test projects with comprehensive coverage:
 | ConfigServiceTests | 12 |
 | ConnectionServiceTests | 21 |
 | InfoBarServiceTests | 19 |
+| KeyboardShortcutServiceTests | 30 |
 | MessagingServiceTests | 19 |
 | NavigationServiceTests | 12 |
 | StatusServiceTests | 12 |
 | StorageServiceTests | 29 |
+| WorkspaceServiceTests | 25 |
 | WpfDataQualityServiceTests | 28 |
 
 ### Phase 1: Architecture Documentation (Complete)
@@ -142,9 +150,9 @@ Development Experience
 
 ```
 Test Coverage
-- Desktop Services: ~37% (615 tests across 33 service test files)
-- Ui.Services: ~405 tests (collections, validation, charting, backfill, alerts, diagnostics, config, credentials, notifications, completeness, live data, etc.)
-- Wpf.Services: ~210 tests (navigation, config, status, connection, messaging, scheduling, maintenance, storage, etc.)
+- Desktop Services: ~45% (816 tests across 41 service test files)
+- Ui.Services: ~551 tests (collections, validation, charting, backfill, alerts, diagnostics, config, credentials, notifications, completeness, live data, activity feed, data sampling, event replay, provider health, provider management, etc.)
+- Wpf.Services: ~265 tests (navigation, config, status, connection, messaging, scheduling, maintenance, storage, keyboard shortcuts, workspace, etc.)
 - Clear test patterns for contributors
 - CI-integrated testing (make test-desktop-services)
 
@@ -170,19 +178,19 @@ Documentation
 
 ### Ui.Services (`src/MarketDataCollector.Ui.Services/Services/`)
 
-59 main service files providing shared desktop logic. 23 have dedicated test files (39% coverage).
+59 main service files providing shared desktop logic. 29 have dedicated test files (49% coverage).
 
-**Tested services**: Alert, ApiClient, BackfillProviderConfig, Backfill, Charting, Config, ConnectionServiceBase, Credential, DataCompleteness, Diagnostics, ErrorHandling, FixtureData, FormValidation, LeanIntegration, LiveData, Notification, OrderBookVisualization, PortfolioImport, Schema, StorageAnalytics, SystemHealth, TimeSeriesAlignment, Watchlist
+**Tested services**: ActivityFeed, Alert, ApiClient, BackfillApi, BackfillProviderConfig, Backfill, Charting, Config, ConnectionServiceBase, Credential, DataCompleteness, DataSampling, Diagnostics, ErrorHandling, EventReplay, FixtureData, FormValidation, LeanIntegration, LiveData, Notification, OrderBookVisualization, PortfolioImport, ProviderHealth, ProviderManagement, Schema, StorageAnalytics, SystemHealth, TimeSeriesAlignment, Watchlist
 
-**Notable untested services**: ActivityFeed, AdminMaintenance, AdvancedAnalytics, AnalysisExportWizard, ArchiveBrowser, ArchiveHealth, BackfillApi, BackfillCheckpoint, BatchExportScheduler, CollectionSession, CommandPalette, DataCalendar, DataSampling, EventReplay, ExportPreset, IntegrityEvents, Manifest, OAuthRefresh, OnboardingTour, ProviderHealth, ProviderManagement, ScheduleManager, ScheduledMaintenance, SetupWizard, SmartRecommendations, StorageOptimizationAdvisor, SymbolGroup, SymbolManagement, SymbolMapping
+**Notable untested services**: AdminMaintenance, AdvancedAnalytics, AnalysisExportWizard, ArchiveBrowser, ArchiveHealth, BackfillCheckpoint, BatchExportScheduler, CollectionSession, CommandPalette, DataCalendar, ExportPreset, IntegrityEvents, Manifest, OAuthRefresh, OnboardingTour, ScheduleManager, ScheduledMaintenance, SetupWizard, SmartRecommendations, StorageOptimizationAdvisor, SymbolGroup, SymbolManagement, SymbolMapping
 
 ### Wpf Services (`src/MarketDataCollector.Wpf/Services/`)
 
-31 service files providing WPF-specific logic. 10 have dedicated test files (32% coverage).
+31 service files providing WPF-specific logic. 12 have dedicated test files (39% coverage).
 
-**Tested services**: AdminMaintenance, BackgroundTaskScheduler, Config, Connection, InfoBar, Messaging, Navigation, Status, Storage, WpfDataQuality
+**Tested services**: AdminMaintenance, BackgroundTaskScheduler, Config, Connection, InfoBar, KeyboardShortcut, Messaging, Navigation, Status, Storage, Workspace, WpfDataQuality
 
-**Notable untested services**: ArchiveHealth, BackendServiceManager, BrushRegistry, ContextMenu, Credential, ExportPreset, FirstRun, FormValidation, KeyboardShortcut, Logging, Notification, OfflineTrackingPersistence, PendingOperationsQueue, RetentionAssurance, Schema, Tooltip, WatchlistService, Workspace, WpfAnalysisExport
+**Notable untested services**: ArchiveHealth, BackendServiceManager, BrushRegistry, ContextMenu, Credential, ExportPreset, FirstRun, FormValidation, Logging, Notification, OfflineTrackingPersistence, PendingOperationsQueue, RetentionAssurance, Schema, Tooltip, WatchlistService, WpfAnalysisExport
 
 ## Recommended Next Steps
 
@@ -194,10 +202,10 @@ Fixture mode is now wired into `App.xaml.cs`:
 - [x] `FixtureDataService.Instance` registered in DI container
 - [x] Warning notification displayed when fixture mode is active
 
-### Priority 2: Expand Test Coverage (In Progress)
+### Priority 2: Expand Test Coverage (Complete - 45% achieved)
 
 **Goal**: Reach 40% desktop service coverage (~36 of 90 services tested)
-**Current**: 37% (33 of 90 services tested)
+**Current**: 45.6% (41 of 90 services tested) - **Target exceeded**
 
 High-value targets for new tests:
 - [x] ConnectionServiceBase - connection state logic
@@ -215,6 +223,14 @@ High-value targets for new tests:
 - [x] LiveDataService - real-time data handling
 - [x] AdminMaintenanceService (Wpf) - maintenance operations
 - [x] StorageService (Wpf) - storage operations
+- [x] ActivityFeedService - activity logging and filtering
+- [x] BackfillApiService - backfill API and contract models
+- [x] DataSamplingService - sampling validation and strategies
+- [x] EventReplayService - replay state machine and models
+- [x] ProviderHealthService - health monitoring and scoring
+- [x] ProviderManagementService - provider CRUD and failover models
+- [x] KeyboardShortcutService (Wpf) - shortcut registration and formatting
+- [x] WorkspaceService (Wpf) - workspace CRUD, export/import
 
 **Impact**: High (catches regressions early, serves as documentation)
 
@@ -255,8 +271,8 @@ Target 60%+ desktop service test coverage. Prioritize services with complex busi
 Track these KPIs to measure improvement:
 
 ### Code Quality
-- [x] Desktop service test infrastructure: **Done** (615 tests)
-- [ ] Desktop service test coverage: **Current 37%, Target 60%+**
+- [x] Desktop service test infrastructure: **Done** (816 tests)
+- [ ] Desktop service test coverage: **Current 45%, Target 60%+**
 - [ ] Regression bugs caught pre-merge: **Target 80%+**
 - [x] UWP code duplication: **Resolved** (UWP removed)
 
@@ -297,9 +313,9 @@ Track these KPIs to measure improvement:
 
 ### Investment Remaining
 - ~~Fixture mode wiring~~: Complete
-- ~~Expanded test coverage (from 29% to 40%)~~: Complete (37%, 33 of 90 services)
+- ~~Expanded test coverage (from 29% to 40%)~~: Complete (45%, 41 of 90 services)
 - Service extraction (Phase 2): ~60 hours
-- Full test coverage to 60%+ (Phase 3): ~80 hours
+- Full test coverage to 60%+ (Phase 3): ~60 hours
 
 ### Expected Returns
 - **Development velocity**: +30% (faster testing, offline development)
@@ -310,14 +326,14 @@ Track these KPIs to measure improvement:
 
 Significant progress has been made on desktop platform improvements:
 
-1. **Test infrastructure** - 615 tests across 2 projects, 33 service test files (up from 0)
+1. **Test infrastructure** - 816 tests across 2 projects, 41 service test files (up from 0)
 2. **DI modernization** - Modern container with 73 registrations
 3. **Architecture documentation** - Comprehensive layer design document
 4. **Fixture mode** - Mock data service implemented and wired into startup (`--fixture` / `MDC_FIXTURE_MODE`)
 5. **CI integration** - Automated testing via Makefile
-6. **Expanded coverage** - All Priority 2 high-value services now tested (Config, Credential, Notification, DataCompleteness, LiveData, AdminMaintenance, Storage)
+6. **Expanded coverage** - 40% target exceeded with 45% coverage; all recommended high-value services tested including ActivityFeed, BackfillApi, DataSampling, EventReplay, ProviderHealth, ProviderManagement, KeyboardShortcut, and Workspace
 
-Test coverage has grown from 29% to **37%** of desktop services (33 of 90), approaching the 40% target. The remaining gap is **service extraction to a shared layer** (Phase 2) and continued expansion toward 60%+ coverage (Phase 3). Next recommended targets include ActivityFeedService, ArchiveHealthService, BackfillApiService, ProviderHealthService, and EventReplayService.
+Test coverage has grown from 29% to **45%** of desktop services (41 of 90), exceeding the 40% target. The remaining gap is **service extraction to a shared layer** (Phase 2) and continued expansion toward 60%+ coverage (Phase 3). Next recommended targets for coverage expansion include AdminMaintenance (Ui), ArchiveBrowser, CommandPalette, ScheduleManager, and SymbolManagement services.
 
 ---
 
@@ -331,8 +347,8 @@ Test coverage has grown from 29% to **37%** of desktop services (33 of 90), appr
 - **UI Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
 - **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
 - **Test Projects**:
-  - `tests/MarketDataCollector.Ui.Tests/` (~405 tests, 25 files)
-  - `tests/MarketDataCollector.Wpf.Tests/` (~210 tests, 10 files)
+  - `tests/MarketDataCollector.Ui.Tests/` (~551 tests, 31 files)
+  - `tests/MarketDataCollector.Wpf.Tests/` (~265 tests, 12 files)
 
 ## Related Documentation
 
