@@ -1122,10 +1122,8 @@ Market-Data-Collector/
 │       │   └── StorageDisplayModels.cs
 │       ├── Services/
 │       │   ├── AdminMaintenanceService.cs
-│       │   ├── AdvancedAnalyticsService.cs
 │       │   ├── ArchiveHealthService.cs
 │       │   ├── BackendServiceManager.cs
-│       │   ├── BackfillApiService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
 │       │   ├── BrushRegistry.cs
 │       │   ├── ConfigService.cs

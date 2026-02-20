@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-20 00:26:05 UTC
+> Auto-generated on 2026-02-20 02:08:10 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -955,10 +955,8 @@ Market-Data-Collector/
 │       │   └── StorageDisplayModels.cs
 │       ├── Services/
 │       │   ├── AdminMaintenanceService.cs
-│       │   ├── AdvancedAnalyticsService.cs
 │       │   ├── ArchiveHealthService.cs
 │       │   ├── BackendServiceManager.cs
-│       │   ├── BackfillApiService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
 │       │   ├── BrushRegistry.cs
 │       │   ├── ConfigService.cs
