@@ -1219,12 +1219,17 @@ Market-Data-Collector/
 │   │   │   ├── BackfillProviderConfigServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── ChartingServiceTests.cs
+│   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceBaseTests.cs
+│   │   │   ├── CredentialServiceTests.cs
+│   │   │   ├── DataCompletenessServiceTests.cs
 │   │   │   ├── DiagnosticsServiceTests.cs
 │   │   │   ├── ErrorHandlingServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
 │   │   │   ├── LeanIntegrationServiceTests.cs
+│   │   │   ├── LiveDataServiceTests.cs
+│   │   │   ├── NotificationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
@@ -1236,6 +1241,7 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── MarketDataCollector.Wpf.Tests/
 │   │   ├── Services/
+│   │   │   ├── AdminMaintenanceServiceTests.cs
 │   │   │   ├── BackgroundTaskSchedulerServiceTests.cs
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceTests.cs
@@ -1243,6 +1249,7 @@ Market-Data-Collector/
 │   │   │   ├── MessagingServiceTests.cs
 │   │   │   ├── NavigationServiceTests.cs
 │   │   │   ├── StatusServiceTests.cs
+│   │   │   ├── StorageServiceTests.cs
 │   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
