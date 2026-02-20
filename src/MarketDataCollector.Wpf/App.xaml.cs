@@ -132,7 +132,7 @@ public partial class App : Application
         services.AddSingleton(_ => WpfServices.ArchiveHealthService.Instance);
         services.AddSingleton(_ => WpfServices.SchemaService.Instance);
         services.AddSingleton(_ => WpfServices.AdminMaintenanceService.Instance);
-        services.AddSingleton(_ => WpfServices.AdvancedAnalyticsService.Instance);
+        services.AddSingleton<AdvancedAnalyticsServiceBase>(_ => new AdvancedAnalyticsServiceBase());
         services.AddSingleton(_ => SearchService.Instance);
 
         // ── Background / infrastructure services ────────────────────────────

@@ -4,10 +4,8 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using WpfServices = MarketDataCollector.Wpf.Services;
-
 using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Services;
+
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
@@ -16,10 +14,10 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class AdvancedAnalyticsPage : Page
 {
-    private readonly AdvancedAnalyticsService _analyticsService;
+    private readonly AdvancedAnalyticsServiceBase _analyticsService;
     private GapAnalysisResult? _lastGapAnalysis;
 
-    public AdvancedAnalyticsPage(AdvancedAnalyticsService analyticsService)
+    public AdvancedAnalyticsPage(AdvancedAnalyticsServiceBase analyticsService)
     {
         InitializeComponent();
         _analyticsService = analyticsService;

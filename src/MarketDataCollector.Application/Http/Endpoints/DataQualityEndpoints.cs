@@ -16,6 +16,47 @@ public static class DataQualityEndpoints
     };
 
     /// <summary>
+    /// Wraps a synchronous handler with consistent error handling and JSON serialization.
+    /// </summary>
+    private static IResult HandleSync(Func<IResult> handler)
+    {
+        try
+        {
+            return handler();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Wraps an async handler with consistent error handling and JSON serialization.
+    /// </summary>
+    private static async Task<IResult> HandleAsync(Func<Task<IResult>> handler)
+    {
+        try
+        {
+            return await handler();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Parses an optional date string, defaulting to today (UTC).
+    /// </summary>
+    private static DateOnly ParseDateOrToday(string? date) =>
+        date != null ? DateOnly.Parse(date) : DateOnly.FromDateTime(DateTime.UtcNow);
+
+    /// <summary>
+    /// Returns the result as JSON using the shared serializer options.
+    /// </summary>
+    private static IResult Json(object value) => Results.Json(value, s_jsonOptions);
+
+    /// <summary>
     /// Maps all data quality monitoring endpoints.
     /// </summary>
     public static void MapDataQualityEndpoints(this WebApplication app, DataQualityMonitoringService qualityService)
@@ -23,242 +64,112 @@ public static class DataQualityEndpoints
         // ==================== DASHBOARD ====================
 
         app.MapGet("/api/quality/dashboard", () =>
-        {
-            try
-            {
-                var dashboard = qualityService.GetDashboard();
-                return Results.Json(dashboard, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get dashboard: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.GetDashboard())));
 
         app.MapGet("/api/quality/metrics", () =>
-        {
-            try
-            {
-                var metrics = qualityService.GetRealTimeMetrics();
-                return Results.Json(metrics, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get metrics: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.GetRealTimeMetrics())));
 
         // ==================== COMPLETENESS ====================
 
         app.MapGet("/api/quality/completeness", (string? date) =>
-        {
-            try
+            HandleSync(() =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
-                var scores = qualityService.Completeness.GetScoresForDate(targetDate);
-                return Results.Json(scores, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get completeness scores: {ex.Message}");
-            }
-        });
+                var targetDate = ParseDateOrToday(date);
+                return Json(qualityService.Completeness.GetScoresForDate(targetDate));
+            }));
 
         app.MapGet("/api/quality/completeness/{symbol}", (string symbol, string? date) =>
-        {
-            try
+            HandleSync(() =>
             {
                 if (date != null)
                 {
                     var targetDate = DateOnly.Parse(date);
                     var score = qualityService.Completeness.GetScore(symbol, targetDate);
                     return score != null
-                        ? Results.Json(score, s_jsonOptions)
+                        ? Json(score)
                         : Results.NotFound($"No completeness data for {symbol} on {date}");
                 }
 
-                var scores = qualityService.Completeness.GetScoresForSymbol(symbol);
-                return Results.Json(scores, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get completeness score: {ex.Message}");
-            }
-        });
+                return Json(qualityService.Completeness.GetScoresForSymbol(symbol));
+            }));
 
         app.MapGet("/api/quality/completeness/summary", () =>
-        {
-            try
-            {
-                var summary = qualityService.Completeness.GetSummary();
-                return Results.Json(summary, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get completeness summary: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.Completeness.GetSummary())));
 
         app.MapGet("/api/quality/completeness/low", (string? date, double? threshold) =>
-        {
-            try
+            HandleSync(() =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
-                var scores = qualityService.Completeness.GetLowCompletenessSymbols(targetDate, threshold ?? 0.8);
-                return Results.Json(scores, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get low completeness symbols: {ex.Message}");
-            }
-        });
+                var targetDate = ParseDateOrToday(date);
+                return Json(qualityService.Completeness.GetLowCompletenessSymbols(targetDate, threshold ?? 0.8));
+            }));
 
         // ==================== GAP ANALYSIS ====================
 
         app.MapGet("/api/quality/gaps", (string? date, int? count) =>
-        {
-            try
+            HandleSync(() =>
             {
                 if (date != null)
                 {
                     var targetDate = DateOnly.Parse(date);
-                    var gaps = qualityService.GapAnalyzer.GetGapsForDate(targetDate);
-                    return Results.Json(gaps, s_jsonOptions);
+                    return Json(qualityService.GapAnalyzer.GetGapsForDate(targetDate));
                 }
 
-                var recent = qualityService.GapAnalyzer.GetRecentGaps(count ?? 100);
-                return Results.Json(recent, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get gaps: {ex.Message}");
-            }
-        });
+                return Json(qualityService.GapAnalyzer.GetRecentGaps(count ?? 100));
+            }));
 
         app.MapGet("/api/quality/gaps/{symbol}", (string symbol, string? date) =>
-        {
-            try
+            HandleSync(() =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
-                var analysis = qualityService.GapAnalyzer.AnalyzeGaps(symbol, targetDate);
-                return Results.Json(analysis, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to analyze gaps: {ex.Message}");
-            }
-        });
+                var targetDate = ParseDateOrToday(date);
+                return Json(qualityService.GapAnalyzer.AnalyzeGaps(symbol, targetDate));
+            }));
 
         app.MapGet("/api/quality/gaps/timeline/{symbol}", (string symbol, string? date) =>
-        {
-            try
+            HandleSync(() =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
+                var targetDate = ParseDateOrToday(date);
                 var analysis = qualityService.GapAnalyzer.AnalyzeGaps(symbol, targetDate);
-                return Results.Json(new { symbol, date = targetDate, timeline = analysis.Timeline }, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get timeline: {ex.Message}");
-            }
-        });
+                return Json(new { symbol, date = targetDate, timeline = analysis.Timeline });
+            }));
 
         app.MapGet("/api/quality/gaps/statistics", (string? date) =>
-        {
-            try
+            HandleSync(() =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : (DateOnly?)null;
-
-                var stats = qualityService.GapAnalyzer.GetStatistics(targetDate);
-                return Results.Json(stats, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get gap statistics: {ex.Message}");
-            }
-        });
+                var targetDate = date != null ? DateOnly.Parse(date) : (DateOnly?)null;
+                return Json(qualityService.GapAnalyzer.GetStatistics(targetDate));
+            }));
 
         // ==================== SEQUENCE ERRORS ====================
 
         app.MapGet("/api/quality/errors", (string? date, int? count) =>
-        {
-            try
+            HandleSync(() =>
             {
                 if (date != null)
                 {
                     var targetDate = DateOnly.Parse(date);
-                    var errors = qualityService.SequenceTracker.GetErrorsForDate(targetDate);
-                    return Results.Json(errors, s_jsonOptions);
+                    return Json(qualityService.SequenceTracker.GetErrorsForDate(targetDate));
                 }
 
-                var recent = qualityService.SequenceTracker.GetRecentErrors(count ?? 100);
-                return Results.Json(recent, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get sequence errors: {ex.Message}");
-            }
-        });
+                return Json(qualityService.SequenceTracker.GetRecentErrors(count ?? 100));
+            }));
 
         app.MapGet("/api/quality/errors/{symbol}", (string symbol, string? date, int? count) =>
-        {
-            try
+            HandleSync(() =>
             {
                 var targetDate = date != null ? DateOnly.Parse(date) : (DateOnly?)null;
-                var summary = qualityService.SequenceTracker.GetSummary(symbol, targetDate);
-                return Results.Json(summary, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get error summary: {ex.Message}");
-            }
-        });
+                return Json(qualityService.SequenceTracker.GetSummary(symbol, targetDate));
+            }));
 
         app.MapGet("/api/quality/errors/statistics", () =>
-        {
-            try
-            {
-                var stats = qualityService.SequenceTracker.GetStatistics();
-                return Results.Json(stats, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get error statistics: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.SequenceTracker.GetStatistics())));
 
         app.MapGet("/api/quality/errors/top-symbols", (int? count) =>
-        {
-            try
-            {
-                var symbols = qualityService.SequenceTracker.GetSymbolsWithMostErrors(count ?? 10);
-                return Results.Json(symbols, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get top error symbols: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.SequenceTracker.GetSymbolsWithMostErrors(count ?? 10))));
 
         // ==================== ANOMALIES ====================
 
         app.MapGet("/api/quality/anomalies", (string? date, string? type, string? severity, int? count) =>
-        {
-            try
+            HandleSync(() =>
             {
                 IReadOnlyList<DataAnomaly> anomalies;
 
@@ -280,227 +191,89 @@ public static class DataQualityEndpoints
                     anomalies = qualityService.AnomalyDetector.GetRecentAnomalies(count ?? 100);
                 }
 
-                return Results.Json(anomalies, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get anomalies: {ex.Message}");
-            }
-        });
+                return Json(anomalies);
+            }));
 
         app.MapGet("/api/quality/anomalies/{symbol}", (string symbol, int? count) =>
-        {
-            try
-            {
-                var anomalies = qualityService.AnomalyDetector.GetAnomalies(symbol, count ?? 100);
-                return Results.Json(anomalies, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get anomalies: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.AnomalyDetector.GetAnomalies(symbol, count ?? 100))));
 
         app.MapGet("/api/quality/anomalies/unacknowledged", (int? count) =>
-        {
-            try
-            {
-                var anomalies = qualityService.AnomalyDetector.GetUnacknowledgedAnomalies(count ?? 100);
-                return Results.Json(anomalies, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get unacknowledged anomalies: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.AnomalyDetector.GetUnacknowledgedAnomalies(count ?? 100))));
 
         app.MapPost("/api/quality/anomalies/{anomalyId}/acknowledge", (string anomalyId) =>
-        {
-            try
+            HandleSync(() =>
             {
                 var success = qualityService.AnomalyDetector.AcknowledgeAnomaly(anomalyId);
                 return success
                     ? Results.Ok(new { acknowledged = true })
                     : Results.NotFound($"Anomaly {anomalyId} not found");
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to acknowledge anomaly: {ex.Message}");
-            }
-        });
+            }));
 
         app.MapGet("/api/quality/anomalies/statistics", () =>
-        {
-            try
-            {
-                var stats = qualityService.AnomalyDetector.GetStatistics();
-                return Results.Json(stats, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get anomaly statistics: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.AnomalyDetector.GetStatistics())));
 
         app.MapGet("/api/quality/anomalies/stale", () =>
-        {
-            try
-            {
-                var stale = qualityService.AnomalyDetector.GetStaleSymbols();
-                return Results.Json(stale, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get stale symbols: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.AnomalyDetector.GetStaleSymbols())));
 
         // ==================== LATENCY ====================
 
         app.MapGet("/api/quality/latency", () =>
-        {
-            try
-            {
-                var distributions = qualityService.LatencyHistogram.GetAllDistributions();
-                return Results.Json(distributions, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get latency distributions: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.LatencyHistogram.GetAllDistributions())));
 
         app.MapGet("/api/quality/latency/{symbol}", (string symbol, string? provider) =>
-        {
-            try
+            HandleSync(() =>
             {
                 var distribution = qualityService.LatencyHistogram.GetDistribution(symbol, provider);
                 return distribution != null
-                    ? Results.Json(distribution, s_jsonOptions)
+                    ? Json(distribution)
                     : Results.NotFound($"No latency data for {symbol}");
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get latency distribution: {ex.Message}");
-            }
-        });
+            }));
 
         app.MapGet("/api/quality/latency/{symbol}/histogram", (string symbol, string? provider) =>
-        {
-            try
-            {
-                var buckets = qualityService.LatencyHistogram.GetBuckets(symbol, provider);
-                return Results.Json(new { symbol, provider, buckets }, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get histogram: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(new { symbol, provider, buckets = qualityService.LatencyHistogram.GetBuckets(symbol, provider) })));
 
         app.MapGet("/api/quality/latency/statistics", () =>
-        {
-            try
-            {
-                var stats = qualityService.LatencyHistogram.GetStatistics();
-                return Results.Json(stats, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get latency statistics: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.LatencyHistogram.GetStatistics())));
 
         app.MapGet("/api/quality/latency/high", (double? thresholdMs) =>
-        {
-            try
-            {
-                var high = qualityService.LatencyHistogram.GetHighLatencySymbols(thresholdMs ?? 100);
-                return Results.Json(high, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get high latency symbols: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.LatencyHistogram.GetHighLatencySymbols(thresholdMs ?? 100))));
 
         // ==================== CROSS-PROVIDER COMPARISON ====================
 
         app.MapGet("/api/quality/comparison/{symbol}", (string symbol, string? date, string? eventType) =>
-        {
-            try
+            HandleSync(() =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
-                var comparison = qualityService.CrossProvider.Compare(symbol, targetDate, eventType ?? "Trade");
-                return Results.Json(comparison, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to compare providers: {ex.Message}");
-            }
-        });
+                var targetDate = ParseDateOrToday(date);
+                return Json(qualityService.CrossProvider.Compare(symbol, targetDate, eventType ?? "Trade"));
+            }));
 
         app.MapGet("/api/quality/comparison/discrepancies", (string? date, int? count) =>
-        {
-            try
+            HandleSync(() =>
             {
-                IReadOnlyList<ProviderDiscrepancy> discrepancies;
                 if (date != null)
                 {
                     var targetDate = DateOnly.Parse(date);
-                    discrepancies = qualityService.CrossProvider.GetDiscrepanciesForDate(targetDate);
-                }
-                else
-                {
-                    discrepancies = qualityService.CrossProvider.GetRecentDiscrepancies(count ?? 100);
+                    return Json(qualityService.CrossProvider.GetDiscrepanciesForDate(targetDate));
                 }
 
-                return Results.Json(discrepancies, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get discrepancies: {ex.Message}");
-            }
-        });
+                return Json(qualityService.CrossProvider.GetRecentDiscrepancies(count ?? 100));
+            }));
 
         app.MapGet("/api/quality/comparison/statistics", () =>
-        {
-            try
-            {
-                var stats = qualityService.CrossProvider.GetStatistics();
-                return Results.Json(stats, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get comparison statistics: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.CrossProvider.GetStatistics())));
 
         // ==================== REPORTS ====================
 
         app.MapGet("/api/quality/reports/daily", async (string? date, CancellationToken ct) =>
-        {
-            try
+            await HandleAsync(async () =>
             {
-                var targetDate = date != null
-                    ? DateOnly.Parse(date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
+                var targetDate = ParseDateOrToday(date);
                 var report = await qualityService.GenerateDailyReportAsync(targetDate, null, ct);
-                return Results.Json(report, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to generate daily report: {ex.Message}");
-            }
-        });
+                return Json(report);
+            }));
 
         app.MapGet("/api/quality/reports/weekly", async (string? weekStart, CancellationToken ct) =>
-        {
-            try
+            await HandleAsync(async () =>
             {
                 DateOnly start;
                 if (weekStart != null)
@@ -511,26 +284,17 @@ public static class DataQualityEndpoints
                 {
                     var today = DateOnly.FromDateTime(DateTime.UtcNow);
                     var dayOfWeek = (int)today.DayOfWeek;
-                    start = today.AddDays(-dayOfWeek); // Start of current week (Sunday)
+                    start = today.AddDays(-dayOfWeek);
                 }
 
                 var report = await qualityService.GenerateWeeklyReportAsync(start, null, ct);
-                return Results.Json(report, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to generate weekly report: {ex.Message}");
-            }
-        });
+                return Json(report);
+            }));
 
         app.MapPost("/api/quality/reports/export", async (ReportExportRequest request, CancellationToken ct) =>
-        {
-            try
+            await HandleAsync(async () =>
             {
-                var targetDate = request.Date != null
-                    ? DateOnly.Parse(request.Date)
-                    : DateOnly.FromDateTime(DateTime.UtcNow);
-
+                var targetDate = ParseDateOrToday(request.Date);
                 var format = Enum.TryParse<ReportExportFormat>(request.Format, true, out var f)
                     ? f : ReportExportFormat.Json;
 
@@ -538,18 +302,12 @@ public static class DataQualityEndpoints
                 var filePath = await qualityService.ExportReportAsync(report, format, ct);
 
                 return Results.Ok(new { filePath, format = format.ToString() });
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to export report: {ex.Message}");
-            }
-        });
+            }));
 
         // ==================== HEALTH ====================
 
         app.MapGet("/api/quality/health", () =>
-        {
-            try
+            HandleSync(() =>
             {
                 var metrics = qualityService.GetRealTimeMetrics();
                 var status = metrics.OverallHealthScore switch
@@ -559,7 +317,7 @@ public static class DataQualityEndpoints
                     _ => "unhealthy"
                 };
 
-                return Results.Json(new
+                return Json(new
                 {
                     status,
                     score = metrics.OverallHealthScore,
@@ -569,41 +327,20 @@ public static class DataQualityEndpoints
                     errorsLast5Min = metrics.SequenceErrorsLast5Minutes,
                     anomaliesLast5Min = metrics.AnomaliesLast5Minutes,
                     timestamp = metrics.Timestamp
-                }, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get health: {ex.Message}");
-            }
-        });
+                });
+            }));
 
         app.MapGet("/api/quality/health/{symbol}", (string symbol) =>
-        {
-            try
+            HandleSync(() =>
             {
                 var health = qualityService.GetSymbolHealth(symbol);
                 return health != null
-                    ? Results.Json(health, s_jsonOptions)
+                    ? Json(health)
                     : Results.NotFound($"No health data for {symbol}");
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get symbol health: {ex.Message}");
-            }
-        });
+            }));
 
         app.MapGet("/api/quality/health/unhealthy", () =>
-        {
-            try
-            {
-                var unhealthy = qualityService.GetUnhealthySymbols();
-                return Results.Json(unhealthy, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get unhealthy symbols: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(qualityService.GetUnhealthySymbols())));
     }
 
     /// <summary>
@@ -611,61 +348,36 @@ public static class DataQualityEndpoints
     /// </summary>
     public static void MapSlaEndpoints(this WebApplication app, DataFreshnessSlaMonitor slaMonitor)
     {
-        // ==================== SLA STATUS ====================
-
         app.MapGet("/api/sla/status", () =>
-        {
-            try
-            {
-                var snapshot = slaMonitor.GetSnapshot();
-                return Results.Json(snapshot, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get SLA status: {ex.Message}");
-            }
-        });
+            HandleSync(() => Json(slaMonitor.GetSnapshot())));
 
         app.MapGet("/api/sla/status/{symbol}", (string symbol) =>
-        {
-            try
+            HandleSync(() =>
             {
                 var status = slaMonitor.GetSymbolStatus(symbol);
                 return status != null
-                    ? Results.Json(status, s_jsonOptions)
+                    ? Json(status)
                     : Results.NotFound($"No SLA data for {symbol}");
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get SLA status for symbol: {ex.Message}");
-            }
-        });
+            }));
 
         app.MapGet("/api/sla/violations", () =>
-        {
-            try
+            HandleSync(() =>
             {
                 var snapshot = slaMonitor.GetSnapshot();
                 var violations = snapshot.SymbolStatuses
                     .Where(s => s.State == SlaState.Violation)
                     .ToList();
 
-                return Results.Json(new
+                return Json(new
                 {
                     count = violations.Count,
                     totalViolations = snapshot.TotalViolations,
                     violations
-                }, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get SLA violations: {ex.Message}");
-            }
-        });
+                });
+            }));
 
         app.MapGet("/api/sla/health", () =>
-        {
-            try
+            HandleSync(() =>
             {
                 var snapshot = slaMonitor.GetSnapshot();
                 var status = snapshot.OverallFreshnessScore switch
@@ -675,7 +387,7 @@ public static class DataQualityEndpoints
                     _ => "unhealthy"
                 };
 
-                return Results.Json(new
+                return Json(new
                 {
                     status,
                     score = snapshot.OverallFreshnessScore,
@@ -687,32 +399,18 @@ public static class DataQualityEndpoints
                     totalViolations = snapshot.TotalViolations,
                     isMarketOpen = snapshot.IsMarketOpen,
                     timestamp = snapshot.Timestamp
-                }, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get SLA health: {ex.Message}");
-            }
-        });
+                });
+            }));
 
         app.MapGet("/api/sla/metrics", () =>
-        {
-            try
+            HandleSync(() => Json(new
             {
-                return Results.Json(new
-                {
-                    totalViolations = slaMonitor.TotalViolations,
-                    currentViolations = slaMonitor.CurrentViolations,
-                    totalRecoveries = slaMonitor.TotalRecoveries,
-                    isMarketOpen = slaMonitor.IsMarketOpen(),
-                    timestamp = DateTimeOffset.UtcNow
-                }, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to get SLA metrics: {ex.Message}");
-            }
-        });
+                totalViolations = slaMonitor.TotalViolations,
+                currentViolations = slaMonitor.CurrentViolations,
+                totalRecoveries = slaMonitor.TotalRecoveries,
+                isMarketOpen = slaMonitor.IsMarketOpen(),
+                timestamp = DateTimeOffset.UtcNow
+            })));
     }
 }
 
