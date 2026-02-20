@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 635 source files
+**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 825 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,16 +22,19 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 635 |
-| C# Files | 623 |
-| F# Files | 12 |
-| Test Files | 163 |
-| Documentation Files | 130 |
+| Total Source Files | 825 |
+| C# Files | 809 |
+| F# Files | 16 |
+| Test Files | 175 |
+| Test Methods | ~2,544 |
+| Documentation Files | 132 |
 | Main Projects | 13 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
+| API Route Constants | 264 |
+| Endpoint Implementations | 254 (96% coverage) |
 | CI/CD Workflows | 22 |
-| Makefile Targets | 72 |
+| Makefile Targets | 78 |
 
 ---
 
@@ -1543,7 +1546,7 @@ public interface IHistoricalDataProvider
 
 The application exposes a REST API when running with `--ui` or `--mode web`.
 
-**Implementation Note:** The codebase declares ~269 route constants in `UiApiRoutes.cs`, but approximately 136 endpoints have full handler implementations. Core endpoints (status, health, config, backfill) are fully functional. Some advanced endpoints may return stub responses or 501 Not Implemented.
+**Implementation Note:** The codebase declares 264 route constants in `UiApiRoutes.cs`, with 254 endpoints having full handler implementations (96% coverage). Core endpoints (status, health, config, backfill) are fully functional. A small number of advanced endpoints may return stub responses or 501 Not Implemented.
 
 ### Core Endpoints
 | Endpoint | Method | Purpose |
@@ -1755,44 +1758,79 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 ### Test Organization
 | Directory | Purpose | Files |
 |-----------|---------|-------|
-| `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 7 |
-| `tests/MarketDataCollector.Tests/Application/Commands/` | Command tests | 2 |
-| `tests/MarketDataCollector.Tests/Application/Config/` | Configuration tests | 2 |
+| `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 8 |
+| `tests/MarketDataCollector.Tests/Application/Commands/` | Command tests | 8 |
+| `tests/MarketDataCollector.Tests/Application/Config/` | Configuration tests | 3 |
 | `tests/MarketDataCollector.Tests/Application/Credentials/` | Credential provider tests | 3 |
 | `tests/MarketDataCollector.Tests/Application/Indicators/` | Technical indicator tests | 1 |
-| `tests/MarketDataCollector.Tests/Application/Monitoring/` | Monitoring/quality tests | 9 |
-| `tests/MarketDataCollector.Tests/Application/Pipeline/` | Event pipeline tests | 6 |
-| `tests/MarketDataCollector.Tests/Application/Services/` | Application service tests | 4 |
+| `tests/MarketDataCollector.Tests/Application/Monitoring/` | Monitoring/quality tests | 13 |
+| `tests/MarketDataCollector.Tests/Application/Pipeline/` | Event pipeline tests | 7 |
+| `tests/MarketDataCollector.Tests/Application/Services/` | Application service tests | 12 |
 | `tests/MarketDataCollector.Tests/Domain/Collectors/` | Domain collector tests | 4 |
-| `tests/MarketDataCollector.Tests/Domain/Models/` | Domain model tests | 11 |
+| `tests/MarketDataCollector.Tests/Domain/Models/` | Domain model tests | 12 |
 | `tests/MarketDataCollector.Tests/Infrastructure/DataSources/` | Data source tests | 1 |
-| `tests/MarketDataCollector.Tests/Infrastructure/Providers/` | Provider-specific tests | 4 |
+| `tests/MarketDataCollector.Tests/Infrastructure/Providers/` | Provider-specific tests | 12 |
 | `tests/MarketDataCollector.Tests/Infrastructure/Resilience/` | Resilience tests | 2 |
 | `tests/MarketDataCollector.Tests/Infrastructure/Shared/` | Shared infra tests | 2 |
-| `tests/MarketDataCollector.Tests/Integration/` | End-to-end tests | 3 |
+| `tests/MarketDataCollector.Tests/Integration/` | End-to-end & endpoint tests | 23 |
 | `tests/MarketDataCollector.Tests/Serialization/` | JSON serialization tests | 1 |
-| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 12 |
+| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 19 |
 | `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
-| `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 5 |
-| `tests/MarketDataCollector.Wpf.Tests/Services/` | WPF desktop service tests | 4 |
-| `tests/MarketDataCollector.Ui.Tests/Services/` | Desktop UI service tests | 6 |
+| `tests/MarketDataCollector.Tests/ProviderSdk/` | Provider SDK contract tests | 4 |
+| `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 4 |
+| `tests/MarketDataCollector.Wpf.Tests/Services/` | WPF desktop service tests | 8 |
+| `tests/MarketDataCollector.Ui.Tests/Services/` | Desktop UI service tests | 18 |
 | `tests/MarketDataCollector.Ui.Tests/Collections/` | UI collection tests | 2 |
 
-**WPF Desktop Service Tests (58 tests, Windows only):**
-- `NavigationServiceTests` - 14 tests for page navigation, registration, history
-- `ConfigServiceTests` - 13 tests for configuration management, validation
-- `StatusServiceTests` - 13 tests for status tracking, events, HTTP client mocking
-- `ConnectionServiceTests` - 18 tests for connection management, monitoring, auto-reconnect
+**WPF Desktop Service Tests (142 tests, Windows only):**
+- `NavigationServiceTests` - Page navigation, registration, history
+- `ConfigServiceTests` - Configuration management, validation
+- `StatusServiceTests` - Status tracking, events, HTTP client mocking
+- `ConnectionServiceTests` - Connection management, monitoring, auto-reconnect
+- `BackgroundTaskSchedulerServiceTests` - Background task scheduling
+- `InfoBarServiceTests` - Info bar display and management
+- `MessagingServiceTests` - Messaging infrastructure
+- `WpfDataQualityServiceTests` - Data quality monitoring
 
-**Desktop UI Service Tests (71 tests, Windows only):**
+**Desktop UI Service Tests (293 tests, Windows only):**
 - `ApiClientServiceTests` - API client configuration and HTTP interactions
 - `BackfillServiceTests` - Backfill coordination and scheduling
+- `BackfillProviderConfigServiceTests` - Backfill provider configuration
+- `ChartingServiceTests` - Charting data preparation
+- `ConnectionServiceBaseTests` - Base connection service behavior
+- `DiagnosticsServiceTests` - Diagnostics collection
+- `ErrorHandlingServiceTests` - Error handling and formatting
 - `FixtureDataServiceTests` - Mock data generation for offline development
 - `FormValidationServiceTests` - Form validation rules and helpers
+- `LeanIntegrationServiceTests` - QuantConnect Lean integration
+- `OrderBookVisualizationServiceTests` - Order book rendering
+- `PortfolioImportServiceTests` - Portfolio import parsing
+- `SchemaServiceTests` - Schema validation
+- `StorageAnalyticsServiceTests` - Storage analytics
 - `SystemHealthServiceTests` - System health monitoring
+- `TimeSeriesAlignmentServiceTests` - Time series alignment
 - `WatchlistServiceTests` - Watchlist management
+- `AlertServiceTests` - Alert management
 - `BoundedObservableCollectionTests` - Bounded collection behavior
 - `CircularBufferTests` - Circular buffer operations
+
+**Integration Endpoint Tests (18 files):**
+- `BackfillEndpointTests` - Backfill API endpoints
+- `ConfigEndpointTests` - Configuration API endpoints
+- `FailoverEndpointTests` - Failover API endpoints
+- `HealthEndpointTests` - Health check endpoints
+- `HistoricalEndpointTests` - Historical data endpoints
+- `IBEndpointTests` - Interactive Brokers endpoints
+- `LiveDataEndpointTests` - Live data streaming endpoints
+- `MaintenanceEndpointTests` - Maintenance API endpoints
+- `NegativePathEndpointTests` - Error handling and edge cases
+- `ProviderEndpointTests` - Provider management endpoints
+- `QualityDropsEndpointTests` - Quality monitoring endpoints
+- `ResponseSchemaSnapshotTests` - Response schema validation
+- `ResponseSchemaValidationTests` - Schema compliance tests
+- `StatusEndpointTests` - Status API endpoints
+- `StorageEndpointTests` - Storage API endpoints
+- `SymbolEndpointTests` - Symbol management endpoints
 
 ### Benchmarks
 Located in `benchmarks/MarketDataCollector.Benchmarks/` using BenchmarkDotNet.
@@ -1851,7 +1889,7 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 - Throw `InvalidOperationException` for state errors
 - Use `Result<T, TError>` in F# code
 
-#### Custom Exception Types (in `Application/Exceptions/`)
+#### Custom Exception Types (in `Core/Exceptions/`)
 | Exception | Purpose |
 |-----------|---------|
 | `ConfigurationException` | Invalid configuration |
@@ -2154,7 +2192,7 @@ The UWP desktop application (`MarketDataCollector.Uwp`) was deprecated and fully
 ### Development Guides
 | File | Purpose |
 |------|---------|
-| `docs/development/uwp-to-wpf-migration.md` | WPF desktop app migration |
+| `docs/archived/uwp-to-wpf-migration.md` | WPF desktop app migration (archived) |
 | `docs/development/wpf-implementation-notes.md` | WPF implementation details |
 | `docs/development/github-actions-summary.md` | CI/CD workflows |
 
@@ -2185,7 +2223,7 @@ The UWP desktop application (`MarketDataCollector.Uwp`) was deprecated and fully
 make diagnose
 
 # Or call the buildctl CLI directly
-python3 build-system/cli/buildctl.py build --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release
+python3 build/python/cli/buildctl.py build --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release
 
 # Use build control CLI
 make doctor
