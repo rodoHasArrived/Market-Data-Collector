@@ -1,7 +1,8 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Contracts.Api;
+using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using AppBackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -44,7 +45,7 @@ public static class BackfillEndpoints
         })
         .WithName("GetBackfillStatus")
         .WithDescription("Returns the result of the most recent backfill operation, or 404 if none has been run.")
-        .Produces<BackfillResult>(200)
+        .Produces<AppBackfillResult>(200)
         .Produces(404);
 
         // Preview backfill (dry run - shows what would be fetched)
@@ -55,7 +56,7 @@ public static class BackfillEndpoints
 
             try
             {
-                var request = new BackfillRequest(
+                var request = new AppBackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
                     req.Symbols!,
                     req.From,
@@ -75,7 +76,7 @@ public static class BackfillEndpoints
         })
         .WithName("PreviewBackfill")
         .WithDescription("Dry-run preview of a backfill operation showing what data would be fetched.")
-        .Produces<BackfillResult>(200)
+        .Produces<AppBackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -87,7 +88,7 @@ public static class BackfillEndpoints
 
             try
             {
-                var request = new BackfillRequest(
+                var request = new AppBackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
                     req.Symbols!,
                     req.From,
@@ -107,7 +108,7 @@ public static class BackfillEndpoints
         })
         .WithName("RunBackfill")
         .WithDescription("Executes a backfill operation for the specified symbols and date range.")
-        .Produces<BackfillResult>(200)
+        .Produces<AppBackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
