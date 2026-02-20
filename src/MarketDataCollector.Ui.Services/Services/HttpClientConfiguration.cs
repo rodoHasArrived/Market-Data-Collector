@@ -6,7 +6,7 @@ using Polly.Extensions.Http;
 namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
-/// Named HttpClient identifiers for IHttpClientFactory in UWP.
+/// Named HttpClient identifiers for IHttpClientFactory in desktop apps.
 /// Using constants ensures consistency across the codebase.
 /// </summary>
 /// <remarks>
@@ -39,7 +39,7 @@ public static class HttpClientNames
 }
 
 /// <summary>
-/// Extension methods for configuring HttpClient instances via IHttpClientFactory in UWP.
+/// Extension methods for configuring HttpClient instances via IHttpClientFactory in desktop apps.
 /// </summary>
 /// <remarks>
 /// Implements TD-10: Replace instance HttpClient with IHttpClientFactory.
@@ -50,10 +50,9 @@ public static class HttpClientNames
 /// - Better testability through DI
 ///
 /// This intentionally duplicates resilience policies from
-/// MarketDataCollector.Infrastructure.Http.SharedResiliencePolicies because desktop apps
-/// cannot reference the main project (XAML compiler error: "Assembly is not allowed in type universe").
+/// MarketDataCollector.Infrastructure.Http.SharedResiliencePolicies because the WPF desktop app
+/// cannot reference the Infrastructure project (XAML compiler limitation).
 /// When updating retry/circuit breaker policies, keep both implementations in sync.
-/// See: docs/analysis/DUPLICATE_CODE_ANALYSIS.md for details.
 /// </remarks>
 public static class HttpClientConfiguration
 {
@@ -62,7 +61,7 @@ public static class HttpClientConfiguration
     private static readonly TimeSpan LongTimeout = TimeSpan.FromMinutes(60);
 
     /// <summary>
-    /// Registers all named HttpClient configurations with the DI container for UWP.
+    /// Registers all named HttpClient configurations with the DI container for desktop apps.
     /// </summary>
     public static IServiceCollection AddDesktopHttpClients(this IServiceCollection services)
     {
@@ -223,7 +222,7 @@ public static class HttpClientConfiguration
 }
 
 /// <summary>
-/// Static factory for creating HttpClient instances from IHttpClientFactory in UWP.
+/// Static factory for creating HttpClient instances from IHttpClientFactory in desktop apps.
 /// Provides backward-compatible static access for services not yet fully converted to DI.
 /// </summary>
 /// <remarks>
@@ -231,50 +230,27 @@ public static class HttpClientConfiguration
 /// </remarks>
 public static class HttpClientFactoryProvider
 {
-    private static IHttpClientFactory? _factory;
-    private static IServiceProvider? _serviceProvider;
-    private static readonly object _lock = new();
-    private static bool _isInitialized;
+    private static readonly Lazy<IHttpClientFactory?> _factory = new(BuildFactory);
 
-    /// <summary>
-    /// Initializes the provider. Call this during application startup.
-    /// </summary>
-    public static void Initialize()
+    private static IHttpClientFactory? BuildFactory()
     {
-        if (_isInitialized) return;
-
-        lock (_lock)
-        {
-            if (_isInitialized) return;
-
-            var services = new ServiceCollection();
-            services.AddDesktopHttpClients();
-            _serviceProvider = services.BuildServiceProvider();
-            _factory = _serviceProvider.GetService<IHttpClientFactory>();
-            _isInitialized = true;
-
-            System.Diagnostics.Debug.WriteLine("[HttpClientFactoryProvider] Initialized with named clients for desktop apps (TD-10)");
-        }
+        var services = new ServiceCollection();
+        services.AddDesktopHttpClients();
+        var provider = services.BuildServiceProvider();
+        return provider.GetService<IHttpClientFactory>();
     }
 
     /// <summary>
     /// Gets an HttpClient for the specified named client.
-    /// Auto-initializes if not already initialized.
+    /// Auto-initializes on first use via thread-safe lazy initialization.
     /// </summary>
     public static HttpClient CreateClient(string name)
     {
-        if (!_isInitialized)
+        if (_factory.Value is { } factory)
         {
-            Initialize();
+            return factory.CreateClient(name);
         }
 
-        if (_factory != null)
-        {
-            return _factory.CreateClient(name);
-        }
-
-        // Fallback for edge cases
-        System.Diagnostics.Debug.WriteLine($"[HttpClientFactoryProvider] Factory not available, creating fallback client for '{name}'");
         return new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     }
 
@@ -291,5 +267,5 @@ public static class HttpClientFactoryProvider
     /// <summary>
     /// Checks if the factory has been initialized.
     /// </summary>
-    public static bool IsInitialized => _isInitialized;
+    public static bool IsInitialized => _factory.IsValueCreated;
 }

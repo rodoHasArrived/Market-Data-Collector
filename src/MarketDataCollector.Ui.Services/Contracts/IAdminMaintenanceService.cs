@@ -7,7 +7,7 @@ namespace MarketDataCollector.Ui.Services;
 /// <summary>
 /// Interface for administrative and maintenance operations including
 /// archive scheduling, tier migration, retention policies, and file cleanup.
-/// Shared between WPF and UWP desktop applications.
+/// Shared between WPF desktop applications.
 /// </summary>
 public interface IAdminMaintenanceService
 {

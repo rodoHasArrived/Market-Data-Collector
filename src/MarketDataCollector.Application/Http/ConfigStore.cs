@@ -111,7 +111,11 @@ public sealed class ConfigStore
             var statusPath = GetStatusPath();
             return File.Exists(statusPath) ? File.ReadAllText(statusPath) : null;
         }
-        catch
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
         {
             return null;
         }
@@ -167,7 +171,15 @@ public sealed class ConfigStore
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
         }
-        catch
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+        catch (JsonException)
         {
             return null;
         }

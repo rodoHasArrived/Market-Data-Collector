@@ -260,7 +260,7 @@ public sealed class PreflightChecker
                 // Clean up test file if it exists
                 if (File.Exists(testFile))
                 {
-                    try { File.Delete(testFile); } catch { }
+                    try { File.Delete(testFile); } catch (IOException) { }
                 }
             }
 

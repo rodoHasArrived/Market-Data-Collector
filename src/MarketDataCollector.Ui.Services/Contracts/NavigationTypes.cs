@@ -2,7 +2,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Represents a navigation history entry.
-/// Shared between WPF and UWP desktop applications.
+/// Shared between WPF desktop applications.
 /// Part of Phase 6C.2 service deduplication.
 /// </summary>
 public sealed class NavigationEntry

@@ -78,9 +78,6 @@ public partial class App : Application
 
         Services = _host.Services;
 
-        // TD-10: Initialize HttpClientFactory early for proper HTTP client lifecycle management
-        HttpClientFactoryProvider.Initialize();
-
         // Provide the DI container to NavigationService so it can resolve pages
         WpfServices.NavigationService.Instance.SetServiceProvider(Services);
 

@@ -1,107 +1,58 @@
-// Re-export the consolidated ConfigStore from the core project.
-// This preserves backward compatibility for existing code referencing this namespace.
+// Thin wrapper around the core ConfigStore that provides the web dashboard default path.
+// New code should reference MarketDataCollector.Application.UI.ConfigStore directly when possible.
 using CoreConfigStore = MarketDataCollector.Application.UI.ConfigStore;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 
 /// <summary>
-/// ConfigStore for web dashboard and shared UI services.
-/// This is a wrapper around the consolidated core ConfigStore implementation.
+/// ConfigStore for web dashboard hosting.
+/// Delegates all operations to the core <see cref="CoreConfigStore"/> and only provides
+/// a web-specific default config path (4 directories up from BaseDirectory).
 /// </summary>
-/// <remarks>
-/// <para><b>Migration Note:</b> This wrapper exists for backward compatibility.
-/// New code should reference <see cref="MarketDataCollector.Application.UI.ConfigStore"/> directly.</para>
-/// <para>The web-specific default path resolver is registered via <see cref="ConfigStoreExtensions.UseWebDefaultPath"/>.</para>
-/// </remarks>
 public sealed class ConfigStore
 {
     private readonly CoreConfigStore _core;
 
-    /// <summary>
-    /// Creates a new ConfigStore with the web dashboard default path.
-    /// The default path resolves to appsettings.json at solution root (4 directories up from BaseDirectory).
-    /// </summary>
-    public ConfigStore() : this(GetWebDefaultPath())
-    {
-    }
+    public ConfigStore() : this(GetWebDefaultPath()) { }
 
-    /// <summary>
-    /// Creates a new ConfigStore with a custom configuration path.
-    /// </summary>
-    /// <param name="configPath">Full path to the configuration file.</param>
     public ConfigStore(string? configPath)
     {
         _core = new CoreConfigStore(configPath);
     }
 
-    /// <summary>
-    /// Gets the path to the configuration file.
-    /// </summary>
     public string ConfigPath => _core.ConfigPath;
 
-    /// <summary>
-    /// Loads configuration from the config file.
-    /// </summary>
-    public static MarketDataCollector.Application.Config.AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
+    public static MarketDataCollector.Application.Config.AppConfig LoadConfig(string path)
+        => CoreConfigStore.LoadConfig(path);
 
-    /// <summary>
-    /// Instance method to load configuration from the configured path.
-    /// </summary>
     public MarketDataCollector.Application.Config.AppConfig Load() => _core.Load();
 
-    /// <summary>
-    /// Saves configuration to the config file.
-    /// </summary>
-    public System.Threading.Tasks.Task SaveAsync(MarketDataCollector.Application.Config.AppConfig cfg) => _core.SaveAsync(cfg);
+    public System.Threading.Tasks.Task SaveAsync(MarketDataCollector.Application.Config.AppConfig cfg)
+        => _core.SaveAsync(cfg);
 
-    /// <summary>
-    /// Attempts to load provider metrics from the status file.
-    /// </summary>
     public MarketDataCollector.Application.Monitoring.ProviderMetricsStatus? TryLoadProviderMetrics()
         => _core.TryLoadProviderMetrics();
 
-    /// <summary>
-    /// Attempts to load status JSON from the status file.
-    /// </summary>
     public string? TryLoadStatusJson() => _core.TryLoadStatusJson();
 
-    /// <summary>
-    /// Gets the data root directory path.
-    /// </summary>
     public string GetDataRoot(MarketDataCollector.Application.Config.AppConfig? cfg = null)
         => _core.GetDataRoot(cfg);
 
-    /// <summary>
-    /// Gets the path to the status file.
-    /// </summary>
     public string GetStatusPath(MarketDataCollector.Application.Config.AppConfig? cfg = null)
         => _core.GetStatusPath(cfg);
 
-    /// <summary>
-    /// Gets the path to the backfill status file.
-    /// </summary>
     public string GetBackfillStatusPath(MarketDataCollector.Application.Config.AppConfig? cfg = null)
         => _core.GetBackfillStatusPath(cfg);
 
-    /// <summary>
-    /// Gets the default configuration path for web dashboard hosting.
-    /// Config lives at solution root by convention (4 directories up from bin output).
-    /// </summary>
     private static string GetWebDefaultPath()
-    {
-        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
-    }
+        => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
 }
 
 /// <summary>
-/// Extension methods for ConfigStore web-specific configuration.
+/// Configures the core ConfigStore default path resolver for web dashboard hosting.
 /// </summary>
 public static class ConfigStoreExtensions
 {
-    /// <summary>
-    /// Configures the default path resolver for web dashboard hosting.
-    /// Call this at startup before any ConfigStore instances are created.
-    /// </summary>
     public static void UseWebDefaultPath()
     {
         CoreConfigStore.DefaultPathResolver = () =>

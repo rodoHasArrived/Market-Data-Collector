@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services;
 using ContractNotificationType = MarketDataCollector.Ui.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Services;
@@ -435,18 +436,7 @@ public sealed class NotificationService : INotificationService
         return $"{duration.Seconds}s";
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        double len = bytes;
-        var order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:F1} {sizes[order]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
 
 /// <summary>

@@ -2,8 +2,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for in-process pub/sub messaging between UI components.
-/// Shared between WPF and UWP desktop applications.
-/// Part of C1 improvement (WPF/UWP service deduplication).
+/// Shared between WPF desktop applications.
 /// </summary>
 public interface IMessagingService
 {

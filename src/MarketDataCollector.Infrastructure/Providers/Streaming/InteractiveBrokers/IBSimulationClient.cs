@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Enums;
@@ -17,8 +18,8 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 public sealed class IBSimulationClient : IMarketDataClient
 {
     private static readonly ILogger _log = LoggingSetup.ForContext<IBSimulationClient>();
-    private readonly Dictionary<int, (string Symbol, SymbolConfig Config)> _depthSubs = new();
-    private readonly Dictionary<int, (string Symbol, SymbolConfig Config)> _tradeSubs = new();
+    private readonly ConcurrentDictionary<int, (string Symbol, SymbolConfig Config)> _depthSubs = new();
+    private readonly ConcurrentDictionary<int, (string Symbol, SymbolConfig Config)> _tradeSubs = new();
     private readonly Timer? _tickTimer;
     private readonly IMarketEventPublisher _publisher;
     private readonly Random _rng = new();
@@ -110,7 +111,7 @@ public sealed class IBSimulationClient : IMarketDataClient
 
     public int SubscribeMarketDepth(SymbolConfig cfg)
     {
-        var id = _nextTickerId++;
+        var id = Interlocked.Increment(ref _nextTickerId);
         _depthSubs[id] = (cfg.Symbol, cfg);
         _log.Debug("[IB-SIM] Subscribed market depth for {Symbol} (tickerId={TickerId})", cfg.Symbol, id);
         return id;
@@ -118,12 +119,12 @@ public sealed class IBSimulationClient : IMarketDataClient
 
     public void UnsubscribeMarketDepth(int subscriptionId)
     {
-        _depthSubs.Remove(subscriptionId);
+        _depthSubs.TryRemove(subscriptionId, out _);
     }
 
     public int SubscribeTrades(SymbolConfig cfg)
     {
-        var id = _nextTickerId++;
+        var id = Interlocked.Increment(ref _nextTickerId);
         _tradeSubs[id] = (cfg.Symbol, cfg);
         _log.Debug("[IB-SIM] Subscribed trades for {Symbol} (tickerId={TickerId})", cfg.Symbol, id);
         return id;
@@ -131,7 +132,7 @@ public sealed class IBSimulationClient : IMarketDataClient
 
     public void UnsubscribeTrades(int subscriptionId)
     {
-        _tradeSubs.Remove(subscriptionId);
+        _tradeSubs.TryRemove(subscriptionId, out _);
     }
 
     private void GenerateSimulatedTicks(object? state)
@@ -140,7 +141,7 @@ public sealed class IBSimulationClient : IMarketDataClient
 
         try
         {
-            foreach (var (id, (symbol, _)) in _tradeSubs)
+            foreach (var (id, (symbol, _)) in _tradeSubs.ToArray())
             {
                 var basePrice = BasePrices.GetValueOrDefault(symbol, 100m);
                 var jitter = (decimal)(_rng.NextDouble() - 0.5) * basePrice * 0.001m; // 0.1% jitter

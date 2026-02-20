@@ -295,16 +295,7 @@ public partial class SystemHealthPage : Page
         };
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        return bytes switch
-        {
-            >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
-            >= 1_048_576 => $"{bytes / 1_048_576.0:F0} MB",
-            >= 1_024 => $"{bytes / 1_024.0:F0} KB",
-            _ => $"{bytes} B"
-        };
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 
     private static string FormatUptime(TimeSpan uptime)
     {

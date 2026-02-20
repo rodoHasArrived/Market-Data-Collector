@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Contracts.Archive;
+using MarketDataCollector.Ui.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 using MarketDataCollector.Wpf.Services;
@@ -377,18 +378,7 @@ public sealed partial class ArchiveHealthPage : Page
         });
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        double len = bytes;
-        int order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:F1} {sizes[order]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
 
 public sealed class IssueDisplayItem

@@ -282,11 +282,11 @@ public sealed class BackfillCoordinator : IDisposable
                 log: _log
             );
 
-            providers = new List<IHistoricalDataProvider> { composite };
+            // Combine composite (for fallback routing) with individual providers (for direct selection)
+            var combined = new List<IHistoricalDataProvider> { composite };
+            combined.AddRange(providers);
+            providers = combined;
         }
-
-        // Add individual providers as well for direct selection
-        providers.AddRange(CreateProviders());
 
         return new HistoricalBackfillService(providers, _log);
     }

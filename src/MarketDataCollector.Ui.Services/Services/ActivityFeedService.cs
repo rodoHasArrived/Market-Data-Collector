@@ -311,18 +311,7 @@ public sealed class ActivityFeedService
         }
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
-        int i = 0;
-        double value = bytes;
-        while (value >= 1024 && i < suffixes.Length - 1)
-        {
-            value /= 1024;
-            i++;
-        }
-        return $"{value:N1} {suffixes[i]}";
-    }
+    private static string FormatBytes(long bytes) => FormatHelpers.FormatBytes(bytes);
 }
 
 /// <summary>

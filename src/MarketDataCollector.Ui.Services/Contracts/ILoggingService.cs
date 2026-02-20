@@ -4,7 +4,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for logging services used by shared UI services.
-/// Implemented by platform-specific logging services (WPF, UWP).
+/// Implemented by platform-specific logging services (WPF).
 /// </summary>
 public interface ILoggingService
 {
