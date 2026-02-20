@@ -318,3 +318,20 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Source issue**: CI build failure
 - **Status**: fixed
 - **Fixed in**: `BackfillEndpoints.cs` and `BackfillCoordinator.cs` — removed `using MarketDataCollector.Application.Backfill;` namespace directive, kept explicit `using` aliases for `BackfillRequest` and `BackfillResult`, and fully qualified `HistoricalBackfillService`
+
+### AI-20260220-regex-hyphen-character-class
+- **ID**: AI-20260220-regex-hyphen-character-class
+- **Area**: build/ci/github-actions
+- **Symptoms**: Ticker data collection workflow fails with "Input validation failed: one or more symbols contain unsupported characters" for hyphenated preferred share symbols like PCG-PA, PCG-PB, PCG-PC even after normalization to uppercase.
+- **Root cause**: In the bash `grep -E` character class `[A-Z0-9.\-^=]`, the `\-` escape sequence is placed between `.` and `^`. POSIX ERE interprets this as a potential range `\-^`, which does not match the hyphen character in uppercase symbols like PCG-PA. Hyphens in a bracket expression are only guaranteed to be treated as literals when placed at the start or end of the character class.
+- **Prevention checklist**:
+  - [ ] In regex character classes, always place the literal hyphen at the **end** of the class (e.g., `[A-Z0-9.^=-]`) or at the start
+  - [ ] Never use `\-` in the middle of a character class — use `-` at the end instead
+  - [ ] When supporting stock tickers, the validation pattern must allow: uppercase letters (A-Z), digits (0-9), dot (BRK.A), hyphen (PCG-PA), caret (^GSPC), and equals (=SPX)
+  - [ ] Test validation patterns with hyphenated preferred share symbols: `echo "PCG-PA" | grep -E '^[A-Z0-9.^=-]+$'`
+- **Verification commands**:
+  - `echo "PCG-PA" | grep -E '^[A-Z0-9.^=-]+$' && echo "OK" || echo "FAIL"`
+  - `printf 'PCG-PA\nPCG-PB\nBRK.A\n^GSPC\n=SPX' | grep -Ev '^[A-Z0-9.^=-]+$' | wc -l` (should return 0)
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22083541882/job/64238547291
+- **Status**: fixed
+- **Fixed in**: `.github/workflows/ticker-data-collection.yml` line 94 — changed `[A-Z0-9.\-^=]` to `[A-Z0-9.^=-]` (hyphen moved to end of character class)
