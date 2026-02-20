@@ -36,7 +36,7 @@ The focus is to make each cleanup item directly actionable by naming **where** t
 - AnalysisExportService split into 6 partial class files (1,683 LOC total)
 
 **Remaining Work:**
-- Consider archiving `docs/development/uwp-to-wpf-migration.md`
+- ~~Consider archiving `docs/development/uwp-to-wpf-migration.md`~~ Done - moved to `docs/archived/`
 - Consider moving `HtmlTemplateGenerator` static CSS/JS to versioned `wwwroot/` files
 - Regenerate repository structure docs and diagrams to reflect post-UWP state
 

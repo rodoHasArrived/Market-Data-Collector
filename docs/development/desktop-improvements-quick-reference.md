@@ -213,8 +213,7 @@ Current → Target
 | `desktop-improvements-executive-summary.md` | Impact analysis and roadmap | 290 | ✅ Updated |
 | `desktop-improvements-quick-reference.md` | This document - one-page summary | 250+ | ✅ Updated |
 | `desktop-testing-guide.md` | Comprehensive testing procedures | 280+ | ✅ Expanded |
-| `desktop-devex-high-value-improvements.md` | Original improvement plan | 170 | 📋 Historical |
-| `desktop-dev-workflow.md` | Daily development commands | 40 | 📋 Consolidated |
+| `desktop-devex-high-value-improvements.md` | Original improvement plan (archived) | 170 | 📦 Archived |
 | `tests/MarketDataCollector.Ui.Tests/README.md` | Ui.Tests project usage | 65 | ✅ Active |
 | `tests/MarketDataCollector.Wpf.Tests/README.md` | WPF tests usage | TBD | 📝 Planned |
 
@@ -248,7 +247,6 @@ Track these to measure progress:
 ## Related Documentation
 
 - **Development Workflow:**
-  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick command reference
   - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture details
   - [Repository Organization Guide](./repository-organization-guide.md) - Code structure
   

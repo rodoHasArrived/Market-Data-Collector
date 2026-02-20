@@ -150,8 +150,7 @@ All critical issues identified in the code review have been addressed:
 #### Near-Term
 1. Replace HTTP polling with WebSocket/SignalR for real-time updates
 2. Implement connection to backend Market Data Collector service
-3. Add comprehensive unit tests for services
-4. Implement actual configuration persistence (currently stub)
+3. Implement actual configuration persistence (currently stub)
 
 #### Long-Term
 1. Consider Blazor Hybrid for cross-platform compatibility
@@ -163,9 +162,18 @@ All critical issues identified in the code review have been addressed:
 
 Related documentation:
 - **Evaluation**: `docs/evaluations/desktop-ui-alternatives-evaluation.md`
-- **Migration History**: [UWP to WPF Migration](./uwp-to-wpf-migration.md) (historical reference)
+- **Migration History**: [UWP to WPF Migration](../archived/uwp-to-wpf-migration.md) (archived)
 
 ### Testing
+
+#### Unit Tests (272 tests)
+
+Desktop services have comprehensive unit test coverage across two projects:
+
+- **MarketDataCollector.Wpf.Tests** (101 tests): NavigationService, ConfigService, StatusService, ConnectionService, WpfDataQualityService
+- **MarketDataCollector.Ui.Tests** (171 tests): ApiClient, Backfill, Charting, FixtureData, FormValidation, SystemHealth, Watchlist, collections, and more
+
+Run tests with `make test-desktop-services`. See [Desktop Testing Guide](./desktop-testing-guide.md) for details.
 
 #### Manual Testing Checklist
 - [ ] Application launches successfully
@@ -176,13 +184,6 @@ Related documentation:
 - [ ] Settings page shows configuration path
 - [ ] Graceful shutdown completes within timeout
 - [ ] Background services start and stop correctly
-
-#### Unit Testing (Planned)
-- [ ] NavigationService tests
-- [ ] ConfigService tests
-- [ ] StatusService tests
-- [ ] ConnectionService tests
-- [ ] KeyboardShortcutService tests
 
 ### Contributing
 
@@ -230,7 +231,6 @@ MIT License - Same as parent project
 
 - **Desktop Development:**
   - [Desktop Testing Guide](./desktop-testing-guide.md) - Comprehensive testing procedures
-  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick commands
   - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Full improvement roadmap
   - [Desktop Improvements - Executive Summary](./desktop-improvements-executive-summary.md) - Impact analysis
   - [Desktop Support Policy](./policies/desktop-support-policy.md) - Contribution requirements
@@ -241,5 +241,4 @@ MIT License - Same as parent project
   - [Repository Organization Guide](./repository-organization-guide.md) - Code structure
 
 - **Planning:**
-  - [UWP to WPF Migration](./uwp-to-wpf-migration.md) - Historical migration reference
   - [Project Roadmap](../status/ROADMAP.md) - Desktop roadmap items

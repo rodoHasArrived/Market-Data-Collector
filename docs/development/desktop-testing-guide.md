@@ -219,7 +219,7 @@ dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Relea
 **Fix**:
 1. Check XAML syntax in the Views/ directory
 2. Ensure all referenced resources exist
-3. See [Desktop App XAML Compiler Errors](./desktop-app-xaml-compiler-errors.md) for detailed diagnostics
+3. See [Desktop App XAML Compiler Errors](../archived/desktop-app-xaml-compiler-errors.md) for historical diagnostics
 
 ### Tests Not Running on Non-Windows
 
@@ -296,7 +296,6 @@ See `.github/workflows/desktop-builds.yml` for CI configuration.
 ## Related Documentation
 
 - **Desktop Development:**
-  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick command reference
   - [Desktop Platform Improvements - Implementation Guide](./desktop-platform-improvements-implementation-guide.md) - Complete improvement roadmap
   - [Desktop Improvements - Executive Summary](./desktop-improvements-executive-summary.md) - Impact analysis and priorities
   - [Desktop Improvements - Quick Reference](./desktop-improvements-quick-reference.md) - One-page summary

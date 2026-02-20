@@ -1121,7 +1121,7 @@ These documents are superseded by this consolidated tracker:
 - `docs/archived/REDESIGN_IMPROVEMENTS.md` — UI redesign quality summary
 - `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md` — Visual UI improvements summary
 - `docs/archived/CHANGES_SUMMARY.md` — Historical changes (v1.5.0 and earlier)
-- `docs/development/ROADMAP_UPDATE_SUMMARY.md` — Roadmap expansion summary
+- `docs/archived/ROADMAP_UPDATE_SUMMARY.md` — Roadmap expansion summary (archived)
 
 See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived documents.
 

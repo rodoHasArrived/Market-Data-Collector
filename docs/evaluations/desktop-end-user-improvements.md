@@ -2013,8 +2013,7 @@ The desktop applications provide a comprehensive feature surface but suffer from
 
 ### Internal Documentation
 
-- **[Desktop Development Workflow](../development/desktop-dev-workflow.md)** - Build and test procedures
-- **[Desktop Testing Guide](../development/desktop-testing-guide.md)** - Comprehensive testing guide
+- **[Desktop Testing Guide](../development/desktop-testing-guide.md)** - Comprehensive testing and build procedures
 - **[Desktop Improvements Executive Summary](../development/desktop-improvements-executive-summary.md)** - Phase 1 implementation summary
 - **[Desktop Platform Improvements Implementation Guide](../development/desktop-platform-improvements-implementation-guide.md)** - Detailed implementation patterns
 - **[WPF Implementation Notes](../development/wpf-implementation-notes.md)** - WPF-specific guidance
