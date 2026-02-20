@@ -889,6 +889,7 @@ Market-Data-Collector/
 │   │   │   ├── EventReplayService.cs
 │   │   │   ├── ExportPresetServiceBase.cs
 │   │   │   ├── FixtureDataService.cs
+│   │   │   ├── FormatHelpers.cs
 │   │   │   ├── FormValidationRules.cs
 │   │   │   ├── HttpClientConfiguration.cs
 │   │   │   ├── InfoBarConstants.cs

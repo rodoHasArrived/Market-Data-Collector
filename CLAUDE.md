@@ -1028,6 +1028,7 @@ Market-Data-Collector/
 │   │   │   ├── EventReplayService.cs
 │   │   │   ├── ExportPresetServiceBase.cs
 │   │   │   ├── FixtureDataService.cs
+│   │   │   ├── FormatHelpers.cs
 │   │   │   ├── FormValidationRules.cs
 │   │   │   ├── HttpClientConfiguration.cs
 │   │   │   ├── InfoBarConstants.cs
@@ -2191,4 +2192,4 @@ See `docs/HELP.md#troubleshooting` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-02-19*
+*Last Updated: 2026-02-20*
