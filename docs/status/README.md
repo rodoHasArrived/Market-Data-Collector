@@ -26,7 +26,7 @@ This folder contains project status, roadmap, and changelog documentation for th
 - [Architecture Overview](../architecture/overview.md)
 - [Getting Started Guide](../getting-started/README.md)
 - [User Guide](../HELP.md)
-- [UWP to WPF Migration](../development/uwp-to-wpf-migration.md)
+- [UWP to WPF Migration](../archived/uwp-to-wpf-migration.md) (archived)
 
 ---
 

@@ -16,14 +16,14 @@ The repository has strong developer experience infrastructure in place:
 
 1. **Build Infrastructure** (`make build-wpf`, `make desktop-dev-bootstrap`)
 2. **Developer Tooling** (`scripts/dev/desktop-dev.ps1`)
-3. **Documentation** (`docs/development/desktop-dev-workflow.md`, `wpf-implementation-notes.md`)
+3. **Documentation** (`docs/development/wpf-implementation-notes.md`, `desktop-testing-guide.md`)
 4. **Policies** (`docs/development/policies/desktop-support-policy.md`)
 5. **PR Templates** (`.github/pull_request_template_desktop.md`)
 6. **Test Infrastructure** - 272 tests across two test projects
 7. **DI Modernization** - Microsoft.Extensions.DependencyInjection with 73 service registrations
 8. **Architecture Documentation** - Comprehensive `desktop-layers.md` with layer diagrams and dependency rules
 
-These align with Priority 1-4 items from the original `desktop-devex-high-value-improvements.md`.
+These align with Priority 1-4 items from the original improvement plan (now [archived](../archived/desktop-devex-high-value-improvements.md)).
 
 ### Remaining Gaps
 
@@ -309,7 +309,7 @@ The primary remaining gap is **test coverage breadth** — only 20% of desktop s
 - **Full Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)
 - **Desktop Testing Guide**: [desktop-testing-guide.md](./desktop-testing-guide.md)
 - **Architecture Layers**: [desktop-layers.md](../architecture/desktop-layers.md)
-- **Original Plan**: [desktop-devex-high-value-improvements.md](./desktop-devex-high-value-improvements.md)
+- **Original Plan**: [desktop-devex-high-value-improvements.md](../archived/desktop-devex-high-value-improvements.md) (archived)
 - **WPF Notes**: [wpf-implementation-notes.md](./wpf-implementation-notes.md)
 - **UI Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
 - **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
@@ -320,7 +320,7 @@ The primary remaining gap is **test coverage breadth** — only 20% of desktop s
 ## Related Documentation
 
 - **Development Guides:**
-  - [Desktop Development Workflow](./desktop-dev-workflow.md)
+  - [Desktop Testing Guide](./desktop-testing-guide.md)
   - [Repository Organization Guide](./repository-organization-guide.md)
   - [Provider Implementation Guide](./provider-implementation.md)
 

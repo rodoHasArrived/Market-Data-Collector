@@ -414,7 +414,6 @@ After implementing basic fixture mode:
 
 - **Desktop Development:**
   - [Desktop Testing Guide](./desktop-testing-guide.md) - Complete testing procedures and fixture usage
-  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick commands
   - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture and patterns
   - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Improvement roadmap
 
