@@ -352,7 +352,7 @@ public partial class DiagnosticsPage : Page
                 _notificationService.ShowNotification(
                     "Error",
                     $"Could not create logs directory: {ex.Message}",
-                    WpfServices.NotificationType.Error);
+                    NotificationType.Error);
                 return;
             }
         }
@@ -370,7 +370,7 @@ public partial class DiagnosticsPage : Page
             _notificationService.ShowNotification(
                 "Error",
                 $"Could not open logs folder: {ex.Message}",
-                WpfServices.NotificationType.Error);
+                NotificationType.Error);
         }
     }
 

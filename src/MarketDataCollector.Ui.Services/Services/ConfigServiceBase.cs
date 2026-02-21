@@ -354,7 +354,7 @@ public abstract class ConfigServiceBase
 
     #region Provider Helpers
 
-    internal static IEnumerable<(string ProviderId, BackfillProviderOptionsDto? Options)> EnumerateProviders(BackfillProvidersConfigDto providers)
+    protected internal static IEnumerable<(string ProviderId, BackfillProviderOptionsDto? Options)> EnumerateProviders(BackfillProvidersConfigDto providers)
     {
         yield return ("alpaca", providers.Alpaca);
         yield return ("polygon", providers.Polygon);
@@ -398,7 +398,7 @@ public abstract class ConfigServiceBase
         }
     }
 
-    internal static string NormalizeProviderId(string providerId)
+    protected internal static string NormalizeProviderId(string providerId)
     {
         var normalized = providerId.Trim().ToLowerInvariant();
         return normalized switch
