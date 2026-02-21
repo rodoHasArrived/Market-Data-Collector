@@ -1,7 +1,8 @@
 using System.Net.WebSockets;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Core.Monitoring;
+using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Resilience;
 using MarketDataCollector.Infrastructure.Shared;

@@ -73,24 +73,45 @@ public sealed record ProviderLatencyStatsDto
     [JsonPropertyName("averageMs")]
     public double AverageMs { get; init; }
 
+    /// <summary>
+    /// Gets the minimum latency in milliseconds.
+    /// </summary>
     [JsonPropertyName("minMs")]
     public double MinMs { get; init; }
 
+    /// <summary>
+    /// Gets the maximum latency in milliseconds.
+    /// </summary>
     [JsonPropertyName("maxMs")]
     public double MaxMs { get; init; }
 
+    /// <summary>
+    /// Gets the 50th percentile (median) latency in milliseconds.
+    /// </summary>
     [JsonPropertyName("p50Ms")]
     public double P50Ms { get; init; }
 
+    /// <summary>
+    /// Gets the 95th percentile latency in milliseconds.
+    /// </summary>
     [JsonPropertyName("p95Ms")]
     public double P95Ms { get; init; }
 
+    /// <summary>
+    /// Gets the 99th percentile latency in milliseconds.
+    /// </summary>
     [JsonPropertyName("p99Ms")]
     public double P99Ms { get; init; }
 
+    /// <summary>
+    /// Gets the number of latency samples collected.
+    /// </summary>
     [JsonPropertyName("sampleCount")]
     public long SampleCount { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether the provider latency is within healthy thresholds.
+    /// </summary>
     [JsonPropertyName("isHealthy")]
     public bool IsHealthy { get; init; }
 }

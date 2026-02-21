@@ -541,6 +541,7 @@ public sealed class DataCompletenessService
                 new[] { symbol },
                 startDate.ToString(FormatHelpers.IsoDateFormat),
                 endDate.ToString(FormatHelpers.IsoDateFormat),
+                "Daily",
                 ct);
 
             return result?.Success == true;

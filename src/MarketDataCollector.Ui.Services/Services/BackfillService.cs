@@ -49,6 +49,8 @@ public sealed class BackfillService
             throw new InvalidOperationException("Use BackfillService.Instance for singleton access");
         }
         _notificationService = NotificationService.Instance;
+        _backfillApiService = new BackfillApiService();
+        _checkpointService = BackfillCheckpointService.Instance;
     }
 
     /// <summary>
