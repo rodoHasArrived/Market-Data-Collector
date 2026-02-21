@@ -175,11 +175,13 @@ This section supersedes the prior effort model and aligns with the current activ
 ## Reference Documents
 
 - `docs/status/IMPROVEMENTS.md` — canonical improvement tracking and sprint recommendations.
+- `docs/status/EVALUATIONS_AND_AUDITS.md` — consolidated architecture evaluations, code audits, and assessments.
 - `docs/status/production-status.md` — production readiness assessment narrative.
 - `docs/status/CHANGELOG.md` — change log by release snapshot.
 - `docs/status/TODO.md` — TODO/NOTE extraction for follow-up.
-- `docs/archived/uwp-to-wpf-migration.md` — desktop strategy and UWP deprecation context (archived).
+- `docs/evaluations/` — detailed evaluation source documents (summarized in EVALUATIONS_AND_AUDITS.md).
+- `docs/audits/` — detailed audit source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 
 ---
 
-*Last Updated: 2026-02-20*
+*Last Updated: 2026-02-21*
