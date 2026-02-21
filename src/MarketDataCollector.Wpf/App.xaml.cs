@@ -152,6 +152,11 @@ public partial class App : Application
         services.AddSingleton(_ => WpfServices.StatusService.Instance);
         services.AddSingleton(_ => WpfServices.FirstRunService.Instance);
 
+        // ── Onboarding / workspace services ──────────────────────────────────
+        services.AddSingleton(_ => MarketDataCollector.Ui.Services.OnboardingTourService.Instance);
+        services.AddSingleton(_ => WpfServices.WorkspaceService.Instance);
+        services.AddSingleton(_ => MarketDataCollector.Ui.Services.AlertService.Instance);
+
         // ── Domain / feature services ───────────────────────────────────────
         services.AddSingleton(_ => WpfServices.BackendServiceManager.Instance);
         services.AddSingleton(_ => WpfServices.WatchlistService.Instance);
@@ -248,6 +253,9 @@ public partial class App : Application
             // Start background task scheduler
             await InitializeBackgroundServicesAsync();
 
+            // Restore last workspace session
+            await RestoreWorkspaceSessionAsync();
+
             // Notify if running in fixture mode
             if (_isFixtureMode)
             {
@@ -306,6 +314,56 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Restores the last workspace session state (active page, window bounds).
+    /// </summary>
+    private static async Task RestoreWorkspaceSessionAsync()
+    {
+        try
+        {
+            var workspaceService = WpfServices.WorkspaceService.Instance;
+            await workspaceService.LoadWorkspacesAsync();
+
+            var session = workspaceService.GetLastSessionState();
+            if (session != null && !string.IsNullOrEmpty(session.ActivePageTag))
+            {
+                // Navigate to the last active page
+                WpfServices.NavigationService.Instance.NavigateTo(session.ActivePageTag);
+                System.Diagnostics.Debug.WriteLine($"[App] Restored session to page: {session.ActivePageTag}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Failed to restore workspace session: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Saves the current workspace session state before shutdown.
+    /// </summary>
+    private static async Task SaveWorkspaceSessionAsync()
+    {
+        try
+        {
+            var workspaceService = WpfServices.WorkspaceService.Instance;
+            var navService = WpfServices.NavigationService.Instance;
+
+            var currentPageTag = navService.GetCurrentPageTag() ?? "Dashboard";
+            var session = new MarketDataCollector.Ui.Services.SessionState
+            {
+                ActivePageTag = currentPageTag,
+                SavedAt = DateTime.UtcNow
+            };
+
+            await workspaceService.SaveSessionStateAsync(session);
+            System.Diagnostics.Debug.WriteLine("[App] Workspace session saved");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Failed to save workspace session: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Handles app exit for clean shutdown of background services with timeout.
     /// </summary>
     private async void OnExit(object sender, ExitEventArgs e)
@@ -326,6 +384,9 @@ public partial class App : Application
             System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
 
             using var cts = new CancellationTokenSource(ShutdownTimeoutMs);
+
+            // Save workspace session before shutting down services
+            await SaveWorkspaceSessionAsync();
 
             // Shutdown services in parallel with timeout for better performance
             var shutdownTasks = new[]

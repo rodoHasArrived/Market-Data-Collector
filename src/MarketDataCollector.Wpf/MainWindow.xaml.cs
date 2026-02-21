@@ -11,6 +11,7 @@ using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
 using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Ui.Services.Services;
 using SysNavigation = System.Windows.Navigation;
 
 namespace MarketDataCollector.Wpf;
@@ -27,6 +28,8 @@ public partial class MainWindow : Window
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.MessagingService _messagingService;
     private readonly WpfServices.ThemeService _themeService;
+    private readonly OnboardingTourService _tourService;
+    private readonly AlertService _alertService;
 
     private static readonly string WindowStateFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -49,12 +52,21 @@ public partial class MainWindow : Window
         _notificationService = notificationService;
         _messagingService = messagingService;
         _themeService = themeService;
+        _tourService = OnboardingTourService.Instance;
+        _alertService = AlertService.Instance;
 
         // Subscribe to keyboard shortcuts
         _keyboardShortcutService.ShortcutInvoked += OnShortcutInvoked;
 
         // Subscribe to notifications for in-app display
         _notificationService.NotificationReceived += OnNotificationReceived;
+
+        // Subscribe to onboarding tour events
+        _tourService.StepChanged += OnTourStepChanged;
+        _tourService.TourCompleted += OnTourCompleted;
+
+        // Subscribe to alert events for guided remediation
+        _alertService.AlertRaised += OnAlertRaised;
 
         // Restore window state from previous session
         RestoreWindowState();
@@ -80,6 +92,9 @@ public partial class MainWindow : Window
         // Unsubscribe from all events to prevent memory leaks
         _keyboardShortcutService.ShortcutInvoked -= OnShortcutInvoked;
         _notificationService.NotificationReceived -= OnNotificationReceived;
+        _tourService.StepChanged -= OnTourStepChanged;
+        _tourService.TourCompleted -= OnTourCompleted;
+        _alertService.AlertRaised -= OnAlertRaised;
     }
 
     private void OnRootFrameNavigated(object sender, SysNavigation.NavigationEventArgs e)
@@ -327,6 +342,107 @@ public partial class MainWindow : Window
         // In-app notification handling can be added here
         // For now, notifications are handled by the NotificationService
     }
+
+    #region Onboarding Tour Overlay
+
+    private void OnTourStepChanged(object? sender, TourStepEventArgs e)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => OnTourStepChanged(sender, e));
+            return;
+        }
+
+        ShowTourStepNotification(e);
+    }
+
+    private void OnTourCompleted(object? sender, TourCompletedEventArgs e)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => OnTourCompleted(sender, e));
+            return;
+        }
+
+        _notificationService.ShowNotification(
+            "Tour Complete",
+            $"You've completed the '{e.TourId}' tour! ({e.StepsCompleted} steps in {e.Duration.TotalSeconds:F0}s)",
+            NotificationType.Success,
+            5000);
+    }
+
+    private void ShowTourStepNotification(TourStepEventArgs e)
+    {
+        var stepInfo = $"Step {e.StepIndex + 1}/{e.TotalSteps}";
+        var message = $"{stepInfo}: {e.Step.Content}";
+
+        if (e.IsLast)
+        {
+            message += "\n(Last step - press Next to finish)";
+        }
+
+        _notificationService.ShowNotification(
+            $"Tour: {e.Step.Title}",
+            message,
+            NotificationType.Info,
+            0); // Persistent until user advances
+
+        // Auto-advance via messaging: pages can listen for "TourNext" / "TourDismiss"
+    }
+
+    #endregion
+
+    #region Alert Remediation
+
+    private void OnAlertRaised(object? sender, AlertEventArgs e)
+    {
+        if (e.IsUpdate) return; // Only show notification for new alerts
+
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => OnAlertRaised(sender, e));
+            return;
+        }
+
+        var alert = e.Alert;
+        if (alert.IsSuppressed || alert.IsSnoozed) return;
+
+        // Show notification with remediation guidance if playbook is available
+        if (alert.Playbook != null)
+        {
+            var firstStep = alert.Playbook.RemediationSteps.Length > 0
+                ? $"\nTry: {alert.Playbook.RemediationSteps[0].Description}"
+                : "";
+
+            var notificationType = alert.Severity switch
+            {
+                AlertSeverity.Critical or AlertSeverity.Emergency => NotificationType.Error,
+                AlertSeverity.Error => NotificationType.Error,
+                AlertSeverity.Warning => NotificationType.Warning,
+                _ => NotificationType.Info
+            };
+
+            _notificationService.ShowNotification(
+                alert.Title,
+                $"{alert.Description}{firstStep}",
+                notificationType,
+                alert.Severity >= AlertSeverity.Error ? 0 : 8000);
+        }
+        else
+        {
+            var notificationType = alert.Severity >= AlertSeverity.Error
+                ? NotificationType.Error
+                : NotificationType.Warning;
+
+            _notificationService.ShowNotification(
+                alert.Title,
+                alert.Description,
+                notificationType,
+                8000);
+        }
+    }
+
+    #endregion
 
     #region Window State Persistence
 
