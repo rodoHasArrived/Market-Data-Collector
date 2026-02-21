@@ -369,7 +369,8 @@ Market-Data-Collector/
 │   │   ├── msix-packaging.md
 │   │   ├── operator-runbook.md
 │   │   ├── performance-tuning.md
-│   │   └── portable-data-packager.md
+│   │   ├── portable-data-packager.md
+│   │   └── service-level-objectives.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
 │   │   ├── backfill-guide.md
@@ -616,6 +617,7 @@ Market-Data-Collector/
 │   │   ├── Manifest/
 │   │   │   └── DataManifest.cs
 │   │   ├── Pipeline/
+│   │   │   ├── IngestionJob.cs
 │   │   │   └── PipelinePolicyConstants.cs
 │   │   ├── Schema/
 │   │   │   └── EventSchema.cs
@@ -898,6 +900,7 @@ Market-Data-Collector/
 │   │   │   ├── EventReplayService.cs
 │   │   │   ├── ExportPresetServiceBase.cs
 │   │   │   ├── FixtureDataService.cs
+│   │   │   ├── FixtureModeDetector.cs
 │   │   │   ├── FormatHelpers.cs
 │   │   │   ├── FormValidationRules.cs
 │   │   │   ├── HttpClientConfiguration.cs
@@ -951,6 +954,7 @@ Market-Data-Collector/
 │   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── BackfillScheduleEndpoints.cs
+│   │   │   ├── CheckpointEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── CronEndpoints.cs
 │   │   │   ├── DiagnosticsEndpoints.cs
