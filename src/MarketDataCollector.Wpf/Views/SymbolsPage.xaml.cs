@@ -9,7 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Contracts;
 using WpfServices = MarketDataCollector.Wpf.Services;
-using NotificationType = MarketDataCollector.Wpf.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Views;
 

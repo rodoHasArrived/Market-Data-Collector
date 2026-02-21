@@ -13,7 +13,6 @@ using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
 using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
 using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
 using WpfServices = MarketDataCollector.Wpf.Services;
-using NotificationType = MarketDataCollector.Wpf.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Views;
 
