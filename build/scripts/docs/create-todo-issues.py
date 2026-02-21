@@ -142,7 +142,19 @@ def ensure_label(repo: str, token: str, label: str, dry_run: bool) -> None:
             raise
 
     create_url = f"https://api.github.com/repos/{repo}/labels"
-    gh_request("POST", create_url, token, {"name": label, "color": "0e8a16", "description": "Auto-created from TODO scanner"})
+    try:
+        gh_request(
+            "POST",
+            create_url,
+            token,
+            {
+                "name": label,
+                "color": "0e8a16",
+                "description": "Auto-created from TODO scanner",
+            },
+        )
+    except urllib.error.HTTPError as exc:
+        print(f"Warning: failed to create label '{label}': {exc}", file=sys.stderr)
 
 
 def find_existing_issue(repo: str, token: str, marker: str) -> int | None:
