@@ -73,12 +73,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private long _messageSequence;
     private volatile bool _isDisposing;
 
-    // Reconnection state
-    private readonly SemaphoreSlim _reconnectGate = new(1, 1);
-    private int _reconnectAttempts;
-    private const int MaxReconnectAttempts = 10;
-    private static readonly TimeSpan ReconnectBaseDelay = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan ReconnectMaxDelay = TimeSpan.FromSeconds(60);
+    // Reconnection - centralized via WebSocketReconnectionHelper (Phase 3.5)
+    private readonly WebSocketReconnectionHelper _reconnectHelper;
 
     /// <summary>
     /// Creates a new Polygon market data client.
@@ -98,6 +94,14 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
         _options = options ?? new PolygonOptions();
+
+        // Centralized reconnection with gating and exponential backoff
+        _reconnectHelper = new WebSocketReconnectionHelper(
+            "Polygon",
+            maxAttempts: 10,
+            baseDelay: TimeSpan.FromSeconds(2),
+            maxDelay: TimeSpan.FromSeconds(60),
+            log: _log);
 
         // Validate API key format if provided
         if (!string.IsNullOrWhiteSpace(_options.ApiKey))
@@ -815,20 +819,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
-    /// Attempts automatic reconnection with exponential backoff and gating.
-    /// On success, re-authenticates and resubscribes to all active symbols.
+    /// Attempts automatic reconnection using centralized WebSocketReconnectionHelper (Phase 3.5).
+    /// Replaces ~60 lines of manual reconnection logic with the shared helper that provides
+    /// gated exponential backoff with jitter.
     /// </summary>
     private async Task TryReconnectAsync()
     {
         if (_isDisposing) return;
 
-        if (!await _reconnectGate.WaitAsync(0))
-        {
-            _log.Debug("Polygon reconnection already in progress, skipping duplicate attempt");
-            return;
-        }
+        MigrationDiagnostics.IncReconnectAttempt("polygon");
 
-        try
+        var success = await _reconnectHelper.TryReconnectAsync(async ct =>
         {
             // Cleanup old connection state
             _isConnected = false;
@@ -839,57 +840,22 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _cts = null;
             _receiveLoop = null;
 
-            while (_reconnectAttempts < MaxReconnectAttempts && !_isDisposing)
-            {
-                _reconnectAttempts++;
-                MigrationDiagnostics.IncReconnectAttempt("polygon");
-                var delay = CalculateReconnectDelay(_reconnectAttempts);
+            await ConnectAsync(ct).ConfigureAwait(false);
 
-                _log.Information("Polygon reconnection attempt {Attempt}/{Max} in {Delay}ms",
-                    _reconnectAttempts, MaxReconnectAttempts, delay.TotalMilliseconds);
+            if (!_isConnected)
+                throw new InvalidOperationException("Connection did not establish");
+        }).ConfigureAwait(false);
 
-                await Task.Delay(delay).ConfigureAwait(false);
-
-                if (_isDisposing) return;
-
-                try
-                {
-                    await ConnectAsync(CancellationToken.None).ConfigureAwait(false);
-
-                    if (_isConnected)
-                    {
-                        MigrationDiagnostics.IncReconnectSuccess("polygon");
-                        _log.Information("Polygon successfully reconnected after {Attempts} attempts. " +
-                            "Resubscribed to {SubCount} active subscriptions.",
-                            _reconnectAttempts, _subscriptionManager.Count);
-                        _reconnectAttempts = 0;
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MigrationDiagnostics.IncReconnectFailure("polygon");
-                    _log.Warning(ex, "Polygon reconnection attempt {Attempt} failed", _reconnectAttempts);
-                }
-            }
-
-            _log.Error("Polygon failed to reconnect after {Attempts} attempts. Manual intervention may be required.",
-                _reconnectAttempts);
-        }
-        finally
+        if (success)
         {
-            _reconnectGate.Release();
+            MigrationDiagnostics.IncReconnectSuccess("polygon");
+            _log.Information("Polygon reconnected. Resubscribed to {SubCount} active subscriptions.",
+                _subscriptionManager.Count);
         }
-    }
-
-    private static TimeSpan CalculateReconnectDelay(int attempt)
-    {
-        var baseMs = ReconnectBaseDelay.TotalMilliseconds;
-        var maxMs = ReconnectMaxDelay.TotalMilliseconds;
-        var delay = Math.Min(baseMs * Math.Pow(2, attempt - 1), maxMs);
-        // Add jitter (±20%)
-        var jitter = delay * 0.2 * (Random.Shared.NextDouble() * 2 - 1);
-        return TimeSpan.FromMilliseconds(delay + jitter);
+        else
+        {
+            MigrationDiagnostics.IncReconnectFailure("polygon");
+        }
     }
 
     /// <summary>
@@ -1219,7 +1185,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         _ws?.Dispose();
         _cts?.Dispose();
         _sendLock.Dispose();
-        _reconnectGate.Dispose();
         _subscriptionManager.Dispose();
     }
 

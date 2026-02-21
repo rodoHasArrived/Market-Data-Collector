@@ -473,8 +473,20 @@ public static class ServiceCompositionRoot
             var credentialResolver = sp.GetRequiredService<ICredentialResolver>();
             var log = LoggingSetup.ForContext("ProviderRegistration");
 
-            // --- Streaming factories (dictionary-based, replaces switch statements) ---
-            RegisterStreamingFactories(registry, config, credentialResolver, sp, log);
+            // --- Streaming factories ---
+            // Phase 1.2: When UseAttributeDiscovery is enabled, [DataSource]-decorated types
+            // are auto-registered as streaming factories via DataSourceRegistry, replacing
+            // manual lambda registration. Default: manual registration (false).
+            var useAttributeDiscovery = config.ProviderRegistry?.UseAttributeDiscovery ?? false;
+            if (useAttributeDiscovery)
+            {
+                var dsRegistry = sp.GetRequiredService<DataSourceRegistry>();
+                RegisterStreamingFactoriesFromAttributes(registry, dsRegistry, sp, log);
+            }
+            else
+            {
+                RegisterStreamingFactories(registry, config, credentialResolver, sp, log);
+            }
 
             // --- Backfill providers ---
             RegisterBackfillProviders(registry, config, credentialResolver, log);
@@ -566,6 +578,67 @@ public static class ServiceCompositionRoot
 
         log.Information("Registered streaming factories for {Count} data sources",
             registry.SupportedStreamingSources.Count);
+    }
+
+    /// <summary>
+    /// Registers streaming factories by discovering [DataSource]-decorated types from the
+    /// DataSourceRegistry and mapping them to DataSourceKind factory functions automatically.
+    /// This replaces manual lambda registration when ProviderRegistry:UseAttributeDiscovery is true.
+    /// </summary>
+    private static void RegisterStreamingFactoriesFromAttributes(
+        ProviderRegistry registry,
+        DataSourceRegistry dsRegistry,
+        IServiceProvider sp,
+        Serilog.ILogger log)
+    {
+        foreach (var source in dsRegistry.Sources)
+        {
+            // Only register types that implement IMarketDataClient (streaming providers)
+            if (!typeof(IMarketDataClient).IsAssignableFrom(source.ImplementationType))
+                continue;
+
+            // Map the DataSource attribute ID to a DataSourceKind enum value
+            if (!TryMapToDataSourceKind(source.Id, out var kind))
+            {
+                log.Debug("Skipping attribute-discovered provider {Id}: no matching DataSourceKind", source.Id);
+                continue;
+            }
+
+            var implType = source.ImplementationType;
+            registry.RegisterStreamingFactory(kind, () =>
+            {
+                // Resolve from DI if registered, otherwise create via Activator
+                var instance = sp.GetService(implType) as IMarketDataClient;
+                if (instance != null)
+                    return instance;
+
+                return (IMarketDataClient)ActivatorUtilities.CreateInstance(sp, implType);
+            });
+
+            log.Information("Auto-registered streaming factory for {Kind} from [DataSource(\"{Id}\")] on {Type}",
+                kind, source.Id, implType.Name);
+        }
+
+        log.Information("Attribute-based discovery registered {Count} streaming factories",
+            registry.SupportedStreamingSources.Count);
+    }
+
+    /// <summary>
+    /// Maps a DataSource attribute ID string to the corresponding DataSourceKind enum.
+    /// </summary>
+    private static bool TryMapToDataSourceKind(string id, out DataSourceKind kind)
+    {
+        kind = id.ToLowerInvariant() switch
+        {
+            "ib" or "interactivebrokers" => DataSourceKind.IB,
+            "alpaca" => DataSourceKind.Alpaca,
+            "polygon" => DataSourceKind.Polygon,
+            "stocksharp" => DataSourceKind.StockSharp,
+            "nyse" => DataSourceKind.NYSE,
+            _ => default
+        };
+
+        return id.ToLowerInvariant() is "ib" or "interactivebrokers" or "alpaca" or "polygon" or "stocksharp" or "nyse";
     }
 
     /// <summary>
