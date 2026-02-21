@@ -202,7 +202,15 @@ def create_issue(repo: str, token: str, todo: TodoItem, label: str, dry_run: boo
         token,
         {"title": compact_title(todo), "body": body, "labels": [label]},
     )
-    return ("created", int(created["number"]))
+    issue_number: int | None = None
+    if isinstance(created, dict):
+        raw_number = created.get("number")
+        if raw_number is not None:
+            try:
+                issue_number = int(raw_number)
+            except (TypeError, ValueError):
+                issue_number = None
+    return ("created", issue_number)
 
 
 def main() -> int:
