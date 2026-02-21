@@ -92,7 +92,7 @@ def load_todos(path: Path) -> list[TodoItem]:
         raise ValueError("Scan JSON field 'todos' must be a list")
 
     items = []
-    for index, raw in enumerate(payload.get("todos", [])):
+    for index, raw in enumerate(raw_todos):
         try:
             line_value = raw.get("line", 0)
             line = int(line_value)
