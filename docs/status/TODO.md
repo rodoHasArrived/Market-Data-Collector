@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-21T02:42:02.882072+00:00
+> Last updated: 2026-02-21T04:23:05.483659+00:00
 
 ## Summary
 
@@ -44,7 +44,7 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Ui.Services/Services/AdminMaintenanceModels.cs:411`
   > SelfTest*, ErrorCodes*, ShowConfig*, QuickCheck* models are defined in DiagnosticsService.cs to avoid duplication and maintain single source of truth
 
-- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCompletenessService.cs:631`
+- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCompletenessService.cs:632`
   > SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
 
 - [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:516`
