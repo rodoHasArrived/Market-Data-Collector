@@ -1,7 +1,7 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-02-21T11:02:39.826760+00:00
+> Last updated: 2026-02-21T11:12:41.549274+00:00
 
 ## Overall Health Score
 
@@ -14,9 +14,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 154 |
-| Total lines | 61,231 |
-| Average file size (lines) | 397.6 |
+| Total documentation files | 155 |
+| Total lines | 61,795 |
+| Average file size (lines) | 398.7 |
 | Orphaned files | 49 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
@@ -56,13 +56,13 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
 - `.github/workflows/TESTING_AI_SYNC.md`
-- `CONFIG_CONSOLIDATION_REPORT.md`
 - `docs/architecture/crystallized-storage-format.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
 - `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
 - `docs/archived/2026-02_VISUAL_CODE_EXAMPLES.md`
 - `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md`
 - `docs/archived/CHANGES_SUMMARY.md`
+- `docs/archived/CONFIG_CONSOLIDATION_REPORT.md`
 - `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
 - `docs/archived/IMPROVEMENTS_2026-02.md`
 - ... and 29 more
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-02-21 | 87 | 154 | 49 | 0 |
+| 2026-02-21 | 87 | 155 | 49 | 0 |
 
 ---
 

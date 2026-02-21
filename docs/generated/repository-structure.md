@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-21 11:02:35 UTC
+> Auto-generated on 2026-02-21 11:12:37 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -224,6 +224,7 @@ Market-Data-Collector/
 │   │   ├── 2026-02_VISUAL_CODE_EXAMPLES.md
 │   │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   │   ├── CHANGES_SUMMARY.md
+│   │   ├── CONFIG_CONSOLIDATION_REPORT.md
 │   │   ├── consolidation.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── desktop-devex-high-value-improvements.md
@@ -238,14 +239,14 @@ Market-Data-Collector/
 │   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
 │   │   ├── uwp-development-roadmap.md
 │   │   ├── uwp-release-checklist.md
-│   │   └── uwp-to-wpf-migration.md
+│   │   ├── uwp-to-wpf-migration.md
+│   │   └── UWP_COMPREHENSIVE_AUDIT.md
 │   ├── audits/
 │   │   ├── CLEANUP_OPPORTUNITIES.md
 │   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── FURTHER_SIMPLIFICATION_OPPORTUNITIES.md
 │   │   ├── H3_DEBUG_CODE_ANALYSIS.md
-│   │   ├── README.md
-│   │   └── UWP_COMPREHENSIVE_AUDIT.md
+│   │   └── README.md
 │   ├── development/
 │   │   ├── policies/
 │   │   │   └── desktop-support-policy.md
@@ -358,6 +359,7 @@ Market-Data-Collector/
 │   │   └── known-vulnerabilities.md
 │   ├── status/
 │   │   ├── CHANGELOG.md
+│   │   ├── EVALUATIONS_AND_AUDITS.md
 │   │   ├── health-dashboard.md
 │   │   ├── IMPROVEMENTS.md
 │   │   ├── production-status.md
@@ -1275,7 +1277,6 @@ Market-Data-Collector/
 ├── .globalconfig
 ├── .markdownlint.json
 ├── CLAUDE.md
-├── CONFIG_CONSOLIDATION_REPORT.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
 ├── global.json
