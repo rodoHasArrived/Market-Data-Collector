@@ -35,6 +35,11 @@ async function main() {
       // Render to SVG
       const svgOutput = viz.renderString(dotSource, { format: 'svg' });
 
+      // Write SVG file
+      const svgFile = dotFile.replace('.dot', '.svg');
+      const svgPath = join(DIAGRAMS_DIR, svgFile);
+      await writeFile(svgPath, svgOutput);
+
       // Convert SVG to PNG using sharp with high DPI
       const pngBuffer = await sharp(Buffer.from(svgOutput))
         .png()
@@ -44,13 +49,13 @@ async function main() {
       // Write PNG file
       await writeFile(pngPath, pngBuffer);
 
-      console.log(`Generated: ${pngFile}`);
+      console.log(`Generated: ${pngFile}, ${svgFile}`);
     } catch (err) {
       console.error(`Error processing ${dotFile}: ${err.message}`);
     }
   }
 
-  console.log('\nDone generating PNG diagrams');
+  console.log('\nDone generating PNG and SVG diagrams');
 }
 
 main().catch(console.error);

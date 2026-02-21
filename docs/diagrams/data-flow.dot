@@ -1,6 +1,6 @@
 // Data Flow Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-21
 //
 // This diagram shows the end-to-end data flow through the system,
 // from ingestion to storage and export.
@@ -47,7 +47,7 @@ digraph DataFlow {
 
   // Data Sources - Historical
   subgraph cluster_historical_sources {
-    label="Historical Data Sources (8 Providers)";
+    label="Historical Data Sources (10 Providers)";
     color="#2c7a7b";
     style="rounded";
     bgcolor="#e6fffa";
@@ -55,7 +55,7 @@ digraph DataFlow {
     YAHOO [fillcolor="#38a169", fontcolor="white", label="Yahoo Finance\n[REST]\n\n50K+ securities\nFree OHLCV"];
     TIINGO [fillcolor="#38a169", fontcolor="white", label="Tiingo\n[REST]\n\nDividend-adjusted\nFundamentals"];
     FINNHUB [fillcolor="#38a169", fontcolor="white", label="Finnhub\n[REST]\n\nHistorical\nNews, Fundamentals"];
-    OTHERS [fillcolor="#38a169", fontcolor="white", label="Polygon, Stooq\nNasdaq, Alpha V.\n\nEOD/Intraday"];
+    OTHERS [fillcolor="#38a169", fontcolor="white", label="Polygon, Stooq\nNasdaq, Alpha V.\nIB, StockSharp\n\nEOD/Intraday"];
   }
 
   // Ingestion Layer

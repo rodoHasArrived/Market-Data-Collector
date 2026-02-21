@@ -1,6 +1,6 @@
 // C4 Level 1: System Context Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-21
 //
 // This diagram shows the Market Data Collector in context with its users
 // and external systems. It answers: "What is the system and who uses it?"
@@ -49,13 +49,15 @@ digraph C4_Context {
          label="Alpaca Markets\n[External System]\n\nWebSocket + REST\nIEX/SIP Feeds"];
     NYSE [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
           label="NYSE Direct\n[External System]\n\nExchange-Direct Feed\nUS Equities"];
+    POL_STREAM [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
+         label="Polygon.io\n[External System]\n\nWebSocket Streaming\nTrades, Quotes"];
     SS [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
         label="StockSharp\n[External System]\n\nMulti-Exchange Adapter\nGlobal Markets"];
   }
 
   // External Systems - Historical Data Providers
   subgraph cluster_historical {
-    label="Historical Data Providers (8 Implemented)";
+    label="Historical Data Providers (10 Implemented)";
     color="#2c7a7b";
     style="rounded";
     bgcolor="#e6fffa";
@@ -69,7 +71,7 @@ digraph C4_Context {
     POL [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white",
          label="Polygon.io\n[External System]\n\nHistorical Bars\nMinute/Day"];
     STOOQ [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white",
-           label="Stooq + Others\n[External System]\n\nNasdaq, Alpha Vantage\nEOD Data"];
+           label="Stooq + Others\n[External System]\n\nNasdaq, Alpha Vantage\nIB, StockSharp, EOD Data"];
   }
 
   // External Systems - Downstream
@@ -103,7 +105,7 @@ digraph C4_Context {
   }
 
   // Relationships - Users to System
-  Operator -> MDC [label="Configures via\nUWP/Web/CLI"];
+  Operator -> MDC [label="Configures via\nWPF/Web/CLI"];
   Quant -> MDC [label="Exports data\nfor analysis"];
   DevOps -> PROM [label="Monitors\ninfrastructure"];
 
@@ -111,6 +113,7 @@ digraph C4_Context {
   IB -> MDC [color="#2b6cb0", label="WebSocket\nL1/L2 streaming"];
   ALP -> MDC [color="#2b6cb0", label="WebSocket\nreal-time"];
   NYSE -> MDC [color="#2b6cb0", label="Exchange feed\nUS equities"];
+  POL_STREAM -> MDC [color="#2b6cb0", label="WebSocket\nstreaming"];
   SS -> MDC [color="#2b6cb0", label="Multi-exchange\nadapter"];
 
   // Relationships - Historical Providers to System
