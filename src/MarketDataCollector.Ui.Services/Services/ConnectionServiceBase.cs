@@ -4,7 +4,7 @@ using MarketDataCollector.Ui.Services.Contracts;
 namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
-/// Abstract base class for connection management shared between WPF and UWP desktop applications.
+/// Abstract base class for connection management shared across desktop applications.
 /// Provides shared state machine, monitoring orchestration, auto-reconnect logic, and event raising.
 /// Platform-specific HTTP calls and timer implementations are delegated to derived classes.
 /// Part of Phase 6C.2 service deduplication (ROADMAP item 6C.2).

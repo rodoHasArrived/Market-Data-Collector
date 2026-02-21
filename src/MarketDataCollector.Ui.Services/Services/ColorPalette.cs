@@ -1,7 +1,7 @@
 namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
-/// Platform-agnostic color palette defining all ARGB color values used across WPF and UWP.
+/// Platform-agnostic color palette defining all ARGB color values used across desktop applications.
 /// Both platform BrushRegistry classes reference this shared source of truth for color definitions
 /// and state-to-color mapping logic.
 /// </summary>

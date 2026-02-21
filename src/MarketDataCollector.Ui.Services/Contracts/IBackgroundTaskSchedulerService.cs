@@ -2,8 +2,8 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for scheduling and managing background tasks.
-/// Shared between WPF and UWP desktop applications.
-/// Part of C1 improvement (WPF/UWP service deduplication).
+/// Shared across desktop applications.
+/// Part of C1 improvement (service deduplication).
 /// </summary>
 public interface IBackgroundTaskSchedulerService
 {

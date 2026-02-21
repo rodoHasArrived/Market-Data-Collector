@@ -8,10 +8,8 @@ namespace MarketDataCollector.Contracts.Domain.Events;
 /// Supports JSON serialization with type discriminator.
 /// </summary>
 /// <remarks>
-/// The [JsonPolymorphic] attributes use conditional compilation for platform compatibility.
 /// Keep derived type list in sync with Domain/Events/MarketEventPayload.cs.
 /// </remarks>
-#if !UWP_BUILD
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(Trade), "trade")]
 [JsonDerivedType(typeof(LOBSnapshot), "l2")]
@@ -30,5 +28,4 @@ namespace MarketDataCollector.Contracts.Domain.Events;
 [JsonDerivedType(typeof(GreeksSnapshot), "greeks")]
 [JsonDerivedType(typeof(OptionChainSnapshot), "option_chain")]
 [JsonDerivedType(typeof(OpenInterestUpdate), "open_interest")]
-#endif
 public abstract record MarketEventPayload : IMarketEventPayload;

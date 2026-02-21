@@ -179,7 +179,7 @@ public sealed record StorageProfileResponse(
 /// <summary>
 /// Unified provider template output for standardized UI consumption.
 /// Combines provider catalog metadata with runtime status into a single
-/// consistent structure that both Web and UWP can consume without
+/// consistent structure that both Web and desktop can consume without
 /// provider-specific conditionals.
 /// </summary>
 public sealed class ProviderTemplateOutput

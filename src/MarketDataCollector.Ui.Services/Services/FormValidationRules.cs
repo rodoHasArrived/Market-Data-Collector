@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
-/// Shared validation rules for form validation across WPF and UWP applications.
+/// Shared validation rules for form validation across desktop applications.
 /// Extracted from FormValidationService implementations to eliminate duplicate validation logic.
 /// </summary>
 public static class FormValidationRules

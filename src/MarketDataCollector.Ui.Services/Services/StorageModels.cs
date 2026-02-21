@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace MarketDataCollector.Ui.Services;
 
 // DTO classes for storage API responses
-// Shared between WPF and UWP desktop applications.
+// Shared across desktop applications.
 
 public class StorageStatsSummary
 {

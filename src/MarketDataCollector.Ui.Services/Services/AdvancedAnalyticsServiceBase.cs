@@ -9,7 +9,7 @@ namespace MarketDataCollector.Ui.Services;
 /// <summary>
 /// Base class for advanced analytics services, providing shared API delegation logic
 /// for gap analysis, cross-provider comparison, latency, quality reports, and rate limits.
-/// WPF and UWP implementations inherit and add platform-specific capabilities.
+/// WPF implementations inherit and add platform-specific capabilities.
 /// </summary>
 public class AdvancedAnalyticsServiceBase
 {

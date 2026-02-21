@@ -4,8 +4,7 @@ using System.Collections.Generic;
 namespace MarketDataCollector.Ui.Services;
 
 // =====================================================================================
-// Advanced Analytics DTOs — shared between WPF and UWP desktop applications.
-// Uses the UWP model (superset) as the canonical definition.
+// Advanced Analytics DTOs — shared across desktop applications.
 // =====================================================================================
 
 #region Gap Analysis Models

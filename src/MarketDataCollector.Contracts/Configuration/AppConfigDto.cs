@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace MarketDataCollector.Contracts.Configuration;
 
 /// <summary>
-/// Application configuration DTO shared between core and UWP applications.
+/// Application configuration DTO shared between core and desktop applications.
 /// </summary>
 public class AppConfigDto
 {
