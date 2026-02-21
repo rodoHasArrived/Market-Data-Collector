@@ -220,7 +220,7 @@ def write_markdown_summary(path: Path, results: Iterable[ScriptResult], dry_run:
             f"| `{result.name}` | `{result.status}` | `{result.duration_seconds:.3f}` | `{output}` |"
         )
 
-    failures = [r for r in rows if r.status != "success"]
+    failures = [r for r in rows if r.status == "failed"]
     if failures:
         lines.append("")
         lines.append("## Failures")
@@ -308,9 +308,17 @@ def main() -> int:
                 print("Stopping due to failure. Use --continue-on-error to continue.", file=sys.stderr)
                 break
 
+        any_failed = any(r.status == "failed" for r in results)
+
         if args.auto_create_todos and "scan-todos" in selected:
             scan_result = next((result for result in results if result.name == "scan-todos"), None)
-            if scan_result is None or scan_result.status != "success":
+            if any_failed and not args.continue_on_error:
+                print(
+                    "Skipping create-todo-issues because a prior script failed "
+                    "(use --continue-on-error to override).",
+                    file=sys.stderr,
+                )
+            elif scan_result is None or scan_result.status != "success":
                 print("Skipping create-todo-issues because scan-todos did not succeed.", file=sys.stderr)
             else:
                 issue_args: List[str] = [
