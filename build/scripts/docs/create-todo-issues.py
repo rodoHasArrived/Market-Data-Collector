@@ -179,7 +179,7 @@ def find_existing_issue(repo: str, token: str, marker: str) -> int | None:
 
 def create_issue(repo: str, token: str, todo: TodoItem, label: str, dry_run: bool) -> tuple[str, int | None]:
     marker = fingerprint(todo)
-    existing = find_existing_issue(repo, token, marker) if token and repo else None
+    existing = find_existing_issue(repo, token, marker) if not dry_run and token and repo else None
     if existing is not None:
         return ("existing", existing)
 
