@@ -79,6 +79,8 @@ def gh_request(method: str, url: str, token: str, payload: dict[str, Any] | None
 def load_todos(path: Path) -> list[TodoItem]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ValueError(f"Failed to read scan file: {path}") from exc
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON in scan file: {path}") from exc
 
