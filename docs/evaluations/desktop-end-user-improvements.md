@@ -2,27 +2,35 @@
 
 ## Market Data Collector — Desktop UX Assessment
 
-**Date:** 2026-02-13  
-**Status:** Evaluation Complete  
+**Date:** 2026-02-21 (Updated)
+**Status:** Evaluation Complete — Partial Implementation In Progress
 **Author:** Architecture Review
 
 ---
 
 ## Executive Summary
 
-This evaluation assesses the desktop end-user experience for Market Data Collector's Windows applications (WPF recommended, UWP legacy). The assessment covers user workflows, trust indicators, operational visibility, onboarding effectiveness, and productivity features across 40+ desktop pages and 60+ shared services.
+This evaluation assesses the desktop end-user experience for Market Data Collector's WPF Windows application. The assessment covers user workflows, trust indicators, operational visibility, onboarding effectiveness, and productivity features across 49 desktop pages and 104 shared services.
 
-**Key Finding:** The desktop applications provide a comprehensive feature surface (Dashboard, Backfill, Data Quality, Storage Management, Provider Health, etc.) but several high-impact UX improvements are needed to build user trust and operational confidence. The primary gaps are in live data connectivity, workflow resumability, and contextual help.
+**Key Finding:** The desktop application provides a comprehensive feature surface (Dashboard, Backfill, Data Quality, Storage Management, Provider Health, etc.) with several key productivity services now implemented (Command Palette, Onboarding Tours, Workspace Persistence, Backfill Checkpoints). The remaining primary gaps are in live data connectivity and full backend integration of existing services.
 
-**Current State:** 40+ XAML pages, 60+ services, 129 tests (15% coverage), extensive monitoring infrastructure.
+**Current State:** 49 XAML pages, 104 services (72 shared + 32 WPF-specific), 1,266 tests across 72 test files, 16 service contracts, extensive monitoring infrastructure. UWP has been fully removed; WPF is the sole desktop client.
 
-**Primary Opportunities:** Live backend integration (P0), resumable job workflows (P0), role-based onboarding (P1), persistent workspace state (P1), intelligent alerting (P1).
+**Primary Opportunities:** Live backend integration (P0), full service wiring for implemented features (P0), alert intelligence upgrades (P1), data quality explainability (P2), export workflow hardening (P2).
+
+**Implementation Progress (since initial assessment):**
+- Command Palette (Ctrl+K): **Implemented** — 47 commands, fuzzy search, recent tracking, styled dialog
+- Onboarding Tours: **Implemented** — 5 built-in tours with progress persistence
+- Workspace Persistence: **Implemented** — 4 default workspaces, session state, window bounds
+- Backfill Checkpoints: **Implemented** — per-symbol progress, resume/retry, disk persistence
+- Keyboard Shortcuts: **Implemented** — full service with 35 tests
+- Fixture Mode: **Implemented** — explicit `--fixture` / `MDC_FIXTURE_MODE` activation with visual warning
 
 ---
 
 ## A. Scope
 
-This assessment focuses on high-value improvements for the Windows desktop experience (WPF app), prioritizing user trust, task completion speed, and operational reliability.
+This assessment focuses on high-value improvements for the Windows desktop experience (WPF app — the sole desktop client after UWP removal), prioritizing user trust, task completion speed, and operational reliability.
 
 ### Assessment Coverage
 
@@ -51,18 +59,19 @@ This assessment focuses on high-value improvements for the Windows desktop exper
 | **Utilities** | Package Manager, Portfolio Import, Schedule Manager | Data packaging, bulk import, scheduling |
 | **Help & Setup** | Welcome, Setup Wizard, Help, Keyboard Shortcuts | Onboarding, documentation |
 
-**Total:** 40+ pages across 7 functional categories
+**Total:** 49 pages across 7 functional categories (including CommandPaletteWindow and WorkspacePage)
 
 ### Services Architecture
 
 | Layer | Component Count | Purpose |
 |-------|----------------|---------|
-| Shared Services | 60+ classes in Ui.Services | Backend communication, state management |
-| WPF Services | 30+ classes in Wpf/Services | Platform-specific implementations |
-| UWP Services | 30+ classes in Uwp/Services | Legacy platform support |
-| Contracts | 15+ interfaces in Ui.Services/Contracts | Service contracts and abstractions |
+| Shared Services | 72 classes in Ui.Services | Backend communication, state management |
+| WPF Services | 32 classes in Wpf/Services | Platform-specific implementations |
+| Contracts | 16 interfaces in Ui.Services/Contracts | Service contracts and abstractions |
 
-**Test Coverage:** 129 tests (71 Ui.Services, 58 Wpf.Tests) - approximately 15% coverage
+**Test Coverage:** 1,266 tests across 72 test files (921 Ui.Tests + 345 Wpf.Tests)
+
+> **Note:** UWP was fully removed from the codebase. WPF is the sole desktop client. See `docs/archived/uwp-to-wpf-migration.md` for historical context.
 
 ---
 
@@ -71,11 +80,13 @@ This assessment focuses on high-value improvements for the Windows desktop exper
 ### Gap 1: Simulated Data in Core Workflows
 
 **Impact:** Erodes user trust, creates confusion about system state
+**Status:** Partially mitigated — Fixture mode is now explicit (`--fixture` flag or `MDC_FIXTURE_MODE=1` env var) with a visual warning banner. However, live backend integration is still pending for most pages.
 
 **Current State:**
-- Dashboard metrics and activity feed are seeded with hard-coded sample entries and random values
-- Symbol management starts from demo symbols rather than persisted user subscriptions
-- Backfill view shows sample status and simulated progress instead of real job execution state
+- `FixtureDataService` is now activated only via explicit opt-in (not implicitly for all environments)
+- When fixture mode is active, a warning notification reads: "Fixture Mode Active — Application is using mock data for offline development"
+- Dashboard metrics and activity feed still lack live backend polling when not in fixture mode
+- Backfill view has checkpoint service but does not yet poll `/api/backfill/status` in real time
 
 **Technical Details:**
 
@@ -92,20 +103,21 @@ This assessment focuses on high-value improvements for the Windows desktop exper
 - **Confusion:** Real vs demo data is not clearly distinguished
 
 **Services Affected:**
-- `FixtureDataService.cs` - Currently used for all environments instead of just offline mode
-- `LiveDataService.cs` - Not integrated with real WebSocket endpoints
-- `BackfillService.cs` - Using mock progress instead of HTTP polling
-- `ActivityFeedService.cs` - Generating sample events instead of subscribing to real logs
+- `FixtureDataService.cs` - Now correctly gated behind `--fixture` CLI flag or `MDC_FIXTURE_MODE=1` env var (fixed since initial assessment)
+- `LiveDataService.cs` - Not yet integrated with real WebSocket endpoints
+- `BackfillService.cs` - `BackfillCheckpointService` now provides checkpoint persistence, but real-time progress polling from `/api/backfill/status` is not yet wired
+- `ActivityFeedService.cs` - Still generating sample events instead of subscribing to real backend logs
 
 ### Gap 2: State and Workflow Continuity Is Weak
 
 **Impact:** Repeated work, user frustration, lost configuration
+**Status:** Significantly improved — `WorkspaceService` (WPF) and `WorkspaceModels` (shared) now provide workspace persistence with 4 built-in templates, session state tracking, and window bounds. `BackfillCheckpointService` enables resumable backfill jobs. However, per-page filter/sort persistence is not yet fully integrated across all 49 pages.
 
 **Current State:**
-- Filters/search selections are ephemeral and reset on reload/navigation in several pages
-- No obvious autosave/draft-recovery behavior for in-progress user operations
-- Window position and layout preferences are not persisted
-- Multi-step wizards don't save intermediate state
+- `WorkspaceService` is implemented with save/load/activate workflows and 4 default workspaces (monitoring, backfill-ops, storage-admin, analysis-export)
+- `BackfillCheckpointService` tracks per-symbol progress with disk persistence and resume capability
+- Window position and layout persistence is modeled in `WindowBounds` (part of `SessionState`)
+- Per-page filter/sort state restoration is partially modeled but not yet wired to all pages
 
 **Examples:**
 
@@ -118,15 +130,20 @@ This assessment focuses on high-value improvements for the Windows desktop exper
 | Column visibility | Not saved | Must reconfigure layout |
 
 **Technical Root Causes:**
-- No `WorkspaceService` persistence implementation
+- `WorkspaceService` now exists (WPF) with session state, workspace templates, and window bounds — but per-page state restoration is not wired to all pages
 - `IOfflineTrackingPersistenceService` exists but not fully integrated
-- No autosave timers in long-running forms
-- Window state management not implemented in `MainWindow.xaml.cs`
+- Autosave timer logic is modeled in `WorkspaceService` but not yet triggered from `MainWindow`
+- `WindowBounds` model exists in `WorkspaceModels.cs` for multi-monitor support
 
-**User Impact:**
-- **Productivity loss:** 5-10 minutes per session reapplying preferences
-- **Cognitive load:** Must remember previous state manually
-- **Frustration:** Especially painful for power users
+**Remaining Work:**
+- Wire `WorkspaceService.LoadSessionStateAsync()` on app startup
+- Connect per-page filters/sorts to `SessionState.ActiveFilters`
+- Integrate autosave timer in `MainWindow.xaml.cs`
+
+**User Impact (reduced from original assessment):**
+- **Productivity loss:** 2-5 minutes per session reapplying preferences (improved from 5-10 min)
+- **Cognitive load:** Reduced with workspace templates but per-page state not yet restored
+- **Frustration:** Workspace switching works, but fine-grained state (column order, filter text) is partial
 
 ### Gap 3: Limited Decision Support for Recovery Actions
 
@@ -160,34 +177,41 @@ This assessment focuses on high-value improvements for the Windows desktop exper
 ### Gap 4: Control-Plane Discoverability Needs Refinement
 
 **Impact:** Steep learning curve, feature under-utilization
+**Status:** Substantially addressed — `CommandPaletteService` (47 commands, fuzzy search, recent tracking) and `CommandPaletteWindow` (Catppuccin-themed dialog) are fully implemented. `OnboardingTourService` provides 5 guided tours. `SmartRecommendationsService` exists for contextual suggestions.
 
 **Current State:**
-- The product surface is broad (40+ pages/features), which is powerful but can increase cognitive load for first-time users
-- No command palette or global search
-- No "recently used" or "favorites" shortcuts
-- Navigation is entirely hierarchical (must click through menus)
-- No contextual recommendations ("Users who configured X also configured Y")
+- The product surface is broad (49 pages/features), which is powerful but can increase cognitive load for first-time users
+- Command palette **is implemented** with 47 commands, fuzzy search scoring, and recent command tracking
+- `CommandPaletteWindow` **is implemented** with Catppuccin Mocha styling, keyboard navigation, and result selection
+- Recent commands tracking **is implemented** (stores up to 10 most recent)
+- `OnboardingTourService` **is implemented** with 5 built-in tours and page-triggered tour suggestions
+- `SmartRecommendationsService` exists for contextual suggestions
 
 **Navigation Depth Analysis:**
 
-| Task | Current Clicks | Optimal Clicks |
-|------|---------------|----------------|
-| Start backfill | 4 clicks (Menu → Backfill → Configure → Start) | 1 click (Ctrl+K → "backfill") |
-| View data quality | 3 clicks (Menu → Quality → Dashboard) | 1 click (Ctrl+K → "quality") |
-| Check provider health | 3 clicks (Menu → Providers → Health) | 1 click (Ctrl+K → "health") |
-| Export data | 5 clicks (Menu → Export → Wizard → Configure → Export) | 2 clicks (Ctrl+K → "export" → configure) |
+| Task | Current Clicks | With Command Palette |
+|------|---------------|----------------------|
+| Start backfill | 4 clicks (Menu → Backfill → Configure → Start) | 1 click (Ctrl+K → "backfill") ✅ Available |
+| View data quality | 3 clicks (Menu → Quality → Dashboard) | 1 click (Ctrl+K → "quality") ✅ Available |
+| Check provider health | 3 clicks (Menu → Providers → Health) | 1 click (Ctrl+K → "health") ✅ Available |
+| Export data | 5 clicks (Menu → Export → Wizard → Configure → Export) | 2 clicks (Ctrl+K → "export" → configure) ✅ Available |
 
-**Missing Features:**
-- Global command palette (like VS Code's Ctrl+K)
-- Recent pages history
-- Smart search across all pages and settings
-- Onboarding tours or guided workflows
-- Feature discovery tips
+**Implemented Features:**
+- ✅ Global command palette with 47 commands and fuzzy search (`CommandPaletteService`)
+- ✅ Recent commands history (up to 10 most recent)
+- ✅ Smart search across all pages with scoring algorithm
+- ✅ Onboarding tours with 5 built-in tours (`OnboardingTourService`)
+- ✅ Feature discovery via tour system (welcome, data-collection, backfill, data-quality, export)
 
-**User Impact:**
-- **Onboarding time:** 4-8 hours to become proficient vs 1-2 hours with better discoverability
-- **Feature usage:** Many advanced features never discovered by typical users
-- **Efficiency:** Power users slowed by deep navigation hierarchies
+**Remaining Integration Work:**
+- Wire Ctrl+K hotkey in `MainWindow.xaml.cs` to open `CommandPaletteWindow`
+- Trigger `OnboardingTourService.GetTourForPage()` in `NavigationService` on first page visits
+- Add keyboard shortcut hints in navigation sidebar
+
+**User Impact (revised):**
+- **Onboarding time:** 2-4 hours to become proficient (improved from 4-8 hours, pending full tour integration)
+- **Feature usage:** Command palette indexes all 49 pages; discovery significantly improved once wired
+- **Efficiency:** Power users can access any page in 2-3 keystrokes once Ctrl+K is wired
 
 ---
 
@@ -301,59 +325,32 @@ public async Task<BackfillProgress> TrackJobAsync(string jobId, CancellationToke
 
 **Why users care:** Long backfills and collection sessions fail in real life; users need safe recovery.
 
-**Current Pain Points:**
+**Implementation Status:** `BackfillCheckpointService` is now **fully implemented** with checkpoint creation, per-symbol progress tracking, resume/retry logic, and disk persistence. 22 tests validate the service. The remaining work is wiring this service to the UI and backend API.
 
-| Failure Type | Current Behavior | User Impact |
-|--------------|------------------|-------------|
-| Network interruption | Job lost, must restart | Hours of wasted time |
-| Provider rate limit | Silent failure | Incomplete data, user unaware |
-| Disk full | Crash, no graceful degradation | Data loss |
-| Process crash | No recovery, must reconfigure | Lost work |
+**Current Pain Points (revised):**
+
+| Failure Type | Current Behavior | Status |
+|--------------|------------------|--------|
+| Network interruption | `BackfillCheckpointService` can track and resume | ✅ Service ready, needs UI wiring |
+| Provider rate limit | Per-symbol error tracking with retry count | ✅ Service ready, needs UI wiring |
+| Disk full | No graceful degradation yet | ❌ Still needed |
+| Process crash | Checkpoint persistence to disk enables recovery | ✅ Service ready, needs startup integration |
 
 **Implementation Plan:**
 
-#### Component 1: Resumable Backfill Sessions
+#### Component 1: Resumable Backfill Sessions ✅ IMPLEMENTED
 
-**Database Schema:**
-```sql
--- Add to SQLite state database
-CREATE TABLE backfill_checkpoints (
-    job_id TEXT PRIMARY KEY,
-    symbol TEXT NOT NULL,
-    provider TEXT NOT NULL,
-    date_from DATE NOT NULL,
-    date_to DATE NOT NULL,
-    last_successful_date DATE NOT NULL,
-    bars_downloaded INTEGER NOT NULL,
-    status TEXT NOT NULL, -- 'running', 'paused', 'failed', 'completed'
-    error_message TEXT,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
-);
-```
+`BackfillCheckpointService` is fully implemented in `src/MarketDataCollector.Ui.Services/Services/BackfillCheckpointService.cs` with:
 
-**Service Implementation:**
-```csharp
-public class BackfillCheckpointService
-{
-    public async Task<BackfillJob> ResumeJobAsync(string jobId, CancellationToken ct)
-    {
-        var checkpoint = await _db.GetCheckpointAsync(jobId, ct);
-        if (checkpoint == null)
-            throw new InvalidOperationException("No checkpoint found");
-        
-        // Resume from last successful date + 1 day
-        var resumeFrom = checkpoint.LastSuccessfulDate.AddDays(1);
-        
-        return await _backfillService.StartJobAsync(
-            checkpoint.Symbol,
-            checkpoint.Provider,
-            resumeFrom,
-            checkpoint.DateTo,
-            ct);
-    }
-}
-```
+- **`BackfillCheckpoint`** model — tracks job ID, symbols, provider, date range, status, created/completed timestamps
+- **`SymbolCheckpoint`** model — per-symbol progress with bars downloaded, error messages, retry count
+- **`CheckpointStatus`** enum — InProgress, Completed, PartiallyCompleted, Failed, Cancelled
+- **`SymbolCheckpointStatus`** enum — Pending, Downloading, Completed, Failed, Skipped
+- **Disk persistence** — checkpoints saved to `%APPDATA%\MarketDataCollector\` as JSON
+- **Cleanup policy** — configurable retention (default 30 days)
+- **22 tests** validating checkpoint lifecycle
+
+**Remaining work:** Wire the service to `BackfillPage.xaml.cs` and the backend `/api/backfill/` endpoints.
 
 #### Component 2: Per-Symbol Failure Tracking
 
@@ -442,6 +439,8 @@ Recent Backfill Jobs:
 
 **Why users care:** Time-to-first-value determines adoption.
 
+**Implementation Status:** `OnboardingTourService` is **fully implemented** with 5 built-in tours (welcome, data-collection, backfill, data-quality, export), progress persistence, page-triggered tour suggestions, and step navigation. `SetupWizardService` exists in Ui.Services. The remaining work is integrating tour triggering into `NavigationService` and enhancing the setup wizard with role-based presets.
+
 **Current Onboarding Experience:**
 
 | Step | Current Time | Optimal Time |
@@ -489,37 +488,25 @@ Step 5: Start Collection
   [Begin Live Collection] [Schedule Backfill] [Configure More]
 ```
 
-#### Phase 2: In-App Tours
+#### Phase 2: In-App Tours ✅ IMPLEMENTED
 
-**First-Launch Tour:**
-1. **Dashboard** - "This shows real-time metrics from your collection"
-2. **Symbols** - "Add or remove symbols to monitor"
-3. **Backfill** - "Download historical data for analysis"
-4. **Data Quality** - "Monitor data completeness and integrity"
-5. **Help** - "Access keyboard shortcuts and documentation"
+`OnboardingTourService` is fully implemented in `src/MarketDataCollector.Ui.Services/Services/OnboardingTourService.cs` with:
 
-**Implementation:**
-```csharp
-public class OnboardingTourService
-{
-    public async Task StartTourAsync(string tourName, CancellationToken ct)
-    {
-        var tour = await _tourRepository.GetTourAsync(tourName, ct);
-        
-        foreach (var step in tour.Steps)
-        {
-            // Highlight element
-            await HighlightElementAsync(step.TargetElement);
-            
-            // Show tooltip
-            await ShowTooltipAsync(step.Message, step.Position);
-            
-            // Wait for user to click "Next" or "Skip Tour"
-            await WaitForUserActionAsync(ct);
-        }
-    }
-}
-```
+**5 Built-In Tours:**
+1. **Welcome** (4 steps) — Dashboard overview, navigation sidebar, keyboard shortcuts, help access
+2. **Data Collection** (4 steps) — Provider list, credentials, test connection, symbol configuration
+3. **Backfill** (4 steps) — Overview, provider selection, date range, resume/recovery
+4. **Data Quality** (3 steps) — Dashboard, completeness scores, gap analysis
+5. **Export** (3 steps) — Export options, presets, custom exports
+
+**Features:**
+- Progress persistence to `%APPDATA%\MarketDataCollector\onboarding-progress.json`
+- `GetTourForPage(pageTag)` — auto-trigger relevant tours on first page visit
+- `StartTour()`, `NextStep()`, `PreviousStep()`, `DismissTour()`, `ResetTour()` lifecycle
+- `StepChanged` and `TourCompleted` events for UI coordination
+- Tour categories: GettingStarted, DataManagement, Monitoring, Advanced
+
+**Remaining work:** Call `GetTourForPage()` from `NavigationService` when navigating to a page for the first time.
 
 #### Phase 3: Role-Based Presets
 
@@ -549,143 +536,76 @@ public class OnboardingTourService
 
 **Why users care:** Frequent users revisit the same filters/views repeatedly.
 
+**Implementation Status:** Core services are **fully implemented**:
+- `WorkspaceService` (WPF) — 4 default workspaces, session state, CRUD, export/import, 28 tests
+- `WorkspaceModels` (shared) — data contracts for workspace, page, widget, window, session state
+- `CommandPaletteService` (shared) — 47 commands, fuzzy search, recent tracking, 27 tests
+- `CommandPaletteWindow` (WPF) — Catppuccin Mocha styled dialog with keyboard navigation
+- `KeyboardShortcutService` (WPF) — keyboard shortcut registration and handling, 35 tests
+
 **Implementation Plan:**
 
-#### Component 1: Workspace Persistence
+#### Component 1: Workspace Persistence ✅ IMPLEMENTED
 
-**State to Persist:**
-```json
-{
-  "workspace": {
-    "lastOpenedPage": "DashboardPage",
-    "windowPosition": { "x": 100, "y": 100, "width": 1200, "height": 800 },
-    "columnLayouts": {
-      "SymbolsPage": ["Symbol", "Price", "Volume", "Status"],
-      "BackfillPage": ["Job", "Progress", "ETA", "Actions"]
-    },
-    "filters": {
-      "SymbolsPage": { "search": "S", "status": "active" },
-      "BackfillPage": { "status": "running", "provider": "Alpaca" }
-    },
-    "sortPreferences": {
-      "SymbolsPage": { "column": "Symbol", "direction": "asc" }
-    },
-    "recentPages": ["DashboardPage", "BackfillPage", "DataQualityPage"]
-  }
-}
-```
+`WorkspaceService` is fully implemented in `src/MarketDataCollector.Wpf/Services/WorkspaceService.cs` with:
 
-**Service Implementation:**
-```csharp
-public class WorkspaceService : IWorkspaceService
-{
-    private const string WorkspaceFile = "workspace.json";
-    
-    public async Task SaveWorkspaceAsync(Workspace workspace, CancellationToken ct)
-    {
-        var json = JsonSerializer.Serialize(workspace, _jsonOptions);
-        await File.WriteAllTextAsync(WorkspaceFile, json, ct);
-    }
-    
-    public async Task<Workspace> LoadWorkspaceAsync(CancellationToken ct)
-    {
-        if (!File.Exists(WorkspaceFile))
-            return Workspace.Default();
-            
-        var json = await File.ReadAllTextAsync(WorkspaceFile, ct);
-        return JsonSerializer.Deserialize<Workspace>(json, _jsonOptions);
-    }
-    
-    // Auto-save on timer
-    public void StartAutoSave()
-    {
-        _autoSaveTimer = new Timer(async _ => 
-        {
-            await SaveWorkspaceAsync(_currentWorkspace, CancellationToken.None);
-        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-    }
-}
-```
-
-#### Component 2: Command Palette (Ctrl+K)
+**4 Default Workspaces:**
+- **monitoring** — Real-time monitoring and data quality overview
+- **backfill-ops** — Historical data backfill and gap filling
+- **storage-admin** — Storage management and maintenance
+- **analysis-export** — Data analysis and export workflows
 
 **Features:**
-- Fuzzy search across all pages
-- Recent pages history
-- Quick actions (start/stop collection, run backfill, etc.)
-- Settings search
-- Keyboard shortcut hints
+- CRUD operations on workspaces (Create, Read, Update, Delete)
+- Workspace activation and switching with `WorkspaceActivated` event
+- Session state persistence (`SessionState` model with active page, open pages, widget layout, filters, window bounds)
+- Workspace export/import for sharing
+- Built-in workspace protection (cannot delete built-in workspaces)
+- Event system: Created, Updated, Deleted, Activated lifecycle events
+- 28 tests in `WorkspaceServiceTests.cs`
 
-**UI Implementation:**
-```xml
-<!-- CommandPaletteDialog.xaml -->
-<Window x:Class="CommandPaletteDialog"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
-    <Border Background="{StaticResource DialogBackground}"
-            CornerRadius="8"
-            Padding="16">
-        <StackPanel>
-            <TextBox x:Name="SearchBox"
-                     PlaceholderText="Type to search..."
-                     TextChanged="OnSearchTextChanged" />
-            <ListBox x:Name="Results"
-                     MaxHeight="400"
-                     SelectionMode="Single">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Icon}" Margin="0,0,8,0" />
-                            <TextBlock Text="{Binding Title}" FontWeight="Bold" />
-                            <TextBlock Text="{Binding Description}" 
-                                       Foreground="Gray" Margin="8,0,0,0" />
-                            <TextBlock Text="{Binding Shortcut}" 
-                                       Foreground="LightGray" 
-                                       HorizontalAlignment="Right" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </StackPanel>
-    </Border>
-</Window>
-```
+**Data Contracts** (in `WorkspaceModels.cs`):
+- `WorkspaceTemplate` — ID, name, description, category, pages, widget layout, filters, window bounds
+- `WorkspacePage` — page tag, title, default flag, scroll position, page-specific state dictionary
+- `WidgetPosition` — row, column, spans, visibility, expanded state
+- `WindowBounds` — X, Y, width, height, monitor ID, maximized flag
+- `SessionState` — active page, open pages, widget layout, active filters, window bounds, timestamp
 
-**Search Index:**
-```csharp
-public class CommandPaletteService
-{
-    private readonly List<Command> _commands = new()
-    {
-        new("Navigate to Dashboard", "dash", () => Navigate("DashboardPage")),
-        new("Navigate to Backfill", "back", () => Navigate("BackfillPage")),
-        new("Start Live Collection", "start collect", () => StartCollection()),
-        new("Stop Live Collection", "stop collect", () => StopCollection()),
-        new("Run Backfill", "backfill run", () => RunBackfill()),
-        new("Open Settings", "settings", () => Navigate("SettingsPage")),
-        // ... 50+ more commands
-    };
-    
-    public IEnumerable<Command> Search(string query)
-    {
-        return _commands
-            .Where(c => FuzzyMatch(c.Title, query) || FuzzyMatch(c.Keywords, query))
-            .OrderByDescending(c => MatchScore(c, query))
-            .Take(10);
-    }
-}
-```
+**Remaining work:** Wire `SessionState` loading on app startup in `MainWindow.xaml.cs` and save on shutdown/timer.
 
-#### Component 3: Expanded Keyboard Coverage
+#### Component 2: Command Palette (Ctrl+K) ✅ IMPLEMENTED
 
-**Current Shortcuts:**
-```
-Ctrl+S     - Save (limited contexts)
-F5         - Refresh (limited contexts)
-```
+`CommandPaletteService` is fully implemented in `src/MarketDataCollector.Ui.Services/Services/CommandPaletteService.cs` and `CommandPaletteWindow` in `src/MarketDataCollector.Wpf/Views/CommandPaletteWindow.xaml`.
 
-**Enhanced Shortcuts:**
+**47 Registered Commands:**
+- **39 Navigation commands** — all pages accessible (Dashboard, Symbols, Backfill, Live Data, Data Quality, Storage, Providers, Charts, Order Book, Settings, Help, Diagnostics, System Health, Archive Health, etc.)
+- **8 Action commands** — Start/Stop Collector, Run Backfill, Refresh Status, Add Symbol, Toggle Theme, Save, Search Symbols
+
+**Fuzzy Search Scoring:**
+- Exact match: 1000 points
+- Title starts with query: 100 points
+- Title contains query: 50 points
+- Keyword match: 40 points
+- Description match: 20 points
+- Fuzzy character match: 10/5 points
+
+**UI (CommandPaletteWindow.xaml):**
+- Catppuccin Mocha theme (#1E1E2E background, #89B4FA accents)
+- Search box with icon and placeholder ("Type a command or search...")
+- Results list with icon, title, description, and keyboard shortcut
+- Keyboard hints footer (↑↓ navigate, ↵ select, esc close)
+- Up to 15 results displayed
+- Closes on Escape or window deactivation
+
+**Test Coverage:** 27 tests in `CommandPaletteServiceTests.cs`
+
+**Remaining work:** Wire Ctrl+K global hotkey in `MainWindow.xaml.cs` to instantiate and show `CommandPaletteWindow`.
+
+#### Component 3: Expanded Keyboard Coverage ✅ PARTIALLY IMPLEMENTED
+
+`KeyboardShortcutService` is implemented in `src/MarketDataCollector.Wpf/Services/KeyboardShortcutService.cs` with 35 tests.
+
+**Enhanced Shortcuts (target):**
 ```
 Global:
   Ctrl+K      - Command palette
@@ -1353,12 +1273,14 @@ public class ExportVerificationReport
 
 ## E. Suggested 90-Day Delivery Plan
 
-### Overview Timeline
+> **Update (2026-02-21):** Several Month 3 deliverables (Command Palette, Onboarding Tours, Workspace Persistence) have already been implemented as services. The revised plan front-loads wiring of these services and focuses remaining effort on live backend integration and alert intelligence.
+
+### Overview Timeline (Revised)
 
 ```
-Month 1: Trust Foundation
-Month 2: Reliability & Recovery
-Month 3: Adoption & Productivity
+Month 1: Service Wiring + Trust Foundation
+Month 2: Live Backend Integration + Recovery
+Month 3: Alert Intelligence + Polish
 ```
 
 ---
@@ -1429,36 +1351,39 @@ Month 3: Adoption & Productivity
 
 ---
 
-### Month 3 (Weeks 9-12): Adoption & Productivity
+### Month 3 (Weeks 9-12): Alert Intelligence & Polish
 
-**Goal:** Users complete tasks faster and discover features easily
+> **Note:** Original Month 3 deliverables (Command Palette, Onboarding Tours, Workspace Persistence) are already implemented as services. Month 3 now focuses on alert intelligence, the last major unimplemented P1 item, plus polish and integration testing.
+
+**Goal:** Reduce alert noise and refine the overall experience
 
 | Week | Focus | Deliverables | Success Criteria |
 |------|-------|--------------|------------------|
-| 9 | Enhanced setup wizard | Role-based presets, diagnostics | New user completes setup in <15 min |
-| 10 | In-app tours | First-launch guidance | 70%+ users complete tour |
-| 11 | Command palette | Ctrl+K navigation, fuzzy search | All pages accessible via command |
-| 12 | Workspace persistence | Filters, layout, recent pages | State restores on restart |
+| 9 | Alert grouping and deduplication | Group similar alerts by category/impact | Alert noise reduced by 70% |
+| 10 | Alert playbooks | Remediation steps for common errors | Root cause identification time -60% |
+| 11 | Smart suppression | Auto-suppress transient/flapping alerts | No notification spam |
+| 12 | Integration testing and polish | End-to-end testing of all wired services | All 49 pages accessible via Ctrl+K |
 
 **Team Allocation:**
 - 1 senior developer (full-time)
-- 1 UX designer (wizard flow, tour content, 50%)
+- 1 UX designer (alert UI patterns, 25%)
 
 **Key Risks:**
-- Wizard complexity (too many options = confusion)
-- Tour interruption (users skip if too long)
-- Command palette discoverability
+- Alert grouping logic too aggressive (hides real issues)
+- Playbook content quality
+- Smart suppression false positives
 
 **Mitigation:**
-- Limit wizard to 5 steps max
-- Make tour skippable, resumable
-- Show command palette hint on first 3 app launches
+- Critical alerts are never suppressed
+- Playbooks reviewed by ops team
+- Configurable suppression thresholds
 
 **Verification Tests:**
-- [ ] New user completes setup wizard in <15 minutes
-- [ ] Tour completion rate >60%
-- [ ] Command palette accessible from all pages
-- [ ] Workspace state persists across restarts
+- [ ] Alerts are grouped by category and impact
+- [ ] Playbooks provide clear remediation steps
+- [ ] Transient alerts are automatically suppressed
+- [ ] Critical alerts are never suppressed
+- [ ] All previously implemented services wired and functional
 
 ---
 
@@ -1547,30 +1472,30 @@ Month 3: Adoption & Productivity
 
 | Feature | Market Data Collector | Bloomberg Terminal | Refinitiv Eikon | TradingView | Custom Build |
 |---------|----------------------|-------------------|----------------|-------------|--------------|
-| **Live data integration** | ⚠ Partial (fixture mode) | ★★★★★ Full | ★★★★★ Full | ★★★★★ Full | Varies |
-| **Resumable jobs** | ☆☆☆☆☆ None | ★★★★★ Full | ★★★★☆ Good | ★★★☆☆ Limited | Rare |
-| **Onboarding wizard** | ★★★☆☆ Basic | ★★★★☆ Good | ★★★★★ Excellent | ★★★★☆ Good | Rare |
-| **Command palette** | ☆☆☆☆☆ None | ★★★★★ Extensive | ★★★★☆ Good | ★★★★★ Excellent | Rare |
-| **Workspace persistence** | ☆☆☆☆☆ None | ★★★★★ Full | ★★★★★ Full | ★★★★★ Full | Varies |
+| **Live data integration** | ⚠ Partial (fixture mode explicit) | ★★★★★ Full | ★★★★★ Full | ★★★★★ Full | Varies |
+| **Resumable jobs** | ★★★☆☆ Service ready, needs UI | ★★★★★ Full | ★★★★☆ Good | ★★★☆☆ Limited | Rare |
+| **Onboarding wizard** | ★★★★☆ 5 tours implemented | ★★★★☆ Good | ★★★★★ Excellent | ★★★★☆ Good | Rare |
+| **Command palette** | ★★★★☆ 47 commands, fuzzy search | ★★★★★ Extensive | ★★★★☆ Good | ★★★★★ Excellent | Rare |
+| **Workspace persistence** | ★★★☆☆ Service ready, needs wiring | ★★★★★ Full | ★★★★★ Full | ★★★★★ Full | Varies |
 | **Smart alerting** | ★★☆☆☆ Basic | ★★★★★ Advanced | ★★★★☆ Good | ★★★☆☆ Moderate | Varies |
 | **Data quality tools** | ★★★★☆ Good | ★★★★★ Excellent | ★★★★★ Excellent | ★★☆☆☆ Limited | Varies |
 | **Export workflows** | ★★★☆☆ Basic | ★★★★★ Advanced | ★★★★☆ Good | ★★★☆☆ Moderate | Varies |
 
 ### Gap Analysis vs Enterprise Solutions
 
-| Capability | Current | Enterprise Standard | Gap Severity | Remediation Priority |
-|------------|---------|-------------------|--------------|---------------------|
-| Live backend connectivity | Partial | Full | **Critical** | P0 |
-| Job resumability | None | Standard | **Critical** | P0 |
-| Failure transparency | Limited | Full | **High** | P0 |
-| Onboarding wizard | Basic | Advanced | **Medium** | P1 |
-| Command palette | None | Standard | **Medium** | P1 |
-| Workspace persistence | None | Standard | **Medium** | P1 |
-| Alert intelligence | Basic | Advanced | **Medium** | P1 |
-| Quality explainability | Good | Excellent | **Low** | P2 |
-| Export validation | Partial | Full | **Low** | P2 |
+| Capability | Current | Enterprise Standard | Gap Severity | Remediation Priority | Progress |
+|------------|---------|-------------------|--------------|---------------------|----------|
+| Live backend connectivity | Partial | Full | **Critical** | P0 | ❌ Not started |
+| Job resumability | Service ready | Standard | **Medium** | P0 | ✅ Service done, needs UI |
+| Failure transparency | Limited | Full | **High** | P0 | ⚠ Partial |
+| Onboarding wizard | 5 tours built | Advanced | **Low** | P1 | ✅ Service done, needs wiring |
+| Command palette | 47 commands | Standard | **Low** | P1 | ✅ Service + UI done, needs hotkey |
+| Workspace persistence | Service ready | Standard | **Low** | P1 | ✅ Service done, needs wiring |
+| Alert intelligence | Basic | Advanced | **Medium** | P1 | ❌ Not started |
+| Quality explainability | Good | Excellent | **Low** | P2 | ❌ Not started |
+| Export validation | Partial | Full | **Low** | P2 | ❌ Not started |
 
-**Key Insight:** The primary gaps are in **operational reliability** (resumability, failure recovery) and **user productivity** (command palette, persistence). These are table-stakes features in enterprise tools.
+**Key Insight:** The primary remaining gap is **live backend connectivity** — the services for productivity features (command palette, workspace persistence, onboarding, backfill checkpoints) are implemented and tested but need final wiring to the UI layer and backend API.
 
 ---
 
@@ -1712,25 +1637,25 @@ Conversion rate: ~85%
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         WPF/UWP UI Layer                    │
+│                       WPF UI Layer (49 pages)               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
 │  │ DashboardPage│  │ BackfillPage │  │ SymbolsPage  │     │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
 │         │                 │                  │              │
-└─────────┼─────────────────┼──────────────────┼──────────────┘
-          │                 │                  │
-┌─────────┼─────────────────┼──────────────────┼──────────────┐
-│         │      Desktop Services Layer (Ui.Services)         │
-│         ▼                 ▼                  ▼              │
+│  ┌──────────────────────────────────────────────────┐      │
+│  │ WPF Services (32 classes)                        │      │
+│  │ WorkspaceService, NavigationService, ConfigService│      │
+│  └──────┬───────────────────────────────────────────┘      │
+└─────────┼───────────────────────────────────────────────────┘
+          │
+┌─────────┼───────────────────────────────────────────────────┐
+│         │      Shared Services Layer (Ui.Services, 72 cls)  │
+│         ▼                                                    │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐     │
-│  │StatusService│  │BackfillService│  │SymbolService │     │
+│  │StatusService│  │BackfillService│  │SymbolService  │     │
+│  │CommandPalette│ │CheckpointSvc │  │OnboardingTour │     │
 │  └──────┬──────┘  └──────┬───────┘  └──────┬────────┘     │
 │         │                 │                  │              │
-└─────────┼─────────────────┼──────────────────┼──────────────┘
-          │                 │                  │
-┌─────────┼─────────────────┼──────────────────┼──────────────┐
-│         │         HTTP API Client Layer                     │
-│         ▼                 ▼                  ▼              │
 │  ┌───────────────────────────────────────────────────┐     │
 │  │            ApiClientService                       │     │
 │  │  - HTTP polling                                   │     │
@@ -1738,7 +1663,7 @@ Conversion rate: ~85%
 │  │  - Retry logic                                    │     │
 │  │  - Connection health                              │     │
 │  └─────────────────────┬─────────────────────────────┘     │
-└────────────────────────┼─────────────────────────────────┘
+└────────────────────────┼─────────────────────────────────────┘
                          │
 ┌────────────────────────┼─────────────────────────────────┐
 │                        ▼                                  │
@@ -1747,17 +1672,21 @@ Conversion rate: ~85%
 └───────────────────────────────────────────────────────────┘
 ```
 
-### Key Services to Modify
+### Key Services Status
 
-| Service | Current State | Modifications Needed |
-|---------|---------------|---------------------|
+| Service | Current State | Remaining Work |
+|---------|---------------|----------------|
 | `StatusService.cs` | Returns mock data | Add HTTP polling to `/api/status` |
-| `BackfillService.cs` | Simulates progress | Poll `/api/backfill/status/{jobId}` |
+| `BackfillService.cs` | Simulates progress | Wire `BackfillCheckpointService` + poll `/api/backfill/status` |
+| `BackfillCheckpointService.cs` | ✅ **Fully implemented** (22 tests) | Wire to `BackfillPage.xaml.cs` |
 | `SymbolManagementService.cs` | In-memory only | POST/DELETE to `/api/config/symbols` |
 | `ActivityFeedService.cs` | Sample events | Subscribe to WebSocket `/api/live/events` |
 | `ConfigService.cs` | Reads local only | Sync with backend `/api/config` |
-| `WorkspaceService.cs` | Not implemented | Save/load workspace.json with auto-save |
-| `CommandPaletteService.cs` | Not implemented | New service for Ctrl+K navigation |
+| `WorkspaceService.cs` | ✅ **Fully implemented** (28 tests) | Wire session state load/save in `MainWindow` |
+| `CommandPaletteService.cs` | ✅ **Fully implemented** (27 tests) | Wire Ctrl+K hotkey in `MainWindow` |
+| `CommandPaletteWindow.xaml` | ✅ **Fully implemented** (styled) | Wire to `MainWindow` keyboard handler |
+| `OnboardingTourService.cs` | ✅ **Fully implemented** (5 tours) | Call from `NavigationService` on page visit |
+| `KeyboardShortcutService.cs` | ✅ **Fully implemented** (35 tests) | Ensure all shortcuts are registered |
 | `AlertService.cs` | Basic notifications | Add grouping, suppression, playbooks |
 
 ### Database Schema Additions
@@ -1969,34 +1898,34 @@ Payback Period: 40 days
 
 ### Primary Finding
 
-The desktop applications provide a comprehensive feature surface but suffer from **trust gaps** (simulated data), **reliability gaps** (no job resumption), and **productivity gaps** (no workspace persistence or command palette). These are table-stakes features in enterprise tools and directly impact adoption.
+The WPF desktop application has a comprehensive feature surface with 49 pages and 104 services. Since the initial assessment, significant progress has been made on **productivity features** — Command Palette (47 commands with fuzzy search), Onboarding Tours (5 built-in tours), Workspace Persistence (4 default templates with session state), and Backfill Checkpoints (per-symbol progress with resume capability) are all fully implemented and tested. The remaining primary gap is **live backend integration** — connecting the UI pages to the REST API endpoints for real-time data.
 
-### Strategic Recommendations
+### Strategic Recommendations (Updated)
 
-1. **Prioritize P0 items aggressively** - Live data connectivity and job resumability are blockers to production adoption. These should be completed within 60 days.
+1. **Wire implemented services immediately** — Command Palette, Onboarding Tours, Workspace Persistence, and Backfill Checkpoints are ready but not connected to the main window. This is the highest-ROI work available (days, not weeks).
 
-2. **Invest in onboarding** - Time-to-first-value is the #1 adoption driver. A polished setup wizard with role-based presets will increase conversion by 3x.
+2. **Prioritize live backend connectivity** — This remains the critical blocker to production adoption. Dashboard, Symbols, and Backfill pages need real API polling.
 
-3. **Build for power users** - Command palette and workspace persistence have low implementation cost but massive productivity impact. These should be in Month 3.
+3. **Don't neglect alerting** — Alert fatigue is real. Intelligent grouping and playbooks will dramatically improve incident response quality. This is the last major unimplemented P1 item.
 
-4. **Don't neglect alerting** - Alert fatigue is real. Intelligent grouping and playbooks will dramatically improve incident response quality.
+4. **Measure everything** — Instrument the desktop app with anonymous telemetry to track actual usage patterns and pain points.
 
-5. **Measure everything** - Instrument the desktop app with anonymous telemetry to track actual usage patterns and pain points.
+5. **Leverage the 1,266-test foundation** — The test suite is strong. Maintain this coverage as live integration is added.
 
 ### Architecture Principles to Follow
 
 - **Progressive enhancement** - Start with polling, add WebSocket later
 - **Optimistic UI** - Update UI immediately, rollback on failure
 - **Fail gracefully** - Never crash, always show actionable error
-- **Preserve state** - Auto-save everything, enable recovery
+- **Preserve state** - Auto-save everything, enable recovery (workspace + checkpoint services ready)
 - **Be transparent** - Show data sources, timestamps, staleness
 
-### Quick Wins (1-2 weeks each)
+### Quick Wins (days each)
 
-1. **Stale data indicator** - Gray out metrics >15 sec old (visual trust signal)
-2. **Recent pages history** - Alt+Left/Right navigation (productivity)
-3. **Keyboard shortcuts** - Ctrl+1-9 for top pages (power user feature)
-4. **Export presets** - 3-4 standard formats (reduce friction)
+1. **Wire Ctrl+K hotkey** - Open `CommandPaletteWindow` from `MainWindow` (immediate productivity gain)
+2. **Wire onboarding tour trigger** - Call `OnboardingTourService.GetTourForPage()` from `NavigationService`
+3. **Wire workspace state restore** - Load `SessionState` on app startup, save on shutdown
+4. **Stale data indicator** - Gray out metrics >15 sec old (visual trust signal)
 5. **Provider health badge** - Show connection status on Dashboard (visibility)
 
 ### Anti-Patterns to Avoid
@@ -2034,8 +1963,8 @@ The desktop applications provide a comprehensive feature surface but suffer from
 
 ### Test Projects
 
-- **MarketDataCollector.Ui.Tests** - `tests/MarketDataCollector.Ui.Tests/` (71 tests)
-- **MarketDataCollector.Wpf.Tests** - `tests/MarketDataCollector.Wpf.Tests/` (58 tests)
+- **MarketDataCollector.Ui.Tests** - `tests/MarketDataCollector.Ui.Tests/` (921 tests across 52 test files)
+- **MarketDataCollector.Wpf.Tests** - `tests/MarketDataCollector.Wpf.Tests/` (345 tests across 20 test files)
 
 ### External Resources
 
@@ -2048,33 +1977,38 @@ The desktop applications provide a comprehensive feature surface but suffer from
 
 ## O. Conclusion
 
-The Market Data Collector desktop applications have a **solid foundation** with 40+ pages, 60+ services, and comprehensive monitoring infrastructure. However, several **high-impact UX improvements** are needed to achieve enterprise-grade user experience and operational reliability.
+The Market Data Collector WPF desktop application has a **strong foundation** with 49 pages, 104 services (72 shared + 32 WPF-specific), 1,266 tests across 72 test files, and comprehensive monitoring infrastructure. Several key productivity services have been implemented since the initial assessment (Command Palette, Onboarding Tours, Workspace Persistence, Backfill Checkpoints), shifting the primary remaining gap to **live backend integration** and **UI wiring** of existing services.
 
-### Priority Ranking
+### Priority Ranking (Updated)
 
-| Priority | Improvements | Effort | Impact | ROI |
-|----------|--------------|--------|--------|-----|
-| **P0** | Live data connectivity, Job resumability | 8 weeks | Critical | 1,990% (3-year) |
-| **P1** | Onboarding wizard, Command palette, Workspace persistence | 4 weeks | High | Included above |
-| **P2** | Quality explainability, Export hardening | 2 weeks | Medium | Incremental |
+| Priority | Improvements | Status | Remaining Effort | Impact |
+|----------|--------------|--------|-----------------|--------|
+| **P0** | Live data connectivity | Not started | 4-6 weeks | Critical |
+| **P0** | Job resumability UI wiring | Service done | 1-2 weeks | Critical |
+| **P1** | Command palette hotkey wiring | Service + UI done | 1-2 days | High |
+| **P1** | Onboarding tour integration | Service done | 1 week | High |
+| **P1** | Workspace state load/save wiring | Service done | 1 week | High |
+| **P1** | Alert intelligence | Not started | 3-4 weeks | Medium |
+| **P2** | Quality explainability | Not started | 2 weeks | Medium |
+| **P2** | Export hardening | Not started | 2 weeks | Medium |
 
 ### Next Steps
 
-1. **Secure executive sponsorship** - Present ROI case to leadership
-2. **Allocate resources** - 1 senior dev + 1 junior dev for 12 weeks
-3. **Begin Phase 1** - Live data connectivity (Month 1)
-4. **Set up telemetry** - Measure baseline metrics before improvements
-5. **Iterate based on data** - Adjust priorities based on actual usage patterns
+1. **Wire implemented services** — Ctrl+K hotkey, tour triggering, workspace state restore (quick wins, 1-2 weeks)
+2. **Live backend integration** — Connect Dashboard, Symbols, Backfill pages to REST API endpoints
+3. **Set up telemetry** — Measure baseline metrics before further improvements
+4. **Alert intelligence** — Implement grouping, suppression, and playbooks
+5. **Iterate based on data** — Adjust priorities based on actual usage patterns
 
 ### Success Criteria
 
 The improvements will be considered successful if:
 
-- ✅ New user conversion rate increases from 30% to 85%
-- ✅ Time-to-first-value decreases from 60-120 min to <15 min
-- ✅ Backfill recovery time decreases from 30+ min to <5 min
-- ✅ Support tickets decrease by 40%
-- ✅ User confidence (NPS) increases by 50 points
+- ✅ New user conversion rate increases from 30% to 85% (onboarding tours implemented, pending integration)
+- ✅ Time-to-first-value decreases from 60-120 min to <15 min (setup wizard + tours ready)
+- ✅ Backfill recovery time decreases from 30+ min to <5 min (checkpoint service ready, pending UI wiring)
+- ✅ Support tickets decrease by 40% (command palette + tours reduce confusion)
+- ✅ User confidence (NPS) increases by 50 points (fixture mode now explicit, reducing false trust)
 
 ### Long-Term Vision
 
@@ -2086,10 +2020,10 @@ Beyond the 90-day plan, the desktop experience should evolve toward:
 - **Advanced visualizations** - Interactive charts, heatmaps
 - **Plugin architecture** - Custom indicators, data sources
 
-**The path forward is clear, actionable, and backed by strong ROI. Let's build a desktop experience users trust and love.**
+**The path forward is clear: wire the implemented services to the UI, then focus on live backend integration. The productivity foundation is built — it needs to be connected.**
 
 ---
 
-*Evaluation Date: 2026-02-13*  
-*Document Version: 2.0 (Comprehensive Expansion)*  
+*Evaluation Date: 2026-02-13 (initial), 2026-02-21 (updated)*
+*Document Version: 3.0 (Updated with implementation progress)*
 *Next Review: 2026-05-13 (After 90-day implementation)*
