@@ -1,17 +1,29 @@
 # Copilot Repository Instructions
 
-Use these instructions for all tasks in this repository to improve quality, reliability, and review speed.
+Use these instructions for every task in this repository to improve quality, reliability, and review speed.
+
+## 0) Standard execution flow
+
+For each task, follow this sequence:
+
+1. Restate the requested change in one sentence.
+2. Identify acceptance criteria before coding.
+3. Make the smallest possible set of edits.
+4. Run targeted validation commands.
+5. Summarize what changed, why, and how it was validated.
+
+If the task request is ambiguous, document assumptions in the PR body.
 
 ## 1) Prefer well-scoped tasks
 
-When working from an issue or prompt, treat it as a strict implementation contract:
+When working from an issue or prompt, treat it as an implementation contract:
 
 - Restate the exact problem being solved.
 - Confirm acceptance criteria before coding.
 - Limit changes to the smallest file set that satisfies the task.
 - Call out assumptions when requirements are ambiguous.
 
-If requirements are unclear, propose concrete acceptance criteria in the PR body.
+If requirements are unclear, propose concrete acceptance criteria and proceed with the safest interpretation.
 
 ## 2) Choose tasks appropriate for an agent
 
@@ -42,7 +54,7 @@ Always do the following before opening a PR:
 
 ## 4) Build and test commands
 
-Use the fastest command set that validates your change:
+Use the fastest command set that validates your change. For non-test-only edits, run restore + build first:
 
 ```bash
 dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -56,6 +68,8 @@ dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c 
 dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
 ```
 
+If only one area is affected, run the nearest test project first and expand scope only if needed.
+
 ## 5) Response quality expectations
 
 - Explain *what* changed and *why*.
@@ -63,6 +77,13 @@ dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Te
 - Include exact validation commands and outcomes.
 - Keep edits consistent with existing architecture and naming.
 
+When a change is documentation-only, explicitly state that no runtime behavior was modified.
+
 ## 6) Path-specific instructions
 
 Also follow any matching files under `.github/instructions/**/*.instructions.md` for language-, path-, and test-specific guidance.
+
+Relevant examples:
+
+- `.github/instructions/docs.instructions.md` for Markdown edits.
+- `.github/instructions/dotnet-tests.instructions.md` for C# test changes.
