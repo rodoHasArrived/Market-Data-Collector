@@ -11,7 +11,7 @@ using System.Windows.Controls;
 using WpfServices = MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Services;
-using NotificationType = MarketDataCollector.Wpf.Services.NotificationType;
+
 namespace MarketDataCollector.Wpf.Views;
 
 public partial class SetupWizardPage : Page

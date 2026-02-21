@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Ui.Services.Services;
+using Contracts = MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Wpf.Services;
 
