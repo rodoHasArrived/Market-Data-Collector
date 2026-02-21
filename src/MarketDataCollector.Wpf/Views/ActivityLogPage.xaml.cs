@@ -170,10 +170,10 @@ public partial class ActivityLogPage : Page
             }
             else
             {
-                // Load demo logs if API not available
+                // API returned non-success status — show offline indicator
                 if (_allLogs.Count == 0)
                 {
-                    LoadDemoLogs();
+                    ShowOfflineIndicator("Backend returned non-success status. Showing local logs only.");
                 }
             }
         }
@@ -181,7 +181,7 @@ public partial class ActivityLogPage : Page
         {
             if (_allLogs.Count == 0)
             {
-                LoadDemoLogs();
+                ShowOfflineIndicator("Backend is unreachable. Showing local logs only.");
             }
         }
         catch (OperationCanceledException)
@@ -194,41 +194,30 @@ public partial class ActivityLogPage : Page
         }
     }
 
-    private void LoadDemoLogs()
-    {
-        var now = DateTime.Now;
-        var demoLogs = new List<(string level, string category, string message, int minutesAgo)>
-        {
-            ("Info", "System", "Application started successfully", 0),
-            ("Info", "Connection", "Connected to Alpaca Markets streaming API", 1),
-            ("Info", "Data", "Subscribed to SPY, AAPL, MSFT, GOOGL, AMZN", 1),
-            ("Debug", "Data", "Received 1,234 trade events in the last minute", 2),
-            ("Info", "Backfill", "Historical backfill completed for SPY (2024-01-01 to 2024-01-20)", 5),
-            ("Warning", "Connection", "Connection latency increased to 150ms", 8),
-            ("Info", "Storage", "Data archived: 156 files compressed, 2.3 GB saved", 10),
-            ("Info", "System", "Configuration reloaded from appsettings.json", 15),
-            ("Error", "Data", "Failed to parse quote data for symbol XYZ: Invalid format", 18),
-            ("Info", "Connection", "Reconnected to streaming API after brief interruption", 20),
-            ("Debug", "System", "Memory usage: 245 MB, GC Gen0: 12, Gen1: 3, Gen2: 1", 25),
-            ("Info", "Backfill", "Scheduled backfill started for TSLA", 30),
-            ("Warning", "Data", "Data gap detected for AAPL between 14:30 and 14:45", 35),
-            ("Info", "Storage", "Tiered storage migration completed: 45 files moved to cold storage", 40)
-        };
+    private bool _offlineIndicatorShown;
 
-        foreach (var (level, category, message, minutesAgo) in demoLogs)
+    private void ShowOfflineIndicator(string reason)
+    {
+        if (_offlineIndicatorShown) return;
+        _offlineIndicatorShown = true;
+
+        _notificationService.ShowNotification(
+            "Offline Mode",
+            $"{reason} Connect the backend service to see live activity logs.",
+            NotificationType.Warning);
+
+        // Add a single informational log entry so the page is not empty
+        var now = DateTime.Now;
+        _allLogs.Add(new LogEntryModel
         {
-            var timestamp = now.AddMinutes(-minutesAgo);
-            _allLogs.Add(new LogEntryModel
-            {
-                RawTimestamp = timestamp,
-                Timestamp = timestamp.ToString("HH:mm:ss"),
-                Level = level,
-                Category = category,
-                Message = message,
-                LevelBackground = GetLevelBackground(level),
-                LevelForeground = GetLevelForeground(level)
-            });
-        }
+            RawTimestamp = now,
+            Timestamp = now.ToString("HH:mm:ss"),
+            Level = "Warning",
+            Category = "System",
+            Message = $"[Offline] {reason} Local UI events will still appear here.",
+            LevelBackground = GetLevelBackground("Warning"),
+            LevelForeground = GetLevelForeground("Warning")
+        });
 
         ApplyFilters();
     }

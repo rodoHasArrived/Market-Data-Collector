@@ -10,6 +10,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
@@ -137,26 +138,35 @@ public partial class LiveDataViewerPage : Page
             _cts?.Cancel();
             _cts = new CancellationTokenSource();
 
-            // Get symbols from status service
-            var status = await _statusService.GetStatusAsync(_cts.Token);
-            if (status != null)
+            // Try loading symbols from backend API via SymbolManagementService
+            var symbolService = SymbolManagementService.Instance;
+            var result = await symbolService.GetAllSymbolsAsync(_cts.Token);
+
+            _availableSymbols.Clear();
+
+            if (result.Success && result.Symbols.Count > 0)
             {
-                _availableSymbols.Clear();
-
-                // SimpleStatus doesn't contain subscription details, so use default symbols
-                // In a real implementation, this would call a separate API endpoint
-                _availableSymbols.AddRange(new[] { "SPY", "AAPL", "MSFT", "GOOGL", "AMZN", "QQQ", "IWM", "DIA" });
-
-                SymbolComboBox.ItemsSource = _availableSymbols;
-                if (_availableSymbols.Count > 0 && SymbolComboBox.SelectedItem == null)
+                _availableSymbols.AddRange(result.Symbols.Select(s => s.Symbol));
+            }
+            else
+            {
+                // Fallback: try loading from config service
+                var configSymbols = await Wpf.Services.ConfigService.Instance.GetConfiguredSymbolsAsync(_cts.Token);
+                if (configSymbols.Length > 0)
                 {
-                    SymbolComboBox.SelectedIndex = 0;
+                    _availableSymbols.AddRange(configSymbols.Select(s => s.Symbol));
                 }
+            }
+
+            SymbolComboBox.ItemsSource = _availableSymbols;
+            if (_availableSymbols.Count > 0 && SymbolComboBox.SelectedItem == null)
+            {
+                SymbolComboBox.SelectedIndex = 0;
             }
         }
         catch (Exception ex)
         {
-            _loggingService.LogError("Failed to load symbols", ex);
+            _loggingService.LogError("Failed to load symbols from backend", ex);
         }
     }
 

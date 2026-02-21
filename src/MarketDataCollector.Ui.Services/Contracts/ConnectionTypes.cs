@@ -67,7 +67,7 @@ public sealed class ReconnectFailedEventArgs : EventArgs
 }
 
 /// <summary>
-/// Connection health event args.
+/// Connection health event args with remediation guidance.
 /// </summary>
 public sealed class ConnectionHealthEventArgs : EventArgs
 {
@@ -75,4 +75,30 @@ public sealed class ConnectionHealthEventArgs : EventArgs
     public double LatencyMs { get; init; }
     public string? ErrorMessage { get; init; }
     public DateTime Timestamp { get; init; }
+
+    /// <summary>
+    /// Categorized error type for structured error handling.
+    /// </summary>
+    public ConnectionErrorCategory ErrorCategory { get; init; }
+
+    /// <summary>
+    /// Actionable remediation guidance for the user.
+    /// </summary>
+    public string? RemediationGuidance { get; init; }
+}
+
+/// <summary>
+/// Categorized connection error types for structured error handling and decision support.
+/// </summary>
+public enum ConnectionErrorCategory
+{
+    None,
+    NetworkUnreachable,
+    ServiceNotRunning,
+    AuthenticationFailed,
+    RateLimited,
+    Timeout,
+    EndpointNotFound,
+    ServerError,
+    Unknown
 }

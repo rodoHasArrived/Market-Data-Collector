@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private readonly WpfServices.ThemeService _themeService;
     private readonly OnboardingTourService _tourService;
     private readonly AlertService _alertService;
+    private readonly WpfServices.WorkspaceService _workspaceService;
     private readonly FixtureModeDetector _fixtureModeDetector;
 
     private static readonly string WindowStateFilePath = Path.Combine(
@@ -55,6 +56,7 @@ public partial class MainWindow : Window
         _themeService = themeService;
         _tourService = OnboardingTourService.Instance;
         _alertService = AlertService.Instance;
+        _workspaceService = WpfServices.WorkspaceService.Instance;
         _fixtureModeDetector = FixtureModeDetector.Instance;
 
         // Subscribe to fixture/offline mode changes
@@ -78,13 +80,16 @@ public partial class MainWindow : Window
         RestoreWindowState();
     }
 
-    private void OnWindowLoaded(object sender, RoutedEventArgs e)
+    private async void OnWindowLoaded(object sender, RoutedEventArgs e)
     {
         // Initialize navigation service with the frame
         _navigationService.Initialize(RootFrame);
 
         // Initialize keyboard shortcuts
         _keyboardShortcutService.Initialize(this);
+
+        // Restore workspace session state from previous run
+        await RestoreWorkspaceSessionAsync();
 
         // Navigate to the main page via DI
         RootFrame.Navigate(App.Services.GetRequiredService<MainPage>());
@@ -94,6 +99,9 @@ public partial class MainWindow : Window
     {
         // Save window state before closing
         SaveWindowState();
+
+        // Save workspace session state for next launch
+        SaveWorkspaceSession();
 
         // Unsubscribe from all events to prevent memory leaks
         _keyboardShortcutService.ShortcutInvoked -= OnShortcutInvoked;
@@ -480,6 +488,78 @@ public partial class MainWindow : Window
                 alert.Description,
                 notificationType,
                 8000);
+        }
+    }
+
+    #endregion
+
+    #region Workspace Session Persistence
+
+    /// <summary>
+    /// Restores the last workspace session state (active workspace, last page, etc.)
+    /// </summary>
+    private async Task RestoreWorkspaceSessionAsync()
+    {
+        try
+        {
+            await _workspaceService.LoadWorkspacesAsync();
+
+            var session = _workspaceService.GetLastSessionState();
+            if (session != null)
+            {
+                // Restore active workspace
+                if (!string.IsNullOrEmpty(session.ActiveWorkspaceId))
+                {
+                    await _workspaceService.ActivateWorkspaceAsync(session.ActiveWorkspaceId);
+                }
+
+                // Restore last active page after MainPage loads
+                if (!string.IsNullOrEmpty(session.ActivePageTag) && session.ActivePageTag != "Dashboard")
+                {
+                    // Defer navigation until MainPage is fully loaded
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+                    {
+                        _navigationService.NavigateTo(session.ActivePageTag);
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to restore workspace session: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Saves the current workspace session state for next launch.
+    /// </summary>
+    private void SaveWorkspaceSession()
+    {
+        try
+        {
+            var currentPage = _navigationService.GetCurrentPageTag();
+            var activeWorkspace = _workspaceService.ActiveWorkspace;
+
+            var session = new Ui.Services.SessionState
+            {
+                ActivePageTag = currentPage ?? "Dashboard",
+                ActiveWorkspaceId = activeWorkspace?.Id,
+                WindowBounds = new Ui.Services.WindowBounds
+                {
+                    X = RestoreBounds.Left,
+                    Y = RestoreBounds.Top,
+                    Width = RestoreBounds.Width,
+                    Height = RestoreBounds.Height,
+                    IsMaximized = WindowState == WindowState.Maximized
+                }
+            };
+
+            // Fire-and-forget since we're closing
+            _ = _workspaceService.SaveSessionStateAsync(session);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to save workspace session: {ex.Message}");
         }
     }
 
