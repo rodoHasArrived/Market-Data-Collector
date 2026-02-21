@@ -189,7 +189,7 @@ def run_script_with_args(name: str, root: Path, extra_args: Sequence[str] | None
         status = "failed"
         stderr = proc.stderr.strip()
         stdout = proc.stdout.strip()
-        error = stderr or stdout or "Script exited with non-zero status"
+        error = stderr or stdout or f"Script exited with non-zero status (exit code {proc.returncode})"
 
     return ScriptResult(
         name=name,
