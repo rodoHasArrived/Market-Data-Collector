@@ -1106,7 +1106,8 @@ Improvements Tracker Update
 
 ## Reference Documents
 
-- **[ROADMAP.md](ROADMAP.md)** — Phased execution timeline (Phases 0-9)
+- **[ROADMAP.md](ROADMAP.md)** — Phased execution timeline (Phases 0-10)
+- **[EVALUATIONS_AND_AUDITS.md](EVALUATIONS_AND_AUDITS.md)** — Consolidated architecture evaluations, code audits, and assessments
 - **[CHANGELOG.md](CHANGELOG.md)** — Historical changes and version history
 - **[TODO.md](TODO.md)** — Auto-generated TODO tracking from code comments
 - **[DEPENDENCIES.md](../DEPENDENCIES.md)** — NuGet package dependencies

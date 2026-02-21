@@ -1,6 +1,6 @@
 # Archived Documentation Index
 
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-02-21
 
 This folder contains historical documentation that has been superseded by newer guides or is no longer actively maintained. These documents are preserved for historical reference and to understand the evolution of the project.
 
@@ -53,6 +53,13 @@ Documents are archived when:
 | **2026-02_UI_IMPROVEMENTS_SUMMARY.md** | 2026-02-12 | UI improvements completed | [IMPROVEMENTS.md](../status/IMPROVEMENTS.md) |
 | **2026-02_VISUAL_CODE_EXAMPLES.md** | 2026-02-12 | Examples incorporated into dev guides | — |
 | **CHANGES_SUMMARY.md** | 2026-02-12 | Change summary superseded by changelog | [CHANGELOG.md](../status/CHANGELOG.md) |
+
+### Audit & Assessment Reports
+
+| Document | Date Archived | Reason | Current Reference |
+|----------|---------------|--------|-------------------|
+| **UWP_COMPREHENSIVE_AUDIT.md** | 2026-02-21 | UWP fully removed from codebase | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
+| **CONFIG_CONSOLIDATION_REPORT.md** | 2026-02-21 | Consolidation work complete, no duplicates found | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
 
 ### Design Documents
 
