@@ -281,7 +281,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
             _isConnected = true;
             _isAuthenticated = true;
-            _reconnectAttempts = 0;
 
             // Start receive loop
             _receiveLoop = Task.Run(() => ReceiveLoopAsync(_cts.Token), CancellationToken.None);
