@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-21 04:45:27 UTC
+> Auto-generated on 2026-02-21 04:52:03 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -581,6 +581,7 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   └── MarketDataModels.cs
 │   │   ├── Export/
+│   │   │   ├── AnalysisExportModels.cs
 │   │   │   └── ExportPreset.cs
 │   │   ├── Manifest/
 │   │   │   └── DataManifest.cs
@@ -837,7 +838,7 @@ Market-Data-Collector/
 │   │   │   ├── AdvancedAnalyticsModels.cs
 │   │   │   ├── AdvancedAnalyticsServiceBase.cs
 │   │   │   ├── AlertService.cs
-│   │   │   ├── AnalysisExportServiceBase.cs
+│   │   │   ├── AnalysisExportService.cs
 │   │   │   ├── AnalysisExportWizardService.cs
 │   │   │   ├── ApiClientService.cs
 │   │   │   ├── ArchiveBrowserService.cs
@@ -992,9 +993,7 @@ Market-Data-Collector/
 │       │   ├── TooltipService.cs
 │       │   ├── TypeForwards.cs
 │       │   ├── WatchlistService.cs
-│       │   ├── WorkspaceService.cs
-│       │   ├── WpfAnalysisExportService.cs
-│       │   └── WpfDataQualityService.cs
+│       │   └── WorkspaceService.cs
 │       ├── Styles/
 │       │   ├── Animations.xaml
 │       │   ├── AppStyles.xaml
@@ -1266,8 +1265,7 @@ Market-Data-Collector/
 │   │   │   ├── StorageServiceTests.cs
 │   │   │   ├── TooltipServiceTests.cs
 │   │   │   ├── WatchlistServiceTests.cs
-│   │   │   ├── WorkspaceServiceTests.cs
-│   │   │   └── WpfDataQualityServiceTests.cs
+│   │   │   └── WorkspaceServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
 │   ├── coverlet.runsettings
