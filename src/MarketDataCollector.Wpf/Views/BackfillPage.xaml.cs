@@ -352,9 +352,27 @@ public partial class BackfillPage : Page
         _navigationService.NavigateTo("DataBrowser");
     }
 
-    private void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
+    private async void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
     {
-        SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
+        try
+        {
+            // Load configured symbols from config service instead of hardcoded list
+            var configSymbols = await WpfServices.ConfigService.Instance.GetConfiguredSymbolsAsync();
+            if (configSymbols.Length > 0)
+            {
+                SymbolsBox.Text = string.Join(", ", configSymbols.Select(s => s.Symbol));
+            }
+            else
+            {
+                // Fallback to common symbols when no config exists yet
+                SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
+            }
+        }
+        catch
+        {
+            // Fallback on error
+            SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
+        }
     }
 
     private void AddMajorETFs_Click(object sender, RoutedEventArgs e)

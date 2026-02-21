@@ -260,6 +260,8 @@ public abstract class ConnectionServiceBase : IDisposable
         var stopwatch = Stopwatch.StartNew();
         bool isHealthy = false;
         string? errorMessage = null;
+        var errorCategory = ConnectionErrorCategory.None;
+        string? remediationGuidance = null;
 
         try
         {
@@ -282,14 +284,20 @@ public abstract class ConnectionServiceBase : IDisposable
             else
             {
                 errorMessage = "Health check returned unhealthy status";
+                errorCategory = ConnectionErrorCategory.ServerError;
+                remediationGuidance = "The backend service is running but reports unhealthy status. "
+                    + "Check: 1) Backend logs for errors. 2) Provider API keys are valid. "
+                    + "3) Sufficient disk space for data storage.";
             }
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
             isHealthy = false;
-            errorMessage = ex.Message;
-            LogWarning("Health check failed", ("Error", ex.Message));
+            (errorMessage, errorCategory, remediationGuidance) = ClassifyHealthCheckError(ex);
+            LogWarning("Health check failed",
+                ("Error", ex.Message),
+                ("Category", errorCategory.ToString()));
         }
 
         ConnectionHealthUpdated?.Invoke(this, new ConnectionHealthEventArgs
@@ -297,6 +305,8 @@ public abstract class ConnectionServiceBase : IDisposable
             IsHealthy = isHealthy,
             LatencyMs = LastLatencyMs,
             ErrorMessage = errorMessage,
+            ErrorCategory = errorCategory,
+            RemediationGuidance = remediationGuidance,
             Timestamp = DateTime.UtcNow
         });
 
@@ -318,6 +328,64 @@ public abstract class ConnectionServiceBase : IDisposable
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Classifies a health check exception into a user-actionable category with remediation guidance.
+    /// </summary>
+    private static (string ErrorMessage, ConnectionErrorCategory Category, string Guidance) ClassifyHealthCheckError(Exception ex)
+    {
+        return ex switch
+        {
+            TaskCanceledException or OperationCanceledException => (
+                "Health check timed out",
+                ConnectionErrorCategory.Timeout,
+                "The backend service did not respond in time. "
+                    + "Check: 1) Backend is not under heavy load. "
+                    + "2) Network latency is acceptable. "
+                    + "3) Try increasing the service timeout in Settings."
+            ),
+            System.Net.Http.HttpRequestException httpEx when httpEx.Message.Contains("refused", StringComparison.OrdinalIgnoreCase) => (
+                "Connection refused — backend service is not running",
+                ConnectionErrorCategory.ServiceNotRunning,
+                "The backend service is not running or not listening on the configured port. "
+                    + "Start the collector with: dotnet run --project src/MarketDataCollector -- --ui --http-port 8080. "
+                    + "Verify the Service URL in Settings matches the backend address."
+            ),
+            System.Net.Http.HttpRequestException httpEx when httpEx.Message.Contains("not found", StringComparison.OrdinalIgnoreCase) => (
+                "Health endpoint not found (404)",
+                ConnectionErrorCategory.EndpointNotFound,
+                "The /healthz endpoint was not found. "
+                    + "Check: 1) Backend version is compatible. "
+                    + "2) The service URL points to the correct host and port."
+            ),
+            System.Net.Http.HttpRequestException httpEx when httpEx.Message.Contains("401", StringComparison.OrdinalIgnoreCase)
+                || httpEx.Message.Contains("403", StringComparison.OrdinalIgnoreCase) => (
+                "Authentication failed",
+                ConnectionErrorCategory.AuthenticationFailed,
+                "The backend rejected the connection. "
+                    + "Check: 1) API key is configured if required. "
+                    + "2) Firewall rules allow the connection."
+            ),
+            System.Net.Http.HttpRequestException httpEx when httpEx.Message.Contains("429", StringComparison.OrdinalIgnoreCase) => (
+                "Rate limited by backend",
+                ConnectionErrorCategory.RateLimited,
+                "Too many requests to the backend. Health check interval will back off automatically."
+            ),
+            System.Net.Http.HttpRequestException => (
+                $"Network error: {ex.Message}",
+                ConnectionErrorCategory.NetworkUnreachable,
+                "Cannot reach the backend service. "
+                    + "Check: 1) Network connectivity. "
+                    + "2) VPN or proxy settings. "
+                    + "3) Backend host is reachable."
+            ),
+            _ => (
+                ex.Message,
+                ConnectionErrorCategory.Unknown,
+                "An unexpected error occurred during health check. Check the application logs for details."
+            )
+        };
     }
 
     private void ScheduleReconnect()
