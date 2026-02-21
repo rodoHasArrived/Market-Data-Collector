@@ -156,7 +156,13 @@ def find_existing_issue(repo: str, token: str, marker: str) -> int | None:
     items = result.get("items", [])
     if not items:
         return None
-    return int(items[0].get("number"))
+    number = items[0].get("number")
+    if isinstance(number, int):
+        return number
+    try:
+        return int(number)
+    except (TypeError, ValueError):
+        return None
 
 
 def create_issue(repo: str, token: str, todo: TodoItem, label: str, dry_run: bool) -> tuple[str, int | None]:
