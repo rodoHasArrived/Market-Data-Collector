@@ -1,14 +1,12 @@
 using System;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using MarketDataCollector.Ui.Services.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
 /// <summary>
-/// WPF implementation of export preset service.
-/// Uses file-based storage in LocalApplicationData.
+/// WPF export preset service.
+/// Passes the platform-specific presets directory to the base class constructor.
 /// All business logic is in <see cref="ExportPresetServiceBase"/>.
 /// </summary>
 public sealed class ExportPresetService : ExportPresetServiceBase
@@ -16,33 +14,10 @@ public sealed class ExportPresetService : ExportPresetServiceBase
     private static readonly Lazy<ExportPresetService> _instance = new(() => new ExportPresetService());
     public static ExportPresetService Instance => _instance.Value;
 
-    private ExportPresetService() { }
-
-    private static string GetPresetsFilePath()
-    {
-        var localFolderPath = Path.Combine(
+    private ExportPresetService()
+        : base(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "MarketDataCollector");
-        Directory.CreateDirectory(localFolderPath);
-        return Path.Combine(localFolderPath, PresetsFileName);
-    }
-
-    protected override async Task<string?> ReadPresetsJsonAsync(CancellationToken cancellationToken)
+            "MarketDataCollector"))
     {
-        var filePath = GetPresetsFilePath();
-        if (File.Exists(filePath))
-            return await File.ReadAllTextAsync(filePath, cancellationToken);
-        return null;
-    }
-
-    protected override async Task WritePresetsJsonAsync(string json, CancellationToken cancellationToken)
-    {
-        var filePath = GetPresetsFilePath();
-        await File.WriteAllTextAsync(filePath, json, cancellationToken);
-    }
-
-    protected override void LogError(string message, Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"[ExportPresetService] {message}: {ex.Message}");
     }
 }

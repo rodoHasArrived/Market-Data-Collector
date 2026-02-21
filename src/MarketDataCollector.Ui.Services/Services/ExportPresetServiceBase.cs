@@ -4,13 +4,14 @@ using MarketDataCollector.Contracts.Export;
 namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
-/// Base class containing shared export preset management logic.
-/// Platform-specific storage is delegated to subclasses via abstract methods.
+/// Export preset management service with file-based storage.
+/// File path is injected via constructor rather than requiring platform-specific overrides.
 /// </summary>
-public abstract class ExportPresetServiceBase
+public class ExportPresetServiceBase
 {
     protected const string PresetsFileName = "export_presets.json";
 
+    private readonly string _presetsFilePath;
     private readonly List<ExportPreset> _presets = new();
     private bool _initialized;
 
@@ -23,6 +24,20 @@ public abstract class ExportPresetServiceBase
     /// Gets all available export presets.
     /// </summary>
     public IReadOnlyList<ExportPreset> Presets => _presets.AsReadOnly();
+
+    /// <summary>
+    /// Creates a new instance with the specified presets directory path.
+    /// The presets file will be stored as <c>{presetsDirectoryPath}/export_presets.json</c>.
+    /// </summary>
+    /// <param name="presetsDirectoryPath">
+    /// Directory where the presets file will be stored.
+    /// The directory will be created if it does not exist.
+    /// </param>
+    protected ExportPresetServiceBase(string presetsDirectoryPath)
+    {
+        Directory.CreateDirectory(presetsDirectoryPath);
+        _presetsFilePath = Path.Combine(presetsDirectoryPath, PresetsFileName);
+    }
 
     /// <summary>
     /// Initializes the service and loads presets.
@@ -44,9 +59,9 @@ public abstract class ExportPresetServiceBase
 
         try
         {
-            var json = await ReadPresetsJsonAsync(cancellationToken);
-            if (json != null)
+            if (File.Exists(_presetsFilePath))
             {
+                var json = await File.ReadAllTextAsync(_presetsFilePath, cancellationToken);
                 var presets = JsonSerializer.Deserialize<List<ExportPreset>>(json);
                 if (presets != null)
                 {
@@ -69,7 +84,7 @@ public abstract class ExportPresetServiceBase
         }
         catch (Exception ex)
         {
-            LogError("Error loading export presets", ex);
+            System.Diagnostics.Debug.WriteLine($"[ExportPresetService] Error loading export presets: {ex.Message}");
 
             if (_presets.Count == 0)
             {
@@ -89,7 +104,7 @@ public abstract class ExportPresetServiceBase
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
             var json = JsonSerializer.Serialize(_presets, options);
-            await WritePresetsJsonAsync(json, cancellationToken);
+            await File.WriteAllTextAsync(_presetsFilePath, json, cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -97,7 +112,7 @@ public abstract class ExportPresetServiceBase
         }
         catch (Exception ex)
         {
-            LogError("Error saving export presets", ex);
+            System.Diagnostics.Debug.WriteLine($"[ExportPresetService] Error saving export presets: {ex.Message}");
         }
     }
 
@@ -294,25 +309,6 @@ public abstract class ExportPresetServiceBase
 
         return importedCount;
     }
-
-    #region Platform-Specific Abstractions
-
-    /// <summary>
-    /// Reads the presets JSON from platform-specific storage. Returns null if not found.
-    /// </summary>
-    protected abstract Task<string?> ReadPresetsJsonAsync(CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Writes the presets JSON to platform-specific storage.
-    /// </summary>
-    protected abstract Task WritePresetsJsonAsync(string json, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Logs an error message. Platform-specific logging.
-    /// </summary>
-    protected abstract void LogError(string message, Exception ex);
-
-    #endregion
 
     #region Built-In Presets
 
