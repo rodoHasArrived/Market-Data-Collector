@@ -24,7 +24,50 @@
     </Window.InputBindings>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Fixture/Offline Mode Banner (P0: Hard visual distinction for non-live modes) -->
+        <Border x:Name="FixtureModeBanner"
+                Grid.Row="0"
+                Visibility="Collapsed"
+                Padding="8,6"
+                CornerRadius="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="&#xE7BA;"
+                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="16"
+                           Foreground="White"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0" />
+                <TextBlock x:Name="FixtureModeText"
+                           Grid.Column="1"
+                           Text="FIXTURE MODE — Showing sample data, not connected to live backend"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2"
+                           Text="&#xE8BB;"
+                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="14"
+                           Foreground="White"
+                           Opacity="0.7"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0" />
+            </Grid>
+        </Border>
+
         <Frame x:Name="RootFrame"
+               Grid.Row="1"
                NavigationUIVisibility="Hidden"
                Navigated="OnRootFrameNavigated" />
     </Grid>
