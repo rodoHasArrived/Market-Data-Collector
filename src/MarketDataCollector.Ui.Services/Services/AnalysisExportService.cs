@@ -2,263 +2,38 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Export;
 
 namespace MarketDataCollector.Ui.Services.Services;
 
-#region Export Event Args
-
-public sealed class ExportProgressEventArgs : EventArgs
-{
-    public double Progress { get; set; }
-    public string? CurrentSymbol { get; set; }
-    public int RowsProcessed { get; set; }
-    public TimeSpan Elapsed { get; set; }
-}
-
-#endregion
-
-#region Export Options
-
-public sealed class AnalysisExportOptions
-{
-    public List<string>? Symbols { get; set; }
-    public DateOnly? FromDate { get; set; }
-    public DateOnly? ToDate { get; set; }
-    public AnalysisExportFormat Format { get; set; } = AnalysisExportFormat.Parquet;
-    public DataAggregation? Aggregation { get; set; }
-    public string[]? IncludeFields { get; set; }
-    public string[]? ExcludeFields { get; set; }
-    public Dictionary<string, string>? Filters { get; set; }
-    public string? OutputPath { get; set; }
-    public string? FileName { get; set; }
-    public CompressionType? Compression { get; set; }
-    public bool IncludeMetadata { get; set; } = true;
-    public bool SplitBySymbol { get; set; }
-    public string? Timezone { get; set; }
-}
-
-public sealed class QualityReportOptions
-{
-    public List<string>? Symbols { get; set; }
-    public DateOnly? FromDate { get; set; }
-    public DateOnly? ToDate { get; set; }
-    public bool IncludeCharts { get; set; } = true;
-    public string Format { get; set; } = "HTML";
-}
-
-public sealed class OrderFlowExportOptions
-{
-    public List<string>? Symbols { get; set; }
-    public DateOnly? FromDate { get; set; }
-    public DateOnly? ToDate { get; set; }
-    public string[]? Metrics { get; set; }
-    public string Aggregation { get; set; } = "Minute";
-    public string Format { get; set; } = "Parquet";
-    public string? OutputPath { get; set; }
-}
-
-public sealed class IntegrityExportOptions
-{
-    public List<string>? Symbols { get; set; }
-    public DateOnly? FromDate { get; set; }
-    public DateOnly? ToDate { get; set; }
-    public string[]? EventTypes { get; set; }
-    public string Format { get; set; } = "CSV";
-    public string? OutputPath { get; set; }
-}
-
-public sealed class ResearchPackageOptions
-{
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public List<string>? Symbols { get; set; }
-    public DateOnly? FromDate { get; set; }
-    public DateOnly? ToDate { get; set; }
-    public DataTypeInclusion IncludeData { get; set; } = new();
-    public bool IncludeMetadata { get; set; } = true;
-    public bool IncludeQualityReport { get; set; } = true;
-    public string Format { get; set; } = "Parquet";
-    public string? OutputPath { get; set; }
-}
-
-public sealed class DataTypeInclusion
-{
-    public bool Trades { get; set; } = true;
-    public bool Quotes { get; set; } = true;
-    public bool Bars { get; set; } = true;
-    public bool OrderBook { get; set; }
-    public bool OrderFlow { get; set; }
-}
-
-#endregion
-
-#region Export Results
-
-public sealed class AnalysisExportResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public string? OutputPath { get; set; }
-    public List<string> FilesCreated { get; set; } = new();
-    public long RowsExported { get; set; }
-    public long BytesWritten { get; set; }
-    public TimeSpan Duration { get; set; }
-    public List<string> Warnings { get; set; } = new();
-}
-
-public sealed class ExportFormatsResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public List<ExportFormatInfo> Formats { get; set; } = new();
-}
-
-public sealed class ExportFormatInfo
-{
-    public string Name { get; set; } = string.Empty;
-    public string Extension { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public bool SupportsCompression { get; set; }
-}
-
-public sealed class AggregationOption
-{
-    public string Value { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-}
-
-public sealed class QualityReportResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public string? ReportPath { get; set; }
-    public QualityReportSummary? Summary { get; set; }
-}
-
-public sealed class QualityReportSummary
-{
-    public int TotalSymbols { get; set; }
-    public int TotalDays { get; set; }
-    public double OverallScore { get; set; }
-    public int GapsFound { get; set; }
-    public int AnomaliesFound { get; set; }
-}
-
-public sealed class ResearchPackageResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public string? PackagePath { get; set; }
-    public string? ManifestPath { get; set; }
-    public long SizeBytes { get; set; }
-}
-
-public sealed class ExportTemplate
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public AnalysisExportFormat Format { get; set; }
-    public DataAggregation Aggregation { get; set; }
-    public string[]? IncludeFields { get; set; }
-    public bool IncludeMetadata { get; set; }
-}
-
-#endregion
-
-#region Enums
-
-public enum AnalysisExportFormat
-{
-    CSV,
-    Parquet,
-    JSON,
-    JSONL,
-    Excel,
-    HDF5,
-    Feather
-}
-
-public enum DataAggregation
-{
-    Tick,
-    Second,
-    Minute,
-    FiveMinute,
-    FifteenMinute,
-    ThirtyMinute,
-    Hour,
-    Daily,
-    Weekly,
-    Monthly
-}
-
-public enum CompressionType
-{
-    None,
-    Gzip,
-    LZ4,
-    Snappy,
-    ZSTD
-}
-
-#endregion
-
-#region API Response Classes
-
-internal sealed class AnalysisExportResponse
-{
-    public bool Success { get; set; }
-    public string? OutputPath { get; set; }
-    public string[]? FilesCreated { get; set; }
-    public long RowsExported { get; set; }
-    public long BytesWritten { get; set; }
-    public double DurationSeconds { get; set; }
-    public string[]? Warnings { get; set; }
-}
-
-internal sealed class ExportFormatsResponse
-{
-    public List<ExportFormatInfo>? Formats { get; set; }
-}
-
-internal sealed class QualityReportResponse
-{
-    public string? ReportPath { get; set; }
-    public QualityReportSummary? Summary { get; set; }
-}
-
-internal sealed class ResearchPackageResponse
-{
-    public string? PackagePath { get; set; }
-    public string? ManifestPath { get; set; }
-    public long SizeBytes { get; set; }
-}
-
-#endregion
-
 /// <summary>
-/// Abstract base class for analysis export shared between platforms.
-/// Provides export operations, format queries, aggregation options, and templates.
-/// Platform-specific API client access is delegated to derived classes.
-/// Part of Phase 2 service extraction.
+/// Analysis export service that provides export operations, format queries,
+/// aggregation options, and templates. Uses <see cref="ApiClientService"/>
+/// directly for all API communication.
 /// </summary>
-public abstract class AnalysisExportServiceBase
+public sealed class AnalysisExportService
 {
+    private static readonly Lazy<AnalysisExportService> _instance = new(() => new AnalysisExportService());
+    public static AnalysisExportService Instance => _instance.Value;
+
     public event EventHandler<ExportProgressEventArgs>? ProgressChanged;
 
-    protected void OnProgressChanged(ExportProgressEventArgs e)
+    private AnalysisExportService() { }
+
+    private void OnProgressChanged(ExportProgressEventArgs e)
         => ProgressChanged?.Invoke(this, e);
 
-    /// <summary>
-    /// Posts to the API and returns the typed response with success indicator.
-    /// </summary>
-    protected abstract Task<(bool Success, string? ErrorMessage, T? Data)> PostApiAsync<T>(string endpoint, object body, CancellationToken ct) where T : class;
+    private async Task<(bool Success, string? ErrorMessage, T? Data)> PostApiAsync<T>(string endpoint, object body, CancellationToken ct) where T : class
+    {
+        var response = await ApiClientService.Instance.PostWithResponseAsync<T>(endpoint, body, ct);
+        return (response.Success, response.ErrorMessage, response.Data);
+    }
 
-    /// <summary>
-    /// Gets from the API and returns the typed response with success indicator.
-    /// </summary>
-    protected abstract Task<(bool Success, string? ErrorMessage, T? Data)> GetApiAsync<T>(string endpoint, CancellationToken ct) where T : class;
+    private async Task<(bool Success, string? ErrorMessage, T? Data)> GetApiAsync<T>(string endpoint, CancellationToken ct) where T : class
+    {
+        var response = await ApiClientService.Instance.GetWithResponseAsync<T>(endpoint, ct);
+        return (response.Success, response.ErrorMessage, response.Data);
+    }
 
     public async Task<AnalysisExportResult> ExportAsync(AnalysisExportOptions options, CancellationToken ct = default)
     {
