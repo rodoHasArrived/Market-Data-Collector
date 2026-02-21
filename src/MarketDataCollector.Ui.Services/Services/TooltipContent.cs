@@ -2,7 +2,7 @@ namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
 /// Contextual help information for a feature.
-/// Shared across WPF and UWP platforms.
+/// Shared across desktop platforms.
 /// </summary>
 public sealed class FeatureHelp
 {
@@ -15,7 +15,7 @@ public sealed class FeatureHelp
 
 /// <summary>
 /// An onboarding tip to show new users.
-/// Shared across WPF and UWP platforms.
+/// Shared across desktop platforms.
 /// </summary>
 public sealed class OnboardingTip
 {
@@ -28,7 +28,7 @@ public sealed class OnboardingTip
 
 /// <summary>
 /// Provides shared feature help content and onboarding tips data.
-/// This is the single source of truth for all tooltip content used across WPF and UWP.
+/// This is the single source of truth for all tooltip content used across desktop platforms.
 /// </summary>
 public static class TooltipContent
 {

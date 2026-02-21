@@ -3,7 +3,7 @@ using MarketDataCollector.Ui.Services.Contracts;
 namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
-/// Abstract base class for theme management shared between WPF and UWP desktop applications.
+/// Abstract base class for theme management shared across desktop applications.
 /// Provides shared theme state management, toggle logic, and delegates platform-specific
 /// theme application and event raising to derived classes.
 /// Part of Phase 6C.2 service deduplication (ROADMAP item 6C.2).

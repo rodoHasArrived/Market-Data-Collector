@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
-/// Centralized JSON serialization options for desktop applications (UWP and WPF).
+/// Centralized JSON serialization options for desktop applications (WPF).
 /// Consolidates all JsonSerializerOptions to avoid duplication across services.
 ///
 /// This mirrors the patterns from MarketDataCollector.Application.Serialization.MarketDataJsonContext

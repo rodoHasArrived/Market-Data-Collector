@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace MarketDataCollector.Ui.Services;
 
 // =====================================================================================
-// Admin Maintenance DTOs — shared between WPF and UWP desktop applications.
+// Admin Maintenance DTOs — shared across desktop applications.
 // Extracted from duplicate definitions to provide a single source of truth.
 // =====================================================================================
 

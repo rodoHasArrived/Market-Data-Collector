@@ -2,7 +2,7 @@ namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
 /// Platform-agnostic severity levels for info bar notifications.
-/// Shared across WPF and UWP platforms.
+/// Shared across desktop platforms.
 /// </summary>
 public enum InfoBarSeverityLevel
 {
@@ -14,7 +14,7 @@ public enum InfoBarSeverityLevel
 
 /// <summary>
 /// Duration configuration for different severity levels.
-/// Shared across WPF and UWP InfoBarService implementations.
+/// Shared across InfoBarService implementations.
 /// </summary>
 public static class InfoBarConstants
 {
@@ -46,7 +46,7 @@ public static class InfoBarConstants
 
 /// <summary>
 /// Contains detailed error information for user display.
-/// Shared across WPF and UWP platforms.
+/// Shared across desktop platforms.
 /// </summary>
 public sealed class ErrorDetailsModel
 {

@@ -5,7 +5,7 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Default logging service for the shared UI services layer.
-/// Platform-specific projects (WPF, UWP) override this with their own implementations
+/// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
 public class LoggingService

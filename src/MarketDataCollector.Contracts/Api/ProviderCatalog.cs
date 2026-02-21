@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Api;
 /// <summary>
 /// Centralized catalog of provider metadata for UI consumption.
 /// Eliminates per-provider conditionals by providing standardized template output
-/// that both Web and UWP can consume without provider-specific logic.
+/// that both Web and desktop can consume without provider-specific logic.
 /// </summary>
 /// <remarks>
 /// This class provides static fallback data for scenarios where the ProviderRegistry

@@ -7,7 +7,7 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Base class containing shared schema creation and export logic.
-/// Platform-specific projects (WPF, UWP) extend this class with their own
+/// Platform-specific projects (WPF) extend this class with their own
 /// storage and caching implementations.
 /// </summary>
 public abstract class SchemaServiceBase : ISchemaService

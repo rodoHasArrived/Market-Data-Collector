@@ -7,7 +7,7 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Base class for admin maintenance services, providing shared API delegation logic.
-/// WPF and UWP implementations inherit from this class and add platform-specific behavior.
+/// WPF implementations inherit from this class and add platform-specific behavior.
 /// </summary>
 public class AdminMaintenanceServiceBase : IAdminMaintenanceService
 {

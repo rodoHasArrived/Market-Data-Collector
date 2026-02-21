@@ -3,7 +3,7 @@ using MarketDataCollector.Ui.Services.Contracts;
 namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
-/// Abstract base class for navigation management shared between WPF and UWP desktop applications.
+/// Abstract base class for navigation management shared across desktop applications.
 /// Provides shared page registry, history tracking, breadcrumb generation, and event raising.
 /// Platform-specific frame navigation is delegated to derived classes.
 /// Part of Phase 6C.2 service deduplication (ROADMAP item 6C.2).
