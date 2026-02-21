@@ -732,6 +732,81 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Resumable Jobs -->
+                <Border x:Name="ResumableJobsCard" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Visibility="Collapsed">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="{StaticResource IconWarning}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="14"
+                                       Foreground="{StaticResource WarningColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Interrupted Jobs"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="These backfill jobs were interrupted and can be resumed. Only pending and failed symbols will be re-downloaded."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   TextWrapping="Wrap"
+                                   FontSize="11"
+                                   Margin="0,0,0,12" />
+
+                        <ListView x:Name="ResumableJobsList"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  MaxHeight="250">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                            CornerRadius="6"
+                                            Padding="12,10"
+                                            Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <TextBlock Text="{Binding Provider}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource InfoColorBrush}"
+                                                           FontSize="12" />
+                                                <TextBlock Text=" · "
+                                                           Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                                                <TextBlock Text="{Binding StatusText}"
+                                                           Foreground="{Binding StatusBrush}"
+                                                           FontSize="12" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding SummaryText}"
+                                                       Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                                       FontSize="11"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,0,0,4" />
+                                            <TextBlock Text="{Binding DateRangeText}"
+                                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                       FontSize="11"
+                                                       Margin="0,0,0,8" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Resume"
+                                                        Style="{StaticResource PrimaryButtonStyle}"
+                                                        FontSize="11"
+                                                        Padding="12,4"
+                                                        Click="ResumeJob_Click"
+                                                        Tag="{Binding}" />
+                                                <Button Content="Discard"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        FontSize="11"
+                                                        Padding="12,4"
+                                                        Margin="8,0,0,0"
+                                                        Click="DiscardJob_Click"
+                                                        Tag="{Binding}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
                 <!-- Scheduled Jobs List -->
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                     <StackPanel>

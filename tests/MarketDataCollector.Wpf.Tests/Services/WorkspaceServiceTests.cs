@@ -269,6 +269,57 @@ public sealed class WorkspaceServiceTests
         act.Should().NotThrow();
     }
 
+    [Fact]
+    public async Task SaveSessionStateAsync_WithActivePageTag_ShouldRoundTripPage()
+    {
+        var svc = CreateService();
+
+        // Act — save state with non-default page (mirrors MainWindow.SaveSessionState)
+        var state = new SessionState
+        {
+            ActivePageTag = "Backfill",
+            OpenPages = new List<WorkspacePage>
+            {
+                new() { PageTag = "Backfill", Title = "Backfill", IsDefault = true }
+            },
+            WindowBounds = new WindowBounds
+            {
+                X = 100, Y = 200, Width = 1200, Height = 800, IsMaximized = false
+            },
+            SavedAt = DateTime.UtcNow
+        };
+        await svc.SaveSessionStateAsync(state);
+
+        // Act — retrieve (mirrors MainWindow.RestoreSessionState)
+        var retrieved = svc.GetLastSessionState();
+
+        // Assert
+        retrieved.Should().NotBeNull();
+        retrieved!.ActivePageTag.Should().Be("Backfill");
+        retrieved.WindowBounds.Should().NotBeNull();
+        retrieved.WindowBounds!.Width.Should().Be(1200);
+    }
+
+    [Fact]
+    public async Task SaveSessionStateAsync_WithActiveWorkspaceId_ShouldRoundTrip()
+    {
+        var svc = CreateService();
+        var firstWorkspace = svc.Workspaces.FirstOrDefault();
+        firstWorkspace.Should().NotBeNull("There should be at least one default workspace");
+
+        var state = new SessionState
+        {
+            ActivePageTag = "Dashboard",
+            ActiveWorkspaceId = firstWorkspace!.Id,
+            SavedAt = DateTime.UtcNow
+        };
+        await svc.SaveSessionStateAsync(state);
+
+        var retrieved = svc.GetLastSessionState();
+        retrieved.Should().NotBeNull();
+        retrieved!.ActiveWorkspaceId.Should().Be(firstWorkspace.Id);
+    }
+
     // ── CaptureCurrentStateAsync ─────────────────────────────────────
 
     [Fact]

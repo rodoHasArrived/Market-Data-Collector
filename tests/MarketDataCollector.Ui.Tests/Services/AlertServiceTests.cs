@@ -360,4 +360,51 @@ public sealed class AlertServiceTests
     {
         Enum.IsDefined(typeof(BusinessImpact), impact).Should().BeTrue();
     }
+
+    // ── Dashboard alert grouping (mirrors DashboardPage.UpdateAlertSummary) ──
+
+    [Fact]
+    public void GetActiveAlerts_GroupedBySeverity_ShouldCountCorrectly()
+    {
+        var svc = CreateService();
+        var prefix = Guid.NewGuid().ToString("N")[..8];
+
+        // Raise alerts of different severities
+        svc.RaiseAlert($"Crit-{prefix}", "desc", AlertSeverity.Critical, BusinessImpact.High, $"Cat-{prefix}");
+        svc.RaiseAlert($"Warn-{prefix}", "desc", AlertSeverity.Warning, BusinessImpact.Low, $"Cat-{prefix}");
+        svc.RaiseAlert($"Info-{prefix}", "desc", AlertSeverity.Info, BusinessImpact.None, $"Cat-{prefix}");
+
+        // Act — mirrors DashboardPage.UpdateAlertSummary grouping logic
+        var alerts = svc.GetActiveAlerts();
+        var criticalCount = alerts.Count(a => a.Severity >= AlertSeverity.Critical && !a.IsSuppressed && !a.IsSnoozed);
+        var warningCount = alerts.Count(a => a.Severity == AlertSeverity.Warning && !a.IsSuppressed && !a.IsSnoozed);
+        var infoCount = alerts.Count(a => a.Severity == AlertSeverity.Info && !a.IsSuppressed && !a.IsSnoozed);
+
+        // Assert — at least our newly raised alerts should be counted
+        criticalCount.Should().BeGreaterOrEqualTo(1);
+        warningCount.Should().BeGreaterOrEqualTo(1);
+        infoCount.Should().BeGreaterOrEqualTo(1);
+    }
+
+    [Fact]
+    public void GetActiveAlerts_SnoozedAlerts_ShouldNotCountInBadges()
+    {
+        var svc = CreateService();
+        var prefix = Guid.NewGuid().ToString("N")[..8];
+        var category = $"Snooze-{prefix}";
+
+        // Raise and snooze
+        var alert = svc.RaiseAlert($"Snoozed-{prefix}", "desc", AlertSeverity.Warning, BusinessImpact.Low, category);
+        svc.SnoozeAlert(alert.Id, TimeSpan.FromHours(1));
+
+        // Act — mirrors DashboardPage.UpdateAlertSummary filtering
+        var alerts = svc.GetActiveAlerts();
+        var unsnoozedWarnings = alerts.Count(a =>
+            a.Id == alert.Id &&
+            a.Severity == AlertSeverity.Warning &&
+            !a.IsSuppressed && !a.IsSnoozed);
+
+        // Assert
+        unsnoozedWarnings.Should().Be(0);
+    }
 }

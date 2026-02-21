@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
@@ -30,6 +32,8 @@ public partial class MainWindow : Window
     private readonly WpfServices.ThemeService _themeService;
     private readonly OnboardingTourService _tourService;
     private readonly AlertService _alertService;
+    private readonly WpfServices.WorkspaceService _workspaceService;
+    private readonly DispatcherTimer _sessionAutosaveTimer;
 
     private static readonly string WindowStateFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -54,6 +58,7 @@ public partial class MainWindow : Window
         _themeService = themeService;
         _tourService = OnboardingTourService.Instance;
         _alertService = AlertService.Instance;
+        _workspaceService = WpfServices.WorkspaceService.Instance;
 
         // Subscribe to keyboard shortcuts
         _keyboardShortcutService.ShortcutInvoked += OnShortcutInvoked;
@@ -67,6 +72,13 @@ public partial class MainWindow : Window
 
         // Subscribe to alert events for guided remediation
         _alertService.AlertRaised += OnAlertRaised;
+
+        // Autosave session state every 30 seconds
+        _sessionAutosaveTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(30)
+        };
+        _sessionAutosaveTimer.Tick += OnSessionAutosaveTick;
 
         // Restore window state from previous session
         RestoreWindowState();
@@ -82,10 +94,22 @@ public partial class MainWindow : Window
 
         // Navigate to the main page via DI
         RootFrame.Navigate(App.Services.GetRequiredService<MainPage>());
+
+        // Restore last session page after MainPage has loaded
+        RestoreSessionState();
+
+        // Start autosave timer
+        _sessionAutosaveTimer.Start();
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
+        // Stop autosave timer
+        _sessionAutosaveTimer.Stop();
+
+        // Save session state (active page, workspace) before closing
+        SaveSessionState();
+
         // Save window state before closing
         SaveWindowState();
 
@@ -440,6 +464,80 @@ public partial class MainWindow : Window
                 notificationType,
                 8000);
         }
+    }
+
+    #endregion
+
+    #region Session State Persistence
+
+    /// <summary>
+    /// Restores the last active page from the saved session state.
+    /// Called after MainPage has loaded so the navigation frame is ready.
+    /// </summary>
+    private void RestoreSessionState()
+    {
+        try
+        {
+            var session = _workspaceService.GetLastSessionState();
+            if (session == null) return;
+
+            var pageTag = session.ActivePageTag;
+            if (!string.IsNullOrEmpty(pageTag) &&
+                pageTag != "Dashboard" &&
+                _navigationService.IsPageRegistered(pageTag))
+            {
+                _navigationService.NavigateTo(pageTag);
+                _messagingService.Send($"Navigate{pageTag}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to restore session state: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Saves the current session state (active page, workspace) to disk.
+    /// Called on window close and periodically by the autosave timer.
+    /// </summary>
+    private void SaveSessionState()
+    {
+        try
+        {
+            var currentPage = _navigationService.GetCurrentPageTag() ?? "Dashboard";
+            var activeWorkspace = _workspaceService.ActiveWorkspace;
+
+            var state = new SessionState
+            {
+                ActivePageTag = currentPage,
+                ActiveWorkspaceId = activeWorkspace?.Id,
+                OpenPages = new List<WorkspacePage>
+                {
+                    new() { PageTag = currentPage, Title = currentPage, IsDefault = true }
+                },
+                WindowBounds = new WindowBounds
+                {
+                    X = RestoreBounds.Left,
+                    Y = RestoreBounds.Top,
+                    Width = RestoreBounds.Width,
+                    Height = RestoreBounds.Height,
+                    IsMaximized = WindowState == WindowState.Maximized
+                },
+                SavedAt = DateTime.UtcNow
+            };
+
+            // Fire-and-forget; we're shutting down so can't await
+            _ = _workspaceService.SaveSessionStateAsync(state);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to save session state: {ex.Message}");
+        }
+    }
+
+    private void OnSessionAutosaveTick(object? sender, EventArgs e)
+    {
+        SaveSessionState();
     }
 
     #endregion

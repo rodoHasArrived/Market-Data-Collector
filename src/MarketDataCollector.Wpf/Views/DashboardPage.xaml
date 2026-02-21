@@ -87,6 +87,72 @@
                 </StackPanel>
             </Grid>
 
+            <!-- Alert Summary Strip -->
+            <Border x:Name="AlertSummaryBanner"
+                    Background="{StaticResource ConsoleBackgroundLightBrush}"
+                    CornerRadius="8"
+                    Padding="16,10"
+                    Margin="0,0,0,16"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{StaticResource IconWarning}"
+                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="14"
+                                   Foreground="{StaticResource WarningColorBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
+
+                        <!-- Critical count badge -->
+                        <Border x:Name="AlertCriticalBadge"
+                                Background="{StaticResource ErrorColorBrush}"
+                                CornerRadius="4"
+                                Padding="8,3"
+                                Margin="0,0,8,0"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="AlertCriticalCount" Text="0 Critical"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="White" />
+                        </Border>
+
+                        <!-- Warning count badge -->
+                        <Border x:Name="AlertWarningBadge"
+                                Background="{StaticResource WarningColorBrush}"
+                                CornerRadius="4"
+                                Padding="8,3"
+                                Margin="0,0,8,0"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="AlertWarningCount" Text="0 Warnings"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="White" />
+                        </Border>
+
+                        <!-- Info count badge -->
+                        <Border x:Name="AlertInfoBadge"
+                                Background="{StaticResource InfoColorBrush}"
+                                CornerRadius="4"
+                                Padding="8,3"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="AlertInfoCount" Text="0 Info"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="White" />
+                        </Border>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Content="View Alerts"
+                            Style="{StaticResource GhostButtonStyle}"
+                            FontSize="11"
+                            Padding="12,4"
+                            Click="ViewAlerts_Click" />
+                </Grid>
+            </Border>
+
             <!-- Console-Inspired Metrics Grid -->
             <Grid Margin="0,0,0,24">
                 <Grid.ColumnDefinitions>

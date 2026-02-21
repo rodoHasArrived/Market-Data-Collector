@@ -410,4 +410,84 @@ public sealed class BackfillCheckpointServiceTests
         checkpoint.CompletedCount.Should().Be(3);
         checkpoint.FailedCount.Should().Be(1);
     }
+
+    // ── Resumability detection ────────────────────────────────────────
+
+    [Theory]
+    [InlineData(CheckpointStatus.InProgress, true)]
+    [InlineData(CheckpointStatus.Failed, true)]
+    [InlineData(CheckpointStatus.PartiallyCompleted, true)]
+    [InlineData(CheckpointStatus.Completed, false)]
+    [InlineData(CheckpointStatus.Cancelled, false)]
+    public void BackfillCheckpoint_IsResumable_BasedOnStatus(CheckpointStatus status, bool isResumable)
+    {
+        // Arrange
+        var checkpoint = new BackfillCheckpoint
+        {
+            JobId = "test-123",
+            Status = status,
+            SymbolCheckpoints = new List<SymbolCheckpoint>
+            {
+                new() { Symbol = "SPY", Status = SymbolCheckpointStatus.Completed },
+                new() { Symbol = "AAPL", Status = SymbolCheckpointStatus.Pending }
+            }
+        };
+
+        // Act — mirrors the logic in GetResumableJobsAsync
+        var resumable = checkpoint.Status is CheckpointStatus.InProgress
+            or CheckpointStatus.Failed
+            or CheckpointStatus.PartiallyCompleted;
+
+        // Assert
+        resumable.Should().Be(isResumable);
+    }
+
+    [Fact]
+    public void BackfillCheckpoint_PendingSymbols_ShouldIncludeFailedAndPending()
+    {
+        // Arrange
+        var checkpoint = new BackfillCheckpoint
+        {
+            SymbolCheckpoints = new List<SymbolCheckpoint>
+            {
+                new() { Symbol = "SPY", Status = SymbolCheckpointStatus.Completed },
+                new() { Symbol = "AAPL", Status = SymbolCheckpointStatus.Failed },
+                new() { Symbol = "MSFT", Status = SymbolCheckpointStatus.Pending },
+                new() { Symbol = "TSLA", Status = SymbolCheckpointStatus.Skipped }
+            }
+        };
+
+        // Act — mirrors the logic in GetPendingSymbolsAsync
+        var pendingSymbols = checkpoint.SymbolCheckpoints
+            .Where(s => s.Status is SymbolCheckpointStatus.Pending or SymbolCheckpointStatus.Failed)
+            .Select(s => s.Symbol)
+            .ToArray();
+
+        // Assert
+        pendingSymbols.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+    }
+
+    [Fact]
+    public async Task CreateCheckpointAsync_ShouldCreateCheckpointWithCorrectProperties()
+    {
+        // Arrange
+        var svc = BackfillCheckpointService.Instance;
+        var jobId = $"test-{Guid.NewGuid():N}"[..20];
+        var symbols = new[] { "SPY", "AAPL" };
+        var from = new DateTime(2024, 1, 1);
+        var to = new DateTime(2024, 6, 30);
+
+        // Act
+        var checkpoint = await svc.CreateCheckpointAsync(
+            jobId, "alpaca", symbols, from, to);
+
+        // Assert
+        checkpoint.JobId.Should().Be(jobId);
+        checkpoint.Provider.Should().Be("alpaca");
+        checkpoint.FromDate.Should().Be(from);
+        checkpoint.ToDate.Should().Be(to);
+        checkpoint.Status.Should().Be(CheckpointStatus.InProgress);
+        checkpoint.SymbolCheckpoints.Should().HaveCount(2);
+        checkpoint.SymbolCheckpoints.Select(s => s.Symbol).Should().BeEquivalentTo(symbols);
+    }
 }

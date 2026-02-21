@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
@@ -26,6 +27,7 @@ public partial class DashboardPage : Page
     private readonly StatusService _statusService;
     private readonly MessagingService _messagingService;
     private readonly WpfServices.NotificationService _notificationService;
+    private readonly AlertService _alertService;
     private readonly DispatcherTimer _refreshTimer;
     private readonly DispatcherTimer _staleCheckTimer;
     private bool _isCollectorPaused;
@@ -47,6 +49,7 @@ public partial class DashboardPage : Page
         _statusService = statusService;
         _messagingService = messagingService;
         _notificationService = notificationService;
+        _alertService = AlertService.Instance;
 
         ActivityItems = new ObservableCollection<DashboardActivityItem>();
         SymbolPerformanceItems = new ObservableCollection<SymbolPerformanceItem>();
@@ -72,6 +75,7 @@ public partial class DashboardPage : Page
         _connectionService.LatencyUpdated += OnLatencyUpdated;
         _statusService.LiveStatusReceived += OnLiveStatusReceived;
         _statusService.BackendReachabilityChanged += OnBackendReachabilityChanged;
+        _alertService.AlertRaised += OnAlertCountChanged;
     }
 
     public ObservableCollection<DashboardActivityItem> ActivityItems { get; }
@@ -88,6 +92,7 @@ public partial class DashboardPage : Page
         _refreshTimer.Start();
         _staleCheckTimer.Start();
         RefreshStatus();
+        UpdateAlertSummary();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -100,6 +105,7 @@ public partial class DashboardPage : Page
         _connectionService.LatencyUpdated -= OnLatencyUpdated;
         _statusService.LiveStatusReceived -= OnLiveStatusReceived;
         _statusService.BackendReachabilityChanged -= OnBackendReachabilityChanged;
+        _alertService.AlertRaised -= OnAlertCountChanged;
     }
 
     private void InitializeEmptyState()
@@ -559,6 +565,62 @@ public partial class DashboardPage : Page
         AddActivityItem("Symbol added", $"Added {QuickAddSymbolBox.Text.Trim().ToUpperInvariant()} to watchlist");
         QuickAddSymbolBox.Text = string.Empty;
     }
+
+    #region Alert Summary
+
+    private void OnAlertCountChanged(object? sender, AlertEventArgs e)
+    {
+        Dispatcher.Invoke(UpdateAlertSummary);
+    }
+
+    private void UpdateAlertSummary()
+    {
+        var alerts = _alertService.GetActiveAlerts();
+        var criticalCount = alerts.Count(a => a.Severity >= AlertSeverity.Critical && !a.IsSuppressed && !a.IsSnoozed);
+        var warningCount = alerts.Count(a => a.Severity == AlertSeverity.Warning && !a.IsSuppressed && !a.IsSnoozed);
+        var infoCount = alerts.Count(a => a.Severity == AlertSeverity.Info && !a.IsSuppressed && !a.IsSnoozed);
+
+        var hasAlerts = criticalCount > 0 || warningCount > 0 || infoCount > 0;
+
+        AlertSummaryBanner.Visibility = hasAlerts ? Visibility.Visible : Visibility.Collapsed;
+
+        if (criticalCount > 0)
+        {
+            AlertCriticalBadge.Visibility = Visibility.Visible;
+            AlertCriticalCount.Text = criticalCount == 1 ? "1 Critical" : $"{criticalCount} Critical";
+        }
+        else
+        {
+            AlertCriticalBadge.Visibility = Visibility.Collapsed;
+        }
+
+        if (warningCount > 0)
+        {
+            AlertWarningBadge.Visibility = Visibility.Visible;
+            AlertWarningCount.Text = warningCount == 1 ? "1 Warning" : $"{warningCount} Warnings";
+        }
+        else
+        {
+            AlertWarningBadge.Visibility = Visibility.Collapsed;
+        }
+
+        if (infoCount > 0)
+        {
+            AlertInfoBadge.Visibility = Visibility.Visible;
+            AlertInfoCount.Text = infoCount == 1 ? "1 Info" : $"{infoCount} Info";
+        }
+        else
+        {
+            AlertInfoBadge.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ViewAlerts_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateTo("NotificationCenter");
+    }
+
+    #endregion
 
     public sealed class DashboardActivityItem
     {

@@ -26,10 +26,13 @@ public partial class BackfillPage : Page
     private readonly WpfServices.NavigationService _navigationService;
     private readonly BackfillApiService _backfillApiService;
     private readonly UiBackfillService _backfillService;
+    private readonly BackfillCheckpointService _checkpointService;
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
+    private readonly ObservableCollection<ResumableJobInfo> _resumableJobs = new();
     private readonly DispatcherTimer _progressPollTimer;
     private CancellationTokenSource? _backfillCts;
+    private string? _activeCheckpointJobId;
 
     public BackfillPage(
         WpfServices.NotificationService notificationService,
@@ -41,9 +44,11 @@ public partial class BackfillPage : Page
         _navigationService = navigationService;
         _backfillApiService = new BackfillApiService();
         _backfillService = UiBackfillService.Instance;
+        _checkpointService = BackfillCheckpointService.Instance;
 
         SymbolProgressList.ItemsSource = _symbolProgress;
         ScheduledJobsList.ItemsSource = _scheduledJobs;
+        ResumableJobsList.ItemsSource = _resumableJobs;
 
         _progressPollTimer = new DispatcherTimer
         {
@@ -64,6 +69,7 @@ public partial class BackfillPage : Page
         UpdateProviderPrioritySummary();
         UpdateGranularityHint();
 
+        await LoadResumableJobsAsync();
         await LoadScheduledJobsAsync();
         await RefreshStatusFromApiAsync();
     }
@@ -172,12 +178,23 @@ public partial class BackfillPage : Page
             else
             {
                 BackfillStatusText.Text = "Failed";
+
+                // Mark checkpoint as failed so it appears in resumable jobs
+                if (_activeCheckpointJobId != null)
+                {
+                    await _checkpointService.MarkJobFailedAsync(
+                        _activeCheckpointJobId,
+                        e.Error?.Message ?? "Backfill failed");
+                }
+
                 _notificationService.ShowNotification(
                     "Backfill Failed",
                     e.Error?.Message ?? "Unknown error occurred.",
                     NotificationType.Error);
             }
 
+            _activeCheckpointJobId = null;
+            await LoadResumableJobsAsync();
             await RefreshStatusFromApiAsync();
         });
     }
@@ -457,12 +474,23 @@ public partial class BackfillPage : Page
         // Start progress polling
         _progressPollTimer.Start();
 
-        // Execute backfill via real API
+        // Create checkpoint for this backfill job
+        var normalizedSymbols = symbols.Select(s => s.Trim().ToUpper()).ToArray();
         _backfillCts = new CancellationTokenSource();
         try
         {
+            var checkpoint = await _checkpointService.CreateCheckpointAsync(
+                Guid.NewGuid().ToString("N")[..12],
+                provider,
+                normalizedSymbols,
+                fromDate,
+                toDate,
+                _backfillCts.Token);
+            _activeCheckpointJobId = checkpoint.JobId;
+
+            // Execute backfill via real API
             await _backfillService.StartBackfillAsync(
-                symbols.Select(s => s.Trim().ToUpper()).ToArray(),
+                normalizedSymbols,
                 provider,
                 fromDate,
                 toDate,
@@ -475,6 +503,15 @@ public partial class BackfillPage : Page
             StartBackfillButton.Visibility = Visibility.Visible;
             PauseBackfillButton.Visibility = Visibility.Collapsed;
             CancelBackfillButton.Visibility = Visibility.Collapsed;
+
+            // Mark checkpoint as failed
+            if (_activeCheckpointJobId != null)
+            {
+                await _checkpointService.MarkJobFailedAsync(
+                    _activeCheckpointJobId, ex.Message);
+                _activeCheckpointJobId = null;
+                await LoadResumableJobsAsync();
+            }
 
             _notificationService.ShowNotification(
                 "Backfill Failed",
@@ -620,6 +657,97 @@ public partial class BackfillPage : Page
         }
     }
 
+    #region Resumable Jobs
+
+    private async Task LoadResumableJobsAsync()
+    {
+        _resumableJobs.Clear();
+
+        try
+        {
+            var jobs = await _checkpointService.GetResumableJobsAsync();
+            foreach (var job in jobs)
+            {
+                _resumableJobs.Add(new ResumableJobInfo
+                {
+                    JobId = job.JobId,
+                    Provider = job.Provider,
+                    StatusText = job.Status.ToString(),
+                    StatusBrush = job.Status switch
+                    {
+                        CheckpointStatus.Failed => new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                        CheckpointStatus.PartiallyCompleted => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+                        _ => new SolidColorBrush(Color.FromRgb(33, 150, 243))
+                    },
+                    SummaryText = $"{job.CompletedCount}/{job.SymbolCheckpoints.Count} symbols done, {job.PendingCount} remaining",
+                    DateRangeText = $"{job.FromDate:d} to {job.ToDate:d} · Started {job.CreatedAt:g}",
+                    Checkpoint = job
+                });
+            }
+        }
+        catch
+        {
+            // Checkpoint directory may not exist yet
+        }
+
+        ResumableJobsCard.Visibility = _resumableJobs.Count > 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private async void ResumeJob_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: ResumableJobInfo info }) return;
+
+        var pendingSymbols = await _checkpointService.GetPendingSymbolsAsync(info.JobId);
+        if (pendingSymbols.Length == 0)
+        {
+            _notificationService.ShowNotification(
+                "Nothing to Resume",
+                "All symbols in this job have already been completed.",
+                NotificationType.Info);
+            return;
+        }
+
+        // Pre-fill the backfill form with the resumable job data
+        SymbolsBox.Text = string.Join(", ", pendingSymbols);
+        FromDatePicker.SelectedDate = info.Checkpoint.FromDate;
+        ToDatePicker.SelectedDate = info.Checkpoint.ToDate;
+
+        _notificationService.ShowNotification(
+            "Job Resumed",
+            $"Loaded {pendingSymbols.Length} pending symbols from interrupted job. Press Start to begin.",
+            NotificationType.Info);
+    }
+
+    private async void DiscardJob_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: ResumableJobInfo info }) return;
+
+        var result = MessageBox.Show(
+            $"Discard checkpoint for this {info.Provider} backfill job?\nThis cannot be undone.",
+            "Discard Checkpoint",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes) return;
+
+        // Mark as cancelled so it no longer appears as resumable
+        await _checkpointService.MarkJobFailedAsync(info.JobId, "Discarded by user");
+        _resumableJobs.Remove(info);
+
+        ResumableJobsCard.Visibility = _resumableJobs.Count > 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        _notificationService.ShowNotification(
+            "Checkpoint Discarded",
+            "The interrupted job has been removed.",
+            NotificationType.Info);
+    }
+
+    #endregion
+
     private void EditScheduledJob_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is ScheduledJobInfo job)
@@ -680,6 +808,20 @@ public class ScheduledJobInfo
 {
     public string Name { get; set; } = string.Empty;
     public string NextRun { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Resumable job information for display in the sidebar.
+/// </summary>
+public class ResumableJobInfo
+{
+    public string JobId { get; set; } = string.Empty;
+    public string Provider { get; set; } = string.Empty;
+    public string StatusText { get; set; } = string.Empty;
+    public SolidColorBrush StatusBrush { get; set; } = new(Color.FromRgb(139, 148, 158));
+    public string SummaryText { get; set; } = string.Empty;
+    public string DateRangeText { get; set; } = string.Empty;
+    public BackfillCheckpoint Checkpoint { get; set; } = new();
 }
 
 /// <summary>
