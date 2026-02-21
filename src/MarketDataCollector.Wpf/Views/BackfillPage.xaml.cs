@@ -19,6 +19,7 @@ namespace MarketDataCollector.Wpf.Views;
 /// <summary>
 /// Historical data backfill page with provider selection, date ranges, and scheduling.
 /// Wired to real BackfillApiService for live execution and progress tracking.
+/// Supports job resumability via BackfillCheckpointService.
 /// </summary>
 public partial class BackfillPage : Page
 {
@@ -26,8 +27,10 @@ public partial class BackfillPage : Page
     private readonly WpfServices.NavigationService _navigationService;
     private readonly BackfillApiService _backfillApiService;
     private readonly UiBackfillService _backfillService;
+    private readonly BackfillCheckpointService _checkpointService;
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
+    private readonly ObservableCollection<ResumableJobInfo> _resumableJobs = new();
     private readonly DispatcherTimer _progressPollTimer;
     private CancellationTokenSource? _backfillCts;
 
@@ -41,9 +44,11 @@ public partial class BackfillPage : Page
         _navigationService = navigationService;
         _backfillApiService = new BackfillApiService();
         _backfillService = UiBackfillService.Instance;
+        _checkpointService = BackfillCheckpointService.Instance;
 
         SymbolProgressList.ItemsSource = _symbolProgress;
         ScheduledJobsList.ItemsSource = _scheduledJobs;
+        ResumableJobsList.ItemsSource = _resumableJobs;
 
         _progressPollTimer = new DispatcherTimer
         {
@@ -65,6 +70,7 @@ public partial class BackfillPage : Page
         UpdateGranularityHint();
 
         await LoadScheduledJobsAsync();
+        await LoadResumableJobsAsync();
         await RefreshStatusFromApiAsync();
     }
 
@@ -147,6 +153,100 @@ public partial class BackfillPage : Page
         });
     }
 
+    private async Task LoadResumableJobsAsync()
+    {
+        _resumableJobs.Clear();
+
+        try
+        {
+            var resumable = await _checkpointService.GetResumableJobsAsync();
+            foreach (var job in resumable)
+            {
+                var pendingSymbols = await _checkpointService.GetPendingSymbolsAsync(job.JobId);
+                _resumableJobs.Add(new ResumableJobInfo
+                {
+                    JobId = job.JobId,
+                    Provider = job.Provider,
+                    Status = job.Status.ToString(),
+                    CreatedAt = job.CreatedAt.ToLocalTime().ToString("g"),
+                    SymbolsSummary = $"{job.CompletedCount}/{job.SymbolCheckpoints.Count} symbols done, {pendingSymbols.Length} remaining",
+                    PendingCount = pendingSymbols.Length,
+                    TotalBarsDownloaded = job.TotalBarsDownloaded,
+                    DateRange = $"{job.FromDate:d} — {job.ToDate:d}"
+                });
+            }
+        }
+        catch
+        {
+            // Checkpoint storage unavailable
+        }
+
+        NoResumableJobsText.Visibility = _resumableJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResumableJobsCard.Visibility = Visibility.Visible;
+    }
+
+    private async void ResumeJob_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not ResumableJobInfo job)
+            return;
+
+        if (_backfillService.IsRunning)
+        {
+            _notificationService.ShowNotification(
+                "Cannot Resume",
+                "A backfill operation is already running. Cancel or wait for it to finish.",
+                NotificationType.Warning);
+            return;
+        }
+
+        try
+        {
+            StartBackfillButton.Visibility = Visibility.Collapsed;
+            PauseBackfillButton.Visibility = Visibility.Visible;
+            CancelBackfillButton.Visibility = Visibility.Visible;
+            ProgressPanel.Visibility = Visibility.Visible;
+            SymbolProgressCard.Visibility = Visibility.Visible;
+
+            BackfillStatusText.Text = $"Resuming ({job.PendingCount} symbols remaining)...";
+
+            _notificationService.ShowNotification(
+                "Resuming Backfill",
+                $"Resuming job from checkpoint: {job.PendingCount} symbols remaining.",
+                NotificationType.Info);
+
+            _progressPollTimer.Start();
+
+            await _backfillService.ResumeBackfillAsync(job.JobId);
+        }
+        catch (Exception ex)
+        {
+            _progressPollTimer.Stop();
+            BackfillStatusText.Text = "Resume Failed";
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
+
+            _notificationService.ShowNotification(
+                "Resume Failed",
+                ex.Message,
+                NotificationType.Error);
+        }
+    }
+
+    private async void DismissJob_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not ResumableJobInfo job)
+            return;
+
+        _resumableJobs.Remove(job);
+        NoResumableJobsText.Visibility = _resumableJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        _notificationService.ShowNotification(
+            "Job Dismissed",
+            "Resumable job has been dismissed from the list.",
+            NotificationType.Info);
+    }
+
     private void OnBackfillCompleted(object? sender, UiBackfillCompletedEventArgs e)
     {
         Dispatcher.Invoke(async () =>
@@ -179,6 +279,7 @@ public partial class BackfillPage : Page
             }
 
             await RefreshStatusFromApiAsync();
+            await LoadResumableJobsAsync();
         });
     }
 
@@ -698,6 +799,21 @@ public class ScheduledJobInfo
 {
     public string Name { get; set; } = string.Empty;
     public string NextRun { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Resumable job information for checkpoint-based resume.
+/// </summary>
+public class ResumableJobInfo
+{
+    public string JobId { get; set; } = string.Empty;
+    public string Provider { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string CreatedAt { get; set; } = string.Empty;
+    public string SymbolsSummary { get; set; } = string.Empty;
+    public int PendingCount { get; set; }
+    public int TotalBarsDownloaded { get; set; }
+    public string DateRange { get; set; } = string.Empty;
 }
 
 /// <summary>

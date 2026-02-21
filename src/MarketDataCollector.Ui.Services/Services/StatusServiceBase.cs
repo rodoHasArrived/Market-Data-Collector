@@ -224,6 +224,9 @@ public abstract class StatusServiceBase
         {
             _isBackendReachable = reachable;
             BackendReachabilityChanged?.Invoke(this, reachable);
+
+            // Update fixture mode detector so the global banner reflects connectivity
+            FixtureModeDetector.Instance.UpdateBackendReachability(reachable);
         }
     }
 

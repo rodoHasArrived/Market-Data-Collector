@@ -47,6 +47,18 @@ public static class UiApiRoutes
     public const string BackfillSchedulesHistory = "/api/backfill/schedules/{id}/history";
     public const string BackfillSchedulesTemplates = "/api/backfill/schedules/templates";
 
+    // Backfill checkpoint/resume endpoints (P0: expose checkpoint semantics to users)
+    public const string BackfillCheckpoints = "/api/backfill/checkpoints";
+    public const string BackfillCheckpointsResumable = "/api/backfill/checkpoints/resumable";
+    public const string BackfillCheckpointById = "/api/backfill/checkpoints/{jobId}";
+    public const string BackfillCheckpointResume = "/api/backfill/checkpoints/{jobId}/resume";
+    public const string BackfillCheckpointPending = "/api/backfill/checkpoints/{jobId}/pending";
+
+    // Ingestion job endpoints (P0: unified job contract)
+    public const string IngestionJobs = "/api/ingestion/jobs";
+    public const string IngestionJobById = "/api/ingestion/jobs/{jobId}";
+    public const string IngestionJobTransition = "/api/ingestion/jobs/{jobId}/transition";
+
     // Backfill provider metadata and status endpoints
     public const string BackfillProviderMetadata = "/api/backfill/providers/metadata";
     public const string BackfillProviderStatuses = "/api/backfill/providers/statuses";
