@@ -160,7 +160,10 @@
                 <!-- Provider Selection -->
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
                     <StackPanel>
-                        <TextBlock Text="Data Provider" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
+                        <TextBlock Text="Data Provider Workflow" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,8" />
+                        <TextBlock Text="Set your provider fallback order and desired data granularity before running a backfill."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   Margin="0,0,0,16" />
 
                         <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
@@ -207,6 +210,84 @@
                                        FontSize="12"
                                        VerticalAlignment="Center" />
                         </StackPanel>
+
+                        <Separator Margin="0,16,0,16" />
+
+                        <TextBlock Text="Provider Priority (Fallback Order)" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,8" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Primary"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontSize="11" Margin="0,0,0,4" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Secondary"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontSize="11" Margin="0,0,0,4" />
+                            <TextBlock Grid.Row="0" Grid.Column="4" Text="Tertiary"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontSize="11" Margin="0,0,0,4" />
+
+                            <ComboBox x:Name="PrimaryProviderCombo"
+                                      Grid.Row="1" Grid.Column="0"
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      SelectionChanged="ProviderPriority_SelectionChanged">
+                                <ComboBoxItem Content="Yahoo Finance" Tag="yahoo" IsSelected="True" />
+                                <ComboBoxItem Content="Stooq" Tag="stooq" />
+                                <ComboBoxItem Content="Nasdaq Data Link" Tag="nasdaq" />
+                            </ComboBox>
+
+                            <ComboBox x:Name="SecondaryProviderCombo"
+                                      Grid.Row="1" Grid.Column="2"
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      SelectionChanged="ProviderPriority_SelectionChanged">
+                                <ComboBoxItem Content="Stooq" Tag="stooq" IsSelected="True" />
+                                <ComboBoxItem Content="Yahoo Finance" Tag="yahoo" />
+                                <ComboBoxItem Content="Nasdaq Data Link" Tag="nasdaq" />
+                                <ComboBoxItem Content="No fallback" Tag="none" />
+                            </ComboBox>
+
+                            <ComboBox x:Name="TertiaryProviderCombo"
+                                      Grid.Row="1" Grid.Column="4"
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      SelectionChanged="ProviderPriority_SelectionChanged">
+                                <ComboBoxItem Content="Nasdaq Data Link" Tag="nasdaq" IsSelected="True" />
+                                <ComboBoxItem Content="Yahoo Finance" Tag="yahoo" />
+                                <ComboBoxItem Content="Stooq" Tag="stooq" />
+                                <ComboBoxItem Content="No fallback" Tag="none" />
+                            </ComboBox>
+                        </Grid>
+
+                        <TextBlock x:Name="ProviderPrioritySummaryText"
+                                   Text="Priority: Yahoo Finance → Stooq → Nasdaq Data Link"
+                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                   FontSize="12" />
+
+                        <Separator Margin="0,16,0,16" />
+
+                        <TextBlock Text="Data Granularity" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,8" />
+                        <ComboBox x:Name="GranularityCombo"
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  SelectionChanged="GranularityCombo_SelectionChanged"
+                                  Margin="0,0,0,8">
+                            <ComboBoxItem Content="Daily (EOD)" Tag="Daily" IsSelected="True" />
+                            <ComboBoxItem Content="Hourly" Tag="Hourly" />
+                            <ComboBoxItem Content="15 Minute" Tag="15Min" />
+                            <ComboBoxItem Content="1 Minute" Tag="1Min" />
+                        </ComboBox>
+                        <TextBlock x:Name="GranularityHintText"
+                                   Text="Daily is recommended for broad symbol lists and long history windows."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" />
                     </StackPanel>
                 </Border>
 
@@ -226,7 +307,8 @@
                                 <TextBlock Text="From Date (UTC)" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
                                 <DatePicker x:Name="FromDatePicker"
                                             Background="{StaticResource ConsoleBackgroundMediumBrush}"
-                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                            SelectedDateChanged="DatePicker_SelectedDateChanged" />
                                 <TextBlock x:Name="FromDateValidationError"
                                            FontSize="12"
                                            Foreground="{StaticResource ErrorColorBrush}"
@@ -238,7 +320,8 @@
                                 <TextBlock Text="To Date (UTC)" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
                                 <DatePicker x:Name="ToDatePicker"
                                             Background="{StaticResource ConsoleBackgroundMediumBrush}"
-                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                            SelectedDateChanged="DatePicker_SelectedDateChanged" />
                                 <TextBlock x:Name="ToDateValidationError"
                                            FontSize="12"
                                            Foreground="{StaticResource ErrorColorBrush}"
@@ -258,7 +341,17 @@
                                     Click="LastYear_Click" Margin="0,0,8,8" />
                             <Button Content="Last 5 Years" Style="{StaticResource GhostButtonStyle}"
                                     Click="Last5Years_Click" Margin="0,0,8,8" />
+                            <Button Content="Smart Range"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="ApplySmartRange_Click"
+                                    Margin="0,0,8,8" />
                         </WrapPanel>
+
+                        <TextBlock x:Name="DateRangeHintText"
+                                   Text="Smart range uses symbol count + granularity to keep request sizes practical."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12"
+                                   Margin="0,8,0,0" />
                     </StackPanel>
                 </Border>
 
