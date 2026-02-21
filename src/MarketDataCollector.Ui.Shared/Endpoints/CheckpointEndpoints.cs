@@ -1,8 +1,9 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -20,9 +21,9 @@ public static class CheckpointEndpoints
         var group = app.MapGroup("").WithTags("Checkpoints");
 
         // Get all checkpoint history
-        group.MapGet(UiApiRoutes.BackfillCheckpoints, (BackfillStatusStore statusStore) =>
+        group.MapGet(UiApiRoutes.BackfillCheckpoints, (BackfillCoordinator backfill) =>
         {
-            var status = statusStore.TryReadLast();
+            var status = backfill.TryReadLast();
             return status is null
                 ? Results.Json(Array.Empty<object>(), jsonOptions)
                 : Results.Json(new[] { status }, jsonOptions);
@@ -32,9 +33,9 @@ public static class CheckpointEndpoints
         .Produces(200);
 
         // Get resumable jobs (incomplete/failed checkpoints)
-        group.MapGet(UiApiRoutes.BackfillCheckpointsResumable, (BackfillStatusStore statusStore) =>
+        group.MapGet(UiApiRoutes.BackfillCheckpointsResumable, (BackfillCoordinator backfill) =>
         {
-            var status = statusStore.TryReadLast();
+            var status = backfill.TryReadLast();
             if (status is null || status.Success)
             {
                 return Results.Json(Array.Empty<object>(), jsonOptions);
@@ -59,9 +60,9 @@ public static class CheckpointEndpoints
         .Produces(200);
 
         // Get checkpoint for a specific job
-        group.MapGet("/api/backfill/checkpoints/{jobId}", (string jobId, BackfillStatusStore statusStore) =>
+        group.MapGet("/api/backfill/checkpoints/{jobId}", (string jobId, BackfillCoordinator backfill) =>
         {
-            var status = statusStore.TryReadLast();
+            var status = backfill.TryReadLast();
             if (status is null)
             {
                 return Results.NotFound(new { error = $"No checkpoint found for job {jobId}" });
@@ -85,9 +86,9 @@ public static class CheckpointEndpoints
         .Produces(404);
 
         // Get pending symbols for a checkpoint
-        group.MapGet("/api/backfill/checkpoints/{jobId}/pending", (string jobId, BackfillStatusStore statusStore) =>
+        group.MapGet("/api/backfill/checkpoints/{jobId}/pending", (string jobId, BackfillCoordinator backfill) =>
         {
-            var status = statusStore.TryReadLast();
+            var status = backfill.TryReadLast();
             if (status is null)
             {
                 return Results.NotFound(new { error = $"No checkpoint found for job {jobId}" });
@@ -115,10 +116,9 @@ public static class CheckpointEndpoints
         // Resume a checkpoint (trigger backfill for pending symbols)
         group.MapPost("/api/backfill/checkpoints/{jobId}/resume", async (
             string jobId,
-            BackfillStatusStore statusStore,
-            HistoricalBackfillService? backfillService) =>
+            BackfillCoordinator backfill) =>
         {
-            var status = statusStore.TryReadLast();
+            var status = backfill.TryReadLast();
             if (status is null)
             {
                 return Results.NotFound(new { error = $"No checkpoint found for job {jobId}" });
@@ -129,27 +129,16 @@ public static class CheckpointEndpoints
                 return Results.BadRequest(new { error = "This job already completed successfully. Nothing to resume." });
             }
 
-            if (backfillService is null)
-            {
-                return Results.Json(new
-                {
-                    accepted = true,
-                    jobId,
-                    message = "Resume request accepted. The backfill service will process pending symbols.",
-                    pendingSymbols = status.Symbols
-                }, jsonOptions);
-            }
-
             // Trigger a new backfill for the same symbols
             try
             {
-                var request = new BackfillRequest(
+                var request = new AppBackfillRequest(
                     status.Provider ?? "composite",
                     status.Symbols ?? Array.Empty<string>(),
-                    status.StartedUtc?.ToString("yyyy-MM-dd"),
-                    status.CompletedUtc?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"));
+                    status.From,
+                    status.To ?? DateOnly.FromDateTime(DateTime.Today));
 
-                var result = await backfillService.RunAsync(request, CancellationToken.None);
+                var result = await backfill.RunAsync(request, CancellationToken.None);
 
                 return Results.Json(new
                 {
