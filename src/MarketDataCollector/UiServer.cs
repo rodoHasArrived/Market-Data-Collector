@@ -164,6 +164,7 @@ public sealed class UiServer : IAsyncDisposable
         // Backfill API
         _app.MapBackfillEndpoints(s_jsonOptions, s_jsonOptionsCompact);
         _app.MapBackfillScheduleEndpoints(s_jsonOptions);
+        _app.MapCheckpointEndpoints(s_jsonOptions);
 
         // Storage API
         _app.MapStorageEndpoints(s_jsonOptions);

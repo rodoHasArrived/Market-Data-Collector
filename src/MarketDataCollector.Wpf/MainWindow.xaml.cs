@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private readonly WpfServices.ThemeService _themeService;
     private readonly OnboardingTourService _tourService;
     private readonly AlertService _alertService;
+    private readonly FixtureModeDetector _fixtureModeDetector;
 
     private static readonly string WindowStateFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -54,6 +55,11 @@ public partial class MainWindow : Window
         _themeService = themeService;
         _tourService = OnboardingTourService.Instance;
         _alertService = AlertService.Instance;
+        _fixtureModeDetector = FixtureModeDetector.Instance;
+
+        // Subscribe to fixture/offline mode changes
+        _fixtureModeDetector.ModeChanged += OnFixtureModeChanged;
+        UpdateFixtureModeBanner();
 
         // Subscribe to keyboard shortcuts
         _keyboardShortcutService.ShortcutInvoked += OnShortcutInvoked;
@@ -95,6 +101,7 @@ public partial class MainWindow : Window
         _tourService.StepChanged -= OnTourStepChanged;
         _tourService.TourCompleted -= OnTourCompleted;
         _alertService.AlertRaised -= OnAlertRaised;
+        _fixtureModeDetector.ModeChanged -= OnFixtureModeChanged;
     }
 
     private void OnRootFrameNavigated(object sender, SysNavigation.NavigationEventArgs e)
@@ -342,6 +349,40 @@ public partial class MainWindow : Window
         // In-app notification handling can be added here
         // For now, notifications are handled by the NotificationService
     }
+
+    #region Fixture/Offline Mode Banner
+
+    private void OnFixtureModeChanged(object? sender, EventArgs e)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => OnFixtureModeChanged(sender, e));
+            return;
+        }
+
+        UpdateFixtureModeBanner();
+    }
+
+    private void UpdateFixtureModeBanner()
+    {
+        if (_fixtureModeDetector.IsNonLiveMode)
+        {
+            FixtureModeBanner.Visibility = Visibility.Visible;
+            FixtureModeText.Text = _fixtureModeDetector.ModeLabel;
+
+            var color = _fixtureModeDetector.IsFixtureMode
+                ? System.Windows.Media.Color.FromRgb(0xFF, 0xB3, 0x00) // Amber for fixture
+                : System.Windows.Media.Color.FromRgb(0xF4, 0x43, 0x36); // Red for offline
+
+            FixtureModeBanner.Background = new System.Windows.Media.SolidColorBrush(color);
+        }
+        else
+        {
+            FixtureModeBanner.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    #endregion
 
     #region Onboarding Tour Overlay
 

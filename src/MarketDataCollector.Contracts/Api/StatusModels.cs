@@ -24,7 +24,7 @@ public class StatusResponse
 }
 
 /// <summary>
-/// Metrics data snapshot.
+/// Metrics data snapshot with staleness and provenance tracking.
 /// </summary>
 public class MetricsData
 {
@@ -54,6 +54,31 @@ public class MetricsData
 
     [JsonPropertyName("quotes")]
     public long Quotes { get; set; }
+
+    /// <summary>
+    /// UTC timestamp when these metrics were last updated from the provider.
+    /// Null indicates no data has been received yet.
+    /// </summary>
+    [JsonPropertyName("lastUpdatedUtc")]
+    public DateTimeOffset? LastUpdatedUtc { get; set; }
+
+    /// <summary>
+    /// Name of the provider that sourced these metrics.
+    /// </summary>
+    [JsonPropertyName("sourceProvider")]
+    public string? SourceProvider { get; set; }
+
+    /// <summary>
+    /// Whether the metrics are considered stale (no update in >15 seconds).
+    /// </summary>
+    [JsonPropertyName("isStale")]
+    public bool IsStale { get; set; }
+
+    /// <summary>
+    /// Age of these metrics in seconds since last update.
+    /// </summary>
+    [JsonPropertyName("ageSeconds")]
+    public double AgeSeconds { get; set; }
 }
 
 /// <summary>
@@ -249,6 +274,73 @@ public class BackfillRequest
 
     [JsonPropertyName("granularity")]
     public string Granularity { get; set; } = "Daily";
+}
+
+/// <summary>
+/// Tracks freshness and provenance of metrics for a specific symbol or subsystem.
+/// Used to show staleness indicators and provider source badges in the UI.
+/// </summary>
+public class MetricsFreshness
+{
+    /// <summary>
+    /// The symbol or subsystem this freshness record applies to.
+    /// </summary>
+    [JsonPropertyName("key")]
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>
+    /// UTC timestamp of the last received data point.
+    /// </summary>
+    [JsonPropertyName("lastDataPointUtc")]
+    public DateTimeOffset? LastDataPointUtc { get; set; }
+
+    /// <summary>
+    /// The provider that supplied the last data point.
+    /// </summary>
+    [JsonPropertyName("provider")]
+    public string? Provider { get; set; }
+
+    /// <summary>
+    /// Whether the data is considered stale (exceeded freshness threshold).
+    /// </summary>
+    [JsonPropertyName("isStale")]
+    public bool IsStale { get; set; }
+
+    /// <summary>
+    /// Freshness state: Fresh, Warning, Stale, or NoData.
+    /// </summary>
+    [JsonPropertyName("freshnessState")]
+    public string FreshnessState { get; set; } = "NoData";
+
+    /// <summary>
+    /// Age of the data in seconds since last update.
+    /// </summary>
+    [JsonPropertyName("ageSeconds")]
+    public double AgeSeconds { get; set; }
+
+    /// <summary>
+    /// The configured freshness threshold in seconds.
+    /// </summary>
+    [JsonPropertyName("thresholdSeconds")]
+    public int ThresholdSeconds { get; set; } = 60;
+}
+
+/// <summary>
+/// Freshness state constants for metric staleness indicators.
+/// </summary>
+public static class FreshnessStates
+{
+    /// <summary>Data is fresh and within acceptable thresholds.</summary>
+    public const string Fresh = "Fresh";
+
+    /// <summary>Data is approaching staleness (>70% of threshold).</summary>
+    public const string Warning = "Warning";
+
+    /// <summary>Data has exceeded the staleness threshold.</summary>
+    public const string Stale = "Stale";
+
+    /// <summary>No data has been received yet.</summary>
+    public const string NoData = "NoData";
 }
 
 /// <summary>
