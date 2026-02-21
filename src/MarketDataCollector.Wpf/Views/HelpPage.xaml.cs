@@ -88,7 +88,7 @@ public partial class HelpPage : Page
             _notificationService.ShowNotification(
                 "Error",
                 "Could not open the link. Please try again.",
-                WpfServices.NotificationType.Error);
+                NotificationType.Error);
         }
     }
 }

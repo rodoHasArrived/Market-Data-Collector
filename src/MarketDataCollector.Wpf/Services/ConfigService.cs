@@ -268,5 +268,5 @@ public sealed class ConfigService : ConfigServiceBase
 
     // Keep backward-compatible internal method for existing callers
     internal Task<AppConfigDto?> LoadConfigAsync()
-        => LoadConfigCoreAsync();
+        => LoadConfigCoreAsync(CancellationToken.None);
 }
