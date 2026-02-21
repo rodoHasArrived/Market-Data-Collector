@@ -37,7 +37,21 @@ public sealed record AppConfig(
     BackfillConfig? Backfill = null,
     SourceRegistryConfig? Sources = null,
     DataSourcesConfig? DataSources = null,
-    DerivativesConfig? Derivatives = null
+    DerivativesConfig? Derivatives = null,
+    ProviderRegistryConfig? ProviderRegistry = null
+);
+
+/// <summary>
+/// Configuration for the unified provider registry (Phase 1.2).
+/// Controls how streaming, backfill, and symbol search providers are discovered and registered.
+/// </summary>
+/// <param name="UseAttributeDiscovery">
+/// When true, <see cref="DataSourceAttribute"/>-decorated types are discovered via reflection
+/// and automatically registered as streaming factories in the <c>ProviderRegistry</c>,
+/// replacing manual lambda registration. Default is false (manual registration).
+/// </param>
+public sealed record ProviderRegistryConfig(
+    bool UseAttributeDiscovery = false
 );
 
 /// <summary>
