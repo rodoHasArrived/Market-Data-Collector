@@ -1,9 +1,11 @@
 # Market Data Collector Documentation
 
-**Version:** 1.6.1  
-**Last Updated:** 2026-02-12
+**Version:** 1.7.0
+**Last Updated:** 2026-02-21
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need, whether you're a developer, operator, or user.
+
+> Tip: Start with the audience section that matches your role, then use the reference and status sections for deeper details.
 
 ---
 
@@ -41,6 +43,7 @@ Building, extending, and testing the system.
 - [Desktop Development Guide](development/wpf-implementation-notes.md) - WPF/UWP development
 - [Build Observability](development/build-observability.md) - Build metrics
 - [GitHub Actions Summary](development/github-actions-summary.md) - CI/CD overview
+- [Documentation Contribution Guide](development/documentation-contribution-guide.md) - Writing and maintenance standards
 
 ### For Operators
 
@@ -75,6 +78,7 @@ Understanding system design.
 
 - [API Reference](reference/api-reference.md) - HTTP API endpoints
 - [Data Dictionary](reference/data-dictionary.md) - Data model definitions
+- [Dependencies Reference](DEPENDENCIES.md) - Third-party package inventory
 - [Generated Documentation](generated/) - Auto-generated docs
 - [Diagrams](diagrams/) - System diagrams (DOT, PNG, SVG)
 - [UML Diagrams](uml/) - UML diagrams
@@ -147,6 +151,17 @@ Quick rules:
 
 ---
 
+## ✅ Documentation Maintenance Checklist
+
+When you update docs in a PR:
+
+1. Add or update links in this index if navigation changes.
+2. Update each touched document's **Last Updated** date.
+3. Validate internal links and examples.
+4. Keep status/planning docs aligned with implementation changes.
+
+---
+
 ## Directory Structure
 
 ```
@@ -172,4 +187,4 @@ docs/
 
 ---
 
-*Documentation maintained by core team. Last update: 2026-02-12*
+*Documentation maintained by core team. Last update: 2026-02-21*
