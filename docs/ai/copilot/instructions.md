@@ -1,6 +1,6 @@
 # Market Data Collector - Copilot Instructions
 
-**Last Updated:** 2026-02-13
+**Last Updated:** 2026-02-22
 
 > **Note:** For comprehensive project context, see [CLAUDE.md](../../../CLAUDE.md) in the repository root.
 
@@ -22,6 +22,16 @@ When assigning work to AI coding agents, prefer issues/prompts that include:
 
 Use PR review comments to iterate in batches so the agent can address full feedback in one pass.
 
+## Quick Start Checklist for Copilot Sessions
+
+Before producing code, Copilot should:
+
+1. Read repository-level instructions in `.github/copilot-instructions.md`.
+2. Read any path-specific instruction file under `.github/instructions/` that matches touched files.
+3. Review `docs/ai/ai-known-errors.md` and apply relevant prevention checks.
+4. Confirm acceptance criteria include required validation commands.
+5. Document assumptions and constraints directly in the PR description.
+
 ## Repository Overview
 
 **Market Data Collector** is a high-performance, cross-platform market data collection system for real-time and historical market microstructure data. It's a production-ready .NET 9.0 solution with F# domain libraries, supporting multiple data providers (Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp) and offering flexible storage options.
@@ -29,7 +39,7 @@ Use PR review comments to iterate in batches so the agent can address full feedb
 **Project Type:** .NET Solution (C# and F#)
 **Target Framework:** .NET 9.0
 **Languages:** C# 13, F# 8.0
-**Size:** 770 C# source files, 144 test files across 14 main projects + 4 test projects
+**Size:** ~850 C# source files and 200+ test files across 13 main projects + 4 test projects
 **Architecture:** Event-driven, monolithic core with optional UI projects
 **Desktop Apps:** WPF (Windows)
 
@@ -51,7 +61,7 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 
 ```bash
 # Navigate to project root
-cd MarketDataCollector
+cd Market-Data-Collector
 
 # Restore dependencies (ALWAYS run first)
 dotnet restore /p:EnableWindowsTargeting=true
@@ -82,11 +92,11 @@ rm -rf bin/ obj/ publish/
 ### Test Framework
 - **Framework:** xUnit
 - **Test Projects:**
-  - `tests/MarketDataCollector.Tests/` (98+ C# test files)
-  - `tests/MarketDataCollector.FSharp.Tests/` (5 F# test files)
-  - `tests/MarketDataCollector.Wpf.Tests/` (58 WPF tests, Windows only)
-  - `tests/MarketDataCollector.Ui.Tests/` (71 UI service tests, Windows only)
-- **Total Test Coverage:** 129 desktop tests + extensive core tests
+  - `tests/MarketDataCollector.Tests/` (core C# tests)
+  - `tests/MarketDataCollector.FSharp.Tests/` (F# tests)
+  - `tests/MarketDataCollector.Wpf.Tests/` (WPF service tests, Windows only)
+  - `tests/MarketDataCollector.Ui.Tests/` (desktop UI service tests)
+- **Total Test Coverage:** 200+ test files across core, F#, WPF, and UI service layers
 - **Mocking:** Moq, NSubstitute, MassTransit.TestFramework
 - **Assertions:** FluentAssertions
 - **Coverage:** coverlet for code coverage reporting
@@ -122,6 +132,20 @@ make test           # Run tests
 make run-ui         # Run with web dashboard
 make docker         # Build and start Docker container
 make clean          # Clean build artifacts
+make doctor         # Run environment diagnostics
+make desktop-dev-bootstrap  # Validate desktop tooling (PowerShell helper)
+```
+
+### Documentation Update Commands
+
+When a change includes documentation updates, run targeted checks before opening a PR:
+
+```bash
+# Validate Markdown links and formatting (if markdownlint is available)
+markdownlint docs/**/*.md
+
+# Optional spellcheck pass if cspell is available
+cspell "docs/**/*.md"
 ```
 
 ## Project Structure
@@ -129,7 +153,7 @@ make clean          # Clean build artifacts
 ### Solution Layout
 
 ```
-MarketDataCollector/
+Market-Data-Collector/
 ├── src/
 │   ├── MarketDataCollector/              # Main console application & entry point
 │   ├── MarketDataCollector.Application/  # Application services, commands, pipelines
@@ -152,7 +176,7 @@ MarketDataCollector/
 ├── benchmarks/
 │   └── MarketDataCollector.Benchmarks/   # BenchmarkDotNet performance tests
 ├── build/                                # Build tooling (Python, Node.js, .NET)
-├── docs/                                 # Comprehensive documentation (87+ files)
+├── docs/                                 # Comprehensive documentation (130+ Markdown files)
 ├── scripts/                              # Automation & diagnostic scripts
 └── deploy/                               # Deployment configs (Docker, systemd)
 ```
