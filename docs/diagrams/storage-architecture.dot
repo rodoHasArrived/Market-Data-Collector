@@ -1,6 +1,6 @@
 // Storage Architecture Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-21
 //
 // This diagram shows the archival-first storage pipeline with WAL,
 // compression profiles, tiered storage, and export capabilities.

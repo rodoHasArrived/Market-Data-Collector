@@ -21,6 +21,7 @@ This folder contains architecture diagrams for the Market Data Collector system 
 | **Deployment Options** | Standalone and Docker deployment paths | `deployment-options.dot` |
 | **Onboarding Flow** | User journey from first-run to operation | `onboarding-flow.dot` |
 | **CLI Commands** | All CLI flags and commands reference | `cli-commands.dot` |
+| **Project Dependencies** | Project layer dependencies and test coverage | `project-dependencies.dot` |
 
 ---
 
@@ -38,9 +39,9 @@ Shows the Market Data Collector in context with:
 ### C4 Level 2: Container Diagram
 
 Shows the major deployable units:
-- **Presentation Layer**: Web Dashboard, WPF Desktop App, legacy UWP Desktop App, CLI Interface
+- **Presentation Layer**: Web Dashboard, WPF Desktop App, CLI Interface
 - **Onboarding & Diagnostics Layer**: Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
-- **Core Collector Service** (.NET 9 console with 50K bounded channel policy)
+- **Core Collector Service** (.NET 9 console with 100K bounded channel policy)
 - **F# Domain Library** (Type-safe validation, discriminated unions)
 - **Contracts Library** (Shared DTOs, pipeline contracts)
 - **Storage Layer** (WAL → JSONL → Parquet with tiered storage)
@@ -51,7 +52,7 @@ Shows the major deployable units:
 Detailed view of the core collector internals:
 - **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, Polygon, StockSharp), Historical providers (10+), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
 - **Domain Layer**: Collectors (Trade, Quote, Depth), Domain models, F# validation pipeline
-- **Application Layer**: EventPipeline (50K bounded channel policy), Technical indicators, Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
+- **Application Layer**: EventPipeline (100K bounded channel policy), Technical indicators, Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
 - **Storage Layer**: Write path (WAL, JSONL, Parquet), Compression profiles, Export service, Quality reporting
 
 ### Data Flow Diagram
@@ -61,7 +62,7 @@ Shows data moving through the system:
 1. **Streaming Sources**: IB, Alpaca, NYSE, Polygon, StockSharp → Real-time ingestion
 2. **Historical Sources**: Alpaca, Alpha Vantage, Finnhub, IB, Nasdaq Data Link, Polygon, Stooq, Tiingo, Yahoo Finance → Batch backfill
 3. **Processing**: Domain collectors → F# validation → Technical indicators
-4. **Pipeline**: Bounded channel (50K policy) → Composite publisher
+4. **Pipeline**: Bounded channel (100K policy) → Composite publisher
 5. **Storage**: WAL → JSONL (hot) → Compression → Parquet (archive) → Tiered storage
 6. **Export**: Python/Pandas, R, QuantConnect Lean, Excel, PostgreSQL
 7. **Optional Exports**: Downstream exports to Lean, Python/R, or database targets
@@ -88,7 +89,7 @@ Details the archival-first storage pipeline:
 - **Export Formats**: Python/Pandas, R Statistics, QuantConnect Lean, Excel, PostgreSQL
 - **Quality Assessment**: Multi-dimensional scoring, outlier detection (4σ), A+ to F grading
 
-### Event Pipeline Sequence (NEW)
+### Event Pipeline Sequence
 
 Shows the detailed event processing sequence:
 1. **Data Source** → Raw events from provider WebSocket
@@ -100,7 +101,7 @@ Shows the detailed event processing sequence:
 7. **Storage Path** → WAL journal → JSONL persist
 8. **Observability** → Metrics, traces, status endpoints
 
-### Resilience Patterns (NEW)
+### Resilience Patterns
 
 Shows fault tolerance mechanisms:
 - **Circuit Breaker**: Closed → Open → Half-Open states, configurable thresholds
@@ -119,7 +120,7 @@ Shows deployment paths from simple to enterprise:
 3. **System Service** - systemd (Linux) for long-running collectors
 4. **Pre-Deployment Setup** - First-time configuration via wizard or auto-config
 
-### Onboarding Flow (NEW)
+### Onboarding Flow
 
 Shows the user journey from first-run to operational:
 1. **First-Run Detection** - Automatic detection of new installations
@@ -150,6 +151,18 @@ Comprehensive reference for all 24+ CLI flags:
 - **Documentation Commands**: --show-config, --error-codes, --help, --version
 - **Common Workflows**: New installation, CI/CD setup, troubleshooting, backfill operations
 - **Exit Codes**: 0 (success), 1 (general error), 2 (config error), 3 (connection error), 4 (auth error), 5 (validation failed)
+
+### Project Dependencies
+
+Shows the project layer dependencies:
+- **Layer 0 (Foundation)**: Contracts, F# Domain
+- **Layer 1 (Core)**: ProviderSdk, Domain, Core
+- **Layer 2 (Infrastructure)**: Infrastructure, Storage
+- **Layer 3 (Application)**: Application logic
+- **Layer 4 (UI)**: Ui.Shared, Ui.Services, Ui (web), Wpf (desktop)
+- **Layer 5 (Entry Point)**: MarketDataCollector main app
+- **Tests**: 140 main tests, 4 F# tests, 19 WPF tests, 50 UI tests
+- **Benchmarks**: BenchmarkDotNet performance tests
 
 ---
 
@@ -192,6 +205,7 @@ dot -Tpng resilience-patterns.dot -o resilience-patterns.png
 dot -Tpng deployment-options.dot -o deployment-options.png
 dot -Tpng onboarding-flow.dot -o onboarding-flow.png
 dot -Tpng cli-commands.dot -o cli-commands.png
+dot -Tpng project-dependencies.dot -o project-dependencies.png
 ```
 
 ### Generate SVG Images
@@ -276,3 +290,5 @@ These diagrams follow the [C4 Model](https://c4model.com/) notation:
 ---
 
 *Diagrams generated with Graphviz DOT language*
+
+*Last Updated: 2026-02-21*

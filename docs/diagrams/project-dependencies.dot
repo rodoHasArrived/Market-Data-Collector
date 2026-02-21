@@ -104,10 +104,10 @@ digraph ProjectDependencies {
         color="#999999";
         fontsize=11;
 
-        Tests [label="Tests\n(98 test files)", fillcolor="#ECEFF1"];
-        FSharpTests [label="FSharp.Tests\n(5 test files)", fillcolor="#ECEFF1"];
-        WpfTests [label="Wpf.Tests\n(5 test files)", fillcolor="#ECEFF1", style="rounded,filled,dashed"];
-        UiTests [label="Ui.Tests\n(14 test files)", fillcolor="#ECEFF1", style="rounded,filled,dashed"];
+        Tests [label="Tests\n(140 test files)", fillcolor="#ECEFF1"];
+        FSharpTests [label="FSharp.Tests\n(4 test files)", fillcolor="#ECEFF1"];
+        WpfTests [label="Wpf.Tests\n(19 test files)", fillcolor="#ECEFF1", style="rounded,filled,dashed"];
+        UiTests [label="Ui.Tests\n(50 test files)", fillcolor="#ECEFF1", style="rounded,filled,dashed"];
     }
 
     // ==================== Benchmarks ====================

@@ -1,6 +1,6 @@
 // C4 Level 3: Component Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-21
 //
 // This diagram shows the internal components of the Market Data Collector Core.
 // It answers: "What are the building blocks and their responsibilities?"
@@ -33,7 +33,7 @@ digraph C4_Components {
     SS [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
         label="StockSharp\n[Multi-Exchange]"];
     HIST_API [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white",
-              label="Historical APIs\n[8 providers]"];
+              label="Historical APIs\n[10 providers]"];
   }
 
   FS [shape=cylinder, style="filled", fillcolor="#718096", fontcolor="white",
@@ -73,7 +73,7 @@ digraph C4_Components {
         color="#1e40af";
 
         HIST_COMPOSITE [label="CompositeHistoricalDataProvider\n[Orchestrator]\n\nAutomatic failover\nRate-limit rotation\nPriority selection\nHealth checking", fillcolor="#fef3c7"];
-        HIST_IMPLS [label="Provider Implementations\n[9 Components]\n\nAlpaca, Yahoo, Stooq\nTiingo, Finnhub, Polygon\nNasdaq, Alpha Vantage", fillcolor="#bfdbfe"];
+        HIST_IMPLS [label="Provider Implementations\n[10 Components]\n\nAlpaca, Yahoo, Stooq\nTiingo, Finnhub, Polygon\nNasdaq, Alpha Vantage\nIB, StockSharp", fillcolor="#bfdbfe"];
       }
 
       // Connection Management

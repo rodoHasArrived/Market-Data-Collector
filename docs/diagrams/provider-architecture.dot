@@ -1,6 +1,6 @@
 // Provider Architecture Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-21
 //
 // This diagram shows the provider abstraction layer and all implemented
 // data providers for both real-time streaming and historical backfill.
@@ -89,7 +89,7 @@ digraph ProviderArchitecture {
 
   // Historical Providers
   subgraph cluster_historical {
-    label="Historical Data Providers (8 Implemented)";
+    label="Historical Data Providers (10 Implemented)";
     color="#2c7a7b";
     style="rounded";
     bgcolor="#d1fae5";
@@ -100,6 +100,7 @@ digraph ProviderArchitecture {
       color="#047857";
 
       ALPACA_HIST [fillcolor="#a7f3d0", label="Alpaca Historical\n[Priority 5]\n\nOHLCV, Trades, Auctions\nAdjusted prices\n1min to 1day bars"];
+      IB_HIST [fillcolor="#a7f3d0", label="Interactive Brokers\n[Priority 5]\n\nAll timeframes\nIB pacing rules\nFull historical data"];
     }
 
     subgraph cluster_hist_tier2 {
@@ -121,6 +122,7 @@ digraph ProviderArchitecture {
       TIINGO_HIST [fillcolor="#bbf7d0", label="Tiingo\n[Priority 25]\n\nDividend-adjusted\nFundamentals, News"];
       FINNHUB_HIST [fillcolor="#bbf7d0", label="Finnhub\n[Priority 35]\n\nFundamentals\nEarnings, News"];
       AV_HIST [fillcolor="#bbf7d0", label="Alpha Vantage\n[Priority 40]\n\nIntraday data\n5min to monthly"];
+      SS_HIST [fillcolor="#bbf7d0", label="StockSharp\n[Priority 35]\n\nMulti-exchange\nGlobal markets"];
     }
 
     // Composite Orchestrator
@@ -183,6 +185,8 @@ digraph ProviderArchitecture {
   I_HIST_PROVIDER -> TIINGO_HIST [style=dashed];
   I_HIST_PROVIDER -> FINNHUB_HIST [style=dashed];
   I_HIST_PROVIDER -> AV_HIST [style=dashed];
+  I_HIST_PROVIDER -> IB_HIST [style=dashed];
+  I_HIST_PROVIDER -> SS_HIST [style=dashed];
 
   // Composite orchestration
   COMPOSITE -> ALPACA_HIST [label="priority 5"];
@@ -193,6 +197,8 @@ digraph ProviderArchitecture {
   COMPOSITE -> NASDAQ_HIST;
   COMPOSITE -> FINNHUB_HIST;
   COMPOSITE -> AV_HIST;
+  COMPOSITE -> IB_HIST [label="priority 5"];
+  COMPOSITE -> SS_HIST;
 
   // Resilience connections
   IB_CLIENT -> CONN_MGR [color="#c53030"];

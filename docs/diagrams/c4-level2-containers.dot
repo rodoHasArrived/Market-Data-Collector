@@ -1,6 +1,6 @@
 // C4 Level 2: Container Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-21
 //
 // This diagram shows the major deployable units within the system.
 // It answers: "What are the major technology choices?"
@@ -37,8 +37,12 @@ digraph C4_Containers {
          label="Alpaca\n[External]\n\nWebSocket"];
     NYSE [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
           label="NYSE Direct\n[External]\n\nExchange Feed"];
+    POL [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
+         label="Polygon.io\n[External]\n\nWebSocket"];
+    SS [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
+        label="StockSharp\n[External]\n\nMulti-Exchange"];
     HIST_PROVIDERS [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white",
-                    label="Historical APIs\n[External]\n\nYahoo, Tiingo, Finnhub\nPolygon, Stooq, etc."];
+                    label="Historical APIs\n[External]\n\nYahoo, Tiingo, Finnhub\nPolygon, Stooq, IB, etc.\n(10 providers)"];
   }
 
   // System Boundary
@@ -55,8 +59,8 @@ digraph C4_Containers {
       style="rounded";
       bgcolor="#faf5ff";
 
-      UWP [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
-           label="UWP Desktop App\n[WinUI 3 / Windows App]\n\n15 pages: Dashboard, Config,\nBackfill, Export, Monitoring\nNative Windows experience"];
+      WPF [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
+           label="WPF Desktop App\n[.NET 9 / WPF]\n\n40+ pages: Dashboard, Config,\nBackfill, Export, Monitoring\nNative Windows experience"];
 
       WEB_UI [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
               label="Web Dashboard\n[ASP.NET / HTML]\n\nBrowser-based monitoring\nReal-time status updates\n/status endpoint"];
@@ -175,13 +179,13 @@ digraph C4_Containers {
   }
 
   // Relationships - Users
-  Operator -> UWP [label="Configures"];
+  Operator -> WPF [label="Configures"];
   Operator -> WEB_UI [label="Monitors"];
   Operator -> CLI [label="Operates"];
   Quant -> PARQUET [label="Analyzes\ndata"];
 
   // Relationships - Presentation to Core
-  UWP -> CORE [label="HTTP/Status API"];
+  WPF -> CORE [label="HTTP/Status API"];
   WEB_UI -> HTTP [label="Status polling"];
   CLI -> CORE [label="In-process"];
 
@@ -198,6 +202,8 @@ digraph C4_Containers {
   IB -> CORE [label="WebSocket\nL1/L2 streaming", color="#2b6cb0"];
   ALP -> CORE [label="WebSocket\nreal-time", color="#2b6cb0"];
   NYSE -> CORE [label="Exchange feed", color="#2b6cb0"];
+  POL -> CORE [label="WebSocket\nstreaming", color="#2b6cb0"];
+  SS -> CORE [label="Multi-exchange\nadapter", color="#2b6cb0"];
   HIST_PROVIDERS -> CORE [label="REST API\nbackfill", color="#2c7a7b"];
 
   // Relationships - Internal
