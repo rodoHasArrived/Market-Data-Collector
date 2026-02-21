@@ -576,7 +576,7 @@ public sealed class BackfillService
                 new[] { symbol },
                 fromDate.ToString(FormatHelpers.IsoDateFormat),
                 toDate.ToString(FormatHelpers.IsoDateFormat),
-                ct);
+                ct: ct);
 
             if (result?.Success == true && result.BarsWritten > 0)
             {

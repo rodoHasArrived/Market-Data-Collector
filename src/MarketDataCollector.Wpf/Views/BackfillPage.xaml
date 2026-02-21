@@ -222,9 +222,23 @@
                                 <ColumnDefinition Width="12" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Primary"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontSize="11" Margin="0,0,0,4" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Secondary"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontSize="11" Margin="0,0,0,4" />
+                            <TextBlock Grid.Row="0" Grid.Column="4" Text="Tertiary"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontSize="11" Margin="0,0,0,4" />
 
                             <ComboBox x:Name="PrimaryProviderCombo"
-                                      Grid.Column="0"
+                                      Grid.Row="1" Grid.Column="0"
                                       Style="{StaticResource FormComboBoxStyle}"
                                       SelectionChanged="ProviderPriority_SelectionChanged">
                                 <ComboBoxItem Content="Yahoo Finance" Tag="yahoo" IsSelected="True" />
@@ -233,7 +247,7 @@
                             </ComboBox>
 
                             <ComboBox x:Name="SecondaryProviderCombo"
-                                      Grid.Column="2"
+                                      Grid.Row="1" Grid.Column="2"
                                       Style="{StaticResource FormComboBoxStyle}"
                                       SelectionChanged="ProviderPriority_SelectionChanged">
                                 <ComboBoxItem Content="Stooq" Tag="stooq" IsSelected="True" />
@@ -243,7 +257,7 @@
                             </ComboBox>
 
                             <ComboBox x:Name="TertiaryProviderCombo"
-                                      Grid.Column="4"
+                                      Grid.Row="1" Grid.Column="4"
                                       Style="{StaticResource FormComboBoxStyle}"
                                       SelectionChanged="ProviderPriority_SelectionChanged">
                                 <ComboBoxItem Content="Nasdaq Data Link" Tag="nasdaq" IsSelected="True" />
@@ -293,7 +307,8 @@
                                 <TextBlock Text="From Date (UTC)" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
                                 <DatePicker x:Name="FromDatePicker"
                                             Background="{StaticResource ConsoleBackgroundMediumBrush}"
-                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                            SelectedDateChanged="DatePicker_SelectedDateChanged" />
                                 <TextBlock x:Name="FromDateValidationError"
                                            FontSize="12"
                                            Foreground="{StaticResource ErrorColorBrush}"
@@ -305,7 +320,8 @@
                                 <TextBlock Text="To Date (UTC)" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
                                 <DatePicker x:Name="ToDatePicker"
                                             Background="{StaticResource ConsoleBackgroundMediumBrush}"
-                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                            Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                            SelectedDateChanged="DatePicker_SelectedDateChanged" />
                                 <TextBlock x:Name="ToDateValidationError"
                                            FontSize="12"
                                            Foreground="{StaticResource ErrorColorBrush}"

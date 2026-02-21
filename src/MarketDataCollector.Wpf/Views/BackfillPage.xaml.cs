@@ -220,7 +220,6 @@ public partial class BackfillPage : Page
     {
         var symbols = SymbolsBox.Text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
         SymbolCountText.Text = $"{symbols.Length} symbols";
-        DateRangeHintText.Text = "Smart range uses symbol count + granularity to keep request sizes practical.";
     }
 
     private void ProviderPriority_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -291,10 +290,18 @@ public partial class BackfillPage : Page
     {
         return granularity switch
         {
-            "1Min" => "1 minute",
-            "15Min" => "15 minute",
-            _ => granularity
+            "1Min" => "1-minute",
+            "15Min" => "15-minute",
+            "Hourly" => "hourly",
+            "Daily" => "daily",
+            _ => granularity.ToLowerInvariant()
         };
+    }
+
+    private void DatePicker_SelectedDateChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        FromDateValidationError.Visibility = Visibility.Collapsed;
+        ToDateValidationError.Visibility = Visibility.Collapsed;
     }
 
     private void ValidateData_Click(object sender, RoutedEventArgs e)

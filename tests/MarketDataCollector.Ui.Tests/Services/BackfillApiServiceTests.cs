@@ -37,6 +37,7 @@ public sealed class BackfillApiServiceTests
         request.Symbols.Should().NotBeNull().And.BeEmpty();
         request.From.Should().BeNull();
         request.To.Should().BeNull();
+        request.Granularity.Should().Be("Daily");
     }
 
     [Fact]
@@ -47,12 +48,14 @@ public sealed class BackfillApiServiceTests
             Provider = "stooq",
             Symbols = new[] { "SPY", "AAPL" },
             From = "2024-01-01",
-            To = "2024-12-31"
+            To = "2024-12-31",
+            Granularity = "Hourly"
         };
 
         request.Provider.Should().Be("stooq");
         request.Symbols.Should().HaveCount(2);
         request.From.Should().Be("2024-01-01");
+        request.Granularity.Should().Be("Hourly");
     }
 
     // ── BackfillResultDto Model ──────────────────────────────────────
