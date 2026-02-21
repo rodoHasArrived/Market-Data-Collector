@@ -137,7 +137,42 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
             parameterProperty?.SetValue(wpfPage.DataContext, parameter);
         }
 
-        return _frame.Navigate(page);
+        var result = _frame.Navigate(page);
+
+        if (result)
+        {
+            // Trigger onboarding tour for the navigated page if applicable
+            var currentTag = GetCurrentPageTag();
+            if (currentTag != null)
+            {
+                CheckOnboardingTourForPage(currentTag);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if an onboarding tour should be shown for the navigated page
+    /// and raises the TourAvailable event if so.
+    /// </summary>
+    private static void CheckOnboardingTourForPage(string pageTag)
+    {
+        try
+        {
+            var tourService = MarketDataCollector.Ui.Services.OnboardingTourService.Instance;
+            if (tourService.IsTourActive) return;
+
+            var tour = tourService.GetTourForPage(pageTag);
+            if (tour != null)
+            {
+                tourService.StartTour(tour.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NavigationService] Tour check failed: {ex.Message}");
+        }
     }
 
     /// <inheritdoc />

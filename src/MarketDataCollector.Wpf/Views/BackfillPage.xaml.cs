@@ -213,6 +213,8 @@ public partial class BackfillPage : Page
 
     private async void OnProgressPollTimerTick(object? sender, EventArgs e)
     {
+        // Poll the backend for real-time backfill progress updates
+        await _backfillService.PollBackendStatusAsync();
         await RefreshStatusFromApiAsync();
     }
 

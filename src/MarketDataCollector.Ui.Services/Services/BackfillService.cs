@@ -778,6 +778,49 @@ public sealed class BackfillService
     }
 
     /// <summary>
+    /// Polls the backend for the latest backfill status and syncs it with local progress.
+    /// Call periodically from the UI to keep progress up to date with backend state.
+    /// </summary>
+    public async Task<BackfillResultDto?> PollBackendStatusAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var backendStatus = await _backfillApiService.GetLastStatusAsync(ct);
+            if (backendStatus == null) return null;
+
+            // Sync backend status with local progress if a job is running
+            if (_currentProgress != null && _currentProgress.Status == "Running")
+            {
+                lock (_progressLock)
+                {
+                    if (backendStatus.BarsWritten > _currentProgress.DownloadedBars)
+                    {
+                        _totalBarsDownloaded = backendStatus.BarsWritten;
+                        _currentProgress.DownloadedBars = backendStatus.BarsWritten;
+                        _currentProgress.BarsPerSecond = BarsPerSecond;
+                    }
+
+                    if (backendStatus.Success && backendStatus.CompletedUtc.HasValue)
+                    {
+                        _currentProgress.Status = "Completed";
+                        _currentProgress.CompletedAt = backendStatus.CompletedUtc?.DateTime;
+                        _currentProgress.CompletedSymbols = backendStatus.Symbols?.Length ?? _currentProgress.TotalSymbols;
+                    }
+                }
+
+                ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
+            }
+
+            return backendStatus;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackfillService] Backend poll failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Gets resumable jobs from the checkpoint store.
     /// </summary>
     public async Task<IReadOnlyList<BackfillCheckpoint>> GetResumableJobsAsync(

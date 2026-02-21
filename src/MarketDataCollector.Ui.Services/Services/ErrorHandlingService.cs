@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Ui.Services.Collections;
@@ -213,6 +214,91 @@ public sealed class ErrorHandlingService : IDisposable
         };
     }
 
+    /// <summary>
+    /// Handles an exception with guided remediation by raising an alert with
+    /// playbook-based steps when applicable.
+    /// </summary>
+    public async Task HandleExceptionWithRemediationAsync(
+        Exception exception,
+        string context,
+        string? alertCategory = null,
+        IReadOnlyList<string>? affectedResources = null,
+        CancellationToken ct = default)
+    {
+        // Log and record the error
+        var severity = ClassifyException(exception);
+        var record = new ErrorRecord
+        {
+            Id = Guid.NewGuid().ToString("N")[..8],
+            Exception = exception,
+            Context = context,
+            Timestamp = DateTime.UtcNow,
+            Severity = severity,
+            WasNotified = true
+        };
+
+        _loggingService.LogError(context, exception, ("severity", severity.ToString()));
+        _recentErrors.Prepend(record);
+
+        // Raise an alert with remediation playbook via AlertService
+        var category = alertCategory ?? ClassifyExceptionCategory(exception);
+        var alertSeverity = MapToAlertSeverity(severity);
+        var impact = severity >= ErrorSeverity.Critical ? BusinessImpact.High : BusinessImpact.Medium;
+
+        AlertService.Instance.RaiseAlert(
+            title: $"{context}: {exception.GetType().Name}",
+            description: exception.Message,
+            severity: alertSeverity,
+            impact: impact,
+            category: category,
+            affectedResources: affectedResources);
+
+        ErrorHandled?.Invoke(this, new ErrorHandledEventArgs
+        {
+            Record = record,
+            WasNotified = true
+        });
+
+        await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Gets remediation steps for a given error category from registered playbooks.
+    /// </summary>
+    public IReadOnlyList<RemediationStep> GetRemediationSteps(string errorCategory)
+    {
+        var alerts = AlertService.Instance.GetActiveAlerts();
+        var matchingAlert = alerts.FirstOrDefault(a =>
+            string.Equals(a.Category, errorCategory, StringComparison.OrdinalIgnoreCase) &&
+            a.Playbook != null);
+
+        return matchingAlert?.Playbook?.RemediationSteps ?? Array.Empty<RemediationStep>();
+    }
+
+    private static string ClassifyExceptionCategory(Exception exception)
+    {
+        return exception switch
+        {
+            HttpRequestException => "Connection",
+            TimeoutException => "Connection",
+            UnauthorizedAccessException => "Provider",
+            System.IO.IOException => "Storage",
+            _ => "General"
+        };
+    }
+
+    private static AlertSeverity MapToAlertSeverity(ErrorSeverity severity)
+    {
+        return severity switch
+        {
+            ErrorSeverity.Info => AlertSeverity.Info,
+            ErrorSeverity.Warning => AlertSeverity.Warning,
+            ErrorSeverity.Error => AlertSeverity.Error,
+            ErrorSeverity.Critical => AlertSeverity.Critical,
+            _ => AlertSeverity.Warning
+        };
+    }
+
     private static ErrorSeverity ClassifyException(Exception exception)
     {
         return exception switch
@@ -245,6 +331,11 @@ public sealed class ErrorRecord
     public DateTime Timestamp { get; init; }
     public ErrorSeverity Severity { get; init; }
     public bool WasNotified { get; set; }
+
+    /// <summary>
+    /// Category for matching to remediation playbooks (e.g. "Connection", "Storage", "Provider").
+    /// </summary>
+    public string? Category { get; init; }
 
     public string DisplayMessage => Exception?.Message ?? ErrorMessage ?? "Unknown error";
 }
