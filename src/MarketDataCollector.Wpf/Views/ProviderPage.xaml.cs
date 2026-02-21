@@ -66,6 +66,8 @@ public partial class ProviderPage : Page
                 RateLimitPerHour = s.Options.RateLimitPerHour?.ToString() ?? "",
                 ConfigSource = s.EffectiveConfigSource,
                 HealthStatus = s.HealthStatus,
+                RequiresApiKey = s.Metadata.RequiresApiKey,
+                FreeTier = s.Metadata.FreeTier,
             }).ToList();
 
             ProviderSettingsList.ItemsSource = settingsViewModels;
@@ -98,12 +100,31 @@ public partial class ProviderPage : Page
             DisplayName = s.Metadata.DisplayName,
             DataTypes = string.Join(", ", s.Metadata.DataTypes),
             HealthStatus = s.HealthStatus,
+            RateLimitUsage = FormatRateLimitUsage(s),
+            ConfigSource = s.EffectiveConfigSource,
         }).ToList();
 
         FallbackChainList.ItemsSource = chainViewModels;
         EmptyFallbackChainText.Visibility = chain.Count == 0
             ? Visibility.Visible
             : Visibility.Collapsed;
+    }
+
+    private static string FormatRateLimitUsage(BackfillProviderStatusDto status)
+    {
+        var parts = new System.Collections.Generic.List<string>();
+        var limitMin = status.Options.RateLimitPerMinute ?? status.Metadata.DefaultRateLimitPerMinute;
+        var limitHr = status.Options.RateLimitPerHour ?? status.Metadata.DefaultRateLimitPerHour;
+
+        if (limitMin.HasValue)
+            parts.Add($"{status.RequestsUsedMinute}/{limitMin}/min");
+        if (limitHr.HasValue)
+            parts.Add($"{status.RequestsUsedHour}/{limitHr}/hr");
+
+        if (status.IsThrottled)
+            parts.Add("[throttled]");
+
+        return parts.Count > 0 ? string.Join("  ", parts) : "";
     }
 
     private void UpdateAuditLog()
@@ -116,7 +137,7 @@ public partial class ProviderPage : Page
             Action = e.Action,
             Summary = e.Action == "reset"
                 ? "Reset to defaults"
-                : "Configuration updated",
+                : BackfillProviderConfigService.ComputeAuditDeltaSummary(e.PreviousValue, e.NewValue),
         }).ToList();
 
         AuditLogList.ItemsSource = viewModels;
@@ -160,6 +181,24 @@ public partial class ProviderPage : Page
         {
             vm.Priority = priority;
             var options = await BuildOptionsFromViewModel(vm);
+
+            // Inline validation before save
+            var inlineResult = await _configService.ValidateProviderInlineAsync(vm.ProviderId, options);
+            if (!inlineResult.IsValid)
+            {
+                _notificationService.NotifyWarning("Validation", string.Join(" ", inlineResult.Errors));
+                return;
+            }
+
+            if (inlineResult.HasWarnings)
+            {
+                vm.InlineWarning = string.Join("; ", inlineResult.Warnings);
+            }
+            else
+            {
+                vm.InlineWarning = null;
+            }
+
             await _configService.SetBackfillProviderOptionsAsync(vm.ProviderId, options);
 
             var config = await _configService.GetBackfillProvidersConfigAsync();
@@ -180,11 +219,26 @@ public partial class ProviderPage : Page
         try
         {
             var options = await BuildOptionsFromViewModel(vm);
+
+            // Inline validation before save
+            var inlineResult = await _configService.ValidateProviderInlineAsync(vm.ProviderId, options);
+            if (!inlineResult.IsValid)
+            {
+                vm.InlineWarning = string.Join("; ", inlineResult.Errors);
+                _notificationService.NotifyWarning("Validation", string.Join(" ", inlineResult.Errors));
+                return;
+            }
+
+            vm.InlineWarning = inlineResult.HasWarnings
+                ? string.Join("; ", inlineResult.Warnings)
+                : null;
+
             await _configService.SetBackfillProviderOptionsAsync(vm.ProviderId, options);
             UpdateAuditLog();
         }
         catch (ArgumentOutOfRangeException ex)
         {
+            vm.InlineWarning = ex.Message;
             _notificationService.NotifyWarning("Validation", ex.Message);
         }
         catch (Exception ex)
@@ -349,12 +403,15 @@ internal sealed class ProviderSettingsViewModel : INotifyPropertyChanged
     private int _priority;
     private string _rateLimitPerMinute = "";
     private string _rateLimitPerHour = "";
+    private string? _inlineWarning;
 
     public string ProviderId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string DataTypes { get; set; } = string.Empty;
     public string ConfigSource { get; set; } = "default";
     public string HealthStatus { get; set; } = "unknown";
+    public bool RequiresApiKey { get; set; }
+    public bool FreeTier { get; set; }
 
     public bool IsEnabled
     {
@@ -380,6 +437,14 @@ internal sealed class ProviderSettingsViewModel : INotifyPropertyChanged
         set { _rateLimitPerHour = value; OnPropertyChanged(); }
     }
 
+    public string? InlineWarning
+    {
+        get => _inlineWarning;
+        set { _inlineWarning = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasInlineWarning)); }
+    }
+
+    public bool HasInlineWarning => !string.IsNullOrEmpty(_inlineWarning);
+
     public Brush ConfigSourceBrush => ConfigSource switch
     {
         "user" => new SolidColorBrush(Color.FromArgb(40, 0, 120, 212)),
@@ -401,6 +466,8 @@ internal sealed class FallbackChainViewModel
     public string DisplayName { get; set; } = string.Empty;
     public string DataTypes { get; set; } = string.Empty;
     public string HealthStatus { get; set; } = "unknown";
+    public string RateLimitUsage { get; set; } = string.Empty;
+    public string ConfigSource { get; set; } = "default";
 
     public Brush HealthBrush => HealthStatus switch
     {
@@ -408,6 +475,13 @@ internal sealed class FallbackChainViewModel
         "degraded" => new SolidColorBrush(Color.FromRgb(255, 180, 0)),
         "unhealthy" => new SolidColorBrush(Color.FromRgb(255, 60, 60)),
         _ => new SolidColorBrush(Color.FromRgb(128, 128, 128)),
+    };
+
+    public Brush ConfigSourceBrush => ConfigSource switch
+    {
+        "user" => new SolidColorBrush(Color.FromArgb(40, 0, 120, 212)),
+        "env" => new SolidColorBrush(Color.FromArgb(40, 0, 180, 0)),
+        _ => new SolidColorBrush(Color.FromArgb(40, 128, 128, 128)),
     };
 }
 

@@ -296,4 +296,153 @@ public sealed class BackfillProviderConfigServiceTests
         var alpaca = statuses.First(s => s.Metadata.ProviderId == "alpaca");
         alpaca.EffectiveConfigSource.Should().Be("user");
     }
+
+    // Phase 3: Feature flag tests
+
+    [Fact]
+    public async Task GetProviderMetadataAsync_SomeProvidersHaveFeatureFlags()
+    {
+        var service = BackfillProviderConfigService.Instance;
+
+        var metadata = await service.GetProviderMetadataAsync();
+
+        var alpaca = metadata.First(m => m.ProviderId == "alpaca");
+        alpaca.FeatureFlags.Should().NotBeNull();
+        alpaca.FeatureFlags.Should().ContainKey("supportsCrypto");
+    }
+
+    [Fact]
+    public async Task GetProviderFeatureFlagsAsync_ReturnsFlags()
+    {
+        var service = BackfillProviderConfigService.Instance;
+
+        var flags = await service.GetProviderFeatureFlagsAsync("alpaca");
+
+        flags.Should().ContainKey("supportsCrypto");
+        flags["supportsCrypto"].Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetProviderFeatureFlagsAsync_UnknownProvider_ReturnsEmptyDictionary()
+    {
+        var service = BackfillProviderConfigService.Instance;
+
+        var flags = await service.GetProviderFeatureFlagsAsync("nonexistent");
+
+        flags.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task IsProviderFeatureEnabledAsync_ReturnsTrueForKnownFlag()
+    {
+        var service = BackfillProviderConfigService.Instance;
+
+        var result = await service.IsProviderFeatureEnabledAsync("polygon", "supportsAggregates");
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task IsProviderFeatureEnabledAsync_ReturnsFalseForUnknownFlag()
+    {
+        var service = BackfillProviderConfigService.Instance;
+
+        var result = await service.IsProviderFeatureEnabledAsync("alpaca", "nonexistentFlag");
+
+        result.Should().BeFalse();
+    }
+
+    // Phase 4: Audit delta summary tests
+
+    [Fact]
+    public void ComputeAuditDeltaSummary_NullPrevious_ReturnsInitial()
+    {
+        var summary = BackfillProviderConfigService.ComputeAuditDeltaSummary(null, "{}");
+
+        summary.Should().Be("Initial configuration set");
+    }
+
+    [Fact]
+    public void ComputeAuditDeltaSummary_NullNew_ReturnsRemoved()
+    {
+        var summary = BackfillProviderConfigService.ComputeAuditDeltaSummary("{}", null);
+
+        summary.Should().Be("Configuration removed");
+    }
+
+    [Fact]
+    public void ComputeAuditDeltaSummary_PriorityChanged_ShowsDelta()
+    {
+        var prev = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 5,
+        });
+        var next = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 10,
+        });
+
+        var summary = BackfillProviderConfigService.ComputeAuditDeltaSummary(prev, next);
+
+        summary.Should().Contain("Priority: 5");
+        summary.Should().Contain("10");
+    }
+
+    [Fact]
+    public void ComputeAuditDeltaSummary_EnabledChanged_ShowsToggle()
+    {
+        var prev = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 5,
+        });
+        var next = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = false,
+            Priority = 5,
+        });
+
+        var summary = BackfillProviderConfigService.ComputeAuditDeltaSummary(prev, next);
+
+        summary.Should().Contain("Disabled");
+    }
+
+    [Fact]
+    public void ComputeAuditDeltaSummary_NoChange_ReturnsNoChange()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 5,
+        });
+
+        var summary = BackfillProviderConfigService.ComputeAuditDeltaSummary(json, json);
+
+        summary.Should().Be("No change");
+    }
+
+    [Fact]
+    public void ComputeAuditDeltaSummary_MultipleChanges_ShowsAll()
+    {
+        var prev = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 5,
+            RateLimitPerMinute = 200,
+        });
+        var next = System.Text.Json.JsonSerializer.Serialize(new BackfillProviderOptionsDto
+        {
+            Enabled = false,
+            Priority = 10,
+            RateLimitPerMinute = 100,
+        });
+
+        var summary = BackfillProviderConfigService.ComputeAuditDeltaSummary(prev, next);
+
+        summary.Should().Contain("Disabled");
+        summary.Should().Contain("Priority");
+        summary.Should().Contain("Rate/min");
+    }
 }

@@ -1,3 +1,4 @@
+using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Tests.Services;
@@ -173,5 +174,118 @@ public sealed class ConfigServiceTests
 
         // Assert
         await act.Should().NotThrowAsync("reloading config should not throw");
+    }
+
+    [Fact]
+    public void InlineValidationResult_IsValid_WhenNoErrors()
+    {
+        // Act
+        var result = new InlineValidationResult();
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+        result.HasWarnings.Should().BeFalse();
+    }
+
+    [Fact]
+    public void InlineValidationResult_IsNotValid_WhenErrors()
+    {
+        // Act
+        var result = new InlineValidationResult
+        {
+            Errors = ["Priority must be non-negative."]
+        };
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void InlineValidationResult_HasWarnings_WhenWarningsPresent()
+    {
+        // Act
+        var result = new InlineValidationResult
+        {
+            Warnings = ["Priority 10 is shared with another provider."]
+        };
+
+        // Assert
+        result.IsValid.Should().BeTrue("warnings do not invalidate");
+        result.HasWarnings.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateProviderInlineAsync_ValidOptions_ReturnsValid()
+    {
+        // Arrange
+        var service = ConfigService.Instance;
+        await service.InitializeAsync();
+        var options = new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 5,
+            RateLimitPerMinute = 200,
+        };
+
+        // Act
+        var result = await service.ValidateProviderInlineAsync("alpaca", options);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateProviderInlineAsync_NegativePriority_ReturnsError()
+    {
+        // Arrange
+        var service = ConfigService.Instance;
+        await service.InitializeAsync();
+        var options = new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = -1,
+        };
+
+        // Act
+        var result = await service.ValidateProviderInlineAsync("alpaca", options);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.Contains("non-negative"));
+    }
+
+    [Fact]
+    public async Task ValidateProviderInlineAsync_ZeroRateLimit_ReturnsError()
+    {
+        // Arrange
+        var service = ConfigService.Instance;
+        await service.InitializeAsync();
+        var options = new BackfillProviderOptionsDto
+        {
+            Enabled = true,
+            Priority = 5,
+            RateLimitPerMinute = 0,
+        };
+
+        // Act
+        var result = await service.ValidateProviderInlineAsync("alpaca", options);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.Contains("greater than zero"));
+    }
+
+    [Fact]
+    public async Task GetBackfillProvidersConfigAsync_ShouldReturnConfig()
+    {
+        // Arrange
+        var service = ConfigService.Instance;
+        await service.InitializeAsync();
+
+        // Act
+        var config = await service.GetBackfillProvidersConfigAsync();
+
+        // Assert
+        config.Should().NotBeNull();
     }
 }
