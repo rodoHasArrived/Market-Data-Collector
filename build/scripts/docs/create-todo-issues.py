@@ -92,13 +92,22 @@ def load_todos(path: Path) -> list[TodoItem]:
         raise ValueError("Scan JSON field 'todos' must be a list")
 
     items = []
-    for raw in payload.get("todos", []):
+    for index, raw in enumerate(payload.get("todos", [])):
+        try:
+            line_value = raw.get("line", 0)
+            line = int(line_value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid 'line' value for TODO item at index {index} "
+                f"in file {raw.get('file', '<unknown>')!r}: {line_value!r}"
+            ) from exc
+
         items.append(
             TodoItem(
                 type=str(raw.get("type", "TODO")),
                 text=str(raw.get("text", "")).strip(),
                 file=str(raw.get("file", "")),
-                line=int(raw.get("line", 0)),
+                line=line,
                 has_issue=bool(raw.get("has_issue", False)),
                 issue_refs=[str(v) for v in raw.get("issue_refs", [])],
                 priority=str(raw.get("priority", "normal")),
