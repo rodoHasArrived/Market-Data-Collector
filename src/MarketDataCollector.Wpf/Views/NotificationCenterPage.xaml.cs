@@ -76,7 +76,7 @@ public partial class NotificationCenterPage : Page
         });
     }
 
-    private void OnNotificationReceived(object? sender, WpfServices.NotificationEventArgs e)
+    private void OnNotificationReceived(object? sender, NotificationEventArgs e)
     {
         Dispatcher.Invoke(() =>
         {
@@ -438,7 +438,7 @@ public partial class NotificationCenterPage : Page
         _notificationService.ShowNotification(
             "Alert Snoozed",
             "Alert snoozed for 1 hour.",
-            WpfServices.NotificationType.Info);
+            NotificationType.Info);
 
         RefreshGroupedAlerts();
         RefreshAlertSummary();
@@ -460,7 +460,7 @@ public partial class NotificationCenterPage : Page
         _notificationService.ShowNotification(
             "Alert Suppressed",
             $"Similar alerts in \"{category}\" will be suppressed for 24 hours.",
-            WpfServices.NotificationType.Info);
+            NotificationType.Info);
 
         RefreshGroupedAlerts();
         RefreshAlertSummary();
@@ -471,24 +471,24 @@ public partial class NotificationCenterPage : Page
     private NotificationItem CreateNotificationItem(
         string title,
         string message,
-        WpfServices.NotificationType type,
+        NotificationType type,
         DateTime timestamp)
     {
         var (icon, iconColor, iconBackground, typeBackground, typeName) = type switch
         {
-            WpfServices.NotificationType.Error => (
+            NotificationType.Error => (
                 (string)FindResource("IconError"),
                 (Brush)FindResource("ErrorColorBrush"),
                 (Brush)FindResource("ErrorColorBrush"),
                 (Brush)FindResource("ConsoleAccentRedAlpha10Brush"),
                 "Error"),
-            WpfServices.NotificationType.Warning => (
+            NotificationType.Warning => (
                 (string)FindResource("IconWarning"),
                 (Brush)FindResource("WarningColorBrush"),
                 (Brush)FindResource("WarningColorBrush"),
                 (Brush)FindResource("ConsoleAccentOrangeAlpha10Brush"),
                 "Warning"),
-            WpfServices.NotificationType.Success => (
+            NotificationType.Success => (
                 (string)FindResource("IconSuccess"),
                 (Brush)FindResource("SuccessColorBrush"),
                 (Brush)FindResource("SuccessColorBrush"),
@@ -586,10 +586,10 @@ public partial class NotificationCenterPage : Page
         {
             var shouldShow = item.NotificationType switch
             {
-                WpfServices.NotificationType.Error => showErrors,
-                WpfServices.NotificationType.Warning => showWarnings,
-                WpfServices.NotificationType.Success => showSuccess,
-                WpfServices.NotificationType.Info => showInfo,
+                NotificationType.Error => showErrors,
+                NotificationType.Warning => showWarnings,
+                NotificationType.Success => showSuccess,
+                NotificationType.Info => showInfo,
                 _ => showInfo
             };
 
@@ -654,7 +654,7 @@ public partial class NotificationCenterPage : Page
         public string Timestamp { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public DateTime RawTimestamp { get; set; }
-        public WpfServices.NotificationType NotificationType { get; set; }
+        public NotificationType NotificationType { get; set; }
         public bool IsRead { get; set; }
     }
 }
