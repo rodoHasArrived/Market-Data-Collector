@@ -281,7 +281,7 @@ public sealed class SmartRecommendationsService
         return issues;
     }
 
-    private async Task<List<InsightMessage>> GetInsightsAsync(
+    private Task<List<InsightMessage>> GetInsightsAsync(
         AppConfig? config,
         StorageAnalytics? analytics,
         CancellationToken ct)
@@ -388,7 +388,7 @@ public sealed class SmartRecommendationsService
             System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error generating insights: {ex.Message}");
         }
 
-        return insights;
+        return Task.FromResult(insights);
     }
 
     // Helper methods that query actual data from services
