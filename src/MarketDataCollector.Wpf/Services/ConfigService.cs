@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +26,18 @@ public sealed class ConfigServiceValidationResult
         IsValid = false,
         Errors = errors
     };
+}
+
+/// <summary>
+/// Result of inline validation for a single provider field change.
+/// Used to provide immediate feedback in the WPF settings panel.
+/// </summary>
+public sealed class InlineValidationResult
+{
+    public string[] Errors { get; set; } = Array.Empty<string>();
+    public string[] Warnings { get; set; } = Array.Empty<string>();
+    public bool IsValid => Errors.Length == 0;
+    public bool HasWarnings => Warnings.Length > 0;
 }
 
 /// <summary>
@@ -72,6 +86,98 @@ public sealed class ConfigService : ConfigServiceBase
     /// </summary>
     public Task<DataSourcesConfigDto> GetDataSourcesConfigAsync()
         => GetDataSourcesConfigDtoAsync();
+
+    /// <summary>
+    /// Gets the data sources configuration. Convenience alias for WPF views.
+    /// </summary>
+    public Task<DataSourcesConfigDto> GetDataSourcesAsync()
+        => GetDataSourcesConfigDtoAsync();
+
+    /// <summary>
+    /// Gets configured symbols. Convenience alias for WPF views.
+    /// </summary>
+    public Task<SymbolConfigDto[]> GetSymbolsAsync()
+        => GetConfiguredSymbolsAsync();
+
+    /// <summary>
+    /// Saves the full data sources configuration. Replaces all sources.
+    /// </summary>
+    public async Task SaveDataSourcesAsync(DataSourcesConfigDto dataSources, CancellationToken ct = default)
+    {
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        config.DataSources = dataSources;
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    /// <summary>
+    /// Gets the currently active data source identifier from configuration.
+    /// Returns null when no active source is set.
+    /// </summary>
+    public async Task<string?> GetActiveDataSourceAsync(CancellationToken ct = default)
+    {
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        return config.DataSource;
+    }
+
+    /// <summary>
+    /// Reloads the configuration from disk.
+    /// Call after an external edit to the config file.
+    /// </summary>
+    public async Task ReloadConfigAsync(CancellationToken ct = default)
+    {
+        // Simply re-read from disk — LoadConfigCoreAsync already reads fresh each call.
+        await LoadConfigCoreAsync(ct);
+    }
+
+    /// <summary>
+    /// Validates a single provider's options inline (for real-time field validation).
+    /// Returns a list of validation messages (empty if valid).
+    /// </summary>
+    public async Task<InlineValidationResult> ValidateProviderInlineAsync(
+        string providerId,
+        BackfillProviderOptionsDto options,
+        CancellationToken ct = default)
+    {
+        var warnings = new List<string>();
+        var errors = new List<string>();
+
+        if (options.Priority is < 0)
+        {
+            errors.Add("Priority must be a non-negative integer.");
+        }
+
+        if (options.RateLimitPerMinute is <= 0)
+        {
+            errors.Add("Rate limit per minute must be greater than zero.");
+        }
+
+        if (options.RateLimitPerHour is <= 0)
+        {
+            errors.Add("Rate limit per hour must be greater than zero.");
+        }
+
+        // Check for duplicate priorities against other providers
+        if (options.Priority.HasValue)
+        {
+            var providers = await GetBackfillProvidersConfigAsync(ct);
+            foreach (var (otherId, otherOpts) in EnumerateProviders(providers))
+            {
+                if (string.Equals(otherId, NormalizeProviderId(providerId), StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (otherOpts?.Enabled == true && otherOpts.Priority == options.Priority)
+                {
+                    warnings.Add($"Priority {options.Priority} is also used by '{otherId}'. Fallback order may be ambiguous.");
+                    break;
+                }
+            }
+        }
+
+        return new InlineValidationResult
+        {
+            Errors = errors.ToArray(),
+            Warnings = warnings.ToArray(),
+        };
+    }
 
     /// <summary>
     /// Adds or updates a single backfill provider configuration entry.

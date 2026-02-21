@@ -47,6 +47,11 @@ public sealed class BackfillProviderConfigService
                 FreeTier = true,
                 DefaultPriority = 5,
                 DefaultRateLimitPerMinute = 200,
+                FeatureFlags = new Dictionary<string, bool>
+                {
+                    ["supportsCrypto"] = true,
+                    ["supportsExtendedHours"] = true,
+                },
             },
             new()
             {
@@ -58,6 +63,11 @@ public sealed class BackfillProviderConfigService
                 FreeTier = false,
                 DefaultPriority = 12,
                 DefaultRateLimitPerMinute = 5,
+                FeatureFlags = new Dictionary<string, bool>
+                {
+                    ["supportsAggregates"] = true,
+                    ["supportsSnapshots"] = true,
+                },
             },
             new()
             {
@@ -69,6 +79,10 @@ public sealed class BackfillProviderConfigService
                 FreeTier = true,
                 DefaultPriority = 15,
                 DefaultRateLimitPerHour = 500,
+                FeatureFlags = new Dictionary<string, bool>
+                {
+                    ["supportsCrypto"] = true,
+                },
             },
             new()
             {
@@ -80,6 +94,10 @@ public sealed class BackfillProviderConfigService
                 FreeTier = true,
                 DefaultPriority = 20,
                 DefaultRateLimitPerMinute = 60,
+                FeatureFlags = new Dictionary<string, bool>
+                {
+                    ["supportsInternational"] = true,
+                },
             },
             new()
             {
@@ -100,6 +118,10 @@ public sealed class BackfillProviderConfigService
                 RequiresApiKey = false,
                 FreeTier = true,
                 DefaultPriority = 30,
+                FeatureFlags = new Dictionary<string, bool>
+                {
+                    ["unofficial"] = true,
+                },
             },
             new()
             {
@@ -130,12 +152,14 @@ public sealed class BackfillProviderConfigService
 
     /// <summary>
     /// Gets combined status view of all providers including config, health, and rate limit usage.
+    /// Attempts to fetch live health from the backend API; falls back to defaults on failure.
     /// </summary>
     public async Task<List<BackfillProviderStatusDto>> GetProviderStatusesAsync(
         BackfillProvidersConfigDto? config,
         CancellationToken ct = default)
     {
         var metadata = await GetProviderMetadataAsync(ct);
+        var healthData = await TryFetchProviderHealthAsync(ct);
         var result = new List<BackfillProviderStatusDto>();
 
         foreach (var meta in metadata)
@@ -144,7 +168,7 @@ public sealed class BackfillProviderConfigService
             var effectiveSource = DetermineConfigSource(options, meta);
             meta.ConfigSource = effectiveSource;
 
-            result.Add(new BackfillProviderStatusDto
+            var status = new BackfillProviderStatusDto
             {
                 Metadata = meta,
                 Options = options ?? new BackfillProviderOptionsDto
@@ -155,7 +179,19 @@ public sealed class BackfillProviderConfigService
                     RateLimitPerHour = meta.DefaultRateLimitPerHour,
                 },
                 EffectiveConfigSource = effectiveSource,
-            });
+            };
+
+            // Merge live health data when available
+            if (healthData.TryGetValue(meta.ProviderId, out var health))
+            {
+                status.HealthStatus = health.Status;
+                status.RequestsUsedMinute = health.RequestsUsedMinute;
+                status.RequestsUsedHour = health.RequestsUsedHour;
+                status.IsThrottled = health.IsThrottled;
+                status.LastUsed = health.LastUsed;
+            }
+
+            result.Add(status);
         }
 
         // Sort by effective priority (enabled first, then by priority)
@@ -248,6 +284,34 @@ public sealed class BackfillProviderConfigService
     }
 
     /// <summary>
+    /// Gets the feature flags for a specific provider.
+    /// Used to conditionally show/hide UI elements for provider-specific capabilities.
+    /// </summary>
+    public async Task<Dictionary<string, bool>> GetProviderFeatureFlagsAsync(
+        string providerId,
+        CancellationToken ct = default)
+    {
+        var metadata = await GetProviderMetadataAsync(ct);
+        var meta = metadata.FirstOrDefault(m =>
+            string.Equals(m.ProviderId, providerId, StringComparison.OrdinalIgnoreCase));
+
+        return meta?.FeatureFlags ?? new Dictionary<string, bool>();
+    }
+
+    /// <summary>
+    /// Checks whether a specific feature flag is enabled for a provider.
+    /// Returns false if the provider or flag is not found.
+    /// </summary>
+    public async Task<bool> IsProviderFeatureEnabledAsync(
+        string providerId,
+        string featureFlag,
+        CancellationToken ct = default)
+    {
+        var flags = await GetProviderFeatureFlagsAsync(providerId, ct);
+        return flags.TryGetValue(featureFlag, out var enabled) && enabled;
+    }
+
+    /// <summary>
     /// Gets the default options for a provider, using its metadata defaults.
     /// </summary>
     public async Task<BackfillProviderOptionsDto> GetDefaultOptionsAsync(
@@ -337,6 +401,73 @@ public sealed class BackfillProviderConfigService
         };
     }
 
+    /// <summary>
+    /// Attempts to fetch live provider health data from the backend API.
+    /// Returns an empty dictionary on failure (offline-first design).
+    /// </summary>
+    private async Task<Dictionary<string, ProviderHealthSnapshot>> TryFetchProviderHealthAsync(CancellationToken ct)
+    {
+        var result = new Dictionary<string, ProviderHealthSnapshot>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            var statuses = await _apiClient.GetAsync<BackfillProviderStatusDto[]>(
+                "/api/backfill/providers/statuses", ct);
+
+            if (statuses != null)
+            {
+                foreach (var s in statuses)
+                {
+                    result[s.Metadata.ProviderId] = new ProviderHealthSnapshot(
+                        s.HealthStatus,
+                        s.RequestsUsedMinute,
+                        s.RequestsUsedHour,
+                        s.IsThrottled,
+                        s.LastUsed);
+                }
+            }
+        }
+        catch
+        {
+            // Offline — return empty so the UI still works with local config.
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Computes a human-readable summary of the delta between previous and new provider options.
+    /// Used by the audit log display.
+    /// </summary>
+    public static string ComputeAuditDeltaSummary(string? previousJson, string? newJson)
+    {
+        if (previousJson == null) return "Initial configuration set";
+        if (newJson == null) return "Configuration removed";
+
+        try
+        {
+            var prev = System.Text.Json.JsonSerializer.Deserialize<BackfillProviderOptionsDto>(previousJson);
+            var next = System.Text.Json.JsonSerializer.Deserialize<BackfillProviderOptionsDto>(newJson);
+            if (prev == null || next == null) return "Configuration updated";
+
+            var changes = new List<string>();
+            if (prev.Enabled != next.Enabled)
+                changes.Add(next.Enabled ? "Enabled" : "Disabled");
+            if (prev.Priority != next.Priority)
+                changes.Add($"Priority: {prev.Priority ?? 0} → {next.Priority ?? 0}");
+            if (prev.RateLimitPerMinute != next.RateLimitPerMinute)
+                changes.Add($"Rate/min: {prev.RateLimitPerMinute?.ToString() ?? "default"} → {next.RateLimitPerMinute?.ToString() ?? "default"}");
+            if (prev.RateLimitPerHour != next.RateLimitPerHour)
+                changes.Add($"Rate/hr: {prev.RateLimitPerHour?.ToString() ?? "default"} → {next.RateLimitPerHour?.ToString() ?? "default"}");
+
+            return changes.Count > 0 ? string.Join("; ", changes) : "No change";
+        }
+        catch
+        {
+            return "Configuration updated";
+        }
+    }
+
     private static string DetermineConfigSource(
         BackfillProviderOptionsDto? options,
         BackfillProviderMetadataDto metadata)
@@ -359,4 +490,11 @@ public sealed class BackfillProviderConfigService
 
         return "user";
     }
+
+    private sealed record ProviderHealthSnapshot(
+        string Status,
+        int RequestsUsedMinute,
+        int RequestsUsedHour,
+        bool IsThrottled,
+        DateTime? LastUsed);
 }

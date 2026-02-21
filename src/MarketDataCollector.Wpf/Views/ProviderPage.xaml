@@ -8,6 +8,10 @@
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
       Loaded="OnPageLoaded">
 
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Page.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">
 
@@ -254,80 +258,94 @@
                             <DataTemplate>
                                 <Border Padding="12,10" BorderThickness="0,0,0,1"
                                         BorderBrush="{StaticResource ConsoleBorderBrush}">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="50" />
-                                            <ColumnDefinition Width="140" />
-                                            <ColumnDefinition Width="70" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="100" />
-                                        </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="50" />
+                                                <ColumnDefinition Width="140" />
+                                                <ColumnDefinition Width="70" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="80" />
+                                                <ColumnDefinition Width="100" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <!-- Enabled Toggle -->
-                                        <CheckBox Grid.Column="0"
-                                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                                                  VerticalAlignment="Center"
-                                                  Checked="ProviderToggle_Changed"
-                                                  Unchecked="ProviderToggle_Changed" />
+                                            <!-- Enabled Toggle -->
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                                      VerticalAlignment="Center"
+                                                      Checked="ProviderToggle_Changed"
+                                                      Unchecked="ProviderToggle_Changed" />
 
-                                        <!-- Provider Name -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" FontSize="13" />
-                                            <TextBlock Text="{Binding ProviderId}"
-                                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                                       FontSize="10" />
-                                        </StackPanel>
+                                            <!-- Provider Name -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource ConsoleTextPrimaryBrush}" FontSize="13" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding ProviderId}"
+                                                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                               FontSize="10" />
+                                                    <TextBlock Text=" (free)" FontSize="10"
+                                                               Foreground="{StaticResource SuccessColorBrush}"
+                                                               Visibility="{Binding FreeTier, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                </StackPanel>
+                                            </StackPanel>
 
-                                        <!-- Priority -->
-                                        <TextBox Grid.Column="2"
-                                                 Text="{Binding Priority, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                 VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                 Width="50" FontSize="12"
-                                                 LostFocus="PriorityField_LostFocus" />
+                                            <!-- Priority -->
+                                            <TextBox Grid.Column="2"
+                                                     Text="{Binding Priority, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                     Width="50" FontSize="12"
+                                                     LostFocus="PriorityField_LostFocus" />
 
-                                        <!-- Data Types -->
-                                        <TextBlock Grid.Column="3"
-                                                   Text="{Binding DataTypes}"
-                                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                            <!-- Data Types -->
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding DataTypes}"
+                                                       Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" FontSize="12"
+                                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
 
-                                        <!-- Rate Limit Per Minute -->
-                                        <TextBox Grid.Column="4"
-                                                 Text="{Binding RateLimitPerMinute, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                 VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                 Width="70" FontSize="12"
-                                                 LostFocus="RateLimitField_LostFocus" />
+                                            <!-- Rate Limit Per Minute -->
+                                            <TextBox Grid.Column="4"
+                                                     Text="{Binding RateLimitPerMinute, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                     Width="70" FontSize="12"
+                                                     LostFocus="RateLimitField_LostFocus" />
 
-                                        <!-- Rate Limit Per Hour -->
-                                        <TextBox Grid.Column="5"
-                                                 Text="{Binding RateLimitPerHour, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                 VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                 Width="70" FontSize="12"
-                                                 LostFocus="RateLimitField_LostFocus" />
+                                            <!-- Rate Limit Per Hour -->
+                                            <TextBox Grid.Column="5"
+                                                     Text="{Binding RateLimitPerHour, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                     Width="70" FontSize="12"
+                                                     LostFocus="RateLimitField_LostFocus" />
 
-                                        <!-- Config Source Badge -->
-                                        <Border Grid.Column="6"
-                                                Background="{Binding ConfigSourceBrush}"
-                                                CornerRadius="4" Padding="6,2"
-                                                HorizontalAlignment="Left" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding ConfigSource}"
-                                                       FontSize="10" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
-                                        </Border>
+                                            <!-- Config Source Badge -->
+                                            <Border Grid.Column="6"
+                                                    Background="{Binding ConfigSourceBrush}"
+                                                    CornerRadius="4" Padding="6,2"
+                                                    HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ConfigSource}"
+                                                           FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                            </Border>
 
-                                        <!-- Reset Button -->
-                                        <Button Grid.Column="7" Content="Reset"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                Tag="{Binding ProviderId}"
-                                                Click="ResetProvider_Click"
-                                                VerticalAlignment="Center"
-                                                FontSize="11" Padding="8,3" />
-                                    </Grid>
+                                            <!-- Reset Button -->
+                                            <Button Grid.Column="7" Content="Reset"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Tag="{Binding ProviderId}"
+                                                    Click="ResetProvider_Click"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="11" Padding="8,3" />
+                                        </Grid>
+
+                                        <!-- Inline validation warning (shown below the row) -->
+                                        <TextBlock Text="{Binding InlineWarning}"
+                                                   Foreground="{StaticResource WarningColorBrush}"
+                                                   FontSize="11" Margin="50,2,0,0"
+                                                   TextWrapping="Wrap"
+                                                   Visibility="{Binding HasInlineWarning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -356,6 +374,8 @@
                                             <ColumnDefinition Width="130" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Priority badge -->
@@ -376,8 +396,26 @@
                                                    Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                                    VerticalAlignment="Center" FontSize="12" />
 
+                                        <!-- Rate limit usage -->
+                                        <TextBlock Grid.Column="3" Text="{Binding RateLimitUsage}"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   VerticalAlignment="Center" FontSize="11"
+                                                   Margin="8,0" />
+
+                                        <!-- Config source badge -->
+                                        <Border Grid.Column="4"
+                                                Background="{Binding ConfigSourceBrush}"
+                                                CornerRadius="4" Padding="4,1"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                Margin="4,0">
+                                            <TextBlock Text="{Binding ConfigSource}"
+                                                       FontSize="9" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                        </Border>
+
                                         <!-- Health indicator -->
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center"
+                                                    Margin="8,0,0,0">
                                             <Ellipse Width="8" Height="8"
                                                      Fill="{Binding HealthBrush}"
                                                      VerticalAlignment="Center" Margin="0,0,6,0" />
