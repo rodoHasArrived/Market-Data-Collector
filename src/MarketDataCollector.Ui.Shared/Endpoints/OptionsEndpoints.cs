@@ -136,13 +136,7 @@ public static class OptionsEndpoints
             var quotes = collector.GetQuotesForUnderlying(underlyingSymbol);
             var dtos = quotes.Select(MapQuoteToDto).ToList();
 
-            return Results.Json(new
-            {
-                underlyingSymbol,
-                quotes = dtos,
-                count = dtos.Count,
-                timestamp = DateTimeOffset.UtcNow
-            }, jsonOptions);
+            return Results.Json(dtos, jsonOptions);
         })
         .WithName("GetOptionQuotesByUnderlying")
         .Produces(200)
