@@ -45,6 +45,9 @@ public sealed class SubscriptionOrchestrator
         _ib = ibClient ?? throw new ArgumentNullException(nameof(ibClient));
         _log = log ?? LoggingSetup.ForContext<SubscriptionOrchestrator>();
         _optionCollector = optionCollector;
+
+        if (_optionCollector is not null)
+            _log.Information("OptionDataCollector available; option subscriptions will be routed through the collector");
     }
 
     public IReadOnlyDictionary<string, int> DepthSubscriptions => _depthSubs;

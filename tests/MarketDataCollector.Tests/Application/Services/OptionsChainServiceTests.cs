@@ -68,6 +68,84 @@ public sealed class OptionsChainServiceTests
 
     #endregion
 
+    #region Input Validation Tests
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetExpirationsAsync_WithInvalidSymbol_ThrowsArgumentException(string? symbol)
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.GetExpirationsAsync(symbol!);
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetStrikesAsync_WithInvalidSymbol_ThrowsArgumentException(string? symbol)
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.GetStrikesAsync(symbol!, new DateOnly(2026, 3, 21));
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task FetchChainSnapshotAsync_WithInvalidSymbol_ThrowsArgumentException(string? symbol)
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.FetchChainSnapshotAsync(symbol!, new DateOnly(2026, 3, 21));
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task FetchOptionQuoteAsync_WithNullContract_ThrowsArgumentNullException()
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.FetchOptionQuoteAsync(null!);
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetCachedChain_WithInvalidSymbol_ThrowsArgumentException(string? symbol)
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.GetCachedChain(symbol!, new DateOnly(2026, 3, 21));
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetCachedChainsForUnderlying_WithInvalidSymbol_ThrowsArgumentException(string? symbol)
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.GetCachedChainsForUnderlying(symbol!);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetQuotesForUnderlying_WithInvalidSymbol_ThrowsArgumentException(string? symbol)
+    {
+        var sut = CreateService(_providerMock.Object);
+        var act = () => sut.GetQuotesForUnderlying(symbol!);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    #endregion
+
     #region GetExpirationsAsync Tests
 
     [Fact]

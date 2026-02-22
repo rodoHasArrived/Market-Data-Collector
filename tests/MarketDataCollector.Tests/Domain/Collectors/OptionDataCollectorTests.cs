@@ -312,6 +312,34 @@ public sealed class OptionDataCollectorTests
         _sut.GetLatestQuote(contract).Should().BeNull();
     }
 
+    [Fact]
+    public void GetLatestQuote_WithNullContract_ThrowsArgumentNullException()
+    {
+        var act = () => _sut.GetLatestQuote(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void GetLatestGreeks_WithNullContract_ThrowsArgumentNullException()
+    {
+        var act = () => _sut.GetLatestGreeks(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void GetLatestOpenInterest_WithNullContract_ThrowsArgumentNullException()
+    {
+        var act = () => _sut.GetLatestOpenInterest(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void GetRecentTrades_WithNullContract_ThrowsArgumentNullException()
+    {
+        var act = () => _sut.GetRecentTrades(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
     #endregion
 
     #region Helpers

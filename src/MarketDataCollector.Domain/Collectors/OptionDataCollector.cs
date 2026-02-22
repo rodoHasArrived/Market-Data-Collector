@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Infrastructure.Contracts;
 
 namespace MarketDataCollector.Domain.Collectors;
 
@@ -9,6 +10,8 @@ namespace MarketDataCollector.Domain.Collectors;
 /// Captures option quotes, trades, greeks, and chain snapshots,
 /// maintains per-contract state, and emits unified MarketEvents.
 /// </summary>
+[ImplementsAdr("ADR-001", "Option data collector implementing domain event publication")]
+[ImplementsAdr("ADR-006", "Polymorphic MarketEvent payloads for option data types")]
 public sealed class OptionDataCollector
 {
     private readonly IMarketEventPublisher _publisher;
@@ -113,6 +116,7 @@ public sealed class OptionDataCollector
     /// </summary>
     public OptionQuote? GetLatestQuote(OptionContractSpec contract)
     {
+        ArgumentNullException.ThrowIfNull(contract);
         var key = BuildContractKey(contract);
         return _latestQuotes.TryGetValue(key, out var quote) ? quote : null;
     }
@@ -122,6 +126,7 @@ public sealed class OptionDataCollector
     /// </summary>
     public GreeksSnapshot? GetLatestGreeks(OptionContractSpec contract)
     {
+        ArgumentNullException.ThrowIfNull(contract);
         var key = BuildContractKey(contract);
         return _latestGreeks.TryGetValue(key, out var greeks) ? greeks : null;
     }
@@ -161,6 +166,7 @@ public sealed class OptionDataCollector
     /// </summary>
     public OpenInterestUpdate? GetLatestOpenInterest(OptionContractSpec contract)
     {
+        ArgumentNullException.ThrowIfNull(contract);
         var key = BuildContractKey(contract);
         return _latestOpenInterest.TryGetValue(key, out var oi) ? oi : null;
     }
@@ -170,6 +176,7 @@ public sealed class OptionDataCollector
     /// </summary>
     public IReadOnlyList<OptionTrade> GetRecentTrades(OptionContractSpec contract, int limit = 50)
     {
+        ArgumentNullException.ThrowIfNull(contract);
         var key = BuildContractKey(contract);
         if (!_recentTrades.TryGetValue(key, out var ring))
             return Array.Empty<OptionTrade>();

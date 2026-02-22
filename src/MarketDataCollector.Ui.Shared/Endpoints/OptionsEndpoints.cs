@@ -26,14 +26,12 @@ public static class OptionsEndpoints
         // GET /api/options/expirations/{underlyingSymbol} — available expirations
         group.MapGet(UiApiRoutes.OptionsExpirations, async (string underlyingSymbol, HttpContext ctx, CancellationToken ct) =>
         {
+            if (string.IsNullOrWhiteSpace(underlyingSymbol))
+                return ValidationError("underlyingSymbol", "Underlying symbol is required.", jsonOptions);
+
             var service = ctx.RequestServices.GetService<OptionsChainService>();
             if (service is null)
-            {
-                return Results.Json(
-                    new { error = "Options chain service not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionsChainService", jsonOptions);
 
             var expirations = await service.GetExpirationsAsync(underlyingSymbol, ct);
 
@@ -45,27 +43,21 @@ public static class OptionsEndpoints
         })
         .WithName("GetOptionsExpirations")
         .Produces(200)
+        .Produces(400)
         .Produces(503);
 
         // GET /api/options/strikes/{underlyingSymbol}/{expiration} — available strikes
         group.MapGet(UiApiRoutes.OptionsStrikes, async (string underlyingSymbol, string expiration, HttpContext ctx, CancellationToken ct) =>
         {
+            if (string.IsNullOrWhiteSpace(underlyingSymbol))
+                return ValidationError("underlyingSymbol", "Underlying symbol is required.", jsonOptions);
+
             var service = ctx.RequestServices.GetService<OptionsChainService>();
             if (service is null)
-            {
-                return Results.Json(
-                    new { error = "Options chain service not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionsChainService", jsonOptions);
 
             if (!DateOnly.TryParse(expiration, out var expirationDate))
-            {
-                return Results.Json(
-                    new { error = "Invalid expiration date format. Use yyyy-MM-dd." },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
+                return ValidationError("expiration", "Invalid expiration date format. Use yyyy-MM-dd.", jsonOptions);
 
             var strikes = await service.GetStrikesAsync(underlyingSymbol, expirationDate, ct);
 
@@ -84,25 +76,18 @@ public static class OptionsEndpoints
         // GET /api/options/chains/{underlyingSymbol} — option chain snapshot
         group.MapGet(UiApiRoutes.OptionsChains, async (string underlyingSymbol, string? expiration, int? strikeRange, HttpContext ctx, CancellationToken ct) =>
         {
+            if (string.IsNullOrWhiteSpace(underlyingSymbol))
+                return ValidationError("underlyingSymbol", "Underlying symbol is required.", jsonOptions);
+
             var service = ctx.RequestServices.GetService<OptionsChainService>();
             if (service is null)
-            {
-                return Results.Json(
-                    new { error = "Options chain service not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionsChainService", jsonOptions);
 
             // If expiration is specified, fetch that specific chain
             if (!string.IsNullOrWhiteSpace(expiration))
             {
                 if (!DateOnly.TryParse(expiration, out var expirationDate))
-                {
-                    return Results.Json(
-                        new { error = "Invalid expiration date format. Use yyyy-MM-dd." },
-                        jsonOptions,
-                        statusCode: StatusCodes.Status400BadRequest);
-                }
+                    return ValidationError("expiration", "Invalid expiration date format. Use yyyy-MM-dd.", jsonOptions);
 
                 // Try cache first, then fetch from provider
                 var chain = service.GetCachedChain(underlyingSymbol, expirationDate)
@@ -111,7 +96,7 @@ public static class OptionsEndpoints
                 if (chain is null)
                 {
                     return Results.Json(
-                        new { error = "No chain data available", underlyingSymbol, expiration },
+                        ErrorResponse.NotFound("OptionChain", $"{underlyingSymbol}/{expiration}"),
                         jsonOptions,
                         statusCode: StatusCodes.Status404NotFound);
                 }
@@ -124,7 +109,7 @@ public static class OptionsEndpoints
             if (chains.Count == 0)
             {
                 return Results.Json(
-                    new { error = "No chain data available for underlying", underlyingSymbol },
+                    ErrorResponse.NotFound("OptionChain", underlyingSymbol),
                     jsonOptions,
                     statusCode: StatusCodes.Status404NotFound);
             }
@@ -141,14 +126,12 @@ public static class OptionsEndpoints
         // GET /api/options/quotes/{underlyingSymbol} — all option quotes for an underlying
         group.MapGet(UiApiRoutes.OptionsQuotesByUnderlying, (string underlyingSymbol, HttpContext ctx) =>
         {
+            if (string.IsNullOrWhiteSpace(underlyingSymbol))
+                return ValidationError("underlyingSymbol", "Underlying symbol is required.", jsonOptions);
+
             var collector = ctx.RequestServices.GetService<OptionDataCollector>();
             if (collector is null)
-            {
-                return Results.Json(
-                    new { error = "Option data collector not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionDataCollector", jsonOptions);
 
             var quotes = collector.GetQuotesForUnderlying(underlyingSymbol);
             var dtos = quotes.Select(MapQuoteToDto).ToList();
@@ -163,6 +146,7 @@ public static class OptionsEndpoints
         })
         .WithName("GetOptionQuotesByUnderlying")
         .Produces(200)
+        .Produces(400)
         .Produces(503);
 
         // GET /api/options/summary — option data summary
@@ -170,12 +154,7 @@ public static class OptionsEndpoints
         {
             var service = ctx.RequestServices.GetService<OptionsChainService>();
             if (service is null)
-            {
-                return Results.Json(
-                    new { error = "Options chain service not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionsChainService", jsonOptions);
 
             var summary = service.GetSummary();
 
@@ -197,12 +176,7 @@ public static class OptionsEndpoints
         {
             var collector = ctx.RequestServices.GetService<OptionDataCollector>();
             if (collector is null)
-            {
-                return Results.Json(
-                    new { error = "Option data collector not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionDataCollector", jsonOptions);
 
             var underlyings = collector.GetTrackedUnderlyings();
 
@@ -222,30 +196,23 @@ public static class OptionsEndpoints
         {
             var service = ctx.RequestServices.GetService<OptionsChainService>();
             if (service is null)
-            {
-                return Results.Json(
-                    new { error = "Options chain service not available" },
-                    jsonOptions,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
+                return ServiceUnavailableError("OptionsChainService", jsonOptions);
 
             if (!service.IsProviderAvailable)
             {
                 return Results.Json(
-                    new { error = "No options chain provider configured" },
+                    ErrorResponse.ServiceUnavailable("OptionsChainProvider", "No options chain provider configured"),
                     jsonOptions,
                     statusCode: StatusCodes.Status503ServiceUnavailable);
             }
 
             if (request?.UnderlyingSymbol is not null && request?.Expiration is not null)
             {
+                if (string.IsNullOrWhiteSpace(request.UnderlyingSymbol))
+                    return ValidationError("underlyingSymbol", "Underlying symbol cannot be empty.", jsonOptions);
+
                 if (!DateOnly.TryParse(request.Expiration, out var expDate))
-                {
-                    return Results.Json(
-                        new { error = "Invalid expiration date format. Use yyyy-MM-dd." },
-                        jsonOptions,
-                        statusCode: StatusCodes.Status400BadRequest);
-                }
+                    return ValidationError("expiration", "Invalid expiration date format. Use yyyy-MM-dd.", jsonOptions);
 
                 var chain = await service.FetchChainSnapshotAsync(
                     request.UnderlyingSymbol, expDate, request.StrikeRange, ct);
@@ -260,16 +227,31 @@ public static class OptionsEndpoints
                 }, jsonOptions);
             }
 
-            return Results.Json(new
-            {
-                message = "Specify underlyingSymbol and expiration to refresh a specific chain",
-                timestamp = DateTimeOffset.UtcNow
-            }, jsonOptions);
+            return Results.Json(
+                ErrorResponse.Validation("Specify underlyingSymbol and expiration to refresh a specific chain"),
+                jsonOptions,
+                statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("RefreshOptionsData")
         .Produces(200)
         .Produces(400)
         .Produces(503);
+    }
+
+    private static IResult ServiceUnavailableError(string serviceName, JsonSerializerOptions jsonOptions)
+    {
+        return Results.Json(
+            ErrorResponse.ServiceUnavailable(serviceName),
+            jsonOptions,
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    private static IResult ValidationError(string field, string message, JsonSerializerOptions jsonOptions)
+    {
+        return Results.Json(
+            ErrorResponse.Validation(message, new[] { new FieldError(field, message) }),
+            jsonOptions,
+            statusCode: StatusCodes.Status400BadRequest);
     }
 
     private static OptionsChainResponse MapChainToResponse(OptionChainSnapshot chain)

@@ -2,6 +2,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +12,8 @@ namespace MarketDataCollector.Application.Services;
 /// Application service that orchestrates option chain discovery, filtering,
 /// and periodic snapshot collection based on <see cref="DerivativesConfig"/>.
 /// </summary>
+[ImplementsAdr("ADR-001", "Options chain service implementing provider abstraction")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken for graceful cancellation")]
 public sealed class OptionsChainService
 {
     private readonly OptionDataCollector _collector;
@@ -39,6 +42,8 @@ public sealed class OptionsChainService
         string underlyingSymbol,
         CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(underlyingSymbol);
+
         if (_provider is null)
         {
             _logger.LogWarning("No options chain provider configured; returning empty expirations for {Symbol}", underlyingSymbol);
@@ -56,6 +61,8 @@ public sealed class OptionsChainService
         DateOnly expiration,
         CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(underlyingSymbol);
+
         if (_provider is null)
         {
             _logger.LogWarning("No options chain provider configured; returning empty strikes for {Symbol}", underlyingSymbol);
@@ -75,6 +82,8 @@ public sealed class OptionsChainService
         int? strikeRange = null,
         CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(underlyingSymbol);
+
         if (_provider is null)
         {
             _logger.LogWarning("No options chain provider configured; cannot fetch chain for {Symbol}", underlyingSymbol);
@@ -102,6 +111,8 @@ public sealed class OptionsChainService
         OptionContractSpec contract,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(contract);
+
         if (_provider is null)
         {
             _logger.LogWarning("No options chain provider configured; cannot fetch quote for {Contract}", contract);
@@ -162,7 +173,9 @@ public sealed class OptionsChainService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogWarning(ex, "Failed to fetch option chains for {Symbol}", underlying);
+                _logger.LogWarning(ex,
+                    "Failed to fetch option chains for {Symbol}: {ErrorType}",
+                    underlying, ex.GetType().Name);
             }
         }
 
@@ -177,19 +190,28 @@ public sealed class OptionsChainService
     /// Returns the latest cached chain snapshot for an underlying and expiration.
     /// </summary>
     public OptionChainSnapshot? GetCachedChain(string underlyingSymbol, DateOnly expiration)
-        => _collector.GetLatestChain(underlyingSymbol, expiration);
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(underlyingSymbol);
+        return _collector.GetLatestChain(underlyingSymbol, expiration);
+    }
 
     /// <summary>
     /// Returns all cached chain snapshots for an underlying symbol.
     /// </summary>
     public IReadOnlyList<OptionChainSnapshot> GetCachedChainsForUnderlying(string underlyingSymbol)
-        => _collector.GetChainsForUnderlying(underlyingSymbol);
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(underlyingSymbol);
+        return _collector.GetChainsForUnderlying(underlyingSymbol);
+    }
 
     /// <summary>
     /// Returns all option quotes for an underlying symbol.
     /// </summary>
     public IReadOnlyList<OptionQuote> GetQuotesForUnderlying(string underlyingSymbol)
-        => _collector.GetQuotesForUnderlying(underlyingSymbol);
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(underlyingSymbol);
+        return _collector.GetQuotesForUnderlying(underlyingSymbol);
+    }
 
     /// <summary>
     /// Returns a summary of collected option data.
