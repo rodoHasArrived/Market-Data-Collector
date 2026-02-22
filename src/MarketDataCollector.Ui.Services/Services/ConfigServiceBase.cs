@@ -398,7 +398,7 @@ public abstract class ConfigServiceBase
         }
     }
 
-    protected internal static string NormalizeProviderId(string providerId)
+    public static string NormalizeProviderId(string providerId)
     {
         var normalized = providerId.Trim().ToLowerInvariant();
         return normalized switch

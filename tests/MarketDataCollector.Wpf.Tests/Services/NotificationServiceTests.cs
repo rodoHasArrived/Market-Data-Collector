@@ -1,4 +1,5 @@
 using MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf.Tests.Services;
 
