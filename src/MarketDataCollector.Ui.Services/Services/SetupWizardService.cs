@@ -594,6 +594,36 @@ public sealed class SetupWizardService
             },
             new()
             {
+                Id = "options-trader",
+                Name = "Options Trader",
+                Description = "Options chain monitoring with underlying and Greeks tracking",
+                Icon = "\uE9CE",
+                RecommendedProviders = new[] { "Interactive Brokers", "Polygon", "Alpaca" },
+                DefaultSymbols = new[] { "SPY", "QQQ", "AAPL", "TSLA", "IWM", "GLD" },
+                SubscribeTrades = true,
+                SubscribeDepth = true,
+                SubscribeQuotes = true,
+                DepthLevels = 5,
+                EnableBackfill = true,
+                StorageTier = "Hot"
+            },
+            new()
+            {
+                Id = "crypto-enthusiast",
+                Name = "Crypto Enthusiast",
+                Description = "Cryptocurrency market data with 24/7 streaming support",
+                Icon = "\uEA3F",
+                RecommendedProviders = new[] { "Alpaca", "Polygon", "StockSharp" },
+                DefaultSymbols = new[] { "BTC/USD", "ETH/USD", "SOL/USD", "DOGE/USD", "ADA/USD" },
+                SubscribeTrades = true,
+                SubscribeDepth = true,
+                SubscribeQuotes = true,
+                DepthLevels = 10,
+                EnableBackfill = true,
+                StorageTier = "Tiered"
+            },
+            new()
+            {
                 Id = "minimal",
                 Name = "Minimal Setup",
                 Description = "Basic configuration for testing and evaluation",
