@@ -122,8 +122,8 @@ public sealed class SmartRecommendationsServiceTests
             Icon = "sync",
             ActionType = QuickActionType.FillGaps,
             Priority = 1,
-            AffectedSymbols = new List<string> { "SPY", "AAPL" },
-            EstimatedTime = "5 minutes"
+            AffectedSymbols = new[] { "SPY", "AAPL" },
+            EstimatedTime = TimeSpan.FromMinutes(5)
         };
 
         // Assert
@@ -135,7 +135,7 @@ public sealed class SmartRecommendationsServiceTests
         action.Priority.Should().Be(1);
         action.AffectedSymbols.Should().HaveCount(2);
         action.AffectedSymbols.Should().Contain("SPY");
-        action.EstimatedTime.Should().Be("5 minutes");
+        action.EstimatedTime.Should().Be(TimeSpan.FromMinutes(5));
     }
 
     [Fact]
@@ -148,8 +148,7 @@ public sealed class SmartRecommendationsServiceTests
         action.Id.Should().BeEmpty();
         action.Title.Should().BeEmpty();
         action.Description.Should().BeEmpty();
-        action.AffectedSymbols.Should().NotBeNull();
-        action.AffectedSymbols.Should().BeEmpty();
+        action.AffectedSymbols.Should().BeNull();
     }
 
     // ── SuggestedBackfill model ────────────────────────────────────
@@ -190,7 +189,7 @@ public sealed class SmartRecommendationsServiceTests
         backfill.Title.Should().BeEmpty();
         backfill.Symbols.Should().NotBeNull();
         backfill.Symbols.Should().BeEmpty();
-        backfill.RecommendedDateRange.Should().Be(0);
+        backfill.RecommendedDateRange.Should().Be(365);
     }
 
     // ── DataQualityIssue model ─────────────────────────────────────
@@ -202,7 +201,7 @@ public sealed class SmartRecommendationsServiceTests
         var issue = new DataQualityIssue
         {
             Id = "dqi-1",
-            Severity = DataQualityIssueSeverity.Warning,
+            Severity = IssueSeverity.Warning,
             Title = "Stale quotes",
             Description = "SPY quotes are 15 minutes behind",
             AffectedCount = 42,
@@ -211,7 +210,7 @@ public sealed class SmartRecommendationsServiceTests
 
         // Assert
         issue.Id.Should().Be("dqi-1");
-        issue.Severity.Should().Be(DataQualityIssueSeverity.Warning);
+        issue.Severity.Should().Be(IssueSeverity.Warning);
         issue.Title.Should().Be("Stale quotes");
         issue.Description.Should().Be("SPY quotes are 15 minutes behind");
         issue.AffectedCount.Should().Be(42);
@@ -285,24 +284,24 @@ public sealed class SmartRecommendationsServiceTests
         values.Should().HaveCount(6);
     }
 
-    // ── DataQualityIssueSeverity enum ──────────────────────────────
+    // ── IssueSeverity enum ──────────────────────────────
 
     [Theory]
-    [InlineData(DataQualityIssueSeverity.Info)]
-    [InlineData(DataQualityIssueSeverity.Warning)]
-    [InlineData(DataQualityIssueSeverity.Error)]
-    [InlineData(DataQualityIssueSeverity.Critical)]
-    public void DataQualityIssueSeverity_AllValues_ShouldBeDefined(DataQualityIssueSeverity severity)
+    [InlineData(IssueSeverity.Info)]
+    [InlineData(IssueSeverity.Warning)]
+    [InlineData(IssueSeverity.Error)]
+    [InlineData(IssueSeverity.Critical)]
+    public void IssueSeverity_AllValues_ShouldBeDefined(IssueSeverity severity)
     {
         // Assert
-        Enum.IsDefined(typeof(DataQualityIssueSeverity), severity).Should().BeTrue();
+        Enum.IsDefined(typeof(IssueSeverity), severity).Should().BeTrue();
     }
 
     [Fact]
-    public void DataQualityIssueSeverity_ShouldHaveExpectedCount()
+    public void IssueSeverity_ShouldHaveExpectedCount()
     {
         // Act
-        var values = Enum.GetValues<DataQualityIssueSeverity>();
+        var values = Enum.GetValues<IssueSeverity>();
 
         // Assert
         values.Should().HaveCount(4);
