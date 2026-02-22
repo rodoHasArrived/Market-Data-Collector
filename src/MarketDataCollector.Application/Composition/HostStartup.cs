@@ -55,11 +55,16 @@ public sealed class HostStartup : IAsyncDisposable
     /// Creates a host startup for streaming data collection (CLI headless mode).
     /// </summary>
     /// <param name="configPath">Path to configuration file.</param>
+    /// <param name="configService">Optional pre-created ConfigurationService to avoid duplicates.</param>
     /// <returns>Configured HostStartup instance.</returns>
-    public static HostStartup CreateForStreaming(string configPath)
+    public static HostStartup CreateForStreaming(string configPath, ConfigurationService? configService = null)
     {
         var log = LoggingSetup.ForContext<HostStartup>();
-        var options = CompositionOptions.Streaming with { ConfigPath = configPath };
+        var options = CompositionOptions.Streaming with
+        {
+            ConfigPath = configPath,
+            ConfigurationService = configService
+        };
 
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddSerilog());
@@ -75,11 +80,16 @@ public sealed class HostStartup : IAsyncDisposable
     /// Creates a host startup for backfill-only operation.
     /// </summary>
     /// <param name="configPath">Path to configuration file.</param>
+    /// <param name="configService">Optional pre-created ConfigurationService to avoid duplicates.</param>
     /// <returns>Configured HostStartup instance.</returns>
-    public static HostStartup CreateForBackfill(string configPath)
+    public static HostStartup CreateForBackfill(string configPath, ConfigurationService? configService = null)
     {
         var log = LoggingSetup.ForContext<HostStartup>();
-        var options = CompositionOptions.BackfillOnly with { ConfigPath = configPath };
+        var options = CompositionOptions.BackfillOnly with
+        {
+            ConfigPath = configPath,
+            ConfigurationService = configService
+        };
 
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddSerilog());
@@ -137,9 +147,10 @@ public sealed class HostStartup : IAsyncDisposable
     public ConfigurationService ConfigurationService => GetRequiredService<ConfigurationService>();
 
     /// <summary>
-    /// Gets the ProviderFactory from the DI container.
+    /// Gets the ProviderRegistry from the DI container.
+    /// This is the single source of truth for all provider types.
     /// </summary>
-    public ProviderFactory ProviderFactory => GetRequiredService<ProviderFactory>();
+    public ProviderRegistry ProviderRegistry => GetRequiredService<ProviderRegistry>();
 
     /// <summary>
     /// Gets the EventPipeline from the DI container.
@@ -183,25 +194,29 @@ public sealed class HostStartup : IAsyncDisposable
     }
 
     /// <summary>
-    /// Creates the backfill providers using the ProviderFactory.
-    /// Uses unified credential resolution through ConfigurationService.
+    /// Gets backfill providers from the unified ProviderRegistry.
+    /// The registry is populated during DI setup and is the single source of truth.
     /// </summary>
     /// <returns>List of configured backfill providers.</returns>
     public IReadOnlyList<IHistoricalDataProvider> CreateBackfillProviders()
     {
-        var factory = GetRequiredService<ProviderFactory>();
-        return factory.CreateBackfillProviders();
+        var registry = GetRequiredService<ProviderRegistry>();
+        return registry.GetBackfillProviders();
     }
 
     /// <summary>
-    /// Creates a composite backfill provider with automatic failover.
+    /// Creates a composite backfill provider with automatic failover
+    /// using providers from the ProviderRegistry.
     /// </summary>
     /// <param name="providers">Individual backfill providers.</param>
     /// <returns>Composite provider with failover support.</returns>
     public CompositeHistoricalDataProvider CreateCompositeBackfillProvider(
         IReadOnlyList<IHistoricalDataProvider> providers)
     {
-        var factory = GetRequiredService<ProviderFactory>();
+        var configStore = GetRequiredService<ConfigStore>();
+        var config = configStore.Load();
+        var credentialResolver = GetRequiredService<ICredentialResolver>();
+        var factory = new ProviderFactory(config, credentialResolver, _log);
         return factory.CreateCompositeBackfillProvider(providers);
     }
 
@@ -291,14 +306,15 @@ public static class HostStartupFactory
     /// </summary>
     /// <param name="deployment">Deployment context from command line arguments.</param>
     /// <param name="configPath">Path to configuration file.</param>
+    /// <param name="configService">Optional pre-created ConfigurationService to avoid duplicate instances.</param>
     /// <returns>Configured HostStartup instance.</returns>
-    public static HostStartup Create(DeploymentContext deployment, string configPath)
+    public static HostStartup Create(DeploymentContext deployment, string configPath, ConfigurationService? configService = null)
     {
         return deployment.Mode switch
         {
-            DeploymentMode.Web => HostStartup.CreateForStreaming(configPath), // Web mode still needs streaming services
-            DeploymentMode.Desktop => HostStartup.CreateForStreaming(configPath),
-            _ => HostStartup.CreateForStreaming(configPath)
+            DeploymentMode.Web => HostStartup.CreateForStreaming(configPath, configService),
+            DeploymentMode.Desktop => HostStartup.CreateForStreaming(configPath, configService),
+            _ => HostStartup.CreateForStreaming(configPath, configService)
         };
     }
 
@@ -306,9 +322,10 @@ public static class HostStartupFactory
     /// Creates a HostStartup for backfill operations.
     /// </summary>
     /// <param name="configPath">Path to configuration file.</param>
+    /// <param name="configService">Optional pre-created ConfigurationService to avoid duplicate instances.</param>
     /// <returns>Configured HostStartup for backfill.</returns>
-    public static HostStartup CreateForBackfill(string configPath)
-        => HostStartup.CreateForBackfill(configPath);
+    public static HostStartup CreateForBackfill(string configPath, ConfigurationService? configService = null)
+        => HostStartup.CreateForBackfill(configPath, configService);
 
     /// <summary>
     /// Creates a HostStartup for utility commands (validation, config checks, etc.).

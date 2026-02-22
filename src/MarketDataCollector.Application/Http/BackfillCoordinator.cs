@@ -18,14 +18,14 @@ namespace MarketDataCollector.Application.UI;
 
 /// <summary>
 /// Coordinates backfill operations using providers from <see cref="ProviderRegistry"/>.
-/// All providers are resolved through the registry, which is populated during DI setup.
+/// All providers are resolved through the registry, which is the single source of truth
+/// populated during DI setup.
 /// </summary>
-[ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified provider discovery")]
+[ImplementsAdr("ADR-001", "Uses ProviderRegistry as single source of truth for provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly ConfigStore _store;
-    private readonly ProviderRegistry? _registry;
-    private readonly ProviderFactory? _factory;
+    private readonly ProviderRegistry _registry;
     private readonly IEventMetrics _metrics;
     private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -37,14 +37,12 @@ public sealed class BackfillCoordinator : IDisposable
     /// Creates a BackfillCoordinator using the unified ProviderRegistry for provider discovery.
     /// </summary>
     /// <param name="store">Configuration store.</param>
-    /// <param name="registry">Provider registry for unified provider discovery.</param>
-    /// <param name="factory">Provider factory as fallback for creating providers if registry is empty.</param>
+    /// <param name="registry">Provider registry (single source of truth for all providers).</param>
     /// <param name="metrics">Event metrics for tracking backfill operations.</param>
-    public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null, IEventMetrics? metrics = null)
+    public BackfillCoordinator(ConfigStore store, ProviderRegistry registry, IEventMetrics? metrics = null)
     {
-        _store = store;
-        _registry = registry;
-        _factory = factory;
+        _store = store ?? throw new ArgumentNullException(nameof(store));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _metrics = metrics ?? new DefaultEventMetrics();
         _lastRun = store.TryLoadBackfillStatus();
 
@@ -178,91 +176,21 @@ public sealed class BackfillCoordinator : IDisposable
     }
 
     /// <summary>
-    /// Creates backfill providers using a priority-based discovery approach:
-    /// 1. ProviderRegistry.GetBackfillProviders() - unified registry
-    /// 2. ProviderFactory.CreateBackfillProviders() - factory with credential resolution
-    /// 3. Manual instantiation - backwards compatibility fallback
+    /// Gets backfill providers from the unified ProviderRegistry.
+    /// The registry is populated during DI setup and is the single source of truth.
     /// </summary>
     private List<IHistoricalDataProvider> CreateProviders()
     {
-        // Priority 1: Use ProviderRegistry if available and populated
-        if (_registry != null)
+        var providers = _registry.GetBackfillProviders();
+        if (providers.Count > 0)
         {
-            var registryProviders = _registry.GetBackfillProviders();
-            if (registryProviders.Count > 0)
-            {
-                _log.Information("Using {Count} providers from ProviderRegistry", registryProviders.Count);
-                return registryProviders.ToList();
-            }
+            _log.Information("Using {Count} backfill providers from ProviderRegistry", providers.Count);
+            return providers.ToList();
         }
 
-        // Priority 2: Use ProviderFactory if available
-        if (_factory != null)
-        {
-            var factoryProviders = _factory.CreateBackfillProviders();
-            if (factoryProviders.Count > 0)
-            {
-                _log.Information("Using {Count} providers from ProviderFactory", factoryProviders.Count);
-
-                // Register with registry if available (populate for future use)
-                if (_registry != null)
-                {
-                    foreach (var provider in factoryProviders)
-                    {
-                        _registry.Register(provider);
-                    }
-                }
-
-                return factoryProviders.ToList();
-            }
-        }
-
-        // Priority 3: Fallback to manual instantiation (backwards compatibility)
-        _log.Debug("Using fallback manual provider instantiation");
-        return CreateProvidersManually();
-    }
-
-    /// <summary>
-    /// Fallback method for manual provider creation when ProviderRegistry and ProviderFactory
-    /// are not available. Maintains backwards compatibility.
-    /// </summary>
-    private List<IHistoricalDataProvider> CreateProvidersManually()
-    {
-        var cfg = _store.Load();
-        var backfillCfg = cfg.Backfill;
-        var providersCfg = backfillCfg?.Providers;
-
-        var providers = new List<IHistoricalDataProvider>();
-
-        // Stooq (always available, free)
-        var stooqCfg = providersCfg?.Stooq;
-        if (stooqCfg?.Enabled ?? true)
-        {
-            providers.Add(new StooqHistoricalDataProvider(log: _log));
-        }
-
-        // Yahoo Finance
-        var yahooCfg = providersCfg?.Yahoo;
-        if (yahooCfg?.Enabled ?? true)
-        {
-            providers.Add(new YahooFinanceHistoricalDataProvider(log: _log));
-        }
-
-        // Nasdaq Data Link (Quandl)
-        var nasdaqCfg = providersCfg?.Nasdaq;
-        if (nasdaqCfg?.Enabled ?? true)
-        {
-            providers.Add(new NasdaqDataLinkHistoricalDataProvider(
-                apiKey: nasdaqCfg?.ApiKey,
-                database: nasdaqCfg?.Database ?? "WIKI",
-                log: _log
-            ));
-        }
-
-        // Sort by priority
-        return providers
-            .OrderBy(p => p.Priority)
-            .ToList();
+        _log.Warning("No backfill providers available in ProviderRegistry. " +
+            "Ensure provider credentials are configured via environment variables or appsettings.json.");
+        return new List<IHistoricalDataProvider>();
     }
 
     private HistoricalBackfillService CreateService()

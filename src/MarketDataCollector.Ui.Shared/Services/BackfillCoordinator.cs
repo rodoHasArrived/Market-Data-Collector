@@ -55,33 +55,30 @@ public sealed record ExistingDataInfo(
 /// <para><b>Migration Note:</b> This class wraps the core implementation from
 /// <see cref="MarketDataCollector.Application.UI.BackfillCoordinator"/> to add preview
 /// functionality while delegating core operations to the wrapped instance.</para>
-/// <para><b>Provider Discovery:</b> Uses <see cref="ProviderRegistry"/> for unified
-/// provider discovery. If a registry is provided, backfill providers are discovered
-/// via <see cref="ProviderRegistry.GetBackfillProviders()"/>.</para>
+/// <para><b>Provider Discovery:</b> Uses <see cref="ProviderRegistry"/> as the single
+/// source of truth. Backfill providers are discovered via
+/// <see cref="ProviderRegistry.GetBackfillProviders()"/>.</para>
 /// </remarks>
-[ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified provider discovery")]
+[ImplementsAdr("ADR-001", "Uses ProviderRegistry as single source of truth for provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly CoreBackfillCoordinator _core;
     private readonly ConfigStore _store;
-    private readonly ProviderRegistry? _registry;
-    private readonly ProviderFactory? _factory;
+    private readonly ProviderRegistry _registry;
     private readonly Serilog.ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
 
     /// <summary>
     /// Creates a BackfillCoordinator with unified provider registry support.
     /// </summary>
     /// <param name="store">Configuration store.</param>
-    /// <param name="registry">Optional provider registry for unified provider discovery.</param>
-    /// <param name="factory">Optional provider factory for creating providers if registry is empty.</param>
-    public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null)
+    /// <param name="registry">Provider registry (single source of truth for all providers).</param>
+    public BackfillCoordinator(ConfigStore store, ProviderRegistry registry)
     {
-        _store = store;
-        _registry = registry;
-        _factory = factory;
+        _store = store ?? throw new ArgumentNullException(nameof(store));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         // Convert Ui.Shared.ConfigStore wrapper to the core ConfigStore for the core coordinator
         var coreStore = new MarketDataCollector.Application.UI.ConfigStore(store.ConfigPath);
-        _core = new CoreBackfillCoordinator(coreStore, registry, factory);
+        _core = new CoreBackfillCoordinator(coreStore, registry);
     }
 
     /// <summary>
@@ -322,7 +319,6 @@ public sealed class BackfillCoordinator : IDisposable
 
     /// <summary>
     /// Creates the backfill service using providers from ProviderRegistry.
-    /// Falls back to ProviderFactory or manual instantiation if registry is empty.
     /// </summary>
     private MarketDataCollector.Application.Backfill.HistoricalBackfillService CreateService()
     {
@@ -331,50 +327,20 @@ public sealed class BackfillCoordinator : IDisposable
     }
 
     /// <summary>
-    /// Gets backfill providers using a priority-based discovery approach:
-    /// 1. ProviderRegistry.GetBackfillProviders() - unified registry
-    /// 2. ProviderFactory.CreateBackfillProviders() - factory with credential resolution
-    /// 3. Manual instantiation - backwards compatibility fallback
+    /// Gets backfill providers from the unified ProviderRegistry.
+    /// The registry is the single source of truth, populated during DI setup.
     /// </summary>
     private IReadOnlyList<IHistoricalDataProvider> GetProviders()
     {
-        // Priority 1: Use ProviderRegistry if available and populated
-        if (_registry != null)
+        var providers = _registry.GetBackfillProviders();
+        if (providers.Count > 0)
         {
-            var registryProviders = _registry.GetBackfillProviders();
-            if (registryProviders.Count > 0)
-            {
-                _log.Information("Using {Count} providers from ProviderRegistry for preview", registryProviders.Count);
-                return registryProviders;
-            }
+            _log.Information("Using {Count} backfill providers from ProviderRegistry", providers.Count);
+            return providers;
         }
 
-        // Priority 2: Use ProviderFactory if available
-        if (_factory != null)
-        {
-            var factoryProviders = _factory.CreateBackfillProviders();
-            if (factoryProviders.Count > 0)
-            {
-                _log.Information("Using {Count} providers from ProviderFactory for preview", factoryProviders.Count);
-
-                // Register with registry if available (populate for future use)
-                if (_registry != null)
-                {
-                    foreach (var provider in factoryProviders)
-                    {
-                        _registry.Register(provider);
-                    }
-                }
-
-                return factoryProviders;
-            }
-        }
-
-        // Priority 3: Fallback to single Stooq provider (backwards compatibility)
-        _log.Debug("Using fallback Stooq provider for preview");
-        return new IHistoricalDataProvider[]
-        {
-            new StooqHistoricalDataProvider()
-        };
+        _log.Warning("No backfill providers available in ProviderRegistry. " +
+            "Ensure provider credentials are configured via environment variables or appsettings.json.");
+        return Array.Empty<IHistoricalDataProvider>();
     }
 }

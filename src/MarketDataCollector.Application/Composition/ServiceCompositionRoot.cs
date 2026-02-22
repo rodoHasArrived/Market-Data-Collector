@@ -60,8 +60,8 @@ public static class ServiceCompositionRoot
     /// <item><description>Core configuration services (always required)</description></item>
     /// <item><description>Storage services (always required)</description></item>
     /// <item><description>Credential services (before providers for credential resolution)</description></item>
-    /// <item><description>Provider services (ProviderRegistry, ProviderFactory - before dependent services)</description></item>
-    /// <item><description>Symbol management services (depends on ProviderFactory/Registry)</description></item>
+    /// <item><description>Provider services (ProviderRegistry - before dependent services)</description></item>
+    /// <item><description>Symbol management services (depends on ProviderRegistry)</description></item>
     /// <item><description>Backfill services (depends on ProviderRegistry/Factory)</description></item>
     /// <item><description>Other services (maintenance, diagnostic, pipeline, collector)</description></item>
     /// </list>
@@ -84,7 +84,7 @@ public static class ServiceCompositionRoot
             services.AddCredentialServices(options);
         }
 
-        // Provider services (ProviderRegistry, ProviderFactory) - must come before
+        // Provider services (ProviderRegistry) - must come before
         // dependent services (SymbolManagement, Backfill) to ensure providers are available
         if (options.EnableProviderServices)
         {
@@ -97,7 +97,7 @@ public static class ServiceCompositionRoot
             services.AddSymbolManagementServices();
         }
 
-        // Backfill services - depends on ProviderRegistry/ProviderFactory
+        // Backfill services - depends on ProviderRegistry
         if (options.EnableBackfillServices)
         {
             services.AddBackfillServices(options);
@@ -151,8 +151,17 @@ public static class ServiceCompositionRoot
             services.AddSingleton<ConfigStore>();
         }
 
-        // ConfigurationService - consolidated configuration operations
-        services.AddSingleton<ConfigurationService>();
+        // ConfigurationService - consolidated configuration operations.
+        // If a pre-created instance is provided via CompositionOptions, use it to avoid
+        // creating a duplicate (C2: Single DI Composition Path).
+        if (options.ConfigurationService is not null)
+        {
+            services.AddSingleton(options.ConfigurationService);
+        }
+        else
+        {
+            services.AddSingleton<ConfigurationService>();
+        }
 
         // Configuration utilities
         services.AddSingleton<ConfigTemplateGenerator>();
@@ -274,19 +283,18 @@ public static class ServiceCompositionRoot
     /// </summary>
     /// <remarks>
     /// <para>Requires <see cref="AddProviderServices"/> to be called first to ensure
-    /// <see cref="ProviderRegistry"/> and <see cref="ProviderFactory"/> are available.</para>
+    /// <see cref="ProviderRegistry"/> is available.</para>
     /// </remarks>
     private static IServiceCollection AddBackfillServices(
         this IServiceCollection services,
         CompositionOptions options)
     {
-        // BackfillCoordinator - uses ProviderRegistry for unified provider discovery
+        // BackfillCoordinator - uses ProviderRegistry as the single source of truth
         services.AddSingleton<BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
-            var registry = sp.GetService<ProviderRegistry>();
-            var factory = sp.GetService<ProviderFactory>();
-            return new BackfillCoordinator(configStore, registry, factory);
+            var registry = sp.GetRequiredService<ProviderRegistry>();
+            return new BackfillCoordinator(configStore, registry);
         });
 
         // SchedulingService - symbol subscription scheduling
@@ -431,15 +439,14 @@ public static class ServiceCompositionRoot
     #region Provider Services
 
     /// <summary>
-    /// Registers the unified <see cref="ProviderRegistry"/> and populates it with
-    /// streaming factory functions (keyed by <see cref="DataSourceKind"/>), backfill providers,
-    /// and symbol search providers. All providers are resolved through DI.
+    /// Registers the unified <see cref="ProviderRegistry"/> as the single source of truth
+    /// for all provider types: streaming factory functions (keyed by <see cref="DataSourceKind"/>),
+    /// backfill providers, and symbol search providers. All providers are resolved through DI.
     /// </summary>
     /// <remarks>
-    /// Streaming factories are registered as <c>Dictionary&lt;DataSourceKind, Func&lt;IMarketDataClient&gt;&gt;</c>
-    /// entries inside <see cref="ProviderRegistry.RegisterStreamingFactory"/>. The old
-    /// <c>MarketDataClientFactory</c> switch statement and <c>ProviderFactory</c> streaming
-    /// creation are replaced by this dictionary-based approach.
+    /// <para><see cref="ProviderFactory"/> is used internally during setup to create backfill
+    /// and symbol search providers, but is NOT registered as a standalone DI service.
+    /// Consumers should depend only on <see cref="ProviderRegistry"/>.</para>
     /// </remarks>
     private static IServiceCollection AddProviderServices(
         this IServiceCollection services,
@@ -497,16 +504,10 @@ public static class ServiceCompositionRoot
             return registry;
         });
 
-        // Keep ProviderFactory registered for backward compatibility with consumers
-        // that still depend on it (BackfillCoordinators, HostStartup).
-        services.AddSingleton<ProviderFactory>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var credentialResolver = sp.GetRequiredService<ICredentialResolver>();
-            var logger = LoggingSetup.ForContext<ProviderFactory>();
-            return new ProviderFactory(config, credentialResolver, logger);
-        });
+        // ProviderFactory is no longer registered as a standalone DI service.
+        // All providers are populated into ProviderRegistry during the setup above
+        // (RegisterBackfillProviders / RegisterSymbolSearchProviders). Consumers
+        // should resolve ProviderRegistry to access backfill and search providers.
 
         return services;
     }
@@ -1019,4 +1020,11 @@ public sealed record CompositionOptions
     /// or explicit configuration.
     /// </summary>
     public bool EnableOpenTelemetry { get; init; }
+
+    /// <summary>
+    /// Pre-created <see cref="ConfigurationService"/> instance to register as a singleton.
+    /// When set, the composition root uses this instance instead of creating a new one,
+    /// avoiding duplicate instances (C2: Single DI Composition Path).
+    /// </summary>
+    public ConfigurationService? ConfigurationService { get; init; }
 }

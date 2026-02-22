@@ -33,9 +33,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 27 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C4, C5, C6, C7, D1, D2, D3, D4, D5, D6, D7, E1, E2, F1, F2, G1, G3 |
+| ✅ **Completed** | 29 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C1, C2, C4, C5, C6, C7, D1, D2, D3, D4, D5, D6, D7, E1, E2, F1, F2, G1, G3 |
 | 🔄 **Partially Complete** | 4 | B3, B4, E3, G2 |
-| 📝 **Open** | 4 | C1, C2, C3, F3 |
+| 📝 **Open** | 2 | C3, F3 |
 | **Total** | 35 | All improvement items (core) |
 
 ### By Theme
@@ -44,7 +44,7 @@ This document consolidates **functional improvements** (features, reliability, U
 |-------|-----------|---------|------|-------|
 | A: Reliability & Resilience | 7 | 0 | 0 | 7 |
 | B: Testing & Quality | 3 | 2 | 0 | 5 |
-| C: Architecture & Modularity | 4 | 0 | 3 | 7 |
+| C: Architecture & Modularity | 6 | 0 | 1 | 7 |
 | D: API & Integration | 7 | 0 | 0 | 7 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 2 | 0 | 1 | 3 |
@@ -52,10 +52,10 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 77.1% complete (27/35), 11.4% partial (4/35), 11.4% open (4/35).
-- **Highest delivery risk:** Theme C (4/7 completed) because architecture debt blocks testability and provider evolution.
-- **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage.
-- **Recommended sprint split:** 60% architecture debt (C1/C2/C3), 25% test foundation (B3 tranche 2), 15% scalability (H1/H2).
+- **Completion ratio:** 82.9% complete (29/35), 11.4% partial (4/35), 5.7% open (2/35).
+- **Highest delivery risk:** Theme C has one remaining item (C3: WebSocket base class adoption).
+- **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage, or C3 for ~800 lines deduplication.
+- **Recommended sprint split:** 40% architecture debt (C3), 35% test foundation (B3/B4), 25% scalability (H2/H3).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -66,7 +66,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
 | 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
 | 5 | B2 tranche 1, D7 remainder | Negative-path + schema validation tests; typed annotations across all endpoint families | ✅ Done |
-| 6 | C1/C2, H1, H4, I1 | Provider registration unified under DI; per-provider backfill rate limiting; degradation scoring; test harness | 🔄 Partial (H1, H4, I1 done; C1/C2 pending) |
+| 6 | C1/C2, H1, H4, I1 | Provider registration unified under DI; per-provider backfill rate limiting; degradation scoring; test harness | ✅ Done |
 | 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 🔄 Partial (B3 tranche 2 done; H2 pending) |
 | 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 📝 Pending |
 
@@ -341,7 +341,7 @@ This document consolidates **functional improvements** (features, reliability, U
   - `SequenceErrorTrackerTests` (20 tests): gap/duplicate/out-of-order detection, summaries, statistics
 
 **Remaining Work:**
-- Priority 3: Configuration services (`ConfigurationWizard`, `AutoConfigurationService`, `ConnectivityTestService`)
+- Priority 3 (partially done): `AutoConfigurationService` tests (12 tests) and `ConnectivityTestService` tests (8 tests) added; `ConfigurationWizard` still pending
 - Priority 4: Subscription services (10 files)
 
 **Files:**
@@ -350,6 +350,8 @@ This document consolidates **functional improvements** (features, reliability, U
 - `tests/MarketDataCollector.Tests/Application/Services/DataQuality/AnomalyDetectorTests.cs` (14 tests)
 - `tests/MarketDataCollector.Tests/Application/Services/DataQuality/CompletenessScoreCalculatorTests.cs` (14 tests)
 - `tests/MarketDataCollector.Tests/Application/Services/DataQuality/SequenceErrorTrackerTests.cs` (20 tests)
+- `tests/MarketDataCollector.Tests/Application/Services/AutoConfigurationServiceTests.cs` (12 tests)
+- `tests/MarketDataCollector.Tests/Application/Services/ConnectivityTestServiceTests.cs` (8 tests)
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1C
 
@@ -379,58 +381,60 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ## Theme C: Architecture & Modularity
 
-### C1. 📝 Unified Provider Registry (OPEN)
+### C1. ✅ Unified Provider Registry (COMPLETED)
 
-**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ COMPLETED
 
-**Problem:** Three separate provider creation mechanisms exist and compete:
-1. `MarketDataClientFactory` - switch-based factory
-2. `ProviderFactory` - parallel factory system
-3. Direct instantiation in `Program.cs`
+**Problem:** Three separate provider creation mechanisms existed and competed:
+1. `MarketDataClientFactory` - switch-based factory (removed in earlier phases)
+2. `ProviderFactory` - parallel factory system registered as standalone DI service
+3. Direct instantiation fallbacks in `BackfillCoordinator`
 
-Adding a new provider requires changes in all three locations. `[DataSource]` attribute discovery (ADR-005) exists but isn't wired into startup.
+**Solution Implemented:**
+- `ProviderRegistry` is now the single source of truth for all provider types
+- Removed standalone `ProviderFactory` DI registration from `ServiceCompositionRoot`
+- `ProviderFactory` is still used internally during setup to create backfill/search providers, but is no longer exposed as a DI service
+- Simplified `BackfillCoordinator` (both Application and Ui.Shared) to use only `ProviderRegistry` — removed 3-tier fallback chain (Registry → Factory → Manual) in favor of single Registry path
+- Updated `HostStartup` to resolve backfill providers from `ProviderRegistry` instead of `ProviderFactory`
+- `[DataSource]` attribute scanning available when `UseAttributeDiscovery` is enabled
 
-**Proposed Solution:**
-- Merge `MarketDataClientFactory` and `ProviderFactory` into single `ProviderRegistry`
-- Use `[DataSource]` attribute scanning to discover providers at startup
-- Replace switch statement with `Dictionary<DataSourceKind, Func<IMarketDataClient>>`
-- Remove direct instantiation from `Program.cs`; resolve all providers through DI
+**Files Changed:**
+- `Application/Composition/ServiceCompositionRoot.cs` — removed `ProviderFactory` singleton
+- `Application/Http/BackfillCoordinator.cs` — simplified to single registry path
+- `Ui.Shared/Services/BackfillCoordinator.cs` — simplified to single registry path
+- `Ui.Shared/Endpoints/UiEndpoints.cs` — passes `ProviderRegistry` to coordinator
+- `Application/Composition/HostStartup.cs` — uses `ProviderRegistry` for backfill
 
-**Files:**
-- `Infrastructure/Providers/MarketDataClientFactory.cs`
-- `Infrastructure/Providers/Core/ProviderFactory.cs`
-- `Program.cs:278-298`
-- `ProviderSdk/DataSourceAttribute.cs`
-- `ProviderSdk/DataSourceRegistry.cs`
-
-**Benefit:** Adding new provider becomes: implement interface, add attribute, done.
+**Benefit:** Adding new provider becomes: implement interface, add attribute, done. Single source of truth eliminates stale fallback paths.
 
 **ROADMAP:** Phase 2 (Architecture) - Item 2A
 
 ---
 
-### C2. 📝 Single DI Composition Path (OPEN)
+### C2. ✅ Single DI Composition Path (COMPLETED)
 
-**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ COMPLETED
 
-**Problem:** `ServiceCompositionRoot.cs` registers services in DI, but `Program.cs` bypasses DI for critical components:
-- Collectors created via `new` (lines 278-281)
-- Storage pipeline created via `new` (lines 213-224)
-- Configuration loaded twice (lines 57, 69)
+**Problem:** `ServiceCompositionRoot.cs` registered services in DI, but `Program.cs` bypassed DI for critical components:
+- Collectors created via `new` (fixed in earlier phases — now resolved from DI)
+- Storage pipeline created via `new` (fixed in earlier phases — now resolved from DI)
+- `ConfigurationService` created twice — once in `Program.Main()` and again in DI
 
-DI registrations in `ServiceCompositionRoot.cs` (lines 525-529, 440-460) are dead code.
+**Solution Implemented:**
+- Added `ConfigurationService?` property to `CompositionOptions` to allow passing a pre-created instance
+- `AddCoreConfigurationServices` now uses the externally-provided instance when available
+- `HostStartup` factory methods accept optional `ConfigurationService` parameter
+- `HostStartupFactory.Create()` and `CreateForBackfill()` pass the pre-created instance through
+- `Program.cs` passes its `configService` to `HostStartupFactory` to avoid duplicate instances
+- All collectors, pipeline, and providers are resolved from DI via `HostStartup.GetRequiredService<T>()`
 
-**Proposed Solution:**
-- Move all object creation in `Program.cs` behind `HostStartup` or `ServiceCompositionRoot`
-- Use `IServiceProvider.GetRequiredService<T>()` consistently
-- Cache loaded `AppConfig` after first load; pass to DI as singleton
+**Files Changed:**
+- `Application/Composition/CompositionOptions` — added `ConfigurationService?` property
+- `Application/Composition/ServiceCompositionRoot.cs` — conditional registration
+- `Application/Composition/HostStartup.cs` — factory methods accept `ConfigurationService`
+- `Program.cs` — passes pre-created instance to `HostStartupFactory`
 
-**Files:**
-- `Program.cs:57-69, 213-281`
-- `Application/Composition/ServiceCompositionRoot.cs:440-529`
-- `Application/Composition/HostStartup.cs`
-
-**Benefit:** One composition path. DI registrations become source of truth. Testable via service replacement.
+**Benefit:** One composition path. DI registrations are the source of truth. No duplicate `ConfigurationService` instances.
 
 **ROADMAP:** Phase 2 (Architecture) - Item 2B
 

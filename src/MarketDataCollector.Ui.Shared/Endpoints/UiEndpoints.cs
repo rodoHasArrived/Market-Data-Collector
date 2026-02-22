@@ -98,7 +98,8 @@ public static class UiEndpoints
         services.AddSingleton<MarketDataCollector.Ui.Shared.Services.BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<MarketDataCollector.Ui.Shared.Services.ConfigStore>();
-            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
+            var registry = sp.GetRequiredService<MarketDataCollector.Infrastructure.Providers.Core.ProviderRegistry>();
+            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore, registry);
         });
 
         services.AddMutationRateLimiter();
@@ -123,7 +124,8 @@ public static class UiEndpoints
         services.AddSingleton<MarketDataCollector.Ui.Shared.Services.BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<MarketDataCollector.Ui.Shared.Services.ConfigStore>();
-            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
+            var registry = sp.GetRequiredService<MarketDataCollector.Infrastructure.Providers.Core.ProviderRegistry>();
+            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore, registry);
         });
 
         services.AddSingleton(statusHandlers);

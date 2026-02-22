@@ -195,7 +195,8 @@ public partial class Program
         // Use unified HostStartup for DI-based service resolution.
         // All core services (collectors, pipeline, storage, providers) flow through
         // ServiceCompositionRoot, making it the single source of truth.
-        await using var hostStartup = HostStartupFactory.Create(deployment, cfgPath);
+        // Pass the pre-created configService to avoid duplicate instances (C2).
+        await using var hostStartup = HostStartupFactory.Create(deployment, cfgPath, configService);
 
         // Resolve all services from DI - single source of truth via ServiceCompositionRoot
         var storageOpt = hostStartup.StorageOptions;
@@ -221,8 +222,8 @@ public partial class Program
         {
             var backfillRequest = BuildBackfillRequest(cfg, cliArgs);
 
-            // Use a separate backfill-mode host for provider creation
-            await using var backfillHost = HostStartupFactory.CreateForBackfill(cfgPath);
+            // Use a separate backfill-mode host for provider creation (shares ConfigurationService)
+            await using var backfillHost = HostStartupFactory.CreateForBackfill(cfgPath, configService);
             var backfillProviders = backfillHost.CreateBackfillProviders();
 
             // Wrap in composite provider if fallback enabled
