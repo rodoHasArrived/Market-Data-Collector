@@ -192,8 +192,8 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 | Gap | Risk | Priority |
 |-----|------|----------|
-| No unified job contract across realtime/backfill flows | Inconsistent behaviors | P0 |
-| Limited checkpoint semantics exposed to users | Manual reruns after partial failures | P0 |
+| No unified job contract across realtime/backfill flows | Inconsistent behaviors | P0 — **Resolved**: `IngestionJobService` manages unified `IngestionJob` lifecycle with state machine; API endpoints at `/api/ingestion/jobs` |
+| Limited checkpoint semantics exposed to users | Manual reruns after partial failures | P0 — **Resolved**: `IngestionJobService.UpdateCheckpointAsync()` + `/api/ingestion/jobs/resumable` endpoint exposes checkpoint semantics |
 | Retry policy lacks workload-level intent | Over-retry, provider throttling | P1 |
 | Missing explicit idempotency strategy | Duplicate records or unnecessary rewrites | P1 |
 | Weak operator timeline/audit view | Harder post-incident analysis | P1 |
@@ -223,8 +223,8 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 | Risk | Impact | Priority |
 |------|--------|----------|
-| SLOs not consistently documented per subsystem | Hard to calibrate alerts | P0 |
-| Alert-to-runbook linkage is implicit | Slower incident triage | P0 |
+| SLOs not consistently documented per subsystem | Hard to calibrate alerts | P0 — **Resolved**: `SloDefinitionRegistry` provides 7 runtime SLO definitions across 6 subsystems, each linked to alert rules and runbook sections. Full docs in `service-level-objectives.md` |
+| Alert-to-runbook linkage is implicit | Slower incident triage | P0 — **Resolved**: `AlertRunbookRegistry` maps all 11 Prometheus alerts to runbook sections with probable causes, immediate actions, and SLO references. `EnrichWithRunbook()` augments dispatched alerts |
 | Release readiness criteria are dispersed | Regressions reaching production | P1 |
 | Rollback playbooks not standardized | Longer MTTR | P1 |
 | Capacity thresholds under-specified | Late scaling detection | P2 |
@@ -261,9 +261,9 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 | Priority | Gap | Impact |
 |----------|-----|--------|
-| P0 | Replace demo/simulated values with live backend state | Users can trust what they see |
-| P0 | Resumable jobs with crash recovery for backfill/exports | Long-running work not lost |
-| P0 | Explicit staleness + source provenance on key metrics | Prevents decisions on stale data |
+| P0 | Replace demo/simulated values with live backend state | Users can trust what they see — **Resolved**: `StatusServiceBase` now populates `DataProvenance` field ("live"/"fixture"/"offline") on `SimpleStatus`; `FixtureModeDetector` integration drives the banner |
+| P0 | Resumable jobs with crash recovery for backfill/exports | Long-running work not lost — **Resolved**: `IngestionJobService` with checkpoint persistence + `/api/ingestion/jobs/resumable` endpoint |
+| P0 | Explicit staleness + source provenance on key metrics | Prevents decisions on stale data — **Resolved**: `SimpleStatus` now includes `RetrievedAtUtc`, `SourceProvider`, `IsStale`, `AgeSeconds`, `DataProvenance` fields |
 | P1 | Actionable error diagnostics with root-cause hints | Faster debugging for data engineers |
 | P1 | Bulk symbol management (import/validate/fix workflows) | Faster portfolio setup |
 | P2 | Alert intelligence (suppress duplicates, smart recommendations) | Reduced alert fatigue |
@@ -290,11 +290,11 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 **Target Personas:** Active Trader, Quant Researcher, Data Engineer, Portfolio Analyst, New User
 
-**P0 — Critical Trust and Continuity:**
-- Replace demo/simulated values with live backend state
-- Add resumable jobs with crash recovery
-- Show explicit staleness + source provenance
-- Hard visual distinction for sample/offline mode
+**P0 — Critical Trust and Continuity (All Resolved):**
+- ~~Replace demo/simulated values with live backend state~~ — **Done**: `StatusServiceBase` sets `DataProvenance`
+- ~~Add resumable jobs with crash recovery~~ — **Done**: `IngestionJobService` with disk-persisted checkpoints
+- ~~Show explicit staleness + source provenance~~ — **Done**: `SimpleStatus` provenance fields
+- ~~Hard visual distinction for sample/offline mode~~ — **Done**: `MainPage.xaml` fixture mode banner with dynamic color/label
 
 **P1 — Productivity and Incident Response:**
 - Actionable error diagnostics with guided remediation

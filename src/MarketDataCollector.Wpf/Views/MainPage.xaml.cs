@@ -4,6 +4,9 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Ui.Services.Services;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using SearchService = MarketDataCollector.Ui.Services.SearchService;
@@ -78,6 +81,9 @@ public partial class MainPage : Page
 
         // Update back button visibility
         UpdateBackButtonVisibility();
+
+        // Initialize fixture/offline mode banner (P0: Hard visual distinction)
+        InitializeFixtureModeBanner();
     }
 
     #region Workspace Navigation Handlers
@@ -489,6 +495,63 @@ public partial class MainPage : Page
                 break;
         }
     }
+
+    #region Fixture/Offline Mode Banner
+
+    /// <summary>
+    /// Initializes the fixture/offline mode banner and subscribes to mode changes.
+    /// Addresses P0: "Hard visual distinction for sample/offline mode".
+    /// </summary>
+    private void InitializeFixtureModeBanner()
+    {
+        var detector = FixtureModeDetector.Instance;
+
+        // Subscribe to mode changes
+        detector.ModeChanged += OnFixtureModeChanged;
+
+        // Set initial state
+        UpdateFixtureModeBanner(detector);
+    }
+
+    private void OnFixtureModeChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() => UpdateFixtureModeBanner(FixtureModeDetector.Instance));
+    }
+
+    private void UpdateFixtureModeBanner(FixtureModeDetector detector)
+    {
+        if (detector.IsNonLiveMode)
+        {
+            FixtureModeBanner.Visibility = Visibility.Visible;
+            FixtureModeLabel.Text = detector.ModeLabel;
+
+            // Parse banner color from detector
+            try
+            {
+                FixtureModeBannerBrush.Color = (Color)ColorConverter.ConvertFromString(detector.BannerColor);
+            }
+            catch
+            {
+                FixtureModeBannerBrush.Color = Colors.Orange;
+            }
+
+            // Adjust content frame margin to account for banner
+            ContentFrame.Margin = new Thickness(0, 92, 0, 0); // 56 header + 36 banner
+        }
+        else
+        {
+            FixtureModeBanner.Visibility = Visibility.Collapsed;
+            ContentFrame.Margin = new Thickness(0, 56, 0, 0);
+        }
+    }
+
+    private void OnFixtureModeDismiss(object sender, RoutedEventArgs e)
+    {
+        FixtureModeBanner.Visibility = Visibility.Collapsed;
+        ContentFrame.Margin = new Thickness(0, 56, 0, 0);
+    }
+
+    #endregion
 
     private void OnMessageReceived(object? sender, string message)
     {
