@@ -678,6 +678,7 @@ Market-Data-Collector/
 │   │   ├── Pipeline/
 │   │   │   ├── DroppedEventAuditTrail.cs
 │   │   │   ├── EventPipeline.cs
+│   │   │   ├── IngestionJobService.cs
 │   │   │   └── PersistentDedupLedger.cs
 │   │   ├── Results/
 │   │   │   ├── ErrorCode.cs
@@ -1121,6 +1122,7 @@ Market-Data-Collector/
 │   │   │   ├── HistoricalEndpoints.cs
 │   │   │   ├── IBEndpoints.cs
 │   │   │   ├── IndexEndpoints.cs
+│   │   │   ├── IngestionJobEndpoints.cs
 │   │   │   ├── LeanEndpoints.cs
 │   │   │   ├── LiveDataEndpoints.cs
 │   │   │   ├── MaintenanceScheduleEndpoints.cs
