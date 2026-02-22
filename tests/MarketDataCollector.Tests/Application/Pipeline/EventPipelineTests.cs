@@ -339,7 +339,7 @@ public class EventPipelineTests : IAsyncLifetime
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
         // Act - Wait for periodic flush
-        await Task.Delay(200);
+        await Task.Delay(150);
 
         // Assert
         sink.FlushCount.Should().BeGreaterThanOrEqualTo(1);
@@ -388,7 +388,7 @@ public class EventPipelineTests : IAsyncLifetime
         _pipeline.Complete();
 
         // Wait for pipeline to drain
-        await Task.Delay(100);
+        await Task.Delay(50);
 
         // Assert - Further publishes may fail
         // The channel is marked complete
@@ -425,7 +425,7 @@ public class EventPipelineTests : IAsyncLifetime
         }
 
         // Give consumer time to start processing before disposal
-        await Task.Delay(100);
+        await Task.Delay(50);
 
         // Act
         await pipeline.DisposeAsync();
@@ -444,15 +444,17 @@ public class EventPipelineTests : IAsyncLifetime
         // Arrange - Use a sink whose flush blocks until its CancellationToken is cancelled.
         // Before the fix, the pipeline passed CancellationToken.None to the final flush,
         // meaning it would hang indefinitely. After the fix, a timeout token is used.
+        // Use a short finalFlushTimeout (1s) so the test completes quickly.
         await using var sink = new CancellationAwareSlowFlushSink();
-        var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
+        var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false,
+            finalFlushTimeout: TimeSpan.FromSeconds(1));
 
         pipeline.TryPublish(CreateTradeEvent("SPY"));
         await Task.Delay(50); // Let consumer process the event
 
-        // Act - Dispose should not hang; the final flush will be cancelled by FinalFlushTimeout
+        // Act - Dispose should not hang; the final flush will be cancelled by finalFlushTimeout
         var disposeTask = pipeline.DisposeAsync().AsTask();
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(45)));
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(10)));
 
         // Assert - Disposal must complete (not hang indefinitely)
         completed.Should().Be(disposeTask,
@@ -523,7 +525,7 @@ public class EventPipelineTests : IAsyncLifetime
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        await Task.Delay(200);
+        await Task.Delay(100);
 
         // Assert - Pipeline should still be alive and processing
         // At least some events should have been processed before the throw

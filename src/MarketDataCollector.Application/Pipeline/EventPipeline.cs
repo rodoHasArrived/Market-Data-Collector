@@ -60,16 +60,13 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly bool _enablePeriodicFlush;
 
     /// <summary>
-    /// Maximum time to wait for the final flush during shutdown before giving up.
+    /// Default maximum time to wait for the final flush during shutdown before giving up.
     /// Prevents the consumer task from hanging indefinitely if the sink is unresponsive.
     /// </summary>
-    private static readonly TimeSpan FinalFlushTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan DefaultFinalFlushTimeout = TimeSpan.FromSeconds(30);
 
-    /// <summary>
-    /// Maximum time to wait for the consumer/flusher tasks to complete during disposal.
-    /// Should be slightly longer than FinalFlushTimeout to allow the flush to timeout first.
-    /// </summary>
-    private static readonly TimeSpan DisposeTaskTimeout = TimeSpan.FromSeconds(35);
+    private readonly TimeSpan _finalFlushTimeout;
+    private readonly TimeSpan _disposeTaskTimeout;
 
     /// <summary>
     /// Creates a new EventPipeline with configurable capacity and flush behavior.
@@ -86,6 +83,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// are written to the WAL before the primary sink. Call <see cref="RecoverAsync"/> on startup
     /// to replay any uncommitted records from a prior crash.</param>
     /// <param name="metrics">Optional event metrics for tracking pipeline throughput.</param>
+    /// <param name="finalFlushTimeout">Optional timeout for the final flush during shutdown. Defaults to 30 seconds.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -96,7 +94,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         ILogger<EventPipeline>? logger = null,
         DroppedEventAuditTrail? auditTrail = null,
         WriteAheadLog? wal = null,
-        IEventMetrics? metrics = null)
+        IEventMetrics? metrics = null,
+        TimeSpan? finalFlushTimeout = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -106,7 +105,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             logger,
             auditTrail,
             wal,
-            metrics)
+            metrics,
+            finalFlushTimeout)
     {
     }
 
@@ -122,13 +122,16 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         ILogger<EventPipeline>? logger = null,
         DroppedEventAuditTrail? auditTrail = null,
         WriteAheadLog? wal = null,
-        IEventMetrics? metrics = null)
+        IEventMetrics? metrics = null,
+        TimeSpan? finalFlushTimeout = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
         _auditTrail = auditTrail;
         _wal = wal;
         _metrics = metrics ?? new DefaultEventMetrics();
+        _finalFlushTimeout = finalFlushTimeout ?? DefaultFinalFlushTimeout;
+        _disposeTaskTimeout = _finalFlushTimeout + TimeSpan.FromSeconds(5);
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
         _capacity = policy.Capacity;
@@ -440,7 +443,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             // Final flush on shutdown with timeout to prevent indefinite hang
             try
             {
-                using var flushTimeoutCts = new CancellationTokenSource(FinalFlushTimeout);
+                using var flushTimeoutCts = new CancellationTokenSource(_finalFlushTimeout);
                 await _sink.FlushAsync(flushTimeoutCts.Token).ConfigureAwait(false);
 
                 // Final WAL commit for any remaining uncommitted records
@@ -453,7 +456,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             {
                 _logger.LogWarning(
                     "Final flush timed out after {TimeoutSeconds}s during pipeline shutdown. Consumed {ConsumedCount} events before timeout - some buffered data may be lost",
-                    FinalFlushTimeout.TotalSeconds, _consumedCount);
+                    _finalFlushTimeout.TotalSeconds, _consumedCount);
             }
             catch (Exception ex)
             {
@@ -503,20 +506,20 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _channel.Writer.TryComplete();
 
         // Wait for consumer with timeout to prevent indefinite hang
-        // (the consumer's finally block has its own FinalFlushTimeout, but this
+        // (the consumer's finally block has its own _finalFlushTimeout, but this
         // acts as a defense-in-depth safeguard)
         try
         {
             var completed = await Task.WhenAny(
                 _consumer,
-                Task.Delay(DisposeTaskTimeout)).ConfigureAwait(false);
+                Task.Delay(_disposeTaskTimeout)).ConfigureAwait(false);
 
             if (completed != _consumer)
             {
                 _logger.LogWarning(
                     "Consumer task did not complete within {TimeoutSeconds}s during disposal. " +
                     "Published: {PublishedCount}, consumed: {ConsumedCount}. Proceeding with disposal",
-                    DisposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
+                    _disposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
             }
             else
             {

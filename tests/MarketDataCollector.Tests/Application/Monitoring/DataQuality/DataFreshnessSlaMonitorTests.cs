@@ -224,7 +224,8 @@ public sealed class DataFreshnessSlaMonitorTests : IDisposable
         monitor.RecordEvent("AAPL");
 
         // Act - Wait for threshold to pass and check to run
-        Thread.Sleep(2500); // Wait for violation
+        // Timer fires every 1s and needs >1s staleness, so 1.5s is sufficient
+        Thread.Sleep(1500);
 
         // Assert
         capturedEvent.Should().NotBeNull();
@@ -250,8 +251,8 @@ public sealed class DataFreshnessSlaMonitorTests : IDisposable
 
         monitor.RecordEvent("AAPL");
 
-        // Wait for violation
-        Thread.Sleep(2500);
+        // Wait for violation - timer fires every 1s and needs >1s staleness
+        Thread.Sleep(1500);
 
         // Act - Record event to recover
         monitor.RecordEvent("AAPL");
