@@ -2,17 +2,30 @@
 
 ## Market Data Collector — Data Pipeline Assessment
 
-**Date:** 2026-02-03
-**Status:** Evaluation Complete
+**Date:** 2026-02-22
+**Status:** Re-evaluation Complete (supersedes 2026-02-03 assessment)
 **Author:** Architecture Review
 
 ---
 
 ## Executive Summary
 
-This document evaluates the real-time streaming architecture of the Market Data Collector system, including WebSocket connectivity, event pipeline, backpressure handling, and resilience patterns. The assessment covers the five streaming providers and the core infrastructure supporting high-throughput market data ingestion.
+This document re-evaluates the real-time streaming architecture of the Market Data Collector system. Since the initial assessment (2026-02-03), several high-priority recommendations have been implemented, substantially strengthening the pipeline.
 
-**Key Finding:** The streaming architecture is fundamentally sound with good resilience patterns via Polly. The primary improvement opportunity is optimizing the event pipeline for higher throughput scenarios and enhancing backpressure signaling to prevent data loss under load.
+**Key changes since last review:**
+
+| Recommendation (Feb 2026) | Status |
+|---------------------------|--------|
+| Implement micro-batching | **Implemented** — 100-event batches with 5 s periodic flush |
+| Add tiered backpressure | **Implemented** — `BackpressureAlertService` with 70 %/90 % thresholds |
+| Add provider failover | **Implemented** — `FailoverAwareMarketDataClient` with automatic provider switching |
+| Add latency histograms | **Implemented** — `ProviderLatencyService` with P50/P95/P99 per provider |
+| Improve reconnection with jitter | **Implemented** — `WebSocketReconnectionHelper` with exponential backoff + jitter |
+| Provider-specific resilience policies | **Implemented** — Three `WebSocketConnectionConfig` profiles (Default, HighFrequency, Resilient) |
+| Add parallel channel consumers | Deferred — single consumer batching meets current throughput needs |
+| Connection pooling | Deferred — not required at current symbol counts |
+
+**Overall finding:** The streaming architecture has matured from a sound foundation into a production-grade pipeline with WAL-backed durability, profile-based resilience, automated failover, and comprehensive backpressure alerting. Remaining improvements are incremental optimisations rather than architectural gaps.
 
 ---
 
@@ -22,190 +35,232 @@ This document evaluates the real-time streaming architecture of the Market Data 
 
 ```
 External Sources                    Internal Processing
-┌─────────────┐     ┌─────────────────────────────────────────────────┐
-│   Alpaca    │────▶│                                                 │
-│  WebSocket  │     │  ┌─────────────┐    ┌─────────────────────┐    │
-├─────────────┤     │  │             │    │                     │    │
-│   Polygon   │────▶│  │  Provider   │───▶│   EventPipeline     │    │
-│  WebSocket  │     │  │  Adapters   │    │   (Channels)        │    │
-├─────────────┤     │  │             │    │                     │    │
-│     IB      │────▶│  └─────────────┘    └──────────┬──────────┘    │
-│   Gateway   │     │                                 │               │
-├─────────────┤     │         ┌───────────────────────┴───────────┐  │
-│  StockSharp │────▶│         ▼                       ▼           │  │
-│  Connectors │     │  ┌─────────────┐         ┌─────────────┐    │  │
-├─────────────┤     │  │  Collectors │         │   Storage   │    │  │
-│    NYSE     │────▶│  │  (Domain)   │         │   Sinks     │    │  │
-│    Feed     │     │  └─────────────┘         └─────────────┘    │  │
-└─────────────┘     └─────────────────────────────────────────────────┘
+┌─────────────┐     ┌──────────────────────────────────────────────────────────┐
+│   Alpaca    │────▶│                                                          │
+│  WebSocket  │     │  ┌─────────────┐    ┌─────────────┐   ┌─────────────┐   │
+├─────────────┤     │  │  Provider   │    │   Domain    │   │   Event     │   │
+│   Polygon   │────▶│  │  Adapters   │───▶│  Collectors │──▶│  Pipeline   │   │
+│  WebSocket  │     │  │             │    │             │   │ (Channels)  │   │
+├─────────────┤     │  └─────────────┘    └─────────────┘   └──────┬──────┘   │
+│     IB      │────▶│         │                                     │          │
+│   Gateway   │     │         │ ┌───────────────────────────────────┤          │
+├─────────────┤     │         │ │                                   │          │
+│  StockSharp │────▶│         │ ▼                                   ▼          │
+│  Connectors │     │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
+├─────────────┤     │  │   Failover   │  │  WAL (crash  │  │   Storage    │   │
+│    NYSE     │────▶│  │   Client     │  │  safe log)   │  │   Sinks      │   │
+│    Feed     │     │  └──────────────┘  └──────────────┘  └──────────────┘   │
+└─────────────┘     │         │                                   │            │
+                    │         ▼                                   ▼            │
+                    │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
+                    │  │  Degradation │  │ Backpressure │  │  Latency &   │   │
+                    │  │  Scorer      │  │ Alerts       │  │  Skew Mon.   │   │
+                    │  └──────────────┘  └──────────────┘  └──────────────┘   │
+                    └──────────────────────────────────────────────────────────┘
 ```
 
 ### Core Components
 
 | Component | Location | Responsibility |
 |-----------|----------|----------------|
-| `IMarketDataClient` | `Infrastructure/` | Provider abstraction |
-| `EventPipeline` | `Application/Pipeline/` | Bounded channel routing |
-| `TradeDataCollector` | `Domain/Collectors/` | Trade event processing |
-| `MarketDepthCollector` | `Domain/Collectors/` | Order book maintenance |
+| `IMarketDataClient` | `ProviderSdk/` | Provider abstraction (ADR-001) |
+| `EventPipeline` | `Application/Pipeline/` | Bounded channel routing with WAL |
+| `EventPipelinePolicy` | `Core/Pipeline/` | Preset channel configurations (ADR-013) |
+| `TradeDataCollector` | `Domain/Collectors/` | Trade event processing with sequence validation |
+| `MarketDepthCollector` | `Domain/Collectors/` | L2 order book maintenance |
 | `QuoteCollector` | `Domain/Collectors/` | BBO state tracking |
-| `WebSocketResiliencePolicy` | `Infrastructure/Resilience/` | Polly-based resilience |
+| `FailoverAwareMarketDataClient` | `Infrastructure/Providers/Streaming/Failover/` | Automatic provider switching |
+| `WebSocketConnectionManager` | `Infrastructure/Resilience/` | Unified WebSocket lifecycle |
+| `WebSocketConnectionConfig` | `Infrastructure/Resilience/` | Profile-based resilience tuning |
+| `WebSocketReconnectionHelper` | `Infrastructure/Shared/` | Standardised reconnection with jitter |
+| `WebSocketResiliencePolicy` | `Infrastructure/Resilience/` | Polly retry + circuit breaker + timeout |
 | `ConnectionHealthMonitor` | `Application/Monitoring/` | Connection state tracking |
+| `ProviderLatencyService` | `Application/Monitoring/` | Per-provider P50/P95/P99 histograms |
+| `ProviderDegradationScorer` | `Application/Monitoring/` | Composite health scoring |
+| `ClockSkewEstimator` | `Application/Monitoring/` | EWMA clock-drift detection |
+| `SpreadMonitor` | `Application/Monitoring/` | Bid-ask spread alerting |
+| `BackpressureAlertService` | `Application/Monitoring/` | Tiered backpressure alerting |
+| `DroppedEventAuditTrail` | `Application/Pipeline/` | Dropped event accounting |
+| `SubscriptionOrchestrator` | `Application/Subscriptions/` | Hot-reloadable subscription management |
 
 ---
 
 ## B. Provider Connectivity Evaluation
 
+### Subscription ID Ranges
+
+Each provider operates in a non-overlapping subscription ID range to prevent conflicts:
+
+| Provider | Starting ID | Range |
+|----------|-------------|-------|
+| Alpaca | 100,000 | 100 K – 200 K |
+| Polygon | 200,000 | 200 K – 300 K |
+| StockSharp | 300,000 | 300 K – 400 K |
+| Interactive Brokers | 400,000 | 400 K – 500 K |
+| NYSE | 500,000 | 500 K – 600 K |
+
+---
+
 ### Provider 1: Alpaca Markets
 
-**Connection Type:** WebSocket (wss://stream.data.alpaca.markets)
+**Connection Type:** WebSocket (`wss://stream.data.alpaca.markets/v2/{feed}`)
+**Authentication:** JSON `{"action": "auth", "key": "<KEY_ID>", "secret": "<SECRET_KEY>"}`
+**Resilience Profile:** `WebSocketConnectionConfig.Default`
 
 **Strengths:**
 
 | Strength | Detail |
 |----------|--------|
-| Stable connection | Reliable WebSocket implementation |
-| Automatic reconnection | Built-in reconnect with backoff |
-| Message batching | Efficient trade/quote aggregation |
-| Authentication | Simple API key authentication |
-| Heartbeat | Regular ping/pong for connection health |
+| Stable connection | `WebSocketConnectionManager` with automatic reconnect |
+| Re-authentication | Automatic re-auth and re-subscription on reconnect |
+| Heartbeat | Ping/pong via `WebSocketConnectionManager` |
+| Feed selection | IEX (free) and SIP (paid) feeds supported |
 
 **Weaknesses:**
 
 | Weakness | Detail |
 |----------|--------|
 | US markets only | No international coverage |
-| Symbol limits | Max 200 symbols per connection |
-| No L2 depth | Only BBO quotes, no order book |
+| No L2 depth | `SubscribeMarketDepth` returns -1 |
+| Symbol limits | Max ~200 symbols per connection |
 
 **Implementation Assessment:**
 - Location: `Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs`
-- Resilience: Polly retry and circuit breaker
-- Throughput: Handles 10K+ messages/second
+- Reconnection: `OnConnectionLostAsync()` re-authenticates, restarts receive loop, re-subscribes
+- Data: Trades → `TradeDataCollector`, Quotes → `QuoteCollector`
 
 ---
 
 ### Provider 2: Polygon.io
 
-**Connection Type:** WebSocket (wss://socket.polygon.io)
+**Connection Type:** WebSocket (`wss://socket.polygon.io/{feed}`)
+**Authentication:** `{"action":"auth","params":"{apiKey}"}`
+**Resilience Profile:** `WebSocketConnectionConfig.Default` + `WebSocketReconnectionHelper`
 
 **Strengths:**
 
 | Strength | Detail |
 |----------|--------|
-| Full tick data | Trade, quote, and aggregate streams |
-| L2 depth | Order book snapshots available |
-| High throughput | Handles market-wide streams |
-| Multiple clusters | Regional endpoint selection |
+| Full tick data | Trade ("T"), quote ("Q"), and aggregate ("A"/"AM") streams |
+| Gated reconnection | `SemaphoreSlim` prevents reconnection storms |
+| Sequence tracking | `_messageSequence` tracks message ordering |
+| Stub mode | Operates in degraded mode if API key missing (< 20 chars) |
 
 **Weaknesses:**
 
 | Weakness | Detail |
 |----------|--------|
-| Cost | Professional tier required for full access |
-| Complexity | Multiple subscription types |
-| Rate limits | Connection limits per tier |
+| Cost | Professional tier for real-time data; free tier is 15-min delayed |
+| Rate limits | Connection and request limits per tier |
+| Complexity | Multiple subscription channels (stocks, options, forex, crypto) |
 
 **Implementation Assessment:**
 - Location: `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
-- Resilience: Circuit breaker with exponential backoff
-- Features: Aggregates, trades, quotes, status messages
+- Reconnection: Exponential backoff (base 2 s → max 60 s), max 10 attempts
+- Data: Trades, quotes, second/minute aggregates
 
 ---
 
 ### Provider 3: Interactive Brokers
 
-**Connection Type:** TCP Socket via TWS/IB Gateway
+**Connection Type:** TCP Socket via TWS/IB Gateway (not WebSocket)
+**Resilience Profile:** `WebSocketConnectionConfig.Resilient`
 
 **Strengths:**
 
 | Strength | Detail |
 |----------|--------|
 | Global coverage | 150+ markets worldwide |
-| Full depth | Level 2 market depth available |
+| Full depth | L2 market depth via `reqMarketDepth()` |
 | Multi-asset | Stocks, futures, forex, options |
-| Conditional orders | Market data + trading combined |
+| Enhanced connection manager | `EnhancedIBConnectionManager` with pacing compliance |
+| Simulation fallback | `IBSimulationClient` when IBAPI library unavailable |
 
 **Weaknesses:**
 
 | Weakness | Detail |
 |----------|--------|
-| Gateway dependency | Requires TWS or IB Gateway running |
+| Gateway dependency | Requires TWS or IB Gateway running locally |
 | Connection limits | Max 3 simultaneous connections |
-| Pacing rules | Complex rate limiting |
-| Session management | Must handle daily restarts |
+| Pacing rules | Complex IB-specific rate limiting (`IBApiLimits`) |
+| Conditional compilation | `#if IBAPI` — falls back to simulation if library absent |
 
 **Implementation Assessment:**
-- Location: `Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs`
-- Connection: IBApi client library
-- Challenges: Session state management, pacing compliance
+- Location: `Infrastructure/Providers/Streaming/InteractiveBrokers/`
+- Components: `IBMarketDataClient`, `IBCallbackRouter`, `EnhancedIBConnectionManager`, `ContractFactory`
+- Data: Trades, quotes (L1), depth (L2, up to 10 levels) via IB API callbacks
 
 ---
 
 ### Provider 4: StockSharp
 
 **Connection Type:** Framework-managed (varies by underlying connector)
+**Resilience Profile:** `WebSocketConnectionConfig.Resilient`
 
 **Strengths:**
 
 | Strength | Detail |
 |----------|--------|
-| 90+ connectors | Massive exchange coverage |
-| Unified interface | Single API for all sources |
-| Order book | Full L2 depth support |
-| Trading integration | Combined data + execution |
+| 90+ connectors | Massive exchange coverage (Rithmic, IQFeed, CQG, etc.) |
+| Message buffering | Bounded channel (50 K capacity, `EventPipelinePolicy.MessageBuffer`) prevents blocking |
+| Async message processor | Dedicated task drains buffer asynchronously |
+| Heartbeat timer | Long-running liveness detection |
 
 **Weaknesses:**
 
 | Weakness | Detail |
 |----------|--------|
 | Framework overhead | Heavy dependency footprint |
-| Learning curve | Complex configuration |
+| Learning curve | Complex connector configuration |
 | Licensing | Commercial features require license |
-| Debugging | Abstraction can hide issues |
+| Conditional compilation | `#if STOCKSHARP` — stub otherwise |
 
 **Implementation Assessment:**
 - Location: `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
-- Approach: Thin wrapper over StockSharp.Algo
+- Reconnection: Automatic with exponential backoff + jitter, connector recreation if needed
+- Data: Trades → `TradeDataCollector`, Quotes → `QuoteCollector`, Depth → `MarketDepthCollector`
 
 ---
 
 ### Provider 5: NYSE
 
-**Connection Type:** Hybrid (WebSocket + REST)
+**Connection Type:** Hybrid (WebSocket + REST, OAuth authenticated)
+**Resilience Profile:** `WebSocketConnectionConfig.Default` + `WebSocketReconnectionHelper`
 
 **Strengths:**
 
 | Strength | Detail |
 |----------|--------|
 | Official source | Direct from exchange |
-| L1/L2 data | Both quote levels available |
-| Reference data | Symbol reference included |
+| L1/L2 data | Both quote levels (Premium/Professional tier) |
 | Historical + real-time | Combined provider |
+| Corporate actions | Dividends, splits, trade conditions |
+| Extended hours | Pre/after-hours data |
 
 **Weaknesses:**
 
 | Weakness | Detail |
 |----------|--------|
 | NYSE only | Single exchange |
-| Cost | Enterprise pricing |
-| Integration complexity | Multiple feed types |
+| Cost | Enterprise pricing for L2 |
+| Rate limits | 100 req/min, 5 K req/hour, 50 K req/day |
+| Token management | OAuth token refresh with expiry tracking |
 
 **Implementation Assessment:**
 - Location: `Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs`
-- Features: Hybrid streaming + historical backfill
+- Features: Hybrid streaming + historical backfill, participant IDs, consolidated tape
 
 ---
 
 ### Provider Comparison Matrix
 
-| Provider | Latency | Throughput | Reliability | Coverage | L2 Depth | Cost |
-|----------|---------|------------|-------------|----------|----------|------|
-| Alpaca | ★★★★☆ | ★★★★☆ | ★★★★★ | US Only | No | Free |
-| Polygon | ★★★★★ | ★★★★★ | ★★★★★ | US + Crypto | Yes | $$$ |
-| IB | ★★★★☆ | ★★★☆☆ | ★★★★☆ | Global | Yes | $ |
-| StockSharp | ★★★☆☆ | ★★★★☆ | ★★★★☆ | Global | Yes | $$ |
-| NYSE | ★★★★★ | ★★★★★ | ★★★★★ | NYSE Only | Yes | $$$$ |
+| Provider | Latency | Throughput | Reliability | Coverage | L2 Depth | Resilience Profile | Cost |
+|----------|---------|------------|-------------|----------|----------|-------------------|------|
+| Alpaca | ★★★★☆ | ★★★★☆ | ★★★★★ | US Only | No | Default | Free |
+| Polygon | ★★★★★ | ★★★★★ | ★★★★★ | US + Crypto | Yes | Default | $$$ |
+| IB | ★★★★☆ | ★★★☆☆ | ★★★★☆ | Global | Yes | Resilient | $ |
+| StockSharp | ★★★☆☆ | ★★★★☆ | ★★★★☆ | Global | Yes | Resilient | $$ |
+| NYSE | ★★★★★ | ★★★★★ | ★★★★★ | NYSE Only | Yes | Default | $$$$ |
 
 ---
 
@@ -215,16 +270,57 @@ External Sources                    Internal Processing
 
 Location: `Application/Pipeline/EventPipeline.cs`
 
-**Architecture:** Bounded `System.Threading.Channels` with dedicated consumer tasks
+**Architecture:** Bounded `System.Threading.Channels` with dedicated consumer task, micro-batching, WAL-backed durability, and backpressure alerting.
 
-```csharp
-// Conceptual structure
-Channel<MarketDataEvent> _tradeChannel;    // Bounded capacity
-Channel<MarketDataEvent> _quoteChannel;    // Bounded capacity
-Channel<MarketDataEvent> _depthChannel;    // Bounded capacity
+#### Pipeline Policy Presets (ADR-013)
 
-// Producers (providers) → Channel → Consumers (collectors/sinks)
+| Preset | Capacity | Full Mode | Metrics | Use Case |
+|--------|----------|-----------|---------|----------|
+| `Default` | 100,000 | DropOldest | Yes | General-purpose event pipelines |
+| `HighThroughput` | 50,000 | DropOldest | Yes | Streaming data pipelines |
+| `MessageBuffer` | 50,000 | DropOldest | No | Internal message buffering (StockSharp) |
+| `MaintenanceQueue` | 100 | Wait | No | Background tasks (no drops allowed) |
+| `Logging` | 1,000 | DropOldest | No | Log channels |
+| `CompletionQueue` | 500 | Wait | No | Completion notifications |
+
+#### Publishing Paths
+
+| Method | Behaviour | Use Case |
+|--------|-----------|----------|
+| `TryPublish(in MarketEvent)` | Non-blocking O(1); returns `false` if full | Hot path for providers |
+| `PublishAsync(MarketEvent, CancellationToken)` | Blocks until space available | Backfill / maintenance |
+
+#### Consumer Processing
+
 ```
+Events arrive → TryPublish → Bounded Channel → Consumer Task
+                                                    │
+                                    ┌───────────────┤
+                                    ▼               ▼
+                               WAL Append      Sink Append
+                                    │               │
+                                    ▼               ▼
+                              WAL Commit    (batch of 100)
+                                                    │
+                                    ┌───────────────┤
+                                    ▼               ▼
+                            Periodic Flush    Final Flush
+                             (every 5 s)     (30 s timeout)
+```
+
+#### Pipeline Statistics Exposed
+
+| Statistic | Description |
+|-----------|-------------|
+| `PublishedCount` | Total events published |
+| `DroppedCount` | Events dropped due to backpressure |
+| `ConsumedCount` | Events consumed by sinks |
+| `RecoveredCount` | Events recovered from WAL on startup |
+| `PeakQueueSize` | Maximum observed queue depth |
+| `CurrentQueueSize` | Current queue depth |
+| `QueueUtilization` | 0 – 100 % current utilisation |
+| `AverageProcessingTimeUs` | Average per-event processing time (microseconds) |
+| `TimeSinceLastFlush` | Time since last sink flush |
 
 ### Evaluation
 
@@ -232,36 +328,41 @@ Channel<MarketDataEvent> _depthChannel;    // Bounded capacity
 
 | Strength | Detail |
 |----------|--------|
-| Bounded channels | Prevents unbounded memory growth |
-| Backpressure | BoundedChannelFullMode handles overflow |
-| Lock-free | Channels are highly optimized |
-| Async/await | Non-blocking producer/consumer |
-| Separation | Decouples providers from processing |
+| WAL durability | Events survive crashes — uncommitted records replayed on startup via `RecoverAsync()` |
+| Micro-batching | 100-event batches reduce per-event I/O overhead (was single-event in prior review) |
+| Periodic flush | 5 s timer ensures data reaches disk even during low-activity periods |
+| DropOldest default | Providers never block; oldest data sacrificed under extreme load |
+| Rich statistics | Queue utilisation, drop count, processing time all exposed for monitoring |
+| Dropped event audit | `DroppedEventAuditTrail` records every dropped event with reason |
+| High water mark alerts | Warning logged at 80 % utilisation; recovery at 50 % |
+| Consistent policies | `EventPipelinePolicy` presets enforce uniform channel configuration (ADR-013) |
 
 **Weaknesses:**
 
 | Weakness | Detail |
 |----------|--------|
-| Single consumer | Each channel has one consumer (potential bottleneck) |
-| No prioritization | All events treated equally |
-| Limited batching | Events processed individually |
-| Drop on overflow | May lose data under extreme load |
+| Single consumer | One consumer task per pipeline (sufficient for current load, limits future scale) |
+| No priority queues | All event types treated equally in the channel |
+| Batch size fixed | 100-event batches are not adaptive to load |
 
 ### Throughput Benchmarks
 
-| Scenario | Events/Second | CPU Usage | Memory |
-|----------|---------------|-----------|--------|
-| Light load (1 symbol) | 1,000 | 5% | 50 MB |
-| Normal load (10 symbols) | 10,000 | 15% | 100 MB |
-| Heavy load (50 symbols) | 50,000 | 40% | 200 MB |
-| Stress test (100+ symbols) | 100,000+ | 80%+ | 500 MB+ |
+Benchmarked in `benchmarks/MarketDataCollector.Benchmarks/EventPipelineBenchmarks.cs`:
 
-### Recommendations
+| Scenario | Configuration | Events Tested |
+|----------|---------------|---------------|
+| Bounded 50 K (Wait) | SingleReader, SingleWriter | 1 K / 10 K / 100 K |
+| Bounded 10 K (Wait) | SingleReader, SingleWriter | 1 K / 10 K / 100 K |
+| Bounded (DropOldest) | TryWrite, non-blocking | 1 K / 10 K / 100 K |
+| Unbounded | Baseline comparison | 1 K / 10 K / 100 K |
+| TryPublish sync | Multi-producer, 50 K DropOldest | Latency |
+| PublishAsync | Multi-producer, async write | Latency |
 
-1. **Add parallel consumers** - Multiple consumer tasks per channel for CPU scaling
-2. **Implement batching** - Process events in micro-batches (10-100 events)
-3. **Add priority queues** - Prioritize quotes over trades if needed
-4. **Improve overflow handling** - Signal backpressure to providers
+### Remaining Recommendations
+
+1. **Adaptive batch sizing** — Scale batch size based on queue utilisation (smaller at low load, larger at high load)
+2. **Parallel consumers** — Add when single consumer saturates (not currently a bottleneck)
+3. **Priority channels** — Separate channels for quotes vs. trades if latency-sensitive use cases emerge
 
 ---
 
@@ -269,16 +370,65 @@ Channel<MarketDataEvent> _depthChannel;    // Bounded capacity
 
 ### Current Implementation
 
-Location: `Infrastructure/Resilience/WebSocketResiliencePolicy.cs`
+Location: `Infrastructure/Resilience/`
 
-**Polly Policies Used:**
+#### WebSocket Connection Profiles
 
-| Policy | Configuration | Purpose |
-|--------|---------------|---------|
-| Retry | Exponential backoff (2, 4, 8, 16 sec) | Transient failure recovery |
-| Circuit Breaker | 5 failures → 30 sec break | Prevent cascade failures |
-| Timeout | 30 seconds | Prevent hung connections |
-| Bulkhead | Per-provider isolation | Limit concurrent operations |
+Three pre-defined profiles match provider characteristics:
+
+| Profile | Max Retries | Base Delay | Max Delay | Circuit Breaker Threshold | CB Duration | Heartbeat Interval | Heartbeat Timeout | Max Reconnect |
+|---------|-------------|------------|-----------|---------------------------|-------------|--------------------|-------------------|---------------|
+| **Default** | 5 | 2 s | 30 s | 5 failures | 30 s | 30 s | 10 s | 10 |
+| **HighFrequency** | 5 | 1 s | 15 s | 5 failures | 15 s | 15 s | 5 s | 10 |
+| **Resilient** | 10 | 3 s | 60 s | 5 failures | 60 s | 30 s | 10 s | 20 |
+
+**Provider assignments:**
+- Alpaca, Polygon, NYSE → `Default`
+- Interactive Brokers, StockSharp → `Resilient`
+
+#### Polly Comprehensive Pipeline
+
+`WebSocketResiliencePolicy.CreateComprehensivePipeline()` creates a three-layer resilience pipeline:
+
+```
+┌──────────────────────────────┐
+│  Layer 1: Timeout            │  5-minute total operation timeout
+│  ┌────────────────────────┐  │
+│  │ Layer 2: Circuit Breaker│  │  50 % failure ratio, min throughput = threshold
+│  │ ┌──────────────────┐   │  │
+│  │ │ Layer 3: Retry   │   │  │  Exponential backoff + ±20 % jitter
+│  │ │                  │   │  │
+│  │ └──────────────────┘   │  │
+│  └────────────────────────┘  │
+└──────────────────────────────┘
+```
+
+**Retry formula:** `delay = min(baseDelay * 2^(attempt - 1), maxDelay) ± 20 % jitter`
+
+#### WebSocket Connection Manager
+
+`WebSocketConnectionManager` provides unified lifecycle management:
+
+| Feature | Detail |
+|---------|--------|
+| Gated reconnection | `SemaphoreSlim(1, 1)` prevents reconnection storms |
+| Receive buffer | 64 KB per message |
+| Message assembly | `StringBuilder` for multi-frame messages |
+| Heartbeat integration | Automatic pong recording on data received |
+| State events | `ConnectionLost`, `Reconnected`, `StateChanged` callbacks |
+| Cleanup | Proper disposal of WebSocket, CTS, heartbeat |
+
+#### WebSocket Reconnection Helper
+
+`WebSocketReconnectionHelper` standardises reconnection across Polygon, NYSE, and StockSharp:
+
+| Parameter | Default |
+|-----------|---------|
+| Max attempts | 10 |
+| Base delay | 2 s |
+| Max delay | 60 s |
+| Jitter | ±20 % |
+| Gating | `SemaphoreSlim` |
 
 ### Evaluation
 
@@ -286,101 +436,77 @@ Location: `Infrastructure/Resilience/WebSocketResiliencePolicy.cs`
 
 | Strength | Detail |
 |----------|--------|
-| Industry standard | Polly is battle-tested |
-| Configurable | Policies adjustable per provider |
-| Observable | Integrates with logging/metrics |
-| Composable | Policies can be combined |
+| Profile-based configuration | Provider-specific tuning without code changes |
+| Comprehensive pipeline | Timeout + circuit breaker + retry in correct order |
+| Jitter on all retries | Prevents thundering herd across providers |
+| Gated reconnection | SemaphoreSlim eliminates reconnection storms |
+| Unified manager | `WebSocketConnectionManager` consolidates lifecycle |
+| Observable state | Events for connection lost, recovered, state changes |
 
-**Weaknesses:**
+**Improvements since prior review:**
 
-| Weakness | Detail |
-|----------|--------|
-| Generic policies | Same policy for all failure types |
-| No adaptive tuning | Static configuration |
-| Limited provider-specific | IB pacing needs special handling |
+| Prior Weakness | Resolution |
+|----------------|------------|
+| Generic policies for all providers | Three profiles (Default / HighFrequency / Resilient) |
+| No adaptive tuning | Profiles tuned per provider type |
+| IB pacing needs special handling | `Resilient` profile + `EnhancedIBConnectionManager` |
+| Reconnection without jitter | ±20 % jitter on all backoff calculations |
 
 ### Failure Scenarios Handled
 
 | Scenario | Response | Recovery Time |
 |----------|----------|---------------|
-| Network blip | Automatic retry | 2-4 seconds |
-| Server unavailable | Circuit breaker | 30 seconds |
+| Network blip | Retry with exponential backoff + jitter | 2 – 4 s |
+| Server unavailable | Circuit breaker opens | 30 – 60 s (profile-dependent) |
 | Authentication failure | Fail fast (no retry) | Immediate |
 | Rate limit | Backoff with jitter | Variable |
-| Timeout | Cancel and retry | 30+ seconds |
+| Connection timeout | Cancel and retry (30 s timeout) | 30 + s |
+| Sustained provider failure | Failover to backup provider | 5 – 15 s |
+| Silent connection loss | Heartbeat timeout triggers reconnect | 10 – 40 s |
 
-### Recommendations
+### Remaining Recommendations
 
-1. **Add adaptive circuit breaker** - Adjust thresholds based on error rates
-2. **Implement provider-specific policies** - IB pacing rules differ from WebSocket
-3. **Add health checks** - Proactive connection validation
-4. **Improve diagnostics** - More detailed failure categorization
+1. **Adaptive circuit breaker** — Auto-adjust thresholds based on rolling error rates
+2. **Per-failure-type retry policies** — Different strategies for timeout vs. rate-limit vs. server error
 
 ---
 
 ## E. Backpressure Handling Evaluation
 
-### Current Approach
-
-**BoundedChannelFullMode Options:**
-
-| Mode | Behavior | Current Usage |
-|------|----------|---------------|
-| Wait | Block producer until space | Default |
-| DropNewest | Drop incoming event | Not used |
-| DropOldest | Drop oldest queued event | Alternative |
-| DropWrite | Drop incoming, return false | Not used |
-
-### Evaluation
-
-**Current Implementation (Wait mode):**
-
-- Pros: No data loss under normal conditions
-- Cons: Can cause provider disconnection if blocked too long
-
-**Problem Scenario:**
-```
-1. Storage sink slows down (disk I/O)
-2. Channel fills up
-3. Provider write blocks
-4. WebSocket read buffer fills
-5. Provider disconnects (timeout)
-6. Data loss during reconnection
-```
-
-### Recommendations
-
-1. **Implement tiered backpressure:**
-   ```
-   75% capacity → Log warning
-   90% capacity → Reduce subscription scope
-   95% capacity → Signal provider to pause
-   100% capacity → Drop oldest with logging
-   ```
-
-2. **Add overflow metrics:**
-   - Track channel depth over time
-   - Alert on sustained high watermark
-   - Log dropped events with context
-
-3. **Implement load shedding:**
-   - Prioritize essential symbols
-   - Drop low-priority data first
-   - Maintain core data integrity
-
----
-
-## F. Connection Management Evaluation
-
 ### Current Implementation
 
-Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
+Backpressure handling has been substantially enhanced since the prior review with the addition of `BackpressureAlertService` and `DroppedEventAuditTrail`.
 
-**Features:**
-- Connection state tracking per provider
-- Heartbeat monitoring
-- Automatic reconnection coordination
-- Health endpoint exposure
+#### Pipeline Backpressure
+
+| Full Mode | Behaviour | Current Usage |
+|-----------|-----------|---------------|
+| DropOldest | Drop oldest queued event | Default, HighThroughput, MessageBuffer, Logging |
+| Wait | Block producer until space | MaintenanceQueue, CompletionQueue |
+
+#### Tiered Alerting (BackpressureAlertService)
+
+| Metric | Warning Threshold | Critical Threshold |
+|--------|-------------------|--------------------|
+| Queue utilisation | 70 % | 90 % |
+| Drop rate | 1 % | 5 % |
+| Check interval | 5 s | — |
+| Consecutive checks before alert | 3 | — |
+| Warning alert interval | 300 s (5 min) | — |
+| Critical alert interval | 60 s | — |
+
+**Alert actions:**
+- Raises `OnBackpressureDetected` event with `BackpressureAlert` record
+- Raises `OnBackpressureResolved` when pressure subsides
+- Optionally sends webhook notification via `DailySummaryWebhook`
+
+#### EventPipeline Internal Thresholds
+
+| Threshold | Level | Action |
+|-----------|-------|--------|
+| 80 % queue utilisation | Warning | One-time log: "Events may be dropped if queue fills" |
+| < 50 % queue utilisation | Recovery | Warning flag reset |
+| Queue full | Drop | Event dropped; `DroppedEventAuditTrail.RecordDroppedEventAsync()` called |
 
 ### Evaluation
 
@@ -388,18 +514,102 @@ Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
 
 | Strength | Detail |
 |----------|--------|
-| Centralized monitoring | Single point for connection status |
-| Heartbeat tracking | Detects silent failures |
-| State machine | Clear connection lifecycle |
-| Observable | Exposes metrics and health |
+| Tiered alerting | Warning (70 %) and critical (90 %) thresholds with configurable cooldowns |
+| Drop rate tracking | Alerts on 1 %+ drop rate, not just absolute queue depth |
+| Debounced alerts | 3 consecutive checks required before triggering (prevents flapping) |
+| Webhook integration | External notification on sustained backpressure |
+| Audit trail | Every dropped event recorded with reason ("backpressure_queue_full") |
+| Non-blocking default | `TryPublish` never blocks providers; DropOldest prevents cascade disconnects |
 
-**Weaknesses:**
+**Improvements since prior review:**
 
-| Weakness | Detail |
-|----------|--------|
-| No connection pooling | Single connection per provider |
-| Limited load balancing | No failover between equivalent providers |
-| Manual recovery | Some scenarios need human intervention |
+| Prior State | Current State |
+|-------------|---------------|
+| Wait mode (blocks producers, risks disconnects) | DropOldest mode (non-blocking, prevents cascading failures) |
+| No overflow metrics | Full `BackpressureAlertService` with tiered thresholds |
+| No dropped event tracking | `DroppedEventAuditTrail` records all drops |
+| No external alerting | Webhook notification on sustained backpressure |
+
+### Remaining Recommendations
+
+1. **Load shedding** — Prioritise essential symbols during sustained overload
+2. **Adaptive capacity** — Dynamically resize channel capacity based on sustained utilisation patterns
+3. **Upstream signaling** — Notify providers to reduce subscription scope before drops start
+
+---
+
+## F. Connection Management & Failover Evaluation
+
+### Failover Implementation
+
+Location: `Infrastructure/Providers/Streaming/Failover/FailoverAwareMarketDataClient.cs`
+
+The `FailoverAwareMarketDataClient` wraps multiple `IMarketDataClient` instances and transparently switches on failure:
+
+```
+┌────────────────────────────────────────────┐
+│       FailoverAwareMarketDataClient        │
+│                                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Primary  │  │ Backup 1 │  │ Backup 2 │ │
+│  │ (active) │  │ (standby)│  │ (standby)│ │
+│  └──────────┘  └──────────┘  └──────────┘ │
+│       │                                    │
+│       ▼                                    │
+│  ┌──────────────────────────────────────┐  │
+│  │    Subscription Tracking             │  │
+│  │  - Active depth subs (per symbol)    │  │
+│  │  - Active trade subs (per symbol)    │  │
+│  └──────────────────────────────────────┘  │
+│       │                                    │
+│       ▼                                    │
+│  ┌──────────────────────────────────────┐  │
+│  │    StreamingFailoverService          │  │
+│  │  - OnFailoverTriggered event         │  │
+│  │  - OnFailoverRecovered event         │  │
+│  └──────────────────────────────────────┘  │
+└────────────────────────────────────────────┘
+```
+
+**Failover process:**
+
+| Step | Action |
+|------|--------|
+| 1 | Acquire `SemaphoreSlim` switch lock |
+| 2 | Connect new provider |
+| 3 | Re-subscribe all active depth and trade subscriptions |
+| 4 | Swap `_activeClient` (volatile) |
+| 5 | Gracefully disconnect old provider |
+| 6 | Record metrics to `StreamingFailoverService` |
+
+**Immediate failover on connect:** `TryFailoverConnectAsync()` iterates through backup providers if the primary fails during initial `ConnectAsync()`.
+
+### Provider Degradation Scoring
+
+Location: `Application/Monitoring/ProviderDegradationScorer.cs`
+
+Composite health score per provider (0.0 = healthy, 1.0 = degraded):
+
+| Component | Weight | Threshold | Max |
+|-----------|--------|-----------|-----|
+| Connection (missed heartbeats) | 35 % | — | 5 missed |
+| Latency (P95) | 25 % | 200 ms | 2,000 ms |
+| Error rate | 25 % | 5 % | — |
+| Reconnects per hour | 15 % | — | 10/hour |
+
+**Degradation threshold:** composite score ≥ 0.6 triggers degradation event.
+**Evaluation interval:** every 30 s.
+
+### Connection Health Monitor
+
+Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
+
+| Feature | Configuration |
+|---------|---------------|
+| Heartbeat interval | 30 s |
+| Heartbeat timeout | 60 s |
+| High latency threshold | 500 ms |
+| Events | `OnConnectionLost`, `OnConnectionRecovered`, `OnHeartbeatMissed`, `OnHighLatency` |
 
 ### Connection State Machine
 
@@ -418,50 +628,126 @@ Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
 │  Connected  │     ┌─────────────┐           │
 └──────┬──────┘     │  Retrying   │───────────┤
        │            └─────────────┘           │
-       │ Error                                │
-       ▼                                      │
-┌─────────────┐                               │
-│Reconnecting │───────────────────────────────┘
-└─────────────┘     Max retries exceeded
+       │ Error               │ Failover       │
+       ▼                     ▼                │
+┌─────────────┐     ┌─────────────┐           │
+│Reconnecting │     │  Failover   │───────────┘
+└──────┬──────┘     │  Switch     │
+       │            └─────────────┘
+       │ Max retries exceeded
+       ▼
+┌─────────────┐
+│  Degraded   │ (scored by ProviderDegradationScorer)
+└─────────────┘
 ```
 
-### Recommendations
+### Evaluation
 
-1. **Add connection pooling** - Multiple connections per provider for throughput
-2. **Implement warm standby** - Pre-connect backup providers
-3. **Add automatic failover** - Switch providers on sustained failure
-4. **Improve reconnection** - Smarter backoff with jitter
+**Strengths:**
+
+| Strength | Detail |
+|----------|--------|
+| Automatic failover | Transparent provider switching with subscription recovery |
+| Composite scoring | Multi-factor degradation detection (connection, latency, errors, reconnects) |
+| Weighted scoring | Connection health (35 %) weighted highest as most critical signal |
+| Lock-protected switching | SemaphoreSlim prevents concurrent failover attempts |
+| Subscription persistence | All active subscriptions re-established on backup provider |
+
+**Improvements since prior review:**
+
+| Prior State | Current State |
+|-------------|---------------|
+| No failover between providers | `FailoverAwareMarketDataClient` with automatic switching |
+| Manual recovery for some scenarios | Fully automated failover + re-subscription |
+| No degradation detection | `ProviderDegradationScorer` with composite scoring |
+| No standardised reconnection | `WebSocketReconnectionHelper` with gated jittered backoff |
+
+### Remaining Recommendations
+
+1. **Warm standby** — Pre-connect backup providers to reduce failover latency
+2. **Connection pooling** — Multiple connections per provider for high symbol counts
+3. **Failover testing** — Chaos engineering hooks to validate failover paths
 
 ---
 
-## G. Latency Analysis
+## G. Latency & Observability Analysis
+
+### Per-Provider Latency Histograms
+
+Location: `Application/Monitoring/ProviderLatencyService.cs`
+
+| Metric | Per Provider |
+|--------|-------------|
+| Sample count | Yes |
+| Mean latency | Yes |
+| P50 | Yes |
+| P95 | Yes |
+| P99 | Yes |
+| Min / Max | Yes |
+| Per-symbol breakdown | Optional |
+| Last update time | Yes |
+| Hourly cleanup | Automatic |
+
+**Recording methods:**
+- `RecordLatency(provider, latencyMs, symbol?)` — direct millisecond value
+- `RecordLatency(provider, eventTime, receiveTime, symbol?)` — computed from timestamps
+
+### Clock Skew Estimation
+
+Location: `Application/Monitoring/ClockSkewEstimator.cs`
+
+| Parameter | Value |
+|-----------|-------|
+| Algorithm | Exponentially Weighted Moving Average (EWMA) |
+| Smoothing factor (α) | 0.05 |
+| Formula | `ewma = α × skewMs + (1 - α) × ewma` |
+| Per-provider tracking | Yes |
+| Snapshot data | Estimated skew, sample count, min/max |
+
+Positive skew indicates provider clock is behind local time. Detects NTP jumps and gradual drift.
+
+### Spread Monitoring
+
+Location: `Application/Monitoring/SpreadMonitor.cs`
+
+| Preset | Wide Spread Threshold (bps) | Percentage | Alert Cooldown |
+|--------|----------------------------|------------|----------------|
+| Default | 100 bps | 1.0 % | 10 s |
+| LargeCap | 10 bps | 0.1 % | 5 s |
+| SmallCap | 500 bps | 5.0 % | 30 s |
+
+**Tracks per symbol:** current spread, average, min, max, wide spread count, consecutive wide spreads.
+**Cleanup:** Removes inactive symbols after 24 hours.
 
 ### End-to-End Latency Components
 
 | Stage | Typical Latency | Variance |
 |-------|-----------------|----------|
-| Network (provider → app) | 1-50 ms | High (network dependent) |
-| WebSocket parsing | 0.1-1 ms | Low |
-| Channel enqueue | 0.01-0.1 ms | Very low |
-| Channel dequeue | 0.01-0.1 ms | Very low |
-| Collector processing | 0.1-1 ms | Low |
-| Storage write | 1-10 ms | Medium |
-| **Total** | **5-100 ms** | **High** |
+| Network (provider → app) | 1 – 50 ms | High (network dependent) |
+| WebSocket parsing | 0.1 – 1 ms | Low |
+| Channel enqueue (TryPublish) | 0.01 – 0.1 ms | Very low |
+| Channel dequeue | 0.01 – 0.1 ms | Very low |
+| Collector processing | 0.1 – 1 ms | Low |
+| WAL append | 0.1 – 1 ms | Low |
+| Storage write (batched) | 1 – 5 ms | Medium |
+| **Total** | **3 – 60 ms** | **Medium** |
 
-### Latency Distribution (P50/P95/P99)
+### Evaluation
 
-| Metric | P50 | P95 | P99 |
-|--------|-----|-----|-----|
-| Trade event processing | 5 ms | 20 ms | 50 ms |
-| Quote event processing | 3 ms | 15 ms | 40 ms |
-| Depth event processing | 10 ms | 40 ms | 100 ms |
+**Improvements since prior review:**
 
-### Optimization Opportunities
+| Prior State | Current State |
+|-------------|---------------|
+| No latency histograms | `ProviderLatencyService` with P50/P95/P99 per provider |
+| No clock skew detection | `ClockSkewEstimator` with EWMA |
+| No spread monitoring | `SpreadMonitor` with preset configurations |
+| Single-event storage writes | Batched writes (100 events) reduce I/O overhead |
 
-1. **Batch storage writes** - Reduce per-event I/O overhead
-2. **Memory-mapped files** - Faster write path (with durability trade-off)
-3. **Object pooling** - Reduce GC pressure
-4. **SIMD parsing** - Faster JSON deserialization
+### Remaining Recommendations
+
+1. **Object pooling** — Reduce GC pressure for `MarketEvent` allocations in hot path
+2. **SIMD-accelerated parsing** — Faster JSON deserialization for high-throughput providers
+3. **Latency-based routing** — Use `ProviderLatencyService` data to prefer lower-latency providers
 
 ---
 
@@ -471,10 +757,15 @@ Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
 
 | Resource | Practical Limit | Bottleneck |
 |----------|-----------------|------------|
-| Symbols per provider | 100-500 | Provider limits, memory |
-| Events per second | 100,000 | CPU, channel throughput |
-| Concurrent providers | 5 | Connection management |
-| Memory usage | 1-2 GB | Event buffering, depth data |
+| Symbols per provider | 100 – 500 | Provider limits, memory |
+| Events per second | 100,000+ | Channel throughput, single consumer |
+| Concurrent providers | 5 (+ failover) | Connection management |
+| Memory usage | 1 – 2 GB | Event buffering, depth data |
+| Subscription IDs | 100 K per provider | Non-overlapping ranges |
+
+### Message Buffering (StockSharp)
+
+StockSharp uses a dedicated `EventPipelinePolicy.MessageBuffer` channel (50 K capacity, DropOldest) to absorb high-frequency bursts from the Hydra connector pattern without blocking the connector thread.
 
 ### Scaling Patterns
 
@@ -482,6 +773,7 @@ Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
 - Add CPU cores → More parallel processing
 - Add RAM → Larger channel buffers
 - Faster disk → Higher write throughput
+- SSD → Lower WAL latency
 
 **Horizontal Scaling (Future):**
 - Multiple collector instances (partitioned by symbol)
@@ -493,9 +785,9 @@ Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
 | Scale | Recommendation |
 |-------|----------------|
 | 100 symbols | Current architecture sufficient |
-| 500 symbols | Add parallel consumers, optimize batching |
-| 1,000+ symbols | Consider horizontal scaling, Kafka integration |
-| 10,000+ symbols | Distributed architecture required |
+| 500 symbols | Monitor backpressure alerts; tune channel capacity if needed |
+| 1,000+ symbols | Add parallel consumers; consider symbol-partitioned instances |
+| 10,000+ symbols | Distributed architecture with Kafka or equivalent |
 
 ---
 
@@ -566,53 +858,63 @@ Location: `Application/Monitoring/ConnectionHealthMonitor.cs`
 
 ---
 
-## J. Summary Recommendations
+## J. Summary & Recommendations
 
-### Retain Current Architecture
+### Architecture Maturity Assessment
 
-The streaming architecture is well-designed. Retain:
+The streaming architecture has progressed from a solid foundation to a production-grade system:
 
-1. **Channel-based pipeline** - Efficient and simple
-2. **Polly resilience** - Industry-standard patterns
-3. **Provider abstraction** - Clean separation
-4. **Connection health monitoring** - Good observability
+| Capability | Feb 2026 Status | Current Status |
+|------------|-----------------|----------------|
+| Provider abstraction | Mature | Mature |
+| Channel-based pipeline | Basic | Mature (WAL, batching, audit trail) |
+| Resilience policies | Generic | Profile-based (Default / HighFrequency / Resilient) |
+| Backpressure handling | Wait mode (risky) | Tiered alerting (70 % / 90 %) + DropOldest |
+| Failover | Not implemented | Automatic with subscription recovery |
+| Latency observability | Not implemented | P50/P95/P99 histograms + clock skew detection |
+| Spread monitoring | Not implemented | Per-symbol with preset configurations |
+| Degradation scoring | Not implemented | Composite 4-factor scoring |
+| Connection management | Basic reconnection | Centralised manager with heartbeat + jitter |
 
-### Recommended Improvements
+### Retain (Proven Components)
+
+1. **Channel-based pipeline** — Efficient, well-tuned, now WAL-backed
+2. **Polly resilience** — Industry-standard, now profile-based
+3. **Provider abstraction** — Clean separation via `IMarketDataClient`
+4. **Micro-batching** — 100-event batches balance throughput and latency
+5. **Failover client** — Transparent provider switching
+6. **Degradation scorer** — Multi-factor health assessment
+
+### Remaining Improvements
 
 | Priority | Improvement | Benefit |
 |----------|-------------|---------|
-| High | Add parallel channel consumers | 2-4x throughput improvement |
-| High | Implement tiered backpressure | Prevent data loss under load |
-| High | Add micro-batching | Reduce per-event overhead |
-| Medium | Add provider failover | Automatic recovery from provider outages |
-| Medium | Implement object pooling | Reduce GC pressure |
-| Medium | Add connection pooling | Higher per-provider throughput |
-| Low | Consider Kafka integration | Future horizontal scaling |
-| Low | Add latency histograms | Better observability |
+| Medium | Parallel channel consumers | 2 – 4x throughput when single consumer saturates |
+| Medium | Object pooling for hot path | Reduce GC pauses under sustained load |
+| Medium | Warm standby for failover | Reduce failover latency from seconds to milliseconds |
+| Low | Adaptive batch sizing | Better throughput/latency balance across load levels |
+| Low | Priority channels per event type | Latency-sensitive quote processing |
+| Low | Kafka integration | Horizontal scaling for 1,000+ symbol deployments |
+| Low | Chaos engineering hooks | Validate failover paths in staging |
 
 ### Performance Targets
 
-| Metric | Current | Target | Action Required |
-|--------|---------|--------|-----------------|
-| Events/second | 100K | 250K | Parallel consumers, batching |
-| P99 latency | 50 ms | 20 ms | Object pooling, optimization |
-| Recovery time | 30 sec | 10 sec | Faster reconnection |
-| Memory under load | 500 MB | 300 MB | Buffer tuning, pooling |
+| Metric | Prior Target | Current Estimate | Notes |
+|--------|-------------|-----------------|-------|
+| Events/second | 250 K | 100 K+ (single consumer) | Sufficient for current use cases |
+| P99 latency | 20 ms | 30 – 60 ms (end-to-end) | Dominated by network + storage |
+| Recovery time | 10 s | 5 – 15 s (failover) | Automatic with re-subscription |
+| Memory under load | 300 MB | 200 – 500 MB | Depends on symbol count and depth |
 
 ---
 
 ## Key Insight
 
-The streaming architecture follows sound principles: bounded channels prevent unbounded growth, Polly provides resilience, and the provider abstraction enables multi-source operation.
+The streaming architecture has addressed all high-priority recommendations from the February 2026 assessment. WAL-backed durability, profile-based resilience, automated failover, and tiered backpressure alerting have transformed the pipeline from a promising foundation into a production-ready system.
 
-The primary improvement opportunities are:
-
-1. **Throughput** - Parallel consumers and micro-batching for 2-4x improvement
-2. **Reliability** - Tiered backpressure to prevent data loss
-3. **Observability** - Better metrics for capacity planning
-
-These are incremental improvements, not architectural changes. The foundation is solid.
+The remaining improvements — parallel consumers, object pooling, warm standby — are incremental optimisations that should be driven by observed production bottlenecks rather than speculative engineering. The architecture is well-positioned for its current scale (hundreds of symbols across five providers) and has clear scaling paths when needed.
 
 ---
 
-*Evaluation Date: 2026-02-03*
+*Evaluation Date: 2026-02-22*
+*Prior Evaluation: 2026-02-03*
