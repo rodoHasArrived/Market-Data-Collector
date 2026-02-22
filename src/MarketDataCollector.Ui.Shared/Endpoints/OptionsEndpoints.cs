@@ -217,14 +217,7 @@ public static class OptionsEndpoints
                 var chain = await service.FetchChainSnapshotAsync(
                     request.UnderlyingSymbol, expDate, request.StrikeRange, ct);
 
-                return Results.Json(new
-                {
-                    refreshed = chain is not null,
-                    underlyingSymbol = request.UnderlyingSymbol,
-                    expiration = request.Expiration,
-                    totalContracts = chain?.TotalContracts ?? 0,
-                    timestamp = DateTimeOffset.UtcNow
-                }, jsonOptions);
+                return Results.Json(chain, jsonOptions);
             }
 
             return Results.Json(
