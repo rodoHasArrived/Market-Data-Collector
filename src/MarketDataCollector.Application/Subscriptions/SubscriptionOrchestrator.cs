@@ -47,7 +47,7 @@ public sealed class SubscriptionOrchestrator
         _optionCollector = optionCollector;
 
         if (_optionCollector is not null)
-            _log.Information("OptionDataCollector available; option subscriptions will be routed through the collector");
+            _log.Information("OptionDataCollector available; option data will be collected by the option collector, while subscriptions remain managed by SubscriptionOrchestrator");
     }
 
     public IReadOnlyDictionary<string, int> DepthSubscriptions => _depthSubs;
