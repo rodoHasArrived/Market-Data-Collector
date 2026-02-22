@@ -707,6 +707,7 @@ Market-Data-Collector/
 │   │   │   ├── GracefulShutdownHandler.cs
 │   │   │   ├── GracefulShutdownService.cs
 │   │   │   ├── HistoricalDataQueryService.cs
+│   │   │   ├── OptionsChainService.cs
 │   │   │   ├── PreflightChecker.cs
 │   │   │   ├── ProgressDisplayService.cs
 │   │   │   ├── SampleDataGenerator.cs
@@ -730,6 +731,7 @@ Market-Data-Collector/
 │   │   │   ├── ClientModels.cs
 │   │   │   ├── ErrorResponse.cs
 │   │   │   ├── LiveDataModels.cs
+│   │   │   ├── OptionsModels.cs
 │   │   │   ├── ProviderCatalog.cs
 │   │   │   ├── StatusEndpointModels.cs
 │   │   │   ├── StatusModels.cs
@@ -823,6 +825,7 @@ Market-Data-Collector/
 │   │   ├── Collectors/
 │   │   │   ├── IQuoteStateStore.cs
 │   │   │   ├── MarketDepthCollector.cs
+│   │   │   ├── OptionDataCollector.cs
 │   │   │   ├── QuoteCollector.cs
 │   │   │   ├── SymbolSubscriptionTracker.cs
 │   │   │   └── TradeDataCollector.cs
@@ -907,6 +910,7 @@ Market-Data-Collector/
 │   │   ├── IHistoricalDataSource.cs
 │   │   ├── IMarketDataClient.cs
 │   │   ├── ImplementsAdrAttribute.cs
+│   │   ├── IOptionsChainProvider.cs
 │   │   ├── IProviderMetadata.cs
 │   │   ├── IProviderModule.cs
 │   │   ├── IRealtimeDataSource.cs
@@ -1118,6 +1122,7 @@ Market-Data-Collector/
 │   │   │   ├── LiveDataEndpoints.cs
 │   │   │   ├── MaintenanceScheduleEndpoints.cs
 │   │   │   ├── MessagingEndpoints.cs
+│   │   │   ├── OptionsEndpoints.cs
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── ProviderExtendedEndpoints.cs
@@ -1240,6 +1245,8 @@ Market-Data-Collector/
 │       │   ├── MessagingHubPage.xaml.cs
 │       │   ├── NotificationCenterPage.xaml
 │       │   ├── NotificationCenterPage.xaml.cs
+│       │   ├── OptionsPage.xaml
+│       │   ├── OptionsPage.xaml.cs
 │       │   ├── OrderBookPage.xaml
 │       │   ├── OrderBookPage.xaml.cs
 │       │   ├── PackageManagerPage.xaml
