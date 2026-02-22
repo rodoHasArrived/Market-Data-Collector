@@ -9,6 +9,7 @@ namespace MarketDataCollector.Ui.Services.Services;
 
 /// <summary>
 /// Simplified status for display in the desktop UI.
+/// Includes provenance and staleness tracking (P0: explicit staleness + source provenance).
 /// </summary>
 public sealed class SimpleStatus
 {
@@ -17,6 +18,33 @@ public sealed class SimpleStatus
     public long Integrity { get; set; }
     public long Historical { get; set; }
     public StatusProviderInfo? Provider { get; set; }
+
+    /// <summary>
+    /// UTC timestamp when this status snapshot was retrieved from the backend.
+    /// </summary>
+    public DateTime? RetrievedAtUtc { get; set; }
+
+    /// <summary>
+    /// Name of the data source provider that produced these metrics.
+    /// Null if sourced from fixture/offline data.
+    /// </summary>
+    public string? SourceProvider { get; set; }
+
+    /// <summary>
+    /// Whether this status data is considered stale (backend reported stale or too old).
+    /// </summary>
+    public bool IsStale { get; set; }
+
+    /// <summary>
+    /// Age of the data in seconds since last backend update.
+    /// </summary>
+    public double AgeSeconds { get; set; }
+
+    /// <summary>
+    /// Data provenance: "live", "cached", "fixture", or "offline".
+    /// Indicates the origin of the data being displayed.
+    /// </summary>
+    public string DataProvenance { get; set; } = "unknown";
 }
 
 /// <summary>
@@ -253,13 +281,22 @@ public abstract class StatusServiceBase
 
                 if (apiStatus?.Metrics != null)
                 {
+                    var now = DateTime.UtcNow;
+                    var activeProvider = providerInfo?.ActiveProvider;
+                    var isFixtureMode = FixtureModeDetector.Instance.IsFixtureMode;
+
                     return new SimpleStatus
                     {
                         Published = apiStatus.Metrics.Published,
                         Dropped = apiStatus.Metrics.Dropped,
                         Integrity = apiStatus.Metrics.Integrity,
                         Historical = apiStatus.Metrics.HistoricalBars,
-                        Provider = providerInfo
+                        Provider = providerInfo,
+                        RetrievedAtUtc = now,
+                        SourceProvider = activeProvider,
+                        IsStale = false, // Just retrieved, not stale
+                        AgeSeconds = 0,
+                        DataProvenance = isFixtureMode ? "fixture" : "live"
                     };
                 }
             }
