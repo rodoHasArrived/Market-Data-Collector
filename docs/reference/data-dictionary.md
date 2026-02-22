@@ -663,6 +663,17 @@ Discriminator for event types in the `MarketEvent` container.
 | `ConnectionStatus` | `6` | Connection state change |
 | `Integrity` | `7` | Data integrity event |
 | `HistoricalBar` | `8` | Historical OHLCV bar |
+| `HistoricalQuote` | `9` | Historical NBBO quote |
+| `HistoricalTrade` | `10` | Historical trade print |
+| `HistoricalAuction` | `11` | Historical auction data |
+| `AggregateBar` | `12` | Real-time aggregate OHLCV bar |
+| `Quote` | `13` | Quote update event |
+| `Depth` | `14` | Order book depth update |
+| `OptionQuote` | `15` | Option quote with greeks/IV |
+| `OptionTrade` | `16` | Option trade execution |
+| `OptionGreeks` | `17` | Option greeks snapshot |
+| `OptionChain` | `18` | Option chain snapshot |
+| `OpenInterest` | `19` | Option open interest update |
 
 ---
 
@@ -733,7 +744,7 @@ Severity level for integrity events.
 
 Type of order book integrity violation.
 
-**Location:** `src/MarketDataCollector.Contracts/Domain/Models/DepthIntegrityEvent.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/DepthIntegrityKind.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
