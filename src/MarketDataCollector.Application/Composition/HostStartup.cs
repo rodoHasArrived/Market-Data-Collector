@@ -175,11 +175,14 @@ public sealed class HostStartup : IAsyncDisposable
         var tradeCollector = GetRequiredService<TradeDataCollector>();
         var log = LoggingSetup.ForContext<SubscriptionOrchestrator>();
 
+        var optionCollector = GetService<OptionDataCollector>();
+
         return new SubscriptionOrchestrator(
             depthCollector,
             tradeCollector,
             dataClient,
-            log);
+            log,
+            optionCollector);
     }
 
     /// <summary>

@@ -310,6 +310,7 @@ public partial class MainPage : Page
             new("Multi-Source", "Collect", "page:DataSources", new[] { "failover", "multiple" }),
             new("Symbols", "Collect", "page:Symbols", new[] { "stocks", "tickers" }),
             new("Backfill", "Collect", "page:Backfill", new[] { "historical", "download" }),
+            new("Options", "Collect", "page:Options", new[] { "derivatives", "chain", "greeks", "strikes", "expiration", "calls", "puts" }),
             new("Schedules", "Collect", "page:Schedules", new[] { "schedule", "cron", "timer" }),
             new("Sessions", "Collect", "page:CollectionSessions", new[] { "history", "runs" }),
 
@@ -383,6 +384,7 @@ public partial class MainPage : Page
             "DataSources" => "Multi-Source Config",
             "Symbols" => "Symbols",
             "Backfill" => "Historical Data Backfill",
+            "Options" => "Options Chain",
             "Schedules" => "Schedules",
             "CollectionSessions" => "Collection Sessions",
             "DataBrowser" => "Data Browser",

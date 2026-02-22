@@ -102,6 +102,48 @@ public sealed class UiApiClient
         => await GetAsync<T>(UiApiRoutes.ProviderCapabilities, ct).ConfigureAwait(false);
 
     // ============================================================
+    // Options / Derivatives endpoints
+    // ============================================================
+
+    public async Task<OptionsExpirationsResponse?> GetOptionsExpirationsAsync(string underlyingSymbol, CancellationToken ct = default)
+        => await GetAsync<OptionsExpirationsResponse>(
+            UiApiRoutes.WithParam(UiApiRoutes.OptionsExpirations, "underlyingSymbol", underlyingSymbol), ct).ConfigureAwait(false);
+
+    public async Task<OptionsStrikesResponse?> GetOptionsStrikesAsync(string underlyingSymbol, string expiration, CancellationToken ct = default)
+    {
+        var route = UiApiRoutes.WithParam(UiApiRoutes.OptionsStrikes, "underlyingSymbol", underlyingSymbol);
+        route = route.Replace("{expiration}", expiration);
+        return await GetAsync<OptionsStrikesResponse>(route, ct).ConfigureAwait(false);
+    }
+
+    public async Task<OptionsChainResponse?> GetOptionsChainAsync(
+        string underlyingSymbol,
+        string? expiration = null,
+        int? strikeRange = null,
+        CancellationToken ct = default)
+    {
+        var route = UiApiRoutes.WithParam(UiApiRoutes.OptionsChains, "underlyingSymbol", underlyingSymbol);
+        var queryParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(expiration)) queryParts.Add($"expiration={expiration}");
+        if (strikeRange.HasValue) queryParts.Add($"strikeRange={strikeRange.Value}");
+        if (queryParts.Count > 0) route = UiApiRoutes.WithQuery(route, string.Join("&", queryParts));
+        return await GetAsync<OptionsChainResponse>(route, ct).ConfigureAwait(false);
+    }
+
+    public async Task<List<OptionQuoteDto>?> GetOptionsQuotesByUnderlyingAsync(string underlyingSymbol, CancellationToken ct = default)
+        => await GetAsync<List<OptionQuoteDto>>(
+            UiApiRoutes.WithParam(UiApiRoutes.OptionsQuotesByUnderlying, "underlyingSymbol", underlyingSymbol), ct).ConfigureAwait(false);
+
+    public async Task<OptionsSummaryResponse?> GetOptionsSummaryAsync(CancellationToken ct = default)
+        => await GetAsync<OptionsSummaryResponse>(UiApiRoutes.OptionsSummary, ct).ConfigureAwait(false);
+
+    public async Task<List<string>?> GetOptionsTrackedUnderlyingsAsync(CancellationToken ct = default)
+        => await GetAsync<List<string>>(UiApiRoutes.OptionsTrackedUnderlyings, ct).ConfigureAwait(false);
+
+    public async Task<OptionsChainResponse?> RefreshOptionsChainAsync(OptionsRefreshRequest request, CancellationToken ct = default)
+        => await PostAsync<OptionsChainResponse>(UiApiRoutes.OptionsRefresh, request, ct).ConfigureAwait(false);
+
+    // ============================================================
     // Generic HTTP methods
     // ============================================================
 
