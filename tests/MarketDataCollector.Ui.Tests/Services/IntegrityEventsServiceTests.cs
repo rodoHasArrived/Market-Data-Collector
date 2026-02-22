@@ -61,16 +61,14 @@ public sealed class IntegrityEventsServiceTests
         // Assert
         evt.Id.Should().NotBeNull();
         evt.Symbol.Should().NotBeNull();
-        evt.Message.Should().NotBeNull();
-        evt.Details.Should().NotBeNull();
-        evt.Source.Should().NotBeNull();
+        evt.Description.Should().NotBeNull();
     }
 
     [Fact]
     public void IntegrityEvent_CanStoreAllProperties()
     {
         // Arrange
-        var timestamp = DateTimeOffset.UtcNow;
+        var timestamp = DateTime.UtcNow;
 
         // Act
         var evt = new IntegrityEvent
@@ -78,22 +76,24 @@ public sealed class IntegrityEventsServiceTests
             Id = "evt-001",
             Timestamp = timestamp,
             Symbol = "SPY",
-            EventType = IntegrityEventType.Gap,
-            Severity = IntegrityEventSeverity.Warning,
-            Message = "Sequence gap detected",
-            Details = "Missing ticks between 10:30 and 10:31",
-            Source = "Alpaca"
+            EventType = IntegrityEventType.SequenceGap,
+            Severity = IntegritySeverity.Warning,
+            Description = "Sequence gap detected",
+            ExpectedSequence = 100,
+            ActualSequence = 105,
+            GapSize = 5
         };
 
         // Assert
         evt.Id.Should().Be("evt-001");
         evt.Timestamp.Should().Be(timestamp);
         evt.Symbol.Should().Be("SPY");
-        evt.EventType.Should().Be(IntegrityEventType.Gap);
-        evt.Severity.Should().Be(IntegrityEventSeverity.Warning);
-        evt.Message.Should().Be("Sequence gap detected");
-        evt.Details.Should().Be("Missing ticks between 10:30 and 10:31");
-        evt.Source.Should().Be("Alpaca");
+        evt.EventType.Should().Be(IntegrityEventType.SequenceGap);
+        evt.Severity.Should().Be(IntegritySeverity.Warning);
+        evt.Description.Should().Be("Sequence gap detected");
+        evt.ExpectedSequence.Should().Be(100);
+        evt.ActualSequence.Should().Be(105);
+        evt.GapSize.Should().Be(5);
     }
 
     [Theory]
@@ -113,10 +113,13 @@ public sealed class IntegrityEventsServiceTests
     // ── IntegrityEventType enum ─────────────────────────────────────
 
     [Theory]
-    [InlineData(IntegrityEventType.Gap)]
+    [InlineData(IntegrityEventType.SequenceGap)]
     [InlineData(IntegrityEventType.OutOfOrder)]
     [InlineData(IntegrityEventType.Duplicate)]
-    [InlineData(IntegrityEventType.Invalid)]
+    [InlineData(IntegrityEventType.ValidationFailure)]
+    [InlineData(IntegrityEventType.StaleData)]
+    [InlineData(IntegrityEventType.ProviderSwitch)]
+    [InlineData(IntegrityEventType.Other)]
     public void IntegrityEventType_AllValues_ShouldBeDefined(IntegrityEventType eventType)
     {
         // Assert
@@ -124,264 +127,199 @@ public sealed class IntegrityEventsServiceTests
     }
 
     [Fact]
-    public void IntegrityEventType_ShouldHaveFourValues()
+    public void IntegrityEventType_ShouldHaveSevenValues()
     {
         // Act
         var values = Enum.GetValues<IntegrityEventType>();
 
         // Assert
-        values.Should().HaveCountGreaterThanOrEqualTo(4);
-        values.Should().Contain(IntegrityEventType.Gap);
+        values.Should().HaveCount(7);
+        values.Should().Contain(IntegrityEventType.SequenceGap);
         values.Should().Contain(IntegrityEventType.OutOfOrder);
         values.Should().Contain(IntegrityEventType.Duplicate);
-        values.Should().Contain(IntegrityEventType.Invalid);
+        values.Should().Contain(IntegrityEventType.ValidationFailure);
+        values.Should().Contain(IntegrityEventType.StaleData);
+        values.Should().Contain(IntegrityEventType.ProviderSwitch);
+        values.Should().Contain(IntegrityEventType.Other);
     }
 
-    // ── IntegrityEventSeverity enum ─────────────────────────────────
+    // ── IntegritySeverity enum ────────────────────────────────────
 
     [Theory]
-    [InlineData(IntegrityEventSeverity.Info)]
-    [InlineData(IntegrityEventSeverity.Warning)]
-    [InlineData(IntegrityEventSeverity.Error)]
-    [InlineData(IntegrityEventSeverity.Critical)]
-    public void IntegrityEventSeverity_AllValues_ShouldBeDefined(IntegrityEventSeverity severity)
+    [InlineData(IntegritySeverity.Info)]
+    [InlineData(IntegritySeverity.Warning)]
+    [InlineData(IntegritySeverity.Critical)]
+    public void IntegritySeverity_AllValues_ShouldBeDefined(IntegritySeverity severity)
     {
         // Assert
-        Enum.IsDefined(typeof(IntegrityEventSeverity), severity).Should().BeTrue();
+        Enum.IsDefined(typeof(IntegritySeverity), severity).Should().BeTrue();
     }
 
     [Fact]
-    public void IntegrityEventSeverity_ShouldHaveFourValues()
+    public void IntegritySeverity_ShouldHaveThreeValues()
     {
         // Act
-        var values = Enum.GetValues<IntegrityEventSeverity>();
+        var values = Enum.GetValues<IntegritySeverity>();
 
         // Assert
-        values.Should().HaveCountGreaterThanOrEqualTo(4);
-        values.Should().Contain(IntegrityEventSeverity.Info);
-        values.Should().Contain(IntegrityEventSeverity.Warning);
-        values.Should().Contain(IntegrityEventSeverity.Error);
-        values.Should().Contain(IntegrityEventSeverity.Critical);
+        values.Should().HaveCount(3);
+        values.Should().Contain(IntegritySeverity.Info);
+        values.Should().Contain(IntegritySeverity.Warning);
+        values.Should().Contain(IntegritySeverity.Critical);
     }
 
-    // ── IntegrityEventFilter model ──────────────────────────────────
+    // ── IntegritySummary model ────────────────────────────────────
 
     [Fact]
-    public void IntegrityEventFilter_DefaultValues_ShouldBeNull()
+    public void IntegritySummary_DefaultValues_ShouldBeZero()
     {
         // Act
-        var filter = new IntegrityEventFilter();
-
-        // Assert
-        filter.Symbol.Should().BeNull();
-        filter.FromDate.Should().BeNull();
-        filter.ToDate.Should().BeNull();
-    }
-
-    [Fact]
-    public void IntegrityEventFilter_CanSetAllProperties()
-    {
-        // Arrange
-        var from = DateTimeOffset.UtcNow.AddDays(-7);
-        var to = DateTimeOffset.UtcNow;
-
-        // Act
-        var filter = new IntegrityEventFilter
-        {
-            Symbol = "AAPL",
-            EventTypes = new List<IntegrityEventType> { IntegrityEventType.Gap, IntegrityEventType.Duplicate },
-            FromDate = from,
-            ToDate = to,
-            MaxResults = 50
-        };
-
-        // Assert
-        filter.Symbol.Should().Be("AAPL");
-        filter.EventTypes.Should().HaveCount(2);
-        filter.EventTypes.Should().Contain(IntegrityEventType.Gap);
-        filter.EventTypes.Should().Contain(IntegrityEventType.Duplicate);
-        filter.FromDate.Should().Be(from);
-        filter.ToDate.Should().Be(to);
-        filter.MaxResults.Should().Be(50);
-    }
-
-    [Fact]
-    public void IntegrityEventFilter_EventTypes_CanBeEmpty()
-    {
-        // Act
-        var filter = new IntegrityEventFilter
-        {
-            EventTypes = new List<IntegrityEventType>()
-        };
-
-        // Assert
-        filter.EventTypes.Should().NotBeNull();
-        filter.EventTypes.Should().BeEmpty();
-    }
-
-    [Theory]
-    [InlineData(10)]
-    [InlineData(100)]
-    [InlineData(1000)]
-    public void IntegrityEventFilter_MaxResults_AcceptsVariousLimits(int maxResults)
-    {
-        // Act
-        var filter = new IntegrityEventFilter { MaxResults = maxResults };
-
-        // Assert
-        filter.MaxResults.Should().Be(maxResults);
-    }
-
-    // ── IntegrityEventSummary model ─────────────────────────────────
-
-    [Fact]
-    public void IntegrityEventSummary_DefaultValues_ShouldBeZero()
-    {
-        // Act
-        var summary = new IntegrityEventSummary();
+        var summary = new IntegritySummary();
 
         // Assert
         summary.TotalEvents.Should().Be(0);
-        summary.GapCount.Should().Be(0);
-        summary.OutOfOrderCount.Should().Be(0);
-        summary.DuplicateCount.Should().Be(0);
-        summary.InvalidCount.Should().Be(0);
+        summary.CriticalCount.Should().Be(0);
+        summary.WarningCount.Should().Be(0);
+        summary.InfoCount.Should().Be(0);
+        summary.EventsLast24Hours.Should().Be(0);
+        summary.EventsLastHour.Should().Be(0);
+        summary.UnacknowledgedCount.Should().Be(0);
     }
 
     [Fact]
-    public void IntegrityEventSummary_CanSetAllProperties()
+    public void IntegritySummary_CanSetAllProperties()
     {
         // Arrange
-        var lastEvent = DateTimeOffset.UtcNow;
+        var lastEvent = DateTime.UtcNow;
 
         // Act
-        var summary = new IntegrityEventSummary
+        var summary = new IntegritySummary
         {
             TotalEvents = 42,
-            GapCount = 10,
-            OutOfOrderCount = 15,
-            DuplicateCount = 12,
-            InvalidCount = 5,
-            LastEventAt = lastEvent,
-            SeverityCounts = new Dictionary<string, int>
-            {
-                ["Info"] = 20,
-                ["Warning"] = 15,
-                ["Error"] = 5,
-                ["Critical"] = 2
-            }
+            CriticalCount = 2,
+            WarningCount = 15,
+            InfoCount = 25,
+            EventsLast24Hours = 20,
+            EventsLastHour = 5,
+            UnacknowledgedCount = 10,
+            MostAffectedSymbol = "SPY",
+            LastEventTime = lastEvent
         };
 
         // Assert
         summary.TotalEvents.Should().Be(42);
-        summary.GapCount.Should().Be(10);
-        summary.OutOfOrderCount.Should().Be(15);
-        summary.DuplicateCount.Should().Be(12);
-        summary.InvalidCount.Should().Be(5);
-        summary.LastEventAt.Should().Be(lastEvent);
-        summary.SeverityCounts.Should().HaveCount(4);
-        summary.SeverityCounts["Info"].Should().Be(20);
-        summary.SeverityCounts["Critical"].Should().Be(2);
+        summary.CriticalCount.Should().Be(2);
+        summary.WarningCount.Should().Be(15);
+        summary.InfoCount.Should().Be(25);
+        summary.EventsLast24Hours.Should().Be(20);
+        summary.EventsLastHour.Should().Be(5);
+        summary.UnacknowledgedCount.Should().Be(10);
+        summary.MostAffectedSymbol.Should().Be("SPY");
+        summary.LastEventTime.Should().Be(lastEvent);
     }
 
     [Fact]
-    public void IntegrityEventSummary_SeverityCounts_CanBeEmpty()
+    public void IntegritySummary_LastEventTime_CanBeNull()
     {
         // Act
-        var summary = new IntegrityEventSummary
-        {
-            SeverityCounts = new Dictionary<string, int>()
-        };
+        var summary = new IntegritySummary();
 
         // Assert
-        summary.SeverityCounts.Should().NotBeNull();
-        summary.SeverityCounts.Should().BeEmpty();
+        summary.LastEventTime.Should().BeNull();
     }
 
-    [Fact]
-    public void IntegrityEventSummary_LastEventAt_CanBeNull()
-    {
-        // Act
-        var summary = new IntegrityEventSummary();
-
-        // Assert
-        summary.LastEventAt.Should().BeNull();
-    }
-
-    // ── GetEventsAsync ──────────────────────────────────────────────
+    // ── GetAllEvents ─────────────────────────────────────────────
 
     [Fact]
-    public async Task GetEventsAsync_WithNullFilter_ReturnsEvents()
+    public void GetAllEvents_ReturnsNonNullCollection()
     {
         // Arrange
         var service = IntegrityEventsService.Instance;
 
         // Act
-        var events = await service.GetEventsAsync(null, CancellationToken.None);
+        var events = service.GetAllEvents();
 
         // Assert
         events.Should().NotBeNull();
     }
 
+    // ── GetEventsBySymbol ────────────────────────────────────────
+
     [Fact]
-    public async Task GetEventsAsync_WithEmptyFilter_ReturnsEvents()
+    public void GetEventsBySymbol_ReturnsNonNullCollection()
     {
         // Arrange
         var service = IntegrityEventsService.Instance;
-        var filter = new IntegrityEventFilter();
 
         // Act
-        var events = await service.GetEventsAsync(filter, CancellationToken.None);
+        var events = service.GetEventsBySymbol("SPY");
 
         // Assert
         events.Should().NotBeNull();
     }
 
+    // ── GetEventsBySeverity ──────────────────────────────────────
+
     [Fact]
-    public async Task GetEventsAsync_WithCancellation_SupportsCancellationToken()
+    public void GetEventsBySeverity_ReturnsNonNullCollection()
     {
         // Arrange
         var service = IntegrityEventsService.Instance;
-        using var cts = new CancellationTokenSource();
 
         // Act
-        var events = await service.GetEventsAsync(null, cts.Token);
+        var events = service.GetEventsBySeverity(IntegritySeverity.Warning);
 
         // Assert
         events.Should().NotBeNull();
     }
 
-    // ── GetSummaryAsync ─────────────────────────────────────────────
+    // ── GetSummary ───────────────────────────────────────────────
 
     [Fact]
-    public async Task GetSummaryAsync_ReturnsNonNullSummary()
+    public void GetSummary_ReturnsNonNullSummary()
     {
         // Arrange
         var service = IntegrityEventsService.Instance;
 
         // Act
-        var summary = await service.GetSummaryAsync(CancellationToken.None);
+        var summary = service.GetSummary();
 
         // Assert
         summary.Should().NotBeNull();
         summary.TotalEvents.Should().BeGreaterThanOrEqualTo(0);
-        summary.GapCount.Should().BeGreaterThanOrEqualTo(0);
-        summary.OutOfOrderCount.Should().BeGreaterThanOrEqualTo(0);
-        summary.DuplicateCount.Should().BeGreaterThanOrEqualTo(0);
-        summary.InvalidCount.Should().BeGreaterThanOrEqualTo(0);
+        summary.CriticalCount.Should().BeGreaterThanOrEqualTo(0);
+        summary.WarningCount.Should().BeGreaterThanOrEqualTo(0);
+        summary.InfoCount.Should().BeGreaterThanOrEqualTo(0);
     }
 
+    // ── GetRecentEvents ──────────────────────────────────────────
+
     [Fact]
-    public async Task GetSummaryAsync_WithCancellation_SupportsCancellationToken()
+    public void GetRecentEvents_ReturnsNonNullCollection()
     {
         // Arrange
         var service = IntegrityEventsService.Instance;
-        using var cts = new CancellationTokenSource();
 
         // Act
-        var summary = await service.GetSummaryAsync(cts.Token);
+        var events = service.GetRecentEvents();
 
         // Assert
-        summary.Should().NotBeNull();
+        events.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(10)]
+    public void GetRecentEvents_WithCount_ReturnsNonNullCollection(int count)
+    {
+        // Arrange
+        var service = IntegrityEventsService.Instance;
+
+        // Act
+        var events = service.GetRecentEvents(count);
+
+        // Assert
+        events.Should().NotBeNull();
     }
 }
