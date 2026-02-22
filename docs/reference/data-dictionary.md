@@ -1,7 +1,7 @@
 # Market Data Collector - Data Dictionary
 
 **Version:** 2.0.0
-**Generated:** 2026-01-09
+**Generated:** 2026-02-22
 **Schema Version:** 1
 
 This document provides comprehensive data dictionaries for all event types in the Market Data Collector system, including field descriptions, data types, valid ranges, and exchange-specific codes.
@@ -45,7 +45,7 @@ This document provides comprehensive data dictionaries for all event types in th
 
 The primary container record that wraps all market data events with common metadata.
 
-**Location:** `src/MarketDataCollector/Domain/Events/MarketEvent.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Events/MarketEvent.cs`
 **JSON Discriminator:** Uses `Type` field for polymorphism
 
 | Field | Type | Description | Required | Valid Range | Default | Example |
@@ -83,7 +83,7 @@ All event payloads inherit from `MarketEventPayload` abstract record and use JSO
 
 Represents a single executed trade (tick-by-tick trade print) with sequence validation.
 
-**Location:** `src/MarketDataCollector/Domain/Models/Trade.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/Trade.cs`
 **JSON Kind:** `"trade"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -128,7 +128,7 @@ Represents a single executed trade (tick-by-tick trade print) with sequence vali
 
 Full Level-2 order book state snapshot with bid/ask ladders.
 
-**Location:** `src/MarketDataCollector/Domain/Models/LOBSnapshot.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/LOBSnapshot.cs`
 **JSON Kind:** `"l2"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -176,7 +176,7 @@ Full Level-2 order book state snapshot with bid/ask ladders.
 
 Best Bid and Offer (BBO/NBBO) snapshot with calculated spread and mid-price.
 
-**Location:** `src/MarketDataCollector/Domain/Models/BboQuotePayload.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/BboQuotePayload.cs`
 **JSON Kind:** `"bbo"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -221,7 +221,7 @@ Best Bid and Offer (BBO/NBBO) snapshot with calculated spread and mid-price.
 
 Rolling order-flow statistics derived from recent trades including VWAP, imbalance, and volume splits.
 
-**Location:** `src/MarketDataCollector/Domain/Models/OrderFlowStatistics.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/OrderFlowStatistics.cs`
 **JSON Kind:** `"orderflow"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -267,7 +267,7 @@ Rolling order-flow statistics derived from recent trades including VWAP, imbalan
 
 Data integrity and continuity anomalies for trade sequences.
 
-**Location:** `src/MarketDataCollector/Domain/Models/IntegrityEvent.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/IntegrityEvent.cs`
 **JSON Kind:** `"integrity"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -311,7 +311,7 @@ Data integrity and continuity anomalies for trade sequences.
 
 Order book integrity violations (gaps, out-of-order, invalid positions, stale data).
 
-**Location:** `src/MarketDataCollector/Domain/Models/DepthIntegrityEvent.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/DepthIntegrityEvent.cs`
 **JSON Kind:** `"depth_integrity"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -354,7 +354,7 @@ Event types for historical/backfill data from various providers.
 
 Daily OHLCV (Open-High-Low-Close-Volume) bars from backfill providers.
 
-**Location:** `src/MarketDataCollector/Domain/Models/HistoricalBar.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/HistoricalBar.cs`
 **JSON Kind:** `"historical_bar"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -400,7 +400,7 @@ Daily OHLCV (Open-High-Low-Close-Volume) bars from backfill providers.
 
 National Best Bid and Offer (NBBO) quote data from historical providers.
 
-**Location:** `src/MarketDataCollector/Domain/Models/HistoricalQuote.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/HistoricalQuote.cs`
 **JSON Kind:** `"historical_quote"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -448,7 +448,7 @@ National Best Bid and Offer (NBBO) quote data from historical providers.
 
 Individual executed trades from historical data providers.
 
-**Location:** `src/MarketDataCollector/Domain/Models/HistoricalTrade.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/HistoricalTrade.cs`
 **JSON Kind:** `"historical_trade"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -495,7 +495,7 @@ Individual executed trades from historical data providers.
 
 Opening and closing auction information for trading sessions.
 
-**Location:** `src/MarketDataCollector/Domain/Models/HistoricalAuction.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/HistoricalAuction.cs`
 **JSON Kind:** `"historical_auction"`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
@@ -540,7 +540,7 @@ Opening and closing auction information for trading sessions.
 
 Represents a single price level in the order book.
 
-**Location:** `src/MarketDataCollector/Domain/Models/OrderBookLevel.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/OrderBookLevel.cs`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
 |-------|------|-------------|----------|-------------|----------|---------|
@@ -567,7 +567,7 @@ Represents a single price level in the order book.
 
 Represents a single auction price point.
 
-**Location:** `src/MarketDataCollector/Domain/Models/HistoricalAuction.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/HistoricalAuction.cs`
 
 | Field | Type | Description | Required | Valid Range | Nullable | Example |
 |-------|------|-------------|----------|-------------|----------|---------|
@@ -585,7 +585,7 @@ These models are used as normalized inputs to collectors but are not stored as e
 
 ### MarketTradeUpdate
 
-**Location:** `src/MarketDataCollector/Domain/Models/MarketTradeUpdate.cs`
+**Location:** `src/MarketDataCollector.Domain/Models/MarketTradeUpdate.cs`
 
 Input to `TradeDataCollector`; converted to `Trade` payload.
 
@@ -604,7 +604,7 @@ Input to `TradeDataCollector`; converted to `Trade` payload.
 
 ### MarketQuoteUpdate
 
-**Location:** `src/MarketDataCollector/Domain/Models/MarketQuoteUpdate.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Models/MarketQuoteUpdate.cs`
 
 Input to `QuoteCollector`; converted to `BboQuotePayload`.
 
@@ -624,7 +624,7 @@ Input to `QuoteCollector`; converted to `BboQuotePayload`.
 
 ### MarketDepthUpdate
 
-**Location:** `src/MarketDataCollector/Domain/Models/MarketDepthUpdate.cs`
+**Location:** `src/MarketDataCollector.Domain/Models/MarketDepthUpdate.cs`
 
 Input to `MarketDepthCollector`; applied to order book state.
 
@@ -650,7 +650,7 @@ Input to `MarketDepthCollector`; applied to order book state.
 
 Discriminator for event types in the `MarketEvent` container.
 
-**Location:** `src/MarketDataCollector/Domain/Events/MarketEventType.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/MarketEventType.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -663,6 +663,17 @@ Discriminator for event types in the `MarketEvent` container.
 | `ConnectionStatus` | `6` | Connection state change |
 | `Integrity` | `7` | Data integrity event |
 | `HistoricalBar` | `8` | Historical OHLCV bar |
+| `HistoricalQuote` | `9` | Historical NBBO quote |
+| `HistoricalTrade` | `10` | Historical trade print |
+| `HistoricalAuction` | `11` | Historical auction data |
+| `AggregateBar` | `12` | Real-time aggregate OHLCV bar |
+| `Quote` | `13` | Quote update event |
+| `Depth` | `14` | Order book depth update |
+| `OptionQuote` | `15` | Option quote with greeks/IV |
+| `OptionTrade` | `16` | Option trade execution |
+| `OptionGreeks` | `17` | Option greeks snapshot |
+| `OptionChain` | `18` | Option chain snapshot |
+| `OpenInterest` | `19` | Option open interest update |
 
 ---
 
@@ -670,7 +681,7 @@ Discriminator for event types in the `MarketEvent` container.
 
 Indicates which side initiated a trade.
 
-**Location:** `src/MarketDataCollector/Domain/Models/AggressorSide.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/AggressorSide.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -689,7 +700,7 @@ Indicates which side initiated a trade.
 
 Order book side indicator.
 
-**Location:** `src/MarketDataCollector/Domain/Models/OrderBookSide.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/OrderBookSide.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -702,7 +713,7 @@ Order book side indicator.
 
 Order book update operation type.
 
-**Location:** `src/MarketDataCollector/Domain/Models/DepthOperation.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/DepthOperation.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -718,7 +729,7 @@ Order book update operation type.
 
 Severity level for integrity events.
 
-**Location:** `src/MarketDataCollector/Domain/Models/IntegritySeverity.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/IntegritySeverity.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -733,7 +744,7 @@ Severity level for integrity events.
 
 Type of order book integrity violation.
 
-**Location:** `src/MarketDataCollector/Domain/Models/DepthIntegrityEvent.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/DepthIntegrityKind.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -749,7 +760,7 @@ Type of order book integrity violation.
 
 Current trading state of the market.
 
-**Location:** `src/MarketDataCollector/Domain/Models/MarketState.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/MarketState.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -764,7 +775,7 @@ Current trading state of the market.
 
 Processing tier classification for events.
 
-**Location:** `src/MarketDataCollector/Domain/Events/MarketEventTier.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/MarketEventTier.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
@@ -777,7 +788,7 @@ Processing tier classification for events.
 
 Connection state for data providers.
 
-**Location:** `src/MarketDataCollector/Domain/Events/ConnectionStatus.cs`
+**Location:** `src/MarketDataCollector.Contracts/Domain/Enums/ConnectionStatus.cs`
 
 | Value | Code | Description |
 |-------|------|-------------|
