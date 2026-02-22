@@ -837,9 +837,10 @@ async function refreshOptionsSummary() {{
 
     const u = await fetch('/api/options/underlyings');
     if (u.ok) {{
-      const syms = await u.json();
+      const data = await u.json();
+      const syms = data && Array.isArray(data.underlyings) ? data.underlyings : [];
       document.getElementById('optTrackedList').textContent =
-        syms && syms.length > 0 ? syms.join(', ') : 'None';
+        syms.length > 0 ? syms.join(', ') : 'None';
     }}
   }} catch (e) {{
     document.getElementById('optProviderStatus').textContent = 'Provider: error - ' + e.message;
