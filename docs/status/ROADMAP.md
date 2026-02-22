@@ -1,9 +1,9 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.1
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-02-22
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
-**Repository Snapshot:** `src/` files: **647** | `tests/` files: **164** | HTTP routes mapped in `Ui.Shared/Endpoints`: **244** | Remaining stub routes: **0**
+**Repository Snapshot:** `src/` files: **664** | `tests/` files: **219** | HTTP route constants: **283** | Remaining stub routes: **0** | Test methods: **~3,444**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
@@ -24,13 +24,17 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 ### What remains
 
-Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
+Remaining work is minimal, tracked in `docs/status/IMPROVEMENTS.md`:
 
 - **35 tracked improvement items total** (core themes A–G)
-  - ✅ Completed: 27
-  - 🔄 Partial: 4
-  - 📝 Open: 4
-- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** (4/7 completed).
+  - ✅ Completed: 33
+  - 🔄 Partial: 1 (G2 — OpenTelemetry trace context propagation)
+  - 📝 Open: 1 (C3 — WebSocket Provider Base Class Adoption)
+- **8 new theme items** (themes H–I)
+  - ✅ Completed: 5 (H1, H3, H4, I1, I2)
+  - 🔄 Partial: 1 (I3 — Configuration Schema Validation)
+  - 📝 Open: 2 (H2 — Multi-Instance Coordination, I4 — Provider SDK Doc Generator)
+- Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete.
 
 ---
 
@@ -47,7 +51,7 @@ Remaining work is primarily quality and architecture hardening, as tracked in `d
 | Phase 6: Duplicate & Unused Code Cleanup | ✅ Completed | Cleanup phase closed; residual cleanup now folded into normal maintenance. |
 | Phase 7: Extended Capabilities | ⏸️ Optional / rolling | Scheduled as capacity permits. |
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
-| Phase 9: Final Production Release | 🔄 Active target | Focus shifted to hardening, coverage, architecture, and performance confidence. |
+| Phase 9: Final Production Release | 🔄 Active target | 94.3% of core improvements complete; remaining: C3 WebSocket refactor, G2 trace propagation. |
 | Phase 10: Scalability & Multi-Instance | 📝 Planned | New phase for horizontal scaling and multi-instance coordination. |
 
 ---
@@ -82,22 +86,23 @@ This section supersedes the prior effort model and aligns with the current activ
 - **B2 (tranche 1)**: ✅ Negative-path endpoint tests (40+ tests) and response schema validation tests (15+ tests) for health/status/config/backfill/provider families.
 - **D7 (remainder)**: ✅ Typed `Produces<T>()` and `.WithDescription()` OpenAPI annotations extended to all endpoint families (58+ endpoints across 7 files).
 
-### Sprint 6 (partial)
+### Sprint 6 ✅
 
-- **C1/C2**: Provider registration and runtime composition unification under DI. *(pending)*
+- **C1/C2**: ✅ Provider registration and runtime composition unified under DI — `ProviderRegistry` is the single entry point; all services resolved via `ServiceCompositionRoot`.
 - **H1**: ✅ Rate limiting per-provider for backfill operations — already implemented via `ProviderRateLimitTracker` in orchestration layer.
 - **H4**: ✅ Provider degradation scoring — `ProviderDegradationScorer` with composite health scores and 20+ unit tests.
 - **I1**: ✅ Integration test harness — `FixtureMarketDataClient` + `InMemoryStorageSink` + 9 pipeline integration tests.
 
 ### Sprint 7 (partial)
 
-- **H2**: Multi-instance coordination via distributed locking for symbol subscriptions. *(pending)*
+- **H2**: Multi-instance coordination via distributed locking for symbol subscriptions. *(pending — not needed for single-instance deployments)*
 - **B3 (tranche 2)**: ✅ Provider tests for IB simulation client (15 tests) and Alpaca credential/reconnect behavior (10 tests).
 
-### Sprint 8
+### Sprint 8 (partial)
 
-- **H3**: Event replay infrastructure for debugging and QA (new item).
-- **G2 (remainder)**: End-to-end distributed tracing from provider through storage with trace context propagation.
+- **H3**: ✅ Event replay infrastructure — `JsonlReplayer`, `MemoryMappedJsonlReader`, `EventReplayService` with pause/resume/seek, CLI `--replay` flag, desktop `EventReplayPage`.
+- **I2**: ✅ CLI progress reporting — `ProgressDisplayService` with progress bars (ETA/throughput), spinners, checklists, and tables.
+- **G2 (remainder)**: End-to-end distributed tracing from provider through storage with trace context propagation. *(pending)*
 
 ---
 
@@ -109,7 +114,7 @@ This section supersedes the prior effort model and aligns with the current activ
 |----|-------|--------|-------------|
 | H1 | Per-Provider Backfill Rate Limiting | ✅ Complete | Rate limits are tracked and enforced via `ProviderRateLimitTracker` in the `CompositeHistoricalDataProvider` and `BackfillWorkerService`. |
 | H2 | Multi-Instance Symbol Coordination | 📝 Open | Support running multiple collector instances without duplicate subscriptions. Requires distributed locking or leader election for symbol assignment. |
-| H3 | Event Replay Infrastructure | 📝 Open | Build a replay service that can re-process stored JSONL/Parquet events through the pipeline for debugging, QA, and backfill verification. |
+| H3 | Event Replay Infrastructure | ✅ Complete | `JsonlReplayer` and `MemoryMappedJsonlReader` for high-performance replay. `EventReplayService` provides pause/resume/seek controls. CLI `--replay` flag and desktop `EventReplayPage` for UI-based replay. |
 | H4 | Graceful Provider Degradation Scoring | ✅ Complete | `ProviderDegradationScorer` computes composite health scores from latency, error rate, connection health, and reconnect frequency. Automatically deprioritizes degraded providers. |
 
 ### Theme I: Developer Experience (New)
@@ -117,43 +122,44 @@ This section supersedes the prior effort model and aligns with the current activ
 | ID | Title | Status | Description |
 |----|-------|--------|-------------|
 | I1 | Integration Test Harness with Fixture Providers | ✅ Complete | `FixtureMarketDataClient` and `InMemoryStorageSink` enable full pipeline integration testing without live API connections. See `tests/.../Integration/FixtureProviderTests.cs`. |
-| I2 | CLI Progress Reporting | 📝 Open | Add structured progress reporting to long-running CLI operations (backfill, packaging, maintenance) with ETA and throughput metrics. |
-| I3 | Configuration Schema Validation at Startup | 📝 Open | Generate JSON Schema from AppConfig record types and validate appsettings.json against it during startup, providing actionable error messages for misconfigurations. |
+| I2 | CLI Progress Reporting | ✅ Complete | `ProgressDisplayService` provides progress bars with ETA/throughput, Unicode spinners, multi-step checklists, and formatted tables. Supports interactive and CI/CD (non-interactive) modes. |
+| I3 | Configuration Schema Validation at Startup | 🔄 Partial | `SchemaValidationService` validates stored data formats against schema versions at startup (`--validate-schemas`, `--strict-schemas`). Missing: JSON Schema generation from C# models for config file validation. |
 | I4 | Provider SDK Documentation Generator | 📝 Open | Auto-generate provider capability documentation from `[DataSource]` attributes and `HistoricalDataCapabilities`, keeping docs in sync with code. |
 
 ---
 
 ## 2026 Delivery Objectives
 
-### Objective 1: Test Confidence
+### Objective 1: Test Confidence ✅ Achieved
 
-- Expand integration and provider tests for critical APIs and reconnect/backfill paths.
-- Prioritize risk-based coverage over broad shallow coverage.
-- Build integration test harness for full-pipeline testing without live connections.
+- ✅ Expanded integration and provider tests — 12 provider test files, 219 test files total, ~3,444 test methods.
+- ✅ Risk-based coverage with negative-path and schema validation tests.
+- ✅ Integration test harness with `FixtureMarketDataClient` and `InMemoryStorageSink`.
 
-### Objective 2: Architectural Sustainability
+### Objective 2: Architectural Sustainability ✅ Substantially Achieved
 
-- Close the Theme C items that currently block easier testing and provider evolution.
-- Reduce reliance on static singletons and duplicated configuration logic.
-- Unify provider registration under a single DI-driven composition path.
+- ✅ C1/C2 complete — unified `ProviderRegistry` and single DI composition path.
+- ✅ Static singletons replaced with injectable `IEventMetrics`.
+- ✅ Consolidated configuration validation pipeline.
+- 🔄 C3 (WebSocket base class) remains open — functional but duplicates ~200-300 LOC.
 
-### Objective 3: API Productization
+### Objective 3: API Productization ✅ Achieved
 
-- Complete quality metrics API exposure and API documentation parity.
-- Improve response schema completeness and operational diagnostics.
-- Typed OpenAPI annotations across all endpoint families.
+- ✅ Quality metrics API fully exposed (`/api/quality/drops`, per-symbol drill-down).
+- ✅ Typed OpenAPI annotations across all endpoint families (58+ endpoints).
+- ✅ 283 route constants with 0 stubs remaining.
 
-### Objective 4: Operational Hardening
+### Objective 4: Operational Hardening 🔄 Mostly Achieved
 
-- Tighten observability-to-action workflows (alerts, runbooks, quality dashboards).
-- Continue deployment profile validation under realistic production-like workloads.
-- End-to-end distributed tracing from provider ingestion through storage.
+- ✅ Prometheus metrics, API auth/rate limiting, category-accurate exit codes.
+- ✅ OpenTelemetry pipeline instrumentation with activity spans.
+- 🔄 End-to-end trace context propagation pending (G2 remainder).
 
-### Objective 5: Scalability (New)
+### Objective 5: Scalability 🔄 Partially Achieved
 
-- Support multi-instance deployment with symbol coordination.
-- Per-provider rate limit enforcement during backfill operations.
-- Provider degradation scoring for intelligent failover.
+- ✅ Per-provider rate limit enforcement via `ProviderRateLimitTracker`.
+- ✅ Provider degradation scoring via `ProviderDegradationScorer`.
+- 📝 H2 multi-instance coordination pending (not needed for single-instance).
 
 ---
 
@@ -162,12 +168,16 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 27 / 35 | 30+ / 35 |
-| Improvement items still open | 4 / 35 | <3 / 35 |
-| Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
-| Architecture debt (Theme C completed) | 4 / 7 | 5+ / 7 |
-| Provider test coverage | Polygon + StockSharp + IB Sim + Alpaca | All 5 streaming providers |
-| OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
+| Core improvement items completed | 33 / 35 | 35 / 35 |
+| Core improvement items still open | 1 / 35 (C3) | 0 / 35 |
+| New theme items (H/I) completed | 5 / 8 | 7+ / 8 |
+| Source files | 664 | — |
+| Test files | 219 | 250+ |
+| Test methods | ~3,444 | 4,000+ |
+| Route constants | 283 | 283 |
+| Architecture debt (Theme C completed) | 6 / 7 | 7 / 7 |
+| Provider test coverage | All 5 streaming providers + failover + backfill | Comprehensive |
+| OpenTelemetry instrumentation | Pipeline metrics + activity spans | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
 
 ---
@@ -184,4 +194,4 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-02-22*

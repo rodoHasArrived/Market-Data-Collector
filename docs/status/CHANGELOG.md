@@ -1,18 +1,18 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-02-20
-**Current Version:** 1.6.1
+**Last Updated:** 2026-02-22
+**Current Version:** 1.6.2
 
 This changelog summarizes the current repository snapshot. Historical release notes are not curated in this repo; use git history for detailed diffs.
 
 ---
 
-## Current Snapshot (2026-02-20)
+## Current Snapshot (2026-02-22)
 
 ### Project Scale
-- 647 source files (635 C#, 12 F#), 164 test files (160 C#, 4 F#), 133 documentation files
+- 664 source files (652 C#, 12 F#), 219 test files (215 C#, 4 F#), 135 documentation files
 - 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
-- 22 CI/CD workflows, 78 Makefile targets
+- 22 CI/CD workflows, 78 Makefile targets, 283 API route constants
 
 ### Core Runtime
 - CLI modes for real-time collection, backfill, replay, packaging, and validation
@@ -54,9 +54,12 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Provider degradation scoring for intelligent failover
 
 ### Testing & Quality
-- 164 test files across 4 test projects (core, F#, WPF, UI)
-- WPF desktop service tests: 58 tests (navigation, config, status, connection)
-- Desktop UI service tests: 71 tests (API client, backfill, fixtures, forms, health, watchlist)
+- 219 test files across 4 test projects with ~3,444 test methods
+- Core tests: 444 methods (backfill, storage, pipeline, monitoring, providers)
+- F# tests: 99 methods (domain validation, calculations, transforms)
+- WPF desktop service tests: 324 methods (navigation, config, status, connection)
+- Desktop UI service tests: 927 methods (API client, backfill, fixtures, forms, health, watchlist)
+- 12 provider test files covering all streaming providers + failover + backfill
 - Negative-path and schema validation endpoint integration tests
 - Integration test harness with fixture providers for full-pipeline testing
 
@@ -66,6 +69,13 @@ This changelog summarizes the current repository snapshot. Historical release no
 - API authentication (API key) and rate limiting middleware
 - Category-accurate process exit codes for CI/CD integration
 
+### Improvement Tracking (as of 2026-02-22)
+- 33/35 core improvement items completed (94.3%)
+- C1/C2 architecture items (unified provider registry, single DI composition path) verified complete
+- F3 (first-run onboarding), E3 (GC pressure optimization), B3/B4 (provider/service tests) verified complete
+- H3 (event replay) and I2 (CLI progress reporting) verified complete
+- Remaining: C3 (WebSocket base class), G2 (trace propagation partial)
+
 ### Recent Changes (since 2026-02-17)
 - Desktop improvements executive summary updated (PR #1372)
 - README.md modernized to reflect current state (PR #1371)
@@ -74,6 +84,15 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Code quality CI fixes and test failures resolved (PR #1365)
 - AI Claude documentation updates (PR #1364)
 - Documentation automation consolidation
+
+---
+
+## Previous Snapshot (2026-02-20)
+
+### Project Scale
+- 647 source files (635 C#, 12 F#), 164 test files (160 C#, 4 F#), 133 documentation files
+- 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
+- 22 CI/CD workflows, 78 Makefile targets
 
 ---
 

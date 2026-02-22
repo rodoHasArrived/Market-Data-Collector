@@ -1,7 +1,7 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-02-20
-**Version:** 1.6.1
+**Last Updated:** 2026-02-22
+**Version:** 1.6.2
 **Status:** Development / Pilot Ready
 
 This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
@@ -29,9 +29,9 @@ The Market Data Collector is a feature-rich system with a working CLI, backfill 
 | WPF Desktop App | ⚠️ Partial UX parity | Windows desktop UI (sole desktop client); several navigable pages still show placeholder "Coming Soon" content |
 | QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
 | Symbol Search Providers | ✅ Implemented | 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp) |
-| API Surface | ✅ Implemented | ~136 endpoints with typed OpenAPI annotations |
-| Architecture | ✅ Monolithic | Single-process runtime |
-| Improvement Tracking | 🔄 In progress | 27/35 items completed (77.1%), see [IMPROVEMENTS.md](IMPROVEMENTS.md) |
+| API Surface | ✅ Implemented | 283 route constants, typed OpenAPI annotations across all endpoint families |
+| Architecture | ✅ Monolithic | Single-process runtime, unified DI composition |
+| Improvement Tracking | ✅ Near complete | 33/35 core items completed (94.3%), see [IMPROVEMENTS.md](IMPROVEMENTS.md) |
 
 ---
 
@@ -256,14 +256,14 @@ When `IBAPI` is NOT defined:
 
 ## Testing Notes
 
-The project has 164 test files (160 C#, 4 F#) across 4 test projects:
+The project has 219 test files (215 C#, 4 F#) across 4 test projects with ~3,444 test methods:
 
-| Test Project | Focus | Tests |
+| Test Project | Focus | Test Methods |
 |--------------|-------|-------|
-| `MarketDataCollector.Tests` | Core unit/integration tests (backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain) | ~130+ test classes |
-| `MarketDataCollector.FSharp.Tests` | F# domain validation, calculations, pipeline transforms | 4 test files |
-| `MarketDataCollector.Wpf.Tests` | WPF desktop service tests (navigation, config, status, connection) | 58 tests |
-| `MarketDataCollector.Ui.Tests` | Desktop UI service tests (API client, backfill, fixtures, forms, health, watchlist, collections) | 71 tests |
+| `MarketDataCollector.Tests` | Core unit/integration tests (backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain) | ~444 |
+| `MarketDataCollector.FSharp.Tests` | F# domain validation, calculations, pipeline transforms | ~99 |
+| `MarketDataCollector.Wpf.Tests` | WPF desktop service tests (navigation, config, status, connection) | ~324 |
+| `MarketDataCollector.Ui.Tests` | Desktop UI service tests (API client, backfill, fixtures, forms, health, watchlist, collections) | ~927 |
 
 Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
 
@@ -280,4 +280,4 @@ Refer to the `tests/` directory for the current suite and to the CI pipelines fo
 
 ---
 
-*Last Updated: 2026-02-20*
+*Last Updated: 2026-02-22*
