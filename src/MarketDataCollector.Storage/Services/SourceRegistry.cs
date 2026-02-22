@@ -198,6 +198,9 @@ public sealed class SourceRegistry : ISourceRegistry
 
     private async Task SaveToDiskAsync()
     {
+        if (string.IsNullOrEmpty(_persistencePath))
+            return;
+
         try
         {
             var data = new RegistryData

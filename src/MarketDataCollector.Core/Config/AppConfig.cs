@@ -24,6 +24,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Sources">Source registry persistence path.</param>
 /// <param name="DataSources">Multiple data source configurations for real-time and historical data.</param>
 /// <param name="Derivatives">Derivatives (options) data collection configuration.</param>
+/// <param name="ProviderRegistry">Unified provider registry configuration controlling attribute-based discovery.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool? Compress = null,
@@ -46,7 +47,7 @@ public sealed record AppConfig(
 /// Controls how streaming, backfill, and symbol search providers are discovered and registered.
 /// </summary>
 /// <param name="UseAttributeDiscovery">
-/// When true, <see cref="DataSourceAttribute"/>-decorated types are discovered via reflection
+/// When true, <c>DataSourceAttribute</c>-decorated types are discovered via reflection
 /// and automatically registered as streaming factories in the <c>ProviderRegistry</c>,
 /// replacing manual lambda registration. Default is false (manual registration).
 /// </param>
