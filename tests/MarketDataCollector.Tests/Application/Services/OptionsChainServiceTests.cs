@@ -451,12 +451,12 @@ public sealed class OptionsChainServiceTests
         var calls = strikes.Select(s =>
         {
             var c = new OptionContractSpec(underlying, s, expiry, OptionRight.Call, OptionStyle.American, 100, "SMART", "USD");
-            return new OptionQuote(DateTimeOffset.UtcNow, $"{underlying}C{s}", c, 2.5m, 2.6m, 50, 60, 155m);
+            return new OptionQuote(DateTimeOffset.UtcNow, $"{underlying}C{s}", c, 2.5m, 50, 2.6m, 60, 155m);
         }).ToList();
         var puts = strikes.Select(s =>
         {
             var c = new OptionContractSpec(underlying, s, expiry, OptionRight.Put, OptionStyle.American, 100, "SMART", "USD");
-            return new OptionQuote(DateTimeOffset.UtcNow, $"{underlying}P{s}", c, 1.5m, 1.6m, 40, 50, 155m);
+            return new OptionQuote(DateTimeOffset.UtcNow, $"{underlying}P{s}", c, 1.5m, 40, 1.6m, 50, 155m);
         }).ToList();
 
         return new OptionChainSnapshot(DateTimeOffset.UtcNow, underlying, 155m, expiry, strikes, calls, puts);
