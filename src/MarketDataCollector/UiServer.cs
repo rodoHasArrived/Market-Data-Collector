@@ -100,6 +100,7 @@ public sealed class UiServer : IAsyncDisposable
                 if (path.StartsWith("api/messaging")) return ["Messaging"];
                 if (path.StartsWith("api/analytics")) return ["Analytics"];
                 if (path.StartsWith("api/historical")) return ["Historical"];
+                if (path.StartsWith("api/options")) return ["Options"];
                 return ["General"];
             });
         });
@@ -210,6 +211,9 @@ public sealed class UiServer : IAsyncDisposable
 
         // Live Data API
         _app.MapLiveDataEndpoints(s_jsonOptions);
+
+        // Options / Derivatives API
+        _app.MapOptionsEndpoints(s_jsonOptions);
 
         // Messaging Hub API
         _app.MapMessagingEndpoints(s_jsonOptions);

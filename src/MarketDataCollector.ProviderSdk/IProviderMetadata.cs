@@ -106,6 +106,7 @@ public interface IProviderMetadata
         if (caps.SupportsRealtimeQuotes || caps.SupportsHistoricalQuotes) types.Add("Quotes");
         if (caps.SupportsMarketDepth) types.Add("MarketDepth");
         if (caps.SupportsHistoricalAuctions) types.Add("Auctions");
+        if (caps.SupportsOptionsChain) types.Add("OptionsChain");
 
         return types.ToArray();
     }
@@ -149,6 +150,9 @@ public sealed record ProviderCapabilities
 
     /// <summary>Supports symbol search/lookup.</summary>
     public bool SupportsSymbolSearch { get; init; }
+
+    /// <summary>Supports options chain data retrieval.</summary>
+    public bool SupportsOptionsChain { get; init; }
 
     #endregion
 
@@ -297,6 +301,17 @@ public sealed record ProviderCapabilities
             SupportedExchanges = exchanges
         };
 
+    /// <summary>Options chain provider capabilities.</summary>
+    public static ProviderCapabilities OptionsChain(
+        bool greeks = true,
+        bool openInterest = true,
+        bool streaming = false) => new()
+        {
+            SupportsStreaming = streaming,
+            SupportsOptionsChain = true,
+            SupportsRealtimeQuotes = streaming
+        };
+
     /// <summary>Hybrid provider supporting both streaming and backfill.</summary>
     public static ProviderCapabilities Hybrid(
         bool trades = true,
@@ -354,6 +369,7 @@ public sealed record ProviderCapabilities
         if (SupportsStreaming) dict["SupportsStreaming"] = true;
         if (SupportsBackfill) dict["SupportsBackfill"] = true;
         if (SupportsSymbolSearch) dict["SupportsSymbolSearch"] = true;
+        if (SupportsOptionsChain) dict["SupportsOptionsChain"] = true;
 
         // Streaming
         if (SupportsRealtimeTrades) dict["SupportsRealtimeTrades"] = true;

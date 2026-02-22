@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Infrastructure;
 using Serilog;
@@ -12,6 +13,7 @@ namespace MarketDataCollector.Application.Subscriptions;
 /// Responsible for:
 /// - registering symbols with collectors (domain)
 /// - subscribing/unsubscribing market depth (infrastructure) via IMarketDataClient
+/// - tracking option contract subscriptions for equity and index options
 ///
 /// Trades are currently always accepted by TradeDataCollector, but this class is future-proofed to support
 /// explicit per-symbol trade subscriptions once you wire them in (tick-by-tick reqs).
@@ -20,35 +22,46 @@ public sealed class SubscriptionOrchestrator
 {
     private readonly MarketDepthCollector _depthCollector;
     private readonly TradeDataCollector _tradeCollector;
+    private readonly OptionDataCollector? _optionCollector;
     private readonly IMarketDataClient _ib;
     private readonly ILogger _log;
     private readonly object _gate = new();
 
-    // symbol -> depth subscription id
+    // symbol -> subscription id
     private readonly ConcurrentDictionary<string, int> _tradeSubs = new(StringComparer.OrdinalIgnoreCase);
-
     private readonly ConcurrentDictionary<string, int> _depthSubs = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, int> _optionSubs = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, SymbolConfig> _lastConfig = new(StringComparer.OrdinalIgnoreCase);
 
     public SubscriptionOrchestrator(
         MarketDepthCollector depthCollector,
         TradeDataCollector tradeCollector,
         IMarketDataClient ibClient,
-        ILogger? log = null)
+        ILogger? log = null,
+        OptionDataCollector? optionCollector = null)
     {
         _depthCollector = depthCollector ?? throw new ArgumentNullException(nameof(depthCollector));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _ib = ibClient ?? throw new ArgumentNullException(nameof(ibClient));
         _log = log ?? LoggingSetup.ForContext<SubscriptionOrchestrator>();
+        _optionCollector = optionCollector;
     }
 
     public IReadOnlyDictionary<string, int> DepthSubscriptions => _depthSubs;
     public IReadOnlyDictionary<string, int> TradeSubscriptions => _tradeSubs;
+    public IReadOnlyDictionary<string, int> OptionSubscriptions => _optionSubs;
 
     /// <summary>
-    /// Gets the total number of active subscriptions (trades + depth).
+    /// Gets the total number of active subscriptions (trades + depth + options).
     /// </summary>
-    public int ActiveSubscriptionCount => _tradeSubs.Count + _depthSubs.Count;
+    public int ActiveSubscriptionCount => _tradeSubs.Count + _depthSubs.Count + _optionSubs.Count;
+
+    /// <summary>
+    /// Returns true if the given symbol config represents an option contract.
+    /// </summary>
+    public static bool IsOptionSymbol(SymbolConfig sc) =>
+        string.Equals(sc.SecurityType, "OPT", StringComparison.OrdinalIgnoreCase)
+        || sc.InstrumentType is InstrumentType.EquityOption or InstrumentType.IndexOption;
 
     public void Apply(AppConfig cfg)
     {
@@ -61,7 +74,13 @@ public sealed class SubscriptionOrchestrator
                 .ToDictionary(s => s.Symbol.Trim(), s => s, StringComparer.OrdinalIgnoreCase);
 
             // Unsubscribe removed symbols
-            foreach (var existing in desired.Keys.Concat(_depthSubs.Keys).Concat(_tradeSubs.Keys).Distinct(StringComparer.OrdinalIgnoreCase))
+            var allKeys = desired.Keys
+                .Concat(_depthSubs.Keys)
+                .Concat(_tradeSubs.Keys)
+                .Concat(_optionSubs.Keys)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var existing in allKeys)
             {
                 if (!desired.ContainsKey(existing))
                 {
@@ -75,6 +94,11 @@ public sealed class SubscriptionOrchestrator
                         try { _ib.UnsubscribeTrades(tradeId); }
                         catch (Exception ex) { _log.Debug(ex, "Error unsubscribing trades for {Symbol}", existing); }
                     }
+                    if (_optionSubs.TryRemove(existing, out var optionId) && optionId > 0)
+                    {
+                        try { _ib.UnsubscribeTrades(optionId); }
+                        catch (Exception ex) { _log.Debug(ex, "Error unsubscribing option trades for {Symbol}", existing); }
+                    }
                     _depthCollector.UnregisterSubscription(existing);
                     _log.Information("Unsubscribed {Symbol} (removed from configuration)", existing);
                 }
@@ -87,10 +111,21 @@ public sealed class SubscriptionOrchestrator
                 var sc = kvp.Value;
                 _lastConfig.TryGetValue(symbol, out var previous);
 
+                var isOption = IsOptionSymbol(sc);
+
                 if (previous is null)
                 {
-                    _log.Information("Subscribing {Symbol}: trades={Trades}, depth={Depth}, levels={Levels}",
-                        symbol, sc.SubscribeTrades, sc.SubscribeDepth, sc.DepthLevels);
+                    if (isOption)
+                    {
+                        _log.Information(
+                            "Subscribing option {Symbol}: type={InstrumentType}, strike={Strike}, right={Right}, expiry={Expiry}",
+                            symbol, sc.InstrumentType, sc.Strike, sc.Right, sc.LastTradeDateOrContractMonth);
+                    }
+                    else
+                    {
+                        _log.Information("Subscribing {Symbol}: trades={Trades}, depth={Depth}, levels={Levels}",
+                            symbol, sc.SubscribeTrades, sc.SubscribeDepth, sc.DepthLevels);
+                    }
                 }
                 else if (HasChanged(previous, sc))
                 {
@@ -105,7 +140,28 @@ public sealed class SubscriptionOrchestrator
                         sc.DepthLevels);
                 }
 
-                // Depth
+                if (isOption)
+                {
+                    // Option contract subscription — subscribe to trades via provider
+                    if (sc.SubscribeTrades && !_optionSubs.ContainsKey(symbol))
+                    {
+                        try
+                        {
+                            var id = _ib.SubscribeTrades(sc);
+                            if (id > 0) _optionSubs[symbol] = id;
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.Warning(ex, "Failed to subscribe option trades for {Symbol}. Provider may be unavailable.", symbol);
+                            _optionSubs[symbol] = -1;
+                        }
+                    }
+
+                    // Options do not typically need L2 depth subscriptions
+                    continue;
+                }
+
+                // Depth (equity only)
                 if (sc.SubscribeDepth)
                 {
                     _depthCollector.RegisterSubscription(symbol);
@@ -177,6 +233,9 @@ public sealed class SubscriptionOrchestrator
                || previous.DepthLevels != current.DepthLevels
                || !string.Equals(previous.Exchange, current.Exchange, StringComparison.OrdinalIgnoreCase)
                || !string.Equals(previous.LocalSymbol, current.LocalSymbol, StringComparison.OrdinalIgnoreCase)
-               || !string.Equals(previous.PrimaryExchange, current.PrimaryExchange, StringComparison.OrdinalIgnoreCase);
+               || !string.Equals(previous.PrimaryExchange, current.PrimaryExchange, StringComparison.OrdinalIgnoreCase)
+               || previous.Strike != current.Strike
+               || previous.Right != current.Right
+               || previous.LastTradeDateOrContractMonth != current.LastTradeDateOrContractMonth;
     }
 }

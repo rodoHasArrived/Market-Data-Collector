@@ -48,6 +48,15 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(SymbolConfig[]))]
 [JsonSerializable(typeof(List<SymbolConfig>))]
 [JsonSerializable(typeof(AggregateBarPayload))]
+// Option types
+[JsonSerializable(typeof(OptionQuote))]
+[JsonSerializable(typeof(OptionTrade))]
+[JsonSerializable(typeof(GreeksSnapshot))]
+[JsonSerializable(typeof(OptionChainSnapshot))]
+[JsonSerializable(typeof(OptionContractSpec))]
+[JsonSerializable(typeof(OpenInterestUpdate))]
+[JsonSerializable(typeof(List<OptionQuote>))]
+[JsonSerializable(typeof(List<OptionTrade>))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 // Configuration types

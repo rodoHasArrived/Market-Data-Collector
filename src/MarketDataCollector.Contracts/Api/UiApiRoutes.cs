@@ -336,6 +336,19 @@ public static class UiApiRoutes
     public const string LeanBacktestHistory = "/api/lean/backtest/history";
     public const string LeanBacktestDelete = "/api/lean/backtest/{backtestId}/delete";
 
+    // Options / Derivatives endpoints
+    public const string OptionsChains = "/api/options/chains/{underlyingSymbol}";
+    public const string OptionsExpirations = "/api/options/expirations/{underlyingSymbol}";
+    public const string OptionsStrikes = "/api/options/strikes/{underlyingSymbol}/{expiration}";
+    public const string OptionsQuote = "/api/options/quote";
+    public const string OptionsQuotesByUnderlying = "/api/options/quotes/{underlyingSymbol}";
+    public const string OptionsTrades = "/api/options/trades";
+    public const string OptionsGreeks = "/api/options/greeks";
+    public const string OptionsOpenInterest = "/api/options/open-interest";
+    public const string OptionsSummary = "/api/options/summary";
+    public const string OptionsTrackedUnderlyings = "/api/options/underlyings";
+    public const string OptionsRefresh = "/api/options/refresh";
+
     // Index endpoints
     public const string IndicesConstituents = "/api/indices/{indexName}/constituents";
 

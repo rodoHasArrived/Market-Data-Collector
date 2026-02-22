@@ -824,6 +824,22 @@ public static class ServiceCompositionRoot
             return new MarketDepthCollector(publisher, requireExplicitSubscription: true);
         });
 
+        // OptionDataCollector - option quotes, trades, greeks, chains
+        services.AddSingleton<OptionDataCollector>(sp =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            return new OptionDataCollector(publisher);
+        });
+
+        // OptionsChainService - orchestrates option chain discovery and filtering
+        services.AddSingleton<OptionsChainService>(sp =>
+        {
+            var collector = sp.GetRequiredService<OptionDataCollector>();
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OptionsChainService>>();
+            var provider = sp.GetService<Infrastructure.Providers.IOptionsChainProvider>();
+            return new OptionsChainService(collector, logger, provider);
+        });
+
         return services;
     }
 
