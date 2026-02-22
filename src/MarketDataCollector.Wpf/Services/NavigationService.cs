@@ -73,6 +73,7 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
         RegisterPage("Backfill", typeof(BackfillPage));
         RegisterPage("PortfolioImport", typeof(PortfolioImportPage));
         RegisterPage("IndexSubscription", typeof(IndexSubscriptionPage));
+        RegisterPage("Options", typeof(OptionsPage));
         RegisterPage("Schedules", typeof(ScheduleManagerPage));
 
         // Monitoring (6 pages)

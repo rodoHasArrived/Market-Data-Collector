@@ -522,6 +522,38 @@ public static partial class HtmlTemplateGenerator
       </div>
       <div id=""derivMsg"" class=""muted"" style=""margin-top: 12px;""></div>
     </div>
+
+    <!-- Options Live Data Panel -->
+    <div class=""card"" style=""flex:1; min-width: 400px;"">
+      <h3>Options Live Data</h3>
+      <p class=""muted"" style=""margin-bottom: 16px;"">Real-time options data summary and tracked underlyings.</p>
+      <div id=""optionsSummary"">
+        <div style=""display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;"">
+          <div class=""metric-card"">
+            <span class=""metric-value"" id=""optContracts"">--</span>
+            <span class=""metric-label"">Tracked Contracts</span>
+          </div>
+          <div class=""metric-card"">
+            <span class=""metric-value"" id=""optChains"">--</span>
+            <span class=""metric-label"">Chains</span>
+          </div>
+          <div class=""metric-card"">
+            <span class=""metric-value"" id=""optUnderlyings"">--</span>
+            <span class=""metric-label"">Underlyings</span>
+          </div>
+          <div class=""metric-card"">
+            <span class=""metric-value"" id=""optGreeks"">--</span>
+            <span class=""metric-label"">With Greeks</span>
+          </div>
+        </div>
+        <div id=""optProviderStatus"" class=""muted"" style=""margin-bottom: 12px;"">Provider status: checking...</div>
+        <div style=""margin-bottom: 12px;"">
+          <label class=""muted"" style=""font-size: 12px;"">Tracked Underlyings:</label>
+          <div id=""optTrackedList"" class=""muted"" style=""margin-top: 4px;"">--</div>
+        </div>
+        <button class=""btn-secondary"" onclick=""refreshOptionsSummary()"">Refresh Options Data</button>
+      </div>
+    </div>
   </div>
 
   <div class=""row"" id=""symbols"">

@@ -20,6 +20,7 @@ public partial class StoragePage : Page { }
 public partial class BackfillPage : Page { }
 public partial class PortfolioImportPage : Page { }
 public partial class IndexSubscriptionPage : Page { }
+public partial class OptionsPage : Page { }
 public partial class ScheduleManagerPage : Page { }
 
 // Monitoring pages

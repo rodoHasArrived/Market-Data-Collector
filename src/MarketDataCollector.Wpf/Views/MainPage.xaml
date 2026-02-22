@@ -263,6 +263,12 @@
                                         <TextBlock Text="Backfill" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
+                                <ListBoxItem Tag="Options">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconTrending}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Options" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
                             </ListBox>
 
                             <Rectangle Style="{StaticResource HorizontalDividerStyle}" Margin="20,6" />

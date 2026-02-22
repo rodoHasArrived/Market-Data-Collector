@@ -820,6 +820,32 @@ async function saveDerivativesConfig() {{
   }}
 }}
 
+async function refreshOptionsSummary() {{
+  try {{
+    const r = await fetch('/api/options/summary');
+    if (r.ok) {{
+      const data = await r.json();
+      document.getElementById('optContracts').textContent = data.trackedContracts ?? '--';
+      document.getElementById('optChains').textContent = data.trackedChains ?? '--';
+      document.getElementById('optUnderlyings').textContent = data.trackedUnderlyings ?? '--';
+      document.getElementById('optGreeks').textContent = data.contractsWithGreeks ?? '--';
+      document.getElementById('optProviderStatus').textContent =
+        'Provider: ' + (data.providerAvailable ? 'Connected' : 'Not configured');
+    }} else {{
+      document.getElementById('optProviderStatus').textContent = 'Provider: unavailable (API returned ' + r.status + ')';
+    }}
+
+    const u = await fetch('/api/options/underlyings');
+    if (u.ok) {{
+      const syms = await u.json();
+      document.getElementById('optTrackedList').textContent =
+        syms && syms.length > 0 ? syms.join(', ') : 'None';
+    }}
+  }} catch (e) {{
+    document.getElementById('optProviderStatus').textContent = 'Provider: error - ' + e.message;
+  }}
+}}
+
 async function addSymbol() {{
   const symbol = document.getElementById('sym').value.trim().toUpperCase();
   if (!symbol) {{
@@ -991,7 +1017,9 @@ loadStatus();
 loadBackfillStatus();
 loadDataSources();
 loadDerivativesConfig();
+refreshOptionsSummary();
 startSSE();
 setInterval(loadBackfillStatus, 5000);
+setInterval(refreshOptionsSummary, 10000);
 ";
 }
