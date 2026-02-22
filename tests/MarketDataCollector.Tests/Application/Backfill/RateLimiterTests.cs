@@ -152,7 +152,7 @@ public class RateLimiterTests : IDisposable
 
         // Act
         await _rateLimiter.WaitForSlotAsync();
-        await Task.Delay(150); // Wait well beyond min delay for CI stability
+        await Task.Delay(100); // Wait well beyond min delay for CI stability
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         await _rateLimiter.WaitForSlotAsync();
@@ -392,8 +392,8 @@ public class RateLimiterTests : IDisposable
         await _rateLimiter.WaitForSlotAsync();
         await _rateLimiter.WaitForSlotAsync();
 
-        // Wait for first request to expire
-        await Task.Delay(120);
+        // Wait for window to expire
+        await Task.Delay(110);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         await _rateLimiter.WaitForSlotAsync();

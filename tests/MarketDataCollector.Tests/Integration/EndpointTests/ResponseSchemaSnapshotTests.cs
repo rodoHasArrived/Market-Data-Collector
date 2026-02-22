@@ -15,7 +15,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// downstream consumers break.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class ResponseSchemaSnapshotTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class ResponseSchemaSnapshotTests
 {
     private readonly HttpClient _client;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };

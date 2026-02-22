@@ -11,7 +11,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Tests failover configuration, rules CRUD, health status, and force failover.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class FailoverEndpointTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class FailoverEndpointTests
 {
     private readonly HttpClient _client;
 

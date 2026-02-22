@@ -13,7 +13,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// negative-path behaviour verification.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class NegativePathEndpointTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class NegativePathEndpointTests
 {
     private readonly HttpClient _client;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };

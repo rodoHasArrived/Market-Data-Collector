@@ -314,7 +314,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task TimeSinceLastFlush_UpdatesAfterFlush()
     {
         // Arrange
-        await Task.Delay(50);
+        await Task.Delay(20);
         var timeBefore = _pipeline.TimeSinceLastFlush;
 
         // Act
@@ -339,7 +339,7 @@ public class EventPipelineTests : IAsyncLifetime
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
         // Act - Wait for periodic flush
-        await Task.Delay(150);
+        await Task.Delay(100);
 
         // Assert
         sink.FlushCount.Should().BeGreaterThanOrEqualTo(1);
@@ -388,7 +388,7 @@ public class EventPipelineTests : IAsyncLifetime
         _pipeline.Complete();
 
         // Wait for pipeline to drain
-        await Task.Delay(50);
+        await Task.Delay(20);
 
         // Assert - Further publishes may fail
         // The channel is marked complete
@@ -425,7 +425,7 @@ public class EventPipelineTests : IAsyncLifetime
         }
 
         // Give consumer time to start processing before disposal
-        await Task.Delay(50);
+        await Task.Delay(20);
 
         // Act
         await pipeline.DisposeAsync();
@@ -450,11 +450,11 @@ public class EventPipelineTests : IAsyncLifetime
             finalFlushTimeout: TimeSpan.FromSeconds(1));
 
         pipeline.TryPublish(CreateTradeEvent("SPY"));
-        await Task.Delay(50); // Let consumer process the event
+        await Task.Delay(20); // Let consumer process the event
 
         // Act - Dispose should not hang; the final flush will be cancelled by finalFlushTimeout
         var disposeTask = pipeline.DisposeAsync().AsTask();
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(10)));
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(5)));
 
         // Assert - Disposal must complete (not hang indefinitely)
         completed.Should().Be(disposeTask,
@@ -525,7 +525,7 @@ public class EventPipelineTests : IAsyncLifetime
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        await Task.Delay(100);
+        await Task.Delay(50);
 
         // Assert - Pipeline should still be alive and processing
         // At least some events should have been processed before the throw

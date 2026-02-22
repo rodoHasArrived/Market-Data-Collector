@@ -126,10 +126,10 @@ public class ConnectionRetryIntegrationTests
         // Arrange
         var pipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
             maxRetries: 5,
-            retryBaseDelay: TimeSpan.FromSeconds(1),
+            retryBaseDelay: TimeSpan.FromMilliseconds(10),
             circuitBreakerFailureThreshold: 10,
             circuitBreakerDuration: TimeSpan.FromSeconds(1),
-            operationTimeout: TimeSpan.FromSeconds(30));
+            operationTimeout: TimeSpan.FromSeconds(5));
 
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
@@ -139,7 +139,7 @@ public class ConnectionRetryIntegrationTests
         {
             await pipeline.ExecuteAsync(async ct =>
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), ct);
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
             }, cts.Token);
         });
     }
@@ -201,7 +201,7 @@ public class ExponentialBackoffTests
             .AddRetry(new Polly.Retry.RetryStrategyOptions
             {
                 MaxRetryAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(100),
+                Delay = TimeSpan.FromMilliseconds(10),
                 BackoffType = DelayBackoffType.Exponential,
                 UseJitter = false,
                 MaxDelay = TimeSpan.FromSeconds(10),
@@ -228,9 +228,9 @@ public class ExponentialBackoffTests
             // Expected
         }
 
-        // Assert - delays should increase exponentially (100ms, 200ms, 400ms)
+        // Assert - delays should increase exponentially (10ms, 20ms, 40ms)
         retryDelays.Should().HaveCount(3);
-        retryDelays[0].Should().BeCloseTo(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(50));
+        retryDelays[0].Should().BeCloseTo(TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(10));
         retryDelays[1].Should().BeGreaterThan(retryDelays[0]);
         retryDelays[2].Should().BeGreaterThan(retryDelays[1]);
     }
@@ -244,7 +244,7 @@ public class ExponentialBackoffTests
             .AddRetry(new Polly.Retry.RetryStrategyOptions
             {
                 MaxRetryAttempts = 5,
-                Delay = TimeSpan.FromMilliseconds(100),
+                Delay = TimeSpan.FromMilliseconds(10),
                 BackoffType = DelayBackoffType.Exponential,
                 UseJitter = true,
                 MaxDelay = TimeSpan.FromSeconds(10),
@@ -274,7 +274,7 @@ public class ExponentialBackoffTests
         // Assert - with jitter, delays should still generally increase but with variation
         retryDelays.Should().HaveCount(5);
         // Jitter means exact values are unpredictable, but general trend should be increasing
-        retryDelays.Average(d => d.TotalMilliseconds).Should().BeGreaterThan(100);
+        retryDelays.Average(d => d.TotalMilliseconds).Should().BeGreaterThan(10);
     }
 }
 

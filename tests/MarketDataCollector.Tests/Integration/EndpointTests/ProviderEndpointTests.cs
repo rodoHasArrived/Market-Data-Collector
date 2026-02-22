@@ -11,7 +11,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Tests provider catalog, status, metrics, comparison, and data source CRUD.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class ProviderEndpointTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class ProviderEndpointTests
 {
     private readonly HttpClient _client;
 
