@@ -218,14 +218,14 @@ public sealed class DataFreshnessSlaMonitorTests : IDisposable
             AlertCooldownSeconds = 0
         });
 
+        using var violationReceived = new ManualResetEventSlim(false);
         SlaViolationEvent? capturedEvent = null;
-        monitor.OnViolation += e => capturedEvent = e;
+        monitor.OnViolation += e => { capturedEvent = e; violationReceived.Set(); };
 
         monitor.RecordEvent("AAPL");
 
-        // Act - Wait for threshold to pass and check to run
-        // Timer fires every 1s and needs >1s staleness, so 1.5s is sufficient
-        Thread.Sleep(1500);
+        // Act - Wait for the violation callback to fire (timer-based, needs >1s staleness)
+        violationReceived.Wait(TimeSpan.FromSeconds(5));
 
         // Assert
         capturedEvent.Should().NotBeNull();
@@ -245,14 +245,15 @@ public sealed class DataFreshnessSlaMonitorTests : IDisposable
             AlertCooldownSeconds = 0
         });
 
+        using var violationReceived = new ManualResetEventSlim(false);
         SlaRecoveryEvent? capturedRecovery = null;
         monitor.OnRecovery += e => capturedRecovery = e;
-        monitor.OnViolation += _ => { }; // Need to handle violation first
+        monitor.OnViolation += _ => violationReceived.Set();
 
         monitor.RecordEvent("AAPL");
 
         // Wait for violation - timer fires every 1s and needs >1s staleness
-        Thread.Sleep(1500);
+        violationReceived.Wait(TimeSpan.FromSeconds(5));
 
         // Act - Record event to recover
         monitor.RecordEvent("AAPL");
@@ -515,7 +516,7 @@ public sealed class DataFreshnessSlaMonitorMarketHoursTests : IDisposable
         monitor.RecordEvent("AAPL");
 
         // Allow a moment for potential async operations
-        Thread.Sleep(100);
+        Thread.Sleep(50);
 
         // Act
         var status = monitor.GetSymbolStatus("AAPL");

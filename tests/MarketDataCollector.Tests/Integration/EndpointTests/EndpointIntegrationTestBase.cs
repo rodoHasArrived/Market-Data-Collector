@@ -10,7 +10,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Uses EndpointTestFixture for in-process testing without real network calls.
 /// Implements improvement B2/#7 from the structural improvements analysis.
 /// </summary>
-public abstract class EndpointIntegrationTestBase : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public abstract class EndpointIntegrationTestBase
 {
     protected readonly HttpClient Client;
     protected readonly EndpointTestFixture Fixture;

@@ -9,7 +9,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// These endpoints expose option chain, quote, greeks, and summary data.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class OptionsEndpointTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class OptionsEndpointTests
 {
     private readonly HttpClient _client;
 

@@ -12,7 +12,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Implements Phase 1A.7 from the roadmap.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class MaintenanceEndpointTests
 {
     private readonly HttpClient _client;
 

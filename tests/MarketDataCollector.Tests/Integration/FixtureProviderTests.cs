@@ -226,7 +226,7 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
 
         // Act - Subscribe and let events flow
         var subId = _client.SubscribeTrades(cfg);
-        await Task.Delay(100); // Let fixture generate events
+        await Task.Delay(50); // Let fixture generate events
         _client.UnsubscribeTrades(subId);
 
         // Flush pipeline to storage
@@ -251,7 +251,7 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
 
         // Act
         var subId = _client.SubscribeMarketDepth(cfg);
-        await Task.Delay(100);
+        await Task.Delay(50);
         _client.UnsubscribeMarketDepth(subId);
         await _pipeline.FlushAsync();
 
@@ -275,7 +275,7 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
             subIds.Add(_client.SubscribeTrades(new SymbolConfig(sym)));
         }
 
-        await Task.Delay(100);
+        await Task.Delay(50);
 
         foreach (var id in subIds)
             _client.UnsubscribeTrades(id);
@@ -293,12 +293,12 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
         // Arrange
         await _client.ConnectAsync();
         _client.SubscribeTrades(new SymbolConfig("SPY"));
-        await Task.Delay(100);
+        await Task.Delay(50);
 
         // Act - Disconnect
         await _client.DisconnectAsync();
         var countAfterDisconnect = _client.GeneratedEvents.Count;
-        await Task.Delay(100);
+        await Task.Delay(50);
         var countLater = _client.GeneratedEvents.Count;
 
         // Assert - No new events after disconnect
@@ -313,7 +313,7 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
         var subId = _client.SubscribeTrades(new SymbolConfig("SPY"));
 
         // Act
-        await Task.Delay(100);
+        await Task.Delay(50);
         _client.UnsubscribeTrades(subId);
         await _pipeline.FlushAsync();
 
@@ -338,7 +338,7 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
         var subId = _client.SubscribeMarketDepth(new SymbolConfig("MSFT"));
 
         // Act
-        await Task.Delay(100);
+        await Task.Delay(50);
         _client.UnsubscribeMarketDepth(subId);
         await _pipeline.FlushAsync();
 
@@ -385,7 +385,7 @@ public sealed class FixtureProviderPipelineTests : IAsyncLifetime
         var subId = _client.SubscribeTrades(new SymbolConfig("SPY"));
 
         // Act - Let it run for a bit
-        await Task.Delay(150);
+        await Task.Delay(75);
         _client.UnsubscribeTrades(subId);
         await _pipeline.FlushAsync();
 

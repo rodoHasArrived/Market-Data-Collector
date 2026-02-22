@@ -262,7 +262,7 @@ public sealed class BackgroundTaskSchedulerServiceTests
         });
 
         // Wait for at least one execution
-        await Task.Delay(200);
+        await Task.Delay(100);
 
         executionCount.Should().BeGreaterThan(0);
 
@@ -290,7 +290,7 @@ public sealed class BackgroundTaskSchedulerServiceTests
             Interval = TimeSpan.FromMilliseconds(50)
         });
 
-        await Task.Delay(200);
+        await Task.Delay(120);
 
         // Should have been called multiple times despite exceptions
         callCount.Should().BeGreaterThan(1);

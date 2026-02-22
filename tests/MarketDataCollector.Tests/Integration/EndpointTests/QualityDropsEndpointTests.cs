@@ -9,6 +9,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Part of B1/#7 and D4 improvements.
 /// </summary>
 [Trait("Category", "Integration")]
+[Collection("Endpoint")]
 public sealed class QualityDropsEndpointTests : EndpointIntegrationTestBase
 {
     public QualityDropsEndpointTests(EndpointTestFixture fixture) : base(fixture)

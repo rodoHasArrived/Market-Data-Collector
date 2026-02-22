@@ -11,7 +11,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Part of B2 (tranche 1): endpoint integration coverage for health/status/config.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class ResponseSchemaValidationTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class ResponseSchemaValidationTests
 {
     private readonly HttpClient _client;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };

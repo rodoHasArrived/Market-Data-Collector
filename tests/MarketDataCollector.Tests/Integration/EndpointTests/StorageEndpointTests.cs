@@ -12,7 +12,8 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// and symbol mapping endpoints (/api/symbol-mappings).
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class StorageEndpointTests : IClassFixture<EndpointTestFixture>
+[Collection("Endpoint")]
+public sealed class StorageEndpointTests
 {
     private readonly HttpClient _client;
 

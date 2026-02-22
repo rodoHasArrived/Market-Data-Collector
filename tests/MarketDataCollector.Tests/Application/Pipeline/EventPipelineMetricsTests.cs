@@ -92,7 +92,7 @@ public class EventPipelineMetricsTests : IAsyncLifetime
         }
 
         // Allow some time for processing
-        await Task.Delay(200);
+        await Task.Delay(50);
 
         // Assert - Some events should have been dropped
         var totalAttempted = 100;
