@@ -9,6 +9,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
@@ -29,8 +30,10 @@ public partial class ProviderHealthPage : Page
     private readonly ObservableCollection<BackfillProviderModel> _backfillProviders = new();
     private readonly ObservableCollection<ConnectionEventModel> _connectionHistory = new();
     private Timer? _refreshTimer;
+    private Timer? _staleCheckTimer;
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
+    private DateTime? _lastRefreshTime;
 
     public ProviderHealthPage(
         StatusService statusService,
@@ -65,6 +68,8 @@ public partial class ProviderHealthPage : Page
         _connectionService.ConnectionHealthUpdated -= OnConnectionHealthUpdated;
         _refreshTimer?.Stop();
         _refreshTimer?.Dispose();
+        _staleCheckTimer?.Stop();
+        _staleCheckTimer?.Dispose();
         _cts?.Cancel();
         _cts?.Dispose();
     }
@@ -77,6 +82,11 @@ public partial class ProviderHealthPage : Page
         _refreshTimer = new Timer(30000);
         _refreshTimer.Elapsed += async (_, _) => await Dispatcher.InvokeAsync(RefreshDataAsync);
         _refreshTimer.Start();
+
+        // Start stale check timer (every 2 seconds) to update the "last updated" text
+        _staleCheckTimer = new Timer(2000);
+        _staleCheckTimer.Elapsed += (_, _) => Dispatcher.Invoke(UpdateStaleIndicator);
+        _staleCheckTimer.Start();
     }
 
     private void OnConnectionStateChanged(object? sender, ConnectionStateChangedEventArgs e)
@@ -124,7 +134,8 @@ public partial class ProviderHealthPage : Page
             UpdateSummaryStats();
 
             // Update last refresh time
-            LastUpdateText.Text = $"Last updated: {DateTime.Now:HH:mm:ss}";
+            _lastRefreshTime = DateTime.UtcNow;
+            UpdateStaleIndicator();
         }
         catch (OperationCanceledException)
         {
@@ -276,6 +287,26 @@ public partial class ProviderHealthPage : Page
             "yahoo" => "100 req/min",
             _ => "Unknown"
         };
+    }
+
+    private void UpdateStaleIndicator()
+    {
+        var secondsSince = _lastRefreshTime.HasValue
+            ? (DateTime.UtcNow - _lastRefreshTime.Value).TotalSeconds
+            : (double?)null;
+
+        var indicator = FormatHelpers.FormatStaleIndicator(secondsSince, staleThresholdSeconds: 45);
+        LastUpdateText.Text = $"Last updated: {indicator.DisplayText}";
+
+        // Visual feedback: stale data gets warning color
+        if (indicator.IsStale)
+        {
+            LastUpdateText.Foreground = (Brush)FindResource("WarningColorBrush");
+        }
+        else
+        {
+            LastUpdateText.Foreground = (Brush)FindResource("ConsoleTextMutedBrush");
+        }
     }
 
     private void UpdateSummaryStats()

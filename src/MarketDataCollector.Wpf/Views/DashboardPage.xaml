@@ -45,6 +45,42 @@
                                                Margin="6,0,0,0" />
                                 </StackPanel>
                             </Border>
+
+                            <!-- Alert Summary Badges -->
+                            <Border x:Name="AlertCriticalBadge"
+                                    Background="{StaticResource ErrorColorBrush}"
+                                    CornerRadius="4"
+                                    Padding="8,4"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Visibility="Collapsed"
+                                    ToolTip="Critical alerts requiring immediate attention">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconWarning}"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="11" Foreground="White" />
+                                    <TextBlock x:Name="AlertCriticalCount" Text="0"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="White" Margin="4,0,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border x:Name="AlertWarningBadge"
+                                    Background="{StaticResource WarningColorBrush}"
+                                    CornerRadius="4"
+                                    Padding="8,4"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Visibility="Collapsed"
+                                    ToolTip="Warnings that may need attention">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconInfo}"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="11" Foreground="White" />
+                                    <TextBlock x:Name="AlertWarningCount" Text="0"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="White" Margin="4,0,0,0" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                         <TextBlock Text="Real-time market data monitoring and collection status"
                                    Style="{StaticResource CardDescriptionStyle}"

@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
@@ -26,6 +27,7 @@ public partial class DashboardPage : Page
     private readonly StatusService _statusService;
     private readonly MessagingService _messagingService;
     private readonly WpfServices.NotificationService _notificationService;
+    private readonly AlertService _alertService;
     private readonly DispatcherTimer _refreshTimer;
     private readonly DispatcherTimer _staleCheckTimer;
     private bool _isCollectorPaused;
@@ -47,6 +49,7 @@ public partial class DashboardPage : Page
         _statusService = statusService;
         _messagingService = messagingService;
         _notificationService = notificationService;
+        _alertService = AlertService.Instance;
 
         ActivityItems = new ObservableCollection<DashboardActivityItem>();
         SymbolPerformanceItems = new ObservableCollection<SymbolPerformanceItem>();
@@ -225,6 +228,7 @@ public partial class DashboardPage : Page
 
             UpdateConnectionInfo();
             UpdateCollectorBadge();
+            UpdateAlertSummaryBadges();
         }
         catch (Exception ex)
         {
@@ -287,6 +291,32 @@ public partial class DashboardPage : Page
         CollectorStatusBadge.Background = isConnected
             ? (Brush)FindResource("SuccessColorBrush")
             : (Brush)FindResource("ErrorColorBrush");
+    }
+
+    private void UpdateAlertSummaryBadges()
+    {
+        var summary = _alertService.GetSummary();
+        var criticalAndError = summary.CriticalCount + summary.ErrorCount;
+
+        if (criticalAndError > 0)
+        {
+            AlertCriticalBadge.Visibility = Visibility.Visible;
+            AlertCriticalCount.Text = criticalAndError.ToString("N0");
+        }
+        else
+        {
+            AlertCriticalBadge.Visibility = Visibility.Collapsed;
+        }
+
+        if (summary.WarningCount > 0)
+        {
+            AlertWarningBadge.Visibility = Visibility.Visible;
+            AlertWarningCount.Text = summary.WarningCount.ToString("N0");
+        }
+        else
+        {
+            AlertWarningBadge.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void OnRefreshTimerTick(object? sender, EventArgs e)

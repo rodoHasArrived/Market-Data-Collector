@@ -355,11 +355,11 @@ public sealed class AlertService
             },
             RemediationSteps = new[]
             {
-                new RemediationStep(1, "Check network", "Verify internet connection is stable"),
-                new RemediationStep(2, "Test API key", "Navigate to Settings and click Test Connection"),
-                new RemediationStep(3, "Check rate limits", "View rate limit usage in Provider Health page"),
-                new RemediationStep(4, "Check provider status", "Visit the provider's status page for outage info"),
-                new RemediationStep(5, "Switch provider", "Configure failover to a backup provider")
+                new RemediationStep(1, "Check network", "Verify internet connection is stable", "TestConnectivity", null),
+                new RemediationStep(2, "Test API key", "Navigate to Settings and click Test Connection", "TestConnection", "Settings"),
+                new RemediationStep(3, "Check rate limits", "View rate limit usage in Provider Health page", null, "ProviderHealth"),
+                new RemediationStep(4, "Check provider status", "Visit the provider's status page for outage info", null, null),
+                new RemediationStep(5, "Switch provider", "Configure failover to a backup provider", null, "DataSources")
             },
             WhatHappensIfIgnored = "No new data will be collected. Existing data is safe but growing stale."
         });
@@ -378,10 +378,10 @@ public sealed class AlertService
             },
             RemediationSteps = new[]
             {
-                new RemediationStep(1, "Review gap details", "Check the Data Quality page for gap timeframes"),
-                new RemediationStep(2, "Run targeted backfill", "Navigate to Backfill and fill the gap with historical data"),
-                new RemediationStep(3, "Verify with backup provider", "Compare data across providers to confirm gap"),
-                new RemediationStep(4, "Schedule gap-fill", "Set up automatic gap detection and fill")
+                new RemediationStep(1, "Review gap details", "Check the Data Quality page for gap timeframes", null, "DataQuality"),
+                new RemediationStep(2, "Run targeted backfill", "Navigate to Backfill and fill the gap with historical data", "RunBackfill", "Backfill"),
+                new RemediationStep(3, "Verify with backup provider", "Compare data across providers to confirm gap", null, "DataQuality"),
+                new RemediationStep(4, "Schedule gap-fill", "Set up automatic gap detection and fill", null, "ScheduleManager")
             },
             WhatHappensIfIgnored = "Analysis and backtesting may produce inaccurate results due to missing data."
         });
@@ -400,10 +400,10 @@ public sealed class AlertService
             },
             RemediationSteps = new[]
             {
-                new RemediationStep(1, "Review storage usage", "Check the Storage page for usage breakdown by symbol"),
-                new RemediationStep(2, "Enable compression", "Navigate to Storage Optimization and enable archive compression"),
-                new RemediationStep(3, "Configure retention", "Set up automatic cleanup of old data in Admin Maintenance"),
-                new RemediationStep(4, "Move to external storage", "Export older data to external drives or cloud storage")
+                new RemediationStep(1, "Review storage usage", "Check the Storage page for usage breakdown by symbol", null, "Storage"),
+                new RemediationStep(2, "Enable compression", "Navigate to Storage Optimization and enable archive compression", null, "StorageOptimization"),
+                new RemediationStep(3, "Configure retention", "Set up automatic cleanup of old data in Admin Maintenance", null, "AdminMaintenance"),
+                new RemediationStep(4, "Move to external storage", "Export older data to external drives or cloud storage", null, "AnalysisExport")
             },
             WhatHappensIfIgnored = "Collection may stop when disk is full, potentially losing real-time data."
         });
@@ -422,10 +422,10 @@ public sealed class AlertService
             },
             RemediationSteps = new[]
             {
-                new RemediationStep(1, "Reduce symbol count", "Remove less important symbols from the watchlist"),
-                new RemediationStep(2, "Stagger requests", "Adjust polling intervals in Settings"),
-                new RemediationStep(3, "Upgrade provider tier", "Consider upgrading to a higher API tier"),
-                new RemediationStep(4, "Use backup provider", "Switch to an alternative provider temporarily")
+                new RemediationStep(1, "Reduce symbol count", "Remove less important symbols from the watchlist", null, "Symbols"),
+                new RemediationStep(2, "Stagger requests", "Adjust polling intervals in Settings", null, "Settings"),
+                new RemediationStep(3, "Upgrade provider tier", "Consider upgrading to a higher API tier", null, null),
+                new RemediationStep(4, "Use backup provider", "Switch to an alternative provider temporarily", null, "DataSources")
             },
             WhatHappensIfIgnored = "Data collection will be throttled, potentially missing time-sensitive market data."
         });
@@ -443,10 +443,10 @@ public sealed class AlertService
             },
             RemediationSteps = new[]
             {
-                new RemediationStep(1, "Review schema changes", "Navigate to Diagnostics to see schema comparison"),
-                new RemediationStep(2, "Run schema migration", "Use Admin Maintenance to migrate existing data"),
-                new RemediationStep(3, "Validate data integrity", "Run data validation on affected symbols"),
-                new RemediationStep(4, "Contact support", "If migration fails, export data and reimport after resolution")
+                new RemediationStep(1, "Review schema changes", "Navigate to Diagnostics to see schema comparison", null, "Diagnostics"),
+                new RemediationStep(2, "Run schema migration", "Use Admin Maintenance to migrate existing data", "RunMigration", "AdminMaintenance"),
+                new RemediationStep(3, "Validate data integrity", "Run data validation on affected symbols", "ValidateData", "DataQuality"),
+                new RemediationStep(4, "Contact support", "If migration fails, export data and reimport after resolution", null, null)
             },
             WhatHappensIfIgnored = "Queries and exports may fail or produce incorrect results."
         });
@@ -531,6 +531,7 @@ public sealed class AlertPlaybook
 
 /// <summary>
 /// A step in a remediation playbook.
+/// Supports optional action routing via ActionId and NavigationTarget.
 /// </summary>
 public sealed class RemediationStep
 {
@@ -538,11 +539,32 @@ public sealed class RemediationStep
     public string Title { get; init; }
     public string Description { get; init; }
 
+    /// <summary>
+    /// Optional action identifier for automated execution (e.g., "TestConnection", "RunBackfill").
+    /// When set, the UI can offer a one-click button to execute this step.
+    /// </summary>
+    public string? ActionId { get; init; }
+
+    /// <summary>
+    /// Optional navigation target page tag (e.g., "Settings", "Backfill", "ProviderHealth").
+    /// When set, the remediation step can navigate the user directly to the relevant page.
+    /// </summary>
+    public string? NavigationTarget { get; init; }
+
     public RemediationStep(int priority, string title, string description)
     {
         Priority = priority;
         Title = title;
         Description = description;
+    }
+
+    public RemediationStep(int priority, string title, string description, string? actionId, string? navigationTarget)
+    {
+        Priority = priority;
+        Title = title;
+        Description = description;
+        ActionId = actionId;
+        NavigationTarget = navigationTarget;
     }
 }
 

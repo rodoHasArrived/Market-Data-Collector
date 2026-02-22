@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -456,38 +457,121 @@ public partial class MainWindow : Window
         var alert = e.Alert;
         if (alert.IsSuppressed || alert.IsSnoozed) return;
 
-        // Show notification with remediation guidance if playbook is available
+        var notificationType = alert.Severity switch
+        {
+            AlertSeverity.Critical or AlertSeverity.Emergency => NotificationType.Error,
+            AlertSeverity.Error => NotificationType.Error,
+            AlertSeverity.Warning => NotificationType.Warning,
+            _ => NotificationType.Info
+        };
+
         if (alert.Playbook != null)
         {
             var firstStep = alert.Playbook.RemediationSteps.Length > 0
-                ? $"\nTry: {alert.Playbook.RemediationSteps[0].Description}"
-                : "";
+                ? alert.Playbook.RemediationSteps[0]
+                : null;
 
-            var notificationType = alert.Severity switch
-            {
-                AlertSeverity.Critical or AlertSeverity.Emergency => NotificationType.Error,
-                AlertSeverity.Error => NotificationType.Error,
-                AlertSeverity.Warning => NotificationType.Warning,
-                _ => NotificationType.Info
-            };
+            var stepHint = firstStep != null
+                ? $"\nTry: {firstStep.Description}"
+                : "";
 
             _notificationService.ShowNotification(
                 alert.Title,
-                $"{alert.Description}{firstStep}",
+                $"{alert.Description}{stepHint}",
                 notificationType,
                 alert.Severity >= AlertSeverity.Error ? 0 : 8000);
+
+            // Auto-execute the first remediation step if it has a navigation target
+            if (firstStep?.NavigationTarget != null)
+            {
+                ExecuteRemediationStep(firstStep);
+            }
         }
         else
         {
-            var notificationType = alert.Severity >= AlertSeverity.Error
-                ? NotificationType.Error
-                : NotificationType.Warning;
-
             _notificationService.ShowNotification(
                 alert.Title,
                 alert.Description,
                 notificationType,
                 8000);
+        }
+    }
+
+    /// <summary>
+    /// Executes a remediation step by navigating to the target page and/or
+    /// dispatching an action command via the messaging service.
+    /// </summary>
+    private void ExecuteRemediationStep(RemediationStep step)
+    {
+        // Navigate to the relevant page if specified
+        if (!string.IsNullOrEmpty(step.NavigationTarget))
+        {
+            _navigationService.NavigateTo(step.NavigationTarget);
+        }
+
+        // Dispatch the action via messaging if specified
+        if (!string.IsNullOrEmpty(step.ActionId))
+        {
+            switch (step.ActionId)
+            {
+                case "TestConnectivity":
+                    _messagingService.Send("TestConnectivity");
+                    break;
+                case "TestConnection":
+                    _ = TestConnectionAsync();
+                    break;
+                case "RunBackfill":
+                    _messagingService.Send("RunBackfill");
+                    break;
+                case "RunMigration":
+                    _messagingService.Send("RunMigration");
+                    break;
+                case "ValidateData":
+                    _messagingService.Send("ValidateData");
+                    break;
+                default:
+                    // Forward unknown actions as messaging commands
+                    _messagingService.Send(step.ActionId);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tests the current provider connection as a remediation action.
+    /// </summary>
+    private async Task TestConnectionAsync()
+    {
+        try
+        {
+            var provider = _connectionService.CurrentProvider ?? "default";
+            var success = await _connectionService.ConnectAsync(provider);
+
+            _notificationService.ShowNotification(
+                success ? "Connection Restored" : "Connection Failed",
+                success
+                    ? $"Successfully reconnected to {provider}."
+                    : $"Could not reconnect to {provider}. Check credentials in Settings.",
+                success ? NotificationType.Success : NotificationType.Error,
+                5000);
+
+            if (success)
+            {
+                // Resolve connection alerts when reconnection succeeds
+                foreach (var alert in _alertService.GetActiveAlerts()
+                    .Where(a => a.Category is "Connection" or "Provider"))
+                {
+                    _alertService.ResolveAlert(alert.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowNotification(
+                "Connection Test Error",
+                $"Error testing connection: {ex.Message}",
+                NotificationType.Error,
+                0);
         }
     }
 
