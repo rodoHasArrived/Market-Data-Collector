@@ -103,7 +103,7 @@ public abstract class LoggingServiceBase : Contracts.ILoggingService
     /// </summary>
     protected abstract void WriteOutput(string formattedMessage);
 
-    internal static string FormatLogEntry(
+    public static string FormatLogEntry(
         LogLevel level,
         DateTime timestamp,
         string message,
