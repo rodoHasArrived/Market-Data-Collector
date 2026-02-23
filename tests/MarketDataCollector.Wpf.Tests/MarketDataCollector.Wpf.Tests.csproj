@@ -53,7 +53,6 @@
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <ProjectReference Include="..\..\src\MarketDataCollector.Wpf\MarketDataCollector.Wpf.csproj" />
     <ProjectReference Include="..\..\src\MarketDataCollector.Ui.Services\MarketDataCollector.Ui.Services.csproj" />
-    <ProjectReference Include="..\..\src\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

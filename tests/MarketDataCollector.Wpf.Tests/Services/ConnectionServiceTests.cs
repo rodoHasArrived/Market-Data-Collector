@@ -1,3 +1,4 @@
+using MarketDataCollector.Ui.Services.Contracts;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 
