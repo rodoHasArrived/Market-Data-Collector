@@ -66,6 +66,10 @@ public partial class Program
             var errorCode = ErrorCodeExtensions.FromException(ex);
             log.Fatal(ex, "MarketDataCollector terminated unexpectedly (ErrorCode={ErrorCode}, ExitCode={ExitCode})",
                 errorCode, errorCode.ToExitCode());
+
+            // Display user-friendly error with actionable suggestions
+            FriendlyErrorFormatter.DisplayError(ex);
+
             return errorCode.ToExitCode();
         }
         finally
@@ -369,6 +373,10 @@ public partial class Program
                 errorCode = ErrorCode.ConnectionFailed;
             log.Error(ex, "Failed to connect to {DataSource} data provider (ErrorCode={ErrorCode}, ExitCode={ExitCode}). Check credentials and connectivity.",
                 cfg.DataSource, errorCode, errorCode.ToExitCode());
+
+            // Display user-friendly error with actionable suggestions
+            FriendlyErrorFormatter.DisplayError(ex);
+
             return errorCode.ToExitCode();
         }
 

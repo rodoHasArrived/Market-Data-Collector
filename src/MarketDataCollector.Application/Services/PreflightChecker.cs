@@ -6,6 +6,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Storage.Services;
+using MarketDataCollector.Core.Config;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -30,8 +31,9 @@ public sealed class PreflightChecker
     /// </summary>
     /// <param name="dataRoot">The data directory path to check.</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="activeDataSource">Active data source to validate credentials for.</param>
     /// <returns>Pre-flight check results with pass/fail status and details.</returns>
-    public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default)
+    public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default, DataSourceKind? activeDataSource = null)
     {
         var startTime = Stopwatch.GetTimestamp();
         var checks = new List<PreflightCheckResult>();
@@ -51,6 +53,12 @@ public sealed class PreflightChecker
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
+
+        // Validate provider credentials for the active data source
+        if (activeDataSource.HasValue)
+        {
+            checks.Add(ValidateProviderCredentials(activeDataSource.Value));
+        }
 
         // Run provider-specific checks if configured
         if (_config.CheckProviderConnectivity)
@@ -521,6 +529,155 @@ public sealed class PreflightChecker
             "No API credentials found in environment variables",
             "Set ALPACA_KEY_ID/ALPACA_SECRET_KEY or configure credentials in appsettings.json.",
             details);
+    }
+
+    /// <summary>
+    /// Validates credentials for the active data source, providing actionable error messages
+    /// with setup instructions specific to each provider.
+    /// </summary>
+    private PreflightCheckResult ValidateProviderCredentials(DataSourceKind dataSource)
+    {
+        const string checkName = "Provider Credentials";
+
+        return dataSource switch
+        {
+            DataSourceKind.Alpaca => ValidateAlpacaCredentials(),
+            DataSourceKind.Polygon => ValidateSimpleApiKey("Polygon", "POLYGON_API_KEY",
+                new[] { "POLYGON_API_KEY", "MDC_POLYGON_API_KEY", "POLYGON__APIKEY" },
+                "https://polygon.io/dashboard/api-keys"),
+            DataSourceKind.NYSE => ValidateSimpleApiKey("NYSE", "NYSE_API_KEY",
+                new[] { "NYSE_API_KEY", "MDC_NYSE_API_KEY" },
+                "https://developer.nyse.com"),
+            DataSourceKind.IB => ValidateIBConnection(),
+            _ => PreflightCheckResult.Passed(checkName,
+                $"No specific credential validation for {dataSource}",
+                new Dictionary<string, object> { ["dataSource"] = dataSource.ToString() })
+        };
+
+        PreflightCheckResult ValidateAlpacaCredentials()
+        {
+            var keyId = GetEnvVarValue("ALPACA_KEY_ID", "MDC_ALPACA_KEY_ID", "ALPACA__KEYID");
+            var secretKey = GetEnvVarValue("ALPACA_SECRET_KEY", "MDC_ALPACA_SECRET_KEY", "ALPACA__SECRETKEY");
+            var missing = new List<string>();
+
+            if (string.IsNullOrEmpty(keyId)) missing.Add("ALPACA_KEY_ID");
+            if (string.IsNullOrEmpty(secretKey)) missing.Add("ALPACA_SECRET_KEY");
+
+            if (missing.Count > 0)
+            {
+                return PreflightCheckResult.Failed(checkName,
+                    $"Alpaca credentials missing: {string.Join(", ", missing)}",
+                    $"Set the required environment variables:\n" +
+                    $"  export ALPACA_KEY_ID=your-key-id\n" +
+                    $"  export ALPACA_SECRET_KEY=your-secret-key\n" +
+                    $"Get your API keys at: https://app.alpaca.markets/paper/dashboard/overview\n" +
+                    $"Or configure in appsettings.json under Alpaca.KeyId / Alpaca.SecretKey",
+                    new Dictionary<string, object>
+                    {
+                        ["provider"] = "Alpaca",
+                        ["missingCredentials"] = missing,
+                        ["signupUrl"] = "https://app.alpaca.markets"
+                    });
+            }
+
+            // Validate key format (Alpaca keys start with PK or AK)
+            if (keyId!.Length < 10 || keyId.Contains("YOUR_") || keyId.Contains("REPLACE"))
+            {
+                return PreflightCheckResult.Warning(checkName,
+                    "Alpaca API key appears to be a placeholder value",
+                    "Replace the placeholder with your actual Alpaca API key from https://app.alpaca.markets",
+                    new Dictionary<string, object> { ["provider"] = "Alpaca", ["keyPreview"] = keyId[..Math.Min(4, keyId.Length)] + "..." });
+            }
+
+            _log.Debug("Alpaca credentials validated: KeyId={KeyPrefix}...", keyId[..Math.Min(4, keyId.Length)]);
+            return PreflightCheckResult.Passed(checkName,
+                $"Alpaca credentials present (KeyId: {keyId[..Math.Min(4, keyId.Length)]}...)",
+                new Dictionary<string, object> { ["provider"] = "Alpaca" });
+        }
+
+        PreflightCheckResult ValidateSimpleApiKey(string providerName, string primaryEnvVar, string[] allEnvVars, string signupUrl)
+        {
+            var apiKey = GetEnvVarValue(allEnvVars);
+
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                return PreflightCheckResult.Failed(checkName,
+                    $"{providerName} API key not found",
+                    $"Set the {primaryEnvVar} environment variable:\n" +
+                    $"  export {primaryEnvVar}=your-api-key\n" +
+                    $"Get your API key at: {signupUrl}\n" +
+                    $"Or configure in appsettings.json",
+                    new Dictionary<string, object>
+                    {
+                        ["provider"] = providerName,
+                        ["missingCredentials"] = new[] { primaryEnvVar },
+                        ["signupUrl"] = signupUrl
+                    });
+            }
+
+            if (apiKey.Contains("YOUR_") || apiKey.Contains("REPLACE") || apiKey.StartsWith("__SET_ME__"))
+            {
+                return PreflightCheckResult.Warning(checkName,
+                    $"{providerName} API key appears to be a placeholder value",
+                    $"Replace the placeholder with your actual {providerName} API key from {signupUrl}",
+                    new Dictionary<string, object> { ["provider"] = providerName });
+            }
+
+            return PreflightCheckResult.Passed(checkName,
+                $"{providerName} credentials present",
+                new Dictionary<string, object> { ["provider"] = providerName });
+        }
+
+        PreflightCheckResult ValidateIBConnection()
+        {
+            // IB uses TWS/Gateway, not API keys - check if the gateway ports are accessible
+            var ports = new[] { 7496, 7497, 4001, 4002 };
+            foreach (var port in ports)
+            {
+                try
+                {
+                    using var client = new TcpClient();
+                    var result = client.BeginConnect("127.0.0.1", port, null, null);
+                    var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(200));
+                    if (success && client.Connected)
+                    {
+                        client.EndConnect(result);
+                        return PreflightCheckResult.Passed(checkName,
+                            $"Interactive Brokers gateway detected on port {port}",
+                            new Dictionary<string, object> { ["provider"] = "IB", ["port"] = port });
+                    }
+                }
+                catch
+                {
+                    // Continue trying other ports
+                }
+            }
+
+            return PreflightCheckResult.Warning(checkName,
+                "Interactive Brokers TWS/Gateway not detected on standard ports (7496, 7497, 4001, 4002)",
+                "Ensure IB TWS or IB Gateway is running:\n" +
+                "  1. Start TWS or IB Gateway\n" +
+                "  2. Enable API connections: File > Global Configuration > API > Settings\n" +
+                "  3. Check 'Enable ActiveX and Socket Clients'\n" +
+                "  4. Verify the socket port matches (default: 7496 for TWS, 4001 for Gateway)\n" +
+                "  Or switch to a different provider with --data-source Alpaca",
+                new Dictionary<string, object>
+                {
+                    ["provider"] = "IB",
+                    ["checkedPorts"] = ports
+                });
+        }
+    }
+
+    private static string? GetEnvVarValue(params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var value = Environment.GetEnvironmentVariable(name);
+            if (!string.IsNullOrEmpty(value))
+                return value;
+        }
+        return null;
     }
 
     private async Task<PreflightCheckResult> CheckProviderEndpointsAsync(CancellationToken ct)

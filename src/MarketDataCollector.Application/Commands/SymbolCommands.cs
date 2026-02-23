@@ -27,6 +27,7 @@ internal sealed class SymbolCommands : ICliCommand
             a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--symbols-import", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -54,6 +55,9 @@ internal sealed class SymbolCommands : ICliCommand
 
         if (CliArguments.HasFlag(args, "--symbols-add"))
             return await RunAddAsync(args, ct);
+
+        if (CliArguments.HasFlag(args, "--symbols-import"))
+            return await RunImportAsync(args, ct);
 
         if (CliArguments.HasFlag(args, "--symbols-remove"))
             return await RunRemoveAsync(args, ct);
@@ -87,6 +91,127 @@ internal sealed class SymbolCommands : ICliCommand
         Console.WriteLine();
 
         return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
+    }
+
+    private async Task<CliResult> RunImportAsync(string[] args, CancellationToken ct)
+    {
+        var filePath = CliArguments.RequireValue(args, "--symbols-import", "--symbols-import symbols.csv");
+        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+
+        if (!File.Exists(filePath))
+        {
+            Console.Error.WriteLine($"Error: File not found: {filePath}");
+            return CliResult.Fail(ErrorCode.FileNotFound);
+        }
+
+        var options = new SymbolAddOptions(
+            SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
+            SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
+            DepthLevels: int.TryParse(CliArguments.GetValue(args, "--depth-levels"), out var levels) ? levels : 10,
+            UpdateExisting: CliArguments.HasFlag(args, "--update")
+        );
+
+        // Parse the file - supports CSV, TXT, and one-symbol-per-line formats
+        var symbols = ParseSymbolFile(filePath);
+
+        if (symbols.Length == 0)
+        {
+            Console.Error.WriteLine("Error: No valid symbols found in the file.");
+            Console.Error.WriteLine("Expected formats:");
+            Console.Error.WriteLine("  - One symbol per line: AAPL\\nMSFT\\nGOOGL");
+            Console.Error.WriteLine("  - Comma-separated: AAPL,MSFT,GOOGL");
+            Console.Error.WriteLine("  - CSV with header: Symbol,Name\\nAAPL,Apple Inc.");
+            return CliResult.Fail(ErrorCode.ValidationFailed);
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"Importing {symbols.Length} symbols from {filePath}...");
+        Console.WriteLine(new string('=', 50));
+
+        var result = await _symbolService.AddSymbolsAsync(symbols, options, ct);
+
+        Console.WriteLine($"  {result.Message}");
+        if (result.AffectedSymbols.Length > 0)
+        {
+            Console.WriteLine($"  Added: {string.Join(", ", result.AffectedSymbols)}");
+        }
+        Console.WriteLine();
+
+        _log.Information("Bulk symbol import from {FilePath}: {Count} symbols, success={Success}",
+            filePath, symbols.Length, result.Success);
+
+        return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
+    }
+
+    /// <summary>
+    /// Parses a symbol file in various formats: one-per-line, comma-separated, or CSV with headers.
+    /// Skips comments (lines starting with #) and empty lines.
+    /// For CSV files with a header row, extracts the first column as the symbol.
+    /// </summary>
+    internal static string[] ParseSymbolFile(string filePath)
+    {
+        var lines = File.ReadAllLines(filePath);
+        var symbols = new List<string>();
+        var isFirstLine = true;
+        var hasHeader = false;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+
+            // Skip empty lines and comments
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+                continue;
+
+            // Detect CSV header row (contains "symbol" case-insensitive)
+            if (isFirstLine && line.Contains(',') &&
+                line.Split(',').Any(col => col.Trim().Equals("symbol", StringComparison.OrdinalIgnoreCase)))
+            {
+                hasHeader = true;
+                isFirstLine = false;
+                continue;
+            }
+            isFirstLine = false;
+
+            if (line.Contains(','))
+            {
+                // CSV or comma-separated: extract first column (symbol) from each
+                if (hasHeader)
+                {
+                    // CSV data row: take the first column
+                    var firstCol = line.Split(',')[0].Trim().Trim('"');
+                    if (IsValidSymbol(firstCol))
+                        symbols.Add(firstCol.ToUpperInvariant());
+                }
+                else
+                {
+                    // Comma-separated list on one line
+                    foreach (var part in line.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        var sym = part.Trim('"');
+                        if (IsValidSymbol(sym))
+                            symbols.Add(sym.ToUpperInvariant());
+                    }
+                }
+            }
+            else
+            {
+                // One symbol per line
+                var sym = line.Trim('"');
+                if (IsValidSymbol(sym))
+                    symbols.Add(sym.ToUpperInvariant());
+            }
+        }
+
+        return symbols.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    private static bool IsValidSymbol(string symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return false;
+        if (symbol.Length > 20) return false;
+        // Allow alphanumeric, dots, slashes (for crypto like BTC/USD), and hyphens
+        return symbol.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '/' || c == '-');
     }
 
     private async Task<CliResult> RunRemoveAsync(string[] args, CancellationToken ct)
