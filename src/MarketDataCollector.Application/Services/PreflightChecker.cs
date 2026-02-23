@@ -627,7 +627,6 @@ public sealed class PreflightChecker
             {
                 remediation += $"\n  Documentation: {requirement.DocsLink}";
             }
-            remediation += $"\n  Run: dotnet run -- --validate-credentials";
 
             return PreflightCheckResult.Failed(checkName,
                 $"{requirement.DisplayName} is the active provider but is missing credentials: {envVarList}",
