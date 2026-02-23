@@ -461,6 +461,17 @@ public static class PrometheusMetrics
 }
 
 /// <summary>
+/// <see cref="IReconnectionMetrics"/> implementation that delegates to
+/// <see cref="PrometheusMetrics.RecordReconnectionAttempt"/>.
+/// Registered as a singleton in DI by the composition root.
+/// </summary>
+public sealed class PrometheusReconnectionMetrics : IReconnectionMetrics
+{
+    public void RecordAttempt(string provider, bool success)
+        => PrometheusMetrics.RecordReconnectionAttempt(provider, success);
+}
+
+/// <summary>
 /// Background service that periodically updates Prometheus metrics.
 /// </summary>
 public sealed class PrometheusMetricsUpdater : IAsyncDisposable

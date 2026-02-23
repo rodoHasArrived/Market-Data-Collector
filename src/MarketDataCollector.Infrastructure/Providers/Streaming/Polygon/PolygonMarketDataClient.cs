@@ -83,12 +83,14 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// <param name="tradeCollector">Collector for trade data.</param>
     /// <param name="quoteCollector">Collector for quote data.</param>
     /// <param name="options">Polygon configuration options. If null or missing ApiKey, runs in stub mode.</param>
+    /// <param name="reconnectionMetrics">Optional reconnection metrics recorder.</param>
     /// <exception cref="ArgumentNullException">If publisher, tradeCollector, or quoteCollector is null.</exception>
     public PolygonMarketDataClient(
         IMarketEventPublisher publisher,
         TradeDataCollector tradeCollector,
         QuoteCollector quoteCollector,
-        PolygonOptions? options = null)
+        PolygonOptions? options = null,
+        IReconnectionMetrics? reconnectionMetrics = null)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
@@ -101,7 +103,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             maxAttempts: 10,
             baseDelay: TimeSpan.FromSeconds(2),
             maxDelay: TimeSpan.FromSeconds(60),
-            log: _log);
+            log: _log,
+            metrics: reconnectionMetrics);
 
         // Validate API key format if provided
         if (!string.IsNullOrWhiteSpace(_options.ApiKey))

@@ -24,6 +24,7 @@ public sealed class WebSocketReconnectionHelper
 {
     private readonly SemaphoreSlim _reconnectGate = new(1, 1);
     private readonly ILogger _log;
+    private readonly IReconnectionMetrics _metrics;
     private readonly string _providerName;
     private readonly int _maxAttempts;
     private readonly TimeSpan _baseDelay;
@@ -35,13 +36,15 @@ public sealed class WebSocketReconnectionHelper
         int maxAttempts = 10,
         TimeSpan? baseDelay = null,
         TimeSpan? maxDelay = null,
-        ILogger? log = null)
+        ILogger? log = null,
+        IReconnectionMetrics? metrics = null)
     {
         _providerName = providerName;
         _maxAttempts = maxAttempts;
         _baseDelay = baseDelay ?? TimeSpan.FromSeconds(2);
         _maxDelay = maxDelay ?? TimeSpan.FromSeconds(60);
         _log = log ?? LoggingSetup.ForContext<WebSocketReconnectionHelper>();
+        _metrics = metrics ?? NullReconnectionMetrics.Instance;
     }
 
     /// <summary>
@@ -87,7 +90,7 @@ public sealed class WebSocketReconnectionHelper
                 try
                 {
                     await reconnectAction(ct).ConfigureAwait(false);
-                    PrometheusMetrics.RecordReconnectionAttempt(_providerName, success: true);
+                    _metrics.RecordAttempt(_providerName, success: true);
                     _log.Information(
                         "{Provider} reconnected successfully on attempt {Attempt}/{MaxAttempts}",
                         _providerName, attempt, _maxAttempts);
@@ -96,7 +99,7 @@ public sealed class WebSocketReconnectionHelper
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
-                    PrometheusMetrics.RecordReconnectionAttempt(_providerName, success: false);
+                    _metrics.RecordAttempt(_providerName, success: false);
                     _log.Warning(ex,
                         "{Provider} reconnection attempt {Attempt}/{MaxAttempts} failed: {ErrorMessage}",
                         _providerName, attempt, _maxAttempts, ex.Message);
