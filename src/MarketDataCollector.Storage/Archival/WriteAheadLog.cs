@@ -106,12 +106,12 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
             _uncommittedRecords++;
 
-            // Check if we should flush
+            // Check if we should flush (use internal method since we already hold _writeLock)
             if (_options.SyncMode == WalSyncMode.EveryWrite ||
                 (_options.SyncMode == WalSyncMode.BatchedSync && _uncommittedRecords >= _options.SyncBatchSize) ||
                 (DateTime.UtcNow - _lastFlushTime) >= _options.MaxFlushDelay)
             {
-                await FlushAsync(ct);
+                await FlushInternalAsync(ct);
             }
 
             return record;
@@ -146,7 +146,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
                 commitRecord.Payload);
 
             await WriteRecordAsync(commitRecord, ct);
-            await FlushAsync(ct);
+            await FlushInternalAsync(ct);
 
             _log.Debug("Committed through sequence {Sequence}", throughSequence);
         }
@@ -164,22 +164,33 @@ public sealed class WriteAheadLog : IAsyncDisposable
         await _writeLock.WaitAsync(ct);
         try
         {
-            if (_currentWriter == null || _currentWalFile == null) return;
-
-            await _currentWriter.FlushAsync();
-
-            if (_options.SyncMode != WalSyncMode.NoSync)
-            {
-                await _currentWalFile.FlushAsync(ct);
-            }
-
-            _uncommittedRecords = 0;
-            _lastFlushTime = DateTime.UtcNow;
+            await FlushInternalAsync(ct);
         }
         finally
         {
             _writeLock.Release();
         }
+    }
+
+    /// <summary>
+    /// Internal flush that assumes the caller already holds <see cref="_writeLock"/>.
+    /// Called from <see cref="AppendAsync{T}"/> and <see cref="CommitAsync"/> which
+    /// acquire the lock before invoking flush, avoiding a deadlock on the non-reentrant
+    /// <see cref="SemaphoreSlim"/>.
+    /// </summary>
+    private async Task FlushInternalAsync(CancellationToken ct = default)
+    {
+        if (_currentWriter == null || _currentWalFile == null) return;
+
+        await _currentWriter.FlushAsync();
+
+        if (_options.SyncMode != WalSyncMode.NoSync)
+        {
+            await _currentWalFile.FlushAsync(ct);
+        }
+
+        _uncommittedRecords = 0;
+        _lastFlushTime = DateTime.UtcNow;
     }
 
     /// <summary>
