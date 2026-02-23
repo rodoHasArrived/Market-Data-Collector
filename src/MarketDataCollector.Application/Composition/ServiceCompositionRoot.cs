@@ -551,8 +551,10 @@ public static class ServiceCompositionRoot
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
+            var reconnMetrics = sp.GetRequiredService<IReconnectionMetrics>();
             return new Infrastructure.Providers.Polygon.PolygonMarketDataClient(
-                publisher, tradeCollector, quoteCollector);
+                publisher, tradeCollector, quoteCollector,
+                reconnectionMetrics: reconnMetrics);
         });
 
         // StockSharp
@@ -698,6 +700,9 @@ public static class ServiceCompositionRoot
         {
             services.AddSingleton<IEventMetrics, DefaultEventMetrics>();
         }
+
+        // IReconnectionMetrics - injectable metrics for WebSocket reconnection tracking.
+        services.AddSingleton<IReconnectionMetrics, PrometheusReconnectionMetrics>();
 
         // DataQualityMonitoringService - orchestrates all quality monitoring components
         services.AddSingleton<DataQualityMonitoringService>(sp =>
