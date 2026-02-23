@@ -68,7 +68,7 @@ public partial class Program
                 errorCode, errorCode.ToExitCode());
 
             // Display user-friendly error with actionable suggestions
-            FriendlyErrorFormatter.DisplayError(ex);
+            FriendlyErrorFormatter.DisplayError(FriendlyErrorFormatter.Format(ex));
 
             return errorCode.ToExitCode();
         }
