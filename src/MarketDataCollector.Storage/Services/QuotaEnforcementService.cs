@@ -157,7 +157,8 @@ public sealed class QuotaEnforcementService : IQuotaEnforcementService
                     RecordUsage(file, info.Length);
                     totalBytes += info.Length;
                 }
-                catch { /* Skip inaccessible files */ }
+                catch (IOException) { /* Skip inaccessible files */ }
+                catch (UnauthorizedAccessException) { /* Skip files we can't access */ }
             }
 
             _lastScanUtc = DateTime.UtcNow;

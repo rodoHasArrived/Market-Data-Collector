@@ -64,6 +64,10 @@ public partial class Program
         catch (Exception ex)
         {
             var errorCode = ErrorCodeExtensions.FromException(ex);
+
+            // Display a user-friendly error message with actionable suggestions
+            FriendlyErrorFormatter.DisplayError(FriendlyErrorFormatter.Format(ex));
+
             log.Fatal(ex, "MarketDataCollector terminated unexpectedly (ErrorCode={ErrorCode}, ExitCode={ExitCode})",
                 errorCode, errorCode.ToExitCode());
             return errorCode.ToExitCode();

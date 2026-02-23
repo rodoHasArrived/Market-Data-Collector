@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
@@ -6,6 +7,7 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// <summary>
 /// Shared helpers to reduce boilerplate in endpoint handlers.
 /// Provides consistent null-check, try/catch, and JSON response patterns.
+/// Uses FriendlyErrorFormatter for user-friendly error responses.
 /// </summary>
 internal static class EndpointHelpers
 {
@@ -26,7 +28,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -48,7 +50,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -71,8 +73,35 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
+    }
+
+    /// <summary>
+    /// Converts an exception into a structured, user-friendly JSON error response
+    /// using FriendlyErrorFormatter for consistent error classification.
+    /// </summary>
+    private static IResult FormatErrorResult(Exception ex, JsonSerializerOptions opts)
+    {
+        var formatted = FriendlyErrorFormatter.Format(ex);
+
+        var statusCode = formatted.Code switch
+        {
+            var c when c.StartsWith("MDC-AUTH") => 401,
+            var c when c.StartsWith("MDC-RATE") => 429,
+            var c when c.StartsWith("MDC-DATA-001") => 404,
+            _ => 500
+        };
+
+        return Results.Json(new
+        {
+            error = formatted.Title,
+            code = formatted.Code,
+            message = formatted.Message,
+            suggestion = formatted.Suggestion,
+            docs = formatted.DocsLink,
+            details = formatted.Details
+        }, opts, statusCode: statusCode);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Subscriptions.Services;
 using Serilog;
@@ -6,7 +7,8 @@ namespace MarketDataCollector.Application.Commands;
 
 /// <summary>
 /// Handles all symbol management CLI commands:
-/// --symbols, --symbols-monitored, --symbols-archived, --symbols-add, --symbols-remove, --symbol-status
+/// --symbols, --symbols-monitored, --symbols-archived, --symbols-add, --symbols-remove,
+/// --symbol-status, --symbols-import, --symbols-export
 /// </summary>
 internal sealed class SymbolCommands : ICliCommand
 {
@@ -27,7 +29,9 @@ internal sealed class SymbolCommands : ICliCommand
             a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase) ||
-            a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase));
+            a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--symbols-import", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--symbols-export", StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
@@ -60,6 +64,12 @@ internal sealed class SymbolCommands : ICliCommand
 
         if (CliArguments.HasFlag(args, "--symbol-status"))
             return await RunStatusAsync(args, ct);
+
+        if (CliArguments.HasFlag(args, "--symbols-import"))
+            return await RunImportAsync(args, ct);
+
+        if (CliArguments.HasFlag(args, "--symbols-export"))
+            return RunExport(args);
 
         return CliResult.Fail(ErrorCode.Unknown);
     }
@@ -150,6 +160,160 @@ internal sealed class SymbolCommands : ICliCommand
 
         Console.WriteLine();
         return CliResult.Ok();
+    }
+
+    private async Task<CliResult> RunImportAsync(string[] args, CancellationToken ct)
+    {
+        var filePath = CliArguments.RequireValue(args, "--symbols-import",
+            "--symbols-import symbols.txt");
+        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+
+        if (!File.Exists(filePath))
+        {
+            Console.Error.WriteLine($"Error: File not found: {filePath}");
+            return CliResult.Fail(ErrorCode.FileNotFound);
+        }
+
+        var content = await File.ReadAllTextAsync(filePath, ct);
+        var symbols = ParseSymbolFile(content, filePath);
+
+        if (symbols.Length == 0)
+        {
+            Console.Error.WriteLine("Error: No valid symbols found in file");
+            return CliResult.Fail(ErrorCode.ValidationFailed);
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"  Found {symbols.Length} symbol(s) in {Path.GetFileName(filePath)}:");
+        Console.WriteLine($"  {string.Join(", ", symbols.Take(20))}");
+        if (symbols.Length > 20)
+        {
+            Console.WriteLine($"  ... and {symbols.Length - 20} more");
+        }
+        Console.WriteLine();
+
+        var options = new SymbolAddOptions(
+            SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
+            SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
+            DepthLevels: int.TryParse(CliArguments.GetValue(args, "--depth-levels"), out var levels) ? levels : 10,
+            UpdateExisting: CliArguments.HasFlag(args, "--update")
+        );
+
+        var result = await _symbolService.AddSymbolsAsync(symbols, options, ct);
+        Console.WriteLine(result.Success ? "  Import Result: Success" : "  Import Result: Failed");
+        Console.WriteLine($"  {result.Message}");
+        if (result.AffectedSymbols.Length > 0)
+        {
+            Console.WriteLine($"  Added: {string.Join(", ", result.AffectedSymbols.Take(20))}");
+            if (result.AffectedSymbols.Length > 20)
+            {
+                Console.WriteLine($"  ... and {result.AffectedSymbols.Length - 20} more");
+            }
+        }
+        Console.WriteLine();
+
+        return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
+    }
+
+    private CliResult RunExport(string[] args)
+    {
+        var filePath = CliArguments.RequireValue(args, "--symbols-export",
+            "--symbols-export symbols.txt");
+        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+
+        var symbols = _symbolService.GetMonitoredSymbols();
+        if (symbols.Length == 0)
+        {
+            Console.Error.WriteLine("Error: No symbols configured for monitoring");
+            return CliResult.Fail(ErrorCode.NoDataAvailable);
+        }
+
+        var symbolNames = symbols.Select(s => s.Symbol).ToArray();
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+        string content;
+        if (extension == ".json")
+        {
+            content = JsonSerializer.Serialize(symbolNames, new JsonSerializerOptions { WriteIndented = true });
+        }
+        else if (extension == ".csv")
+        {
+            content = string.Join(",", symbolNames);
+        }
+        else
+        {
+            // Default: one symbol per line
+            content = string.Join(Environment.NewLine, symbolNames);
+        }
+
+        File.WriteAllText(filePath, content);
+
+        Console.WriteLine();
+        Console.WriteLine($"  Exported {symbolNames.Length} symbol(s) to {filePath}");
+        Console.WriteLine($"  Symbols: {string.Join(", ", symbolNames.Take(20))}");
+        if (symbolNames.Length > 20)
+        {
+            Console.WriteLine($"  ... and {symbolNames.Length - 20} more");
+        }
+        Console.WriteLine();
+
+        return CliResult.Ok();
+    }
+
+    /// <summary>
+    /// Parses symbols from a file, auto-detecting format (one-per-line, CSV, or JSON array).
+    /// </summary>
+    internal static string[] ParseSymbolFile(string content, string filePath)
+    {
+        content = content.Trim();
+        if (string.IsNullOrEmpty(content))
+            return Array.Empty<string>();
+
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+        // JSON array format
+        if (content.StartsWith('[') || extension == ".json")
+        {
+            try
+            {
+                var symbols = JsonSerializer.Deserialize<string[]>(content);
+                if (symbols != null)
+                {
+                    return symbols
+                        .Select(s => s.Trim().ToUpperInvariant())
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+                }
+            }
+            catch (JsonException)
+            {
+                // Fall through to line-based parsing
+            }
+        }
+
+        // CSV format (single line with commas) or one-per-line
+        var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+        // If it's a single line with commas, treat as CSV
+        if (lines.Length == 1 && lines[0].Contains(','))
+        {
+            return lines[0].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => s.ToUpperInvariant())
+                .Where(s => !string.IsNullOrWhiteSpace(s) && !s.StartsWith('#'))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        // Multi-line: one symbol per line (or CSV with header)
+        return lines
+            .Select(l => l.Trim())
+            .Where(l => !string.IsNullOrWhiteSpace(l) && !l.StartsWith('#') && !l.StartsWith("//"))
+            .Select(l => l.Split(',', StringSplitOptions.TrimEntries)[0]) // Take first column (handles CSV with headers)
+            .Select(s => s.ToUpperInvariant())
+            .Where(s => !string.IsNullOrWhiteSpace(s) && s != "SYMBOL" && s != "TICKER") // Skip CSV headers
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     internal static string FormatBytes(long bytes)

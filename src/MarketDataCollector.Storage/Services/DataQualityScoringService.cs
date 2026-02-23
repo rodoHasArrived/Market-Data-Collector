@@ -266,7 +266,22 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                         }
                     }
                 }
-                catch { /* Skip parse errors */ }
+                catch (FormatException ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Skipping unparseable line while computing sequence integrity for file {FilePath}. Line: {Line}",
+                        filePath,
+                        line);
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Skipping malformed JSON line while computing sequence integrity for file {FilePath}. Line: {Line}",
+                        filePath,
+                        line);
+                }
 
                 if (total >= 10000) break;
             }
