@@ -42,11 +42,24 @@ public sealed class WriteAheadLog : IAsyncDisposable
     }
 
     /// <summary>
+    /// Gets the number of valid events recovered during the last initialization.
+    /// </summary>
+    public long LastRecoveryEventCount { get; private set; }
+
+    /// <summary>
+    /// Gets the duration of the last recovery in milliseconds.
+    /// </summary>
+    public double LastRecoveryDurationMs { get; private set; }
+
+    /// <summary>
     /// Initialize the WAL, recovering any uncommitted transactions.
     /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default)
     {
         _log.Information("Initializing WAL in {WalDirectory}", _walDirectory);
+
+        var recoveryStopwatch = System.Diagnostics.Stopwatch.StartNew();
+        long totalRecoveredEvents = 0;
 
         // Find and recover any existing WAL files
         var walFiles = Directory.GetFiles(_walDirectory, "*.wal")
@@ -58,8 +71,20 @@ public sealed class WriteAheadLog : IAsyncDisposable
             _log.Information("Found {Count} existing WAL files, recovering...", walFiles.Count);
             foreach (var walFile in walFiles)
             {
-                await RecoverWalFileAsync(walFile, ct);
+                totalRecoveredEvents += await RecoverWalFileAsync(walFile, ct);
             }
+        }
+
+        recoveryStopwatch.Stop();
+        LastRecoveryEventCount = totalRecoveredEvents;
+        LastRecoveryDurationMs = recoveryStopwatch.Elapsed.TotalMilliseconds;
+
+        if (totalRecoveredEvents > 0)
+        {
+            _log.Information(
+                "WAL recovery complete: {RecoveredCount} events in {DurationMs}ms",
+                totalRecoveredEvents,
+                LastRecoveryDurationMs);
         }
 
         // Get the highest sequence number
@@ -363,7 +388,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
         _currentFileSize += Encoding.UTF8.GetByteCount(line) + Environment.NewLine.Length;
     }
 
-    private async Task RecoverWalFileAsync(string walFile, CancellationToken ct)
+    private async Task<long> RecoverWalFileAsync(string walFile, CancellationToken ct)
     {
         _log.Information("Recovering WAL file: {File}", walFile);
 
@@ -390,6 +415,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
         _log.Information("Recovered {Valid} valid records, {Invalid} invalid from {File}",
             validRecords, invalidRecords, walFile);
+
+        return validRecords;
     }
 
     private async IAsyncEnumerable<WalRecord> ReadWalFileAsync(

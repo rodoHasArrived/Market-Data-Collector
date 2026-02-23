@@ -52,14 +52,15 @@ public sealed class ConfigValidationPipeline : IConfigValidator
     }
 
     /// <summary>
-    /// Creates the default pipeline with Field and Semantic stages.
+    /// Creates the default pipeline with Field, Semantic, and Credential Security stages.
     /// </summary>
     public static ConfigValidationPipeline CreateDefault()
     {
         return new ConfigValidationPipeline(new IConfigValidationStage[]
         {
             new FieldValidationStage(),
-            new SemanticValidationStage()
+            new SemanticValidationStage(),
+            new CredentialSecurityStage()
         });
     }
 
@@ -149,5 +150,66 @@ public sealed class SemanticValidationStage : IConfigValidationStage
         }
 
         return results;
+    }
+}
+
+/// <summary>
+/// Checks for credentials that appear to be hardcoded in the config file rather than
+/// set via environment variables. Emits warnings to prevent accidental credential commits.
+/// </summary>
+public sealed class CredentialSecurityStage : IConfigValidationStage
+{
+    private static readonly string[] PlaceholderPatterns =
+    {
+        "your-", "YOUR_", "__SET_ME__", "REPLACE_", "ENTER_", "INSERT_",
+        "TODO", "xxx", "change-me", "placeholder"
+    };
+
+    public IReadOnlyList<ConfigValidationResult> Validate(AppConfig config)
+    {
+        var results = new List<ConfigValidationResult>();
+
+        CheckCredential(results, "Alpaca.KeyId", config.Alpaca?.KeyId, "ALPACA__KEYID");
+        CheckCredential(results, "Alpaca.SecretKey", config.Alpaca?.SecretKey, "ALPACA__SECRETKEY");
+        CheckCredential(results, "Polygon.ApiKey", config.Polygon?.ApiKey, "POLYGON__APIKEY");
+
+        if (config.Backfill?.Providers != null)
+        {
+            var providers = config.Backfill.Providers;
+            CheckCredential(results, "Backfill.Providers.Tiingo.ApiToken", providers.Tiingo?.ApiToken, "TIINGO__TOKEN");
+            CheckCredential(results, "Backfill.Providers.Finnhub.ApiKey", providers.Finnhub?.ApiKey, "FINNHUB__APIKEY");
+            CheckCredential(results, "Backfill.Providers.AlphaVantage.ApiKey", providers.AlphaVantage?.ApiKey, "ALPHAVANTAGE__APIKEY");
+            CheckCredential(results, "Backfill.Providers.Nasdaq.ApiKey", providers.Nasdaq?.ApiKey, "NASDAQ__APIKEY");
+        }
+
+        return results;
+    }
+
+    private static void CheckCredential(
+        List<ConfigValidationResult> results,
+        string propertyName,
+        string? value,
+        string envVarName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        // Skip placeholder values - those are expected in sample configs
+        if (IsPlaceholder(value))
+            return;
+
+        // If the value looks like a real credential (not a placeholder), warn
+        results.Add(new ConfigValidationResult(
+            ConfigValidationSeverity.Warning,
+            propertyName,
+            $"Credential '{propertyName}' appears to be set directly in config file. " +
+            "Use environment variables instead to avoid accidental commits.",
+            $"Set environment variable {envVarName} and remove the value from the config file"));
+    }
+
+    private static bool IsPlaceholder(string value)
+    {
+        return PlaceholderPatterns.Any(p =>
+            value.Contains(p, StringComparison.OrdinalIgnoreCase));
     }
 }
