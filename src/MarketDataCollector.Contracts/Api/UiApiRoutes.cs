@@ -266,6 +266,11 @@ public static class UiApiRoutes
     public const string HealthProviderTest = "/api/health/providers/{provider}/test";
     public const string HealthDiagnosticsBundle = "/api/health/diagnostics/bundle";
 
+    // Trading calendar endpoints
+    public const string CalendarStatus = "/api/calendar/status";
+    public const string CalendarHolidays = "/api/calendar/holidays";
+    public const string CalendarTradingDays = "/api/calendar/trading-days";
+
     // Messaging endpoints
     public const string MessagingConfig = "/api/messaging/config";
     public const string MessagingStatus = "/api/messaging/status";
