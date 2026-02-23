@@ -35,7 +35,6 @@ public static class ExportEndpoints
 
             var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", Guid.NewGuid().ToString("N")[..12]);
 
-            var profile = exportService.GetProfile(req.ProfileId ?? "python-pandas");
             var formatOverride = req.Format?.ToLowerInvariant() switch
             {
                 "csv" => ExportFormat.Csv,
