@@ -384,6 +384,7 @@ Market-Data-Collector/
 │   │   ├── data-dictionary.md
 │   │   ├── data-uniformity.md
 │   │   ├── design-review-memo.md
+│   │   ├── environment-variables.md
 │   │   └── open-source-references.md
 │   ├── security/
 │   │   └── known-vulnerabilities.md
@@ -960,6 +961,7 @@ Market-Data-Collector/
 │   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── BackfillScheduleEndpoints.cs
+│   │   │   ├── CalendarEndpoints.cs
 │   │   │   ├── CheckpointEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── CronEndpoints.cs
