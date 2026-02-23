@@ -24,6 +24,7 @@ internal sealed record CliArguments
     public bool SymbolsArchived { get; init; }
     public string? SymbolsAdd { get; init; }
     public string? SymbolsRemove { get; init; }
+    public string? SymbolsImport { get; init; }
     public string? SymbolStatus { get; init; }
 
     // Symbol options
@@ -54,7 +55,7 @@ internal sealed record CliArguments
     /// </summary>
     public bool HasSymbolCommand =>
         Symbols || SymbolsMonitored || SymbolsArchived ||
-        SymbolsAdd != null || SymbolsRemove != null || SymbolStatus != null;
+        SymbolsAdd != null || SymbolsRemove != null || SymbolsImport != null || SymbolStatus != null;
 
     /// <summary>
     /// Parses the raw args array into a typed CliArguments record.
@@ -81,6 +82,7 @@ internal sealed record CliArguments
             SymbolsArchived = HasFlag(args, "--symbols-archived"),
             SymbolsAdd = GetValue(args, "--symbols-add"),
             SymbolsRemove = GetValue(args, "--symbols-remove"),
+            SymbolsImport = GetValue(args, "--symbols-import"),
             SymbolStatus = GetValue(args, "--symbol-status"),
 
             NoTrades = HasFlag(args, "--no-trades"),

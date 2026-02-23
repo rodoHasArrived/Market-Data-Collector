@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
@@ -26,7 +27,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -48,7 +49,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -71,7 +72,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -85,4 +86,38 @@ internal static class EndpointHelpers
 
         return DateOnly.TryParse(dateStr, out var date) ? date : DateOnly.FromDateTime(DateTime.UtcNow);
     }
+
+    /// <summary>
+    /// Formats an exception into a structured JSON error response using FriendlyErrorFormatter.
+    /// Returns a consistent error envelope with error code, message, and actionable suggestion.
+    /// </summary>
+    private static IResult FormatErrorResult(Exception ex, JsonSerializerOptions opts)
+    {
+        var formatted = FriendlyErrorFormatter.Format(ex);
+        var statusCode = GetHttpStatusCode(ex);
+
+        return Results.Json(new
+        {
+            error = formatted.Title,
+            code = formatted.Code,
+            message = formatted.Message,
+            suggestion = formatted.Suggestion,
+            docsLink = formatted.DocsLink,
+            timestamp = DateTimeOffset.UtcNow
+        }, opts, statusCode: statusCode);
+    }
+
+    /// <summary>
+    /// Maps exception types to appropriate HTTP status codes.
+    /// </summary>
+    private static int GetHttpStatusCode(Exception ex) => ex switch
+    {
+        ArgumentException or ArgumentNullException => 400,
+        UnauthorizedAccessException => 403,
+        FileNotFoundException or DirectoryNotFoundException => 404,
+        InvalidOperationException => 409,
+        NotSupportedException or NotImplementedException => 501,
+        TimeoutException or OperationCanceledException => 504,
+        _ => 500
+    };
 }
