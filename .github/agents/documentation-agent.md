@@ -658,6 +658,7 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── EventSchemaValidator.cs
 │   │   │   ├── IConnectionHealthMonitor.cs
+│   │   │   ├── IReconnectionMetrics.cs
 │   │   │   └── MigrationDiagnostics.cs
 │   │   ├── Performance/
 │   │   │   └── Performance/

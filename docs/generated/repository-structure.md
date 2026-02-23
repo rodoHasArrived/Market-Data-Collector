@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-23 15:33:24 UTC
+> Auto-generated on 2026-02-23 17:40:43 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -630,6 +630,7 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── EventSchemaValidator.cs
 │   │   │   ├── IConnectionHealthMonitor.cs
+│   │   │   ├── IReconnectionMetrics.cs
 │   │   │   └── MigrationDiagnostics.cs
 │   │   ├── Performance/
 │   │   │   └── Performance/
