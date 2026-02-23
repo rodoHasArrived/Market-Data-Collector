@@ -330,6 +330,10 @@ function getDataFreshnessHtml(status) {
   if (!timestamp) return '';
 
   const lastUpdate = new Date(timestamp);
+  if (Number.isNaN(lastUpdate.getTime())) {
+    // Invalid timestamp format; avoid displaying misleading freshness info
+    return '';
+  }
   const now = new Date();
   const diffMs = now - lastUpdate;
   const diffSec = Math.floor(diffMs / 1000);
