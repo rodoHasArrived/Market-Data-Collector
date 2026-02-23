@@ -536,6 +536,124 @@ public static class StorageEndpoints
         })
         .WithName("RunDefragmentation").Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+
+        // GET /api/storage/capacity-forecast — predictive storage capacity warning
+        group.MapGet(UiApiRoutes.StorageCapacityForecast, (StorageOptions opts) =>
+        {
+            var rootPath = Path.GetFullPath(opts.RootPath);
+            if (!Directory.Exists(rootPath))
+            {
+                return Results.Json(new
+                {
+                    error = "Storage directory not found",
+                    rootPath
+                }, jsonOptions, statusCode: 404);
+            }
+
+            try
+            {
+                // Calculate current storage usage
+                var dirInfo = new DirectoryInfo(rootPath);
+                var allFiles = dirInfo.GetFiles("*.*", SearchOption.AllDirectories);
+                var totalBytes = allFiles.Sum(f => f.Length);
+                var fileCount = allFiles.Length;
+
+                // Calculate growth rate from recent files (last 24h vs previous 24h)
+                var now = DateTime.UtcNow;
+                var recentFiles = allFiles.Where(f => f.LastWriteTimeUtc > now.AddHours(-24)).ToList();
+                var olderFiles = allFiles.Where(f => f.LastWriteTimeUtc > now.AddHours(-48) && f.LastWriteTimeUtc <= now.AddHours(-24)).ToList();
+
+                var recentBytes = recentFiles.Sum(f => f.Length);
+                var olderBytes = olderFiles.Sum(f => f.Length);
+                var dailyGrowthBytes = recentBytes > 0 ? recentBytes : olderBytes;
+
+                // Check available disk space
+                var driveInfo = new DriveInfo(Path.GetPathRoot(rootPath) ?? "/");
+                var availableBytes = driveInfo.AvailableFreeSpace;
+                var totalDiskBytes = driveInfo.TotalSize;
+
+                // Project when storage will be full
+                double? daysUntilFull = null;
+                string? warning = null;
+
+                if (dailyGrowthBytes > 0)
+                {
+                    // Factor in quota limit if configured
+                    var effectiveLimit = opts.Quotas?.Global?.MaxBytes ?? availableBytes;
+                    var remainingBytes = Math.Min(effectiveLimit - totalBytes, availableBytes);
+
+                    if (remainingBytes > 0)
+                    {
+                        daysUntilFull = (double)remainingBytes / dailyGrowthBytes;
+
+                        if (daysUntilFull < 3)
+                            warning = $"CRITICAL: At current rate ({FormatBytes(dailyGrowthBytes)}/day), storage will be full in {daysUntilFull:F1} days. Enable tier migration or increase disk space.";
+                        else if (daysUntilFull < 7)
+                            warning = $"WARNING: At current rate ({FormatBytes(dailyGrowthBytes)}/day), storage will be full in {daysUntilFull:F1} days. Consider enabling tier migration or increasing disk space.";
+                    }
+                    else
+                    {
+                        warning = "CRITICAL: Storage quota exceeded or disk full.";
+                        daysUntilFull = 0;
+                    }
+                }
+
+                return Results.Json(new
+                {
+                    timestamp = DateTimeOffset.UtcNow,
+                    rootPath,
+                    currentUsage = new
+                    {
+                        totalBytes,
+                        totalFormatted = FormatBytes(totalBytes),
+                        fileCount
+                    },
+                    growthRate = new
+                    {
+                        last24hBytes = recentBytes,
+                        last24hFormatted = FormatBytes(recentBytes),
+                        previous24hBytes = olderBytes,
+                        dailyEstimateBytes = dailyGrowthBytes,
+                        dailyEstimateFormatted = FormatBytes(dailyGrowthBytes)
+                    },
+                    disk = new
+                    {
+                        availableBytes,
+                        availableFormatted = FormatBytes(availableBytes),
+                        totalDiskBytes,
+                        usagePercent = totalDiskBytes > 0 ? (double)(totalDiskBytes - availableBytes) / totalDiskBytes * 100 : 0
+                    },
+                    forecast = new
+                    {
+                        daysUntilFull,
+                        warning,
+                        quotaConfigured = opts.Quotas?.Global?.MaxBytes != null,
+                        quotaMaxBytes = opts.Quotas?.Global?.MaxBytes
+                    }
+                }, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new
+                {
+                    error = $"Failed to compute capacity forecast: {ex.Message}"
+                }, jsonOptions, statusCode: 500);
+            }
+        })
+        .WithName("GetStorageCapacityForecast")
+        .WithDescription("Returns storage capacity forecast with growth rate, disk usage, and days-until-full prediction.")
+        .Produces(200);
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        return bytes switch
+        {
+            >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
+            >= 1_048_576 => $"{bytes / 1_048_576.0:F1} MB",
+            >= 1024 => $"{bytes / 1024.0:F1} KB",
+            _ => $"{bytes} B"
+        };
     }
 }
 

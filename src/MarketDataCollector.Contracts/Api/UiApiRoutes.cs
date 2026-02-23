@@ -19,6 +19,7 @@ public static class UiApiRoutes
 
     // Configuration endpoints
     public const string Config = "/api/config";
+    public const string ConfigEffective = "/api/config/effective";
     public const string ConfigDataSource = "/api/config/datasource";
     public const string ConfigAlpaca = "/api/config/alpaca";
     public const string ConfigStorage = "/api/config/storage";
@@ -133,6 +134,7 @@ public static class UiApiRoutes
     public const string StorageTiersStatistics = "/api/storage/tiers/statistics";
     public const string StorageTiersPlan = "/api/storage/tiers/plan";
     public const string StorageMaintenanceDefrag = "/api/storage/maintenance/defrag";
+    public const string StorageCapacityForecast = "/api/storage/capacity-forecast";
 
     // Historical data query endpoints
     public const string HistoricalData = "/api/historical";
@@ -265,6 +267,11 @@ public static class UiApiRoutes
     public const string HealthMetrics = "/api/health/metrics";
     public const string HealthProviderTest = "/api/health/providers/{provider}/test";
     public const string HealthDiagnosticsBundle = "/api/health/diagnostics/bundle";
+
+    // Trading calendar endpoints
+    public const string CalendarStatus = "/api/calendar/status";
+    public const string CalendarHolidays = "/api/calendar/holidays";
+    public const string CalendarTradingDays = "/api/calendar/trading-days";
 
     // Messaging endpoints
     public const string MessagingConfig = "/api/messaging/config";

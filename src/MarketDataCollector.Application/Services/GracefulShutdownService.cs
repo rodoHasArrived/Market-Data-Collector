@@ -84,31 +84,53 @@ public sealed class GracefulShutdownService : IHostedService
         {
             var snapshot = Metrics.GetSnapshot();
             var duration = _sessionStopwatch.Elapsed;
+            var totalEvents = snapshot.Published + snapshot.Dropped;
+            var completeness = totalEvents > 0
+                ? (double)snapshot.Published / totalEvents * 100.0
+                : 100.0;
 
             var sb = new StringBuilder();
             sb.AppendLine();
-            sb.AppendLine($"  Session Summary ({FormatDuration(duration)}):");
-            sb.AppendLine($"    Events collected:  {snapshot.Published:N0}");
-            sb.AppendLine($"    Events dropped:    {snapshot.Dropped:N0} ({snapshot.DropRate:F3}%)");
+            sb.AppendLine("  ╔══════════════════════════════════════════╗");
+            sb.AppendLine($"  ║  Session Summary ({FormatDuration(duration),-21})║");
+            sb.AppendLine("  ╠══════════════════════════════════════════╣");
+            sb.AppendLine($"  ║  Events collected:  {snapshot.Published,18:N0} ║");
+            sb.AppendLine($"  ║  Events dropped:    {snapshot.Dropped,18:N0} ║");
+            sb.AppendLine($"  ║  Data completeness: {completeness,17:F1}% ║");
 
             if (snapshot.Trades > 0)
-                sb.AppendLine($"    Trades:            {snapshot.Trades:N0}");
+                sb.AppendLine($"  ║  Trades:            {snapshot.Trades,18:N0} ║");
             if (snapshot.DepthUpdates > 0)
-                sb.AppendLine($"    Depth updates:     {snapshot.DepthUpdates:N0}");
+                sb.AppendLine($"  ║  Depth updates:     {snapshot.DepthUpdates,18:N0} ║");
             if (snapshot.Quotes > 0)
-                sb.AppendLine($"    Quotes:            {snapshot.Quotes:N0}");
+                sb.AppendLine($"  ║  Quotes:            {snapshot.Quotes,18:N0} ║");
             if (snapshot.HistoricalBars > 0)
-                sb.AppendLine($"    Historical bars:   {snapshot.HistoricalBars:N0}");
+                sb.AppendLine($"  ║  Historical bars:   {snapshot.HistoricalBars,18:N0} ║");
             if (snapshot.Integrity > 0)
-                sb.AppendLine($"    Integrity events:  {snapshot.Integrity:N0}");
+                sb.AppendLine($"  ║  Integrity events:  {snapshot.Integrity,18:N0} ║");
 
-            sb.AppendLine($"    Avg latency:       {snapshot.AverageLatencyUs:F1} us");
-            sb.AppendLine($"    Memory usage:      {snapshot.MemoryUsageMb:F1} MB");
+            sb.AppendLine("  ╠══════════════════════════════════════════╣");
+
+            // Throughput rates
+            if (duration.TotalSeconds > 0)
+            {
+                var eventsPerSec = snapshot.Published / duration.TotalSeconds;
+                sb.AppendLine($"  ║  Avg throughput:    {eventsPerSec,14:N1}/sec ║");
+            }
+
+            sb.AppendLine($"  ║  Avg latency:       {snapshot.AverageLatencyUs,15:F1} us ║");
+
+            if (snapshot.MinLatencyUs > 0 || snapshot.MaxLatencyUs > 0)
+                sb.AppendLine($"  ║  Latency range:     {snapshot.MinLatencyUs:F0}-{snapshot.MaxLatencyUs:F0} us{"",-1} ║");
+
+            sb.AppendLine($"  ║  Memory usage:      {snapshot.MemoryUsageMb,14:F1} MB ║");
+            sb.AppendLine($"  ║  GC collections:    {$"G0={snapshot.Gc0Collections} G1={snapshot.Gc1Collections} G2={snapshot.Gc2Collections}",-18} ║");
+            sb.AppendLine("  ╚══════════════════════════════════════════╝");
+            sb.AppendLine();
 
             var summaryText = sb.ToString();
             _log.Information("Session summary:{Summary}", summaryText);
             Console.Write(summaryText);
-            Console.WriteLine();
         }
         catch (Exception ex)
         {

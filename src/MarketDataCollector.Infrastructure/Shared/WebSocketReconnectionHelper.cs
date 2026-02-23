@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
@@ -74,29 +75,36 @@ public sealed class WebSocketReconnectionHelper
                 ct.ThrowIfCancellationRequested();
 
                 var delay = CalculateDelay(attempt);
+                var nextDelay = attempt < _maxAttempts ? CalculateDelay(attempt + 1) : TimeSpan.Zero;
                 _log.Information(
-                    "{Provider} reconnection attempt {Attempt}/{MaxAttempts} in {Delay:F1}s",
-                    _providerName, attempt, _maxAttempts, delay.TotalSeconds);
+                    "{Provider} reconnection attempt {Attempt}/{MaxAttempts}, waiting {DelayMs}ms" +
+                    (attempt < _maxAttempts ? " (next retry in {NextDelayMs}ms if this fails)" : ""),
+                    _providerName, attempt, _maxAttempts,
+                    (int)delay.TotalMilliseconds, (int)nextDelay.TotalMilliseconds);
 
                 await Task.Delay(delay, ct).ConfigureAwait(false);
 
                 try
                 {
                     await reconnectAction(ct).ConfigureAwait(false);
-                    _log.Information("{Provider} reconnected successfully on attempt {Attempt}",
-                        _providerName, attempt);
+                    PrometheusMetrics.RecordReconnectionAttempt(_providerName, success: true);
+                    _log.Information(
+                        "{Provider} reconnected successfully on attempt {Attempt}/{MaxAttempts}",
+                        _providerName, attempt, _maxAttempts);
                     return true;
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
+                    PrometheusMetrics.RecordReconnectionAttempt(_providerName, success: false);
                     _log.Warning(ex,
-                        "{Provider} reconnection attempt {Attempt}/{MaxAttempts} failed",
-                        _providerName, attempt, _maxAttempts);
+                        "{Provider} reconnection attempt {Attempt}/{MaxAttempts} failed: {ErrorMessage}",
+                        _providerName, attempt, _maxAttempts, ex.Message);
                 }
             }
 
-            _log.Error("{Provider} reconnection failed after {MaxAttempts} attempts",
+            _log.Error(
+                "{Provider} reconnection exhausted all {MaxAttempts} attempts — giving up",
                 _providerName, _maxAttempts);
             return false;
         }

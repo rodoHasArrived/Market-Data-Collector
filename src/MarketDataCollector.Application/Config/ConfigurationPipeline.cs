@@ -207,6 +207,12 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
                 warnings.Add(deprecationMessage);
             }
 
+            // Stage 2.6: Warn if credentials appear directly in config file
+            WarnIfCredentialsInConfigFile(config, warnings);
+
+            // Stage 2.7: Warn about provider-specific symbol fields that won't apply
+            WarnAboutProviderSpecificSymbolFields(config, warnings);
+
             // Stage 3: Apply environment variable overrides
             config = _envOverride.ApplyOverrides(config);
 
@@ -278,6 +284,107 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
                 new[] { $"Pipeline error: {ex.Message}" },
                 sourcePath,
                 source);
+        }
+    }
+
+    #endregion
+
+    #region Credential Security
+
+    private static readonly string[] PlaceholderValues =
+        ["__SET_ME__", "your-key-here", "your-secret-here", "REPLACE_ME", "ENTER_YOUR", "INSERT_YOUR", "TODO", "xxx"];
+
+    private static bool IsLikelyRealCredential(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        // Skip placeholder values
+        return !PlaceholderValues.Any(p =>
+            value.Contains(p, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void WarnIfCredentialsInConfigFile(AppConfig config, List<string> warnings)
+    {
+        var credentialFields = new List<(string fieldName, string? value, string envVar)>();
+
+        // Alpaca credentials
+        if (config.Alpaca != null)
+        {
+            credentialFields.Add(("Alpaca.KeyId", config.Alpaca.KeyId, "ALPACA__KEYID"));
+            credentialFields.Add(("Alpaca.SecretKey", config.Alpaca.SecretKey, "ALPACA__SECRETKEY"));
+        }
+
+        // Polygon credentials
+        if (config.Polygon != null)
+        {
+            credentialFields.Add(("Polygon.ApiKey", config.Polygon.ApiKey, "POLYGON__APIKEY"));
+        }
+
+        // Backfill provider credentials
+        if (config.Backfill?.Providers != null)
+        {
+            var providers = config.Backfill.Providers;
+            if (providers.Tiingo != null)
+                credentialFields.Add(("Backfill.Providers.Tiingo.ApiToken", providers.Tiingo.ApiToken, "TIINGO__TOKEN"));
+            if (providers.Finnhub != null)
+                credentialFields.Add(("Backfill.Providers.Finnhub.ApiKey", providers.Finnhub.ApiKey, "FINNHUB__TOKEN"));
+            if (providers.AlphaVantage != null)
+                credentialFields.Add(("Backfill.Providers.AlphaVantage.ApiKey", providers.AlphaVantage.ApiKey, "ALPHAVANTAGE__APIKEY"));
+            if (providers.Polygon != null)
+                credentialFields.Add(("Backfill.Providers.Polygon.ApiKey", providers.Polygon.ApiKey, "POLYGON__APIKEY"));
+            if (providers.Nasdaq != null)
+                credentialFields.Add(("Backfill.Providers.Nasdaq.ApiKey", providers.Nasdaq.ApiKey, "NASDAQ__APIKEY"));
+        }
+
+        foreach (var (fieldName, value, envVar) in credentialFields)
+        {
+            if (IsLikelyRealCredential(value))
+            {
+                var msg = $"Credential '{fieldName}' appears to be set directly in the config file. " +
+                          $"Use environment variable {envVar} instead to avoid accidental commits.";
+                _log.Warning(msg);
+                warnings.Add(msg);
+            }
+        }
+    }
+
+    private void WarnAboutProviderSpecificSymbolFields(AppConfig config, List<string> warnings)
+    {
+        if (config.Symbols == null || config.Symbols.Length == 0)
+            return;
+
+        // IB-specific fields that have non-default values
+        var isIB = config.DataSource == DataSourceKind.IB;
+        if (isIB)
+            return; // No warning needed when using IB
+
+        var providerName = config.DataSource.ToString();
+        foreach (var symbol in config.Symbols)
+        {
+            var ibFields = new List<string>();
+
+            if (!string.IsNullOrEmpty(symbol.PrimaryExchange))
+                ibFields.Add("PrimaryExchange");
+            if (!string.IsNullOrEmpty(symbol.LocalSymbol))
+                ibFields.Add("LocalSymbol");
+            if (!string.IsNullOrEmpty(symbol.TradingClass))
+                ibFields.Add("TradingClass");
+            if (symbol.ConId.HasValue)
+                ibFields.Add("ConId");
+            if (symbol.SecurityType != "STK")
+                ibFields.Add("SecurityType");
+            if (symbol.Exchange != "SMART")
+                ibFields.Add("Exchange");
+
+            if (ibFields.Count > 0)
+            {
+                var fields = string.Join(", ", ibFields);
+                var msg = $"Symbol {symbol.Symbol} has IB-specific fields ({fields}) " +
+                          $"but the active provider is {providerName} -- these fields will be ignored.";
+                _log.Information(msg);
+                warnings.Add(msg);
+            }
         }
     }
 

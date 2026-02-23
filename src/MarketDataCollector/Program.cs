@@ -300,21 +300,39 @@ public partial class Program
                 .Distinct(StringComparer.OrdinalIgnoreCase);
 
             var sources = failoverCfg!.Sources ?? Array.Empty<DataSourceConfig>();
-            foreach (var providerId in allProviderIds)
+
+            // Create streaming clients in parallel for faster startup
+            var providerIds = allProviderIds.ToList();
+            var creationTasks = providerIds.Select(providerId =>
             {
                 var source = sources.FirstOrDefault(s => string.Equals(s.Id, providerId, StringComparison.OrdinalIgnoreCase));
                 var providerKind = source?.Provider ?? cfg.DataSource;
-
-                try
+                return Task.Run(() =>
                 {
-                    var client = providerRegistry.CreateStreamingClient(providerKind);
+                    try
+                    {
+                        var client = providerRegistry.CreateStreamingClient(providerKind);
+                        return (providerId, client: (IMarketDataClient?)client, providerKind, error: (Exception?)null);
+                    }
+                    catch (Exception ex)
+                    {
+                        return (providerId, client: (IMarketDataClient?)null, providerKind, error: (Exception?)ex);
+                    }
+                });
+            });
+
+            var results = await Task.WhenAll(creationTasks);
+            foreach (var (providerId, client, providerKind, error) in results)
+            {
+                if (client != null)
+                {
                     providerMap[providerId] = client;
                     failoverService.RegisterProvider(providerId);
                     log.Information("Created streaming client for failover provider {ProviderId} ({Kind})", providerId, providerKind);
                 }
-                catch (Exception ex)
+                else
                 {
-                    log.Warning(ex, "Failed to create streaming client for provider {ProviderId}; skipping", providerId);
+                    log.Warning(error, "Failed to create streaming client for provider {ProviderId}; skipping", providerId);
                 }
             }
 

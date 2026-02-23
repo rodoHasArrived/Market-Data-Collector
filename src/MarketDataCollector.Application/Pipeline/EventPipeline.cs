@@ -266,6 +266,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         {
             _logger.LogInformation("WAL recovery complete, no uncommitted events found");
         }
+
+        // Emit WAL recovery metrics to Prometheus
+        PrometheusMetrics.RecordWalRecovery(
+            _wal.LastRecoveryEventCount,
+            _wal.LastRecoveryDurationMs / 1000.0);
     }
 
     /// <summary>

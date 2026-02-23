@@ -256,6 +256,12 @@ public static class PrometheusMetrics
         "mdc_wal_recovery_duration_seconds",
         "Duration of WAL recovery on startup in seconds");
 
+    // Provider reconnection metrics (labeled by provider and outcome)
+    private static readonly Counter ProviderReconnectionAttemptsTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_provider_reconnection_attempts_total",
+        "Total reconnection attempts per provider and outcome",
+        new CounterConfiguration { LabelNames = new[] { "provider", "outcome" } });
+
     // Migration diagnostics counters (Phase 0 — temporary observability for migration)
     private static readonly Counter MigrationStreamingFactoryHits = Prometheus.Metrics.CreateCounter(
         "mdc_migration_streaming_factory_hits_total",
@@ -416,6 +422,17 @@ public static class PrometheusMetrics
                 SlaFreshnessMs.WithLabels(safeSymbol).Observe(status.FreshnessMs);
             }
         }
+    }
+
+    /// <summary>
+    /// Records a provider reconnection attempt with outcome.
+    /// </summary>
+    /// <param name="provider">Provider name (e.g., "Alpaca", "Polygon").</param>
+    /// <param name="success">Whether the reconnection attempt succeeded.</param>
+    public static void RecordReconnectionAttempt(string provider, bool success)
+    {
+        var outcome = success ? "success" : "failure";
+        ProviderReconnectionAttemptsTotal.WithLabels(provider, outcome).Inc();
     }
 
     /// <summary>
