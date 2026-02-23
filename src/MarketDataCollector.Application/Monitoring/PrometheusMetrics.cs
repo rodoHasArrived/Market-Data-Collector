@@ -247,6 +247,15 @@ public static class PrometheusMetrics
             Buckets = new double[] { 100, 500, 1000, 5000, 10000, 30000, 60000, 120000, 300000 }
         });
 
+    // WAL recovery metrics
+    private static readonly Counter WalRecoveryEventsTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_wal_recovery_events_total",
+        "Total number of events recovered from WAL on startup");
+
+    private static readonly Gauge WalRecoveryDurationSeconds = Prometheus.Metrics.CreateGauge(
+        "mdc_wal_recovery_duration_seconds",
+        "Duration of WAL recovery on startup in seconds");
+
     // Migration diagnostics counters (Phase 0 — temporary observability for migration)
     private static readonly Counter MigrationStreamingFactoryHits = Prometheus.Metrics.CreateCounter(
         "mdc_migration_streaming_factory_hits_total",
@@ -407,6 +416,15 @@ public static class PrometheusMetrics
                 SlaFreshnessMs.WithLabels(safeSymbol).Observe(status.FreshnessMs);
             }
         }
+    }
+
+    /// <summary>
+    /// Records WAL recovery metrics after startup recovery completes.
+    /// </summary>
+    public static void RecordWalRecovery(long recoveredEvents, double durationSeconds)
+    {
+        WalRecoveryEventsTotal.IncTo(recoveredEvents);
+        WalRecoveryDurationSeconds.Set(durationSeconds);
     }
 
     /// <summary>

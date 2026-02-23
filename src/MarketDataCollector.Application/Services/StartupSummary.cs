@@ -26,17 +26,57 @@ public sealed class StartupSummary
     {
         var sb = new StringBuilder();
 
+        // Determine mode
+        var mode = "Real-time Collection";
+        var port = "8080";
+        if (args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
+        {
+            port = GetArgValue(args, "--http-port") ?? "8080";
+            mode = $"Web | Port: {port}";
+        }
+        else if (args.Any(a => a.Equals("--backfill", StringComparison.OrdinalIgnoreCase)) || config.Backfill?.Enabled == true)
+        {
+            mode = "Backfill";
+        }
+
+        // Health matrix header
         sb.AppendLine();
-        sb.AppendLine("╔══════════════════════════════════════════════════════════════════════╗");
-        sb.AppendLine("║                     Market Data Collector                             ║");
-        sb.AppendLine("╚══════════════════════════════════════════════════════════════════════╝");
+        sb.AppendLine("╔══════════════════════════════════════════╗");
+        sb.AppendLine("║  Market Data Collector v1.6.2            ║");
+        sb.AppendLine($"║  Mode: {mode,-33}║");
+        sb.AppendLine("╠══════════════════════════════════════════╣");
+
+        // Providers section
+        sb.AppendLine("║  Providers:                              ║");
+        AppendProviderStatus(sb, "Alpaca", config.DataSource == DataSourceKind.Alpaca, HasAlpacaCredentials(config));
+        AppendProviderStatus(sb, "Polygon", config.DataSource == DataSourceKind.Polygon, HasPolygonCredentials(config));
+        AppendProviderStatus(sb, "IB", config.DataSource == DataSourceKind.IB, HasIBConfig(config));
+        AppendProviderStatus(sb, "StockSharp", config.DataSource == DataSourceKind.StockSharp, config.StockSharp?.Enabled == true);
+        AppendProviderStatus(sb, "NYSE", config.DataSource == DataSourceKind.NYSE, HasNYSECredentials());
+
+        // Storage section
+        sb.AppendLine("║  Storage:                                ║");
+        var dataRootExists = Directory.Exists(config.DataRoot);
+        AppendHealthRow(sb, "JSONL sink", dataRootExists);
+        AppendHealthRow(sb, "Parquet sink", config.Storage?.EnableParquetSink == true);
+        AppendHealthRow(sb, "Compression", config.Compress == true);
+
+        // Symbols
+        var symbolCount = config.Symbols?.Length ?? 0;
+        sb.AppendLine($"║  Symbols:        {symbolCount,-23}║");
+
+        // Backfill
+        var backfillStatus = config.Backfill?.Enabled == true ? "Enabled" : "Disabled";
+        sb.AppendLine($"║  Backfill:       {backfillStatus,-23}║");
+
+        sb.AppendLine("╚══════════════════════════════════════════╝");
         sb.AppendLine();
 
         // Configuration source
         sb.AppendLine($"  Configuration: {configPath}");
         sb.AppendLine();
 
-        // Data Source
+        // Data Source details
         sb.AppendLine("  Data Source:");
         sb.AppendLine($"    Provider:     {GetProviderDisplayName(config.DataSource)}");
 
@@ -59,7 +99,7 @@ public sealed class StartupSummary
         }
         sb.AppendLine();
 
-        // Symbols
+        // Symbols details
         var symbols = config.Symbols ?? Array.Empty<SymbolConfig>();
         sb.AppendLine("  Symbols:");
         sb.AppendLine($"    Count:        {symbols.Length}");
@@ -78,7 +118,7 @@ public sealed class StartupSummary
         }
         sb.AppendLine();
 
-        // Storage
+        // Storage details
         sb.AppendLine("  Storage:");
         sb.AppendLine($"    Root:         {Path.GetFullPath(config.DataRoot)}");
         sb.AppendLine($"    Compression:  {(config.Compress ?? false ? "Enabled (gzip)" : "Disabled")}");
@@ -99,7 +139,7 @@ public sealed class StartupSummary
         }
         sb.AppendLine();
 
-        // Backfill
+        // Backfill details
         if (config.Backfill != null)
         {
             sb.AppendLine("  Backfill:");
@@ -119,27 +159,12 @@ public sealed class StartupSummary
             sb.AppendLine();
         }
 
-        // Mode
-        sb.AppendLine("  Mode:");
-        if (args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
-        {
-            var port = GetArgValue(args, "--http-port") ?? "8080";
-            sb.AppendLine($"    Running:      Web Dashboard (http://localhost:{port})");
-        }
-        else if (args.Any(a => a.Equals("--backfill", StringComparison.OrdinalIgnoreCase)) || config.Backfill?.Enabled == true)
-        {
-            sb.AppendLine("    Running:      Historical Backfill");
-        }
-        else
-        {
-            sb.AppendLine("    Running:      Real-time Collection");
-        }
-
+        // Hot reload
         if (args.Any(a => a.Equals("--watch-config", StringComparison.OrdinalIgnoreCase)))
         {
-            sb.AppendLine("    Hot Reload:   Enabled");
+            sb.AppendLine("  Hot Reload: Enabled");
+            sb.AppendLine();
         }
-        sb.AppendLine();
 
         // Quick tips
         sb.AppendLine("  Tips:");
@@ -152,6 +177,68 @@ public sealed class StartupSummary
         sb.AppendLine();
 
         _output.Write(sb.ToString());
+    }
+
+    private static void AppendProviderStatus(StringBuilder sb, string name, bool isActive, bool hasCredentials)
+    {
+        string status;
+        string indicator;
+
+        if (isActive && hasCredentials)
+        {
+            indicator = "+";
+            status = "Active";
+        }
+        else if (isActive && !hasCredentials)
+        {
+            indicator = "!";
+            status = "No credentials";
+        }
+        else if (hasCredentials)
+        {
+            indicator = "-";
+            status = "Available";
+        }
+        else
+        {
+            return; // Don't show providers that aren't active and have no credentials
+        }
+
+        var line = $"    [{indicator}] {name,-12} {status}";
+        sb.AppendLine($"║  {line,-38}║");
+    }
+
+    private static void AppendHealthRow(StringBuilder sb, string component, bool ready)
+    {
+        var indicator = ready ? "+" : "-";
+        var status = ready ? "Ready" : "Off";
+        var line = $"    [{indicator}] {component,-12} {status}";
+        sb.AppendLine($"║  {line,-38}║");
+    }
+
+    private static bool HasAlpacaCredentials(AppConfig config)
+    {
+        return !string.IsNullOrEmpty(config.Alpaca?.KeyId) ||
+               !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ALPACA__KEYID")) ||
+               !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ALPACA_KEY_ID"));
+    }
+
+    private static bool HasPolygonCredentials(AppConfig config)
+    {
+        return !string.IsNullOrEmpty(config.Polygon?.ApiKey) ||
+               !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("POLYGON__APIKEY")) ||
+               !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("POLYGON_API_KEY"));
+    }
+
+    private static bool HasIBConfig(AppConfig config)
+    {
+        return config.IB != null && !string.IsNullOrEmpty(config.IB.Host);
+    }
+
+    private static bool HasNYSECredentials()
+    {
+        return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NYSE__APIKEY")) ||
+               !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NYSE_API_KEY"));
     }
 
     /// <summary>

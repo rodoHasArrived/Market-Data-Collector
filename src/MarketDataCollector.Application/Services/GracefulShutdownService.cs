@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Text;
+using MarketDataCollector.Application.Monitoring;
 using Microsoft.Extensions.Hosting;
 using System.Threading;
 using Serilog;
@@ -13,6 +16,7 @@ public sealed class GracefulShutdownService : IHostedService
     private readonly IEnumerable<IFlushable> _flushables;
     private readonly ILogger _log;
     private readonly TimeSpan _shutdownTimeout;
+    private readonly Stopwatch _sessionStopwatch = new();
 
     /// <summary>
     /// Creates a new graceful shutdown service.
@@ -30,6 +34,7 @@ public sealed class GracefulShutdownService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        _sessionStopwatch.Start();
         _log.Information("Graceful shutdown service initialized with {Count} flushable components",
             _flushables.Count());
         return Task.CompletedTask;
@@ -37,6 +42,7 @@ public sealed class GracefulShutdownService : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
+        _sessionStopwatch.Stop();
         _log.Information("Graceful shutdown initiated - flushing all buffers...");
 
         using var timeoutCts = new CancellationTokenSource(_shutdownTimeout);
@@ -68,6 +74,55 @@ public sealed class GracefulShutdownService : IHostedService
         {
             _log.Error(ex, "Error during graceful shutdown flush");
         }
+
+        PrintSessionSummary();
+    }
+
+    private void PrintSessionSummary()
+    {
+        try
+        {
+            var snapshot = Metrics.GetSnapshot();
+            var duration = _sessionStopwatch.Elapsed;
+
+            var sb = new StringBuilder();
+            sb.AppendLine();
+            sb.AppendLine($"  Session Summary ({FormatDuration(duration)}):");
+            sb.AppendLine($"    Events collected:  {snapshot.Published:N0}");
+            sb.AppendLine($"    Events dropped:    {snapshot.Dropped:N0} ({snapshot.DropRate:F3}%)");
+
+            if (snapshot.Trades > 0)
+                sb.AppendLine($"    Trades:            {snapshot.Trades:N0}");
+            if (snapshot.DepthUpdates > 0)
+                sb.AppendLine($"    Depth updates:     {snapshot.DepthUpdates:N0}");
+            if (snapshot.Quotes > 0)
+                sb.AppendLine($"    Quotes:            {snapshot.Quotes:N0}");
+            if (snapshot.HistoricalBars > 0)
+                sb.AppendLine($"    Historical bars:   {snapshot.HistoricalBars:N0}");
+            if (snapshot.Integrity > 0)
+                sb.AppendLine($"    Integrity events:  {snapshot.Integrity:N0}");
+
+            sb.AppendLine($"    Avg latency:       {snapshot.AverageLatencyUs:F1} us");
+            sb.AppendLine($"    Memory usage:      {snapshot.MemoryUsageMb:F1} MB");
+
+            var summaryText = sb.ToString();
+            _log.Information("Session summary:{Summary}", summaryText);
+            Console.Write(summaryText);
+            Console.WriteLine();
+        }
+        catch (Exception ex)
+        {
+            _log.Debug(ex, "Failed to generate session summary");
+        }
+    }
+
+    private static string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalHours >= 1)
+            return $"{(int)duration.TotalHours}h {duration.Minutes}m {duration.Seconds}s";
+        if (duration.TotalMinutes >= 1)
+            return $"{(int)duration.TotalMinutes}m {duration.Seconds}s";
+        return $"{duration.Seconds}s";
     }
 
     private async Task FlushWithLoggingAsync(IFlushable flushable, string name, CancellationToken ct)

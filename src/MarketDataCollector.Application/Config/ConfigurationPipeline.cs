@@ -196,6 +196,17 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
 
         try
         {
+            // Stage 2.5: Warn if both legacy DataSource and new DataSources are set
+            if (config.DataSource != default && config.DataSources?.Sources is { Length: > 0 })
+            {
+                const string deprecationMessage =
+                    "Both 'DataSource' and 'DataSources' are set. " +
+                    "'DataSources' takes precedence for multi-provider configuration. " +
+                    "Remove 'DataSource' to silence this warning.";
+                _log.Warning(deprecationMessage);
+                warnings.Add(deprecationMessage);
+            }
+
             // Stage 3: Apply environment variable overrides
             config = _envOverride.ApplyOverrides(config);
 

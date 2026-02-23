@@ -13,7 +13,7 @@
 #
 # =============================================================================
 
-.PHONY: help install docker docker-build docker-up docker-down docker-logs \
+.PHONY: help quickstart install docker docker-build docker-up docker-down docker-logs \
         run run-ui run-backfill test build publish clean check-deps \
         setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
         gen-interfaces gen-structure gen-providers gen-workflows update-claude-md docs-all \
@@ -100,6 +100,51 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Diagnostics:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+
+# =============================================================================
+# Quick Start
+# =============================================================================
+
+quickstart: ## Zero-to-running setup for new contributors
+	@echo ""
+	@echo "$(BLUE)Market Data Collector - Quick Start$(NC)"
+	@echo "======================================"
+	@echo ""
+	@echo "$(BLUE)[1/5] Checking .NET 9 SDK...$(NC)"
+	@dotnet --version > /dev/null 2>&1 || { echo "$(YELLOW)ERROR: .NET SDK not found. Install from https://dot.net/download$(NC)"; exit 1; }
+	@echo "  .NET SDK $$(dotnet --version) found"
+	@echo ""
+	@echo "$(BLUE)[2/5] Setting up configuration...$(NC)"
+	@if [ ! -f config/appsettings.json ]; then \
+		cp config/appsettings.sample.json config/appsettings.json; \
+		echo "  $(GREEN)Created config/appsettings.json from template$(NC)"; \
+	else \
+		echo "  config/appsettings.json already exists"; \
+	fi
+	@mkdir -p data logs
+	@echo ""
+	@echo "$(BLUE)[3/5] Restoring packages...$(NC)"
+	@dotnet restore --verbosity quiet
+	@echo "  $(GREEN)Packages restored$(NC)"
+	@echo ""
+	@echo "$(BLUE)[4/5] Building...$(NC)"
+	@dotnet build -c Release --verbosity quiet --nologo
+	@echo "  $(GREEN)Build succeeded$(NC)"
+	@echo ""
+	@echo "$(BLUE)[5/5] Running quick tests...$(NC)"
+	@dotnet test $(TEST_PROJECT) --verbosity quiet --nologo --no-build -c Release 2>&1 | tail -3
+	@echo ""
+	@echo "$(GREEN)Setup complete!$(NC)"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Set API credentials as environment variables:"
+	@echo "     export ALPACA__KEYID=your-key-id"
+	@echo "     export ALPACA__SECRETKEY=your-secret-key"
+	@echo "  2. Run the interactive setup wizard:"
+	@echo "     dotnet run --project $(PROJECT) -- --wizard"
+	@echo "  3. Or start collecting immediately:"
+	@echo "     make run-ui"
 	@echo ""
 
 # =============================================================================
