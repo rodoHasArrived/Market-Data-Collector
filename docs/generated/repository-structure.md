@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-23 17:40:43 UTC
+> Auto-generated on 2026-02-23 18:47:27 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
