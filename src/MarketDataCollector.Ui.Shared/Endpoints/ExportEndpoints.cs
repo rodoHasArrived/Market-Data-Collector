@@ -157,7 +157,7 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
-                format = req?.Format ?? "csv",
+                format = "parquet",
                 qualitySummary = result.QualitySummary is not null ? new
                 {
                     overallScore = result.QualitySummary.OverallScore,
