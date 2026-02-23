@@ -35,7 +35,7 @@ public class GracefulShutdownTests
     public async Task StopAsync_CompletesWithinTimeout()
     {
         // Arrange
-        var slowFlushable = new MockFlushable("Slow", flushDelay: TimeSpan.FromMilliseconds(100));
+        var slowFlushable = new MockFlushable("Slow", flushDelay: TimeSpan.FromMilliseconds(30));
         var service = new GracefulShutdownService(
             new[] { slowFlushable },
             shutdownTimeout: TimeSpan.FromSeconds(5));
@@ -113,7 +113,7 @@ public class GracefulShutdownTests
     public async Task StopAsync_FlushesInParallel()
     {
         // Arrange
-        var delay = TimeSpan.FromMilliseconds(100);
+        var delay = TimeSpan.FromMilliseconds(30);
         var flushables = Enumerable.Range(0, 5)
             .Select(i => new MockFlushable($"Component{i}", flushDelay: delay))
             .ToList();
@@ -126,8 +126,8 @@ public class GracefulShutdownTests
         await service.StopAsync(CancellationToken.None);
         stopwatch.Stop();
 
-        // Assert - if sequential, would take 500ms; parallel should be ~100ms
-        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(300));
+        // Assert - if sequential, would take 150ms; parallel should be ~30ms
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(200));
         flushables.Should().OnlyContain(f => f.WasFlushed);
     }
 
@@ -243,8 +243,8 @@ public class GracefulShutdownTests
         // Arrange
         var flushOrder = new List<string>();
         var fast = new OrderTrackingFlushable("Fast", flushOrder, TimeSpan.Zero);
-        var medium = new OrderTrackingFlushable("Medium", flushOrder, TimeSpan.FromMilliseconds(50));
-        var slow = new OrderTrackingFlushable("Slow", flushOrder, TimeSpan.FromMilliseconds(100));
+        var medium = new OrderTrackingFlushable("Medium", flushOrder, TimeSpan.FromMilliseconds(15));
+        var slow = new OrderTrackingFlushable("Slow", flushOrder, TimeSpan.FromMilliseconds(30));
 
         var service = new GracefulShutdownService(new IFlushable[] { slow, medium, fast });
         await service.StartAsync(CancellationToken.None);

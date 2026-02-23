@@ -35,11 +35,11 @@ public sealed class DataValidatorTests : IDisposable
             }
             catch (IOException) when (attempt < 4)
             {
-                Thread.Sleep(50);
+                Thread.Sleep(10);
             }
             catch (UnauthorizedAccessException) when (attempt < 4)
             {
-                Thread.Sleep(50);
+                Thread.Sleep(10);
             }
         }
     }

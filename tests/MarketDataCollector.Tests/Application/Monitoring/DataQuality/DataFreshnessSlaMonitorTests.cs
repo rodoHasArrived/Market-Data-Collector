@@ -516,7 +516,7 @@ public sealed class DataFreshnessSlaMonitorMarketHoursTests : IDisposable
         monitor.RecordEvent("AAPL");
 
         // Allow a moment for potential async operations
-        Thread.Sleep(50);
+        Thread.Sleep(10);
 
         // Act
         var status = monitor.GetSymbolStatus("AAPL");

@@ -24,8 +24,8 @@ public sealed class WriteAheadLogTests : IAsyncDisposable
                     Directory.Delete(_walDir, recursive: true);
                 return;
             }
-            catch (IOException) when (attempt < 4) { await Task.Delay(100); }
-            catch (UnauthorizedAccessException) when (attempt < 4) { await Task.Delay(100); }
+            catch (IOException) when (attempt < 4) { await Task.Delay(20); }
+            catch (UnauthorizedAccessException) when (attempt < 4) { await Task.Delay(20); }
         }
     }
 

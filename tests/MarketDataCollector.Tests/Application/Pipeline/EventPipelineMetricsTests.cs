@@ -92,7 +92,7 @@ public class EventPipelineMetricsTests : IAsyncLifetime
         }
 
         // Allow some time for processing
-        await Task.Delay(50);
+        await Task.Delay(10);
 
         // Assert - Some events should have been dropped
         var totalAttempted = 100;
@@ -144,7 +144,7 @@ public class EventPipelineMetricsTests : IAsyncLifetime
         var start = DateTime.UtcNow;
         while (_mockSink.ReceivedEvents.Count < expectedCount)
         {
-            await Task.Delay(10);
+            await Task.Delay(1);
             if ((DateTime.UtcNow - start).TotalMilliseconds > maxWaitMs)
                 break;
         }

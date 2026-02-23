@@ -80,7 +80,7 @@ jobs:
         id: fsharp-tests
         shell: bash
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results-fsharp-Linux.trx" --results-directory ./TestResults /p:EnableWindowsTargeting=true
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results-fsharp-Linux.trx" --results-directory ./TestResults /p:EnableWindowsTargeting=true
 
       - name: Upload test results on failure
         uses: actions/upload-artifact@v4
@@ -152,7 +152,7 @@ jobs:
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" --results-directory ./TestResults /p:EnableWindowsTargeting=true
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" --results-directory ./TestResults /p:EnableWindowsTargeting=true
 
       - name: Upload test results on failure
         uses: actions/upload-artifact@v4
