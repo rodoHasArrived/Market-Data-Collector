@@ -1,4 +1,5 @@
 using MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Ui.Services.Services;
 
 namespace MarketDataCollector.Wpf.Tests.Services;
 
@@ -152,15 +153,10 @@ public sealed class StatusServiceTests
         var newStatus = "New";
 
         // Act
-        var args = new StatusChangedEventArgs
-        {
-            OldStatus = oldStatus,
-            NewStatus = newStatus,
-            Timestamp = DateTime.UtcNow
-        };
+        var args = new StatusChangedEventArgs(oldStatus, newStatus);
 
         // Assert
-        args.OldStatus.Should().Be(oldStatus);
+        args.PreviousStatus.Should().Be(oldStatus);
         args.NewStatus.Should().Be(newStatus);
         args.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
@@ -169,13 +165,14 @@ public sealed class StatusServiceTests
     public void SimpleStatus_Properties_ShouldBeSettable()
     {
         // Act
+        var providerInfo = new StatusProviderInfo { ActiveProvider = "TestProvider", IsConnected = true };
         var status = new SimpleStatus
         {
             Published = 100,
             Dropped = 5,
             Integrity = 2,
             Historical = 1000,
-            Provider = "TestProvider"
+            Provider = providerInfo
         };
 
         // Assert
@@ -183,7 +180,8 @@ public sealed class StatusServiceTests
         status.Dropped.Should().Be(5);
         status.Integrity.Should().Be(2);
         status.Historical.Should().Be(1000);
-        status.Provider.Should().Be("TestProvider");
+        status.Provider.Should().NotBeNull();
+        status.Provider!.ActiveProvider.Should().Be("TestProvider");
     }
 
     [Fact]

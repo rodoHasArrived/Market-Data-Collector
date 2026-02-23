@@ -31,7 +31,7 @@ public sealed class PendingOperationsQueueServiceTests
         // We test the lifecycle explicitly below.
 
         // Assert
-        service.IsInitialized.Should().BeOfType(typeof(bool));
+        ((object)service.IsInitialized).Should().BeOfType<bool>();
     }
 
     [Fact]

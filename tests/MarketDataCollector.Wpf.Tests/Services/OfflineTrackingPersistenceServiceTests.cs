@@ -29,7 +29,7 @@ public sealed class OfflineTrackingPersistenceServiceTests
         var service = OfflineTrackingPersistenceService.Instance;
 
         // Verify IsInitialized is a boolean property
-        service.IsInitialized.Should().BeOfType(typeof(bool));
+        ((object)service.IsInitialized).Should().BeOfType<bool>();
     }
 
     [Fact]
