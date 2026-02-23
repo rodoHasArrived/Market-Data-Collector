@@ -490,6 +490,7 @@ Market-Data-Collector/
 │   │   ├── data-quality-monitoring-evaluation.md
 │   │   ├── desktop-end-user-improvements-shortlist.md
 │   │   ├── desktop-end-user-improvements.md
+│   │   ├── high-value-low-cost-improvements-brainstorm.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── ingestion-orchestration-evaluation.md
 │   │   ├── operational-readiness-evaluation.md
