@@ -1,5 +1,6 @@
 using MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Ui.Services.Services;
+using NotificationType = MarketDataCollector.Ui.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Tests.Services;
 

@@ -1,3 +1,4 @@
+using System.Net.Http;
 using MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Tests.Services;
