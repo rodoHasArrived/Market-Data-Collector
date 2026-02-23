@@ -33,6 +33,14 @@ public sealed class PreflightChecker
     /// <returns>Pre-flight check results with pass/fail status and details.</returns>
     public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default)
     {
+        return await RunChecksAsync(dataRoot, activeDataSource: null, ct);
+    }
+
+    /// <summary>
+    /// Runs all pre-flight checks including provider credential validation.
+    /// </summary>
+    public async Task<PreflightResult> RunChecksAsync(string dataRoot, string? activeDataSource, CancellationToken ct = default)
+    {
         var startTime = Stopwatch.GetTimestamp();
         var checks = new List<PreflightCheckResult>();
 
@@ -51,6 +59,12 @@ public sealed class PreflightChecker
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
+
+        // Validate provider credentials if active data source is known
+        if (!string.IsNullOrEmpty(activeDataSource))
+        {
+            checks.Add(ValidateProviderCredentials(activeDataSource));
+        }
 
         // Run provider-specific checks if configured
         if (_config.CheckProviderConnectivity)
@@ -522,6 +536,120 @@ public sealed class PreflightChecker
             "Set ALPACA_KEY_ID/ALPACA_SECRET_KEY or configure credentials in appsettings.json.",
             details);
     }
+
+    /// <summary>
+    /// Validates that all enabled providers have their required credentials configured.
+    /// Returns a detailed table of missing credentials with the exact env var names to set.
+    /// </summary>
+    public PreflightCheckResult ValidateProviderCredentials(string activeDataSource)
+    {
+        const string checkName = "Provider Credentials";
+
+        var providerCredentialMap = new Dictionary<string, ProviderCredentialRequirement>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Alpaca"] = new("Alpaca Markets", new[]
+            {
+                new CredentialRequirement("ALPACA__KEYID", new[] { "ALPACA_KEY_ID", "MDC_ALPACA_KEY_ID" }),
+                new CredentialRequirement("ALPACA__SECRETKEY", new[] { "ALPACA_SECRET_KEY", "MDC_ALPACA_SECRET_KEY" })
+            }, "docs/providers/alpaca-setup.md"),
+            ["Polygon"] = new("Polygon.io", new[]
+            {
+                new CredentialRequirement("POLYGON__APIKEY", new[] { "POLYGON_API_KEY", "MDC_POLYGON_API_KEY" })
+            }, "docs/providers/data-sources.md"),
+            ["IB"] = new("Interactive Brokers", Array.Empty<CredentialRequirement>(),
+                "docs/providers/interactive-brokers-setup.md"),
+            ["NYSE"] = new("NYSE Direct", new[]
+            {
+                new CredentialRequirement("NYSE__APIKEY", new[] { "NYSE_API_KEY", "MDC_NYSE_API_KEY" })
+            }, null),
+            ["Tiingo"] = new("Tiingo", new[]
+            {
+                new CredentialRequirement("TIINGO__TOKEN", new[] { "TIINGO_API_TOKEN", "TIINGO_TOKEN", "MDC_TIINGO_TOKEN" })
+            }, null),
+            ["Finnhub"] = new("Finnhub", new[]
+            {
+                new CredentialRequirement("FINNHUB__TOKEN", new[] { "FINNHUB_API_KEY", "MDC_FINNHUB_API_KEY" })
+            }, null),
+            ["AlphaVantage"] = new("Alpha Vantage", new[]
+            {
+                new CredentialRequirement("ALPHAVANTAGE__APIKEY", new[] { "ALPHA_VANTAGE_API_KEY", "ALPHAVANTAGE_API_KEY", "MDC_ALPHA_VANTAGE_API_KEY" })
+            }, null)
+        };
+
+        if (!providerCredentialMap.TryGetValue(activeDataSource, out var requirement))
+        {
+            return PreflightCheckResult.Passed(checkName,
+                $"Provider '{activeDataSource}' has no credential requirements registered");
+        }
+
+        if (requirement.Credentials.Length == 0)
+        {
+            return PreflightCheckResult.Passed(checkName,
+                $"{requirement.DisplayName} does not require API credentials (uses local connection)");
+        }
+
+        var missing = new List<string>();
+        var found = new List<string>();
+
+        foreach (var cred in requirement.Credentials)
+        {
+            var value = Environment.GetEnvironmentVariable(cred.PrimaryEnvVar);
+
+            if (string.IsNullOrEmpty(value))
+            {
+                value = cred.AlternativeEnvVars
+                    .Select(Environment.GetEnvironmentVariable)
+                    .FirstOrDefault(v => !string.IsNullOrEmpty(v));
+            }
+
+            if (string.IsNullOrEmpty(value))
+            {
+                missing.Add(cred.PrimaryEnvVar);
+            }
+            else
+            {
+                found.Add(cred.PrimaryEnvVar);
+            }
+        }
+
+        var details = new Dictionary<string, object>
+        {
+            ["provider"] = requirement.DisplayName,
+            ["missingCredentials"] = missing,
+            ["foundCredentials"] = found
+        };
+
+        if (missing.Count > 0)
+        {
+            var envVarList = string.Join(", ", missing);
+            var remediation = $"Set the following environment variables: {envVarList}";
+            if (requirement.DocsLink != null)
+            {
+                remediation += $"\n  Documentation: {requirement.DocsLink}";
+            }
+            remediation += $"\n  Run: dotnet run -- --validate-credentials";
+
+            return PreflightCheckResult.Failed(checkName,
+                $"{requirement.DisplayName} is the active provider but is missing credentials: {envVarList}",
+                remediation,
+                details);
+        }
+
+        return PreflightCheckResult.Passed(checkName,
+            $"{requirement.DisplayName} credentials verified ({found.Count} credential(s) found)",
+            details);
+    }
+
+    private sealed record ProviderCredentialRequirement(
+        string DisplayName,
+        CredentialRequirement[] Credentials,
+        string? DocsLink
+    );
+
+    private sealed record CredentialRequirement(
+        string PrimaryEnvVar,
+        string[] AlternativeEnvVars
+    );
 
     private async Task<PreflightCheckResult> CheckProviderEndpointsAsync(CancellationToken ct)
     {

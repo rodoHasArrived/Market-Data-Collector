@@ -851,3 +851,154 @@ public enum SymbolPreset
     SP500Top20,
     Crypto
 }
+
+/// <summary>
+/// Role-based configuration presets that configure ~15 settings at once.
+/// Reduces time-to-value from 30+ minutes of manual config to a single --preset flag.
+/// </summary>
+public static class ConfigurationPresets
+{
+    /// <summary>
+    /// Available preset names.
+    /// </summary>
+    public static IReadOnlyList<string> AvailablePresets => new[]
+    {
+        "researcher", "daytrader", "options", "crypto"
+    };
+
+    /// <summary>
+    /// Gets the preset description for display.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> PresetDescriptions => new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["researcher"] = "Historical analysis with daily bars, Parquet export, no real-time streaming",
+        ["daytrader"] = "Real-time streaming with L2 data, low-latency JSONL storage",
+        ["options"] = "Options chain + Greeks via IB, derivatives enabled, weekly/monthly expirations",
+        ["crypto"] = "24/7 crypto collection via Alpaca, no market hours filter, extended retention"
+    };
+
+    /// <summary>
+    /// Applies a named preset to the given config, returning a new config with preset values.
+    /// </summary>
+    public static AppConfig ApplyPreset(string presetName, AppConfig config)
+    {
+        return presetName.ToLowerInvariant() switch
+        {
+            "researcher" => ApplyResearcherPreset(config),
+            "daytrader" => ApplyDayTraderPreset(config),
+            "options" => ApplyOptionsPreset(config),
+            "crypto" => ApplyCryptoPreset(config),
+            _ => throw new ArgumentException($"Unknown preset: '{presetName}'. Available: {string.Join(", ", AvailablePresets)}")
+        };
+    }
+
+    private static AppConfig ApplyResearcherPreset(AppConfig config)
+    {
+        return config with
+        {
+            DataSource = DataSourceKind.Alpaca,
+            Symbols = new[]
+            {
+                new SymbolConfig("SPY", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("QQQ", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("AAPL", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("MSFT", SubscribeTrades: false, SubscribeDepth: false)
+            },
+            Storage = new StorageConfig(
+                Profile: StorageProfilePresets.DefaultProfile,
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily"
+            ),
+            Compress = true,
+            Backfill = (config.Backfill ?? new BackfillConfig()) with
+            {
+                Enabled = true,
+                Provider = "composite",
+                EnableFallback = true,
+                ProviderPriority = new[] { "stooq", "yahoo", "tiingo", "alpaca" }
+            }
+        };
+    }
+
+    private static AppConfig ApplyDayTraderPreset(AppConfig config)
+    {
+        return config with
+        {
+            DataSource = DataSourceKind.Alpaca,
+            Symbols = new[]
+            {
+                new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("QQQ", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("AAPL", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("MSFT", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("NVDA", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("TSLA", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10)
+            },
+            Storage = new StorageConfig(
+                Profile: "LowLatency",
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily",
+                RetentionDays: 30
+            ),
+            Compress = false
+        };
+    }
+
+    private static AppConfig ApplyOptionsPreset(AppConfig config)
+    {
+        return config with
+        {
+            DataSource = DataSourceKind.IB,
+            Symbols = new[]
+            {
+                new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10,
+                    SecurityType: "STK", Exchange: "SMART"),
+                new SymbolConfig("QQQ", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10,
+                    SecurityType: "STK", Exchange: "SMART"),
+                new SymbolConfig("AAPL", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10,
+                    SecurityType: "STK", Exchange: "SMART"),
+                new SymbolConfig("MSFT", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10,
+                    SecurityType: "STK", Exchange: "SMART")
+            },
+            Storage = new StorageConfig(
+                Profile: StorageProfilePresets.DefaultProfile,
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily"
+            ),
+            Compress = true,
+            Derivatives = new DerivativesConfig(
+                Enabled: true,
+                CaptureGreeks: true,
+                CaptureChainSnapshots: true,
+                CaptureOpenInterest: true
+            )
+        };
+    }
+
+    private static AppConfig ApplyCryptoPreset(AppConfig config)
+    {
+        return config with
+        {
+            DataSource = DataSourceKind.Alpaca,
+            Symbols = new[]
+            {
+                new SymbolConfig("BTC/USD", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("ETH/USD", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("SOL/USD", SubscribeTrades: true, SubscribeDepth: false),
+                new SymbolConfig("AVAX/USD", SubscribeTrades: true, SubscribeDepth: false),
+                new SymbolConfig("DOGE/USD", SubscribeTrades: true, SubscribeDepth: false)
+            },
+            Storage = new StorageConfig(
+                Profile: StorageProfilePresets.DefaultProfile,
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily",
+                RetentionDays: 90
+            ),
+            Compress = true,
+            Alpaca = (config.Alpaca ?? new AlpacaOptions()) with
+            {
+                Feed = "crypto"
+            }
+        };
+    }
+}

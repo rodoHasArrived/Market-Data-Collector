@@ -25,7 +25,9 @@ internal sealed class ConfigCommands : ICliCommand
         return CliArguments.HasFlag(args, "--wizard") ||
             CliArguments.HasFlag(args, "--auto-config") ||
             CliArguments.HasFlag(args, "--detect-providers") ||
-            CliArguments.HasFlag(args, "--generate-config");
+            CliArguments.HasFlag(args, "--generate-config") ||
+            CliArguments.HasFlag(args, "--preset") ||
+            CliArguments.HasFlag(args, "--list-presets");
     }
 
     public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
@@ -55,7 +57,81 @@ internal sealed class ConfigCommands : ICliCommand
             return RunGenerateConfig(args);
         }
 
+        if (CliArguments.HasFlag(args, "--list-presets"))
+        {
+            return RunListPresets();
+        }
+
+        if (CliArguments.HasFlag(args, "--preset"))
+        {
+            return RunApplyPreset(args);
+        }
+
         return CliResult.Fail(ErrorCode.Unknown);
+    }
+
+    private static CliResult RunListPresets()
+    {
+        Console.WriteLine();
+        Console.WriteLine("  Available Configuration Presets");
+        Console.WriteLine("  " + new string('=', 55));
+        Console.WriteLine();
+
+        foreach (var (name, description) in ConfigurationPresets.PresetDescriptions)
+        {
+            Console.WriteLine($"  {name,-14} {description}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("  Usage: MarketDataCollector --preset <name>");
+        Console.WriteLine("  Example: MarketDataCollector --preset daytrader");
+        Console.WriteLine();
+
+        return CliResult.Ok();
+    }
+
+    private CliResult RunApplyPreset(string[] args)
+    {
+        var presetName = CliArguments.GetValue(args, "--preset");
+        if (string.IsNullOrWhiteSpace(presetName))
+        {
+            Console.Error.WriteLine("Error: --preset requires a preset name");
+            Console.Error.WriteLine($"Available: {string.Join(", ", ConfigurationPresets.AvailablePresets)}");
+            return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+        }
+
+        if (!ConfigurationPresets.PresetDescriptions.ContainsKey(presetName))
+        {
+            Console.Error.WriteLine($"Error: Unknown preset '{presetName}'");
+            Console.Error.WriteLine($"Available: {string.Join(", ", ConfigurationPresets.AvailablePresets)}");
+            return CliResult.Fail(ErrorCode.NotFound);
+        }
+
+        try
+        {
+            var currentConfig = _configService.GetConfig();
+            var newConfig = ConfigurationPresets.ApplyPreset(presetName, currentConfig);
+            _configService.SaveConfig(newConfig);
+
+            Console.WriteLine();
+            Console.WriteLine($"  Applied preset: {presetName}");
+            Console.WriteLine($"  Description: {ConfigurationPresets.PresetDescriptions[presetName]}");
+            Console.WriteLine();
+            Console.WriteLine($"  Data Source: {newConfig.DataSource}");
+            Console.WriteLine($"  Symbols: {string.Join(", ", (newConfig.Symbols ?? []).Select(s => s.Symbol))}");
+            Console.WriteLine($"  Storage Profile: {newConfig.Storage?.Profile ?? "default"}");
+            Console.WriteLine($"  Compression: {(newConfig.Compress == true ? "Enabled" : "Disabled")}");
+            Console.WriteLine();
+            Console.WriteLine("  Configuration saved. Run without --preset to start collection.");
+            Console.WriteLine();
+
+            return CliResult.Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            return CliResult.Fail(ErrorCode.ValidationFailed);
+        }
     }
 
     private CliResult RunGenerateConfig(string[] args)

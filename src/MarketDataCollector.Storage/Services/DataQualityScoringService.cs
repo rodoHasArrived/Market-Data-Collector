@@ -266,7 +266,8 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                         }
                     }
                 }
-                catch { /* Skip parse errors */ }
+                catch (FormatException) { /* Skip unparseable lines */ }
+                catch (System.Text.Json.JsonException) { /* Skip malformed JSON lines */ }
 
                 if (total >= 10000) break;
             }
