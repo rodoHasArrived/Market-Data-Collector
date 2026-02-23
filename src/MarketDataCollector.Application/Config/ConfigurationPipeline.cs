@@ -233,7 +233,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
 
             if (options.ValidateConfig)
             {
-                var validator = ConfigValidationPipeline.CreateDefault();
+                var validator = ConfigValidationPipeline.CreateDefault(strictCredentials: options.StrictCredentials);
                 var results = validator.Validate(config);
 
                 foreach (var result in results)
@@ -620,6 +620,12 @@ public sealed record PipelineOptions
     /// Whether to validate the configuration.
     /// </summary>
     public bool ValidateConfig { get; init; } = true;
+
+    /// <summary>
+    /// When true, credentials found in the config file (rather than environment variables)
+    /// are treated as validation errors instead of warnings. Enable via --strict-credentials.
+    /// </summary>
+    public bool StrictCredentials { get; init; }
 
     /// <summary>
     /// Default options - self-healing and validation enabled.

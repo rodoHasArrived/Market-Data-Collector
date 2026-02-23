@@ -16,6 +16,7 @@ public sealed class GracefulShutdownService : IHostedService
     private readonly IEnumerable<IFlushable> _flushables;
     private readonly ILogger _log;
     private readonly TimeSpan _shutdownTimeout;
+    private readonly string? _dataRoot;
     private readonly Stopwatch _sessionStopwatch = new();
 
     /// <summary>
@@ -23,12 +24,15 @@ public sealed class GracefulShutdownService : IHostedService
     /// </summary>
     /// <param name="flushables">Collection of flushable components to flush on shutdown</param>
     /// <param name="shutdownTimeout">Maximum time to wait for flush operations (default: 30 seconds)</param>
+    /// <param name="dataRoot">Optional data root path for storage summary on shutdown</param>
     public GracefulShutdownService(
         IEnumerable<IFlushable> flushables,
-        TimeSpan? shutdownTimeout = null)
+        TimeSpan? shutdownTimeout = null,
+        string? dataRoot = null)
     {
         _flushables = flushables ?? throw new ArgumentNullException(nameof(flushables));
         _shutdownTimeout = shutdownTimeout ?? TimeSpan.FromSeconds(30);
+        _dataRoot = dataRoot;
         _log = Log.ForContext<GracefulShutdownService>();
     }
 
@@ -102,8 +106,19 @@ public sealed class GracefulShutdownService : IHostedService
             if (snapshot.Integrity > 0)
                 sb.AppendLine($"    Integrity events:  {snapshot.Integrity:N0}");
 
+            // Data completeness
+            var totalAttempted = snapshot.Published + snapshot.Dropped;
+            if (totalAttempted > 0)
+            {
+                var completeness = (double)snapshot.Published / totalAttempted * 100;
+                sb.AppendLine($"    Data completeness: {completeness:F1}%");
+            }
+
             sb.AppendLine($"    Avg latency:       {snapshot.AverageLatencyUs:F1} us");
             sb.AppendLine($"    Memory usage:      {snapshot.MemoryUsageMb:F1} MB");
+
+            // Storage summary
+            AppendStorageSummary(sb);
 
             var summaryText = sb.ToString();
             _log.Information("Session summary:{Summary}", summaryText);
@@ -114,6 +129,42 @@ public sealed class GracefulShutdownService : IHostedService
         {
             _log.Debug(ex, "Failed to generate session summary");
         }
+    }
+
+    private void AppendStorageSummary(StringBuilder sb)
+    {
+        try
+        {
+            if (_dataRoot == null || !Directory.Exists(_dataRoot))
+                return;
+
+            var liveDir = Path.Combine(_dataRoot, "live");
+            if (!Directory.Exists(liveDir))
+                return;
+
+            var files = Directory.GetFiles(liveDir, "*.*", SearchOption.AllDirectories);
+            if (files.Length == 0)
+                return;
+
+            var totalBytes = files.Sum(f => new FileInfo(f).Length);
+
+            sb.AppendLine($"    Storage written:   {FormatSize(totalBytes)} ({files.Length} files)");
+        }
+        catch (Exception ex)
+        {
+            _log.Debug(ex, "Failed to collect storage summary");
+        }
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        return bytes switch
+        {
+            >= 1024 * 1024 * 1024 => $"{bytes / (1024.0 * 1024.0 * 1024.0):F1} GB",
+            >= 1024 * 1024 => $"{bytes / (1024.0 * 1024.0):F1} MB",
+            >= 1024 => $"{bytes / 1024.0:F1} KB",
+            _ => $"{bytes} bytes"
+        };
     }
 
     private static string FormatDuration(TimeSpan duration)

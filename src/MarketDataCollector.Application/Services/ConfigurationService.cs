@@ -324,9 +324,14 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// Validates an AppConfig object using the unified validation pipeline.
     /// Returns true if valid, false otherwise.
     /// </summary>
-    public bool ValidateConfig(AppConfig config, out IReadOnlyList<string> errors)
+    /// <param name="config">The configuration to validate.</param>
+    /// <param name="errors">Any validation error messages.</param>
+    /// <param name="strictCredentials">
+    /// When true, credentials in config files are treated as errors instead of warnings.
+    /// </param>
+    public bool ValidateConfig(AppConfig config, out IReadOnlyList<string> errors, bool strictCredentials = false)
     {
-        var validator = ConfigValidationPipeline.CreateDefault();
+        var validator = ConfigValidationPipeline.CreateDefault(strictCredentials: strictCredentials);
         var results = validator.Validate(config);
 
         var errorList = new List<string>();

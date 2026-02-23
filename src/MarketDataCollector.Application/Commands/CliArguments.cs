@@ -16,6 +16,7 @@ internal sealed record CliArguments
     public bool ValidateConfig { get; init; }
     public bool ValidateSchemas { get; init; }
     public bool StrictSchemas { get; init; }
+    public bool StrictCredentials { get; init; }
     public bool WatchConfig { get; init; }
 
     // Symbol management
@@ -74,6 +75,7 @@ internal sealed record CliArguments
             ValidateConfig = HasFlag(args, "--validate-config"),
             ValidateSchemas = HasFlag(args, "--validate-schemas"),
             StrictSchemas = HasFlag(args, "--strict-schemas"),
+            StrictCredentials = HasFlag(args, "--strict-credentials"),
             WatchConfig = HasFlag(args, "--watch-config"),
 
             Symbols = HasFlag(args, "--symbols"),

@@ -54,13 +54,17 @@ public sealed class ConfigValidationPipeline : IConfigValidator
     /// <summary>
     /// Creates the default pipeline with Field, Semantic, and Credential Security stages.
     /// </summary>
-    public static ConfigValidationPipeline CreateDefault()
+    /// <param name="strictCredentials">
+    /// When true, credentials found in config files are reported as errors instead of
+    /// warnings, causing validation to fail. Enable via --strict-credentials CLI flag.
+    /// </param>
+    public static ConfigValidationPipeline CreateDefault(bool strictCredentials = false)
     {
         return new ConfigValidationPipeline(new IConfigValidationStage[]
         {
             new FieldValidationStage(),
             new SemanticValidationStage(),
-            new CredentialSecurityStage()
+            new CredentialSecurityStage(strict: strictCredentials)
         });
     }
 
@@ -149,6 +153,38 @@ public sealed class SemanticValidationStage : IConfigValidationStage
                 "Enable SubscribeTrades or SubscribeDepth for at least one symbol"));
         }
 
+        // Warn about IB-specific symbol fields when using a non-IB provider
+        if (config.DataSource != DataSourceKind.IB && config.Symbols is { Length: > 0 })
+        {
+            var providerName = config.DataSource.ToString();
+
+            foreach (var symbol in config.Symbols)
+            {
+                var unusedFields = new List<string>();
+
+                if (!string.Equals(symbol.Exchange, "SMART", StringComparison.OrdinalIgnoreCase))
+                    unusedFields.Add("Exchange");
+                if (symbol.PrimaryExchange != null)
+                    unusedFields.Add("PrimaryExchange");
+                if (symbol.LocalSymbol != null)
+                    unusedFields.Add("LocalSymbol");
+                if (symbol.TradingClass != null)
+                    unusedFields.Add("TradingClass");
+                if (symbol.ConId.HasValue)
+                    unusedFields.Add("ConId");
+
+                if (unusedFields.Count > 0)
+                {
+                    var fieldList = string.Join(", ", unusedFields);
+                    results.Add(new ConfigValidationResult(
+                        ConfigValidationSeverity.Info,
+                        $"Symbols[{symbol.Symbol}]",
+                        $"Symbol '{symbol.Symbol}' has IB-specific fields ({fieldList}) but active provider is {providerName} — these fields will be ignored",
+                        "Remove IB-specific fields or switch to IB provider"));
+                }
+            }
+        }
+
         return results;
     }
 }
@@ -156,6 +192,8 @@ public sealed class SemanticValidationStage : IConfigValidationStage
 /// <summary>
 /// Checks for credentials that appear to be hardcoded in the config file rather than
 /// set via environment variables. Emits warnings to prevent accidental credential commits.
+/// When <c>strict</c> mode is enabled (via <c>--strict-credentials</c>), findings are
+/// reported as errors instead of warnings, causing config validation to fail.
 /// </summary>
 public sealed class CredentialSecurityStage : IConfigValidationStage
 {
@@ -164,6 +202,20 @@ public sealed class CredentialSecurityStage : IConfigValidationStage
         "your-", "YOUR_", "__SET_ME__", "REPLACE_", "ENTER_", "INSERT_",
         "TODO", "xxx", "change-me", "placeholder"
     };
+
+    private readonly bool _strict;
+
+    /// <summary>
+    /// Creates a new credential security validation stage.
+    /// </summary>
+    /// <param name="strict">
+    /// When true, hardcoded credentials are reported as errors (not warnings),
+    /// causing configuration validation to fail. Enable via --strict-credentials CLI flag.
+    /// </param>
+    public CredentialSecurityStage(bool strict = false)
+    {
+        _strict = strict;
+    }
 
     public IReadOnlyList<ConfigValidationResult> Validate(AppConfig config)
     {
@@ -185,7 +237,7 @@ public sealed class CredentialSecurityStage : IConfigValidationStage
         return results;
     }
 
-    private static void CheckCredential(
+    private void CheckCredential(
         List<ConfigValidationResult> results,
         string propertyName,
         string? value,
@@ -198,9 +250,13 @@ public sealed class CredentialSecurityStage : IConfigValidationStage
         if (IsPlaceholder(value))
             return;
 
-        // If the value looks like a real credential (not a placeholder), warn
+        var severity = _strict
+            ? ConfigValidationSeverity.Error
+            : ConfigValidationSeverity.Warning;
+
+        // If the value looks like a real credential (not a placeholder), warn or error
         results.Add(new ConfigValidationResult(
-            ConfigValidationSeverity.Warning,
+            severity,
             propertyName,
             $"Credential '{propertyName}' appears to be set directly in config file. " +
             "Use environment variables instead to avoid accidental commits.",

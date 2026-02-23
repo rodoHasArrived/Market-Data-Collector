@@ -227,6 +227,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _logger.LogInformation("Initializing WAL for pipeline recovery");
         await _wal.InitializeAsync(ct).ConfigureAwait(false);
 
+        // Emit Prometheus metrics for WAL recovery (improvement 2.3)
+        PrometheusMetrics.RecordWalRecovery(
+            _wal.LastRecoveryEventCount,
+            _wal.LastRecoveryDurationMs / 1000.0);
+
         var recovered = 0;
         long maxRecoveredSequence = 0;
 

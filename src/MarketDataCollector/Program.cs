@@ -127,7 +127,7 @@ public partial class Program
         }
 
         // Validate configuration (routed through ConfigurationService)
-        if (!configService.ValidateConfig(cfg, out _))
+        if (!configService.ValidateConfig(cfg, out _, strictCredentials: cliArgs.StrictCredentials))
         {
             log.Error("Exiting due to configuration errors (ExitCode={ExitCode})",
                 ErrorCode.ConfigurationInvalid.ToExitCode());

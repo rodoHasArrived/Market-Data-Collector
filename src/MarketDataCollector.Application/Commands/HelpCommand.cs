@@ -276,6 +276,9 @@ SCHEMA VALIDATION:
     --max-files <n>         Max files to check (default: 100)
     --fail-fast             Stop on first incompatibility
 
+CREDENTIAL SECURITY:
+    --strict-credentials    Fail if credentials are set in config file instead of env vars
+
 EXAMPLES:
     # Quick health check (recommended first step)
     MarketDataCollector --quick-check
@@ -389,6 +392,10 @@ SCHEMA VALIDATION OPTIONS:
     --strict-schemas        Exit if schema incompatibilities found (use with --validate-schemas)
     --max-files <n>         Max files to check (default: 100, use with --check-schemas)
     --fail-fast             Stop on first incompatibility (use with --check-schemas)
+
+CREDENTIAL SECURITY OPTIONS:
+    --strict-credentials    Treat credentials in config file as validation errors (not just warnings)
+                            Use to enforce that all secrets come from environment variables
 
 SYMBOL MANAGEMENT:
     --symbols               Show all symbols (monitored + archived)
