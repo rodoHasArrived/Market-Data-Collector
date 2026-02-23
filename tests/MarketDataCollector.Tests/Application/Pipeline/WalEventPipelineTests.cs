@@ -107,6 +107,9 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
         }
 
         await WaitForConsumption(sink, expectedCount: 50, timeoutMs: 15_000);
+        // ConsumedCount is updated after the sink flush + WAL commit, so allow
+        // a brief window for the counter to catch up after the sink receives all events.
+        await WaitForConsumedCount(pipeline, expectedCount: 50, timeoutMs: 5_000);
 
         sink.ReceivedEvents.Should().HaveCount(50);
         pipeline.ConsumedCount.Should().Be(50);
@@ -363,6 +366,15 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (sink.ReceivedEvents.Count < expectedCount && sw.ElapsedMilliseconds < timeoutMs)
+        {
+            await Task.Delay(1);
+        }
+    }
+
+    private static async Task WaitForConsumedCount(EventPipeline pipeline, int expectedCount, int timeoutMs = 5000)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (pipeline.ConsumedCount < expectedCount && sw.ElapsedMilliseconds < timeoutMs)
         {
             await Task.Delay(1);
         }

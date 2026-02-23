@@ -149,7 +149,7 @@ public sealed class LiquidityProfileTests
         analyzer.RecordEvent("THINLY", "trade", baseTime.AddMinutes(15));
 
         detected.Should().NotBeNull("a 15-minute gap exceeds the 600s threshold for Low liquidity");
-        detected!.Severity.Should().Be(GapSeverity.Minor, "relative to the Low liquidity baseline this is a minor exceedance");
+        detected!.Severity.Should().Be(GapSeverity.Moderate, "a 15-min gap is 1.5x the 600s Low-liquidity threshold, placing it in the Moderate range (1x–5x)");
     }
 
     [Fact]
