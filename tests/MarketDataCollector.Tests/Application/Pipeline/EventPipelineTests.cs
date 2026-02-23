@@ -214,7 +214,7 @@ public class EventPipelineTests : IAsyncLifetime
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (pipeline.ConsumedCount < 1 && sw.ElapsedMilliseconds < 2000)
         {
-            await Task.Delay(10);
+            await Task.Delay(1);
         }
 
         // Assert - Peak should have been recorded when events were queued
@@ -249,7 +249,7 @@ public class EventPipelineTests : IAsyncLifetime
         var targetCount = 15; // capacity + small buffer for in-flight processing
         while (sink.ReceivedEvents.Count < targetCount && stopwatch.Elapsed < TimeSpan.FromSeconds(2))
         {
-            await Task.Delay(50);
+            await Task.Delay(1);
         }
         await pipeline.FlushAsync();
 
@@ -314,7 +314,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task TimeSinceLastFlush_UpdatesAfterFlush()
     {
         // Arrange
-        await Task.Delay(20);
+        await Task.Delay(5);
         var timeBefore = _pipeline.TimeSinceLastFlush;
 
         // Act
@@ -339,7 +339,7 @@ public class EventPipelineTests : IAsyncLifetime
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
         // Act - Wait for periodic flush
-        await Task.Delay(100);
+        await Task.Delay(75);
 
         // Assert
         sink.FlushCount.Should().BeGreaterThanOrEqualTo(1);
@@ -388,7 +388,7 @@ public class EventPipelineTests : IAsyncLifetime
         _pipeline.Complete();
 
         // Wait for pipeline to drain
-        await Task.Delay(20);
+        await Task.Delay(5);
 
         // Assert - Further publishes may fail
         // The channel is marked complete
@@ -425,7 +425,7 @@ public class EventPipelineTests : IAsyncLifetime
         }
 
         // Give consumer time to start processing before disposal
-        await Task.Delay(20);
+        await Task.Delay(5);
 
         // Act
         await pipeline.DisposeAsync();
@@ -450,11 +450,11 @@ public class EventPipelineTests : IAsyncLifetime
             finalFlushTimeout: TimeSpan.FromSeconds(1));
 
         pipeline.TryPublish(CreateTradeEvent("SPY"));
-        await Task.Delay(20); // Let consumer process the event
+        await Task.Delay(5); // Let consumer process the event
 
         // Act - Dispose should not hang; the final flush will be cancelled by finalFlushTimeout
         var disposeTask = pipeline.DisposeAsync().AsTask();
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(5)));
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(3)));
 
         // Assert - Disposal must complete (not hang indefinitely)
         completed.Should().Be(disposeTask,
@@ -469,7 +469,7 @@ public class EventPipelineTests : IAsyncLifetime
         var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
 
         pipeline.TryPublish(CreateTradeEvent("SPY"));
-        await Task.Delay(50); // Let consumer process
+        await Task.Delay(5); // Let consumer process
 
         // Act
         await pipeline.DisposeAsync();
@@ -525,7 +525,7 @@ public class EventPipelineTests : IAsyncLifetime
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        await Task.Delay(50);
+        await Task.Delay(10);
 
         // Assert - Pipeline should still be alive and processing
         // At least some events should have been processed before the throw
@@ -555,7 +555,7 @@ public class EventPipelineTests : IAsyncLifetime
         // Wait for all to be consumed
         while (pipeline.ConsumedCount < eventCount && sw.ElapsedMilliseconds < 5000)
         {
-            await Task.Delay(10);
+            await Task.Delay(1);
         }
 
         sw.Stop();
@@ -606,7 +606,7 @@ public class EventPipelineTests : IAsyncLifetime
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (_mockSink.ReceivedEvents.Count < expectedCount && sw.ElapsedMilliseconds < timeoutMs)
         {
-            await Task.Delay(10);
+            await Task.Delay(1);
         }
     }
 

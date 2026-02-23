@@ -258,11 +258,11 @@ public sealed class BackgroundTaskSchedulerServiceTests
             Id = taskId,
             Name = "Quick task",
             Action = _ => { executionCount++; return Task.CompletedTask; },
-            Interval = TimeSpan.FromMilliseconds(50)
+            Interval = TimeSpan.FromMilliseconds(20)
         });
 
         // Wait for at least one execution
-        await Task.Delay(100);
+        await Task.Delay(50);
 
         executionCount.Should().BeGreaterThan(0);
 
@@ -287,10 +287,10 @@ public sealed class BackgroundTaskSchedulerServiceTests
                 callCount++;
                 throw new InvalidOperationException("boom");
             },
-            Interval = TimeSpan.FromMilliseconds(50)
+            Interval = TimeSpan.FromMilliseconds(20)
         });
 
-        await Task.Delay(120);
+        await Task.Delay(60);
 
         // Should have been called multiple times despite exceptions
         callCount.Should().BeGreaterThan(1);

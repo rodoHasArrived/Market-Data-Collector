@@ -7,5 +7,5 @@
   "internalDiagnosticMessages": false,
   "shadowCopy": false,
   "methodDisplay": "classAndMethod",
-  "longRunningTestSeconds": 30
+  "longRunningTestSeconds": 15
 }

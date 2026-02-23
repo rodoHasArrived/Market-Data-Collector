@@ -35,8 +35,8 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
                     Directory.Delete(_walDir, recursive: true);
                 return;
             }
-            catch (IOException) when (attempt < 4) { await Task.Delay(100); }
-            catch (UnauthorizedAccessException) when (attempt < 4) { await Task.Delay(100); }
+            catch (IOException) when (attempt < 4) { await Task.Delay(20); }
+            catch (UnauthorizedAccessException) when (attempt < 4) { await Task.Delay(20); }
         }
     }
 
@@ -361,7 +361,7 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (sink.ReceivedEvents.Count < expectedCount && sw.ElapsedMilliseconds < timeoutMs)
         {
-            await Task.Delay(10);
+            await Task.Delay(1);
         }
     }
 

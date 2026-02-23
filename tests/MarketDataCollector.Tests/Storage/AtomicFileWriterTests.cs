@@ -26,8 +26,8 @@ public sealed class AtomicFileWriterTests : IDisposable
                     Directory.Delete(_testRoot, recursive: true);
                 return;
             }
-            catch (IOException) when (attempt < 4) { Thread.Sleep(50); }
-            catch (UnauthorizedAccessException) when (attempt < 4) { Thread.Sleep(50); }
+            catch (IOException) when (attempt < 4) { Thread.Sleep(10); }
+            catch (UnauthorizedAccessException) when (attempt < 4) { Thread.Sleep(10); }
         }
     }
 

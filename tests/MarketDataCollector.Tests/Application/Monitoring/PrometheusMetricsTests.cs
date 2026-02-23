@@ -122,7 +122,7 @@ public class PrometheusMetricsUpdaterTests
     {
         // Arrange
         Metrics.Reset();
-        await using var updater = new PrometheusMetricsUpdater(TimeSpan.FromMilliseconds(50));
+        await using var updater = new PrometheusMetricsUpdater(TimeSpan.FromMilliseconds(20));
 
         // Increment metrics
         for (int i = 0; i < 5; i++)
@@ -131,7 +131,7 @@ public class PrometheusMetricsUpdaterTests
         }
 
         // Act - Wait for a few update cycles
-        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        await Task.Delay(TimeSpan.FromMilliseconds(60));
 
         // Assert - Metrics should have been updated at least once
         var snapshot = Metrics.GetSnapshot();
