@@ -1,10 +1,12 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 // Import extension methods for DTO to domain conversion
 using MarketDataCollector.Ui.Shared;
@@ -41,6 +43,63 @@ public static class ConfigEndpoints
             }, jsonOptions);
         }).WithName("GetConfig")
         .WithDescription("Returns the full application configuration including symbols, storage settings, and provider options.")
+        .Produces(200);
+
+        // Get effective configuration with source annotations
+        group.MapGet(UiApiRoutes.ConfigEffective, (ConfigStore store) =>
+        {
+            var cfg = store.Load();
+            var envOverride = new ConfigEnvironmentOverride();
+            var envVars = envOverride.GetRecognizedVariables();
+
+            // Build effective config entries with source annotations
+            var entries = new List<object>();
+
+            // Core settings
+            entries.Add(BuildEntry("dataSource", cfg.DataSource.ToString(), envVars, "MDC_DATASOURCE", "IB"));
+            entries.Add(BuildEntry("dataRoot", cfg.DataRoot, envVars, "MDC_DATA_ROOT", "data"));
+            entries.Add(BuildEntry("compress", cfg.Compress?.ToString() ?? "null", envVars, "MDC_COMPRESS", "null"));
+
+            // Alpaca settings
+            if (cfg.Alpaca != null)
+            {
+                entries.Add(BuildEntry("alpaca.keyId", SensitiveValueMasker.Mask(cfg.Alpaca.KeyId), envVars, "MDC_ALPACA_KEY_ID", null));
+                entries.Add(BuildEntry("alpaca.secretKey", SensitiveValueMasker.MaskCompletely(cfg.Alpaca.SecretKey), envVars, "MDC_ALPACA_SECRET_KEY", null));
+                entries.Add(BuildEntry("alpaca.feed", cfg.Alpaca.Feed ?? "iex", envVars, "MDC_ALPACA_FEED", "iex"));
+                entries.Add(BuildEntry("alpaca.useSandbox", cfg.Alpaca.UseSandbox.ToString(), envVars, "MDC_ALPACA_SANDBOX", "False"));
+            }
+
+            // Storage settings
+            var storage = cfg.Storage;
+            entries.Add(BuildEntry("storage.namingConvention", storage?.NamingConvention ?? "BySymbol", envVars, "MDC_STORAGE_NAMING", "BySymbol"));
+            entries.Add(BuildEntry("storage.datePartition", storage?.DatePartition ?? "Daily", envVars, "MDC_STORAGE_PARTITION", "Daily"));
+            entries.Add(BuildEntry("storage.retentionDays", storage?.RetentionDays?.ToString() ?? "null", envVars, "MDC_STORAGE_RETENTION_DAYS", "null"));
+            entries.Add(BuildEntry("storage.enableParquetSink", storage?.EnableParquetSink.ToString() ?? "False", envVars, null, "False"));
+
+            // Backfill settings
+            var backfill = cfg.Backfill;
+            entries.Add(BuildEntry("backfill.enabled", backfill?.Enabled.ToString() ?? "False", envVars, "MDC_BACKFILL_ENABLED", "False"));
+            entries.Add(BuildEntry("backfill.provider", backfill?.Provider ?? "composite", envVars, "MDC_BACKFILL_PROVIDER", "composite"));
+
+            // Symbols summary
+            entries.Add(new { key = "symbols.count", value = (cfg.Symbols?.Length ?? 0).ToString(), source = "config" });
+
+            // Environment overrides summary
+            var activeOverrides = envVars.Where(v => v.IsSet).Select(v => new
+            {
+                envVar = v.EnvironmentVariable,
+                configPath = v.ConfigPath,
+                isSensitive = v.IsSensitive
+            });
+
+            return Results.Json(new
+            {
+                timestamp = DateTimeOffset.UtcNow,
+                entries,
+                environmentOverrides = activeOverrides
+            }, jsonOptions);
+        }).WithName("GetConfigEffective")
+        .WithDescription("Returns the resolved effective configuration with source annotations showing where each value comes from.")
         .Produces(200);
 
         // Update data source
@@ -153,5 +212,33 @@ public static class ConfigEndpoints
 
         // Note: Status endpoint is handled by StatusEndpoints.MapStatusEndpoints()
         // which provides live status via StatusEndpointHandlers rather than loading from file
+    }
+
+    private static object BuildEntry(
+        string key,
+        string value,
+        IReadOnlyList<EnvironmentOverrideInfo> envVars,
+        string? envVarName,
+        string? defaultValue)
+    {
+        string source;
+
+        if (envVarName != null)
+        {
+            var envInfo = envVars.FirstOrDefault(v =>
+                string.Equals(v.EnvironmentVariable, envVarName, StringComparison.OrdinalIgnoreCase));
+            if (envInfo?.IsSet == true)
+                source = $"env:{envVarName}";
+            else if (value == defaultValue)
+                source = "default";
+            else
+                source = "config";
+        }
+        else
+        {
+            source = value == defaultValue ? "default" : "config";
+        }
+
+        return new { key, value, source };
     }
 }
