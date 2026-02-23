@@ -753,6 +753,116 @@ def load_trades(symbol: str) -> pd.DataFrame:
 
 ---
 
+### 10.4 Wire export API endpoints to real backend processing
+
+**Problem:** The export endpoints in `ExportEndpoints.cs` are **stubs** -- they accept requests, return a fake `jobId` and `status: "queued"`, but never actually invoke `AnalysisExportService`. Users calling `POST /api/export/analysis` get an immediate 200 response with no export happening. This is the most critical gap in the data consumption workflow because it silently does nothing.
+
+**Improvement:** Wire the export endpoints to the real `AnalysisExportService`:
+1. `POST /api/export/analysis` should call `AnalysisExportService.ExportAsync()` with the request parameters
+2. For large exports, run in a background task and return a real job ID tracked in a `ConcurrentDictionary<string, ExportJobStatus>`
+3. `GET /api/export/jobs/{jobId}` should return real status (queued/running/complete/failed) with progress percentage
+4. `GET /api/export/download/{jobId}` should serve the completed export file
+5. Add basic job cleanup (remove completed jobs after 24 hours)
+
+The export service itself is fully implemented with 7 format writers. Only the HTTP layer is stubbed.
+
+**Value:** High -- without this, the web API export feature literally doesn't work.
+**Cost:** ~6-8 hours. The export service is built and tested; this is plumbing.
+**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/ExportEndpoints.cs`, `src/MarketDataCollector.Storage/Export/AnalysisExportService.cs`
+
+---
+
+### 10.5 Data preview before export
+
+**Problem:** Users can't preview what an export will produce before committing to it. For a large export (weeks of multi-symbol data), they can't verify that their filters are correct, see the resulting schema, or estimate the output file size. A misconfigured export wastes time and disk.
+
+**Improvement:** Add a `POST /api/export/preview` endpoint that:
+1. Applies the same filters as a real export but only reads the first 100 records
+2. Returns: sample rows, column names with types, total record estimate, projected file size
+3. Can be called from the web dashboard before clicking "Export"
+
+```json
+{
+  "sampleRows": 100,
+  "totalEstimate": 1247831,
+  "columns": ["Timestamp", "Symbol", "Price", "Volume", "Exchange"],
+  "estimatedSize": "847 MB",
+  "format": "parquet",
+  "warnings": ["Excel format limited to 1M rows; your data has 1.2M rows"]
+}
+```
+
+**Value:** Medium-High -- prevents wasted exports and builds trust in the export pipeline.
+**Cost:** ~4-6 hours. Reuse `HistoricalDataQueryService` with a limit, add size estimation.
+**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/ExportEndpoints.cs`, `src/MarketDataCollector.Application/Services/HistoricalDataQueryService.cs`
+
+---
+
+### 10.6 Wire FeatureSettings in export pipeline
+
+**Problem:** `ExportRequest` declares `FeatureSettings` and `AggregationSettings` properties that allow users to request technical indicators (SMA, EMA, RSI), rolling statistics, and time-series aggregation on export. These fields are **parsed from the request but completely ignored** during export -- data is always exported raw.
+
+Users requesting `"Features": { "IncludeIndicators": true, "IndicatorPeriods": [20, 50] }` get raw trades with no indicators, and no error or warning that their request was silently dropped.
+
+**Improvement:**
+1. Wire `FeatureSettings.IncludeIndicators` to `TechnicalIndicatorService` (already exists, uses Skender library) during the export pipeline
+2. Wire `AggregationSettings` for basic OHLCV bar aggregation from tick data
+3. If a requested feature isn't supported yet, return a `warnings` array in the response instead of silently ignoring it
+
+This turns the export from a raw data dump into an analysis-ready dataset.
+
+**Value:** High -- transforms exports from "raw firehose" into analysis-ready data, which is what researchers actually need.
+**Cost:** ~8-12 hours. `TechnicalIndicatorService` exists; wire it into the export format pipeline.
+**Files:** `src/MarketDataCollector.Storage/Export/AnalysisExportService.Formats.cs`, `src/MarketDataCollector.Application/Indicators/TechnicalIndicatorService.cs`
+
+---
+
+## Category 11: Trust & Transparency
+
+### 11.1 Data lineage in exports
+
+**Problem:** When sharing exported data with a research team or auditor, there's no metadata about where the data came from. Which provider? What quality score? Were there gaps? What was the collection session duration? Users must manually track this information.
+
+**Improvement:** Include a machine-readable manifest file alongside every export:
+
+```json
+{
+  "exportedAt": "2026-02-23T16:05:00Z",
+  "symbols": ["SPY", "AAPL"],
+  "dateRange": { "from": "2026-02-01", "to": "2026-02-23" },
+  "provider": "Alpaca",
+  "format": "parquet",
+  "qualityScores": { "SPY": 99.7, "AAPL": 98.2 },
+  "knownGaps": [{ "symbol": "SPY", "from": "10:31", "to": "10:32", "date": "2026-02-15" }],
+  "recordCount": 1247831,
+  "checksum": "sha256:abc123..."
+}
+```
+
+The data for this already exists in `DataLineageService`, `DataQualityScoringService`, and `StorageChecksumService`.
+
+**Value:** Medium-High -- essential for research reproducibility and compliance.
+**Cost:** ~4-6 hours. Assemble existing metadata into a JSON manifest alongside export output.
+**Files:** `src/MarketDataCollector.Storage/Export/AnalysisExportService.IO.cs`, `src/MarketDataCollector.Storage/Services/DataLineageService.cs`
+
+---
+
+### 11.2 Trading calendar awareness in collection status
+
+**Problem:** Users see "no data received" warnings on weekends, holidays, and outside market hours. The system has `TradingCalendar` with market hours and holiday schedules, but this context isn't surfaced to users. They can't distinguish "no data because market is closed" from "no data because provider is broken."
+
+**Improvement:**
+1. In the web dashboard status bar, show market state: `"Market: Closed (weekend) — next open: Mon 9:30 AM ET"`
+2. Suppress stale-data warnings outside market hours
+3. In the CLI, skip SLA violation logging when market is closed
+4. Add `GET /api/calendar/status` endpoint returning current market state and next open/close times
+
+**Value:** Medium-High -- eliminates false alarms that erode user trust.
+**Cost:** ~3-4 hours. `TradingCalendar` is fully implemented; expose it.
+**Files:** `src/MarketDataCollector.Application/Services/TradingCalendar.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/`
+
+---
+
 ## Priority Matrix
 
 | ID | Improvement | Value | Cost | Priority |
@@ -769,10 +879,15 @@ def load_trades(symbol: str) -> pd.DataFrame:
 | 9.4 | Role-based configuration presets | High | 4-6h | **P1** |
 | 9.5 | Bulk symbol import from file | High | 4-6h | **P1** |
 | 10.1 | Quick-query CLI for stored data | High | 6-8h | **P1** |
+| 10.4 | Wire export API to real backend | High | 6-8h | **P1** |
+| 10.6 | Wire FeatureSettings in export | High | 8-12h | **P1** |
 | 3.3 | JSON Schema for config | High | 6-8h | **P2** |
 | 2.2 | `/api/config/effective` endpoint | High | 6-8h | **P2** |
 | 9.2 | Backfill progress with ETA/resume | High | 6-8h | **P2** |
 | 9.7 | One-click export from web dashboard | High | 6-8h | **P2** |
+| 10.5 | Data preview before export | Med-High | 4-6h | **P2** |
+| 11.1 | Data lineage in exports | Med-High | 4-6h | **P2** |
+| 11.2 | Trading calendar in collection status | Med-High | 3-4h | **P2** |
 | 9.8 | Provider recommendation engine | Med-High | 6-8h | **P2** |
 | 9.9 | Alert noise reduction / grouping | Med-High | 6-8h | **P2** |
 | 9.10 | Session summary on shutdown | Med-High | 3-4h | **P2** |
@@ -811,4 +926,6 @@ def load_trades(symbol: str) -> pd.DataFrame:
 - Items in Category 5 (CI) compound in value over time as the test suite grows
 - Category 6 (code quality) items can be done opportunistically alongside other work
 - **Category 9 items are disproportionately cheap** because the backend services already exist and are tested -- the work is wiring, not building
-- Category 10 items bridge the "collection to analysis" gap that determines whether users stick with the tool long-term
+- **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Item 10.4 (wire export API) is critical -- the endpoints exist but return fake data
+- **Category 11 items** build user trust through transparency -- lineage, calendar awareness, and quality metadata make the system credible for research use
+- **Total: 48 improvements** across 11 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks)
