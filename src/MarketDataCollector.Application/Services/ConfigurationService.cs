@@ -804,10 +804,10 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Saves a modified config back to disk.
     /// </summary>
-    public void SaveConfig(AppConfig config, string? configPath = null)
+    public async Task SaveConfigAsync(AppConfig config, string? configPath = null)
     {
         var store = new ConfigStore(configPath);
-        store.SaveAsync(config).GetAwaiter().GetResult();
+        await store.SaveAsync(config).ConfigureAwait(false);
         _log.Information("Configuration saved to {Path}", store.ConfigPath);
     }
 
