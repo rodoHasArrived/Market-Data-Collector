@@ -1,6 +1,12 @@
 # Code Quality Workflow
 # Runs code formatting checks, static analysis, and documentation validation
 # Consolidated into single job to reduce restore/build cycles
+#
+# Performance optimizations:
+# - Single restore + build pass with analysis enabled
+# - Minimal verbosity on restore
+# - Diagnostics uploaded only on failure
+# - Reduced timeouts
 
 name: Code Quality
 
@@ -35,13 +41,15 @@ concurrency:
 env:
   DOTNET_VERSION: '9.0.x'
   DOTNET_NOLOGO: true
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
 
 jobs:
   quality-checks:
     name: Code Quality Checks
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -53,7 +61,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       # Format check (doesn't need build)
       - name: Check code formatting
@@ -67,7 +75,17 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true /p:TreatWarningsAsErrors=false /p:AnalysisLevel=latest /p:EnforceCodeStyleInBuild=true /p:RunAnalyzersDuringBuild=true /p:GenerateDocumentationFile=true /p:NoWarn=1591 2>&1 | tee build-output.log
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:TreatWarningsAsErrors=false \
+            /p:AnalysisLevel=latest \
+            /p:EnforceCodeStyleInBuild=true \
+            /p:RunAnalyzersDuringBuild=true \
+            /p:GenerateDocumentationFile=true \
+            /p:NoWarn=1591 \
+            2>&1 | tee build-output.log
 
       # Analyze build output for issues
       - name: Analyze build results
@@ -105,43 +123,30 @@ jobs:
             echo "has_issues=$HAS_ISSUES"
           } >> "$GITHUB_OUTPUT"
 
-          echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Generated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Format check results
-          echo "### Code Formatting" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.format-check.outcome }}" = "success" ]; then
-            echo "- Status: Passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Status: Issues detected" >> $GITHUB_STEP_SUMMARY
-            echo "- Run \`dotnet format\` locally to fix" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Static analysis results
-          echo "### Static Analysis" >> $GITHUB_STEP_SUMMARY
-          ANALYZER_WARNINGS=$(grep -cE "warning (CA|CS|IDE)" build-output.log || true)
-          echo "- Analyzer warnings: $ANALYZER_WARNINGS" >> $GITHUB_STEP_SUMMARY
-
-          # Security warnings
-          SECURITY_WARNINGS=$(grep -cE "warning SCS" build-output.log || true)
-          if [ "$SECURITY_WARNINGS" -gt 0 ]; then
-            echo "- Security warnings: $SECURITY_WARNINGS" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Nullable warnings
-          NULLABLE_WARNINGS=$(grep -cE "warning CS86" build-output.log || true)
-          if [ "$NULLABLE_WARNINGS" -gt 0 ]; then
-            echo "- Nullable reference warnings: $NULLABLE_WARNINGS" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # XML documentation
-          echo "### XML Documentation" >> $GITHUB_STEP_SUMMARY
-          XML_COUNT=$(find . -name "*.xml" -path "*/bin/Release/*" 2>/dev/null | wc -l)
-          echo "- Documentation files generated: $XML_COUNT" >> $GITHUB_STEP_SUMMARY
+          # Summary
+          {
+            echo "## Code Quality Report"
+            echo ""
+            echo "### Code Formatting"
+            if [ "${{ steps.format-check.outcome }}" = "success" ]; then
+              echo "- Status: Passed"
+            else
+              echo "- Status: Issues detected — run \`dotnet format\` locally to fix"
+            fi
+            echo ""
+            echo "### Static Analysis"
+            echo "- Analyzer warnings: $WARNING_COUNT"
+            if [ -f build-output.log ]; then
+              SECURITY_WARNINGS=$(grep -cE "warning SCS" build-output.log || true)
+              if [ "$SECURITY_WARNINGS" -gt 0 ]; then
+                echo "- Security warnings: $SECURITY_WARNINGS"
+              fi
+              NULLABLE_WARNINGS=$(grep -cE "warning CS86" build-output.log || true)
+              if [ "$NULLABLE_WARNINGS" -gt 0 ]; then
+                echo "- Nullable reference warnings: $NULLABLE_WARNINGS"
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload build log
         if: always() && steps.analyze.outputs.has_issues == '1'
@@ -149,7 +154,7 @@ jobs:
         with:
           name: build-output
           path: build-output.log
-          retention-days: 7
+          retention-days: 5
 
       # ─── AI Code Quality Analysis ──────────────────────────────────
       - name: Extract top warnings for AI
@@ -197,15 +202,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### AI Code Quality Suggestions" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Save AI response to file to avoid shell injection issues
-          # Use $RUNNER_TEMP for isolation per workflow run
           cat > "$RUNNER_TEMP/ai-response.txt" << 'HEREDOC_EOF'
           ${{ steps.ai-quality.outputs.response }}
           HEREDOC_EOF
-          
-          # Check if file has content (-s checks for non-zero size)
-          # This handles both empty responses and missing content
+
           if [ -f "$RUNNER_TEMP/ai-response.txt" ] && [ -s "$RUNNER_TEMP/ai-response.txt" ]; then
             cat "$RUNNER_TEMP/ai-response.txt" >> $GITHUB_STEP_SUMMARY
           else
@@ -253,5 +255,5 @@ jobs:
       - name: Fail workflow when quality issues exist
         if: steps.analyze.outputs.has_issues == '1'
         run: |
-          echo "Code quality issues detected. Failing workflow after creating Copilot task."
+          echo "Code quality issues detected."
           exit 1

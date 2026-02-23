@@ -36,21 +36,16 @@ runs:
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
 
-    - name: Print installed SDKs
+    - name: Print SDK version
       shell: bash
-      run: |
-        dotnet --version
-        dotnet --list-sdks
-        dotnet --info
+      run: dotnet --version
 
     - name: Cache NuGet packages
       id: nuget-cache
       uses: actions/cache@v5.0.3
       with:
-        path: |
-          ~/.nuget/packages
-          !~/.nuget/packages/unwanted
-        key: ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props', 'global.json', 'NuGet.config', 'packages.lock.json', '**/packages.lock.json') }}
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props', 'Directory.Packages.props', 'global.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}
           ${{ runner.os }}-nuget-
@@ -62,3 +57,4 @@ runs:
         echo "DOTNET_CLI_TELEMETRY_OPTOUT=1" >> $GITHUB_ENV
         echo "DOTNET_NOLOGO=true" >> $GITHUB_ENV
         echo "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1" >> $GITHUB_ENV
+        echo "DOTNET_GENERATE_ASPNET_CERTIFICATE=false" >> $GITHUB_ENV

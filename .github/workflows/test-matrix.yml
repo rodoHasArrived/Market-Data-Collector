@@ -6,6 +6,12 @@
 # separate C# / F# test runs with per-language arguments, a Category!=Integration filter,
 # platform-conditional jobs, and per-platform Codecov flags. The reusable template targets
 # simpler "build + test entire solution" scenarios.
+#
+# Performance optimizations applied:
+# - Minimal verbosity on restore/build/test to reduce log I/O
+# - blame-hang-timeout to prevent tests from hanging indefinitely
+# - Parallel test execution via xUnit defaults
+# - SDK telemetry and first-time experience disabled
 
 name: Test Matrix
 
@@ -38,14 +44,16 @@ concurrency:
 env:
   DOTNET_VERSION: '9.0.x'
   DOTNET_NOLOGO: true
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
 
 jobs:
   # Ubuntu tests always run (free tier for public repos, essential for PRs)
   test-ubuntu:
     name: Test (Linux)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -57,12 +65,12 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Build
         shell: bash
         run: |
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Run C# unit tests
         shell: bash
@@ -70,17 +78,25 @@ jobs:
           dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
             -c Release \
             --no-build \
-            --verbosity normal \
+            --verbosity minimal \
             --logger "trx;LogFileName=test-results-csharp-Linux.trx" \
             --results-directory ./TestResults \
             --collect:"XPlat Code Coverage" \
-            --filter "Category!=Integration"
+            --filter "Category!=Integration" \
+            --blame-hang-timeout 60s
 
       - name: Run F# unit tests
-        id: fsharp-tests
         shell: bash
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results-fsharp-Linux.trx" --results-directory ./TestResults /p:EnableWindowsTargeting=true
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+            -c Release \
+            --no-build \
+            --verbosity minimal \
+            --collect:"XPlat Code Coverage" \
+            --logger "trx;LogFileName=test-results-fsharp-Linux.trx" \
+            --results-directory ./TestResults \
+            /p:EnableWindowsTargeting=true \
+            --blame-hang-timeout 60s
 
       - name: Upload test results on failure
         uses: actions/upload-artifact@v4
@@ -88,7 +104,7 @@ jobs:
         with:
           name: test-results-Linux
           path: ./TestResults/
-          retention-days: 7
+          retention-days: 5
 
       - name: Upload coverage to Codecov
         if: success()
@@ -106,7 +122,7 @@ jobs:
     # Skip on PRs to reduce billing - only run on pushes to main and manual triggers
     if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -126,14 +142,14 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Build
         shell: bash
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Run C# unit tests
         shell: bash
@@ -141,18 +157,26 @@ jobs:
           dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
             -c Release \
             --no-build \
-            --verbosity normal \
+            --verbosity minimal \
             --logger "trx;LogFileName=test-results-csharp-${{ matrix.os_name }}.trx" \
             --results-directory ./TestResults \
-            --filter "Category!=Integration"
+            --filter "Category!=Integration" \
+            --blame-hang-timeout 60s
 
       - name: Run F# unit tests
-        id: fsharp-tests
         shell: bash
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" --results-directory ./TestResults /p:EnableWindowsTargeting=true
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+            -c Release \
+            --no-build \
+            --verbosity minimal \
+            --collect:"XPlat Code Coverage" \
+            --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" \
+            --results-directory ./TestResults \
+            /p:EnableWindowsTargeting=true \
+            --blame-hang-timeout 60s
 
       - name: Upload test results on failure
         uses: actions/upload-artifact@v4
@@ -160,24 +184,19 @@ jobs:
         with:
           name: test-results-${{ matrix.os_name }}
           path: ./TestResults/
-          retention-days: 7
+          retention-days: 5
 
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
     needs: [test-ubuntu, test-other-platforms]
     if: always()
-    timeout-minutes: 5
+    timeout-minutes: 2
 
     steps:
       - name: Generate test summary
         run: |
           echo "# Test Matrix Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Run Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          echo "## Platform Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
