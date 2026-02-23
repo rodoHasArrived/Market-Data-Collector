@@ -375,7 +375,7 @@ public partial class Program
                 cfg.DataSource, errorCode, errorCode.ToExitCode());
 
             // Display user-friendly error with actionable suggestions
-            FriendlyErrorFormatter.DisplayError(ex);
+            FriendlyErrorFormatter.DisplayError(FriendlyErrorFormatter.Format(ex));
 
             return errorCode.ToExitCode();
         }
