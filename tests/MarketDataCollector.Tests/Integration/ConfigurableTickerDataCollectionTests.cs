@@ -15,7 +15,7 @@ namespace MarketDataCollector.Tests.Integration;
 /// Defaults to "SPY" if the variable is not set.
 /// Output format can be selected via YAHOO_TICKER_OUTPUT_FORMAT (json or csv).
 ///
-/// Outputs are written as JSON files to the ArtifactOutput directory for CI artifact upload.
+/// Outputs are written as JSON or CSV files (based on the selected format) to the ArtifactOutput directory for CI artifact upload.
 ///
 /// Run locally:
 ///   YAHOO_TICKER_SYMBOLS=SPY,AAPL dotnet test --filter "FullyQualifiedName~ConfigurableTickerDataCollectionTests"
