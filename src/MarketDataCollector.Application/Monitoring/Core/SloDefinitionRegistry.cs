@@ -189,6 +189,15 @@ public sealed class SloDefinitionRegistry
     }
 
     /// <summary>
+    /// Removes an SLO definition by its ID.
+    /// </summary>
+    /// <returns>True if the definition was removed; false if it was not found.</returns>
+    public bool Unregister(string sloId)
+    {
+        return _definitions.TryRemove(sloId, out _);
+    }
+
+    /// <summary>
     /// Gets an SLO definition by its ID.
     /// </summary>
     public SloDefinition? Get(string sloId)
