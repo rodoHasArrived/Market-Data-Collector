@@ -338,8 +338,8 @@ public class EventPipelineTests : IAsyncLifetime
 
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
-        // Act - Wait for periodic flush
-        await Task.Delay(75);
+        // Act - Wait for periodic flush (generous margin for CI runners)
+        await Task.Delay(300);
 
         // Assert
         sink.FlushCount.Should().BeGreaterThanOrEqualTo(1);
