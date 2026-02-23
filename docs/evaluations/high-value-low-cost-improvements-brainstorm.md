@@ -436,6 +436,323 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 ---
 
+## Category 9: End-User Experience — Data Collection Workflow
+
+> **Key insight:** Many of the services below are already fully built and tested in the backend (`BackfillCheckpointService`, `WorkspaceService`, `CommandPaletteService`, `AlertService`, `FriendlyErrorFormatter`, `OnboardingTourService`). The work is **wiring**, not building from scratch.
+
+### 9.1 Data freshness indicator on web dashboard
+
+**Problem:** The web dashboard auto-refreshes but gives no indication of whether the data shown is live, stale, or demo/fixture data. Users report spending 15+ minutes trying to determine if the system is actually collecting real data. The dashboard in fixture mode looks identical to live mode.
+
+**Improvement:** Add a persistent status bar to the dashboard HTML template showing:
+- Provider connection state (green/yellow/red dot per provider)
+- "Last event received: 3 seconds ago" timestamp with staleness coloring (green <10s, yellow <60s, red >60s)
+- A clear badge if fixture/demo mode is active: `[DEMO MODE]`
+- Event throughput: `42 events/sec`
+
+The data is already available from `/api/status` and `/api/providers/status`. This is purely a frontend template change.
+
+**Value:** High -- the #1 user question is "is the system actually running?"
+**Cost:** ~3-4 hours. Modify the HTML template in `wwwroot/templates/` to poll `/api/status` and render the bar.
+**Files:** `src/MarketDataCollector/wwwroot/templates/`, `src/MarketDataCollector.Application/Http/HtmlTemplates.cs`
+
+---
+
+### 9.2 Backfill progress with ETA and resumability
+
+**Problem:** Long-running backfills (e.g., 5 years of daily bars for 100 symbols) show minimal progress feedback. If a backfill fails halfway, users must restart from scratch. `BackfillCheckpointService` exists with 22 passing tests but isn't wired to the backfill execution path or exposed in the web API.
+
+**Improvement:**
+1. Wire `BackfillCheckpointService` into `HistoricalBackfillService` to persist progress per symbol
+2. Add a `--resume` flag to the backfill CLI that picks up from the last checkpoint
+3. Enhance `/api/backfill/status` to include per-symbol progress percentage, bars fetched, and ETA
+4. Display a summary line in the CLI: `"Backfill: SPY 847/1260 bars (67%) — ETA 2m 15s | AAPL queued"`
+
+**Value:** High -- backfills can take hours; losing progress is the #2 user complaint.
+**Cost:** ~6-8 hours. The checkpoint service is built; this is integration work.
+**Files:** `src/MarketDataCollector.Application/Backfill/HistoricalBackfillService.cs`, `src/MarketDataCollector.Ui.Services/Services/BackfillCheckpointService.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/BackfillEndpoints.cs`
+
+---
+
+### 9.3 Friendly error messages with "what to do next"
+
+**Problem:** `FriendlyErrorFormatter` exists with 30+ classified error codes (MDC-CFG-001, MDC-AUTH-002, etc.) and includes suggested actions and doc links. However, it's not integrated into all error paths -- many errors still surface as raw exceptions or generic HTTP status codes. Users report spending 30+ minutes debugging simple credential issues.
+
+**Improvement:** Integrate `FriendlyErrorFormatter` into:
+1. CLI startup errors (wrap the top-level try/catch in `Program.cs`)
+2. Provider connection failures (catch in `ConnectAsync` implementations)
+3. HTTP API error responses (use in `EndpointHelpers` for consistent error JSON)
+
+Example before: `"System.Net.Http.HttpRequestException: Response status code does not indicate success: 401 (Unauthorized)"`
+
+Example after:
+```
+MDC-AUTH-002: Authentication failed for Alpaca provider
+  → Check that ALPACA__KEYID and ALPACA__SECRETKEY environment variables are set
+  → Verify your API key is active at https://app.alpaca.markets/
+  → Run: dotnet run -- --validate-credentials
+  → Docs: docs/providers/alpaca-setup.md
+```
+
+**Value:** High -- transforms cryptic errors into self-service debugging.
+**Cost:** ~4-6 hours. The formatter exists; wire it to the 3 error surface areas.
+**Files:** `src/MarketDataCollector/Program.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/EndpointHelpers.cs`, provider `ConnectAsync` methods
+
+---
+
+### 9.4 Role-based configuration presets for first-time setup
+
+**Problem:** The configuration wizard asks many questions. New users don't know which provider to choose, how many depth levels to capture, or what storage settings to use. The project has 5+ streaming providers, 10+ historical providers, and dozens of config knobs.
+
+**Improvement:** Add 4 role-based presets to `ConfigurationWizard` and `AutoConfigurationService`:
+
+| Preset | Description | Defaults |
+|--------|-------------|----------|
+| **Researcher** | Historical analysis, daily bars | Stooq + Yahoo backfill, BySymbol storage, Parquet export, no real-time |
+| **Day Trader** | Real-time streaming, L2 data | Alpaca streaming, 10 depth levels, JSONL hot storage, low-latency profile |
+| **Options Trader** | Options chain + Greeks | IB streaming, derivatives enabled, weekly/monthly expirations |
+| **Crypto** | 24/7 crypto collection | Alpaca crypto feed, no market hours filter, extended retention |
+
+Each preset sets ~15 config values at once. Users can customize after applying a preset.
+
+**Value:** High -- reduces time-to-value from 30+ minutes of config to 2 minutes.
+**Cost:** ~4-6 hours. Define preset dictionaries, add `--preset <name>` CLI flag.
+**Files:** `src/MarketDataCollector.Application/Services/ConfigurationWizard.cs`, `src/MarketDataCollector.Application/Services/AutoConfigurationService.cs`
+
+---
+
+### 9.5 Bulk symbol import from CSV/text file
+
+**Problem:** Adding 100+ symbols requires either editing `appsettings.json` manually or using `--symbols-add` one batch at a time. There's no way to import from a watchlist file, a broker export, or a simple text file with one symbol per line.
+
+**Improvement:** Add `--symbols-import <file>` CLI flag that:
+1. Reads a file (CSV, TXT, or JSON)
+2. Detects format automatically (one-per-line, comma-separated, or JSON array)
+3. Validates each symbol against the active provider's symbol search
+4. Shows a preview: `"Found 147 valid symbols, 3 unknown (XYZ, FOO, BAR). Proceed? [Y/n]"`
+5. Adds validated symbols to the configuration
+
+Also add `--symbols-export <file>` to export the current symbol list for sharing.
+
+**Value:** High -- users with large portfolios save hours of manual entry.
+**Cost:** ~4-6 hours. File parsing is trivial; symbol validation uses existing `ISymbolSearchProvider`.
+**Files:** `src/MarketDataCollector.Application/Commands/SymbolCommands.cs`
+
+---
+
+### 9.6 Collection health email/webhook digest
+
+**Problem:** `DailySummaryWebhook` sends Slack/Discord/Teams notifications at market close. But many users want a simple email digest or don't use chat platforms. There's also no weekly summary -- only daily.
+
+**Improvement:**
+1. Add a `WeeklySummaryWebhook` that aggregates daily stats into a week-over-week comparison:
+   - Total events collected vs. previous week
+   - Average SLA compliance with trend arrow
+   - Top 5 symbols by gap count
+   - Storage growth rate and projected capacity
+2. Add an `--email-digest <address>` config option using SMTP (basic `SmtpClient` or `MailKit`)
+3. Add `"Summary.Schedule": "daily|weekly|both"` config option
+
+**Value:** Medium-High -- keeps users informed without requiring dashboard checks.
+**Cost:** ~6-8 hours. Daily webhook exists; extend with weekly aggregation and email transport.
+**Files:** `src/MarketDataCollector.Application/Services/DailySummaryWebhook.cs`
+
+---
+
+### 9.7 One-click data export from web dashboard
+
+**Problem:** The export API exists (7 formats: Parquet, CSV, JSON, Arrow, SQL, Excel, Lean) but can only be triggered via API calls or the WPF desktop app. The web dashboard has no export UI. Users collecting data headlessly on a server must craft API calls manually.
+
+**Improvement:** Add an export section to the web dashboard HTML template:
+1. Symbol selector (multi-select from monitored symbols)
+2. Date range picker (from/to)
+3. Format selector (dropdown: CSV, Parquet, JSON)
+4. "Export" button that calls `POST /api/export/create` and shows download link
+5. Recent exports list from `/api/export/history`
+
+The backend endpoints already exist. This is a frontend-only addition.
+
+**Value:** High -- makes headless server deployments fully self-service.
+**Cost:** ~6-8 hours. HTML/JS template work; all backend endpoints exist.
+**Files:** `src/MarketDataCollector/wwwroot/templates/`, `src/MarketDataCollector.Application/Http/HtmlTemplates.cs`
+
+---
+
+### 9.8 Provider comparison and recommendation engine
+
+**Problem:** New users face 5 streaming providers and 10 historical providers with no guidance on which to choose. The provider comparison doc exists in markdown but isn't programmatically accessible. Users must read docs and cross-reference feature tables manually.
+
+**Improvement:** Add a `--recommend-providers` CLI command that:
+1. Asks what symbols the user wants to collect (or reads from config)
+2. Checks which providers support those symbols (via `ISymbolSearchProvider`)
+3. Checks which providers the user has credentials for
+4. Scores providers by: credential availability, symbol coverage, rate limits, data types supported
+5. Outputs a recommendation table:
+
+```
+Recommended providers for your 15 symbols:
+  Streaming: Alpaca (✓ credentials, 15/15 symbols, trades+quotes)
+  Backfill:  Stooq (✓ free, 15/15 symbols, daily bars)
+             Yahoo Finance (✓ free, 15/15 symbols, daily bars, backup)
+  Note: IB would add L2 depth but requires TWS running
+```
+
+**Value:** Medium-High -- eliminates the "which provider?" analysis paralysis.
+**Cost:** ~6-8 hours. Provider metadata exists in `DataSourceRegistry`; build scoring logic.
+**Files:** `src/MarketDataCollector.Application/Commands/` (new command), `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs`
+
+---
+
+### 9.9 Alert noise reduction with smart grouping
+
+**Problem:** During market volatility or provider outages, users receive 100+ alerts per minute for related issues (each stale symbol generates a separate SLA violation, each reconnection attempt generates a separate alert). The `AlertService` has deduplication and suppression logic, but this is only in the WPF desktop app -- not in the web dashboard or webhook notifications.
+
+**Improvement:** Add alert aggregation to `ConnectionStatusWebhook` and `BackpressureAlertService`:
+1. If 5+ symbols trigger SLA violations within 60 seconds, send a single grouped alert: `"SLA violation: 12 symbols stale (SPY, AAPL, MSFT, +9 more) — likely provider outage"`
+2. If 3+ reconnection attempts occur in 5 minutes, summarize: `"Provider Alpaca: 5 reconnection attempts in last 5 min, currently retrying (attempt 3/10)"`
+3. Send a "resolved" summary when the batch clears: `"12 symbols recovered after 3m 15s outage"`
+
+**Value:** Medium-High -- prevents alert fatigue, which causes users to ignore real problems.
+**Cost:** ~6-8 hours. Add a batching/windowing layer before webhook dispatch.
+**Files:** `src/MarketDataCollector.Application/Monitoring/ConnectionStatusWebhook.cs`, `src/MarketDataCollector.Application/Monitoring/DataQuality/DataFreshnessSlaMonitor.cs`
+
+---
+
+### 9.10 Data completeness summary in CLI output
+
+**Problem:** After a collection session ends (graceful shutdown), there's no summary of what was collected. Users must query the API or inspect storage files to understand the session's output. The daily summary webhook provides some of this, but only for users who configured webhooks.
+
+**Improvement:** On graceful shutdown, print a collection session summary to the console:
+
+```
+Session Summary (2h 15m 42s):
+  Events collected:  1,247,831
+  Events dropped:    23 (0.002%)
+  Symbols active:    15
+  Data completeness: 99.8%
+  Storage written:   847 MB (JSONL: 623 MB, Parquet: 224 MB)
+  Gaps detected:     2 (SPY 10:31-10:32, AAPL 14:05-14:06)
+  Files created:     45
+```
+
+The data is available from `Metrics`, `DataQualityMonitoringService`, and `StorageCatalogService`.
+
+**Value:** Medium-High -- gives immediate feedback on session quality without additional tools.
+**Cost:** ~3-4 hours. Wire existing metrics into `GracefulShutdownService` summary.
+**Files:** `src/MarketDataCollector.Application/Services/GracefulShutdownService.cs`
+
+---
+
+### 9.11 Predictive storage capacity warnings
+
+**Problem:** Storage fills up silently. Users discover disk full errors only when writes start failing. `QuotaEnforcementService` exists for hard limits, but there's no **predictive** warning ("at current rate, storage will be full in 3 days").
+
+**Improvement:** Add a periodic check (every hour) that:
+1. Calculates average storage growth rate over the last 24 hours
+2. Projects when available disk space will be exhausted
+3. If projected exhaustion is within 7 days, emit a warning: `"Storage warning: At current rate (2.3 GB/day), disk will be full in 4.2 days. Consider enabling tier migration or increasing disk space."`
+4. Expose via `/api/storage/capacity-forecast` endpoint
+
+**Value:** Medium -- prevents data loss from full disks.
+**Cost:** ~4-6 hours. Storage metrics exist; add trend calculation and alert.
+**Files:** `src/MarketDataCollector.Storage/Services/QuotaEnforcementService.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/StorageEndpoints.cs`
+
+---
+
+### 9.12 Keyboard shortcut and command palette wiring (WPF)
+
+**Problem:** The WPF desktop app has `CommandPaletteService` (47 commands with fuzzy search) and `KeyboardShortcutService` (35+ shortcuts) fully implemented and tested. But the Ctrl+K hotkey to open the command palette isn't wired in the main window, and many shortcuts aren't connected to their actions. Users don't know these features exist.
+
+**Improvement:**
+1. Wire `Ctrl+K` in `MainWindow.xaml.cs` to open `CommandPaletteWindow`
+2. Show a subtle first-run hint: "Press Ctrl+K to open the command palette"
+3. Add a "Keyboard Shortcuts" link in the navigation footer
+4. Ensure the top 10 most-used commands (navigate to page, start backfill, toggle theme) are wired
+
+**Value:** Medium -- transforms the desktop app from click-heavy to keyboard-driven.
+**Cost:** ~2-3 hours. The services exist and are tested; this is event wiring.
+**Files:** `src/MarketDataCollector.Wpf/MainWindow.xaml.cs`, `src/MarketDataCollector.Wpf/Views/CommandPaletteWindow.xaml.cs`
+
+---
+
+## Category 10: Data Consumption & Analysis Workflow
+
+### 10.1 Quick-query CLI for stored data
+
+**Problem:** Users collect data continuously but querying it requires either writing code, using the export API, or opening files manually. There's no quick CLI command to answer "what's the last price for SPY?" or "how many bars do I have for AAPL in January?"
+
+**Improvement:** Add a `--query` CLI mode with common queries:
+
+```bash
+# Last known price
+dotnet run -- --query "last SPY"
+# Output: SPY | Last: 512.34 | Time: 2026-02-23 15:59:58 | Source: Alpaca
+
+# Data inventory
+dotnet run -- --query "count AAPL --from 2026-01-01 --to 2026-01-31"
+# Output: AAPL | Trades: 1,247,831 | Quotes: 2,891,203 | Bars: 22 | Gaps: 0
+
+# Date range summary
+dotnet run -- --query "summary SPY --from 2026-02-01"
+# Output: SPY | 16 trading days | 99.7% complete | 2 gaps (total: 4m)
+```
+
+**Value:** High -- enables instant data verification without leaving the terminal.
+**Cost:** ~6-8 hours. Use `HistoricalDataQueryService` and `StorageCatalogService` as backends.
+**Files:** `src/MarketDataCollector.Application/Commands/` (new query command)
+
+---
+
+### 10.2 Automatic Parquet conversion for completed trading days
+
+**Problem:** Real-time data is stored as JSONL (optimized for append writes). For analysis, users prefer Parquet (columnar, compressed, fast queries). Currently, Parquet conversion requires manual export or the `CompositeSink` writing both formats simultaneously (doubling I/O).
+
+**Improvement:** Add a background task that runs after market close (or on a schedule):
+1. Identifies completed trading days with JSONL files but no Parquet files
+2. Converts JSONL to Parquet in the background
+3. Optionally deletes the JSONL originals after successful conversion (configurable)
+4. Logs: `"Converted 15 JSONL files to Parquet (saved 340 MB). Originals retained."`
+
+This separates the write-optimized hot path (JSONL) from the read-optimized archive (Parquet) without runtime overhead.
+
+**Value:** Medium-High -- gives users analysis-ready files automatically.
+**Cost:** ~6-8 hours. Both JSONL reading and Parquet writing exist; add a scheduled converter.
+**Files:** `src/MarketDataCollector.Storage/Services/`, `src/MarketDataCollector.Application/Scheduling/`
+
+---
+
+### 10.3 Python/R loader script generation with exports
+
+**Problem:** `PortableDataPackager` creates ZIP packages with loader scripts, but these are only generated for explicit package operations. Users who just want to analyze today's data in Python must write their own loading code.
+
+**Improvement:** Add a `--generate-loader` CLI flag that outputs a ready-to-run Python/R script for the current data directory:
+
+```bash
+dotnet run -- --generate-loader python --output ./load_data.py
+```
+
+Generated script:
+```python
+import pandas as pd
+from pathlib import Path
+
+DATA_DIR = Path("/data/live/alpaca/2026-02-23")
+symbols = ["SPY", "AAPL", "MSFT"]
+
+def load_trades(symbol: str) -> pd.DataFrame:
+    return pd.read_json(DATA_DIR / f"{symbol}_trades.jsonl", lines=True)
+
+# Quick start:
+# df = load_trades("SPY")
+# print(df.describe())
+```
+
+**Value:** Medium -- bridges the gap from "collected data" to "usable data" in 10 seconds.
+**Cost:** ~3-4 hours. Template-based generation; the storage path conventions are well-defined.
+**Files:** `src/MarketDataCollector.Application/Commands/` (new command), or extend `PortableDataPackager.Scripts.cs`
+
+---
+
 ## Priority Matrix
 
 | ID | Improvement | Value | Cost | Priority |
@@ -447,8 +764,19 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 | 6.1 | Replace bare catch blocks | High | 2-4h | **P1** |
 | 3.1 | Environment variable reference doc | High | 3-4h | **P1** |
 | 5.4 | Graceful shutdown integration test | High | 6-8h | **P1** |
+| 9.1 | Data freshness indicator on dashboard | High | 3-4h | **P1** |
+| 9.3 | Friendly error messages wiring | High | 4-6h | **P1** |
+| 9.4 | Role-based configuration presets | High | 4-6h | **P1** |
+| 9.5 | Bulk symbol import from file | High | 4-6h | **P1** |
+| 10.1 | Quick-query CLI for stored data | High | 6-8h | **P1** |
 | 3.3 | JSON Schema for config | High | 6-8h | **P2** |
 | 2.2 | `/api/config/effective` endpoint | High | 6-8h | **P2** |
+| 9.2 | Backfill progress with ETA/resume | High | 6-8h | **P2** |
+| 9.7 | One-click export from web dashboard | High | 6-8h | **P2** |
+| 9.8 | Provider recommendation engine | Med-High | 6-8h | **P2** |
+| 9.9 | Alert noise reduction / grouping | Med-High | 6-8h | **P2** |
+| 9.10 | Session summary on shutdown | Med-High | 3-4h | **P2** |
+| 10.2 | Auto Parquet conversion after close | Med-High | 6-8h | **P2** |
 | 1.2 | Legacy config deprecation warning | Medium | 1-2h | **P2** |
 | 1.3 | Provider-specific field validation | Medium | 3-4h | **P2** |
 | 2.3 | WAL recovery metrics | Medium | 2-3h | **P2** |
@@ -460,11 +788,15 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 | 5.3 | Benchmark regression detection | Medium | 4-6h | **P2** |
 | 3.2 | Offline config validation CLI | Medium | 4-6h | **P2** |
 | 3.4 | `make quickstart` target | Medium | 2-3h | **P2** |
+| 9.6 | Weekly digest and email support | Medium | 6-8h | **P2** |
+| 9.11 | Predictive storage capacity warnings | Medium | 4-6h | **P2** |
+| 10.3 | Python/R loader script generation | Medium | 3-4h | **P2** |
 | 6.2 | `TimeProvider` abstraction | Medium | 4-6h | **P3** |
 | 6.4 | Endpoint handler consolidation | Medium | 6-8h | **P3** |
 | 7.2 | API key rotation | Medium | 4-6h | **P3** |
 | 8.1 | Parallel provider initialization | Medium | 2-3h | **P3** |
 | 8.2 | Conditional Parquet sink | Medium | 2-3h | **P3** |
+| 9.12 | Command palette hotkey wiring | Medium | 2-3h | **P3** |
 | 6.3 | `Lazy<T>` consolidation | Low-Med | 4-8h | **P3** |
 | 8.3 | Config double-read elimination | Low | 2-3h | **P4** |
 
@@ -478,3 +810,5 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 - Items in Categories 1-2 (startup/ops) deliver the most immediate user-facing value
 - Items in Category 5 (CI) compound in value over time as the test suite grows
 - Category 6 (code quality) items can be done opportunistically alongside other work
+- **Category 9 items are disproportionately cheap** because the backend services already exist and are tested -- the work is wiring, not building
+- Category 10 items bridge the "collection to analysis" gap that determines whether users stick with the tool long-term
