@@ -1,3 +1,4 @@
+using MarketDataCollector.Contracts.Export;
 using MarketDataCollector.Ui.Services.Services;
 using MarketDataCollector.Wpf.Services;
 
@@ -55,7 +56,7 @@ public sealed class ExportPresetServiceTests
         var presets = service.Presets;
 
         // Assert
-        presets.Should().BeAssignableTo<IReadOnlyList<Contracts.Export.ExportPreset>>();
+        presets.Should().BeAssignableTo<IReadOnlyList<ExportPreset>>();
     }
 
     [Fact]
