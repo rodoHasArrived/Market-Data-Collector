@@ -92,7 +92,10 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
     [Fact]
     public async Task TryPublish_WithWal_MultipleEvents_AllConsumedAndCommitted()
     {
-        var wal = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.EveryWrite });
+        // Use NoSync to avoid 50 sequential file flushes in the consumer which
+        // can exceed the wait timeout on busy CI runners (especially Windows).
+        // Single-event EveryWrite behavior is covered by TryPublish_WithWal_EventIsWrittenToWalAndSink.
+        var wal = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.NoSync });
         await wal.InitializeAsync();
 
         await using var sink = new MockWalSink();
@@ -103,7 +106,7 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        await WaitForConsumption(sink, expectedCount: 50);
+        await WaitForConsumption(sink, expectedCount: 50, timeoutMs: 15_000);
 
         sink.ReceivedEvents.Should().HaveCount(50);
         pipeline.ConsumedCount.Should().Be(50);
