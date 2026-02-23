@@ -273,15 +273,19 @@ public class JsonlBatchWriteTests : IDisposable
         var batchOptions = new JsonlBatchOptions { BatchSize = 5, Enabled = true, FlushInterval = TimeSpan.FromMinutes(5) };
         var options = new StorageOptions { RootPath = _testRoot };
         var policy = new TestStoragePolicy(_testRoot);
-        await using var sink = new JsonlStorageSink(options, policy, batchOptions);
 
-        // Act
-        for (int i = 0; i < 5; i++)
+        // Use a block scope so the sink is disposed (releasing file handles) before reading
         {
-            await sink.AppendAsync(CreateTestEvent("AAPL", i));
+            await using var sink = new JsonlStorageSink(options, policy, batchOptions);
+
+            // Act
+            for (int i = 0; i < 5; i++)
+            {
+                await sink.AppendAsync(CreateTestEvent("AAPL", i));
+            }
         }
 
-        // Assert
+        // Assert - sink is disposed, file handles released
         var files = Directory.GetFiles(_testRoot, "*.jsonl", SearchOption.AllDirectories);
         files.Should().HaveCount(1);
 

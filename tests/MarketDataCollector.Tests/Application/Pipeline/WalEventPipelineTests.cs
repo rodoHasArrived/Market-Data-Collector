@@ -104,6 +104,7 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
         }
 
         await WaitForConsumption(sink, expectedCount: 50);
+        await WaitForPipelineConsumedCount(pipeline, expectedCount: 50);
 
         sink.ReceivedEvents.Should().HaveCount(50);
         pipeline.ConsumedCount.Should().Be(50);
@@ -360,6 +361,15 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (sink.ReceivedEvents.Count < expectedCount && sw.ElapsedMilliseconds < timeoutMs)
+        {
+            await Task.Delay(1);
+        }
+    }
+
+    private static async Task WaitForPipelineConsumedCount(EventPipeline pipeline, int expectedCount, int timeoutMs = 5000)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (pipeline.ConsumedCount < expectedCount && sw.ElapsedMilliseconds < timeoutMs)
         {
             await Task.Delay(1);
         }
