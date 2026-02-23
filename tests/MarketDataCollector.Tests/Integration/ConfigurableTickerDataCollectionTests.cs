@@ -63,10 +63,21 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
 
     private static OutputFormat GetConfiguredOutputFormat()
     {
-        var envValue = Environment.GetEnvironmentVariable("YAHOO_TICKER_OUTPUT_FORMAT");
-        if (string.Equals(envValue, "csv", StringComparison.OrdinalIgnoreCase))
-            return OutputFormat.Csv;
+        var envValueRaw = Environment.GetEnvironmentVariable("YAHOO_TICKER_OUTPUT_FORMAT");
+        var envValue = envValueRaw?.Trim();
 
+        if (string.IsNullOrEmpty(envValue))
+        {
+            return OutputFormat.Json;
+        }
+
+        if (string.Equals(envValue, "csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return OutputFormat.Csv;
+        }
+
+        System.Console.Error.WriteLine(
+            $"Unsupported YAHOO_TICKER_OUTPUT_FORMAT value '{envValueRaw}'. Falling back to JSON.");
         return OutputFormat.Json;
     }
 
