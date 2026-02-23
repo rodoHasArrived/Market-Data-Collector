@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-23T13:43:38.314927+00:00
+> Last updated: 2026-02-23T15:32:08.493394+00:00
 
 ## Summary
 
@@ -50,7 +50,7 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:516`
   > ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison ProviderHealthComparison below is for overall provider ranking
 
-- [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:154`
+- [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:213`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
 
 - [ ] `src/MarketDataCollector.Wpf/GlobalUsings.cs:7`
