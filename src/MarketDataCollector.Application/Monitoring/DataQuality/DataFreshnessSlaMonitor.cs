@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring.DataQuality;
@@ -214,6 +215,23 @@ public sealed class DataFreshnessSlaMonitor : IDisposable
         var threshold = customThresholdSeconds ?? _config.GetThresholdForSymbol(symbol);
         _symbolStates.GetOrAdd(symbol, s => new SymbolFreshnessState(s, threshold));
         _log.Debug("Registered symbol {Symbol} for SLA monitoring with threshold {Threshold}s", symbol, threshold);
+    }
+
+    /// <summary>
+    /// Registers a symbol for SLA monitoring with a threshold derived from its liquidity profile.
+    /// Illiquid symbols receive longer freshness thresholds to avoid false SLA violations.
+    /// </summary>
+    public void RegisterSymbolLiquidity(string symbol, LiquidityProfile profile)
+    {
+        var thresholds = LiquidityProfileProvider.GetThresholds(profile);
+        var freshnessThreshold = thresholds.FreshnessThresholdSeconds;
+
+        // Remove and re-add to update the threshold
+        _symbolStates.TryRemove(symbol, out _);
+        _symbolStates.GetOrAdd(symbol, s => new SymbolFreshnessState(s, freshnessThreshold));
+
+        _log.Debug("Registered symbol {Symbol} with liquidity profile {Profile} (SLA threshold: {Threshold}s)",
+            symbol, profile, freshnessThreshold);
     }
 
     /// <summary>

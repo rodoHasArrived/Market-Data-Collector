@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring.DataQuality;
@@ -13,6 +14,7 @@ public sealed class CompletenessScoreCalculator : IDisposable
 {
     private readonly ILogger _log = LoggingSetup.ForContext<CompletenessScoreCalculator>();
     private readonly ConcurrentDictionary<string, SymbolDateState> _states = new();
+    private readonly ConcurrentDictionary<string, LiquidityProfile> _symbolLiquidity = new();
     private readonly CompletenessConfig _config;
     private readonly Timer _cleanupTimer;
     private volatile bool _isDisposed;
@@ -28,6 +30,25 @@ public sealed class CompletenessScoreCalculator : IDisposable
     }
 
     /// <summary>
+    /// Registers a liquidity profile for a symbol. When set, the expected events per hour
+    /// for that symbol will be derived from the profile instead of the global default.
+    /// </summary>
+    public void RegisterSymbolLiquidity(string symbol, LiquidityProfile profile)
+    {
+        _symbolLiquidity[symbol.ToUpperInvariant()] = profile;
+        var thresholds = LiquidityProfileProvider.GetThresholds(profile);
+
+        // Update any existing states for this symbol
+        foreach (var state in _states.Values.Where(s => s.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)))
+        {
+            state.SetExpectedEventsPerHour(thresholds.ExpectedEventsPerHour);
+        }
+
+        _log.Debug("Registered liquidity profile {Profile} for {Symbol} (expected {Expected} events/hour)",
+            profile, symbol, thresholds.ExpectedEventsPerHour);
+    }
+
+    /// <summary>
     /// Records an event for completeness tracking.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,7 +58,17 @@ public sealed class CompletenessScoreCalculator : IDisposable
 
         var date = DateOnly.FromDateTime(timestamp.UtcDateTime);
         var key = GetKey(symbol, date);
-        var state = _states.GetOrAdd(key, _ => new SymbolDateState(symbol, date, _config));
+        var state = _states.GetOrAdd(key, _ =>
+        {
+            var s = new SymbolDateState(symbol, date, _config);
+            // Apply liquidity-derived expected events if a profile is registered
+            if (_symbolLiquidity.TryGetValue(symbol.ToUpperInvariant(), out var profile))
+            {
+                var thresholds = LiquidityProfileProvider.GetThresholds(profile);
+                s.SetExpectedEventsPerHour(thresholds.ExpectedEventsPerHour);
+            }
+            return s;
+        });
         state.RecordEvent(timestamp, eventType);
     }
 
