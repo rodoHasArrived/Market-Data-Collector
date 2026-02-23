@@ -29,7 +29,10 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", Guid.NewGuid().ToString("N")[..12]);
+            var outputDir = Path.Combine(
+                Path.GetTempPath(),
+                "mdc-exports",
+                $"{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}");
 
             var exportRequest = new ExportRequest
             {
