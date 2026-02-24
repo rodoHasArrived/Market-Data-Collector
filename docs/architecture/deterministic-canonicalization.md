@@ -53,6 +53,16 @@ Equivalent market events from different providers for the same instrument should
 | `EventSchema` + `DataDictionary` | `Contracts/Schema/EventSchema.cs` | Schema definitions with `TradeConditions` and `QuoteConditions` dictionaries already in the model. |
 | `CrossProviderComparisonService` | `Application/Monitoring/DataQuality/` | Tracks price/volume discrepancies across providers. |
 
+### Existing convergence layer (collectors)
+
+All providers already converge through three collector classes that normalize the intermediate domain models:
+
+- **`TradeDataCollector`** accepts `MarketTradeUpdate` from any provider, validates symbol format and sequence bounds, emits `Trade` payloads and `IntegrityEvent` for anomalies.
+- **`QuoteCollector`** accepts `MarketQuoteUpdate`, maintains BBO state per symbol, auto-increments a local sequence number.
+- **`MarketDepthCollector`** accepts `MarketDepthUpdate` (position-based deltas), maintains per-symbol order book buffers, emits `LOBSnapshot`.
+
+These collectors handle **structural normalization** (consistent types, field validation) but do **not** perform **identity resolution** (canonical symbol), **semantic normalization** (condition codes), or **provenance tagging** (canonical venue). Canonicalization is a layer above the collectors, operating on the `MarketEvent` envelope after the collector produces a typed payload.
+
 ### Gaps to fill
 
 | Gap | Impact | Effort |
@@ -64,6 +74,73 @@ Equivalent market events from different providers for the same instrument should
 | No `CanonicalizationVersion` field | Cannot pin backtests to a specific transform | Low - add field to `MarketEvent` record |
 | No `CanonicalSymbol` field on envelope | Consumers must resolve symbols themselves | Low - add field to `MarketEvent` record |
 | No dead-letter routing for unmapped events | Unmappable events silently persist with raw data | Medium - add quarantine sink option |
+
+## Provider Field Audit
+
+The following tables document the concrete differences discovered by reading each provider's implementation. These drive the mapping tables in the detailed design.
+
+### Timestamp Formats
+
+| Provider | Source | Format | Unit | Fallback |
+|----------|--------|--------|------|----------|
+| Alpaca (`AlpacaMarketDataClient`) | `t` field in WebSocket JSON | ISO 8601 string | N/A | `DateTimeOffset.UtcNow` |
+| Polygon (`PolygonMarketDataClient`) | `t` field in WebSocket JSON | Unix epoch long | Milliseconds | `DateTimeOffset.UtcNow` |
+| IB (`IBCallbackRouter`) tick-by-tick | `time` parameter | Unix epoch long | **Seconds** | `DateTimeOffset.UtcNow` |
+| IB (`IBCallbackRouter`) RTVolume | Embedded in `"price;size;time;..."` string | Unix epoch long | **Milliseconds** | N/A |
+| IB (`IBCallbackRouter`) tick price/size | None (uses collector clock) | N/A | N/A | `DateTimeOffset.UtcNow` |
+| StockSharp (`MessageConverter`) | `msg.ServerTime` | `DateTimeOffset` | N/A | Varies by connector |
+
+**Key issue:** IB uses **seconds** for tick-by-tick but **milliseconds** in RTVolume. Mixing these without awareness produces timestamps off by 1000x.
+
+### Aggressor Side Determination
+
+| Provider | Method | Effective Coverage | Notes |
+|----------|--------|--------------------|-------|
+| Alpaca | None | 0% — always `Unknown` | Alpaca stock stream doesn't expose condition codes that indicate side |
+| Polygon | Condition codes `c:[29-33]` → `Sell` | ~5% of trades | Only sell-side codes are definitive; no buyer-initiated codes in Polygon spec |
+| IB | None | 0% — always `Unknown` | `tickType` could theoretically be inferred but isn't today |
+| StockSharp | `msg.OriginSide` → `Sides.Buy`/`Sides.Sell` | Connector-dependent | Full coverage when underlying connector supports it (Rithmic: yes, IQFeed: no) |
+
+**Implication for canonicalization:** Do not treat `AggressorSide.Unknown` as a mapping failure. For most providers, it is the truthful canonical value.
+
+### Venue / Exchange Identifiers
+
+| Provider | Format | Examples | Mapping needed |
+|----------|--------|---------|----------------|
+| Alpaca | Text strings | `"NASDAQ"`, `"V"`, `"P"`, `"NYSE_ARCA"` | Partial — some are already readable, single-char codes need lookup |
+| Polygon | Numeric exchange ID | `1`→NYSE, `4`→NASDAQ, `8`→BATS, `9`→IEX, `16`→MEMX (19 codes) | Complete — all numeric, existing `MapExchangeCode()` in `PolygonMarketDataClient` |
+| IB | TWS routing names | `"SMART"`, `"ISLAND"`, `"ARCA"`, `"NYSE"` | Partial — `"SMART"` is IB-specific (best-execution router), not an exchange |
+| StockSharp | `SecurityId.BoardCode` | Varies by connector | Connector-dependent |
+
+### Condition Codes
+
+| Provider | System | Raw format | Scope |
+|----------|--------|-----------|-------|
+| Alpaca | CTA plan codes | Single-char strings: `"@"`, `"T"`, `"I"` | ~20 defined codes |
+| Polygon | SEC numeric codes | Integer array: `[0, 12, 37]` | 54 codes (0–53), only 5 codes (29–33) are definitive for aggressor |
+| IB | Field-code callbacks | Integer `tickType` values + `specialConditions` string | ~50 IB field codes, separate from trade conditions |
+| StockSharp | Connector-specific | Varies | Unknown coverage |
+
+### Sequence Numbers
+
+| Provider | Source | Reliability | Gap detection possible |
+|----------|--------|-------------|----------------------|
+| Alpaca | Trade ID from `i` field | Sparse (not sequential) | No — IDs are not contiguous |
+| Polygon | Local `Interlocked.Increment` counter | Sequential but collector-local | Only within a single collector process lifetime |
+| IB | None (always `0`) | N/A | No |
+| StockSharp | `msg.SeqNum` (optional) | Connector-dependent | Only when connector provides it |
+
+### Field Name Mapping Across Providers
+
+| Concept | Alpaca JSON | Polygon JSON | IB Callback | StockSharp |
+|---------|-------------|-------------|-------------|------------|
+| Trade price | `p` | `p` | `price` (double) | `msg.TradePrice` (decimal?) |
+| Trade size | `s` | `s` | `size` (double) | `msg.TradeVolume` (decimal?) |
+| Timestamp | `t` (ISO 8601) | `t` (epoch ms) | `time` (epoch s) | `msg.ServerTime` |
+| Symbol | `S` | `sym` | reqId→symbol map | `symbol` parameter |
+| Venue | `x` (text) | `x` (numeric) | `exchange` (text) | `msg.SecurityId.BoardCode` |
+| Trade ID | `i` (long) | `i` (string) | N/A | `msg.TradeId` |
+| Conditions | (implicit) | `c` (int array) | `specialConditions` | (connector-specific) |
 
 ## Detailed Design
 
@@ -216,6 +293,18 @@ public sealed class ConditionCodeMapper
 | IB | `"RegularTrade"` | `Regular` |
 | IB | `"OddLot"` | `OddLot` |
 
+**Polygon aggressor-side condition codes** (from existing `MapConditionCodesToAggressor()` in `PolygonMarketDataClient`):
+
+| Polygon Code | Meaning | Aggressor Inference |
+|-------------|---------|---------------------|
+| 29 | Seller (`OriginatedBySeller`) | `AggressorSide.Sell` |
+| 30 | Seller Down Exempt (`SellerDownExempt`) | `AggressorSide.Sell` |
+| 31–33 | Additional seller codes | `AggressorSide.Sell` |
+| 0–28, 34–53 | Informational/ambiguous | `AggressorSide.Unknown` |
+| 14 | Intermarket Sweep | `AggressorSide.Unknown` (can be buy or sell) |
+
+Note: Polygon does not define buyer-initiated codes. Only ~5% of trades carry definitive aggressor inference. The canonicalization layer should preserve `Unknown` as a valid canonical value rather than attempting inference.
+
 The mapping table will be stored as a JSON config file (`config/condition-codes.json`) and loaded at startup. The `DataDictionary.TradeConditions` field in `EventSchema.cs` already has a slot for this.
 
 **Enriched payload contract:**
@@ -241,6 +330,28 @@ Normalize freeform venue strings to [ISO 10383 MIC codes](https://www.iso20022.o
 | IB | `"ARCA"` | `"ARCX"` |
 | IB | `"NYSE"` | `"XNYS"` |
 
+**Polygon full exchange mapping** (already exists as `MapExchangeCode()` in `PolygonMarketDataClient`):
+
+| Polygon ID | Name | ISO 10383 MIC |
+|-----------|------|---------------|
+| 1 | NYSE | `XNYS` |
+| 2 | AMEX | `XASE` |
+| 3 | ARCA | `ARCX` |
+| 4 | NASDAQ | `XNAS` |
+| 5 | NASDAQ BX | `XBOS` |
+| 6 | NASDAQ PSX | `XPHL` |
+| 7 | BATS Y | `BATY` |
+| 8 | BATS | `BATS` |
+| 9 | IEX | `IEXG` |
+| 10 | EDGX | `EDGX` |
+| 11 | EDGA | `EDGA` |
+| 12 | CHX | `XCHI` |
+| 14 | FINRA ADF | `FINN` |
+| 15 | CBOE | `XCBO` |
+| 16 | MEMX | `MEMX` |
+| 17 | MIAX | `MIHI` |
+| 19 | LTSE | `LTSE` |
+
 Stored in `config/venue-mapping.json`, loaded at startup. The `CanonicalVenue` field on `MarketEvent` carries the resolved MIC.
 
 ### E. Timestamp Semantics
@@ -260,6 +371,10 @@ Clarify the three timestamp fields and enforce population:
 | `ClockQuality` | Enum: `ExchangeNtp`, `ProviderServer`, `CollectorLocal`, `Unknown` | Qualifies how trustworthy `ExchangeTimestamp` is for latency measurement |
 
 Provider adapters should be updated to call `StampReceiveTime(exchangeTs)` with the exchange timestamp when the provider feed includes it (Alpaca and Polygon both provide it; IB provides it for most events).
+
+**IB timestamp hazard:** The IB adapter uses Unix **seconds** for `tickByTickAllLast` callbacks but Unix **milliseconds** in the RTVolume string (`"price;size;time;..."` format). The canonicalization layer does not need to fix this (it's a provider adapter concern), but the `ClockQuality` tag should reflect the source: `ExchangeNtp` for tick-by-tick (exchange-stamped), `CollectorLocal` for `OnTickPrice`/`OnTickSize` (stamped with `DateTimeOffset.UtcNow` because IB doesn't provide timestamps for those callbacks).
+
+**StockSharp variability:** `msg.ServerTime` comes from the underlying S# connector. For Rithmic, this is an exchange timestamp. For IQFeed, it may be the IQFeed server timestamp. The `ClockQuality` tag should be set per-connector, not per-provider.
 
 ### F. Symbol Identity Layer
 
@@ -417,6 +532,8 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
 | `src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Wire canonicalization before publish |
 | `src/MarketDataCollector.Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs` | Wire canonicalization before publish |
 | `src/MarketDataCollector.Infrastructure/Providers/Streaming/IB/IBMarketDataClient.cs` | Wire canonicalization before publish |
+| `src/MarketDataCollector.Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs` | Wire canonicalization before publish |
+| `src/MarketDataCollector.Infrastructure/Providers/Streaming/StockSharp/Converters/MessageConverter.cs` | Populate `ExchangeTimestamp` from `msg.ServerTime` |
 | `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` | Add canonicalization counters |
 | `config/condition-codes.json` | New file: provider condition code mapping table |
 | `config/venue-mapping.json` | New file: raw venue to ISO 10383 MIC mapping |
