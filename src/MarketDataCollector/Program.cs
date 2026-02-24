@@ -95,7 +95,9 @@ public partial class Program
             new ValidateConfigCommand(configService, cfgPath, log),
             new DryRunCommand(cfg, configService, log),
             new SelfTestCommand(log),
-            new PackageCommands(cfg, log)
+            new PackageCommands(cfg, log),
+            new ConfigPresetCommand(new AutoConfigurationService(), log),
+            new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log)
         );
 
         var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);

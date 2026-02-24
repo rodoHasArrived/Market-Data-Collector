@@ -17,6 +17,7 @@ public sealed partial class AnalysisExportService
         CancellationToken ct)
     {
         var exportedFiles = new List<ExportedFile>();
+        var hasFeatures = request.Features is not null && HasAnyFeature(request.Features);
 
         foreach (var group in GroupBySymbolIfRequired(sourceFiles, profile.SplitBySymbol))
         {
@@ -25,44 +26,89 @@ public sealed partial class AnalysisExportService
                 request.OutputDirectory,
                 $"{symbol}_{DateTime.UtcNow:yyyyMMdd}.csv");
 
-            var recordCount = 0L;
-            var isFirst = true;
-
-            await using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
-
-            foreach (var sourceFile in group)
+            if (hasFeatures)
             {
-                await foreach (var record in ReadJsonlRecordsAsync(sourceFile.Path, ct))
+                // Buffer all records for feature computation (requires full series)
+                var allRecords = new List<Dictionary<string, object?>>();
+                foreach (var sourceFile in group)
                 {
-                    if (isFirst)
+                    await foreach (var record in ReadJsonlRecordsAsync(sourceFile.Path, ct))
                     {
-                        // Write header
-                        await writer.WriteLineAsync(string.Join(",", record.Keys));
-                        isFirst = false;
+                        allRecords.Add(record);
                     }
-
-                    // Write values
-                    var values = record.Values.Select(v => EscapeCsvValue(v?.ToString() ?? ""));
-                    await writer.WriteLineAsync(string.Join(",", values));
-                    recordCount++;
                 }
-            }
 
-            var fileInfo = new FileInfo(outputPath);
-            exportedFiles.Add(new ExportedFile
+                allRecords = EnrichWithFeatures(allRecords, request.Features!);
+
+                await using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
+                if (allRecords.Count > 0)
+                {
+                    await writer.WriteLineAsync(string.Join(",", allRecords[0].Keys));
+                    foreach (var record in allRecords)
+                    {
+                        var values = record.Values.Select(v => EscapeCsvValue(v?.ToString() ?? ""));
+                        await writer.WriteLineAsync(string.Join(",", values));
+                    }
+                }
+
+                _log.Information("Enriched {Count} records with features for {Symbol}", allRecords.Count, symbol);
+
+                var enrichedInfo = new FileInfo(outputPath);
+                exportedFiles.Add(new ExportedFile
+                {
+                    Path = outputPath,
+                    RelativePath = Path.GetFileName(outputPath),
+                    Symbol = symbol,
+                    Format = "csv",
+                    SizeBytes = enrichedInfo.Length,
+                    RecordCount = allRecords.Count,
+                    ChecksumSha256 = await ComputeChecksumAsync(outputPath, ct)
+                });
+            }
+            else
             {
-                Path = outputPath,
-                RelativePath = Path.GetFileName(outputPath),
-                Symbol = symbol,
-                Format = "csv",
-                SizeBytes = fileInfo.Length,
-                RecordCount = recordCount,
-                ChecksumSha256 = await ComputeChecksumAsync(outputPath, ct)
-            });
+                // Streaming export without features (no memory buffering needed)
+                var recordCount = 0L;
+                var isFirst = true;
+
+                await using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
+
+                foreach (var sourceFile in group)
+                {
+                    await foreach (var record in ReadJsonlRecordsAsync(sourceFile.Path, ct))
+                    {
+                        if (isFirst)
+                        {
+                            await writer.WriteLineAsync(string.Join(",", record.Keys));
+                            isFirst = false;
+                        }
+
+                        var values = record.Values.Select(v => EscapeCsvValue(v?.ToString() ?? ""));
+                        await writer.WriteLineAsync(string.Join(",", values));
+                        recordCount++;
+                    }
+                }
+
+                var fileInfo = new FileInfo(outputPath);
+                exportedFiles.Add(new ExportedFile
+                {
+                    Path = outputPath,
+                    RelativePath = Path.GetFileName(outputPath),
+                    Symbol = symbol,
+                    Format = "csv",
+                    SizeBytes = fileInfo.Length,
+                    RecordCount = recordCount,
+                    ChecksumSha256 = await ComputeChecksumAsync(outputPath, ct)
+                });
+            }
         }
 
         return exportedFiles;
     }
+
+    private static bool HasAnyFeature(FeatureSettings f) =>
+        f.IncludeReturns || f.IncludeRollingStats ||
+        f.IncludeTechnicalIndicators || f.IncludeMicrostructure;
 
     private async Task<List<ExportedFile>> ExportToJsonlAsync(
         List<SourceFile> sourceFiles,
