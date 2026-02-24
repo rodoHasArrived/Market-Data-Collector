@@ -98,13 +98,64 @@ jobs:
             /p:EnableWindowsTargeting=true \
             --blame-hang-timeout 60s
 
-      - name: Upload test results on failure
-        uses: actions/upload-artifact@v4
+      - name: Retry failed tests to detect flaky tests (improvement 5.1)
         if: failure()
+        shell: bash
+        run: |
+          echo "::group::Retrying failed tests to detect flaky failures"
+          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+            -c Release \
+            --no-build \
+            --verbosity minimal \
+            --logger "trx;LogFileName=test-results-retry-Linux.trx" \
+            --results-directory ./TestResults/retry \
+            --filter "Category!=Integration" \
+            --blame-hang-timeout 60s || true
+          echo "::endgroup::"
+
+      - name: Analyze test execution times (improvement 5.2)
+        if: always()
+        shell: bash
+        run: |
+          echo "## Test Execution Times (Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          # Parse TRX files for test durations
+          for trx in ./TestResults/*.trx; do
+            if [ -f "$trx" ]; then
+              echo "### $(basename "$trx")" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              # Extract test execution summary from TRX XML
+              grep -oP 'duration="[^"]*"' "$trx" | head -1 | sed 's/duration="/Total duration: /' | sed 's/"//' >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+              grep -oP 'total="[0-9]+"' "$trx" | head -1 | sed 's/total="/Total tests: /' | sed 's/"//' >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+              grep -oP 'passed="[0-9]+"' "$trx" | head -1 | sed 's/passed="/Passed: /' | sed 's/"//' >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+              grep -oP 'failed="[0-9]+"' "$trx" | head -1 | sed 's/failed="/Failed: /' | sed 's/"//' >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          # Check for flaky tests (passed on retry but failed initially)
+          if [ -d "./TestResults/retry" ]; then
+            echo "### Flaky Test Detection" >> $GITHUB_STEP_SUMMARY
+            echo "Tests were retried after initial failure." >> $GITHUB_STEP_SUMMARY
+            for trx in ./TestResults/retry/*.trx; do
+              if [ -f "$trx" ]; then
+                RETRY_PASSED=$(grep -oP 'passed="[0-9]+"' "$trx" | head -1 | grep -oP '[0-9]+' || echo "0")
+                if [ "$RETRY_PASSED" -gt "0" ]; then
+                  echo "⚠️ **Potential flaky tests detected**: $RETRY_PASSED tests passed on retry" >> $GITHUB_STEP_SUMMARY
+                fi
+              fi
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: test-results-Linux
           path: ./TestResults/
-          retention-days: 5
+          retention-days: 14
 
       - name: Upload coverage to Codecov
         if: success()

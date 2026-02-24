@@ -6,6 +6,7 @@ using AppBackfillResult = MarketDataCollector.Application.Backfill.BackfillResul
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
@@ -114,16 +115,46 @@ public static class BackfillEndpoints
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Backfill progress endpoint
-        group.MapGet("/api/backfill/progress", (BackfillCoordinator backfill) =>
+        // Backfill progress endpoint (enhanced with ETA - improvement 9.2)
+        group.MapGet(UiApiRoutes.BackfillProgress, (
+            HttpContext ctx) =>
         {
-            var progress = backfill.GetProgress();
-            return progress is not null
-                ? Results.Json(progress, jsonOptions)
-                : Results.Json(new { message = "No active backfill operation", symbols = Array.Empty<object>() }, jsonOptions);
+            var backfill = ctx.RequestServices.GetService<BackfillCoordinator>();
+            var tracker = ctx.RequestServices.GetService<Application.Backfill.BackfillProgressTracker>();
+
+            // Use the new tracker if available
+            if (tracker is not null)
+            {
+                var allProgress = tracker.GetAllProgress();
+                return allProgress.Count > 0
+                    ? Results.Json(new
+                    {
+                        active = allProgress.Where(p => p.Status == "running").ToList(),
+                        completed = allProgress.Where(p => p.Status is "completed" or "failed").ToList(),
+                        timestamp = DateTimeOffset.UtcNow
+                    }, jsonOptions)
+                    : Results.Json(new
+                    {
+                        active = Array.Empty<object>(),
+                        completed = Array.Empty<object>(),
+                        message = "No active backfill operations",
+                        timestamp = DateTimeOffset.UtcNow
+                    }, jsonOptions);
+            }
+
+            // Fallback to legacy progress
+            if (backfill is not null)
+            {
+                var progress = backfill.GetProgress();
+                return progress is not null
+                    ? Results.Json(progress, jsonOptions)
+                    : Results.Json(new { message = "No active backfill operation", symbols = Array.Empty<object>() }, jsonOptions);
+            }
+
+            return Results.Json(new { message = "Backfill service unavailable" }, jsonOptions);
         })
         .WithName("GetBackfillProgress")
-        .WithDescription("Returns progress of the currently active backfill operation, if any.")
+        .WithDescription("Returns progress of all active and recently completed backfill operations with ETA estimates.")
         .Produces(200);
 
         // Get provider metadata descriptors

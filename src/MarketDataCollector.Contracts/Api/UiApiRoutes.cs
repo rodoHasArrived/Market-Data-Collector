@@ -186,6 +186,16 @@ public static class UiApiRoutes
     public const string SlaHealth = "/api/sla/health";
     public const string SlaMetrics = "/api/sla/metrics";
 
+    // Cross-provider divergence endpoints
+    public const string QualityDivergences = "/api/quality/divergences";
+    public const string QualityDivergenceConfig = "/api/quality/divergences/config";
+
+    // Alert aggregation endpoints
+    public const string AlertsPending = "/api/alerts/pending";
+
+    // Backfill progress endpoints
+    public const string BackfillProgress = "/api/backfill/progress";
+
     // Storage quality endpoints
     public const string StorageQualitySummary = "/api/storage/quality/summary";
     public const string StorageQualityScores = "/api/storage/quality/scores";
@@ -328,6 +338,8 @@ public static class UiApiRoutes
     public const string ExportOrderflow = "/api/export/orderflow";
     public const string ExportIntegrity = "/api/export/integrity";
     public const string ExportResearchPackage = "/api/export/research-package";
+    public const string ExportPreview = "/api/export/preview";
+    public const string ExportLoaderScript = "/api/export/loader-script";
 
     // Lean integration endpoints
     public const string LeanStatus = "/api/lean/status";

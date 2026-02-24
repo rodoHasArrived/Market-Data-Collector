@@ -262,6 +262,25 @@ public static class PrometheusMetrics
         "Total reconnection attempts per provider and outcome",
         new CounterConfiguration { LabelNames = new[] { "provider", "outcome" } });
 
+    // Cross-provider divergence alerting metrics (improvement 4.2)
+    private static readonly Counter ProviderQuoteDivergenceTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_provider_quote_divergence_total",
+        "Total cross-provider mid-price divergence events detected",
+        new CounterConfiguration { LabelNames = new[] { "symbol" } });
+
+    private static readonly Gauge ProviderQuoteDivergenceActive = Prometheus.Metrics.CreateGauge(
+        "mdc_provider_quote_divergence_active",
+        "Number of symbols currently showing cross-provider quote divergence");
+
+    // Alert aggregation metrics (improvement 9.9)
+    private static readonly Counter AlertsSuppressedTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_alerts_suppressed_total",
+        "Total alerts suppressed by smart grouping/deduplication");
+
+    private static readonly Counter AlertBatchesSentTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_alert_batches_sent_total",
+        "Total grouped alert batches sent instead of individual alerts");
+
     // Migration diagnostics counters (Phase 0 — temporary observability for migration)
     private static readonly Counter MigrationStreamingFactoryHits = Prometheus.Metrics.CreateCounter(
         "mdc_migration_streaming_factory_hits_total",
@@ -451,6 +470,39 @@ public static class PrometheusMetrics
     {
         var safeSymbol = GetSymbolLabel(symbol);
         SlaFreshnessMs.WithLabels(safeSymbol).Observe(freshnessMs);
+    }
+
+    /// <summary>
+    /// Records a cross-provider quote divergence event for a symbol (improvement 4.2).
+    /// </summary>
+    public static void RecordQuoteDivergence(string symbol)
+    {
+        var safeSymbol = GetSymbolLabel(symbol);
+        ProviderQuoteDivergenceTotal.WithLabels(safeSymbol).Inc();
+    }
+
+    /// <summary>
+    /// Updates the count of symbols currently showing quote divergence (improvement 4.2).
+    /// </summary>
+    public static void SetActiveQuoteDivergences(int count)
+    {
+        ProviderQuoteDivergenceActive.Set(count);
+    }
+
+    /// <summary>
+    /// Records an alert that was suppressed by smart grouping/deduplication (improvement 9.9).
+    /// </summary>
+    public static void RecordAlertSuppressed()
+    {
+        AlertsSuppressedTotal.Inc();
+    }
+
+    /// <summary>
+    /// Records a grouped alert batch that was sent (improvement 9.9).
+    /// </summary>
+    public static void RecordAlertBatchSent()
+    {
+        AlertBatchesSentTotal.Inc();
     }
 
     /// <summary>

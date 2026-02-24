@@ -140,6 +140,11 @@ public sealed partial class AnalysisExportService
                 result.LoaderScriptPath = scriptPath;
             }
 
+            // Generate data lineage manifest (improvement 11.1)
+            var lineagePath = await GenerateLineageManifestAsync(
+                request.OutputDirectory, result, profile, sourceFiles, ct);
+            result.LineageManifestPath = lineagePath;
+
             result.CompletedAt = DateTime.UtcNow;
             result.Success = true;
 
@@ -156,6 +161,77 @@ public sealed partial class AnalysisExportService
             result.CompletedAt = DateTime.UtcNow;
             return result;
         }
+    }
+
+    /// <summary>
+    /// Previews an export operation without writing files. Returns estimated record counts,
+    /// file sizes, and a sample of the data (improvement 10.5).
+    /// </summary>
+    public async Task<ExportPreview> PreviewAsync(ExportRequest request, CancellationToken ct = default)
+    {
+        var profile = request.CustomProfile ?? GetProfile(request.ProfileId);
+        if (profile is null)
+            return new ExportPreview { Error = $"Unknown profile: {request.ProfileId}" };
+
+        var sourceFiles = FindSourceFiles(request);
+
+        long totalRecords = 0;
+        long totalSizeBytes = 0;
+        var symbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var eventTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var sampleRecords = new List<Dictionary<string, object?>>();
+
+        foreach (var file in sourceFiles)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (file.Symbol != null) symbols.Add(file.Symbol);
+            if (file.EventType != null) eventTypes.Add(file.EventType);
+
+            var fileInfo = new FileInfo(file.Path);
+            totalSizeBytes += fileInfo.Length;
+
+            // Count records and collect sample from first few files
+            long fileRecords = 0;
+            await foreach (var record in ReadJsonlRecordsAsync(file.Path, ct))
+            {
+                fileRecords++;
+                if (sampleRecords.Count < 5)
+                    sampleRecords.Add(record);
+            }
+            totalRecords += fileRecords;
+        }
+
+        // Estimate output size based on format compression ratios
+        var outputSizeEstimate = profile.Format switch
+        {
+            ExportFormat.Parquet => (long)(totalSizeBytes * 0.3), // Parquet compresses well
+            ExportFormat.Csv => (long)(totalSizeBytes * 1.2), // CSV is larger than JSONL
+            ExportFormat.Arrow => (long)(totalSizeBytes * 0.5),
+            _ => totalSizeBytes
+        };
+
+        return new ExportPreview
+        {
+            ProfileId = profile.Id,
+            ProfileName = profile.Name,
+            Format = profile.Format.ToString().ToLowerInvariant(),
+            Symbols = symbols.ToArray(),
+            EventTypes = eventTypes.ToArray(),
+            SourceFileCount = sourceFiles.Count,
+            EstimatedRecords = totalRecords,
+            SourceSizeBytes = totalSizeBytes,
+            EstimatedOutputSizeBytes = outputSizeEstimate,
+            EstimatedOutputSizeMb = Math.Round(outputSizeEstimate / (1024.0 * 1024.0), 2),
+            SampleData = sampleRecords,
+            DateRange = new ExportDateRange
+            {
+                Start = request.StartDate,
+                End = request.EndDate,
+                TradingDays = CountTradingDays(request.StartDate, request.EndDate)
+            },
+            Timestamp = DateTimeOffset.UtcNow
+        };
     }
 
     private List<SourceFile> FindSourceFiles(ExportRequest request)
