@@ -951,7 +951,7 @@ public sealed class AutoConfigurationService
                 CaptureGreeks: true,
                 CaptureChainSnapshots: true,
                 CaptureOpenInterest: true,
-                ExpirationFilter: "weekly+monthly",
+                ExpirationFilter: new[] { "weekly", "monthly" },
                 IndexOptions: new IndexOptionsConfig(
                     Enabled: true,
                     Indices: new[] { "SPX", "NDX" },
