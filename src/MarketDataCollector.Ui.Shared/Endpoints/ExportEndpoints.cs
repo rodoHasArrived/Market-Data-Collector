@@ -72,6 +72,38 @@ public static class ExportEndpoints
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
+        // Export preview - shows record counts, file sizes, and sample data without writing
+        group.MapPost(UiApiRoutes.ExportPreview, async (
+            ExportPreviewRequest req,
+            HttpContext ctx,
+            CancellationToken ct) =>
+        {
+            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
+            if (exportService is null)
+            {
+                return Results.Json(new
+                {
+                    error = "Export service not available",
+                    suggestion = "Ensure the application is running in full mode with storage configured"
+                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+
+            var exportRequest = new ExportRequest
+            {
+                ProfileId = req.ProfileId ?? "python-pandas",
+                Symbols = req.Symbols,
+                EventTypes = req.EventTypes ?? new[] { "Trade", "BboQuote" },
+                StartDate = req.StartDate ?? DateTime.UtcNow.AddDays(-7),
+                EndDate = req.EndDate ?? DateTime.UtcNow
+            };
+
+            var preview = await exportService.PreviewAsync(exportRequest, req.SampleSize ?? 5, ct);
+
+            return Results.Json(preview, jsonOptions);
+        })
+        .WithName("ExportPreview")
+        .Produces(200);
+
         // Available export formats - returns real profiles from AnalysisExportService
         group.MapGet(UiApiRoutes.ExportFormats, (HttpContext ctx) =>
         {
@@ -340,6 +372,7 @@ public static class ExportEndpoints
     }
 
     private sealed record ExportAnalysisRequest(string? ProfileId, string[]? Symbols, string? Format, DateTime? StartDate, DateTime? EndDate);
+    private sealed record ExportPreviewRequest(string? ProfileId, string[]? Symbols, string[]? EventTypes, DateTime? StartDate, DateTime? EndDate, int? SampleSize);
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
