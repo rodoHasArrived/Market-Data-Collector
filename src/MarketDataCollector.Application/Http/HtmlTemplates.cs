@@ -28,9 +28,13 @@ public static class HtmlTemplateManager
                 return _loader.Value.LoadIndexTemplate(configPath, statusPath, backfillPath);
             }
         }
-        catch
+        catch (IOException)
         {
-            // Fall through to legacy template
+            // Template file not readable - fall through to legacy template
+        }
+        catch (InvalidOperationException)
+        {
+            // Template loading/parsing failed - fall through to legacy template
         }
 
         return LegacyTemplates.Index(configPath, statusPath, backfillPath);
@@ -50,9 +54,13 @@ public static class HtmlTemplateManager
                 return _loader.Value.LoadCredentialsTemplate(config);
             }
         }
-        catch
+        catch (IOException)
         {
-            // Fall through to legacy template
+            // Template file not readable - fall through to legacy template
+        }
+        catch (InvalidOperationException)
+        {
+            // Template loading/parsing failed - fall through to legacy template
         }
 
         return LegacyTemplates.CredentialsDashboard(config, statuses);

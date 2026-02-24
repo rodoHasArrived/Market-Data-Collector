@@ -51,6 +51,7 @@ public sealed class PreflightChecker
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
+        checks.Add(ValidateProviderCredentials());
 
         // Run provider-specific checks if configured
         if (_config.CheckProviderConnectivity)
@@ -520,6 +521,123 @@ public sealed class PreflightChecker
         return PreflightCheckResult.Warning(checkName,
             "No API credentials found in environment variables",
             "Set ALPACA_KEY_ID/ALPACA_SECRET_KEY or configure credentials in appsettings.json.",
+            details);
+    }
+
+    /// <summary>
+    /// Validates that all enabled providers have the credentials they require.
+    /// Returns a detailed table of missing credentials with exact env var names.
+    /// </summary>
+    public PreflightCheckResult ValidateProviderCredentials(IReadOnlyList<string>? enabledProviders = null)
+    {
+        const string checkName = "Provider Credentials";
+
+        // Provider credential requirements: (providerId, displayName, envVars[])
+        var providerCredentials = new (string Id, string Name, (string EnvVar, string Description)[] Required)[]
+        {
+            ("alpaca", "Alpaca", new[]
+            {
+                ("ALPACA__KEYID", "API Key ID"),
+                ("ALPACA__SECRETKEY", "Secret Key")
+            }),
+            ("polygon", "Polygon", new[]
+            {
+                ("POLYGON__APIKEY", "API Key")
+            }),
+            ("finnhub", "Finnhub", new[]
+            {
+                ("FINNHUB__TOKEN", "API Token")
+            }),
+            ("tiingo", "Tiingo", new[]
+            {
+                ("TIINGO__TOKEN", "API Token")
+            }),
+            ("alphavantage", "Alpha Vantage", new[]
+            {
+                ("ALPHAVANTAGE__APIKEY", "API Key")
+            }),
+            ("nyse", "NYSE", new[]
+            {
+                ("NYSE__APIKEY", "API Key")
+            }),
+            ("nasdaq", "Nasdaq Data Link", new[]
+            {
+                ("NASDAQ__APIKEY", "API Key")
+            }),
+            ("ib", "Interactive Brokers", Array.Empty<(string, string)>())
+        };
+
+        var configured = new List<string>();
+        var missingEntries = new List<(string Provider, string EnvVar, string Description)>();
+
+        foreach (var (id, name, required) in providerCredentials)
+        {
+            // If enabledProviders is specified, only check those
+            if (enabledProviders is { Count: > 0 } &&
+                !enabledProviders.Any(p => p.Equals(id, StringComparison.OrdinalIgnoreCase) ||
+                                           p.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            if (required.Length == 0) continue; // IB uses TWS gateway, not env vars
+
+            var allFound = true;
+            foreach (var (envVar, desc) in required)
+            {
+                // Check both double-underscore and alternate formats
+                var value = Environment.GetEnvironmentVariable(envVar);
+                if (string.IsNullOrEmpty(value))
+                {
+                    // Also try alternate naming (ALPACA_KEY_ID vs ALPACA__KEYID)
+                    var altVar = envVar.Replace("__", "_");
+                    value = Environment.GetEnvironmentVariable(altVar);
+                }
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    missingEntries.Add((name, envVar, desc));
+                    allFound = false;
+                }
+            }
+
+            if (allFound)
+            {
+                configured.Add(name);
+            }
+        }
+
+        var details = new Dictionary<string, object>
+        {
+            ["configuredProviders"] = configured,
+            ["missingCredentials"] = missingEntries.Select(m => new { m.Provider, m.EnvVar, m.Description }).ToArray()
+        };
+
+        if (missingEntries.Count > 0 && configured.Count == 0 && enabledProviders is { Count: > 0 })
+        {
+            // All enabled providers are missing credentials — this is a failure
+            var table = string.Join("\n", missingEntries.Select(m =>
+                $"    {m.Provider,-20} {m.EnvVar,-25} ({m.Description})"));
+
+            return PreflightCheckResult.Failed(checkName,
+                $"Missing credentials for {missingEntries.Select(m => m.Provider).Distinct().Count()} enabled provider(s)",
+                $"Set the following environment variables:\n{table}",
+                details);
+        }
+
+        if (missingEntries.Count > 0)
+        {
+            var table = string.Join("\n", missingEntries.Select(m =>
+                $"    {m.Provider,-20} {m.EnvVar,-25} ({m.Description})"));
+
+            return PreflightCheckResult.Warning(checkName,
+                $"Credentials configured for {configured.Count} provider(s); {missingEntries.Select(m => m.Provider).Distinct().Count()} provider(s) missing credentials",
+                $"To enable additional providers, set:\n{table}",
+                details);
+        }
+
+        return PreflightCheckResult.Passed(checkName,
+            $"All provider credentials configured: {string.Join(", ", configured)}",
             details);
     }
 

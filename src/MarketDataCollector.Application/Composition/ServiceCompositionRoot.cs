@@ -19,6 +19,7 @@ using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Export;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Maintenance;
 using MarketDataCollector.Storage.Policies;
@@ -197,6 +198,13 @@ public static class ServiceCompositionRoot
         services.AddSingleton<IDataQualityService, DataQualityService>();
         services.AddSingleton<IStorageSearchService, StorageSearchService>();
         services.AddSingleton<ITierMigrationService, TierMigrationService>();
+
+        // Analysis export service for data export operations
+        services.AddSingleton<AnalysisExportService>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            return new AnalysisExportService(storageOptions.RootPath);
+        });
 
         return services;
     }
