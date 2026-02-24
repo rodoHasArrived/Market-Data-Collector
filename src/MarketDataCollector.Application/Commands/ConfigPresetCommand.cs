@@ -104,7 +104,7 @@ internal sealed class ConfigPresetCommand : ICliCommand
         // Warn if overwriting
         if (File.Exists(configPath))
         {
-            var backupPath = configPath + $".backup.{DateTime.Now:yyyyMMdd-HHmmss}";
+            var backupPath = configPath + $".backup.{DateTime.UtcNow:yyyyMMdd-HHmmss}";
             File.Copy(configPath, backupPath, overwrite: true);
             Console.WriteLine($"  Backed up existing config to: {backupPath}");
         }
