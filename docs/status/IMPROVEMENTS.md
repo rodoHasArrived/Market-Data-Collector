@@ -49,6 +49,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | E: Performance & Scalability | 3 | 0 | 0 | 3 |
 | F: User Experience | 3 | 0 | 0 | 3 |
 | G: Operations & Monitoring | 2 | 1 | 0 | 3 |
+| J: Data Canonicalization | 1 | 0 | 7 | 8 |
 
 ### Portfolio Health Snapshot
 
@@ -979,6 +980,148 @@ No clear contract for what each validates or when it runs.
 
 ---
 
+## Theme J: Data Canonicalization
+
+### J1. ✅ Deterministic Canonicalization Design (COMPLETED)
+
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** Equivalent market events from different providers for the same instrument produce structurally incomparable records. The same instrument appears as different symbol strings, condition codes use different encoding systems, and venue identifiers are inconsistent across providers.
+
+**Solution Implemented:**
+- Comprehensive design document with provider field audit covering timestamp formats, aggressor side determination, venue identifiers, condition codes, and sequence numbers across Alpaca, Polygon, IB, and StockSharp
+- Detailed canonicalization stage design with `IEventCanonicalizer` interface and `EventCanonicalizer` class
+- Condition code mapping registry specification (CTA plan codes, SEC numeric codes, IB field codes → canonical enum)
+- Venue normalization to ISO 10383 MIC codes with complete Polygon exchange mapping
+- 3-phase rollout plan: Contract + Mapping Inventory → Dual-Write Validation → Default Canonical Read Path
+- Acceptance criteria, operational metrics, risk mitigations, and test strategy
+
+**Files:**
+- `docs/architecture/deterministic-canonicalization.md`
+
+**ROADMAP:** Theme J (Data Canonicalization)
+
+---
+
+### J2. 📝 MarketEvent Canonical Fields (OPEN)
+
+**Impact:** High | **Effort:** Low | **Priority:** P1 | **Status:** 📝 OPEN
+
+**Problem:** `MarketEvent` envelope lacks fields to distinguish raw vs. canonicalized events and carry resolved identifiers.
+
+**Proposed Solution:**
+- Add `CanonicalSymbol` (`string?`), `CanonicalizationVersion` (`int`), `CanonicalVenue` (`string?`) fields to `MarketEvent` sealed record
+- Update `MarketDataJsonContext` source generator attributes for new fields
+- New fields use `WhenWritingNull`/default omission for backward compatibility with existing JSONL files
+
+**Files to modify:**
+- `src/MarketDataCollector.Domain/Events/MarketEvent.cs`
+- `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs`
+
+**Dependencies:** None (additive change)
+
+---
+
+### J3. 📝 EventCanonicalizer Implementation (OPEN)
+
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+
+**Problem:** No canonicalization step exists between provider adapters and `EventPipeline`.
+
+**Proposed Solution:**
+- `IEventCanonicalizer` interface with `Canonicalize(MarketEvent raw, CancellationToken ct)` method
+- `EventCanonicalizer` class using `with` expression pattern (same as `StampReceiveTime()`)
+- Wire `CanonicalSymbolRegistry.TryResolve(symbol, provider)` for symbol resolution
+- Place canonicalization **before** `EventPipeline.PublishAsync()` in provider adapters
+
+**Dependencies:** J2 (canonical fields on MarketEvent)
+
+---
+
+### J4. 📝 Condition Code Mapping Registry (OPEN)
+
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 📝 OPEN
+
+**Problem:** Trade condition codes stored as raw `string[]?` with no cross-provider normalization.
+
+**Proposed Solution:**
+- `CanonicalTradeCondition` enum (Regular, FormT_ExtendedHours, OddLot, etc.)
+- `ConditionCodeMapper` class with `(provider, raw_code) → CanonicalTradeCondition` lookup
+- Mapping table in `config/condition-codes.json` covering Alpaca CTA plan codes, Polygon SEC numeric codes, IB field codes
+- Enriched payload preserves both raw and canonical conditions
+
+**Dependencies:** J3 (EventCanonicalizer to invoke mapper)
+
+---
+
+### J5. 📝 Venue Normalization to ISO 10383 MIC (OPEN)
+
+**Impact:** Medium | **Effort:** Low | **Priority:** P2 | **Status:** 📝 OPEN
+
+**Problem:** Venue identifiers differ across providers for the same exchange.
+
+**Proposed Solution:**
+- `VenueMicMapper` class with raw venue → ISO 10383 MIC code lookup
+- Mapping table in `config/venue-mapping.json` (Polygon numeric IDs, Alpaca text strings, IB routing names)
+- `CanonicalVenue` field populated on `MarketEvent` envelope
+
+**Dependencies:** J3 (EventCanonicalizer to invoke mapper)
+
+---
+
+### J6. 📝 Provider Adapter Wiring (OPEN)
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 OPEN
+
+**Problem:** Provider adapters publish raw events without canonicalization.
+
+**Proposed Solution:**
+- Wire `EventCanonicalizer.Canonicalize()` in Alpaca, Polygon, IB, and StockSharp provider adapters
+- Place between `StampReceiveTime()` and `EventPipeline.PublishAsync()`
+- Configurable pilot symbol list for dual-write validation phase
+
+**Files to modify:**
+- `Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs`
+- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
+- `Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs`
+- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
+
+**Dependencies:** J3 (EventCanonicalizer implementation)
+
+---
+
+### J7. 📝 Canonicalization Metrics and Monitoring (OPEN)
+
+**Impact:** Medium | **Effort:** Low | **Priority:** P2 | **Status:** 📝 OPEN
+
+**Problem:** No observability into canonicalization success rates, latency, or unresolved mappings.
+
+**Proposed Solution:**
+- Add Prometheus counters: `canonicalization_events_total`, `canonicalization_unresolved_total`, `canonicalization_duration_seconds`
+- Alert threshold: > 0.1% unresolved rate for a provider triggers warning
+- Integrate with existing `PrometheusMetrics` and monitoring dashboard
+
+**Dependencies:** J3 (EventCanonicalizer must emit metrics)
+
+---
+
+### J8. 📝 Golden Fixture Test Suite (OPEN)
+
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 📝 OPEN
+
+**Problem:** No test fixtures for verifying canonicalization correctness across providers.
+
+**Proposed Solution:**
+- Curated raw JSON payloads from each provider for trade, quote, and L2 events
+- `.raw.json` input / `.expected.json` canonical output pairs in `tests/.../Fixtures/Canonicalization/`
+- Property tests: idempotency, determinism, raw preservation, tier progression
+- Backward compatibility tests with existing JSONL files
+- Drift canary CI job for detecting new unmapped codes
+
+**Dependencies:** J3 (EventCanonicalizer to test against)
+
+---
+
 ## Priority Matrix
 
 ### By Impact and Effort
@@ -1144,6 +1287,7 @@ Improvements Tracker Update
 - **[TODO.md](TODO.md)** — Auto-generated TODO tracking from code comments
 - **[DEPENDENCIES.md](../DEPENDENCIES.md)** — NuGet package dependencies
 - **[production-status.md](production-status.md)** — Current production readiness assessment
+- **[deterministic-canonicalization.md](../architecture/deterministic-canonicalization.md)** — Cross-provider canonicalization design (Theme J)
 
 ### Archived Improvement Documents
 
@@ -1160,7 +1304,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-22
+**Last Updated:** 2026-02-24
 **Maintainer:** Project Team
-**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items)
+**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (1/8)
 **Next Review:** Weekly engineering sync (or immediately after any status change)

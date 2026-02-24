@@ -126,6 +126,19 @@ This section supersedes the prior effort model and aligns with the current activ
 | I3 | Configuration Schema Validation at Startup | 🔄 Partial | `SchemaValidationService` validates stored data formats against schema versions at startup (`--validate-schemas`, `--strict-schemas`). Missing: JSON Schema generation from C# models for config file validation. |
 | I4 | Provider SDK Documentation Generator | 📝 Open | Auto-generate provider capability documentation from `[DataSource]` attributes and `HistoricalDataCapabilities`, keeping docs in sync with code. |
 
+### Theme J: Data Canonicalization (New)
+
+| ID | Title | Status | Description |
+|----|-------|--------|-------------|
+| J1 | Deterministic Canonicalization Design | ✅ Complete | Design document with provider field audit, condition code mapping, venue normalization, and 3-phase rollout plan. See [deterministic-canonicalization.md](../architecture/deterministic-canonicalization.md). |
+| J2 | MarketEvent Canonical Fields | 📝 Open | Add `CanonicalSymbol`, `CanonicalizationVersion`, `CanonicalVenue` fields to `MarketEvent` envelope. Update `MarketDataJsonContext` source generator. |
+| J3 | EventCanonicalizer Implementation | 📝 Open | `IEventCanonicalizer` interface and `EventCanonicalizer` class. Wire `CanonicalSymbolRegistry.TryResolve()` for symbol resolution with provider hint. |
+| J4 | Condition Code Mapping Registry | 📝 Open | `ConditionCodeMapper` with `config/condition-codes.json` mapping Alpaca CTA plan codes, Polygon SEC numeric codes, and IB field codes to canonical enum. |
+| J5 | Venue Normalization to ISO 10383 MIC | 📝 Open | `VenueMicMapper` with `config/venue-mapping.json` for normalizing raw venue strings to ISO 10383 MIC codes. |
+| J6 | Provider Adapter Wiring | 📝 Open | Wire canonicalization into Alpaca, Polygon, IB, and StockSharp provider adapters between `StampReceiveTime()` and `EventPipeline.PublishAsync()`. |
+| J7 | Canonicalization Metrics & Monitoring | 📝 Open | Prometheus counters for canonicalization events, duration, unresolved mappings. Alert thresholds for degraded mapping rates. |
+| J8 | Golden Fixture Test Suite | 📝 Open | Curated provider payloads with `.raw.json` / `.expected.json` pairs. Property tests for idempotency, determinism, and backward compatibility. |
+
 ---
 
 ## 2026 Delivery Objectives
@@ -161,6 +174,12 @@ This section supersedes the prior effort model and aligns with the current activ
 - ✅ Provider degradation scoring via `ProviderDegradationScorer`.
 - 📝 H2 multi-instance coordination pending (not needed for single-instance).
 
+### Objective 6: Cross-Provider Data Canonicalization 📝 Planned
+
+- ✅ Design document complete with provider field audit and 3-phase rollout plan.
+- 📝 J2–J8 implementation pending (contract fields, canonicalizer, mappers, provider wiring, tests).
+- Target: >= 99.5% canonical identity match rate across providers for US liquid equities.
+
 ---
 
 ## Success Metrics (Updated Baseline)
@@ -179,6 +198,9 @@ This section supersedes the prior effort model and aligns with the current activ
 | Provider test coverage | All 5 streaming providers + failover + backfill | Comprehensive |
 | OpenTelemetry instrumentation | Pipeline metrics + activity spans | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
+| Canonicalization design | Complete | Implementation complete |
+| Canonicalization implementation (J2–J8) | 0 / 7 | 6+ / 7 |
+| Cross-provider canonical identity match | N/A | >= 99.5% |
 
 ---
 
@@ -191,7 +213,8 @@ This section supersedes the prior effort model and aligns with the current activ
 - `docs/status/TODO.md` — TODO/NOTE extraction for follow-up.
 - `docs/evaluations/` — detailed evaluation source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/audits/` — detailed audit source documents (summarized in EVALUATIONS_AND_AUDITS.md).
+- `docs/architecture/deterministic-canonicalization.md` — cross-provider canonicalization design.
 
 ---
 
-*Last Updated: 2026-02-22*
+*Last Updated: 2026-02-24*
