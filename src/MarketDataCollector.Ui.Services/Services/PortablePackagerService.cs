@@ -695,7 +695,7 @@ Refer to your data provider's terms of service for data usage rights.
 
             using var aes = Aes.Create();
             var iv = new byte[aes.BlockSize / 8];
-            sourceStream.Read(iv, 0, iv.Length);
+            sourceStream.ReadExactly(iv, 0, iv.Length);
             aes.IV = iv;
             aes.Key = DeriveKey(password, aes.KeySize / 8);
 
