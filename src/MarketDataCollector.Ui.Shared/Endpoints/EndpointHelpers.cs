@@ -89,7 +89,7 @@ internal static class EndpointHelpers
         {
             var c when c.StartsWith("MDC-AUTH") => 401,
             var c when c.StartsWith("MDC-RATE") => 429,
-            var c when c.StartsWith("MDC-DATA-001") => 404,
+            var c when c == "MDC-DATA-001" => 404,
             _ => 500
         };
 
