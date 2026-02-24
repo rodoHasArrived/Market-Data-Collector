@@ -93,6 +93,7 @@ public partial class Program
             new SchemaCheckCommand(cfg, log),
             new SymbolCommands(symbolService, log),
             new ValidateConfigCommand(configService, cfgPath, log),
+            new CheckConfigCommand(cfg, configService, log),
             new DryRunCommand(cfg, configService, log),
             new SelfTestCommand(log),
             new PackageCommands(cfg, log),

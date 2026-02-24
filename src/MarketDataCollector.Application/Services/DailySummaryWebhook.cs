@@ -33,6 +33,10 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
     private Func<IReadOnlyList<StaleDataAlert>>? _getStaleSymbols;
     private Func<SystemHealthSnapshot>? _getHealthSnapshot;
 
+    // Weekly aggregation: keeps last 7 daily summaries for weekly digest
+    private readonly List<DailySummary> _dailyHistory = new();
+    private readonly object _historyLock = new();
+
     /// <summary>
     /// Event raised when a summary is sent successfully.
     /// </summary>
@@ -80,6 +84,7 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
     public async Task<DailySummaryResult> SendSummaryAsync(CancellationToken ct = default)
     {
         var summary = BuildSummary();
+        RecordDailySummary(summary);
         var results = new List<WebhookDeliveryResult>();
         var startTime = DateTimeOffset.UtcNow;
 
@@ -149,6 +154,128 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// Sends a weekly summary that aggregates the last 7 daily summaries into a
+    /// week-over-week comparison. Includes total events, average SLA compliance,
+    /// top symbols by gap count, and storage growth.
+    /// </summary>
+    public async Task<DailySummaryResult> SendWeeklySummaryAsync(CancellationToken ct = default)
+    {
+        WeeklySummary weeklySummary;
+        lock (_historyLock)
+        {
+            weeklySummary = AggregateWeeklySummary(_dailyHistory);
+        }
+
+        var results = new List<WebhookDeliveryResult>();
+        var startTime = DateTimeOffset.UtcNow;
+
+        if (_config.Webhooks is null || _config.Webhooks.Length == 0)
+        {
+            return new DailySummaryResult(
+                Success: false,
+                Summary: BuildSummary(),
+                DeliveryResults: Array.Empty<WebhookDeliveryResult>(),
+                SentAt: startTime,
+                ErrorMessage: "No webhooks configured"
+            );
+        }
+
+        var message = FormatWeeklySummaryMessage(weeklySummary);
+
+        foreach (var webhook in _config.Webhooks.Where(w => w.Enabled))
+        {
+            var payload = FormatCustomMessage(webhook.Type, message, "Weekly Summary");
+            var result = await DeliverPayloadAsync(webhook, payload, ct);
+            results.Add(result);
+        }
+
+        var allSuccess = results.All(r => r.Success);
+        _log.Information("Weekly summary sent to {Count} webhook(s), success: {Success}", results.Count, allSuccess);
+
+        return new DailySummaryResult(
+            Success: allSuccess,
+            Summary: BuildSummary(),
+            DeliveryResults: results.ToArray(),
+            SentAt: startTime,
+            ErrorMessage: allSuccess ? null : "One or more webhooks failed"
+        );
+    }
+
+    /// <summary>
+    /// Gets the current weekly summary without sending it.
+    /// </summary>
+    public WeeklySummary GetWeeklySummary()
+    {
+        lock (_historyLock)
+        {
+            return AggregateWeeklySummary(_dailyHistory);
+        }
+    }
+
+    private static WeeklySummary AggregateWeeklySummary(List<DailySummary> history)
+    {
+        var recentDays = history
+            .OrderByDescending(d => d.Date)
+            .Take(7)
+            .ToList();
+
+        if (recentDays.Count == 0)
+        {
+            return new WeeklySummary
+            {
+                WeekEndDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                TradingDaysReported = 0
+            };
+        }
+
+        return new WeeklySummary
+        {
+            WeekEndDate = recentDays.First().Date,
+            TradingDaysReported = recentDays.Count,
+            TotalEventsPublished = recentDays.Sum(d => d.TotalEventsPublished),
+            TotalEventsDropped = recentDays.Sum(d => d.TotalEventsDropped),
+            AverageDropRate = recentDays.Average(d =>
+                d.TotalEventsPublished > 0
+                    ? (double)d.TotalEventsDropped / d.TotalEventsPublished * 100
+                    : 0),
+            PeakQueueSize = recentDays.Max(d => d.PeakQueueSize),
+            AverageProcessingTimeUs = recentDays.Average(d => d.AverageProcessingTimeUs),
+            TotalStaleSymbolIncidents = recentDays.Sum(d => d.StaleSymbolCount),
+            AverageMemoryUsageMb = recentDays.Average(d => d.MemoryUsageMb),
+            DaysWithWarnings = recentDays.Count(d => d.WarningCount > 0),
+            DailySummaries = recentDays
+        };
+    }
+
+    private static string FormatWeeklySummaryMessage(WeeklySummary summary)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"Week ending {summary.WeekEndDate:yyyy-MM-dd} ({summary.TradingDaysReported} trading days)");
+        sb.AppendLine();
+        sb.AppendLine($"Total events: {summary.TotalEventsPublished:N0}");
+        sb.AppendLine($"Events dropped: {summary.TotalEventsDropped:N0} ({summary.AverageDropRate:F3}% avg)");
+        sb.AppendLine($"Peak queue size: {summary.PeakQueueSize:N0}");
+        sb.AppendLine($"Avg processing: {summary.AverageProcessingTimeUs:F2} us");
+        sb.AppendLine($"Stale symbol incidents: {summary.TotalStaleSymbolIncidents}");
+        sb.AppendLine($"Days with warnings: {summary.DaysWithWarnings}/{summary.TradingDaysReported}");
+        sb.AppendLine($"Avg memory: {summary.AverageMemoryUsageMb:F0} MB");
+        return sb.ToString();
+    }
+
+    private void RecordDailySummary(DailySummary summary)
+    {
+        lock (_historyLock)
+        {
+            _dailyHistory.Add(summary);
+            // Keep at most 14 days of history
+            while (_dailyHistory.Count > 14)
+            {
+                _dailyHistory.RemoveAt(0);
+            }
+        }
     }
 
     private DailySummary BuildSummary()
@@ -501,7 +628,21 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
                 return;
             }
 
-            await SendSummaryAsync(_cts.Token);
+            var schedule = _config.SummarySchedule?.ToLowerInvariant() ?? "daily";
+
+            // Send daily summary unless weekly-only
+            if (schedule is "daily" or "both")
+            {
+                await SendSummaryAsync(_cts.Token);
+            }
+
+            // Send weekly summary on Fridays (or if weekly-only)
+            var isFriday = DateTime.UtcNow.DayOfWeek == DayOfWeek.Friday;
+            if (isFriday && schedule is "weekly" or "both")
+            {
+                _log.Information("Sending weekly summary digest (Friday)");
+                await SendWeeklySummaryAsync(_cts.Token);
+            }
         }
         catch (Exception ex)
         {
@@ -549,6 +690,14 @@ public sealed record DailySummaryWebhookConfig
     /// HTTP request timeout in seconds.
     /// </summary>
     public int TimeoutSeconds { get; init; } = 30;
+
+    /// <summary>
+    /// Summary schedule: "daily", "weekly", or "both".
+    /// "weekly" sends a weekly aggregation on Fridays after market close.
+    /// "both" sends daily summaries and a weekly aggregation on Fridays.
+    /// Default: "daily".
+    /// </summary>
+    public string SummarySchedule { get; init; } = "daily";
 }
 
 /// <summary>
@@ -663,3 +812,22 @@ public readonly record struct WebhookDeliveryResult(
     string? ErrorMessage,
     DateTimeOffset SentAt
 );
+
+/// <summary>
+/// Aggregated weekly summary computed from daily summaries.
+/// Provides week-over-week comparison data for trend analysis.
+/// </summary>
+public sealed class WeeklySummary
+{
+    public DateOnly WeekEndDate { get; init; }
+    public int TradingDaysReported { get; init; }
+    public long TotalEventsPublished { get; init; }
+    public long TotalEventsDropped { get; init; }
+    public double AverageDropRate { get; init; }
+    public long PeakQueueSize { get; init; }
+    public double AverageProcessingTimeUs { get; init; }
+    public int TotalStaleSymbolIncidents { get; init; }
+    public double AverageMemoryUsageMb { get; init; }
+    public int DaysWithWarnings { get; init; }
+    public IReadOnlyList<DailySummary> DailySummaries { get; init; } = Array.Empty<DailySummary>();
+}

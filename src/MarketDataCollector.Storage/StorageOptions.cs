@@ -89,6 +89,20 @@ public sealed class StorageOptions
     public bool VerifyOnRead { get; init; } = false;
 
     /// <summary>
+    /// Whether to automatically convert completed JSONL files to Parquet format
+    /// after market close. Runs as a background task, converting yesterday's JSONL
+    /// files to columnar Parquet for efficient analysis. Originals are retained
+    /// unless <see cref="DeleteJsonlAfterParquetConversion"/> is true.
+    /// </summary>
+    public bool AutoParquetConversion { get; init; } = false;
+
+    /// <summary>
+    /// Whether to delete original JSONL files after successful Parquet conversion.
+    /// Only applies when <see cref="AutoParquetConversion"/> is true.
+    /// </summary>
+    public bool DeleteJsonlAfterParquetConversion { get; init; } = false;
+
+    /// <summary>
     /// Partition strategy for multi-dimensional partitioning.
     /// </summary>
     public PartitionStrategy? PartitionStrategy { get; init; }
