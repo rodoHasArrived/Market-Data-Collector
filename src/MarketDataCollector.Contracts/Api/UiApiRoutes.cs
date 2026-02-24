@@ -328,6 +328,7 @@ public static class UiApiRoutes
     public const string ExportOrderflow = "/api/export/orderflow";
     public const string ExportIntegrity = "/api/export/integrity";
     public const string ExportResearchPackage = "/api/export/research-package";
+    public const string ExportPreview = "/api/export/preview";
 
     // Lean integration endpoints
     public const string LeanStatus = "/api/lean/status";

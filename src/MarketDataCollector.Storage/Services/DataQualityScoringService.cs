@@ -266,7 +266,7 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                         }
                     }
                 }
-                catch { /* Skip parse errors */ }
+                catch (Exception ex) { _logger.LogDebug(ex, "Skipping unparseable line in sequence analysis"); }
 
                 if (total >= 10000) break;
             }

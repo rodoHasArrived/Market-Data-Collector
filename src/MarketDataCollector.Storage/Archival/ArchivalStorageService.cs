@@ -218,7 +218,8 @@ public sealed class ArchivalStorageService : IStorageSink
         if (_backgroundFlushTask != null)
         {
             try { await _backgroundFlushTask; }
-            catch { /* Expected on cancellation */ }
+            catch (OperationCanceledException) { /* Expected on cancellation */ }
+            catch (Exception ex) { _log.Warning(ex, "Background flush task completed with error during dispose"); }
         }
 
         // Final flush

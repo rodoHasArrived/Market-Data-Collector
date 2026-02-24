@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using MarketDataCollector.Application.Logging;
+using Serilog;
 
 namespace MarketDataCollector.Storage.Services;
 
@@ -10,6 +12,7 @@ namespace MarketDataCollector.Storage.Services;
 /// </summary>
 public sealed class MetadataTagService : IMetadataTagService
 {
+    private static readonly ILogger _log = LoggingSetup.ForContext<MetadataTagService>();
     private readonly ConcurrentDictionary<string, FileMetadataRecord> _metadata = new(StringComparer.OrdinalIgnoreCase);
     private readonly string _metadataStorePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
@@ -255,7 +258,10 @@ public sealed class MetadataTagService : IMetadataTagService
     private async Task SaveInBackgroundAsync()
     {
         try { await SaveAsync(); }
-        catch { /* Background save failure is non-critical */ }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Background metadata save failed (non-critical)");
+        }
     }
 
     private sealed class MetadataStore

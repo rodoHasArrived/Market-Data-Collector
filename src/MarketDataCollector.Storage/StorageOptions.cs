@@ -83,6 +83,12 @@ public sealed class StorageOptions
     public bool EnableParquetSink { get; init; } = false;
 
     /// <summary>
+    /// Whether to verify file checksums on read. When enabled, the JSONL replayer
+    /// verifies stored checksums before returning data to detect bit rot or corruption.
+    /// </summary>
+    public bool VerifyOnRead { get; init; } = false;
+
+    /// <summary>
     /// Partition strategy for multi-dimensional partitioning.
     /// </summary>
     public PartitionStrategy? PartitionStrategy { get; init; }

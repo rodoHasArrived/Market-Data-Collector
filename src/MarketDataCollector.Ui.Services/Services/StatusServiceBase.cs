@@ -239,7 +239,8 @@ public abstract class StatusServiceBase
                 }
             }
             catch (OperationCanceledException) { break; }
-            catch { SetBackendReachable(false); }
+            catch (HttpRequestException) { SetBackendReachable(false); }
+            catch (Exception) { SetBackendReachable(false); }
 
             try { await Task.Delay(TimeSpan.FromSeconds(intervalSeconds), ct); }
             catch (OperationCanceledException) { break; }

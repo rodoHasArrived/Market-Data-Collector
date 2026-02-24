@@ -16,6 +16,7 @@ public sealed class GracefulShutdownService : IHostedService
     private readonly IEnumerable<IFlushable> _flushables;
     private readonly ILogger _log;
     private readonly TimeSpan _shutdownTimeout;
+    private readonly string? _storageRootPath;
     private readonly Stopwatch _sessionStopwatch = new();
 
     /// <summary>
@@ -23,12 +24,15 @@ public sealed class GracefulShutdownService : IHostedService
     /// </summary>
     /// <param name="flushables">Collection of flushable components to flush on shutdown</param>
     /// <param name="shutdownTimeout">Maximum time to wait for flush operations (default: 30 seconds)</param>
+    /// <param name="storageRootPath">Optional storage root path to include storage stats in shutdown summary</param>
     public GracefulShutdownService(
         IEnumerable<IFlushable> flushables,
-        TimeSpan? shutdownTimeout = null)
+        TimeSpan? shutdownTimeout = null,
+        string? storageRootPath = null)
     {
         _flushables = flushables ?? throw new ArgumentNullException(nameof(flushables));
         _shutdownTimeout = shutdownTimeout ?? TimeSpan.FromSeconds(30);
+        _storageRootPath = storageRootPath;
         _log = Log.ForContext<GracefulShutdownService>();
     }
 
@@ -123,6 +127,16 @@ public sealed class GracefulShutdownService : IHostedService
             if (snapshot.MinLatencyUs > 0 || snapshot.MaxLatencyUs > 0)
                 sb.AppendLine($"  ║  Latency range:     {snapshot.MinLatencyUs:F0}-{snapshot.MaxLatencyUs:F0} us{"",-1} ║");
 
+            // Storage statistics
+            var (storageSize, fileCount) = GetStorageStats();
+            if (storageSize > 0 || fileCount > 0)
+            {
+                sb.AppendLine("  ╠══════════════════════════════════════════╣");
+                sb.AppendLine($"  ║  Storage written:   {FormatBytes(storageSize),18} ║");
+                sb.AppendLine($"  ║  Files on disk:     {fileCount,18:N0} ║");
+            }
+
+            sb.AppendLine("  ╠══════════════════════════════════════════╣");
             sb.AppendLine($"  ║  Memory usage:      {snapshot.MemoryUsageMb,14:F1} MB ║");
             sb.AppendLine($"  ║  GC collections:    {$"G0={snapshot.Gc0Collections} G1={snapshot.Gc1Collections} G2={snapshot.Gc2Collections}",-18} ║");
             sb.AppendLine("  ╚══════════════════════════════════════════╝");
@@ -136,6 +150,46 @@ public sealed class GracefulShutdownService : IHostedService
         {
             _log.Debug(ex, "Failed to generate session summary");
         }
+    }
+
+    private (long totalBytes, int fileCount) GetStorageStats()
+    {
+        if (string.IsNullOrEmpty(_storageRootPath) || !Directory.Exists(_storageRootPath))
+            return (0, 0);
+
+        try
+        {
+            long totalBytes = 0;
+            int fileCount = 0;
+
+            foreach (var file in Directory.EnumerateFiles(_storageRootPath, "*.*", SearchOption.AllDirectories))
+            {
+                if (file.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase) ||
+                    file.EndsWith(".jsonl.gz", StringComparison.OrdinalIgnoreCase) ||
+                    file.EndsWith(".parquet", StringComparison.OrdinalIgnoreCase))
+                {
+                    fileCount++;
+                    totalBytes += new FileInfo(file).Length;
+                }
+            }
+
+            return (totalBytes, fileCount);
+        }
+        catch
+        {
+            return (0, 0);
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        return bytes switch
+        {
+            >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
+            >= 1_048_576 => $"{bytes / 1_048_576.0:F1} MB",
+            >= 1024 => $"{bytes / 1024.0:F1} KB",
+            _ => $"{bytes} B"
+        };
     }
 
     private static string FormatDuration(TimeSpan duration)

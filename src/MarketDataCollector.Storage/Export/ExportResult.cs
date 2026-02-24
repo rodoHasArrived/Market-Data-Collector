@@ -106,6 +106,12 @@ public sealed class ExportResult
     public ExportQualitySummary? QualitySummary { get; set; }
 
     /// <summary>
+    /// Path to the generated lineage manifest file.
+    /// </summary>
+    [JsonPropertyName("lineageManifestPath")]
+    public string? LineageManifestPath { get; set; }
+
+    /// <summary>
     /// Warnings encountered during export.
     /// </summary>
     [JsonPropertyName("warnings")]

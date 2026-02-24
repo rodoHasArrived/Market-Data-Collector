@@ -193,6 +193,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
     {
         var appliedFixes = new List<string>();
         var warnings = new List<string>();
+        var validationErrors = new List<string>();
 
         try
         {
@@ -207,8 +208,8 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
                 warnings.Add(deprecationMessage);
             }
 
-            // Stage 2.6: Warn if credentials appear directly in config file
-            WarnIfCredentialsInConfigFile(config, warnings);
+            // Stage 2.6: Warn (or fail in strict mode) if credentials appear directly in config file
+            WarnIfCredentialsInConfigFile(config, warnings, options.StrictCredentials ? validationErrors : null);
 
             // Stage 2.7: Warn about provider-specific symbol fields that won't apply
             WarnAboutProviderSpecificSymbolFields(config, warnings);
@@ -234,7 +235,6 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
             }
 
             // Stage 6: Validate
-            var validationErrors = new List<string>();
             var isValid = true;
 
             if (options.ValidateConfig)
@@ -257,12 +257,17 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
                     }
                 }
 
-                isValid = !results.Any(r => r.IsError);
+                isValid = !results.Any(r => r.IsError) && validationErrors.Count == 0;
 
                 if (!isValid)
                 {
                     _log.Warning("Configuration validation failed with {ErrorCount} errors", validationErrors.Count);
                 }
+            }
+            else if (validationErrors.Count > 0)
+            {
+                // Strict credential errors found even when validation is skipped
+                isValid = false;
             }
 
             // Stage 7: Return validated config
@@ -304,7 +309,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
             value.Contains(p, StringComparison.OrdinalIgnoreCase));
     }
 
-    private void WarnIfCredentialsInConfigFile(AppConfig config, List<string> warnings)
+    private void WarnIfCredentialsInConfigFile(AppConfig config, List<string> warnings, List<string>? errors = null)
     {
         var credentialFields = new List<(string fieldName, string? value, string envVar)>();
 
@@ -343,7 +348,17 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
             {
                 var msg = $"Credential '{fieldName}' appears to be set directly in the config file. " +
                           $"Use environment variable {envVar} instead to avoid accidental commits.";
-                _log.Warning(msg);
+
+                if (errors is not null)
+                {
+                    // Strict mode: treat as a hard validation error
+                    _log.Error("Strict credential violation: {Message}", msg);
+                    errors.Add($"[strict-credentials] {msg}");
+                }
+                else
+                {
+                    _log.Warning(msg);
+                }
                 warnings.Add(msg);
             }
         }
@@ -727,6 +742,12 @@ public sealed record PipelineOptions
     /// Whether to validate the configuration.
     /// </summary>
     public bool ValidateConfig { get; init; } = true;
+
+    /// <summary>
+    /// When true, credentials found directly in the config file cause a hard validation error
+    /// instead of a warning. Use with --strict-credentials CLI flag.
+    /// </summary>
+    public bool StrictCredentials { get; init; }
 
     /// <summary>
     /// Default options - self-healing and validation enabled.

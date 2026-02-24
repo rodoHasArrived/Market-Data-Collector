@@ -271,6 +271,85 @@ load_trades <- function(symbol = NULL) {
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Generates a machine-readable lineage manifest alongside the export, documenting
+    /// data provenance, quality scores, and known gaps for reproducibility and audit.
+    /// </summary>
+    internal async Task<string> GenerateLineageManifestAsync(
+        string outputDir,
+        ExportRequest request,
+        ExportResult result,
+        CancellationToken ct)
+    {
+        var manifestPath = Path.Combine(outputDir, "lineage_manifest.json");
+
+        // Build per-file lineage entries
+        var fileEntries = result.Files.Select(f => new
+        {
+            path = f.RelativePath,
+            symbol = f.Symbol,
+            eventType = f.EventType,
+            format = f.Format,
+            recordCount = f.RecordCount,
+            sizeBytes = f.SizeBytes,
+            checksumSha256 = f.ChecksumSha256,
+            firstTimestamp = f.FirstTimestamp,
+            lastTimestamp = f.LastTimestamp
+        }).ToArray();
+
+        var manifest = new
+        {
+            schemaVersion = "1.0",
+            exportedAt = DateTime.UtcNow.ToString("O"),
+            generator = "MarketDataCollector.AnalysisExportService",
+            export = new
+            {
+                profileId = result.ProfileId,
+                format = result.Files.FirstOrDefault()?.Format ?? "unknown",
+                symbols = result.Symbols,
+                dateRange = result.DateRange is not null
+                    ? new { from = result.DateRange.Start.ToString("yyyy-MM-dd"), to = result.DateRange.End.ToString("yyyy-MM-dd"), tradingDays = result.DateRange.TradingDays }
+                    : null,
+                totalRecords = result.TotalRecords,
+                totalBytes = result.TotalBytes,
+                filesGenerated = result.FilesGenerated,
+                durationSeconds = Math.Round(result.DurationSeconds, 2)
+            },
+            source = new
+            {
+                dataRoot = _dataRoot,
+                requestedSymbols = request.Symbols ?? Array.Empty<string>(),
+                requestedEventTypes = request.EventTypes,
+                startDate = request.StartDate.ToString("O"),
+                endDate = request.EndDate.ToString("O"),
+                sessionFilter = request.SessionFilter.ToString(),
+                minQualityScore = request.MinQualityScore
+            },
+            quality = result.QualitySummary is not null
+                ? new
+                {
+                    overallScore = result.QualitySummary.OverallScore,
+                    completenessScore = result.QualitySummary.CompletenessScore,
+                    gapsDetected = result.QualitySummary.GapsDetected,
+                    gapsFilled = result.QualitySummary.GapsFilled,
+                    outliersDetected = result.QualitySummary.OutliersDetected,
+                    missingDates = result.QualitySummary.MissingDates
+                }
+                : null,
+            files = fileEntries,
+            warnings = result.Warnings
+        };
+
+        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        });
+
+        await File.WriteAllTextAsync(manifestPath, json, ct);
+        return manifestPath;
+    }
+
     private async IAsyncEnumerable<Dictionary<string, object?>> ReadJsonlRecordsAsync(
         string path,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)

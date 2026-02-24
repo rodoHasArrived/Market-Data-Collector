@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -337,10 +338,181 @@ public static class ExportEndpoints
         .WithName("ExportResearchPackage")
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+
+        // Export preview - returns sample schema, record estimates, and size predictions without running a full export
+        group.MapPost(UiApiRoutes.ExportPreview, (
+            ExportPreviewRequest req,
+            HttpContext ctx) =>
+        {
+            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
+            var storageOptions = ctx.RequestServices.GetService<StorageOptions>();
+            var rootPath = storageOptions?.RootPath ?? "data";
+
+            var startDate = req.StartDate ?? DateTime.UtcNow.AddDays(-7);
+            var endDate = req.EndDate ?? DateTime.UtcNow;
+            var symbols = req.Symbols ?? Array.Empty<string>();
+            var format = req.Format ?? "parquet";
+            var eventTypes = req.EventTypes ?? new[] { "Trade", "BboQuote" };
+
+            // Scan storage to estimate record counts and file sizes
+            long totalRecordEstimate = 0;
+            long totalSourceBytes = 0;
+            int sourceFileCount = 0;
+
+            try
+            {
+                var fullPath = Path.GetFullPath(rootPath);
+                if (Directory.Exists(fullPath))
+                {
+                    foreach (var file in Directory.EnumerateFiles(fullPath, "*.jsonl*", SearchOption.AllDirectories))
+                    {
+                        if (file.Contains("_wal", StringComparison.OrdinalIgnoreCase) ||
+                            file.Contains("_archive", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        var fileName = Path.GetFileName(file);
+                        if (symbols.Length > 0 &&
+                            !symbols.Any(s => fileName.Contains(s, StringComparison.OrdinalIgnoreCase)))
+                            continue;
+
+                        var fi = new FileInfo(file);
+                        sourceFileCount++;
+                        totalSourceBytes += fi.Length;
+                        totalRecordEstimate += fi.Length / 100; // ~100 bytes per JSONL line
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to scan storage for export preview");
+            }
+
+            // Estimate output size based on format
+            var estimatedOutputBytes = format.ToLowerInvariant() switch
+            {
+                "parquet" => (long)(totalSourceBytes * 0.3),
+                "csv" => (long)(totalSourceBytes * 0.7),
+                "arrow" => (long)(totalSourceBytes * 0.4),
+                "xlsx" => (long)(totalSourceBytes * 0.5),
+                _ => totalSourceBytes
+            };
+
+            // Build column schema based on event types
+            var columns = BuildColumnSchema(eventTypes);
+
+            // Warnings
+            var warnings = new List<string>();
+            if (format.Equals("xlsx", StringComparison.OrdinalIgnoreCase) && totalRecordEstimate > 1_000_000)
+                warnings.Add($"Excel format is limited to ~1M rows; estimated {totalRecordEstimate:N0} rows. Consider Parquet or CSV.");
+            if (totalRecordEstimate == 0)
+                warnings.Add("No matching data found for the specified symbols and date range.");
+            if (estimatedOutputBytes > 1_073_741_824)
+                warnings.Add($"Estimated output is {estimatedOutputBytes / 1_073_741_824.0:F1} GB. Consider narrowing the date range or symbol list.");
+
+            return Results.Json(new
+            {
+                timestamp = DateTimeOffset.UtcNow,
+                parameters = new
+                {
+                    symbols = symbols.Length > 0 ? symbols : new[] { "(all)" },
+                    startDate,
+                    endDate,
+                    format,
+                    eventTypes
+                },
+                estimates = new
+                {
+                    totalRecords = totalRecordEstimate,
+                    sourceFiles = sourceFileCount,
+                    sourceBytes = totalSourceBytes,
+                    outputBytes = estimatedOutputBytes,
+                    outputFormatted = FormatBytesLocal(estimatedOutputBytes)
+                },
+                schema = new { columns, columnCount = columns.Count },
+                profiles = exportService?.GetProfiles().Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    format = p.Format.ToString().ToLowerInvariant()
+                }) ?? Enumerable.Empty<object>(),
+                warnings,
+                serviceAvailable = exportService is not null
+            }, jsonOptions);
+        })
+        .WithName("ExportPreview")
+        .WithDescription("Returns a preview of what an export would produce including schema, record estimates, and output size predictions.")
+        .Produces(200);
     }
+
+    private static List<object> BuildColumnSchema(string[] eventTypes)
+    {
+        var columns = new List<object>();
+        foreach (var eventType in eventTypes)
+        {
+            switch (eventType.ToLowerInvariant())
+            {
+                case "trade":
+                    columns.AddRange(new object[]
+                    {
+                        new { name = "Timestamp", type = "datetime64[ns]", eventType = "Trade" },
+                        new { name = "Symbol", type = "string", eventType = "Trade" },
+                        new { name = "Price", type = "decimal(18,8)", eventType = "Trade" },
+                        new { name = "Size", type = "int64", eventType = "Trade" },
+                        new { name = "Side", type = "enum(Buy,Sell,Unknown)", eventType = "Trade" },
+                        new { name = "Exchange", type = "string", eventType = "Trade" }
+                    });
+                    break;
+                case "bboquote":
+                case "quote":
+                    columns.AddRange(new object[]
+                    {
+                        new { name = "Timestamp", type = "datetime64[ns]", eventType = "BboQuote" },
+                        new { name = "Symbol", type = "string", eventType = "BboQuote" },
+                        new { name = "BidPrice", type = "decimal(18,8)", eventType = "BboQuote" },
+                        new { name = "BidSize", type = "int64", eventType = "BboQuote" },
+                        new { name = "AskPrice", type = "decimal(18,8)", eventType = "BboQuote" },
+                        new { name = "AskSize", type = "int64", eventType = "BboQuote" }
+                    });
+                    break;
+                case "lobsnapshot":
+                case "depth":
+                    columns.AddRange(new object[]
+                    {
+                        new { name = "Timestamp", type = "datetime64[ns]", eventType = "LOBSnapshot" },
+                        new { name = "Symbol", type = "string", eventType = "LOBSnapshot" },
+                        new { name = "Bids", type = "array<{Price,Size}>", eventType = "LOBSnapshot" },
+                        new { name = "Asks", type = "array<{Price,Size}>", eventType = "LOBSnapshot" }
+                    });
+                    break;
+                case "bar":
+                case "historicalbar":
+                    columns.AddRange(new object[]
+                    {
+                        new { name = "Timestamp", type = "datetime64[ns]", eventType = "Bar" },
+                        new { name = "Symbol", type = "string", eventType = "Bar" },
+                        new { name = "Open", type = "decimal(18,8)", eventType = "Bar" },
+                        new { name = "High", type = "decimal(18,8)", eventType = "Bar" },
+                        new { name = "Low", type = "decimal(18,8)", eventType = "Bar" },
+                        new { name = "Close", type = "decimal(18,8)", eventType = "Bar" },
+                        new { name = "Volume", type = "int64", eventType = "Bar" }
+                    });
+                    break;
+            }
+        }
+        return columns;
+    }
+
+    private static string FormatBytesLocal(long bytes) => bytes switch
+    {
+        >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
+        >= 1_048_576 => $"{bytes / 1_048_576.0:F1} MB",
+        >= 1024 => $"{bytes / 1024.0:F1} KB",
+        _ => $"{bytes} B"
+    };
 
     private sealed record ExportAnalysisRequest(string? ProfileId, string[]? Symbols, string? Format, DateTime? StartDate, DateTime? EndDate);
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
+    private sealed record ExportPreviewRequest(string[]? Symbols, string? Format, DateTime? StartDate, DateTime? EndDate, string[]? EventTypes);
 }

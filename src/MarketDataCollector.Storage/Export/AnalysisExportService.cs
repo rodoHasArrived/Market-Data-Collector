@@ -143,6 +143,19 @@ public sealed partial class AnalysisExportService
             result.CompletedAt = DateTime.UtcNow;
             result.Success = true;
 
+            // Generate lineage manifest for data provenance and reproducibility
+            try
+            {
+                var manifestPath = await GenerateLineageManifestAsync(
+                    request.OutputDirectory, request, result, ct);
+                result.LineageManifestPath = manifestPath;
+            }
+            catch (Exception manifestEx)
+            {
+                _log.Warning(manifestEx, "Failed to generate lineage manifest (non-fatal)");
+                result.Warnings = [.. result.Warnings, $"Lineage manifest generation failed: {manifestEx.Message}"];
+            }
+
             _log.Information("Export completed: {FileCount} files, {RecordCount:N0} records, {Bytes:N0} bytes",
                 result.FilesGenerated, result.TotalRecords, result.TotalBytes);
 

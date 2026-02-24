@@ -483,7 +483,11 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
     private static string GetEasternTimeZoneId()
     {
         try { return TimeZoneInfo.FindSystemTimeZoneById("America/New_York").Id; }
-        catch { return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time").Id; }
+        catch (TimeZoneNotFoundException)
+        {
+            // Linux uses "America/New_York", Windows uses "Eastern Standard Time"
+            return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time").Id;
+        }
     }
 
     private async void ScheduledCallback(object? state)
