@@ -134,6 +134,36 @@ public sealed class CanonicalSymbolRegistry : ICanonicalSymbolRegistry
     }
 
     /// <inheritdoc />
+    public string? TryResolveWithProvider(string symbol, string provider)
+    {
+        if (string.IsNullOrWhiteSpace(symbol) || string.IsNullOrWhiteSpace(provider))
+            return null;
+
+        var normalized = symbol.Trim();
+
+        // Check provider-specific mappings first (highest priority for disambiguation)
+        var registry = _registryService.GetRegistry();
+        if (registry.ProviderMappings.TryGetValue(provider, out var providerMap) &&
+            providerMap.TryGetValue(normalized, out var canonical))
+        {
+            return canonical;
+        }
+
+        // Check ProviderSymbols on individual entries for this provider
+        foreach (var (canonicalName, entry) in registry.Symbols)
+        {
+            if (entry.ProviderSymbols.TryGetValue(provider, out var providerSymbol) &&
+                string.Equals(providerSymbol, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                return canonicalName;
+            }
+        }
+
+        // Fall back to general resolution (cache, alias index, fuzzy match)
+        return ResolveToCanonical(normalized);
+    }
+
+    /// <inheritdoc />
     public bool IsKnown(string identifier)
     {
         if (string.IsNullOrWhiteSpace(identifier))

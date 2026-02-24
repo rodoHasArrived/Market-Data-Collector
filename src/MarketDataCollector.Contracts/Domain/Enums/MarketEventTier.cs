@@ -13,5 +13,15 @@ public enum MarketEventTier
     /// <summary>
     /// Derived event from processing pipeline.
     /// </summary>
-    Derived = 1
+    Derived = 1,
+
+    /// <summary>
+    /// Enriched event after canonicalization (symbol resolution, condition code mapping, venue normalization).
+    /// </summary>
+    Enriched = 2,
+
+    /// <summary>
+    /// Fully processed event after all transformations.
+    /// </summary>
+    Processed = 3
 }

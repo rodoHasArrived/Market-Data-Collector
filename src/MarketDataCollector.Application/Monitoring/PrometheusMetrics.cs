@@ -291,6 +291,21 @@ public static class PrometheusMetrics
         "mdc_migration_streaming_factories_registered",
         "Total streaming factories registered (migration diagnostics)");
 
+    // Canonicalization metrics
+    private static readonly Counter CanonicalizationEventsTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_events_total",
+        "Total canonicalization events by provider, event type, and status",
+        new CounterConfiguration { LabelNames = new[] { "provider", "event_type", "status" } });
+
+    private static readonly Counter CanonicalizationUnresolvedTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_unresolved_total",
+        "Total unresolved canonicalization fields by provider and field type",
+        new CounterConfiguration { LabelNames = new[] { "provider", "field" } });
+
+    private static readonly Gauge CanonicalizationVersionActive = Prometheus.Metrics.CreateGauge(
+        "mdc_canonicalization_version_active",
+        "Currently active canonicalization mapping version");
+
     // Symbol-level metrics (with labels)
     private static readonly Counter TradesBySymbol = Prometheus.Metrics.CreateCounter(
         "mdc_trades_by_symbol_total",
@@ -380,6 +395,10 @@ public static class PrometheusMetrics
         MigrationReconnectFailures.IncTo(migrationSnapshot.ReconnectFailures);
         MigrationProvidersRegistered.Set(migrationSnapshot.ProvidersRegistered);
         MigrationStreamingFactoriesRegistered.Set(migrationSnapshot.StreamingFactoriesRegistered);
+
+        // Update canonicalization metrics
+        var canonSnapshot = Canonicalization.CanonicalizationMetrics.GetSnapshot();
+        CanonicalizationVersionActive.Set(canonSnapshot.ActiveVersion);
     }
 
     /// <summary>
@@ -451,6 +470,22 @@ public static class PrometheusMetrics
     {
         var safeSymbol = GetSymbolLabel(symbol);
         SlaFreshnessMs.WithLabels(safeSymbol).Observe(freshnessMs);
+    }
+
+    /// <summary>
+    /// Records a canonicalization event with provider, event type, and status labels.
+    /// </summary>
+    public static void RecordCanonicalizationEvent(string provider, string eventType, string status)
+    {
+        CanonicalizationEventsTotal.WithLabels(provider, eventType, status).Inc();
+    }
+
+    /// <summary>
+    /// Records an unresolved canonicalization field.
+    /// </summary>
+    public static void RecordCanonicalizationUnresolved(string provider, string field)
+    {
+        CanonicalizationUnresolvedTotal.WithLabels(provider, field).Inc();
     }
 
     /// <summary>
