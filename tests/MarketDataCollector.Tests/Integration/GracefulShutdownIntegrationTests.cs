@@ -184,8 +184,8 @@ public sealed class GracefulShutdownIntegrationTests : IAsyncLifetime
             Size: 100,
             Aggressor: AggressorSide.Unknown,
             SequenceNumber: sequence,
-            Source: "test");
-        return MarketEvent.TradeEvent(trade.Timestamp, symbol, trade, sequence, "test");
+            StreamId: "test");
+        return MarketEvent.Trade(trade.Timestamp, symbol, trade, sequence, "test");
     }
 
     /// <summary>
