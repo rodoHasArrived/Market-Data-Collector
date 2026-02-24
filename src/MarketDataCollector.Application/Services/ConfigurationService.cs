@@ -807,7 +807,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     public async Task SaveConfigAsync(AppConfig config, string? configPath = null)
     {
         var store = new ConfigStore(configPath);
-        await store.SaveAsync(config).ConfigureAwait(false);
+        await store.SaveAsync(config);
         _log.Information("Configuration saved to {Path}", store.ConfigPath);
     }
 
