@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-24 15:31:39 UTC
+> Auto-generated on 2026-02-24 15:51:54 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -435,6 +435,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigPresetCommand.cs
 │   │   │   ├── DiagnosticsCommands.cs
 │   │   │   ├── DryRunCommand.cs
+│   │   │   ├── GenerateLoaderCommand.cs
 │   │   │   ├── HelpCommand.cs
 │   │   │   ├── ICliCommand.cs
 │   │   │   ├── PackageCommands.cs
@@ -803,6 +804,7 @@ Market-Data-Collector/
 │   │   │   ├── LifecyclePolicyEngine.cs
 │   │   │   ├── MaintenanceScheduler.cs
 │   │   │   ├── MetadataTagService.cs
+│   │   │   ├── ParquetConversionService.cs
 │   │   │   ├── QuotaEnforcementService.cs
 │   │   │   ├── SourceRegistry.cs
 │   │   │   ├── StorageCatalogService.cs
@@ -1198,6 +1200,7 @@ Market-Data-Collector/
 │   │   │   ├── LifecyclePolicyEngineTests.cs
 │   │   │   ├── MemoryMappedJsonlReaderTests.cs
 │   │   │   ├── MetadataTagServiceTests.cs
+│   │   │   ├── ParquetConversionServiceTests.cs
 │   │   │   ├── PortableDataPackagerTests.cs
 │   │   │   ├── QuotaEnforcementServiceTests.cs
 │   │   │   ├── StorageCatalogServiceTests.cs
