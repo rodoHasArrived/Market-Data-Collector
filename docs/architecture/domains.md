@@ -20,20 +20,50 @@ public sealed record MarketEvent(
     long Sequence = 0,
     string Source = "IB",
     int SchemaVersion = 1,
-    MarketEventTier Tier = MarketEventTier.Raw
+    MarketEventTier Tier = MarketEventTier.Raw,
+    DateTimeOffset? ExchangeTimestamp = null,
+    DateTimeOffset ReceivedAtUtc = default,
+    long ReceivedAtMonotonic = 0
 );
 ```
 
 ### Envelope fields
 
 - `Timestamp` – canonical event timestamp used by the pipeline.
-- `Symbol` – instrument identifier (or `SYSTEM` for platform events like heartbeat).
+- `Symbol` – raw instrument identifier as received from the provider (or `SYSTEM` for platform events like heartbeat). This field is never mutated by canonicalization.
 - `Type` – discriminator for payload parsing and downstream routing.
 - `Payload` – strongly typed `MarketEventPayload` instance (nullable for heartbeat/system events).
 - `Sequence` – monotonic sequence when available from source or collector.
 - `Source` – provider/source identifier (examples: `IB`, `ALPACA`, `stooq`).
 - `SchemaVersion` – payload schema compatibility marker.
-- `Tier` – event tier classification (raw/derived/normalized workflows).
+- `Tier` – event tier classification (`Raw`, `Enriched`, `Processed`). Canonicalized events are promoted to `Enriched`.
+- `ExchangeTimestamp` – exchange/venue timestamp from the provider feed (best-effort, depends on provider).
+- `ReceivedAtUtc` – wall-clock time when the event entered the collector. Set by `StampReceiveTime()`.
+- `ReceivedAtMonotonic` – monotonic clock timestamp for latency measurement. Set by `StampReceiveTime()`.
+
+### Timestamp semantics
+
+The three timestamp fields serve distinct purposes:
+
+| Field | Populated by | Semantics |
+|-------|-------------|-----------|
+| `Timestamp` | Factory methods (`MarketEvent.Trade()`, etc.) | When the event was created in the collector process |
+| `ExchangeTimestamp` | `StampReceiveTime(exchangeTs)` in provider adapter | Exchange/venue timestamp from the provider feed |
+| `ReceivedAtUtc` | `StampReceiveTime()` | Wall-clock time when event entered the collector |
+
+`EstimatedLatencyMs` computes end-to-end latency from `ReceivedAtUtc - ExchangeTimestamp` when both are available.
+
+### Planned canonicalization fields
+
+The [Deterministic Canonicalization](deterministic-canonicalization.md) design proposes three additional fields on the envelope to support cross-provider data comparison:
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `CanonicalSymbol` | `string?` | Resolved canonical identity (e.g., `"AAPL"`) via `CanonicalSymbolRegistry` |
+| `CanonicalizationVersion` | `int` | `0` = not canonicalized, `1+` = version of mapping tables applied |
+| `CanonicalVenue` | `string?` | Normalized venue as ISO 10383 MIC code (e.g., `"XNAS"`) |
+
+These fields are additive — existing consumers and storage paths continue to work unchanged. Events with `CanonicalizationVersion = 0` (or the field absent) have not been through canonicalization. See the [design document](deterministic-canonicalization.md) for the full specification.
 
 ### Current `MarketEventType` values
 
@@ -268,3 +298,22 @@ Key points:
 - **Backfill bars** → `HistoricalBar` payloads on `MarketEventType.HistoricalBar`
 
 This split keeps domain logic deterministic, testable, and independent from provider adapter implementation details.
+
+---
+
+## Canonicalization Layer
+
+A planned canonicalization stage will sit between provider adapters and the `EventPipeline` to resolve cross-provider differences in symbol identity, condition codes, and venue identifiers. This is a higher-level identity resolution layer that builds on the existing structural normalization performed by the collectors.
+
+The canonicalization stage:
+
+1. **Resolves symbols** via `CanonicalSymbolRegistry` to populate `CanonicalSymbol` on the envelope.
+2. **Maps condition codes** from provider-specific formats (CTA plan codes, SEC numeric codes, IB field codes) to a canonical enum.
+3. **Normalizes venues** to ISO 10383 MIC codes (e.g., Polygon exchange ID `4` → `"XNAS"`).
+4. **Preserves raw data** — the original `Symbol`, condition codes, and venue strings are never mutated.
+
+The canonicalization design is documented in [Deterministic Canonicalization](deterministic-canonicalization.md).
+
+---
+
+*Last Updated: 2026-02-24*

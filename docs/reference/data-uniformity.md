@@ -1,5 +1,7 @@
 # Data Uniformity and Usability Plan
 
+> **Related:** [Deterministic Canonicalization Design](../architecture/deterministic-canonicalization.md) — detailed design for cross-provider symbol resolution, condition code mapping, and venue normalization.
+
 This note expands on the data-quality goals for the collector so downstream users receive a uniform, analysis-ready tape regardless of provider quirks.
 
 ## Current implementation snapshot (2026-01-30)
@@ -15,8 +17,10 @@ This note expands on the data-quality goals for the collector so downstream user
 
 ## Metadata and identifiers
 * **Provider provenance:** Include `provider` and optional `connectorId` on every row to make side-by-side comparisons and reconciliation easier.
-* **Symbol mapping registry:** Maintain a mapping table of provider symbols → canonical symbols (ISIN/FIGI where available) and apply it during ingestion; emit both the canonical and raw values when mappings exist.
-* **Clock domains:** Persist both provider and collector timestamps when available so analysts can measure latency and clock skew.
+* **Symbol mapping registry:** Maintain a mapping table of provider symbols → canonical symbols (ISIN/FIGI where available) and apply it during ingestion; emit both the canonical and raw values when mappings exist. The [Deterministic Canonicalization](../architecture/deterministic-canonicalization.md) design specifies how `CanonicalSymbolRegistry` is wired into the ingestion path to populate a `CanonicalSymbol` field on the `MarketEvent` envelope while preserving the raw `Symbol`.
+* **Clock domains:** Persist both provider and collector timestamps when available so analysts can measure latency and clock skew. The `ExchangeTimestamp`, `ReceivedAtUtc`, and `ReceivedAtMonotonic` fields on `MarketEvent` already support this pattern. A planned `ClockQuality` enum will qualify timestamp trustworthiness per provider.
+* **Condition code normalization:** Map provider-specific trade condition codes (CTA plan codes from Alpaca, SEC numeric codes from Polygon, IB field codes) to a canonical enum. See the [condition code mapping](../architecture/deterministic-canonicalization.md#c-condition-code-mapping) section of the canonicalization design.
+* **Venue normalization:** Normalize freeform venue identifiers to ISO 10383 MIC codes for consistent exchange identification across providers. See the [venue normalization](../architecture/deterministic-canonicalization.md#d-venue-normalization) section.
 
 ## Precision, units, and currencies
 * **Decimals for prices:** Store prices as `decimal` in code and stringified decimals in JSON to avoid floating-point drift during parquet/duckdb conversion.

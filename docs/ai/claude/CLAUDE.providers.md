@@ -745,6 +745,37 @@ export TIINGO__APIKEY=your-key
 
 ---
 
+## Canonicalization Requirements for Providers
+
+A planned [Deterministic Canonicalization](../../architecture/deterministic-canonicalization.md) stage will run between provider adapters and `EventPipeline` to normalize cross-provider differences. When implementing or modifying a provider, keep these requirements in mind:
+
+### What providers must do
+
+1. **Populate `ExchangeTimestamp`** — Call `StampReceiveTime(exchangeTs)` with the exchange timestamp when the provider feed includes it. Alpaca provides ISO 8601 timestamps in `t`, Polygon provides epoch-millisecond `t`, IB provides epoch-seconds for tick-by-tick and epoch-milliseconds in RTVolume.
+
+2. **Pass raw symbol unchanged** — Do not attempt to resolve canonical symbols in the provider adapter. Use the raw symbol string from the provider feed. Canonicalization handles identity resolution.
+
+3. **Preserve raw condition codes** — Store provider-specific condition codes in `TradeDto.Conditions` (or equivalent payload fields) without mapping. The `ConditionCodeMapper` handles translation to canonical codes.
+
+4. **Set `Source` accurately** — The `Source` field on `MarketEvent` must match the provider identifier used in `CanonicalSymbolRegistry.ProviderMappings` (e.g., `"ALPACA"`, `"POLYGON"`, `"IB"`, `"STOCKSHARP"`).
+
+### Provider-specific timestamp hazards
+
+| Provider | Hazard | Mitigation |
+|----------|--------|------------|
+| IB | Uses **seconds** for `tickByTickAllLast` but **milliseconds** in RTVolume | Provider adapter must normalize before calling `StampReceiveTime()` |
+| StockSharp | `msg.ServerTime` source varies by connector (exchange time vs. server time) | Document clock quality per connector |
+| Polygon | Timestamps are Unix epoch **milliseconds** | Standard conversion |
+| Alpaca | ISO 8601 strings | Standard parsing |
+
+### Venue identifiers by provider
+
+Each provider uses a different format for exchange/venue identifiers. The `VenueMicMapper` normalizes these to ISO 10383 MIC codes. When adding a new provider, document the venue format in the [canonicalization design](../../architecture/deterministic-canonicalization.md) and add mappings to `config/venue-mapping.json`.
+
+See the [provider field audit](../../architecture/deterministic-canonicalization.md#provider-field-audit) for a comprehensive comparison of field formats across providers.
+
+---
+
 ## Related Documentation
 
 - [docs/providers/provider-comparison.md](../../providers/provider-comparison.md) - Provider feature matrix
@@ -752,7 +783,8 @@ export TIINGO__APIKEY=your-key
 - [docs/providers/interactive-brokers-setup.md](../../providers/interactive-brokers-setup.md) - IB setup
 - [docs/providers/alpaca-setup.md](../../providers/alpaca-setup.md) - Alpaca setup
 - [docs/architecture/provider-management.md](../../architecture/provider-management.md) - Provider architecture
+- [docs/architecture/deterministic-canonicalization.md](../../architecture/deterministic-canonicalization.md) - Canonicalization design
 
 ---
 
-*Last Updated: 2026-02-20*
+*Last Updated: 2026-02-24*

@@ -207,9 +207,10 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
    - `MarketDepthCollector.OnDepth(MarketDepthUpdate)`
    - `QuoteCollector.OnQuote(MarketQuoteUpdate)`
 4. Collectors emit strongly-typed `MarketEvent` objects via `IMarketEventPublisher`
-5. `EventPipeline` routes events through a bounded channel to decouple producers from I/O
-6. `JsonlStorageSink` appends events as JSONL
-7. `StatusWriter` periodically dumps health snapshots for UI/monitoring
+5. *(Planned)* `EventCanonicalizer` resolves canonical symbol, maps condition codes, and normalizes venue identifiers — see [Deterministic Canonicalization](deterministic-canonicalization.md)
+6. `EventPipeline` routes events through a bounded channel to decouple producers from I/O
+7. `JsonlStorageSink` appends events as JSONL
+8. `StatusWriter` periodically dumps health snapshots for UI/monitoring
 
 ### Event Pipeline Details
 
@@ -444,6 +445,6 @@ The system includes several high-performance features:
 
 ---
 
-**Version:** 1.6.1
-**Last Updated:** 2026-02-06
-**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)
+**Version:** 1.6.2
+**Last Updated:** 2026-02-24
+**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [deterministic-canonicalization.md](deterministic-canonicalization.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)
