@@ -321,10 +321,35 @@ public sealed partial class AnalysisExportService
                 continue;
             }
 
-            var windowPrices = new double[period];
+            // Build a window of valid (non-NaN) prices for this period
+            var windowStart = i - period + 1;
+            var validCount = 0;
             for (int j = 0; j < period; j++)
-                windowPrices[j] = double.IsNaN(prices[i - period + 1 + j]) ? 0 : prices[i - period + 1 + j];
+            {
+                if (!double.IsNaN(prices[windowStart + j]))
+                {
+                    validCount++;
+                }
+            }
 
+            if (validCount == 0)
+            {
+                records[i]["bb_upper"] = null;
+                records[i]["bb_middle"] = null;
+                records[i]["bb_lower"] = null;
+                continue;
+            }
+
+            var windowPrices = new double[validCount];
+            var idx = 0;
+            for (int j = 0; j < period; j++)
+            {
+                var price = prices[windowStart + j];
+                if (!double.IsNaN(price))
+                {
+                    windowPrices[idx++] = price;
+                }
+            }
             var mean = Mean(windowPrices);
             var std = StdDev(windowPrices, mean);
 
