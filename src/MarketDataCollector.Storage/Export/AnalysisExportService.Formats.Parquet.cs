@@ -159,13 +159,15 @@ public sealed partial class AnalysisExportService
     private static DataColumn CreateDataColumn(DataField dataField, List<object?> values) =>
         dataField.ClrType switch
         {
-            var t when t == typeof(int?) => new DataColumn(dataField, values.Select(ConvertToInt).ToArray()),
-            var t when t == typeof(long?) => new DataColumn(dataField, values.Select(ConvertToLong).ToArray()),
-            var t when t == typeof(float?) => new DataColumn(dataField, values.Select(ConvertToFloat).ToArray()),
-            var t when t == typeof(double?) => new DataColumn(dataField, values.Select(ConvertToDouble).ToArray()),
-            var t when t == typeof(decimal?) => new DataColumn(dataField, values.Select(ConvertToDecimal).ToArray()),
-            var t when t == typeof(bool?) => new DataColumn(dataField, values.Select(ConvertToBool).ToArray()),
-            var t when t == typeof(DateTimeOffset?) => new DataColumn(dataField, values.Select(ConvertToDateTimeOffset).ToArray()),
+            // Parquet.Net DataField.ClrType returns the non-nullable base type even for
+            // nullable fields (e.g. DataField<double?>.ClrType == typeof(double)).
+            var t when t == typeof(int) => new DataColumn(dataField, values.Select(ConvertToInt).ToArray()),
+            var t when t == typeof(long) => new DataColumn(dataField, values.Select(ConvertToLong).ToArray()),
+            var t when t == typeof(float) => new DataColumn(dataField, values.Select(ConvertToFloat).ToArray()),
+            var t when t == typeof(double) => new DataColumn(dataField, values.Select(ConvertToDouble).ToArray()),
+            var t when t == typeof(decimal) => new DataColumn(dataField, values.Select(ConvertToDecimal).ToArray()),
+            var t when t == typeof(bool) => new DataColumn(dataField, values.Select(ConvertToBool).ToArray()),
+            var t when t == typeof(DateTimeOffset) => new DataColumn(dataField, values.Select(ConvertToDateTimeOffset).ToArray()),
             _ => new DataColumn(dataField, values.Select(v => v?.ToString() ?? string.Empty).ToArray())
         };
 

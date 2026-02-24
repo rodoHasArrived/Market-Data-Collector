@@ -106,7 +106,8 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        await WaitForConsumption(sink, expectedCount: 50, timeoutMs: 15_000);
+        // FlushAsync waits for the consumer to drain all queued events
+        await pipeline.FlushAsync(CancellationToken.None);
 
         sink.ReceivedEvents.Should().HaveCount(50);
         pipeline.ConsumedCount.Should().Be(50);

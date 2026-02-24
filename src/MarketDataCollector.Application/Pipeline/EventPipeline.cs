@@ -40,6 +40,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly bool _metricsEnabled;
     private readonly DroppedEventAuditTrail? _auditTrail;
     private readonly IEventMetrics _metrics;
+    private int _disposed;
+    private volatile bool _consumerBusy;
 
     // Performance metrics
     private long _publishedCount;
@@ -363,10 +365,42 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     public void Complete() => _channel.Writer.TryComplete();
 
     /// <summary>
-    /// Forces an immediate flush of buffered data to storage.
+    /// Waits for the consumer to process all currently-queued events, then forces
+    /// an immediate flush of buffered data to storage.
     /// </summary>
     public async Task FlushAsync(CancellationToken ct = default)
     {
+        // Wait for the consumer to process all currently-queued events.
+        // In DropOldest mode the channel silently discards events, so
+        // consumed + dropped may never reach published. Fall back to
+        // checking whether the channel is empty and the consumer is idle.
+        var targetPublished = Interlocked.Read(ref _publishedCount);
+
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var consumed = Interlocked.Read(ref _consumedCount);
+            var dropped = Interlocked.Read(ref _droppedCount);
+
+            // All published events accounted for
+            if (consumed + dropped >= targetPublished)
+                break;
+
+            // Channel is empty — check if the consumer has finished its batch
+            if (_channel.Reader.Count == 0 && !_consumerBusy)
+            {
+                await Task.Delay(10, ct).ConfigureAwait(false);
+                var newConsumed = Interlocked.Read(ref _consumedCount);
+                if (_channel.Reader.Count == 0 && !_consumerBusy && newConsumed == consumed)
+                    break; // Consumer is idle, nothing left to process
+            }
+            else
+            {
+                await Task.Delay(1, ct).ConfigureAwait(false);
+            }
+        }
+
         await _sink.FlushAsync(ct).ConfigureAwait(false);
         Interlocked.Exchange(ref _lastFlushTimestamp, Stopwatch.GetTimestamp());
     }
@@ -402,6 +436,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
             while (await _channel.Reader.WaitToReadAsync(_cts.Token).ConfigureAwait(false))
             {
+                _consumerBusy = true;
                 var startTs = Stopwatch.GetTimestamp();
 
                 // Drain up to _batchSize events from the channel
@@ -436,6 +471,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 }
 
                 Interlocked.Add(ref _consumedCount, batchBuffer.Count);
+                _consumerBusy = false;
 
                 // Track processing time amortized across the batch
                 var elapsedNs = (long)(HighResolutionTimestamp.GetElapsedNanoseconds(startTs));
@@ -507,12 +543,15 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
     public async ValueTask DisposeAsync()
     {
-        _cts.Cancel();
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return; // Already disposed
+
+        // Signal no more events will be published so the consumer can drain
+        // remaining items from the channel and exit naturally.
         _channel.Writer.TryComplete();
 
-        // Wait for consumer with timeout to prevent indefinite hang
-        // (the consumer's finally block has its own _finalFlushTimeout, but this
-        // acts as a defense-in-depth safeguard)
+        // Wait for consumer to drain the channel. Only force-cancel as a
+        // timeout fallback to prevent indefinite hang.
         try
         {
             var completed = await Task.WhenAny(
@@ -523,8 +562,13 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             {
                 _logger.LogWarning(
                     "Consumer task did not complete within {TimeoutSeconds}s during disposal. " +
-                    "Published: {PublishedCount}, consumed: {ConsumedCount}. Proceeding with disposal",
+                    "Published: {PublishedCount}, consumed: {ConsumedCount}. Force-cancelling",
                     _disposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
+
+                await _cts.CancelAsync().ConfigureAwait(false);
+
+                // Give a short grace period after force-cancel
+                await Task.WhenAny(_consumer, Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
             }
             else
             {
@@ -535,6 +579,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         {
             _logger.LogError(ex, "Consumer task failed during disposal. Published: {PublishedCount}, consumed: {ConsumedCount}", _publishedCount, _consumedCount);
         }
+
+        // Cancel the CTS to stop the periodic flusher
+        if (!_cts.IsCancellationRequested)
+            await _cts.CancelAsync().ConfigureAwait(false);
 
         if (_flusher is not null)
         {
