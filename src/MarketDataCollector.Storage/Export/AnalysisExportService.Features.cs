@@ -418,48 +418,48 @@ public sealed partial class AnalysisExportService
             switch (features.Normalization)
             {
                 case NormalizationType.MinMax:
-                {
-                    var min = validValues.Min();
-                    var max = validValues.Max();
-                    var range = max - min;
-                    if (range == 0) break;
-
-                    for (int i = 0; i < records.Count; i++)
                     {
-                        if (values[i].HasValue)
-                            records[i][col] = Math.Round((values[i]!.Value - min) / range, 8);
+                        var min = validValues.Min();
+                        var max = validValues.Max();
+                        var range = max - min;
+                        if (range == 0) break;
+
+                        for (int i = 0; i < records.Count; i++)
+                        {
+                            if (values[i].HasValue)
+                                records[i][col] = Math.Round((values[i]!.Value - min) / range, 8);
+                        }
+                        break;
                     }
-                    break;
-                }
                 case NormalizationType.ZScore:
-                {
-                    var mean = Mean(validValues);
-                    var std = StdDev(validValues, mean);
-                    if (std == 0) break;
-
-                    for (int i = 0; i < records.Count; i++)
                     {
-                        if (values[i].HasValue)
-                            records[i][col] = Math.Round((values[i]!.Value - mean) / std, 8);
+                        var mean = Mean(validValues);
+                        var std = StdDev(validValues, mean);
+                        if (std == 0) break;
+
+                        for (int i = 0; i < records.Count; i++)
+                        {
+                            if (values[i].HasValue)
+                                records[i][col] = Math.Round((values[i]!.Value - mean) / std, 8);
+                        }
+                        break;
                     }
-                    break;
-                }
                 case NormalizationType.Robust:
-                {
-                    var sorted = validValues.OrderBy(v => v).ToArray();
-                    var median = sorted[sorted.Length / 2];
-                    var q1 = sorted[sorted.Length / 4];
-                    var q3 = sorted[3 * sorted.Length / 4];
-                    var iqr = q3 - q1;
-                    if (iqr == 0) break;
-
-                    for (int i = 0; i < records.Count; i++)
                     {
-                        if (values[i].HasValue)
-                            records[i][col] = Math.Round((values[i]!.Value - median) / iqr, 8);
+                        var sorted = validValues.OrderBy(v => v).ToArray();
+                        var median = sorted[sorted.Length / 2];
+                        var q1 = sorted[sorted.Length / 4];
+                        var q3 = sorted[3 * sorted.Length / 4];
+                        var iqr = q3 - q1;
+                        if (iqr == 0) break;
+
+                        for (int i = 0; i < records.Count; i++)
+                        {
+                            if (values[i].HasValue)
+                                records[i][col] = Math.Round((values[i]!.Value - median) / iqr, 8);
+                        }
+                        break;
                     }
-                    break;
-                }
             }
         }
     }
