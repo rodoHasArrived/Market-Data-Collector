@@ -39,7 +39,8 @@ public sealed record AppConfig(
     SourceRegistryConfig? Sources = null,
     DataSourcesConfig? DataSources = null,
     DerivativesConfig? Derivatives = null,
-    ProviderRegistryConfig? ProviderRegistry = null
+    ProviderRegistryConfig? ProviderRegistry = null,
+    CanonicalizationConfig? Canonicalization = null
 );
 
 /// <summary>
