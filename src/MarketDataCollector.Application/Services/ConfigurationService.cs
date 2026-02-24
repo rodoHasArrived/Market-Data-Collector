@@ -798,7 +798,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     public AppConfig GetConfig(string? configPath = null)
     {
         var store = new ConfigStore(configPath);
-        return store.LoadAsync().GetAwaiter().GetResult();
+        return store.Load();
     }
 
     /// <summary>
