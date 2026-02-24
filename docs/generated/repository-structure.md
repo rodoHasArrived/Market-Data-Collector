@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-23 19:06:15 UTC
+> Auto-generated on 2026-02-24 05:27:12 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -426,16 +426,19 @@ Market-Data-Collector/
 │   │   │   ├── BackfillRequest.cs
 │   │   │   ├── BackfillResult.cs
 │   │   │   ├── BackfillStatusStore.cs
+│   │   │   ├── GapBackfillService.cs
 │   │   │   └── HistoricalBackfillService.cs
 │   │   ├── Commands/
 │   │   │   ├── CliArguments.cs
 │   │   │   ├── CommandDispatcher.cs
 │   │   │   ├── ConfigCommands.cs
+│   │   │   ├── ConfigPresetCommand.cs
 │   │   │   ├── DiagnosticsCommands.cs
 │   │   │   ├── DryRunCommand.cs
 │   │   │   ├── HelpCommand.cs
 │   │   │   ├── ICliCommand.cs
 │   │   │   ├── PackageCommands.cs
+│   │   │   ├── QueryCommand.cs
 │   │   │   ├── SchemaCheckCommand.cs
 │   │   │   ├── SelfTestCommand.cs
 │   │   │   ├── SymbolCommands.cs
@@ -752,6 +755,7 @@ Market-Data-Collector/
 │   │   │   └── WriteAheadLog.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportService.cs
+│   │   │   ├── AnalysisExportService.Features.cs
 │   │   │   ├── AnalysisExportService.Formats.Arrow.cs
 │   │   │   ├── AnalysisExportService.Formats.cs
 │   │   │   ├── AnalysisExportService.Formats.Parquet.cs
@@ -1172,6 +1176,7 @@ Market-Data-Collector/
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
 │   │   │   ├── FixtureProviderTests.cs
+│   │   │   ├── GracefulShutdownIntegrationTests.cs
 │   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── ProviderSdk/
 │   │   │   ├── CredentialValidatorTests.cs
