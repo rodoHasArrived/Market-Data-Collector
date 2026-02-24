@@ -312,6 +312,126 @@ public class AnalysisExportServiceTests : IDisposable
         stringsXml.Should().Contain("&gt;");   // > escaped
     }
 
+    [Fact]
+    public async Task PreviewAsync_WithValidData_ShouldReturnPreviewWithoutWritingFiles()
+    {
+        // Arrange
+        await CreateTestJsonlFileAsync("AAPL.Trade.jsonl", new[]
+        {
+            new { Timestamp = "2026-01-03T10:00:00Z", Symbol = "AAPL", Price = 185.50m, Size = 100 },
+            new { Timestamp = "2026-01-03T10:00:01Z", Symbol = "AAPL", Price = 185.55m, Size = 200 }
+        });
+
+        var request = new ExportRequest
+        {
+            ProfileId = "python-pandas",
+            Symbols = new[] { "AAPL" },
+            EventTypes = new[] { "Trade" },
+            StartDate = new DateTime(2026, 1, 1),
+            EndDate = new DateTime(2026, 1, 5)
+        };
+
+        // Act
+        var preview = await _service.PreviewAsync(request, sampleSize: 1);
+
+        // Assert
+        preview.Error.Should().BeNull();
+        preview.ProfileId.Should().Be("python-pandas");
+        preview.TotalRecords.Should().Be(2);
+        preview.SourceFileCount.Should().Be(1);
+        preview.Symbols.Should().Contain("AAPL");
+        preview.SampleRecords.Should().HaveCountGreaterOrEqualTo(1);
+        preview.EstimatedOutputBytes.Should().BeGreaterThan(0);
+
+        // No files should have been written to the output directory
+        Directory.GetFiles(_testOutputDir).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task PreviewAsync_WithNoData_ShouldReturnEmptyPreview()
+    {
+        // Arrange
+        var request = new ExportRequest
+        {
+            ProfileId = "python-pandas",
+            Symbols = new[] { "NONEXISTENT" },
+            StartDate = new DateTime(2026, 1, 1),
+            EndDate = new DateTime(2026, 1, 5)
+        };
+
+        // Act
+        var preview = await _service.PreviewAsync(request);
+
+        // Assert
+        preview.Error.Should().BeNull();
+        preview.TotalRecords.Should().Be(0);
+        preview.SourceFileCount.Should().Be(0);
+        preview.Symbols.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldGenerateLineageManifest()
+    {
+        // Arrange
+        await CreateTestJsonlFileAsync("AAPL.Trade.jsonl", new[]
+        {
+            new { Timestamp = "2026-01-03T10:00:00Z", Symbol = "AAPL", Price = 185.50m, Size = 100 },
+            new { Timestamp = "2026-01-03T10:00:01Z", Symbol = "AAPL", Price = 185.55m, Size = 200 }
+        });
+
+        var request = new ExportRequest
+        {
+            ProfileId = "python-pandas",
+            OutputDirectory = _testOutputDir,
+            Symbols = new[] { "AAPL" },
+            EventTypes = new[] { "Trade" },
+            StartDate = new DateTime(2026, 1, 1),
+            EndDate = new DateTime(2026, 1, 5)
+        };
+
+        // Act
+        var result = await _service.ExportAsync(request);
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.LineageManifestPath.Should().NotBeNullOrEmpty();
+        File.Exists(result.LineageManifestPath).Should().BeTrue();
+
+        // Validate manifest is valid JSON with expected structure
+        var manifestJson = await File.ReadAllTextAsync(result.LineageManifestPath!);
+        var manifest = JsonDocument.Parse(manifestJson);
+        var root = manifest.RootElement;
+
+        root.GetProperty("version").GetString().Should().Be("1.0.0");
+        root.GetProperty("generator").GetString().Should().Be("MarketDataCollector");
+        root.GetProperty("exportProfile").GetProperty("id").GetString().Should().Be("python-pandas");
+        root.GetProperty("sources").GetArrayLength().Should().BeGreaterThan(0);
+        root.GetProperty("summary").GetProperty("sourceFileCount").GetInt32().Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task GenerateStandaloneLoaderAsync_Python_ShouldGenerateLoaderScript()
+    {
+        // Arrange
+        await CreateTestJsonlFileAsync("AAPL.Trade.jsonl", new[]
+        {
+            new { Timestamp = "2026-01-03T10:00:00Z", Symbol = "AAPL", Price = 185.50m, Size = 100 }
+        });
+
+        var outputDir = Path.Combine(_testOutputDir, "loaders");
+
+        // Act
+        var scriptPath = await _service.GenerateStandaloneLoaderAsync(outputDir, "python");
+
+        // Assert
+        scriptPath.Should().NotBeNullOrEmpty();
+        File.Exists(scriptPath).Should().BeTrue();
+
+        var content = await File.ReadAllTextAsync(scriptPath);
+        content.Should().Contain("pandas");
+        content.Should().Contain("load_trades");
+    }
+
     private async Task CreateTestJsonlFileAsync<T>(string fileName, T[] records)
     {
         var filePath = Path.Combine(_testDataRoot, fileName);

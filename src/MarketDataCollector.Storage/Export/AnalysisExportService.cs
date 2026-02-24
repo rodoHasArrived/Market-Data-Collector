@@ -49,6 +49,144 @@ public sealed partial class AnalysisExportService
     }
 
     /// <summary>
+    /// Preview an export without writing any files.
+    /// Returns record counts, file sizes, date ranges, and sample records.
+    /// </summary>
+    public async Task<ExportPreviewResult> PreviewAsync(ExportRequest request, int sampleSize = 5, CancellationToken ct = default)
+    {
+        var profile = request.CustomProfile ?? GetProfile(request.ProfileId);
+        if (profile is null)
+            return new ExportPreviewResult { Error = $"Unknown profile: {request.ProfileId}" };
+
+        try
+        {
+            var sourceFiles = FindSourceFiles(request);
+
+            var symbols = sourceFiles
+                .Where(f => f.Symbol != null)
+                .Select(f => f.Symbol!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(s => s)
+                .ToArray();
+
+            var eventTypes = sourceFiles
+                .Where(f => f.EventType != null)
+                .Select(f => f.EventType!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(t => t)
+                .ToArray();
+
+            long totalRecords = 0;
+            long totalSourceBytes = 0;
+            var sampleRecords = new List<Dictionary<string, object?>>();
+
+            foreach (var file in sourceFiles)
+            {
+                var fileInfo = new FileInfo(file.Path);
+                totalSourceBytes += fileInfo.Length;
+
+                await foreach (var record in ReadJsonlRecordsAsync(file.Path, ct))
+                {
+                    totalRecords++;
+                    if (sampleRecords.Count < sampleSize)
+                        sampleRecords.Add(record);
+                }
+            }
+
+            // Estimate output size based on format compression ratios
+            var estimatedOutputBytes = profile.Format switch
+            {
+                ExportFormat.Parquet => (long)(totalSourceBytes * 0.3),
+                ExportFormat.Csv => (long)(totalSourceBytes * 0.8),
+                ExportFormat.Arrow => (long)(totalSourceBytes * 0.4),
+                ExportFormat.Xlsx => (long)(totalSourceBytes * 0.5),
+                _ => totalSourceBytes
+            };
+
+            var dates = sourceFiles
+                .Where(f => f.Date.HasValue)
+                .Select(f => f.Date!.Value)
+                .ToList();
+
+            return new ExportPreviewResult
+            {
+                ProfileId = profile.Id,
+                ProfileName = profile.Name,
+                Format = profile.Format.ToString().ToLowerInvariant(),
+                SourceFileCount = sourceFiles.Count,
+                TotalRecords = totalRecords,
+                TotalSourceBytes = totalSourceBytes,
+                EstimatedOutputBytes = estimatedOutputBytes,
+                Symbols = symbols,
+                EventTypes = eventTypes,
+                DateRange = dates.Count > 0
+                    ? new ExportDateRange
+                    {
+                        Start = dates.Min(),
+                        End = dates.Max(),
+                        TradingDays = CountTradingDays(dates.Min(), dates.Max())
+                    }
+                    : null,
+                SampleRecords = sampleRecords.ToArray()
+            };
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Export preview failed for profile {ProfileId}", request.ProfileId);
+            return new ExportPreviewResult { Error = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Generate a standalone loader script without performing a full export.
+    /// </summary>
+    public async Task<string> GenerateStandaloneLoaderAsync(
+        string outputDir,
+        string targetTool,
+        string[]? symbols = null,
+        CancellationToken ct = default)
+    {
+        var profile = targetTool.ToLowerInvariant() switch
+        {
+            "python" or "pandas" => ExportProfile.PythonPandas,
+            "r" or "rstats" => ExportProfile.RStats,
+            "pyarrow" or "arrow" => ExportProfile.ArrowFeather,
+            "postgresql" or "postgres" => ExportProfile.PostgreSql,
+            _ => ExportProfile.PythonPandas
+        };
+
+        // Build mock file list from what's in storage
+        var sourceFiles = FindSourceFiles(new ExportRequest
+        {
+            Symbols = symbols,
+            StartDate = DateTime.MinValue,
+            EndDate = DateTime.MaxValue
+        });
+
+        var exportedFiles = sourceFiles.Select(f => new ExportedFile
+        {
+            Path = f.Path,
+            RelativePath = Path.GetFileName(f.Path),
+            Symbol = f.Symbol,
+            EventType = f.EventType,
+            Format = profile.Format switch
+            {
+                ExportFormat.Parquet => "parquet",
+                ExportFormat.Csv => "csv",
+                ExportFormat.Arrow => "arrow",
+                _ => "csv"
+            }
+        }).ToList();
+
+        Directory.CreateDirectory(outputDir);
+        var scriptPath = await GenerateLoaderScriptAsync(outputDir, profile, exportedFiles, ct);
+        var dictPath = await GenerateDataDictionaryAsync(
+            outputDir, new[] { "Trade", "BboQuote" }, profile, ct);
+
+        return scriptPath;
+    }
+
+    /// <summary>
     /// Export data according to the request.
     /// </summary>
     public async Task<ExportResult> ExportAsync(ExportRequest request, CancellationToken ct = default)
@@ -139,6 +277,11 @@ public sealed partial class AnalysisExportService
                     request.OutputDirectory, profile, exportedFiles, ct);
                 result.LoaderScriptPath = scriptPath;
             }
+
+            // Generate lineage manifest with provenance information
+            var lineagePath = await GenerateLineageManifestAsync(
+                request.OutputDirectory, request, profile, sourceFiles, exportedFiles, ct);
+            result.LineageManifestPath = lineagePath;
 
             result.CompletedAt = DateTime.UtcNow;
             result.Success = true;

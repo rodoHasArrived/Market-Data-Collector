@@ -97,7 +97,8 @@ public partial class Program
             new SelfTestCommand(log),
             new PackageCommands(cfg, log),
             new ConfigPresetCommand(new AutoConfigurationService(), log),
-            new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log)
+            new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log),
+            new GenerateLoaderCommand(cfg.DataRoot, log)
         );
 
         var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);

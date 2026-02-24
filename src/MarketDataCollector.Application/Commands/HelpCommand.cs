@@ -441,6 +441,12 @@ IMPORT OPTIONS:
     --skip-validation               Skip checksum validation during import
     --merge                         Merge with existing data (don't overwrite)
 
+DATA QUERY & EXPORT TOOLS:
+    --query <command>               Quick data query (last, count, summary, symbols, range)
+    --generate-loader <tool>        Generate standalone loader scripts (python, r, pyarrow, postgresql)
+    --output <path>                 Output directory for generated scripts
+    --symbols <list>                Symbols filter (comma-separated)
+
 AUTO-CONFIGURATION OPTIONS:
     --template <name>       Template for --generate-config: minimal, full, alpaca,
                             stocksharp, backfill, production, docker (default: minimal)
@@ -532,6 +538,14 @@ EXAMPLES:
 
     # Check status of a specific symbol
     MarketDataCollector --symbol-status AAPL
+
+    # Query stored data
+    MarketDataCollector --query ""last SPY""
+    MarketDataCollector --query ""count AAPL"" --from 2026-01-01
+
+    # Generate loader scripts for Python or R
+    MarketDataCollector --generate-loader python --output ./loaders
+    MarketDataCollector --generate-loader r --symbols AAPL,MSFT
 
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:

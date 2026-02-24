@@ -134,6 +134,7 @@ public static class UiApiRoutes
     public const string StorageTiersStatistics = "/api/storage/tiers/statistics";
     public const string StorageTiersPlan = "/api/storage/tiers/plan";
     public const string StorageMaintenanceDefrag = "/api/storage/maintenance/defrag";
+    public const string StorageConvertParquet = "/api/storage/convert-parquet";
     public const string StorageCapacityForecast = "/api/storage/capacity-forecast";
 
     // Historical data query endpoints
@@ -323,6 +324,7 @@ public static class UiApiRoutes
 
     // Export endpoints
     public const string ExportAnalysis = "/api/export/analysis";
+    public const string ExportPreview = "/api/export/preview";
     public const string ExportFormats = "/api/export/formats";
     public const string ExportQualityReport = "/api/export/quality-report";
     public const string ExportOrderflow = "/api/export/orderflow";

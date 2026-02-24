@@ -100,6 +100,12 @@ public sealed class ExportResult
     public string? LoaderScriptPath { get; set; }
 
     /// <summary>
+    /// Path to generated lineage manifest (provenance tracking).
+    /// </summary>
+    [JsonPropertyName("lineageManifestPath")]
+    public string? LineageManifestPath { get; set; }
+
+    /// <summary>
     /// Data quality summary.
     /// </summary>
     [JsonPropertyName("qualitySummary")]
@@ -226,4 +232,49 @@ public sealed class ExportQualitySummary
 
     [JsonPropertyName("issueDetails")]
     public string[]? IssueDetails { get; set; }
+}
+
+/// <summary>
+/// Result of an export preview operation (no files written).
+/// </summary>
+public sealed class ExportPreviewResult
+{
+    [JsonPropertyName("profileId")]
+    public string? ProfileId { get; set; }
+
+    [JsonPropertyName("profileName")]
+    public string? ProfileName { get; set; }
+
+    [JsonPropertyName("format")]
+    public string? Format { get; set; }
+
+    [JsonPropertyName("sourceFileCount")]
+    public int SourceFileCount { get; set; }
+
+    [JsonPropertyName("totalRecords")]
+    public long TotalRecords { get; set; }
+
+    [JsonPropertyName("totalSourceBytes")]
+    public long TotalSourceBytes { get; set; }
+
+    [JsonPropertyName("estimatedOutputBytes")]
+    public long EstimatedOutputBytes { get; set; }
+
+    [JsonPropertyName("symbols")]
+    public string[] Symbols { get; set; } = Array.Empty<string>();
+
+    [JsonPropertyName("eventTypes")]
+    public string[] EventTypes { get; set; } = Array.Empty<string>();
+
+    [JsonPropertyName("dateRange")]
+    public ExportDateRange? DateRange { get; set; }
+
+    [JsonPropertyName("sampleRecords")]
+    public Dictionary<string, object?>[] SampleRecords { get; set; } = Array.Empty<Dictionary<string, object?>>();
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
 }
