@@ -323,16 +323,16 @@ public sealed class IngestionJobService : IDisposable
     /// <summary>
     /// Deletes a terminal job by ID.
     /// </summary>
-    public async Task<bool> DeleteJobAsync(string jobId, CancellationToken ct = default)
+    public Task<bool> DeleteJobAsync(string jobId, CancellationToken ct = default)
     {
         if (!_jobs.TryRemove(jobId, out var job))
-            return false;
+            return Task.FromResult(false);
 
         if (!job.IsTerminal)
         {
             // Put it back - can only delete terminal jobs
             _jobs[jobId] = job;
-            return false;
+            return Task.FromResult(false);
         }
 
         var filePath = GetJobFilePath(jobId);
@@ -349,7 +349,7 @@ public sealed class IngestionJobService : IDisposable
         }
 
         _log.Information("Deleted job {JobId}", jobId);
-        return true;
+        return Task.FromResult(true);
     }
 
     private string GetJobFilePath(string jobId) =>

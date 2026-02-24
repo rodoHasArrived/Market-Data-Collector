@@ -104,7 +104,8 @@ public static class SymbolEndpoints
                         files = result.Results?.Take(10).Select(f => new { f.Path, f.SizeBytes, f.EventCount })
                     };
                 }
-                catch { /* storage search not critical */ }
+                catch (IOException) { /* storage search not critical - file access issue */ }
+                catch (InvalidOperationException) { /* storage search not critical - service issue */ }
             }
 
             return Results.Json(new

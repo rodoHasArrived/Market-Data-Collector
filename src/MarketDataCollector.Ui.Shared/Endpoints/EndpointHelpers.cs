@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
@@ -6,6 +7,7 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// <summary>
 /// Shared helpers to reduce boilerplate in endpoint handlers.
 /// Provides consistent null-check, try/catch, and JSON response patterns.
+/// Uses FriendlyErrorFormatter for structured error responses.
 /// </summary>
 internal static class EndpointHelpers
 {
@@ -26,7 +28,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -48,7 +50,7 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
     }
 
@@ -71,8 +73,32 @@ internal static class EndpointHelpers
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed: {ex.Message}");
+            return FormatErrorResult(ex, opts);
         }
+    }
+
+    /// <summary>
+    /// Formats an exception into a structured error response using FriendlyErrorFormatter.
+    /// </summary>
+    private static IResult FormatErrorResult(Exception ex, JsonSerializerOptions opts)
+    {
+        var formatted = FriendlyErrorFormatter.Format(ex);
+        var statusCode = formatted.Code switch
+        {
+            var c when c.StartsWith("MDC-AUTH") => StatusCodes.Status401Unauthorized,
+            var c when c.StartsWith("MDC-RATE") => StatusCodes.Status429TooManyRequests,
+            var c when c.StartsWith("MDC-DATA-001") => StatusCodes.Status404NotFound,
+            _ => StatusCodes.Status500InternalServerError
+        };
+
+        return Results.Json(new
+        {
+            error = formatted.Title,
+            code = formatted.Code,
+            message = formatted.Message,
+            suggestion = formatted.Suggestion,
+            docs = formatted.DocsLink
+        }, opts, statusCode: statusCode);
     }
 
     /// <summary>

@@ -27,7 +27,9 @@ internal sealed class SymbolCommands : ICliCommand
             a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase) ||
-            a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase));
+            a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--symbols-import", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--symbols-export", StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
@@ -60,6 +62,12 @@ internal sealed class SymbolCommands : ICliCommand
 
         if (CliArguments.HasFlag(args, "--symbol-status"))
             return await RunStatusAsync(args, ct);
+
+        if (CliArguments.HasFlag(args, "--symbols-import"))
+            return await RunImportAsync(args, ct);
+
+        if (CliArguments.HasFlag(args, "--symbols-export"))
+            return RunExport(args);
 
         return CliResult.Fail(ErrorCode.Unknown);
     }
@@ -149,6 +157,128 @@ internal sealed class SymbolCommands : ICliCommand
         }
 
         Console.WriteLine();
+        return CliResult.Ok();
+    }
+
+    /// <summary>
+    /// Import symbols from a CSV or text file.
+    /// Supports formats: one symbol per line, or CSV with symbol in the first column.
+    /// Lines starting with # are treated as comments.
+    /// </summary>
+    private async Task<CliResult> RunImportAsync(string[] args, CancellationToken ct)
+    {
+        var filePath = CliArguments.RequireValue(args, "--symbols-import", "--symbols-import symbols.csv");
+        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+
+        if (!File.Exists(filePath))
+        {
+            Console.Error.WriteLine($"  Error: File not found: {filePath}");
+            return CliResult.Fail(ErrorCode.FileNotFound);
+        }
+
+        var lines = await File.ReadAllLinesAsync(filePath, ct);
+        var symbols = new List<string>();
+        var skipped = 0;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+
+            // Skip empty lines and comments
+            if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
+            {
+                skipped++;
+                continue;
+            }
+
+            // CSV: take first column (handles "AAPL,Stock,..." or just "AAPL")
+            var symbol = line.Split(',', StringSplitOptions.TrimEntries)[0].Trim().ToUpperInvariant();
+
+            // Skip header rows
+            if (symbol.Equals("SYMBOL", StringComparison.OrdinalIgnoreCase) ||
+                symbol.Equals("TICKER", StringComparison.OrdinalIgnoreCase))
+            {
+                skipped++;
+                continue;
+            }
+
+            if (!string.IsNullOrEmpty(symbol) && !symbols.Contains(symbol))
+            {
+                symbols.Add(symbol);
+            }
+        }
+
+        if (symbols.Count == 0)
+        {
+            Console.Error.WriteLine("  Error: No valid symbols found in file.");
+            Console.Error.WriteLine("  Expected format: one symbol per line, or CSV with symbol in the first column.");
+            return CliResult.Fail(ErrorCode.ValidationFailed);
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"  Importing {symbols.Count} symbols from {Path.GetFileName(filePath)}...");
+
+        var options = new SymbolAddOptions(
+            SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
+            SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
+            DepthLevels: int.TryParse(CliArguments.GetValue(args, "--depth-levels"), out var levels) ? levels : 10,
+            UpdateExisting: CliArguments.HasFlag(args, "--update")
+        );
+
+        var result = await _symbolService.AddSymbolsAsync(symbols.ToArray(), options, ct);
+
+        Console.WriteLine();
+        Console.WriteLine(result.Success ? "  Import Result" : "  Import Failed");
+        Console.WriteLine("  " + new string('=', 50));
+        Console.WriteLine($"  {result.Message}");
+        Console.WriteLine($"  Symbols parsed: {symbols.Count}");
+        Console.WriteLine($"  Lines skipped: {skipped}");
+        if (result.AffectedSymbols.Length > 0)
+        {
+            Console.WriteLine($"  Added: {string.Join(", ", result.AffectedSymbols)}");
+        }
+        Console.WriteLine();
+
+        _log.Information("Bulk symbol import from {File}: {Count} symbols, {Skipped} skipped",
+            filePath, symbols.Count, skipped);
+
+        return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
+    }
+
+    /// <summary>
+    /// Export current monitored symbols to a CSV file.
+    /// </summary>
+    private CliResult RunExport(string[] args)
+    {
+        var filePath = CliArguments.RequireValue(args, "--symbols-export", "--symbols-export symbols.csv");
+        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+
+        var result = _symbolService.GetMonitoredSymbols();
+        var symbols = result.Symbols;
+
+        if (symbols.Length == 0)
+        {
+            Console.Error.WriteLine("  No monitored symbols to export.");
+            return CliResult.Fail(ErrorCode.NotFound);
+        }
+
+        using var writer = new StreamWriter(filePath);
+        writer.WriteLine("# Market Data Collector - Symbol Export");
+        writer.WriteLine($"# Exported: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        writer.WriteLine($"# Count: {symbols.Length}");
+        writer.WriteLine("Symbol,SecurityType,SubscribeTrades,SubscribeDepth,DepthLevels,Exchange");
+
+        foreach (var sym in symbols)
+        {
+            writer.WriteLine($"{sym.Symbol},{sym.SecurityType},{sym.SubscribeTrades},{sym.SubscribeDepth},{sym.DepthLevels},{sym.Exchange}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"  Exported {symbols.Length} symbols to {filePath}");
+        Console.WriteLine();
+
+        _log.Information("Exported {Count} symbols to {File}", symbols.Length, filePath);
+
         return CliResult.Ok();
     }
 

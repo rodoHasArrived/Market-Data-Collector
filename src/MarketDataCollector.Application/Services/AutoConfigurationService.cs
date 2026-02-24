@@ -809,6 +809,199 @@ public sealed class AutoConfigurationService
         return false;
     }
 
+    /// <summary>
+    /// Applies a role-based configuration preset, setting ~15 config values at once.
+    /// Presets: Researcher, DayTrader, OptionsTrader, Crypto.
+    /// </summary>
+    public AppConfig ApplyPreset(ConfigPreset preset, AppConfig? existingConfig = null)
+    {
+        var config = existingConfig ?? new AppConfig();
+        var detectedProviders = DetectAvailableProviders();
+
+        return preset switch
+        {
+            ConfigPreset.Researcher => ApplyResearcherPreset(config, detectedProviders),
+            ConfigPreset.DayTrader => ApplyDayTraderPreset(config, detectedProviders),
+            ConfigPreset.OptionsTrader => ApplyOptionsTraderPreset(config, detectedProviders),
+            ConfigPreset.Crypto => ApplyCryptoPreset(config, detectedProviders),
+            _ => config
+        };
+    }
+
+    /// <summary>
+    /// Lists available presets with descriptions.
+    /// </summary>
+    public static IReadOnlyList<ConfigPresetInfo> GetPresetDescriptions() => new[]
+    {
+        new ConfigPresetInfo(ConfigPreset.Researcher, "Researcher",
+            "Historical analysis, daily bars. Uses free backfill providers (Stooq/Yahoo), " +
+            "BySymbol storage with Parquet export, no real-time streaming.",
+            new[] { "Stooq + Yahoo backfill", "BySymbol storage", "Research storage profile", "Parquet export enabled", "No real-time streaming" }),
+        new ConfigPresetInfo(ConfigPreset.DayTrader, "Day Trader",
+            "Real-time streaming with L2 depth data. Uses Alpaca streaming, " +
+            "10 depth levels, JSONL hot storage, low-latency profile.",
+            new[] { "Alpaca streaming", "10 depth levels", "LowLatency storage profile", "Trades + Quotes + Depth", "US major indices" }),
+        new ConfigPresetInfo(ConfigPreset.OptionsTrader, "Options Trader",
+            "Options chain + Greeks collection. Uses IB streaming, " +
+            "derivatives enabled, weekly/monthly expirations.",
+            new[] { "IB streaming", "Derivatives enabled", "Greeks capture", "Weekly expirations", "SPY/QQQ/IWM + SPX/NDX" }),
+        new ConfigPresetInfo(ConfigPreset.Crypto, "Crypto",
+            "24/7 crypto collection. Uses Alpaca crypto feed, " +
+            "no market hours filter, extended retention.",
+            new[] { "Alpaca crypto feed", "BTC/ETH/SOL", "No market hours filter", "365-day retention", "Archival storage profile" })
+    };
+
+    private AppConfig ApplyResearcherPreset(AppConfig config, IReadOnlyList<DetectedProvider> providers)
+    {
+        _log.Information("Applying 'Researcher' configuration preset");
+
+        var backfillProviders = new List<string>();
+        foreach (var p in providers.Where(p => p.HasCredentials && p.Capabilities.Contains("Historical")))
+            backfillProviders.Add(p.Name.ToLowerInvariant());
+        if (!backfillProviders.Contains("yahoo")) backfillProviders.Add("yahoo");
+        if (!backfillProviders.Contains("stooq")) backfillProviders.Add("stooq");
+
+        return config with
+        {
+            DataSource = DataSourceKind.IB, // Not used in research mode
+            Symbols = new[]
+            {
+                new SymbolConfig("SPY", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("QQQ", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("AAPL", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("MSFT", SubscribeTrades: false, SubscribeDepth: false),
+                new SymbolConfig("GOOGL", SubscribeTrades: false, SubscribeDepth: false)
+            },
+            Storage = new StorageConfig(
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily",
+                Profile: "Research",
+                EnableParquetSink: true
+            ),
+            Compress = true,
+            Backfill = new BackfillConfig(
+                Enabled: true,
+                Provider: "composite",
+                EnableFallback: true,
+                EnableRateLimitRotation: true,
+                ProviderPriority: backfillProviders.ToArray()
+            )
+        };
+    }
+
+    private AppConfig ApplyDayTraderPreset(AppConfig config, IReadOnlyList<DetectedProvider> providers)
+    {
+        _log.Information("Applying 'Day Trader' configuration preset");
+
+        var hasAlpaca = providers.Any(p => p.Name == "Alpaca" && p.HasCredentials);
+        var dataSource = hasAlpaca ? DataSourceKind.Alpaca : DataSourceKind.IB;
+
+        config = AutoConfigureAlpaca(config, new List<string>());
+
+        return config with
+        {
+            DataSource = dataSource,
+            Symbols = new[]
+            {
+                new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("QQQ", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("AAPL", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("MSFT", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10)
+            },
+            Storage = new StorageConfig(
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily",
+                Profile: "LowLatency",
+                RetentionDays: 30
+            ),
+            Compress = false,
+            Backfill = new BackfillConfig(
+                Enabled: false,
+                Provider: "composite",
+                EnableFallback: true
+            )
+        };
+    }
+
+    private AppConfig ApplyOptionsTraderPreset(AppConfig config, IReadOnlyList<DetectedProvider> providers)
+    {
+        _log.Information("Applying 'Options Trader' configuration preset");
+
+        return config with
+        {
+            DataSource = DataSourceKind.IB,
+            Symbols = new[]
+            {
+                new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("QQQ", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("IWM", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("AAPL", SubscribeTrades: true, SubscribeDepth: false)
+            },
+            Storage = new StorageConfig(
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily",
+                Profile: "Research"
+            ),
+            Compress = true,
+            Derivatives = new DerivativesConfig(
+                Enabled: true,
+                Underlyings: new[] { "SPY", "QQQ", "IWM", "AAPL" },
+                MaxDaysToExpiration: 90,
+                StrikeRange: 20,
+                CaptureGreeks: true,
+                CaptureChainSnapshots: true,
+                CaptureOpenInterest: true,
+                ExpirationFilter: new[] { "weekly", "monthly" },
+                IndexOptions: new IndexOptionsConfig(
+                    Enabled: true,
+                    Indices: new[] { "SPX", "NDX" },
+                    IncludeWeeklies: true
+                )
+            ),
+            Backfill = new BackfillConfig(
+                Enabled: true,
+                Provider: "composite",
+                EnableFallback: true,
+                EnableRateLimitRotation: true
+            )
+        };
+    }
+
+    private AppConfig ApplyCryptoPreset(AppConfig config, IReadOnlyList<DetectedProvider> providers)
+    {
+        _log.Information("Applying 'Crypto' configuration preset");
+
+        config = AutoConfigureAlpaca(config, new List<string>());
+
+        return config with
+        {
+            DataSource = DataSourceKind.Alpaca,
+            Alpaca = config.Alpaca != null
+                ? config.Alpaca with { Feed = "crypto" }
+                : null,
+            Symbols = new[]
+            {
+                new SymbolConfig("BTC/USD", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("ETH/USD", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10),
+                new SymbolConfig("SOL/USD", SubscribeTrades: true, SubscribeDepth: false),
+                new SymbolConfig("AVAX/USD", SubscribeTrades: true, SubscribeDepth: false),
+                new SymbolConfig("LINK/USD", SubscribeTrades: true, SubscribeDepth: false)
+            },
+            Storage = new StorageConfig(
+                NamingConvention: "BySymbol",
+                DatePartition: "Daily",
+                Profile: "Archival",
+                RetentionDays: 365
+            ),
+            Compress = true,
+            Backfill = new BackfillConfig(
+                Enabled: true,
+                Provider: "composite",
+                EnableFallback: true
+            )
+        };
+    }
+
     private sealed record ProviderCredentialInfo(
         string DisplayName,
         string[] RequiredEnvVars,
@@ -817,6 +1010,31 @@ public sealed class AutoConfigurationService
         int Priority
     );
 }
+
+/// <summary>
+/// Available configuration presets for different user roles.
+/// </summary>
+public enum ConfigPreset
+{
+    /// <summary>Historical analysis, daily bars, Parquet export.</summary>
+    Researcher,
+    /// <summary>Real-time streaming, L2 depth, low-latency storage.</summary>
+    DayTrader,
+    /// <summary>Options chain + Greeks, IB streaming, derivatives enabled.</summary>
+    OptionsTrader,
+    /// <summary>24/7 crypto collection, Alpaca crypto feed, extended retention.</summary>
+    Crypto
+}
+
+/// <summary>
+/// Descriptive information about a configuration preset.
+/// </summary>
+public sealed record ConfigPresetInfo(
+    ConfigPreset Preset,
+    string Name,
+    string Description,
+    string[] KeySettings
+);
 
 /// <summary>
 /// Options for first-time configuration generation.

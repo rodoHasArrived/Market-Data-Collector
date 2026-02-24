@@ -66,6 +66,11 @@ public partial class Program
             var errorCode = ErrorCodeExtensions.FromException(ex);
             log.Fatal(ex, "MarketDataCollector terminated unexpectedly (ErrorCode={ErrorCode}, ExitCode={ExitCode})",
                 errorCode, errorCode.ToExitCode());
+
+            // Display user-friendly error with actionable suggestions
+            var friendlyError = FriendlyErrorFormatter.Format(ex);
+            FriendlyErrorFormatter.DisplayError(friendlyError);
+
             return errorCode.ToExitCode();
         }
         finally
@@ -90,7 +95,9 @@ public partial class Program
             new ValidateConfigCommand(configService, cfgPath, log),
             new DryRunCommand(cfg, configService, log),
             new SelfTestCommand(log),
-            new PackageCommands(cfg, log)
+            new PackageCommands(cfg, log),
+            new ConfigPresetCommand(new AutoConfigurationService(), log),
+            new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log)
         );
 
         var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
