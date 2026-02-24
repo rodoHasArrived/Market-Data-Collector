@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-24 17:26:34 UTC
+> Auto-generated on 2026-02-24 18:50:08 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -211,6 +211,7 @@ Market-Data-Collector/
 │   │   ├── c4-diagrams.md
 │   │   ├── crystallized-storage-format.md
 │   │   ├── desktop-layers.md
+│   │   ├── deterministic-canonicalization.md
 │   │   ├── domains.md
 │   │   ├── layer-boundaries.md
 │   │   ├── overview.md
