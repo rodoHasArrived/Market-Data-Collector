@@ -361,6 +361,12 @@ public static class UiApiRoutes
     // Index endpoints
     public const string IndicesConstituents = "/api/indices/{indexName}/constituents";
 
+    // Canonicalization parity endpoints (Phase 2)
+    public const string CanonicalizationStatus = "/api/canonicalization/status";
+    public const string CanonicalizationParity = "/api/canonicalization/parity";
+    public const string CanonicalizationParityByProvider = "/api/canonicalization/parity/{provider}";
+    public const string CanonicalizationConfig = "/api/canonicalization/config";
+
     /// <summary>
     /// Replaces a route parameter with a value.
     /// </summary>

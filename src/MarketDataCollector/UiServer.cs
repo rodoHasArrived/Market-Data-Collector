@@ -242,6 +242,9 @@ public sealed class UiServer : IAsyncDisposable
         // Export API
         _app.MapExportEndpoints(s_jsonOptions);
 
+        // Canonicalization parity dashboard (Phase 2)
+        _app.MapCanonicalizationEndpoints(s_jsonOptions);
+
         // UI API
         _app.MapUiEndpoints(s_jsonOptions);
     }

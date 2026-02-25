@@ -46,6 +46,13 @@ public interface ICanonicalSymbolRegistry
     IReadOnlyList<CanonicalSymbolDefinition> GetByExchange(string exchange);
 
     /// <summary>
+    /// Resolves a symbol to its canonical form using a provider hint for disambiguation.
+    /// Checks provider-specific mappings first, then falls back to general resolution.
+    /// Returns null if no match is found.
+    /// </summary>
+    string? TryResolveWithProvider(string symbol, string provider);
+
+    /// <summary>
     /// Checks if a given identifier (canonical, alias, ISIN, FIGI, etc.) is known.
     /// </summary>
     bool IsKnown(string identifier);

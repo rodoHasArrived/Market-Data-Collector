@@ -103,6 +103,10 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(BinanceConfig))]
 [JsonSerializable(typeof(CoinbaseConfig))]
 [JsonSerializable(typeof(KrakenConfig))]
+// Canonicalization enums
+[JsonSerializable(typeof(CanonicalTradeCondition))]
+[JsonSerializable(typeof(CanonicalTradeCondition[]))]
+[JsonSerializable(typeof(MarketEventTier))]
 public partial class MarketDataJsonContext : JsonSerializerContext
 {
     /// <summary>

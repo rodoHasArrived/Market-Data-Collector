@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Backfill;
+using MarketDataCollector.Application.Canonicalization;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Logging;
@@ -223,6 +224,11 @@ public static class ServiceCompositionRoot
     /// </remarks>
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
+        // Canonical symbol registry - identity resolution for canonicalization
+        services.AddSingleton<CanonicalSymbolRegistry>();
+        services.AddSingleton<Contracts.Catalog.ICanonicalSymbolRegistry>(sp =>
+            sp.GetRequiredService<CanonicalSymbolRegistry>());
+
         // Symbol import/export
         services.AddSingleton<SymbolImportExportService>();
         services.AddSingleton<TemplateService>();
@@ -793,12 +799,50 @@ public static class ServiceCompositionRoot
             return new EventPipeline(sink, EventPipelinePolicy.HighThroughput, metrics: metrics, wal: wal, auditTrail: auditTrail);
         });
 
-        // IMarketEventPublisher - facade for publishing events
+        // IMarketEventPublisher - facade for publishing events.
+        // When canonicalization is enabled, wraps PipelinePublisher with
+        // CanonicalizingPublisher (Phase 2 dual-write validation).
         services.AddSingleton<IMarketEventPublisher>(sp =>
         {
             var pipeline = sp.GetRequiredService<EventPipeline>();
             var metrics = sp.GetRequiredService<IEventMetrics>();
-            return new PipelinePublisher(pipeline, metrics);
+            IMarketEventPublisher publisher = new PipelinePublisher(pipeline, metrics);
+
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+
+            if (config.Canonicalization is { Enabled: true })
+            {
+                var canonConfig = config.Canonicalization;
+                var symbolRegistry = sp.GetService<Contracts.Catalog.ICanonicalSymbolRegistry>();
+                if (symbolRegistry is null)
+                {
+                    Log.ForContext<EventPipeline>().Warning(
+                        "Canonicalization enabled but ICanonicalSymbolRegistry not registered; skipping");
+                    return publisher;
+                }
+                var conditions = canonConfig.ConditionCodesPath is not null
+                    ? ConditionCodeMapper.LoadFromFile(canonConfig.ConditionCodesPath)
+                    : ConditionCodeMapper.CreateDefault();
+                var venues = canonConfig.VenueMappingPath is not null
+                    ? VenueMicMapper.LoadFromFile(canonConfig.VenueMappingPath)
+                    : VenueMicMapper.CreateDefault();
+                var canonicalizer = new EventCanonicalizer(
+                    symbolRegistry, conditions, venues, canonConfig.Version);
+
+                CanonicalizationMetrics.SetActiveVersion(canonConfig.Version);
+
+                publisher = new CanonicalizingPublisher(
+                    publisher, canonicalizer, canonConfig);
+
+                Log.ForContext<EventPipeline>().Information(
+                    "Canonicalization enabled (version={Version}, pilotSymbols={PilotCount}, dualWrite={DualWrite})",
+                    canonConfig.Version,
+                    canonConfig.PilotSymbols?.Length ?? 0,
+                    canonConfig.EnableDualWrite);
+            }
+
+            return publisher;
         });
 
         return services;
