@@ -86,21 +86,63 @@ public sealed class ConditionCodeMapper
     {
         using var doc = JsonDocument.Parse(json);
         var mappings = new Dictionary<(string Provider, string RawCode), CanonicalTradeCondition>();
+        var log = Log.ForContext<ConditionCodeMapper>();
 
-        if (doc.RootElement.TryGetProperty("mappings", out var mappingsElement))
+        if (doc.RootElement.TryGetProperty("mappings", out var mappingsElement) &&
+            mappingsElement.ValueKind == JsonValueKind.Array)
         {
             foreach (var entry in mappingsElement.EnumerateArray())
             {
-                var provider = entry.GetProperty("provider").GetString()?.ToUpperInvariant();
-                var rawCode = entry.GetProperty("rawCode").GetString();
-                var canonicalStr = entry.GetProperty("canonical").GetString();
+                if (!entry.TryGetProperty("provider", out var providerProperty) ||
+                    providerProperty.ValueKind != JsonValueKind.String)
+                {
+                    log.Warning(
+                        "Skipping condition code mapping with missing or invalid 'provider' property: {Entry}",
+                        entry.ToString());
+                    continue;
+                }
+
+                if (!entry.TryGetProperty("rawCode", out var rawCodeProperty) ||
+                    rawCodeProperty.ValueKind != JsonValueKind.String)
+                {
+                    log.Warning(
+                        "Skipping condition code mapping with missing or invalid 'rawCode' property: {Entry}",
+                        entry.ToString());
+                    continue;
+                }
+
+                if (!entry.TryGetProperty("canonical", out var canonicalProperty) ||
+                    canonicalProperty.ValueKind != JsonValueKind.String)
+                {
+                    log.Warning(
+                        "Skipping condition code mapping with missing or invalid 'canonical' property: {Entry}",
+                        entry.ToString());
+                    continue;
+                }
+
+                var provider = providerProperty.GetString()?.ToUpperInvariant();
+                var rawCode = rawCodeProperty.GetString();
+                var canonicalStr = canonicalProperty.GetString();
 
                 if (provider is null || rawCode is null || canonicalStr is null)
+                {
+                    log.Warning(
+                        "Skipping condition code mapping with null values in 'provider', 'rawCode' or 'canonical': {Entry}",
+                        entry.ToString());
                     continue;
+                }
 
                 if (Enum.TryParse<CanonicalTradeCondition>(canonicalStr, ignoreCase: true, out var canonical))
                 {
                     mappings[(provider, rawCode)] = canonical;
+                }
+                else
+                {
+                    log.Warning(
+                        "Skipping condition code mapping with unknown canonical value '{Canonical}' for provider {Provider} and raw code {RawCode}",
+                        canonicalStr,
+                        provider,
+                        rawCode);
                 }
             }
         }
