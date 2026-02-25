@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Application.Canonicalization;
 using MarketDataCollector.Application.Subscriptions.Models;
 using System.Threading;
 using Prometheus;
@@ -484,11 +485,11 @@ public static class PrometheusMetrics
     }
 
     /// <summary>
-    /// Updates canonicalization metrics from a <see cref="Canonicalization.CanonicalizationMetricsSnapshot"/>.
+    /// Updates canonicalization metrics from a <see cref="CanonicalizationMetricsSnapshot"/>.
     /// Called periodically by the metrics updater.
     /// </summary>
     public static void UpdateCanonicalizationMetrics(
-        Canonicalization.CanonicalizationMetricsSnapshot snapshot,
+        CanonicalizationMetricsSnapshot snapshot,
         int activeVersion)
     {
         CanonicalizationEventsTotal.IncTo(snapshot.Canonicalized);
