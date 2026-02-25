@@ -1152,7 +1152,7 @@ No clear contract for what each validates or when it runs.
 - Unit tests for `EventCanonicalizer`, `ConditionCodeMapper`, `VenueMicMapper`, and `CanonicalizingPublisher` cover core correctness, idempotency, and edge cases
 - Property tests for idempotency (canonicalize twice = same result), raw symbol preservation, and tier progression are covered in `EventCanonicalizerTests`
 - **8 curated fixture JSON files** in `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/` covering Alpaca and Polygon regular, extended-hours, and odd-lot trade scenarios plus cross-provider XNAS identity checks
-- **`CanonicalizationGoldenFixtureTests`** loads all `.json` fixture files at runtime using `[Theory][MemberData]`, constructs `MarketEvent` from fixture inputs, runs production `condition-codes.json` and `venue-mapping.json` mappings, and asserts canonical symbol, venue, tier, and version fields match expected values
+- **`CanonicalizationGoldenFixtureTests`** loads all `.json` fixture files at runtime using `[Theory][MemberData]`, constructs `MarketEvent` from fixture inputs, applies production symbol and venue canonicalization (via `venue-mapping.json`), and asserts canonical symbol, venue, tier, and version fields match expected values
 
 **Remaining:**
 - Backward compatibility tests replaying archived JSONL files through canonicalizer
