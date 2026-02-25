@@ -69,6 +69,7 @@ Market-Data-Collector/
 │   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
+│   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
 │   │   ├── copilot-setup-steps.yml
 │   │   ├── desktop-builds.yml
