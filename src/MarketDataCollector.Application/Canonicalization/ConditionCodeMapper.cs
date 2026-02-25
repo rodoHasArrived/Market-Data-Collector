@@ -10,7 +10,6 @@ namespace MarketDataCollector.Application.Canonicalization;
 /// </summary>
 public sealed class ConditionCodeMapper
 {
-    private readonly ILogger _log = Log.ForContext<ConditionCodeMapper>();
     private readonly Dictionary<(string Provider, string RawCode), CanonicalTradeCondition> _map;
 
     public ConditionCodeMapper(Dictionary<(string Provider, string RawCode), CanonicalTradeCondition> mappings)
