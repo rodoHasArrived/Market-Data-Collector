@@ -26,13 +26,13 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     public string GetPath(MarketEvent evt)
     {
         var root = string.IsNullOrWhiteSpace(_options.RootPath) ? "data" : _options.RootPath;
-        var symbol = Sanitize(evt.Symbol);
+        var symbol = Sanitize(evt.EffectiveSymbol);
         var type = evt.Type.ToString();
         var dateStr = FormatDate(evt.Timestamp.UtcDateTime);
         var ext = GetExtension();
         var prefix = string.IsNullOrWhiteSpace(_options.FilePrefix) ? "" : $"{_options.FilePrefix}_";
         var source = Sanitize(evt.Source);
-        var assetClass = GetAssetClass(evt.Symbol, evt.Type);
+        var assetClass = GetAssetClass(evt.EffectiveSymbol, evt.Type);
 
         // Build path based on naming convention
         return _options.NamingConvention switch

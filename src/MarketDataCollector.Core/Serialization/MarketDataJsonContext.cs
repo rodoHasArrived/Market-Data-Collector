@@ -60,6 +60,7 @@ namespace MarketDataCollector.Application.Serialization;
 // Canonicalization types
 [JsonSerializable(typeof(CanonicalTradeCondition))]
 [JsonSerializable(typeof(CanonicalTradeCondition[]))]
+[JsonSerializable(typeof(CanonicalizationConfig))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 // Configuration types

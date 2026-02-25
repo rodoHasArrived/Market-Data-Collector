@@ -291,6 +291,36 @@ public static class PrometheusMetrics
         "mdc_migration_streaming_factories_registered",
         "Total streaming factories registered (migration diagnostics)");
 
+    // Canonicalization metrics (Phase 2)
+    private static readonly Counter CanonicalizationEventsTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_events_total",
+        "Total number of events processed through canonicalization");
+
+    private static readonly Counter CanonicalizationSkippedTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_skipped_total",
+        "Total number of events skipped by canonicalization (non-pilot or heartbeat)");
+
+    private static readonly Counter CanonicalizationUnresolvedTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_unresolved_total",
+        "Total number of events with unresolved canonical symbols");
+
+    private static readonly Counter CanonicalizationDualWritesTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_dual_writes_total",
+        "Total number of events dual-written (raw + canonical) during Phase 2 validation");
+
+    private static readonly Histogram CanonicalizationDurationSeconds = Prometheus.Metrics.CreateHistogram(
+        "mdc_canonicalization_duration_seconds",
+        "Canonicalization processing time per event",
+        new HistogramConfiguration
+        {
+            // Microsecond-level buckets (in seconds): 1µs to 1ms
+            Buckets = new double[] { 0.000001, 0.000005, 0.00001, 0.000025, 0.00005, 0.0001, 0.00025, 0.0005, 0.001 }
+        });
+
+    private static readonly Gauge CanonicalizationVersionActive = Prometheus.Metrics.CreateGauge(
+        "mdc_canonicalization_version_active",
+        "Currently active canonicalization mapping version");
+
     // Symbol-level metrics (with labels)
     private static readonly Counter TradesBySymbol = Prometheus.Metrics.CreateCounter(
         "mdc_trades_by_symbol_total",
@@ -451,6 +481,27 @@ public static class PrometheusMetrics
     {
         var safeSymbol = GetSymbolLabel(symbol);
         SlaFreshnessMs.WithLabels(safeSymbol).Observe(freshnessMs);
+    }
+
+    /// <summary>
+    /// Updates canonicalization metrics from a <see cref="Canonicalization.CanonicalizationMetricsSnapshot"/>.
+    /// Called periodically by the metrics updater.
+    /// </summary>
+    public static void UpdateCanonicalizationMetrics(
+        Canonicalization.CanonicalizationMetricsSnapshot snapshot,
+        int activeVersion)
+    {
+        CanonicalizationEventsTotal.IncTo(snapshot.Canonicalized);
+        CanonicalizationSkippedTotal.IncTo(snapshot.Skipped);
+        CanonicalizationUnresolvedTotal.IncTo(snapshot.Unresolved);
+        CanonicalizationDualWritesTotal.IncTo(snapshot.DualWrites);
+        CanonicalizationVersionActive.Set(activeVersion);
+
+        // Record average duration as a histogram observation if available
+        if (snapshot.AverageDurationUs > 0)
+        {
+            CanonicalizationDurationSeconds.Observe(snapshot.AverageDurationUs / 1_000_000);
+        }
     }
 
     /// <summary>

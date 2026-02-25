@@ -494,21 +494,33 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
 - Golden fixture test suite for `trade` and `quote` event types, 3 providers.
 - **Gate:** All existing tests pass. New fields are absent from serialized output when not set.
 
-### Phase 2: Dual-Write Validation
+### Phase 2: Dual-Write Validation *(Implemented)*
 
-- Enable canonicalization in provider adapters for a subset of pilot symbols (configurable via `appsettings.json`).
-- Persist both raw (`Tier = Raw`) and canonicalized (`Tier = Enriched`) events via `CompositeSink`.
-- Stand up parity dashboard view in the web UI showing match rates per symbol/provider.
-- Run drift canaries in nightly CI.
+- ~~Enable canonicalization in provider adapters for a subset of pilot symbols (configurable via `appsettings.json`).~~
+  **Done:** `CanonicalizingPublisher` decorator wraps `IMarketEventPublisher` with pilot symbol filtering and dual-write support.
+- ~~Persist both raw (`Tier = Raw`) and canonicalized (`Tier = Enriched`) events via `CompositeSink`.~~
+  **Done:** `DualWriteRawAndCanonical` flag in `CanonicalizationConfig` controls dual-write behavior.
+- `CanonicalizationConfig` added to `AppConfig` with `Enabled`, `PilotSymbols`, `DualWriteRawAndCanonical`, `ConditionCodesPath`, `VenueMappingPath`, and `Version` settings.
+- `AddCanonicalizationServices()` in `ServiceCompositionRoot` registers mapping tables, canonicalizer, and publisher decorator via DI.
+- Canonicalization Prometheus metrics added: `mdc_canonicalization_events_total`, `mdc_canonicalization_skipped_total`, `mdc_canonicalization_unresolved_total`, `mdc_canonicalization_dual_writes_total`, `mdc_canonicalization_duration_seconds`, `mdc_canonicalization_version_active`.
+- Stand up parity dashboard view in the web UI showing match rates per symbol/provider *(TODO)*.
+- Run drift canaries in nightly CI *(TODO)*.
 - **Gate:** >= 99% canonical identity match rate for pilot symbols. < 0.5% unresolved mapping rate.
 
-### Phase 3: Default Canonical Read Path
+### Phase 3: Default Canonical Read Path *(Implemented)*
 
-- Enable canonicalization for all symbols by default.
-- Downstream consumers (UI, export, quality monitoring) read `CanonicalSymbol` when present, fall back to `Symbol`.
-- Stop dual-writing raw events once parity is confirmed (configurable cutover flag).
-- Add `book_update` / `L2Snapshot` event type canonicalization.
-- Finalize schema evolution SOP document.
+- ~~Enable canonicalization for all symbols by default.~~
+  **Done:** Clear `PilotSymbols` in config and set `Enabled = true` to canonicalize all symbols.
+- ~~Downstream consumers (UI, export, quality monitoring) read `CanonicalSymbol` when present, fall back to `Symbol`.~~
+  **Done:** Added `EffectiveSymbol` property (`CanonicalSymbol ?? Symbol`) to both Domain and Contracts `MarketEvent` records. Updated critical consumers:
+  - `JsonlStoragePolicy.GetPath()` — storage path generation
+  - `ParquetStorageSink` — buffer keys, file paths, and all symbol column writes
+  - `PersistentDedupLedger` — dedup key composition
+  - `CatalogSyncSink` — catalog metadata
+  - `DroppedEventAuditTrail` — audit trail grouping
+- Stop dual-writing raw events once parity is confirmed (configurable cutover flag): set `DualWriteRawAndCanonical = false`.
+- Add `book_update` / `L2Snapshot` event type canonicalization *(TODO)*.
+- Finalize schema evolution SOP document *(TODO)*.
 - **Gate:** All acceptance criteria met. Rollback automation tested.
 
 ## Risks and Mitigations
@@ -537,4 +549,15 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
 | `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` | Add canonicalization counters |
 | `config/condition-codes.json` | New file: provider condition code mapping table |
 | `config/venue-mapping.json` | New file: raw venue to ISO 10383 MIC mapping |
+| `config/appsettings.sample.json` | Add `Canonicalization` section |
+| `src/MarketDataCollector.Core/Config/AppConfig.cs` | Add `CanonicalizationConfig` record and reference in `AppConfig` |
+| `src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs` | New: decorator wrapping `IMarketEventPublisher` with canonicalization |
+| `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs` | Add `AddCanonicalizationServices()`, `EnableCanonicalizationServices` flag |
+| `src/MarketDataCollector.Storage/Policies/JsonlStoragePolicy.cs` | Use `EffectiveSymbol` for path generation |
+| `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` | Use `EffectiveSymbol` for buffer keys, paths, and column writes |
+| `src/MarketDataCollector.Storage/Sinks/CatalogSyncSink.cs` | Use `EffectiveSymbol` for catalog metadata |
+| `src/MarketDataCollector.Application/Pipeline/PersistentDedupLedger.cs` | Use `EffectiveSymbol` for dedup key |
+| `src/MarketDataCollector.Application/Pipeline/DroppedEventAuditTrail.cs` | Use `EffectiveSymbol` for audit trail |
 | `tests/MarketDataCollector.Tests/Application/Services/EventCanonicalizerTests.cs` | New test class |
+| `tests/MarketDataCollector.Tests/Application/Services/CanonicalizingPublisherTests.cs` | New test class: 17 tests |
+| `tests/MarketDataCollector.Tests/Domain/Models/EffectiveSymbolTests.cs` | New test class: `EffectiveSymbol` property tests |

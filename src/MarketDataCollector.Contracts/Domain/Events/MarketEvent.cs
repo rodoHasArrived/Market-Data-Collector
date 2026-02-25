@@ -21,6 +21,12 @@ public sealed record MarketEvent(
 )
 {
     /// <summary>
+    /// Returns the effective symbol for downstream consumers: <see cref="CanonicalSymbol"/>
+    /// when available, otherwise the raw <see cref="Symbol"/>.
+    /// </summary>
+    public string EffectiveSymbol => CanonicalSymbol ?? Symbol;
+
+    /// <summary>
     /// Creates a trade market event.
     /// </summary>
     public static MarketEvent CreateTrade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")

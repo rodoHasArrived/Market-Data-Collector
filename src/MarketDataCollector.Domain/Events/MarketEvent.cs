@@ -99,6 +99,14 @@ public sealed record MarketEvent(
         };
 
     /// <summary>
+    /// Returns the effective symbol for downstream consumers: <see cref="CanonicalSymbol"/>
+    /// when available, otherwise the raw <see cref="Symbol"/>.
+    /// Use this property in storage paths, dedup keys, metrics labels, and quality monitoring
+    /// to ensure consistent behavior regardless of canonicalization state.
+    /// </summary>
+    public string EffectiveSymbol => CanonicalSymbol ?? Symbol;
+
+    /// <summary>
     /// Computes the estimated end-to-end latency in milliseconds using monotonic clock,
     /// or falls back to wall-clock difference if monotonic data is unavailable.
     /// </summary>
