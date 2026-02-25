@@ -1,37 +1,106 @@
+using System.Collections.Frozen;
 using System.Text.Json;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Enums;
 using Serilog;
 
 namespace MarketDataCollector.Application.Canonicalization;
 
 /// <summary>
-/// Maps provider-specific trade condition codes to canonical <see cref="CanonicalTradeCondition"/> values.
-/// Loaded from a JSON configuration file at startup.
+/// Maps provider-specific raw trade condition codes to canonical <see cref="CanonicalTradeCondition"/> values.
+/// Loaded from <c>config/condition-codes.json</c> at startup.
+/// Thread-safe after initialization (uses frozen dictionary).
 /// </summary>
 public sealed class ConditionCodeMapper
 {
-    private readonly Dictionary<(string Provider, string RawCode), CanonicalTradeCondition> _map;
+    private readonly ILogger _log = LoggingSetup.ForContext<ConditionCodeMapper>();
 
-    public ConditionCodeMapper(Dictionary<(string Provider, string RawCode), CanonicalTradeCondition> mappings)
+    /// <summary>
+    /// Lookup: (PROVIDER, rawCode) -> CanonicalTradeCondition.
+    /// Frozen after load for zero-allocation reads on the hot path.
+    /// </summary>
+    private readonly FrozenDictionary<(string Provider, string RawCode), CanonicalTradeCondition> _map;
+
+    /// <summary>
+    /// Version of the mapping table (from the JSON file).
+    /// </summary>
+    public int Version { get; }
+
+    private ConditionCodeMapper(
+        FrozenDictionary<(string Provider, string RawCode), CanonicalTradeCondition> map,
+        int version)
     {
-        _map = mappings ?? throw new ArgumentNullException(nameof(mappings));
+        _map = map;
+        Version = version;
     }
 
     /// <summary>
-    /// Maps raw provider condition codes to canonical codes.
+    /// Loads the condition code mapping from a JSON file.
+    /// </summary>
+    public static ConditionCodeMapper LoadFromFile(string path)
+    {
+        if (!File.Exists(path))
+        {
+            Log.Warning("Condition code mapping file not found at {Path}, using empty mappings", path);
+            return new ConditionCodeMapper(
+                FrozenDictionary<(string, string), CanonicalTradeCondition>.Empty, 0);
+        }
+
+        var json = File.ReadAllText(path);
+        return LoadFromJson(json);
+    }
+
+    /// <summary>
+    /// Loads the condition code mapping from a JSON string.
+    /// </summary>
+    public static ConditionCodeMapper LoadFromJson(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var version = root.TryGetProperty("version", out var vProp) ? vProp.GetInt32() : 0;
+        var dict = new Dictionary<(string, string), CanonicalTradeCondition>();
+
+        if (root.TryGetProperty("mappings", out var mappings))
+        {
+            foreach (var providerProp in mappings.EnumerateObject())
+            {
+                var provider = providerProp.Name.ToUpperInvariant();
+                foreach (var codeProp in providerProp.Value.EnumerateObject())
+                {
+                    var rawCode = codeProp.Name;
+                    var canonicalName = codeProp.Value.GetString();
+                    if (canonicalName is not null &&
+                        Enum.TryParse<CanonicalTradeCondition>(canonicalName, ignoreCase: true, out var canonical))
+                    {
+                        dict[(provider, rawCode)] = canonical;
+                    }
+                }
+            }
+        }
+
+        return new ConditionCodeMapper(dict.ToFrozenDictionary(), version);
+    }
+
+    /// <summary>
+    /// Maps raw provider condition codes to canonical conditions.
     /// Returns both the canonical and raw arrays for auditability.
     /// </summary>
+    /// <param name="provider">Provider name (e.g., "ALPACA", "POLYGON").</param>
+    /// <param name="rawConditions">Raw condition codes from the provider.</param>
+    /// <returns>Tuple of canonical conditions and the original raw conditions.</returns>
     public (CanonicalTradeCondition[] Canonical, string[] Raw) MapConditions(
         string provider, string[]? rawConditions)
     {
-        if (rawConditions is null || rawConditions.Length == 0)
+        if (rawConditions is null or { Length: 0 })
             return ([], []);
 
+        var upperProvider = provider.ToUpperInvariant();
         var canonical = new CanonicalTradeCondition[rawConditions.Length];
+
         for (var i = 0; i < rawConditions.Length; i++)
         {
-            var key = (provider.ToUpperInvariant(), rawConditions[i]);
-            canonical[i] = _map.TryGetValue(key, out var mapped)
+            canonical[i] = _map.TryGetValue((upperProvider, rawConditions[i]), out var mapped)
                 ? mapped
                 : CanonicalTradeCondition.Unknown;
         }
@@ -40,158 +109,17 @@ public sealed class ConditionCodeMapper
     }
 
     /// <summary>
-    /// Checks whether a given raw code has a known canonical mapping for the provider.
+    /// Tries to map a single raw condition code to its canonical equivalent.
     /// </summary>
-    public bool HasMapping(string provider, string rawCode)
+    public CanonicalTradeCondition MapSingle(string provider, string rawCode)
     {
-        return _map.ContainsKey((provider.ToUpperInvariant(), rawCode));
+        return _map.TryGetValue((provider.ToUpperInvariant(), rawCode), out var mapped)
+            ? mapped
+            : CanonicalTradeCondition.Unknown;
     }
 
     /// <summary>
     /// Gets the total number of mappings loaded.
     /// </summary>
     public int MappingCount => _map.Count;
-
-    /// <summary>
-    /// Creates a <see cref="ConditionCodeMapper"/> from a JSON configuration file.
-    /// Expected format:
-    /// <code>
-    /// {
-    ///   "version": 1,
-    ///   "mappings": [
-    ///     { "provider": "ALPACA", "rawCode": "@", "canonical": "Regular" },
-    ///     ...
-    ///   ]
-    /// }
-    /// </code>
-    /// </summary>
-    public static ConditionCodeMapper LoadFromFile(string filePath)
-    {
-        if (!File.Exists(filePath))
-        {
-            Log.ForContext<ConditionCodeMapper>()
-                .Warning("Condition code mapping file not found at {Path}, using built-in defaults", filePath);
-            return CreateDefault();
-        }
-
-        var json = File.ReadAllText(filePath);
-        return LoadFromJson(json);
-    }
-
-    /// <summary>
-    /// Creates a <see cref="ConditionCodeMapper"/> from a JSON string.
-    /// </summary>
-    public static ConditionCodeMapper LoadFromJson(string json)
-    {
-        using var doc = JsonDocument.Parse(json);
-        var mappings = new Dictionary<(string Provider, string RawCode), CanonicalTradeCondition>();
-        var log = Log.ForContext<ConditionCodeMapper>();
-
-        if (doc.RootElement.TryGetProperty("mappings", out var mappingsElement) &&
-            mappingsElement.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var entry in mappingsElement.EnumerateArray())
-            {
-                if (!entry.TryGetProperty("provider", out var providerProperty) ||
-                    providerProperty.ValueKind != JsonValueKind.String)
-                {
-                    log.Warning(
-                        "Skipping condition code mapping with missing or invalid 'provider' property: {Entry}",
-                        entry.ToString());
-                    continue;
-                }
-
-                if (!entry.TryGetProperty("rawCode", out var rawCodeProperty) ||
-                    rawCodeProperty.ValueKind != JsonValueKind.String)
-                {
-                    log.Warning(
-                        "Skipping condition code mapping with missing or invalid 'rawCode' property: {Entry}",
-                        entry.ToString());
-                    continue;
-                }
-
-                if (!entry.TryGetProperty("canonical", out var canonicalProperty) ||
-                    canonicalProperty.ValueKind != JsonValueKind.String)
-                {
-                    log.Warning(
-                        "Skipping condition code mapping with missing or invalid 'canonical' property: {Entry}",
-                        entry.ToString());
-                    continue;
-                }
-
-                var provider = providerProperty.GetString()?.ToUpperInvariant();
-                var rawCode = rawCodeProperty.GetString();
-                var canonicalStr = canonicalProperty.GetString();
-
-                if (provider is null || rawCode is null || canonicalStr is null)
-                {
-                    log.Warning(
-                        "Skipping condition code mapping with null values in 'provider', 'rawCode' or 'canonical': {Entry}",
-                        entry.ToString());
-                    continue;
-                }
-
-                if (Enum.TryParse<CanonicalTradeCondition>(canonicalStr, ignoreCase: true, out var canonical))
-                {
-                    mappings[(provider, rawCode)] = canonical;
-                }
-                else
-                {
-                    log.Warning(
-                        "Skipping condition code mapping with unknown canonical value '{Canonical}' for provider {Provider} and raw code {RawCode}",
-                        canonicalStr,
-                        provider,
-                        rawCode);
-                }
-            }
-        }
-
-        return new ConditionCodeMapper(mappings);
-    }
-
-    /// <summary>
-    /// Creates a mapper with built-in default mappings for known providers.
-    /// </summary>
-    public static ConditionCodeMapper CreateDefault()
-    {
-        var mappings = new Dictionary<(string Provider, string RawCode), CanonicalTradeCondition>
-        {
-            // Alpaca CTA plan codes
-            [("ALPACA", "@")] = CanonicalTradeCondition.Regular,
-            [("ALPACA", "T")] = CanonicalTradeCondition.FormT_ExtendedHours,
-            [("ALPACA", "I")] = CanonicalTradeCondition.Intermarket_Sweep,
-            [("ALPACA", "X")] = CanonicalTradeCondition.CrossTrade,
-            [("ALPACA", "O")] = CanonicalTradeCondition.OpeningPrint,
-            [("ALPACA", "6")] = CanonicalTradeCondition.ClosingPrint,
-            [("ALPACA", "4")] = CanonicalTradeCondition.DerivativelyPriced,
-            [("ALPACA", "H")] = CanonicalTradeCondition.Halted,
-
-            // Polygon SEC numeric codes
-            [("POLYGON", "0")] = CanonicalTradeCondition.Regular,
-            [("POLYGON", "12")] = CanonicalTradeCondition.FormT_ExtendedHours,
-            [("POLYGON", "37")] = CanonicalTradeCondition.OddLot,
-            [("POLYGON", "14")] = CanonicalTradeCondition.Intermarket_Sweep,
-            [("POLYGON", "15")] = CanonicalTradeCondition.OpeningPrint,
-            [("POLYGON", "16")] = CanonicalTradeCondition.ClosingPrint,
-            [("POLYGON", "22")] = CanonicalTradeCondition.AveragePrice,
-            [("POLYGON", "29")] = CanonicalTradeCondition.SellerInitiated,
-            [("POLYGON", "30")] = CanonicalTradeCondition.SellerDownExempt,
-            [("POLYGON", "38")] = CanonicalTradeCondition.CrossTrade,
-            [("POLYGON", "40")] = CanonicalTradeCondition.DerivativelyPriced,
-            [("POLYGON", "52")] = CanonicalTradeCondition.CorrectedConsolidated,
-            [("POLYGON", "53")] = CanonicalTradeCondition.Contingent,
-
-            // IB text-based condition codes
-            [("IB", "RegularTrade")] = CanonicalTradeCondition.Regular,
-            [("IB", "OddLot")] = CanonicalTradeCondition.OddLot,
-            [("IB", "FormT")] = CanonicalTradeCondition.FormT_ExtendedHours,
-            [("IB", "IntermarketSweep")] = CanonicalTradeCondition.Intermarket_Sweep,
-            [("IB", "OpeningPrint")] = CanonicalTradeCondition.OpeningPrint,
-            [("IB", "ClosingPrint")] = CanonicalTradeCondition.ClosingPrint,
-            [("IB", "DerivativelyPriced")] = CanonicalTradeCondition.DerivativelyPriced,
-            [("IB", "Halted")] = CanonicalTradeCondition.Halted,
-        };
-
-        return new ConditionCodeMapper(mappings);
-    }
 }

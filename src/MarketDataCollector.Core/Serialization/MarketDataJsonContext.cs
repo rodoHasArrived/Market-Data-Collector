@@ -57,6 +57,10 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(OpenInterestUpdate))]
 [JsonSerializable(typeof(List<OptionQuote>))]
 [JsonSerializable(typeof(List<OptionTrade>))]
+// Canonicalization types
+[JsonSerializable(typeof(CanonicalTradeCondition))]
+[JsonSerializable(typeof(CanonicalTradeCondition[]))]
+[JsonSerializable(typeof(CanonicalizationConfig))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 // Configuration types

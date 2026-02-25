@@ -21,7 +21,7 @@ public enum MarketEventTier
     Enriched = 2,
 
     /// <summary>
-    /// Fully processed event after all transformations.
+    /// Fully processed event after all pipeline stages.
     /// </summary>
     Processed = 3
 }

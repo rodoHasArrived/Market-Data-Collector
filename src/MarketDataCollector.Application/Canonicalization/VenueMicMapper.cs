@@ -1,39 +1,103 @@
+using System.Collections.Frozen;
 using System.Text.Json;
+using MarketDataCollector.Application.Logging;
 using Serilog;
 
 namespace MarketDataCollector.Application.Canonicalization;
 
 /// <summary>
-/// Normalizes freeform venue/exchange identifiers to ISO 10383 MIC (Market Identifier Code) values.
-/// Maps provider-specific venue formats (numeric IDs, text abbreviations, routing names) to
-/// standard 4-character MIC codes.
+/// Maps provider-specific venue identifiers to ISO 10383 MIC (Market Identifier Code).
+/// Loaded from <c>config/venue-mapping.json</c> at startup.
+/// Thread-safe after initialization (uses frozen dictionary).
 /// </summary>
 public sealed class VenueMicMapper
 {
-    private readonly Dictionary<(string Provider, string RawVenue), string> _map;
+    private readonly ILogger _log = LoggingSetup.ForContext<VenueMicMapper>();
 
-    public VenueMicMapper(Dictionary<(string Provider, string RawVenue), string> mappings)
+    /// <summary>
+    /// Lookup: (PROVIDER, rawVenue) -> ISO 10383 MIC code (or null for unmappable venues like IB "SMART").
+    /// </summary>
+    private readonly FrozenDictionary<(string Provider, string RawVenue), string?> _map;
+
+    /// <summary>
+    /// Version of the mapping table (from the JSON file).
+    /// </summary>
+    public int Version { get; }
+
+    private VenueMicMapper(
+        FrozenDictionary<(string Provider, string RawVenue), string?> map,
+        int version)
     {
-        _map = mappings ?? throw new ArgumentNullException(nameof(mappings));
+        _map = map;
+        Version = version;
     }
 
     /// <summary>
-    /// Attempts to map a raw venue string from a specific provider to an ISO 10383 MIC code.
-    /// Returns <c>null</c> if no mapping exists.
+    /// Loads the venue mapping from a JSON file.
     /// </summary>
+    public static VenueMicMapper LoadFromFile(string path)
+    {
+        if (!File.Exists(path))
+        {
+            Log.Warning("Venue mapping file not found at {Path}, using empty mappings", path);
+            return new VenueMicMapper(
+                FrozenDictionary<(string, string), string?>.Empty, 0);
+        }
+
+        var json = File.ReadAllText(path);
+        return LoadFromJson(json);
+    }
+
+    /// <summary>
+    /// Loads the venue mapping from a JSON string.
+    /// </summary>
+    public static VenueMicMapper LoadFromJson(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var version = root.TryGetProperty("version", out var vProp) ? vProp.GetInt32() : 0;
+        var dict = new Dictionary<(string, string), string?>();
+
+        if (root.TryGetProperty("mappings", out var mappings))
+        {
+            foreach (var providerProp in mappings.EnumerateObject())
+            {
+                var provider = providerProp.Name.ToUpperInvariant();
+                foreach (var venueProp in providerProp.Value.EnumerateObject())
+                {
+                    var rawVenue = venueProp.Name;
+                    var mic = venueProp.Value.ValueKind == JsonValueKind.Null
+                        ? null
+                        : venueProp.Value.GetString();
+                    dict[(provider, rawVenue)] = mic;
+                }
+            }
+        }
+
+        return new VenueMicMapper(dict.ToFrozenDictionary(), version);
+    }
+
+    /// <summary>
+    /// Tries to map a raw venue identifier to an ISO 10383 MIC code.
+    /// </summary>
+    /// <param name="rawVenue">Raw venue string from the provider (may be null).</param>
+    /// <param name="provider">Provider name (e.g., "ALPACA", "POLYGON", "IB").</param>
+    /// <returns>The ISO MIC code, or null if the venue is unmappable or unknown.</returns>
     public string? TryMapVenue(string? rawVenue, string provider)
     {
-        if (string.IsNullOrWhiteSpace(rawVenue))
+        if (string.IsNullOrEmpty(rawVenue))
             return null;
 
-        var key = (provider.ToUpperInvariant(), rawVenue);
-        if (_map.TryGetValue(key, out var mic))
+        var upperProvider = provider.ToUpperInvariant();
+
+        if (_map.TryGetValue((upperProvider, rawVenue), out var mic))
             return mic;
 
-        // Try provider-agnostic lookup (raw venue might already be a MIC)
-        var agnosticKey = ("*", rawVenue.ToUpperInvariant());
-        if (_map.TryGetValue(agnosticKey, out var agnosticMic))
-            return agnosticMic;
+        // Try case-insensitive venue match by uppercasing the raw venue
+        var upperVenue = rawVenue.ToUpperInvariant();
+        if (upperVenue != rawVenue && _map.TryGetValue((upperProvider, upperVenue), out mic))
+            return mic;
 
         return null;
     }
@@ -42,172 +106,4 @@ public sealed class VenueMicMapper
     /// Gets the total number of mappings loaded.
     /// </summary>
     public int MappingCount => _map.Count;
-
-    /// <summary>
-    /// Creates a <see cref="VenueMicMapper"/> from a JSON configuration file.
-    /// Expected format:
-    /// <code>
-    /// {
-    ///   "version": 1,
-    ///   "mappings": [
-    ///     { "provider": "ALPACA", "rawVenue": "V", "mic": "XNAS" },
-    ///     ...
-    ///   ]
-    /// }
-    /// </code>
-    /// </summary>
-    public static VenueMicMapper LoadFromFile(string filePath)
-    {
-        if (!File.Exists(filePath))
-        {
-            Log.ForContext<VenueMicMapper>()
-                .Warning("Venue mapping file not found at {Path}, using built-in defaults", filePath);
-            return CreateDefault();
-        }
-
-        var json = File.ReadAllText(filePath);
-        return LoadFromJson(json);
-    }
-
-    /// <summary>
-    /// Creates a <see cref="VenueMicMapper"/> from a JSON string.
-    /// </summary>
-    public static VenueMicMapper LoadFromJson(string json)
-    {
-        using var doc = JsonDocument.Parse(json);
-        var mappings = new Dictionary<(string Provider, string RawVenue), string>();
-
-        if (doc.RootElement.TryGetProperty("mappings", out var mappingsElement))
-        {
-            foreach (var entry in mappingsElement.EnumerateArray())
-            {
-                if (!entry.TryGetProperty("provider", out var providerProperty) ||
-                    providerProperty.ValueKind != JsonValueKind.String)
-                {
-                    Log.ForContext<VenueMicMapper>()
-                        .Warning("Skipping venue MIC mapping entry with missing or non-string 'provider': {Entry}", entry.ToString());
-                    continue;
-                }
-
-                if (!entry.TryGetProperty("rawVenue", out var rawVenueProperty) ||
-                    rawVenueProperty.ValueKind != JsonValueKind.String)
-                {
-                    Log.ForContext<VenueMicMapper>()
-                        .Warning("Skipping venue MIC mapping entry with missing or non-string 'rawVenue': {Entry}", entry.ToString());
-                    continue;
-                }
-
-                if (!entry.TryGetProperty("mic", out var micProperty) ||
-                    micProperty.ValueKind != JsonValueKind.String)
-                {
-                    Log.ForContext<VenueMicMapper>()
-                        .Warning("Skipping venue MIC mapping entry with missing or non-string 'mic': {Entry}", entry.ToString());
-                    continue;
-                }
-
-                var provider = providerProperty.GetString()?.ToUpperInvariant();
-                var rawVenue = rawVenueProperty.GetString();
-                var mic = micProperty.GetString();
-
-                if (string.IsNullOrWhiteSpace(provider) ||
-                    string.IsNullOrWhiteSpace(rawVenue) ||
-                    string.IsNullOrWhiteSpace(mic))
-                {
-                    Log.ForContext<VenueMicMapper>()
-                        .Warning("Skipping venue MIC mapping entry with empty 'provider', 'rawVenue', or 'mic': {Entry}", entry.ToString());
-                    continue;
-                }
-                mappings[(provider, rawVenue)] = mic;
-            }
-        }
-
-        return new VenueMicMapper(mappings);
-    }
-
-    /// <summary>
-    /// Creates a mapper with built-in default mappings for known providers.
-    /// Based on the provider field audit in the deterministic canonicalization design doc.
-    /// </summary>
-    public static VenueMicMapper CreateDefault()
-    {
-        var mappings = new Dictionary<(string Provider, string RawVenue), string>
-        {
-            // Alpaca text venue identifiers
-            [("ALPACA", "V")] = "XNAS",
-            [("ALPACA", "NASDAQ")] = "XNAS",
-            [("ALPACA", "P")] = "ARCX",
-            [("ALPACA", "NYSE_ARCA")] = "ARCX",
-            [("ALPACA", "N")] = "XNYS",
-            [("ALPACA", "NYSE")] = "XNYS",
-            [("ALPACA", "A")] = "XASE",
-            [("ALPACA", "AMEX")] = "XASE",
-            [("ALPACA", "Z")] = "BATS",
-            [("ALPACA", "BATS")] = "BATS",
-            [("ALPACA", "B")] = "XBOS",
-            [("ALPACA", "X")] = "XPHL",
-            [("ALPACA", "J")] = "EDGA",
-            [("ALPACA", "K")] = "EDGX",
-            [("ALPACA", "IEX")] = "IEXG",
-            [("ALPACA", "M")] = "XCHI",
-            [("ALPACA", "W")] = "XCBO",
-
-            // Polygon numeric exchange IDs
-            [("POLYGON", "1")] = "XNYS",
-            [("POLYGON", "2")] = "XASE",
-            [("POLYGON", "3")] = "ARCX",
-            [("POLYGON", "4")] = "XNAS",
-            [("POLYGON", "5")] = "XBOS",
-            [("POLYGON", "6")] = "XPHL",
-            [("POLYGON", "7")] = "BATY",
-            [("POLYGON", "8")] = "BATS",
-            [("POLYGON", "9")] = "IEXG",
-            [("POLYGON", "10")] = "EDGX",
-            [("POLYGON", "11")] = "EDGA",
-            [("POLYGON", "12")] = "XCHI",
-            [("POLYGON", "14")] = "FINN",
-            [("POLYGON", "15")] = "XCBO",
-            [("POLYGON", "16")] = "MEMX",
-            [("POLYGON", "17")] = "MIHI",
-            [("POLYGON", "19")] = "LTSE",
-
-            // IB TWS routing names
-            [("IB", "ISLAND")] = "XNAS",
-            [("IB", "ARCA")] = "ARCX",
-            [("IB", "NYSE")] = "XNYS",
-            [("IB", "AMEX")] = "XASE",
-            [("IB", "BATS")] = "BATS",
-            [("IB", "EDGX")] = "EDGX",
-            [("IB", "EDGA")] = "EDGA",
-            [("IB", "BYX")] = "BATY",
-            [("IB", "IEX")] = "IEXG",
-            [("IB", "CHX")] = "XCHI",
-            [("IB", "CBOE")] = "XCBO",
-            [("IB", "MEMX")] = "MEMX",
-            [("IB", "PHLX")] = "XPHL",
-            [("IB", "BEX")] = "XBOS",
-            // SMART is IB-specific best-execution router, not a real exchange
-            [("IB", "SMART")] = "SMART",
-
-            // Provider-agnostic pass-through for already-standard MIC codes
-            [("*", "XNYS")] = "XNYS",
-            [("*", "XNAS")] = "XNAS",
-            [("*", "ARCX")] = "ARCX",
-            [("*", "XASE")] = "XASE",
-            [("*", "BATS")] = "BATS",
-            [("*", "BATY")] = "BATY",
-            [("*", "IEXG")] = "IEXG",
-            [("*", "EDGX")] = "EDGX",
-            [("*", "EDGA")] = "EDGA",
-            [("*", "XCHI")] = "XCHI",
-            [("*", "XCBO")] = "XCBO",
-            [("*", "XBOS")] = "XBOS",
-            [("*", "XPHL")] = "XPHL",
-            [("*", "MEMX")] = "MEMX",
-            [("*", "MIHI")] = "MIHI",
-            [("*", "FINN")] = "FINN",
-            [("*", "LTSE")] = "LTSE",
-        };
-
-        return new VenueMicMapper(mappings);
-    }
 }

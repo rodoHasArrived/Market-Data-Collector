@@ -57,6 +57,30 @@ public sealed class CanonicalSymbolRegistry : ICanonicalSymbolRegistry
     }
 
     /// <inheritdoc />
+    public string? TryResolve(string symbol, string provider)
+    {
+        if (string.IsNullOrWhiteSpace(symbol))
+            return null;
+
+        var normalized = symbol.Trim();
+
+        // Fast path: check provider-specific mappings first
+        if (!string.IsNullOrWhiteSpace(provider))
+        {
+            var registry = _registryService.GetRegistry();
+            var upperProvider = provider.ToUpperInvariant();
+            if (registry.ProviderMappings.TryGetValue(upperProvider, out var mappings) &&
+                mappings.TryGetValue(normalized, out var canonical))
+            {
+                return canonical;
+            }
+        }
+
+        // Fall back to generic resolution
+        return ResolveToCanonical(normalized);
+    }
+
+    /// <inheritdoc />
     public async Task RegisterAsync(CanonicalSymbolDefinition definition, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(definition);

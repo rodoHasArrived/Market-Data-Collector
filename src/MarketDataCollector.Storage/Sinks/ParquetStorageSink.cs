@@ -227,7 +227,7 @@ public sealed class ParquetStorageSink : IStorageSink
             if (events[i].Payload is not Trade trade) continue;
             var evt = events[i];
             timestamps[idx] = evt.Timestamp;
-            symbols[idx] = evt.Symbol;
+            symbols[idx] = evt.EffectiveSymbol;
             prices[idx] = trade.Price;
             sizes[idx] = trade.Size;
             aggressors[idx] = trade.Aggressor.ToString();
@@ -276,7 +276,7 @@ public sealed class ParquetStorageSink : IStorageSink
             if (events[i].Payload is not BboQuotePayload quote) continue;
             var evt = events[i];
             timestamps[idx] = evt.Timestamp;
-            symbols[idx] = evt.Symbol;
+            symbols[idx] = evt.EffectiveSymbol;
             bidPrices[idx] = quote.BidPrice;
             bidSizes[idx] = quote.BidSize;
             askPrices[idx] = quote.AskPrice;
@@ -315,7 +315,7 @@ public sealed class ParquetStorageSink : IStorageSink
         using var rowGroupWriter = groupWriter.CreateRowGroup();
 
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[0], snapshots.Select(s => s.Event.Timestamp).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[1], snapshots.Select(s => s.Event.Symbol).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[1], snapshots.Select(s => s.Event.EffectiveSymbol).ToArray()));
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[2], snapshots.Select(s => s.Snapshot.Bids?.Count ?? 0).ToArray()));
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[3], snapshots.Select(s => s.Snapshot.Asks?.Count ?? 0).ToArray()));
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[4], snapshots.Select(s => s.Snapshot.Bids?.FirstOrDefault()?.Price ?? 0m).ToArray()));
@@ -367,7 +367,7 @@ public sealed class ParquetStorageSink : IStorageSink
             if (events[i].Payload is not HistoricalBar bar) continue;
             var evt = events[i];
             timestamps[idx] = evt.Timestamp;
-            symbols[idx] = evt.Symbol;
+            symbols[idx] = evt.EffectiveSymbol;
             opens[idx] = bar.Open;
             highs[idx] = bar.High;
             lows[idx] = bar.Low;
@@ -405,7 +405,7 @@ public sealed class ParquetStorageSink : IStorageSink
         );
 
         var timestamps = events.Select(e => e.Timestamp).ToArray();
-        var symbols = events.Select(e => e.Symbol).ToArray();
+        var symbols = events.Select(e => e.EffectiveSymbol).ToArray();
         var types = events.Select(e => e.Type.ToString()).ToArray();
         var payloads = events.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Payload)).ToArray();
         var sequences = events.Select(e => e.Sequence).ToArray();
@@ -424,18 +424,19 @@ public sealed class ParquetStorageSink : IStorageSink
 
     private string GetBufferKey(MarketEvent evt)
     {
-        return $"{evt.Symbol}_{evt.Type}_{evt.Timestamp.Date:yyyyMMdd}";
+        return $"{evt.EffectiveSymbol}_{evt.Type}_{evt.Timestamp.Date:yyyyMMdd}";
     }
 
     private string GetFilePath(MarketEvent evt)
     {
         var date = evt.Timestamp.Date;
         var typeName = evt.Type.ToString().ToLowerInvariant();
-        var fileName = $"{evt.Symbol}_{typeName}_{date:yyyyMMdd}.parquet";
+        var effectiveSymbol = evt.EffectiveSymbol;
+        var fileName = $"{effectiveSymbol}_{typeName}_{date:yyyyMMdd}.parquet";
 
         return _options.NamingConvention switch
         {
-            FileNamingConvention.BySymbol => Path.Combine(_options.RootPath, evt.Symbol, fileName),
+            FileNamingConvention.BySymbol => Path.Combine(_options.RootPath, effectiveSymbol, fileName),
             FileNamingConvention.ByDate => Path.Combine(_options.RootPath, $"{date:yyyy}", $"{date:MM}", $"{date:dd}", fileName),
             FileNamingConvention.ByType => Path.Combine(_options.RootPath, typeName, fileName),
             _ => Path.Combine(_options.RootPath, fileName)

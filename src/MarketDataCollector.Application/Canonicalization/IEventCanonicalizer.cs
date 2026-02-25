@@ -1,15 +1,21 @@
+using MarketDataCollector.Domain.Events;
+
 namespace MarketDataCollector.Application.Canonicalization;
 
 /// <summary>
-/// Resolves symbols, maps condition codes, and normalizes venue identifiers
-/// on a <see cref="MarketEvent"/> before it enters the <c>EventPipeline</c>.
+/// Transforms a raw <see cref="MarketEvent"/> into a canonicalized event by resolving symbols,
+/// mapping condition codes, and normalizing venue identifiers.
+/// Runs <b>before</b> <c>EventPipeline.PublishAsync()</c> to avoid adding latency to the
+/// high-throughput sink path.
 /// </summary>
 public interface IEventCanonicalizer
 {
     /// <summary>
-    /// Canonicalizes a raw market event by resolving its symbol to the canonical identity,
-    /// mapping condition codes to provider-agnostic values, and normalizing venue to ISO 10383 MIC.
-    /// Returns an enriched copy via <c>with</c> expression; the original event is not mutated.
+    /// Canonicalizes a raw market event. Returns the enriched event with canonical fields populated.
+    /// The original <see cref="MarketEvent.Symbol"/> is never mutated.
     /// </summary>
+    /// <param name="raw">The raw event from a provider adapter.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The canonicalized event with <see cref="MarketEvent.Tier"/> set to <c>Enriched</c>.</returns>
     MarketEvent Canonicalize(MarketEvent raw, CancellationToken ct = default);
 }
