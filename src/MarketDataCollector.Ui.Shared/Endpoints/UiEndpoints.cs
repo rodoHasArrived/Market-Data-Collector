@@ -191,8 +191,7 @@ public static class UiEndpoints
         app.MapProviderExtendedEndpoints(jsonOptions);
         app.MapIndexEndpoints(jsonOptions);
 
-        // Canonicalization parity dashboard (Phase 2)
-        app.MapCanonicalizationEndpoints(jsonOptions);
+        // Canonicalization parity dashboard (Phase 2) endpoints are mapped elsewhere to avoid duplicate registrations.
 
         // Trading calendar endpoints
         app.MapCalendarEndpoints(jsonOptions);
