@@ -31,12 +31,12 @@ Remaining work is minimal, tracked in `docs/status/IMPROVEMENTS.md`:
   - 🔄 Partial: 1 (G2 — OpenTelemetry trace context propagation)
   - 📝 Open: 1 (C3 — WebSocket Provider Base Class Adoption)
 - **8 new theme items** (themes H–I)
-  - ✅ Completed: 5 (H1, H3, H4, I1, I2)
+  - ✅ Completed: 6 (H1, H3, H4, I1, I2, I4)
   - 🔄 Partial: 1 (I3 — Configuration Schema Validation)
-  - 📝 Open: 2 (H2 — Multi-Instance Coordination, I4 — Provider SDK Doc Generator)
+  - 📝 Open: 1 (H2 — Multi-Instance Coordination)
 - **8 canonicalization items** (theme J)
   - ✅ Completed: 7 (J1–J7 — design, MarketEvent fields, canonicalizer, condition codes, venue normalization, provider wiring, metrics)
-  - 🔄 Partial: 1 (J8 — Golden fixture test suite)
+  - 🔄 Partial: 1 (J8 — Golden fixture test suite; curated fixtures + fixture-runner tests added, drift-canary CI still pending)
 - Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete.
 
 ---
@@ -127,7 +127,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | I1 | Integration Test Harness with Fixture Providers | ✅ Complete | `FixtureMarketDataClient` and `InMemoryStorageSink` enable full pipeline integration testing without live API connections. See `tests/.../Integration/FixtureProviderTests.cs`. |
 | I2 | CLI Progress Reporting | ✅ Complete | `ProgressDisplayService` provides progress bars with ETA/throughput, Unicode spinners, multi-step checklists, and formatted tables. Supports interactive and CI/CD (non-interactive) modes. |
 | I3 | Configuration Schema Validation at Startup | 🔄 Partial | `SchemaValidationService` validates stored data formats against schema versions at startup (`--validate-schemas`, `--strict-schemas`). Missing: JSON Schema generation from C# models for config file validation. |
-| I4 | Provider SDK Documentation Generator | 📝 Open | Auto-generate provider capability documentation from `[DataSource]` attributes and `HistoricalDataCapabilities`, keeping docs in sync with code. |
+| I4 | Provider SDK Documentation Generator | ✅ Complete | `generate-structure-docs.py` `extract_providers()` now reads from the correct `src/MarketDataCollector.Infrastructure/Providers` path, handles both positional and named `[DataSource]` attribute params, and emits a richer table with Class/Type/Category columns. Historical providers fall back to a curated static list. Run via `make gen-providers`. |
 
 ### Theme J: Data Canonicalization (New)
 
@@ -140,7 +140,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | J5 | Venue Normalization to ISO 10383 MIC | ✅ Complete | `VenueMicMapper` with `config/venue-mapping.json` — 29 Alpaca, 17 Polygon, 17 IB venue mappings to ISO 10383 MIC codes. |
 | J6 | Provider Adapter Wiring | ✅ Complete | `CanonicalizingPublisher` decorator wraps `IMarketEventPublisher` with DI registration in `ServiceCompositionRoot`. Pilot symbol filtering, dual-write mode, lock-free metrics. |
 | J7 | Canonicalization Metrics & Monitoring | ✅ Complete | `CanonicalizationMetrics` with per-provider parity stats. API endpoints for status, parity, and config. Thread-safe counters for success/fail/unresolved. |
-| J8 | Golden Fixture Test Suite | 🔄 Partial | Unit tests cover core correctness and idempotency. Remaining: curated `.raw.json`/`.expected.json` fixture pairs and drift canary CI job. |
+| J8 | Golden Fixture Test Suite | 🔄 Partial | 8 curated fixture `.json` files added (Alpaca + Polygon: regular, extended-hours, odd-lot, cross-provider XNAS identity). `CanonicalizationGoldenFixtureTests` drives them via `[Theory][MemberData]` using production `condition-codes.json` and `venue-mapping.json`. Remaining: drift-canary CI job for detecting new unmapped codes. |
 
 ---
 
@@ -193,7 +193,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | Stub endpoints remaining | 0 | 0 |
 | Core improvement items completed | 33 / 35 | 35 / 35 |
 | Core improvement items still open | 1 / 35 (C3) | 0 / 35 |
-| New theme items (H/I) completed | 5 / 8 | 7+ / 8 |
+| New theme items (H/I) completed | 6 / 8 | 7+ / 8 |
 | Source files | 664 | — |
 | Test files | 219 | 250+ |
 | Test methods | ~3,444 | 4,000+ |

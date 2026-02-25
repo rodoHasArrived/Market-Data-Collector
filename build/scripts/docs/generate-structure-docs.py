@@ -253,15 +253,18 @@ def generate_structure_tree(root: Path, max_depth: int = 4) -> str:
 def extract_providers(root: Path) -> list[dict[str, str]]:
     """Extract provider information from source code."""
     providers = []
-    providers_dir = root / 'src' / 'MarketDataCollector' / 'Infrastructure' / 'Providers'
+    # Correct path: MarketDataCollector.Infrastructure project, not MarketDataCollector/Infrastructure sub-folder
+    providers_dir = root / 'src' / 'MarketDataCollector.Infrastructure' / 'Providers'
 
     if not providers_dir.exists():
         return providers
 
-    # Pattern to match DataSource attribute
+    # Pattern to match DataSource attribute (may span multiple lines, positional or named params)
+    # Positional: [DataSource("id", "Name", DataSourceType.X, DataSourceCategory.Y)]
+    # Named:      [DataSource(id: "id", displayName: "Name", type: ..., category: ...)]
     datasource_pattern = re.compile(
-        r'\[DataSource\s*\(\s*"([^"]+)"(?:\s*,\s*"([^"]*)")?(?:\s*,\s*DataSourceType\.(\w+))?(?:\s*,\s*DataSourceCategory\.(\w+))?\s*\)\]',
-        re.MULTILINE
+        r'\[DataSource\s*\(([^)]*)\)\]',
+        re.DOTALL
     )
 
     # Pattern to match class definitions implementing interfaces
@@ -278,12 +281,32 @@ def extract_providers(root: Path) -> list[dict[str, str]]:
 
         # Find DataSource attributes
         for match in datasource_pattern.finditer(content):
-            provider_id = match.group(1)
-            display_name = match.group(2) or provider_id.replace('-', ' ').title()
-            source_type = match.group(3) or 'Unknown'
-            category = match.group(4) or 'Unknown'
+            args = match.group(1)
 
-            # Find the class name
+            # Extract id: support positional ("id") and named (id: "id")
+            id_named = re.search(r'\bid\s*:\s*"([^"]+)"', args)
+            id_pos = re.search(r'^\s*"([^"]+)"', args)
+            provider_id = (id_named or id_pos)
+            if not provider_id:
+                continue
+            provider_id = provider_id.group(1)
+
+            # Extract displayName: support named and positional
+            name_named = re.search(r'displayName\s*:\s*"([^"]+)"', args)
+            name_pos_match = list(re.finditer(r'"([^"]+)"', args))
+            display_name = name_named.group(1) if name_named else (
+                name_pos_match[1].group(1) if len(name_pos_match) > 1 else provider_id.replace('-', ' ').title()
+            )
+
+            # Extract type
+            type_match = re.search(r'DataSourceType\.(\w+)', args)
+            source_type = type_match.group(1) if type_match else 'Unknown'
+
+            # Extract category
+            cat_match = re.search(r'DataSourceCategory\.(\w+)', args)
+            category = cat_match.group(1) if cat_match else 'Unknown'
+
+            # Find the class name following the attribute
             class_match = class_pattern.search(content[match.end():match.end() + 500])
             class_name = class_match.group(1) if class_match else 'Unknown'
 
@@ -303,13 +326,8 @@ def generate_provider_registry(root: Path, extract_attrs: bool = False) -> str:
     """Generate provider registry documentation."""
     providers = extract_providers(root) if extract_attrs else []
 
-    # Static provider information (fallback)
-    static_providers = [
-        {'id': 'alpaca', 'name': 'Alpaca Markets', 'type': 'Streaming', 'category': 'RealTime'},
-        {'id': 'interactive-brokers', 'name': 'Interactive Brokers', 'type': 'Streaming', 'category': 'RealTime'},
-        {'id': 'polygon', 'name': 'Polygon.io', 'type': 'Streaming', 'category': 'RealTime'},
-        {'id': 'nyse', 'name': 'NYSE', 'type': 'Streaming', 'category': 'RealTime'},
-        {'id': 'stocksharp', 'name': 'StockSharp', 'type': 'Streaming', 'category': 'RealTime'},
+    # Static historical provider list (these don't use [DataSource] attribute in the codebase)
+    static_historical = [
         {'id': 'yahoo-finance', 'name': 'Yahoo Finance', 'type': 'Historical', 'category': 'Backfill'},
         {'id': 'stooq', 'name': 'Stooq', 'type': 'Historical', 'category': 'Backfill'},
         {'id': 'tiingo', 'name': 'Tiingo', 'type': 'Historical', 'category': 'Backfill'},
@@ -318,8 +336,28 @@ def generate_provider_registry(root: Path, extract_attrs: bool = False) -> str:
         {'id': 'nasdaq-data-link', 'name': 'Nasdaq Data Link', 'type': 'Historical', 'category': 'Backfill'},
     ]
 
-    # Use extracted providers if available, otherwise use static list
-    all_providers = providers if providers else static_providers
+    # Use extracted providers if available, otherwise fall back to a static streaming list
+    static_streaming = [
+        {'id': 'alpaca', 'name': 'Alpaca Markets', 'type': 'Streaming', 'category': 'RealTime'},
+        {'id': 'interactive-brokers', 'name': 'Interactive Brokers', 'type': 'Streaming', 'category': 'RealTime'},
+        {'id': 'polygon', 'name': 'Polygon.io', 'type': 'Streaming', 'category': 'RealTime'},
+        {'id': 'nyse', 'name': 'NYSE', 'type': 'Streaming', 'category': 'RealTime'},
+        {'id': 'stocksharp', 'name': 'StockSharp', 'type': 'Streaming', 'category': 'RealTime'},
+    ]
+    all_providers = (providers if providers else static_streaming) + static_historical
+
+    def _is_realtime(p: dict) -> bool:
+        cat = p.get('category', '').lower()
+        typ = p.get('type', '').lower()
+        return cat in ('realtime', 'broker', 'aggregator', 'exchange') or typ in ('realtime', 'hybrid', 'streaming')
+
+    def _is_historical(p: dict) -> bool:
+        cat = p.get('category', '').lower()
+        typ = p.get('type', '').lower()
+        return cat in ('backfill', 'historical') or typ in ('historical',)
+
+    realtime_providers = [p for p in all_providers if _is_realtime(p)]
+    historical_providers = [p for p in all_providers if _is_historical(p) and not _is_realtime(p)]
 
     content = f"""# Provider Registry
 
@@ -329,12 +367,12 @@ This document lists all data providers available in the Market Data Collector.
 
 ## Real-Time Streaming Providers
 
-| Provider | ID | Type | Status |
-|----------|-----|------|--------|
+| Provider | ID | Class | Type | Category | Status |
+|----------|-----|-------|------|----------|--------|
 """
-    for p in all_providers:
-        if p.get('category') == 'RealTime' or p.get('type') == 'Streaming':
-            content += f"| {p['name']} | `{p['id']}` | {p.get('type', 'Streaming')} | ✅ Active |\n"
+    for p in realtime_providers:
+        class_col = f"`{p['class']}`" if p.get('class') and p['class'] != 'Unknown' else '—'
+        content += f"| {p['name']} | `{p['id']}` | {class_col} | {p.get('type', 'Streaming')} | {p.get('category', '—')} | ✅ Active |\n"
 
     content += """
 ## Historical Data Providers (Backfill)
@@ -342,9 +380,8 @@ This document lists all data providers available in the Market Data Collector.
 | Provider | ID | Free Tier | Rate Limits |
 |----------|-----|-----------|-------------|
 """
-    for p in all_providers:
-        if p.get('category') == 'Backfill' or p.get('type') == 'Historical':
-            content += f"| {p['name']} | `{p['id']}` | Yes | Varies |\n"
+    for p in historical_providers:
+        content += f"| {p['name']} | `{p['id']}` | Yes | Varies |\n"
 
     content += """
 ## Provider Configuration
@@ -364,7 +401,7 @@ export ALPHAVANTAGE__APIKEY=your-key
 
 ## Adding a New Provider
 
-1. Create provider class in `src/MarketDataCollector/Infrastructure/Providers/{Name}/`
+1. Create provider class in `src/MarketDataCollector.Infrastructure/Providers/{Name}/`
 2. Implement `IMarketDataClient` (streaming) or `IHistoricalDataProvider` (backfill)
 3. Add `[DataSource]` attribute with provider metadata
 4. Add `[ImplementsAdr]` attributes for ADR compliance

@@ -1,18 +1,18 @@
 # Provider Registry
 
-> Auto-generated on 2026-02-23 03:56:51 UTC
+> Auto-generated on 2026-02-25 17:06:11 UTC
 
 This document lists all data providers available in the Market Data Collector.
 
 ## Real-Time Streaming Providers
 
-| Provider | ID | Type | Status |
-|----------|-----|------|--------|
-| Alpaca Markets | `alpaca` | Streaming | ✅ Active |
-| Interactive Brokers | `interactive-brokers` | Streaming | ✅ Active |
-| Polygon.io | `polygon` | Streaming | ✅ Active |
-| NYSE | `nyse` | Streaming | ✅ Active |
-| StockSharp | `stocksharp` | Streaming | ✅ Active |
+| Provider | ID | Class | Type | Category | Status |
+|----------|-----|-------|------|----------|--------|
+| Interactive Brokers | `ib` | `IBMarketDataClient` | Realtime | Broker | ✅ Active |
+| StockSharp | `stocksharp` | `StockSharpMarketDataClient` | Realtime | Aggregator | ✅ Active |
+| NYSE Direct | `nyse` | `NYSEDataSource` | Hybrid | Exchange | ✅ Active |
+| Polygon.io | `polygon` | `PolygonMarketDataClient` | Realtime | Aggregator | ✅ Active |
+| Alpaca Markets | `alpaca` | `AlpacaMarketDataClient` | Realtime | Broker | ✅ Active |
 
 ## Historical Data Providers (Backfill)
 
@@ -42,7 +42,7 @@ export ALPHAVANTAGE__APIKEY=your-key
 
 ## Adding a New Provider
 
-1. Create provider class in `src/MarketDataCollector/Infrastructure/Providers/{Name}/`
+1. Create provider class in `src/MarketDataCollector.Infrastructure/Providers/{Name}/`
 2. Implement `IMarketDataClient` (streaming) or `IHistoricalDataProvider` (backfill)
 3. Add `[DataSource]` attribute with provider metadata
 4. Add `[ImplementsAdr]` attributes for ADR compliance
