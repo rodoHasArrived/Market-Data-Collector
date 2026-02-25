@@ -88,8 +88,6 @@ The system exposes status and monitoring through:
 
 ---
 
----
-
 ## Why monolithic over microservices?
 
 We evaluated a microservices decomposition ([ADR-003](../adr/003-microservices-decomposition.md)) and rejected it. Key reasons:

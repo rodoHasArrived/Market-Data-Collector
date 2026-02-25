@@ -1,23 +1,25 @@
 # UWP Desktop Release Checklist (Desktop-Ready Scope)
 
-This checklist defines the minimal **desktop-ready** scope for the UWP app release. Each item includes explicit acceptance criteria and is tagged as **must-ship** or **post-ship**. Links point to implementation locations or the refinement backlog so expectations are concrete.
+> **Archived:** The UWP desktop application was deprecated and removed. The WPF desktop app (`MarketDataCollector.Wpf`) is now the sole desktop client. All must-ship items below have been implemented in the WPF app. See [UWP to WPF Migration](uwp-to-wpf-migration.md) for migration details.
+
+This checklist defined the minimal **desktop-ready** scope for the original UWP app release. The acceptance criteria below were carried forward to the WPF implementation.
 
 ## Desktop-Ready Scope
 
-### Must-Ship
+### Must-Ship — All Implemented in WPF
 
-| Area | Acceptance Criteria | Links |
+| Area | Acceptance Criteria | WPF Implementation |
 | --- | --- | --- |
-| **Notification handling** | - Connection loss, reconnect attempts, and recovery trigger Windows toast notifications.<br>- Backfill completion and data gap warnings trigger notifications when enabled in settings.<br>- Notifications are suppressed during quiet hours and logged in history for review. | [NotificationService](../../src/MarketDataCollector.Uwp/Services/NotificationService.cs), [NotificationCenterPage](../../src/MarketDataCollector.Uwp/Views/NotificationCenterPage.xaml.cs), [MainPage notification routing](../../src/MarketDataCollector.Uwp/Views/MainPage.xaml.cs) |
-| **Reconnection behavior** | - Automatic reconnection with exponential backoff is enabled and configurable (max attempts, base delay).<br>- Reconnection attempts and outcomes update UI status and activity feed.<br>- Manual pause/resume of auto-reconnect is supported for maintenance windows. | [ConnectionService](../../src/MarketDataCollector.Uwp/Services/ConnectionService.cs), [MainPage status handlers](../../src/MarketDataCollector.Uwp/Views/MainPage.xaml.cs) |
-| **Integrity visibility** | - Dashboard displays integrity counters and recent integrity events.<br>- Users can expand/collapse integrity details, acknowledge alerts, and export an integrity report.<br>- Integrity events are recorded with severity and surfaced in the notification center. | [DashboardPage UI](../../src/MarketDataCollector.Uwp/Views/DashboardPage.xaml), [DashboardPage code-behind](../../src/MarketDataCollector.Uwp/Views/DashboardPage.xaml.cs), [IntegrityEventsService](../../src/MarketDataCollector.Uwp/Services/IntegrityEventsService.cs) |
+| **Notification handling** | - Connection loss, reconnect attempts, and recovery trigger notifications.<br>- Backfill completion and data gap warnings trigger notifications when enabled in settings.<br>- Notifications are logged in history for review. | [NotificationService](../../src/MarketDataCollector.Wpf/Services/NotificationService.cs), [NotificationCenterPage](../../src/MarketDataCollector.Wpf/Views/NotificationCenterPage.xaml.cs) |
+| **Reconnection behavior** | - Automatic reconnection with exponential backoff is enabled and configurable (max attempts, base delay).<br>- Reconnection attempts and outcomes update UI status and activity feed.<br>- Manual pause/resume of auto-reconnect is supported for maintenance windows. | [ConnectionService](../../src/MarketDataCollector.Wpf/Services/ConnectionService.cs), [MainPage](../../src/MarketDataCollector.Wpf/Views/MainPage.xaml.cs) |
+| **Integrity visibility** | - Dashboard displays integrity counters and recent integrity events.<br>- Users can expand/collapse integrity details, acknowledge alerts, and export an integrity report.<br>- Integrity events are recorded with severity and surfaced in the notification center. | [DashboardPage](../../src/MarketDataCollector.Wpf/Views/DashboardPage.xaml), [IntegrityEventsService](../../src/MarketDataCollector.Ui.Services/Services/IntegrityEventsService.cs) |
 
 ### Post-Ship
 
-| Area | Acceptance Criteria | Links |
+| Area | Acceptance Criteria | Status |
 | --- | --- | --- |
-| **System tray + advanced notification routing** | - System tray icon supports quick actions and notification badges.<br>- Action Center deep links provide direct navigation to remediation pages. | [Feature refinements backlog](../../src/MarketDataCollector.Uwp/FEATURE_REFINEMENTS.md#1-real-time-notification-system) |
-| **Expanded archive health reporting** | - Archive health page supports scheduled full verification and trend reporting across multiple sessions.<br>- Exportable compliance report includes integrity summary and verification metadata. | [Feature refinements backlog](../../src/MarketDataCollector.Uwp/FEATURE_REFINEMENTS.md#57-archive-verification--integrity-dashboard) |
+| **System tray + advanced notification routing** | - System tray icon supports quick actions and notification badges.<br>- Deep links provide direct navigation to remediation pages. | Future enhancement for WPF app |
+| **Expanded archive health reporting** | - Archive health page supports scheduled full verification and trend reporting across multiple sessions.<br>- Exportable compliance report includes integrity summary and verification metadata. | Implemented: [ArchiveHealthPage](../../src/MarketDataCollector.Wpf/Views/ArchiveHealthPage.xaml) |
 
 ## Release Notes Gate
 

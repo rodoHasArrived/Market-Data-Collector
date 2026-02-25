@@ -1,7 +1,7 @@
 # Historical Data Sources Reference
 
-**Last Updated:** 2026-01-30
-**Version:** 1.6.1
+**Last Updated:** 2026-02-25
+**Version:** 1.6.2
 
 This document catalogs available free and freemium data sources for historical equity backfilling, with implementation status for each.
 
@@ -229,7 +229,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 | **Free Tier** | 5 API calls/minute |
 | **Historical Depth** | 2+ years for most equities |
 
-**Note:** Streaming provider is still stub-only; historical data provider is fully functional.
+**Note:** The Polygon streaming provider is stub-only (synthetic events); the historical data provider is fully functional. Condition codes and venue identifiers from Polygon are mapped to canonical formats via `ConditionCodeMapper` and `VenueMicMapper`.
 
 ---
 
