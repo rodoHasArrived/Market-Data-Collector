@@ -189,7 +189,9 @@ Market-Data-Collector/
 │       └── ai-repo-updater.py
 ├── config/  # Configuration files
 │   ├── appsettings.json
-│   └── appsettings.sample.json
+│   ├── appsettings.sample.json
+│   ├── condition-codes.json
+│   └── venue-mapping.json
 ├── deploy/  # Deployment configurations
 │   ├── docker/
 │   │   ├── .dockerignore
@@ -457,6 +459,13 @@ Market-Data-Collector/
 │   │   │   ├── BackfillStatusStore.cs
 │   │   │   ├── GapBackfillService.cs
 │   │   │   └── HistoricalBackfillService.cs
+│   │   ├── Canonicalization/
+│   │   │   ├── CanonicalizationMetrics.cs
+│   │   │   ├── CanonicalizingPublisher.cs
+│   │   │   ├── ConditionCodeMapper.cs
+│   │   │   ├── EventCanonicalizer.cs
+│   │   │   ├── IEventCanonicalizer.cs
+│   │   │   └── VenueMicMapper.cs
 │   │   ├── Commands/
 │   │   │   ├── CliArguments.cs
 │   │   │   ├── CommandDispatcher.cs
@@ -639,6 +648,7 @@ Market-Data-Collector/
 │   │   │   ├── AlpacaOptions.cs
 │   │   │   ├── AppConfig.cs
 │   │   │   ├── BackfillConfig.cs
+│   │   │   ├── CanonicalizationConfig.cs
 │   │   │   ├── DataSourceConfig.cs
 │   │   │   ├── DataSourceKind.cs
 │   │   │   ├── DataSourceKindConverter.cs
@@ -970,6 +980,7 @@ Market-Data-Collector/
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── BackfillScheduleEndpoints.cs
 │   │   │   ├── CalendarEndpoints.cs
+│   │   │   ├── CanonicalizationEndpoints.cs
 │   │   │   ├── CheckpointEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── CronEndpoints.cs
