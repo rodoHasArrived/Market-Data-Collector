@@ -249,7 +249,7 @@ public sealed class CatalogSyncSink : IStorageSink
             }
 
             // Capture metadata from first event (race is benign — all events for a path share these)
-            Symbol ??= evt.Symbol;
+            Symbol ??= evt.EffectiveSymbol;
             EventType ??= evt.Type.ToString();
             Source ??= evt.Source;
         }

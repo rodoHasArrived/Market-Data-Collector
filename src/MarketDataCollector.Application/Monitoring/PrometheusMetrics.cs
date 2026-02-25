@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Application.Canonicalization;
 using MarketDataCollector.Application.Subscriptions.Models;
 using System.Threading;
 using Prometheus;
@@ -291,16 +292,31 @@ public static class PrometheusMetrics
         "mdc_migration_streaming_factories_registered",
         "Total streaming factories registered (migration diagnostics)");
 
-    // Canonicalization metrics
+    // Canonicalization metrics (Phase 2)
     private static readonly Counter CanonicalizationEventsTotal = Prometheus.Metrics.CreateCounter(
         "mdc_canonicalization_events_total",
-        "Total canonicalization events by provider, event type, and status",
-        new CounterConfiguration { LabelNames = new[] { "provider", "event_type", "status" } });
+        "Total number of events processed through canonicalization");
+
+    private static readonly Counter CanonicalizationSkippedTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_skipped_total",
+        "Total number of events skipped by canonicalization (non-pilot or heartbeat)");
 
     private static readonly Counter CanonicalizationUnresolvedTotal = Prometheus.Metrics.CreateCounter(
         "mdc_canonicalization_unresolved_total",
-        "Total unresolved canonicalization fields by provider and field type",
-        new CounterConfiguration { LabelNames = new[] { "provider", "field" } });
+        "Total number of events with unresolved canonical symbols");
+
+    private static readonly Counter CanonicalizationDualWritesTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_dual_writes_total",
+        "Total number of events dual-written (raw + canonical) during Phase 2 validation");
+
+    private static readonly Histogram CanonicalizationDurationSeconds = Prometheus.Metrics.CreateHistogram(
+        "mdc_canonicalization_duration_seconds",
+        "Canonicalization processing time per event",
+        new HistogramConfiguration
+        {
+            // Microsecond-level buckets (in seconds): 1µs to 1ms
+            Buckets = new double[] { 0.000001, 0.000005, 0.00001, 0.000025, 0.00005, 0.0001, 0.00025, 0.0005, 0.001 }
+        });
 
     private static readonly Gauge CanonicalizationVersionActive = Prometheus.Metrics.CreateGauge(
         "mdc_canonicalization_version_active",
@@ -473,19 +489,24 @@ public static class PrometheusMetrics
     }
 
     /// <summary>
-    /// Records a canonicalization event with provider, event type, and status labels.
+    /// Updates canonicalization metrics from a <see cref="CanonicalizationMetricsSnapshot"/>.
+    /// Called periodically by the metrics updater.
     /// </summary>
-    public static void RecordCanonicalizationEvent(string provider, string eventType, string status)
+    public static void UpdateCanonicalizationMetrics(
+        CanonicalizationMetricsSnapshot snapshot,
+        int activeVersion)
     {
-        CanonicalizationEventsTotal.WithLabels(provider, eventType, status).Inc();
-    }
+        CanonicalizationEventsTotal.IncTo(snapshot.Canonicalized);
+        CanonicalizationSkippedTotal.IncTo(snapshot.Skipped);
+        CanonicalizationUnresolvedTotal.IncTo(snapshot.Unresolved);
+        CanonicalizationDualWritesTotal.IncTo(snapshot.DualWrites);
+        CanonicalizationVersionActive.Set(activeVersion);
 
-    /// <summary>
-    /// Records an unresolved canonicalization field.
-    /// </summary>
-    public static void RecordCanonicalizationUnresolved(string provider, string field)
-    {
-        CanonicalizationUnresolvedTotal.WithLabels(provider, field).Inc();
+        // Record average duration as a histogram observation if available
+        if (snapshot.AverageDurationUs > 0)
+        {
+            CanonicalizationDurationSeconds.Observe(snapshot.AverageDurationUs / 1_000_000);
+        }
     }
 
     /// <summary>

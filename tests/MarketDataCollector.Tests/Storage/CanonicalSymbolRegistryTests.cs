@@ -448,4 +448,43 @@ public sealed class CanonicalSymbolRegistryTests : IDisposable
             }
         }
     }
+
+    // --- TryResolve (provider-aware) ---
+
+    [Fact]
+    public void TryResolve_FallsBackToGenericResolution()
+    {
+        // Without provider-specific mappings, TryResolve should still work via generic resolve
+        var result = _canonicalRegistry.TryResolve("AAPL", "ALPACA");
+
+        result.Should().Be("AAPL");
+    }
+
+    [Fact]
+    public void TryResolve_NullSymbol_ReturnsNull()
+    {
+        _canonicalRegistry.TryResolve(null!, "ALPACA").Should().BeNull();
+    }
+
+    [Fact]
+    public void TryResolve_EmptySymbol_ReturnsNull()
+    {
+        _canonicalRegistry.TryResolve("", "ALPACA").Should().BeNull();
+    }
+
+    [Fact]
+    public void TryResolve_NullProvider_FallsBackToGeneric()
+    {
+        var result = _canonicalRegistry.TryResolve("AAPL", null!);
+
+        result.Should().Be("AAPL");
+    }
+
+    [Fact]
+    public void TryResolve_ByAlias_FallsBackToGenericResolution()
+    {
+        var result = _canonicalRegistry.TryResolve("AAPL.US", "POLYGON");
+
+        result.Should().Be("AAPL");
+    }
 }

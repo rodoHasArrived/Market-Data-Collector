@@ -159,8 +159,9 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
     /// </summary>
     private static string ComputeEventKey(MarketEvent evt)
     {
-        // Key structure: {Source}:{Symbol}:{Type}:{identity}
-        var prefix = $"{evt.Source}:{evt.Symbol}:{evt.Type}:";
+        // Key structure: {Source}:{EffectiveSymbol}:{Type}:{identity}
+        // Uses EffectiveSymbol (CanonicalSymbol ?? Symbol) for consistent dedup across symbol mappings
+        var prefix = $"{evt.Source}:{evt.EffectiveSymbol}:{evt.Type}:";
 
         return evt.Payload switch
         {

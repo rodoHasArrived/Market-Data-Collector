@@ -47,14 +47,14 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
         if (_disposed) return;
 
         Interlocked.Increment(ref _totalDropped);
-        _dropCountsBySymbol.AddOrUpdate(evt.Symbol, 1, (_, count) => count + 1);
+        _dropCountsBySymbol.AddOrUpdate(evt.EffectiveSymbol, 1, (_, count) => count + 1);
 
         var record = new
         {
             timestamp = DateTimeOffset.UtcNow,
             eventTimestamp = evt.Timestamp,
             eventType = evt.Type.ToString(),
-            symbol = evt.Symbol,
+            symbol = evt.EffectiveSymbol,
             sequence = evt.Sequence,
             source = evt.Source,
             reason

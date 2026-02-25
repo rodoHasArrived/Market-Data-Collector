@@ -18,6 +18,7 @@ public sealed record MarketEvent(
     DateTimeOffset? ExchangeTimestamp = null,
     DateTimeOffset ReceivedAtUtc = default,
     long ReceivedAtMonotonic = 0,
+    // Canonicalization fields
     string? CanonicalSymbol = null,
     int CanonicalizationVersion = 0,
     string? CanonicalVenue = null
@@ -96,6 +97,14 @@ public sealed record MarketEvent(
             ReceivedAtMonotonic = Stopwatch.GetTimestamp(),
             ExchangeTimestamp = exchangeTs ?? ExchangeTimestamp
         };
+
+    /// <summary>
+    /// Returns the effective symbol for downstream consumers: <see cref="CanonicalSymbol"/>
+    /// when available, otherwise the raw <see cref="Symbol"/>.
+    /// Use this property in storage paths, dedup keys, metrics labels, and quality monitoring
+    /// to ensure consistent behavior regardless of canonicalization state.
+    /// </summary>
+    public string EffectiveSymbol => CanonicalSymbol ?? Symbol;
 
     /// <summary>
     /// Computes the estimated end-to-end latency in milliseconds using monotonic clock,

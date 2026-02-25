@@ -102,6 +102,7 @@ public sealed record IntegrityEvent(
             StreamId: streamId,
             Venue: venue);
 
+
     /// <summary>
     /// Creates a canonicalization hard-fail integrity event when required fields are missing.
     /// </summary>

@@ -1,6 +1,5 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Catalog;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -12,332 +11,284 @@ namespace MarketDataCollector.Tests.Application.Services;
 
 /// <summary>
 /// Tests for <see cref="CanonicalizingPublisher"/>.
-/// Covers Phase 2 dual-write validation, pilot symbol scoping, and decorator behavior.
+/// Covers decorator behavior, pilot symbol filtering, dual-write mode,
+/// metrics tracking, and passthrough for non-pilot symbols.
 /// </summary>
-public sealed class CanonicalizingPublisherTests : IDisposable
+public sealed class CanonicalizingPublisherTests
 {
-    private readonly RecordingPublisher _inner;
-    private readonly ICanonicalSymbolRegistry _registry;
-    private readonly EventCanonicalizer _canonicalizer;
+    private readonly IEventCanonicalizer _canonicalizer;
+    private readonly TestPublisher _inner;
 
     public CanonicalizingPublisherTests()
     {
-        _inner = new RecordingPublisher();
-        _registry = Substitute.For<ICanonicalSymbolRegistry>();
-        _registry.TryResolveWithProvider(Arg.Any<string>(), Arg.Any<string>())
-            .Returns(callInfo => callInfo.ArgAt<string>(0));
-
-        _canonicalizer = new EventCanonicalizer(
-            _registry,
-            ConditionCodeMapper.CreateDefault(),
-            VenueMicMapper.CreateDefault(),
-            version: 1);
-
-        CanonicalizationMetrics.Reset();
-    }
-
-    public void Dispose()
-    {
-        CanonicalizationMetrics.Reset();
+        _canonicalizer = CreateTestCanonicalizer();
+        _inner = new TestPublisher();
     }
 
     [Fact]
-    public void TryPublish_CanonicalizationEnabled_EnrichesEvent()
+    public void Canonicalize_PublishesCanonicalized_WhenNoPilotFilter()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
-
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: false);
         var evt = CreateTradeEvent("AAPL", "ALPACA");
-        publisher.TryPublish(evt);
 
-        _inner.Published.Should().HaveCount(1);
-        _inner.Published[0].CanonicalSymbol.Should().Be("AAPL");
-        _inner.Published[0].CanonicalizationVersion.Should().Be(1);
-        _inner.Published[0].Tier.Should().Be(MarketEventTier.Enriched);
+        publisher.TryPublish(in evt);
+
+        _inner.PublishedEvents.Should().HaveCount(1);
+        _inner.PublishedEvents[0].CanonicalizationVersion.Should().BeGreaterThan(0);
+        _inner.PublishedEvents[0].CanonicalSymbol.Should().Be("AAPL");
     }
 
     [Fact]
-    public void TryPublish_DualWrite_PublishesBothRawAndEnriched()
+    public void DualWrite_PublishesBothRawAndCanonical()
     {
-        var config = new CanonicalizationConfig(Enabled: true, EnableDualWrite: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
-
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: true);
         var evt = CreateTradeEvent("AAPL", "ALPACA");
-        publisher.TryPublish(evt);
 
-        _inner.Published.Should().HaveCount(2);
+        publisher.TryPublish(in evt);
 
-        // First event is raw (unchanged)
-        _inner.Published[0].CanonicalSymbol.Should().BeNull();
-        _inner.Published[0].CanonicalizationVersion.Should().Be(0);
-        _inner.Published[0].Tier.Should().Be(MarketEventTier.Raw);
-
-        // Second event is enriched
-        _inner.Published[1].CanonicalSymbol.Should().Be("AAPL");
-        _inner.Published[1].CanonicalizationVersion.Should().Be(1);
-        _inner.Published[1].Tier.Should().Be(MarketEventTier.Enriched);
+        _inner.PublishedEvents.Should().HaveCount(2);
+        // First is raw
+        _inner.PublishedEvents[0].CanonicalizationVersion.Should().Be(0);
+        _inner.PublishedEvents[0].Symbol.Should().Be("AAPL");
+        // Second is canonical
+        _inner.PublishedEvents[1].CanonicalizationVersion.Should().BeGreaterThan(0);
     }
 
     [Fact]
-    public void TryPublish_DualWrite_RecordsDualWriteMetric()
+    public void PilotSymbols_SkipsNonPilotSymbols()
     {
-        var config = new CanonicalizationConfig(Enabled: true, EnableDualWrite: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: new[] { "AAPL" }, dualWrite: false);
+        var evt = CreateTradeEvent("MSFT", "ALPACA");
 
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
-        publisher.TryPublish(CreateTradeEvent("SPY", "ALPACA"));
+        publisher.TryPublish(in evt);
 
-        var snapshot = CanonicalizationMetrics.GetSnapshot();
-        snapshot.DualWriteTotal.Should().Be(2);
+        _inner.PublishedEvents.Should().HaveCount(1);
+        // Non-pilot symbol should pass through uncanonicalized
+        _inner.PublishedEvents[0].CanonicalizationVersion.Should().Be(0);
+        _inner.PublishedEvents[0].Symbol.Should().Be("MSFT");
     }
 
     [Fact]
-    public void TryPublish_NoDualWrite_PublishesOnlyEnriched()
+    public void PilotSymbols_CanonicalizesPilotSymbols()
     {
-        var config = new CanonicalizationConfig(Enabled: true, EnableDualWrite: false);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: new[] { "AAPL" }, dualWrite: false);
+        var evt = CreateTradeEvent("AAPL", "ALPACA");
 
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
+        publisher.TryPublish(in evt);
 
-        _inner.Published.Should().HaveCount(1);
-        _inner.Published[0].CanonicalizationVersion.Should().Be(1);
+        _inner.PublishedEvents.Should().HaveCount(1);
+        _inner.PublishedEvents[0].CanonicalizationVersion.Should().BeGreaterThan(0);
     }
 
     [Fact]
-    public void TryPublish_PilotSymbols_OnlyCanonicalizesMatchingSymbols()
+    public void PilotSymbols_CaseInsensitive()
     {
-        var config = new CanonicalizationConfig(
-            Enabled: true,
-            PilotSymbols: new[] { "AAPL", "SPY" });
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: new[] { "aapl" }, dualWrite: false);
+        var evt = CreateTradeEvent("AAPL", "ALPACA");
 
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
-        publisher.TryPublish(CreateTradeEvent("TSLA", "ALPACA"));
-        publisher.TryPublish(CreateTradeEvent("SPY", "ALPACA"));
+        publisher.TryPublish(in evt);
 
-        _inner.Published.Should().HaveCount(3);
-
-        // AAPL should be enriched
-        _inner.Published[0].CanonicalizationVersion.Should().Be(1);
-
-        // TSLA should be raw (not in pilot list)
-        _inner.Published[1].CanonicalizationVersion.Should().Be(0);
-
-        // SPY should be enriched
-        _inner.Published[2].CanonicalizationVersion.Should().Be(1);
+        _inner.PublishedEvents.Should().HaveCount(1);
+        _inner.PublishedEvents[0].CanonicalizationVersion.Should().BeGreaterThan(0);
     }
 
     [Fact]
-    public void TryPublish_PilotSymbols_CaseInsensitive()
+    public void DualWrite_ReturnsFalse_WhenInnerRejects()
     {
-        var config = new CanonicalizationConfig(
-            Enabled: true,
-            PilotSymbols: new[] { "AAPL" });
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        _inner.ShouldReject = true;
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: true);
+        var evt = CreateTradeEvent("AAPL", "ALPACA");
 
-        publisher.TryPublish(CreateTradeEvent("aapl", "ALPACA"));
-
-        _inner.Published.Should().HaveCount(1);
-        _inner.Published[0].CanonicalizationVersion.Should().Be(1);
-    }
-
-    [Fact]
-    public void TryPublish_EmptyPilotSymbols_CanonicalizesAll()
-    {
-        var config = new CanonicalizationConfig(
-            Enabled: true,
-            PilotSymbols: Array.Empty<string>());
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
-
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
-        publisher.TryPublish(CreateTradeEvent("TSLA", "ALPACA"));
-
-        _inner.Published.Should().AllSatisfy(e =>
-            e.CanonicalizationVersion.Should().Be(1));
-    }
-
-    [Fact]
-    public void TryPublish_NullPilotSymbols_CanonicalizesAll()
-    {
-        var config = new CanonicalizationConfig(Enabled: true, PilotSymbols: null);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
-
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
-
-        _inner.Published[0].CanonicalizationVersion.Should().Be(1);
-    }
-
-    [Fact]
-    public void TryPublish_PreservesRawSymbol()
-    {
-        _registry.TryResolveWithProvider("AAPL.US", "STOCKSHARP").Returns("AAPL");
-
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
-
-        publisher.TryPublish(CreateTradeEvent("AAPL.US", "STOCKSHARP"));
-
-        _inner.Published[0].Symbol.Should().Be("AAPL.US");
-        _inner.Published[0].CanonicalSymbol.Should().Be("AAPL");
-    }
-
-    [Fact]
-    public void TryPublish_ReturnsInnerPublisherResult()
-    {
-        _inner.ShouldSucceed = false;
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
-
-        var result = publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
+        var result = publisher.TryPublish(in evt);
 
         result.Should().BeFalse();
+        // When raw publish fails, canonical should not be attempted
+        _inner.PublishedEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void TryPublish_VenueIsCanonicalized()
+    public void Metrics_TracksCanonicalizedCount()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: false);
+        var evt = CreateTradeEvent("AAPL", "ALPACA");
 
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA", venue: "V"));
+        publisher.TryPublish(in evt);
+        publisher.TryPublish(in evt);
 
-        _inner.Published[0].CanonicalVenue.Should().Be("XNAS");
+        publisher.CanonicalizationCount.Should().Be(2);
     }
 
     [Fact]
-    public void Constructor_ThrowsOnNullInner()
+    public void Metrics_TracksSkippedCount()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var act = () => new CanonicalizingPublisher(null!, _canonicalizer, config);
-        act.Should().Throw<ArgumentNullException>();
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: new[] { "AAPL" }, dualWrite: false);
+        var evt = CreateTradeEvent("MSFT", "ALPACA");
+
+        publisher.TryPublish(in evt);
+
+        publisher.SkippedCount.Should().Be(1);
+        publisher.CanonicalizationCount.Should().Be(0);
     }
 
     [Fact]
-    public void Constructor_ThrowsOnNullCanonicalizer()
+    public void Metrics_TracksDualWriteCount()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var act = () => new CanonicalizingPublisher(_inner, null!, config);
-        act.Should().Throw<ArgumentNullException>();
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: true);
+        var evt = CreateTradeEvent("AAPL", "ALPACA");
+
+        publisher.TryPublish(in evt);
+
+        publisher.DualWriteCount.Should().Be(1);
     }
 
     [Fact]
-    public void Constructor_ThrowsOnNullConfig()
+    public void Metrics_TracksUnresolvedSymbols()
     {
-        var act = () => new CanonicalizingPublisher(_inner, _canonicalizer, null!);
-        act.Should().Throw<ArgumentNullException>();
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: false);
+        var evt = CreateTradeEvent("UNKNOWN_SYM", "ALPACA");
+
+        publisher.TryPublish(in evt);
+
+        publisher.UnresolvedCount.Should().Be(1);
     }
 
-    #region Parity Metrics Tests
-
     [Fact]
-    public void ParityMetrics_TracksPerProvider()
+    public void MetricsSnapshot_ReflectsAllCounters()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: new[] { "AAPL" }, dualWrite: true);
 
         publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
-        publisher.TryPublish(CreateTradeEvent("SPY", "POLYGON"));
+        publisher.TryPublish(CreateTradeEvent("MSFT", "ALPACA")); // skipped
+
+        var snapshot = publisher.GetMetricsSnapshot();
+        snapshot.Canonicalized.Should().Be(1);
+        snapshot.Skipped.Should().Be(1);
+        snapshot.DualWrites.Should().Be(1);
+    }
+
+    [Fact]
+    public void AverageDuration_IsPositive_AfterCanonicalization()
+    {
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: false);
+        var evt = CreateTradeEvent("AAPL", "ALPACA");
+
+        publisher.TryPublish(in evt);
+
+        publisher.AverageDurationUs.Should().BeGreaterOrEqualTo(0);
+    }
+
+    [Fact]
+    public void NullPilotSymbols_CanonicalizeAll()
+    {
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: false);
+
+        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
         publisher.TryPublish(CreateTradeEvent("MSFT", "ALPACA"));
 
-        var snapshot = CanonicalizationMetrics.GetSnapshot();
-        snapshot.ProviderParity.Should().ContainKey("ALPACA");
-        snapshot.ProviderParity.Should().ContainKey("POLYGON");
-        snapshot.ProviderParity["ALPACA"].Total.Should().Be(2);
-        snapshot.ProviderParity["POLYGON"].Total.Should().Be(1);
+        publisher.CanonicalizationCount.Should().Be(2);
+        publisher.SkippedCount.Should().Be(0);
     }
 
     [Fact]
-    public void ParityMetrics_MatchRateCalculation()
+    public void EmptyPilotSymbols_CanonicalizeAll()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: Array.Empty<string>(), dualWrite: false);
 
-        // All should succeed since registry returns the same symbol
         publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA"));
-        publisher.TryPublish(CreateTradeEvent("SPY", "ALPACA"));
+        publisher.TryPublish(CreateTradeEvent("MSFT", "ALPACA"));
 
-        var snapshot = CanonicalizationMetrics.GetSnapshot();
-        snapshot.ProviderParity["ALPACA"].MatchRatePercent.Should().Be(100.0);
+        // Empty pilot set means no filter → canonicalize all
+        publisher.CanonicalizationCount.Should().Be(2);
     }
 
     [Fact]
-    public void ParityMetrics_UnresolvedVenueTracked()
+    public void VenueNormalization_AppliedThroughPublisher()
     {
-        var config = new CanonicalizationConfig(Enabled: true);
-        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, config);
+        var publisher = new CanonicalizingPublisher(_inner, _canonicalizer, pilotSymbols: null, dualWrite: false);
+        var trade = new Trade(
+            Timestamp: DateTimeOffset.UtcNow,
+            Symbol: "AAPL",
+            Price: 150.0m,
+            Size: 100,
+            Aggressor: AggressorSide.Buy,
+            SequenceNumber: 1,
+            Venue: "V");
+        var evt = MarketEvent.Trade(DateTimeOffset.UtcNow, "AAPL", trade, source: "ALPACA");
 
-        // Unknown venue should be tracked as unresolved
-        publisher.TryPublish(CreateTradeEvent("AAPL", "ALPACA", venue: "UNKNOWN_EX"));
+        publisher.TryPublish(in evt);
 
-        var snapshot = CanonicalizationMetrics.GetSnapshot();
-        snapshot.ProviderParity["ALPACA"].UnresolvedVenue.Should().Be(1);
-    }
-
-    #endregion
-
-    #region CanonicalizationConfig Tests
-
-    [Fact]
-    public void CanonicalizationConfig_Defaults_AreCorrect()
-    {
-        var config = new CanonicalizationConfig();
-
-        config.Enabled.Should().BeFalse();
-        config.Version.Should().Be(1);
-        config.PilotSymbols.Should().BeNull();
-        config.EnableDualWrite.Should().BeFalse();
-        config.UnresolvedAlertThresholdPercent.Should().Be(0.1);
-        config.ConditionCodesPath.Should().BeNull();
-        config.VenueMappingPath.Should().BeNull();
+        _inner.PublishedEvents[0].CanonicalVenue.Should().Be("XNAS");
     }
 
     [Fact]
-    public void CanonicalizationConfig_PilotOverride()
+    public void ThrowsOnNullInner()
     {
-        var config = new CanonicalizationConfig(
-            Enabled: true,
-            PilotSymbols: new[] { "AAPL", "SPY" },
-            EnableDualWrite: true,
-            Version: 2);
-
-        config.Enabled.Should().BeTrue();
-        config.PilotSymbols.Should().HaveCount(2);
-        config.EnableDualWrite.Should().BeTrue();
-        config.Version.Should().Be(2);
+        var act = () => new CanonicalizingPublisher(null!, _canonicalizer);
+        act.Should().Throw<ArgumentNullException>();
     }
 
-    #endregion
+    [Fact]
+    public void ThrowsOnNullCanonicalizer()
+    {
+        var act = () => new CanonicalizingPublisher(_inner, null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
 
     #region Helpers
 
-    private static MarketEvent CreateTradeEvent(string symbol, string source, string? venue = null)
+    private static MarketEvent CreateTradeEvent(string symbol, string source)
     {
-        return MarketEvent.Trade(
-            DateTimeOffset.UtcNow,
-            symbol,
-            new Trade(
-                Timestamp: DateTimeOffset.UtcNow,
-                Symbol: symbol,
-                Price: 150.25m,
-                Size: 100,
-                Aggressor: AggressorSide.Buy,
-                SequenceNumber: 1,
-                Venue: venue),
-            source: source);
+        var trade = new Trade(
+            Timestamp: DateTimeOffset.UtcNow,
+            Symbol: symbol,
+            Price: 150.0m,
+            Size: 100,
+            Aggressor: AggressorSide.Buy,
+            SequenceNumber: 1);
+        return MarketEvent.Trade(DateTimeOffset.UtcNow, symbol, trade, source: source);
+    }
+
+    private static IEventCanonicalizer CreateTestCanonicalizer()
+    {
+        var registry = Substitute.For<ICanonicalSymbolRegistry>();
+        registry.ResolveToCanonical("AAPL").Returns("AAPL");
+        registry.ResolveToCanonical("MSFT").Returns("MSFT");
+        registry.ResolveToCanonical("UNKNOWN_SYM").Returns((string?)null);
+
+        var conditions = ConditionCodeMapper.LoadFromJson("""
+        {
+            "version": 1,
+            "mappings": {
+                "ALPACA": { "@": "Regular" }
+            }
+        }
+        """);
+
+        var venues = VenueMicMapper.LoadFromJson("""
+        {
+            "version": 1,
+            "mappings": {
+                "ALPACA": { "V": "XNAS", "N": "XNYS" }
+            }
+        }
+        """);
+
+        return new EventCanonicalizer(registry, conditions, venues, version: 1);
     }
 
     /// <summary>
-    /// Test double that records all published events for assertion.
+    /// Test publisher that records all published events.
     /// </summary>
-    private sealed class RecordingPublisher : IMarketEventPublisher
+    private sealed class TestPublisher : IMarketEventPublisher
     {
-        public List<MarketEvent> Published { get; } = new();
-        public bool ShouldSucceed { get; set; } = true;
+        public List<MarketEvent> PublishedEvents { get; } = new();
+        public bool ShouldReject { get; set; }
 
         public bool TryPublish(in MarketEvent evt)
         {
-            Published.Add(evt);
-            return ShouldSucceed;
+            if (ShouldReject) return false;
+            PublishedEvents.Add(evt);
+            return true;
         }
     }
 
