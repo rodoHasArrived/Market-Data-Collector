@@ -20,8 +20,7 @@ provider failover, and data quality monitoring.
 The architecture supports multiple deployment modes:
 - **Standalone Console Application** – Single-process data collection with local storage
 - **WPF Desktop Application** – Recommended Windows desktop app for configuration and monitoring
-- **UWP Desktop Application** – Legacy Windows 10+ companion app (WinUI 3)
-- **Web Dashboard** – Browser-based monitoring and management interface
+- **Web Dashboard** – Browser-based monitoring and management interface (ASP.NET Minimal API)
 
 See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI contracts, storage profiles, pipeline policy, and configuration-service details.
 
@@ -33,11 +32,11 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                           Presentation Layer                              │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
-│  │  Web Dashboard  │  │  WPF Desktop   │  │  UWP Desktop    │          │
-│  │  (ASP.NET)      │  │  (Recommended) │  │  (Legacy)       │          │
+│  │  Web Dashboard  │  │  WPF Desktop   │  │  Standalone     │          │
+│  │  (ASP.NET)      │  │  (Recommended) │  │  (Console)      │          │
 │  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘          │
 └───────────┼────────────────────┼────────────────────┼────────────────────┘
-            │ JSON/FS            │ Config/Status      │ Config/Status
+            │ JSON/FS            │ Config/Status      │ CLI
 ┌───────────┼────────────────────┼────────────────────────────────────────┐
 │           ▼                    ▼                                        │
 │                       Application Layer                                  │
@@ -79,10 +78,12 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 │  │ Streaming Providers                  Historical Data Providers    │  │
 │  │ ├─ IBMarketDataClient               ├─ AlpacaHistoricalProvider  │  │
 │  │ ├─ AlpacaMarketDataClient           ├─ YahooFinanceProvider      │  │
-│  │ └─ PolygonMarketDataClient (stub)   ├─ StooqProvider             │  │
-│  │                                      ├─ NasdaqDataLinkProvider   │  │
-│  │ Connection Management                └─ CompositeProvider        │  │
-│  │ ├─ EnhancedIBConnectionManager       (automatic failover)        │  │
+│  │ ├─ NYSEDataSource                   ├─ StooqProvider             │  │
+│  │ ├─ StockSharpMarketDataClient       ├─ TiingoProvider            │  │
+│  │ ├─ PolygonMarketDataClient          ├─ FinnhubProvider           │  │
+│  │ └─ FailoverAwareMarketDataClient    ├─ NasdaqDataLinkProvider   │  │
+│  │                                      └─ CompositeProvider        │  │
+│  │ Connection Management                (automatic failover)        │  │
 │  │ ├─ IBCallbackRouter                                               │  │
 │  │ └─ WebSocketResiliencePolicy                                      │  │
 │  └──────────────────────────────────────────────────────────────────┘  │
@@ -207,7 +208,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
    - `MarketDepthCollector.OnDepth(MarketDepthUpdate)`
    - `QuoteCollector.OnQuote(MarketQuoteUpdate)`
 4. Collectors emit strongly-typed `MarketEvent` objects via `IMarketEventPublisher`
-5. *(Planned)* `EventCanonicalizer` resolves canonical symbol, maps condition codes, and normalizes venue identifiers — see [Deterministic Canonicalization](deterministic-canonicalization.md)
+5. `CanonicalizingPublisher` resolves canonical symbols, maps condition codes, and normalizes venue identifiers — see [Deterministic Canonicalization](deterministic-canonicalization.md)
 6. `EventPipeline` routes events through a bounded channel to decouple producers from I/O
 7. `JsonlStorageSink` appends events as JSONL
 8. `StatusWriter` periodically dumps health snapshots for UI/monitoring
@@ -223,6 +224,23 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 * **Date partitioning** – Daily (default), Hourly, Monthly, or None
 * **Compression** – Optional gzip compression for all JSONL files
 * **Metrics** – `Metrics.Published`, `Metrics.Dropped`, `Metrics.Integrity` track event throughput and data quality.
+
+### Canonicalization Pipeline
+
+The canonicalization pipeline runs between domain event emission and the `EventPipeline`, enriching each `MarketEvent` with normalized identifiers before storage:
+
+* **`CanonicalizingPublisher`** – `IMarketEventPublisher` decorator that transparently applies canonicalization to every event. Supports:
+  - **Dual-write mode (Phase 2)** – Publishes both the raw event and the canonicalized version for parity validation
+  - **Canonical-only mode (Phase 3)** – Publishes only the enriched event
+  - **Pilot symbol filtering** – Limits canonicalization to a configurable subset during rollout; non-pilot events pass through unchanged
+* **`EventCanonicalizer`** – Core transformation logic:
+  - Resolves `CanonicalSymbol` via `CanonicalSymbolRegistry` (ISIN, FIGI, alias, provider-mapping lookups)
+  - Maps provider-specific condition codes to standardized codes via `ConditionCodeMapper` (CTA plan codes, Polygon numeric codes, IB free-text)
+  - Normalizes exchange/venue identifiers to MIC codes via `VenueMicMapper`
+  - Stamps `CanonicalizationVersion` on each enriched event for schema pinning
+* **`CanonicalizationMetrics`** – Thread-safe lock-free counters for success, soft-fail, hard-fail, and dual-write events; per-provider parity dashboards expose match-rate percentages
+
+See [Deterministic Canonicalization](deterministic-canonicalization.md) for the full design and rollout phases.
 
 ### Quote/BBO Path
 
@@ -268,6 +286,14 @@ The server uses `HttpListener` to avoid ASP.NET overhead, making it suitable for
 ### Event Schema Validation
 
 The `EventSchemaValidator` component validates that emitted events conform to expected schemas, catching serialization issues and schema drift early.
+
+### Distributed Tracing (OpenTelemetry)
+
+`OpenTelemetrySetup` integrates the OpenTelemetry SDK for distributed tracing across the full market data pipeline:
+
+* **Activity source** – `MarketDataCollector` named activity source propagates trace context from provider through collector to storage
+* **`TracedEventMetrics`** – Wraps `IEventMetrics` to emit OTEL span events alongside Prometheus counters, enabling trace-linked latency analysis
+* Supports OTLP, Jaeger, or console exporters via configuration
 
 ---
 
@@ -317,6 +343,26 @@ await foreach (var evt in replayer.ReadEventsAsync(cancellationToken))
     }
 }
 ```
+
+### Portable Data Packaging
+
+The `PortableDataPackager` (in `Storage/Packaging/`) creates self-contained, portable archives for sharing and archival:
+
+* Bundles data files, quality reports, data dictionaries, and loader scripts into a single ZIP archive
+* Includes auto-generated Python, R, and SQL import scripts for popular analysis environments
+* SHA-256 manifest for end-to-end integrity verification
+* Progress events via `ProgressChanged` for UI integration
+* Supports both creation (`CreatePackageAsync`) and validated import (`ImportPackageAsync`) workflows
+
+See `docs/operations/portable-data-packager.md` for usage details.
+
+### Scheduled Archive Maintenance
+
+`ScheduledArchiveMaintenanceService` (in `Storage/Maintenance/`) runs background maintenance tasks on a configurable schedule:
+
+* Compaction, re-compression, and integrity verification of archive tiers
+* `ArchiveMaintenanceScheduleManager` manages task schedules with cron-style triggers via `OperationalScheduler`
+* `IMaintenanceExecutionHistory` persists execution results for audit and diagnostics
 
 ---
 
@@ -420,8 +466,8 @@ The system implements an archival-first storage strategy for crash-safe persiste
 
 The system supports multiple credential sources with priority resolution:
 
-1. **Environment Variables** – `NYSE_API_KEY`, `ALPACA_API_KEY`, etc.
-2. **Windows Credential Store** – Via UWP CredentialPicker
+1. **Environment Variables** – `NYSE_API_KEY`, `ALPACA_API_KEY`, etc. (recommended for production)
+2. **Windows Credential Store** – Platform credential manager via `CredentialService` in the WPF desktop app
 3. **Configuration File** – `appsettings.json` (development only)
 
 Note: Cloud secret managers (Azure Key Vault, AWS Secrets Manager) are not currently implemented.
@@ -446,5 +492,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.6.2
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-02-25
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [deterministic-canonicalization.md](deterministic-canonicalization.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)
