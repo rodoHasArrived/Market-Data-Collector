@@ -74,20 +74,49 @@ public sealed class VenueMicMapper
     /// </summary>
     public static VenueMicMapper LoadFromJson(string json)
     {
-        var doc = JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(json);
         var mappings = new Dictionary<(string Provider, string RawVenue), string>();
 
         if (doc.RootElement.TryGetProperty("mappings", out var mappingsElement))
         {
             foreach (var entry in mappingsElement.EnumerateArray())
             {
-                var provider = entry.GetProperty("provider").GetString()?.ToUpperInvariant();
-                var rawVenue = entry.GetProperty("rawVenue").GetString();
-                var mic = entry.GetProperty("mic").GetString();
-
-                if (provider is null || rawVenue is null || mic is null)
+                if (!entry.TryGetProperty("provider", out var providerProperty) ||
+                    providerProperty.ValueKind != JsonValueKind.String)
+                {
+                    Log.ForContext<VenueMicMapper>()
+                        .Warning("Skipping venue MIC mapping entry with missing or non-string 'provider': {Entry}", entry.ToString());
                     continue;
+                }
 
+                if (!entry.TryGetProperty("rawVenue", out var rawVenueProperty) ||
+                    rawVenueProperty.ValueKind != JsonValueKind.String)
+                {
+                    Log.ForContext<VenueMicMapper>()
+                        .Warning("Skipping venue MIC mapping entry with missing or non-string 'rawVenue': {Entry}", entry.ToString());
+                    continue;
+                }
+
+                if (!entry.TryGetProperty("mic", out var micProperty) ||
+                    micProperty.ValueKind != JsonValueKind.String)
+                {
+                    Log.ForContext<VenueMicMapper>()
+                        .Warning("Skipping venue MIC mapping entry with missing or non-string 'mic': {Entry}", entry.ToString());
+                    continue;
+                }
+
+                var provider = providerProperty.GetString()?.ToUpperInvariant();
+                var rawVenue = rawVenueProperty.GetString();
+                var mic = micProperty.GetString();
+
+                if (string.IsNullOrWhiteSpace(provider) ||
+                    string.IsNullOrWhiteSpace(rawVenue) ||
+                    string.IsNullOrWhiteSpace(mic))
+                {
+                    Log.ForContext<VenueMicMapper>()
+                        .Warning("Skipping venue MIC mapping entry with empty 'provider', 'rawVenue', or 'mic': {Entry}", entry.ToString());
+                    continue;
+                }
                 mappings[(provider, rawVenue)] = mic;
             }
         }
