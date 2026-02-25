@@ -84,7 +84,7 @@ public sealed class ConditionCodeMapper
     /// </summary>
     public static ConditionCodeMapper LoadFromJson(string json)
     {
-        var doc = JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(json);
         var mappings = new Dictionary<(string Provider, string RawCode), CanonicalTradeCondition>();
 
         if (doc.RootElement.TryGetProperty("mappings", out var mappingsElement))
