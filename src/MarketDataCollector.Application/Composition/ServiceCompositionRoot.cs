@@ -810,12 +810,13 @@ public static class ServiceCompositionRoot
         // wraps its own PipelinePublisher internally). Otherwise creates PipelinePublisher directly.
         services.AddSingleton<IMarketEventPublisher>(sp =>
         {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+
             // Check if canonicalization should wrap the publisher
             var canonPublisher = sp.GetService<CanonicalizingPublisher>();
             if (canonPublisher is not null)
             {
-                var configStore = sp.GetRequiredService<ConfigStore>();
-                var config = configStore.Load();
                 if (config.Canonicalization is { Enabled: true })
                     return canonPublisher;
             }
@@ -823,9 +824,6 @@ public static class ServiceCompositionRoot
             var pipeline = sp.GetRequiredService<EventPipeline>();
             var metrics = sp.GetRequiredService<IEventMetrics>();
             IMarketEventPublisher publisher = new PipelinePublisher(pipeline, metrics);
-
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
 
             if (config.Canonicalization is { Enabled: true })
             {
