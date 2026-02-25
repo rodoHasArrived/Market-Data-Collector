@@ -22,9 +22,11 @@ Each data provider speaks its own API and protocol. We isolate them so:
 - historical backfill can run independently of live capture
 
 Examples of current adapters:
-- **Live providers:** Interactive Brokers, Alpaca, NYSE Direct, StockSharp (Polygon currently runs in stub mode)
-- **Historical/backfill providers:** Alpaca, Yahoo Finance, Stooq, Tiingo, Finnhub, Alpha Vantage, Nasdaq Data Link, Polygon
-- **Symbol resolution:** OpenFIGI-based resolution for cross-provider symbol mapping
+- **Live providers:** Interactive Brokers, Alpaca, NYSE Direct, StockSharp (Polygon streaming is stub-only; historical data is fully functional)
+- **Historical/backfill providers:** Alpaca, Yahoo Finance, Stooq, Tiingo, Finnhub, Alpha Vantage, Nasdaq Data Link, Polygon, Interactive Brokers
+- **Symbol resolution:** OpenFIGI-based resolution for cross-provider symbol mapping, plus Alpaca, Finnhub, and Polygon search providers
+
+This approach is formally documented in [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md).
 
 ### 2) Domain Logic (the “brains”)
 This layer decides what the incoming data *means* and whether it’s valid:
@@ -32,7 +34,7 @@ This layer decides what the incoming data *means* and whether it’s valid:
 - `MarketDepthCollector` maintains the order book and emits integrity events
 - `QuoteCollector` tracks BBO state and quote context
 
-Because this layer is provider-agnostic, it can be tested without a live feed.
+Because this layer is provider-agnostic, it can be tested without a live feed. See [ADR-006: Domain Events Polymorphic Payload](../adr/006-domain-events-polymorphic-payload.md) for the sealed-record wrapper design.
 
 ### 3) Application Services (the “conductor”)
 This is the orchestration layer that wires everything together and exposes tooling:
@@ -43,17 +45,17 @@ This is the orchestration layer that wires everything together and exposes tooli
 
 ### 4) Pipeline + Storage (the “transport and memory”)
 All domain events flow through a bounded, backpressured pipeline to prevent runaway memory use:
-- `EventPipeline` uses a bounded channel (default **100,000 events**) with drop policies
-- Storage sinks include **JSONL** and **Parquet**
-- **Write-ahead logging (WAL)** for crash-safe persistence
+- `EventPipeline` uses a bounded channel (default **100,000 events**) with drop policies ([ADR-013](../adr/013-bounded-channel-policy.md))
+- Storage sinks include **JSONL** and **Parquet** ([ADR-008](../adr/008-multi-format-composite-storage.md))
+- **Write-ahead logging (WAL)** for crash-safe persistence ([ADR-007](../adr/007-write-ahead-log-durability.md))
 - **Compression profiles**, **schema versioning**, **retention policies**, and **replay tooling**
 - Export profiles for analytics (Python/R/Lean/SQL-friendly exports)
 
 ### 5) Presentation + Monitoring (the “eyes and dashboard”)
 The system exposes status and monitoring through:
 - Web dashboard (HTTP status server + UI)
-- Prometheus metrics endpoint
-- Native Windows UWP desktop app for monitoring and configuration
+- Prometheus metrics endpoint ([ADR-012](../adr/012-monitoring-and-alerting-pipeline.md))
+- Native Windows WPF desktop app for monitoring and configuration
 
 ---
 
@@ -69,20 +71,38 @@ The system exposes status and monitoring through:
 ## Current capabilities (as implemented in this repo)
 
 ### Implemented today
-- Live capture from IB, Alpaca, NYSE Direct, StockSharp (Polygon adapter runs in stub mode today)
-- Historical backfill with provider failover and rate limiting
+- Live capture from IB, Alpaca, NYSE Direct, StockSharp (Polygon streaming adapter is stub-only; Polygon historical data is fully functional)
+- Historical backfill from 10 providers with automatic failover chain and rate limiting
+- Deterministic canonicalization: cross-provider symbol, condition code, and venue normalization
 - Integrity event emission for trade sequences and order book consistency
 - Quote-aware analytics (BBO context)
 - Storage in JSONL and Parquet with retention, compression, and WAL
 - Data replay and export tooling for downstream analysis
-- Monitoring via Prometheus metrics, status JSON, and web/UWP dashboards
+- Ingestion orchestration: unified job model, scheduled backfills, checkpoint/resume, deduplication
+- Data quality monitoring with SLA enforcement, anomaly detection, and gap analysis
+- Monitoring via Prometheus metrics, status JSON, and web/WPF dashboards
 - QuantConnect Lean integration for backtesting
 
 ### Notes on provider maturity
-- Polygon is currently implemented in **stub mode** (synthetic events) until the full WebSocket client is completed.
+- Polygon streaming is currently **stub-only** (synthetic events). The Polygon historical data provider is fully functional.
 
 ---
 
-**Version:** 1.6.1
-**Last Updated:** 2026-01-28
-**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [Lean Integration](../integrations/lean-integration.md) | [ADR Index](../adr/README.md)
+---
+
+## Why monolithic over microservices?
+
+We evaluated a microservices decomposition ([ADR-003](../adr/003-microservices-decomposition.md)) and rejected it. Key reasons:
+
+- **Deployment simplicity**: A single process is easier to deploy, configure, and debug for research teams.
+- **Latency**: In-process event routing via bounded channels avoids network serialization overhead.
+- **Operational cost**: Microservices demand service mesh, distributed tracing, and container orchestration — overhead that doesn't justify the scale of a market data collector.
+- **Shared state**: Collectors, pipeline, and storage share event models directly; splitting them would require contract duplication and version management.
+
+The monolith supports optional UI projects (web dashboard, WPF desktop) as separate entry points that compose the same library assemblies.
+
+---
+
+**Version:** 1.6.2
+**Last Updated:** 2026-02-25
+**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [ADR Index](../adr/README.md) | [Lean Integration](../integrations/lean-integration.md) | [Canonicalization Design](deterministic-canonicalization.md)

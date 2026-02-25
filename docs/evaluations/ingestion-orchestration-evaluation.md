@@ -2,8 +2,8 @@
 
 ## Market Data Collector — Scheduler & Backfill Control Assessment
 
-**Date:** 2026-02-12  
-**Status:** Evaluation Complete  
+**Date:** 2026-02-12
+**Status:** Evaluation Complete — All P0/P1 Recommendations Implemented
 **Author:** Architecture Review
 
 ---
@@ -127,3 +127,21 @@ Track the following KPIs:
 ## Recommendation
 
 Prioritize a unified ingestion job contract and checkpoint strategy before adding more provider-specific orchestration features. This sequencing delivers immediate reliability gains and reduces operational complexity across both desktop and headless workflows.
+
+---
+
+## F. Implementation Follow-Up (2026-02-25)
+
+All P0 and P1 recommendations from this evaluation have been implemented:
+
+| Capability | Status | Implementation |
+|------------|--------|----------------|
+| Unified Job State Machine | ✅ Done | `IngestionJob` contract with 7-state machine: Draft → Queued → Running → Paused → Completed / Failed / Cancelled. Supports `Realtime`, `Historical`, `GapFill`, `ScheduledBackfill` workload types. |
+| Job Lifecycle Service | ✅ Done | `IngestionJobService` with disk persistence, concurrent job registry, create/transition/cancel/delete APIs. |
+| Checkpoint & Resume | ✅ Done | `IngestionCheckpointToken` (symbol/date cursor, last offset) persisted per job. `BackfillCheckpointService` tracks per-symbol progress with resume from last committed cursor. |
+| Cron/Session-Aware Scheduler | ✅ Done | `CronExpressionParser` (5-field cron with timezone support), `BackfillSchedule` (GapFill, FullBackfill, RollingWindow, EndOfDay types), `BackfillScheduleManager` with CRUD + preset templates. |
+| Scheduled Execution Service | ✅ Done | `ScheduledBackfillService` with dual-loop architecture (scheduler + executor), priority queue, catch-up logic for missed schedules, and market-hours-aware pausing. |
+| Retry & Throttling | ✅ Done | `IngestionJob.RetryEnvelope` with configurable max retries, base delay, and exponential backoff. Provider rate-limit guards in `BackfillWorkerService`. |
+| Idempotent Writes | ✅ Done | `PersistentDedupLedger` with SHA256-based event keys, TTL expiry, JSONL-backed persistence, and automatic compaction. |
+| Gap Detection & Repair | ✅ Done | `DataGapAnalyzer` detects missing data periods. `GapBackfillService` and `RunImmediateGapFillAsync()` for automatic repair. |
+| Desktop UX | ✅ Done | Backfill UI pages, checkpoint resume actions, and schedule management in WPF desktop app. API endpoints exposed via `/api/backfill/schedules/*` and `/api/backfill/gap-fill`. |
