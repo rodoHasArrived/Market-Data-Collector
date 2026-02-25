@@ -801,13 +801,10 @@ public static class ServiceCompositionRoot
         });
 
         // IMarketEventPublisher - facade for publishing events.
-        // When canonicalization is enabled, wraps PipelinePublisher with CanonicalizingPublisher.
+        // When canonicalization is enabled, returns CanonicalizingPublisher (which
+        // wraps its own PipelinePublisher internally). Otherwise creates PipelinePublisher directly.
         services.AddSingleton<IMarketEventPublisher>(sp =>
         {
-            var pipeline = sp.GetRequiredService<EventPipeline>();
-            var metrics = sp.GetRequiredService<IEventMetrics>();
-            IMarketEventPublisher publisher = new PipelinePublisher(pipeline, metrics);
-
             // Check if canonicalization should wrap the publisher
             var canonPublisher = sp.GetService<CanonicalizingPublisher>();
             if (canonPublisher is not null)
@@ -818,7 +815,9 @@ public static class ServiceCompositionRoot
                     return canonPublisher;
             }
 
-            return publisher;
+            var pipeline = sp.GetRequiredService<EventPipeline>();
+            var metrics = sp.GetRequiredService<IEventMetrics>();
+            return new PipelinePublisher(pipeline, metrics);
         });
 
         return services;

@@ -1,9 +1,6 @@
 using System.Diagnostics;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Domain.Events;
-using Serilog;
 
 namespace MarketDataCollector.Application.Canonicalization;
 
@@ -27,7 +24,6 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
     private readonly IEventCanonicalizer _canonicalizer;
     private readonly HashSet<string>? _pilotSymbols;
     private readonly bool _dualWrite;
-    private readonly ILogger _log = LoggingSetup.ForContext<CanonicalizingPublisher>();
 
     // Metrics counters (lock-free via Interlocked)
     private long _canonicalizedCount;
