@@ -824,12 +824,12 @@ public static class ServiceCompositionRoot
             var metrics = sp.GetRequiredService<IEventMetrics>();
             IMarketEventPublisher publisher = new PipelinePublisher(pipeline, metrics);
 
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
+            var pipelineConfigStore = sp.GetRequiredService<ConfigStore>();
+            var pipelineConfig = pipelineConfigStore.Load();
 
-            if (config.Canonicalization is { Enabled: true })
+            if (pipelineConfig.Canonicalization is { Enabled: true })
             {
-                var canonConfig = config.Canonicalization;
+                var canonConfig = pipelineConfig.Canonicalization;
                 var symbolRegistry = sp.GetService<Contracts.Catalog.ICanonicalSymbolRegistry>();
                 if (symbolRegistry is null)
                 {
