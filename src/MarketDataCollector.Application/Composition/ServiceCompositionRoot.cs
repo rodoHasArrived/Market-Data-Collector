@@ -814,9 +814,9 @@ public static class ServiceCompositionRoot
             var canonPublisher = sp.GetService<CanonicalizingPublisher>();
             if (canonPublisher is not null)
             {
-                var configStore = sp.GetRequiredService<ConfigStore>();
-                var config = configStore.Load();
-                if (config.Canonicalization is { Enabled: true })
+                var earlyConfigStore = sp.GetRequiredService<ConfigStore>();
+                var earlyConfig = earlyConfigStore.Load();
+                if (earlyConfig.Canonicalization is { Enabled: true })
                     return canonPublisher;
             }
 
