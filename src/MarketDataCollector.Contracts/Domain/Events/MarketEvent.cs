@@ -14,7 +14,10 @@ public sealed record MarketEvent(
     long Sequence = 0,
     string Source = "IB",
     int SchemaVersion = 1,
-    MarketEventTier Tier = MarketEventTier.Raw
+    MarketEventTier Tier = MarketEventTier.Raw,
+    string? CanonicalSymbol = null,
+    int CanonicalizationVersion = 0,
+    string? CanonicalVenue = null
 )
 {
     /// <summary>

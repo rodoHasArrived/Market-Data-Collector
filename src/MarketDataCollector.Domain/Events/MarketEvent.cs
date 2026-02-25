@@ -17,7 +17,11 @@ public sealed record MarketEvent(
     MarketEventTier Tier = MarketEventTier.Raw,
     DateTimeOffset? ExchangeTimestamp = null,
     DateTimeOffset ReceivedAtUtc = default,
-    long ReceivedAtMonotonic = 0
+    long ReceivedAtMonotonic = 0,
+    // Canonicalization fields (Phase 1)
+    string? CanonicalSymbol = null,
+    int CanonicalizationVersion = 0,
+    string? CanonicalVenue = null
 )
 {
     public static MarketEvent Trade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")
