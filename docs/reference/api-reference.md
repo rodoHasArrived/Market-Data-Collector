@@ -115,11 +115,103 @@ Set the `MDC_API_KEY` environment variable to enable authentication. Pass the ke
 
 Health probes (`/healthz`, `/readyz`, `/livez`) are always exempt.
 
+**Example:**
+
+```bash
+# With header (recommended)
+curl -H "X-Api-Key: your-api-key" http://localhost:8080/api/status
+
+# With query parameter
+curl http://localhost:8080/api/status?api_key=your-api-key
+```
+
+When authentication fails, the API returns `401 Unauthorized`:
+
+```json
+{ "error": "Unauthorized", "message": "Missing or invalid API key" }
+```
+
 ### Rate Limiting
 
 - **Global**: 120 requests/minute per API key or IP address
 - **Mutations**: POST/PUT/DELETE endpoints have an additional 10 requests/minute limit
 - Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
+
+When rate-limited, the API returns `429 Too Many Requests` with a `Retry-After` header.
+
+### Common Usage Examples
+
+**Check system status:**
+
+```bash
+curl http://localhost:8080/api/status
+```
+
+```json
+{
+  "status": "Running",
+  "uptime": "02:15:30",
+  "provider": "ALPACA",
+  "symbolCount": 5,
+  "eventsPerSecond": 42.3,
+  "lastEventAt": "2026-02-25T14:30:00Z"
+}
+```
+
+**Add symbols to monitoring:**
+
+```bash
+curl -X POST http://localhost:8080/api/symbols/add \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: your-key" \
+  -d '{"symbols": ["AAPL", "MSFT", "GOOGL"]}'
+```
+
+**Get live quote for a symbol:**
+
+```bash
+curl http://localhost:8080/api/data/quotes/SPY
+```
+
+**Run a historical backfill:**
+
+```bash
+curl -X POST http://localhost:8080/api/backfill/run \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: your-key" \
+  -d '{
+    "provider": "stooq",
+    "symbols": ["SPY", "AAPL"],
+    "from": "2024-01-01",
+    "to": "2024-01-31"
+  }'
+```
+
+**Check data quality for a symbol:**
+
+```bash
+curl http://localhost:8080/api/storage/quality/symbol/SPY
+```
+
+### Error Responses
+
+All endpoints return errors in a consistent format:
+
+```json
+{
+  "error": "ErrorCodeName",
+  "message": "Human-readable description of the error",
+  "details": { }
+}
+```
+
+| HTTP Status | Meaning |
+|-------------|---------|
+| `400` | Bad request — invalid parameters or payload |
+| `401` | Unauthorized — missing or invalid API key |
+| `404` | Not found — symbol or resource does not exist |
+| `429` | Too many requests — rate limit exceeded |
+| `500` | Internal server error — unexpected failure |
 
 ### Endpoint Groups
 
