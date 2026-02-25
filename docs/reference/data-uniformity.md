@@ -4,11 +4,26 @@
 
 This note expands on the data-quality goals for the collector so downstream users receive a uniform, analysis-ready tape regardless of provider quirks.
 
-## Current implementation snapshot (2026-01-30)
-* **Envelope fields today:** The persisted `MarketEvent` model includes `timestamp`, `symbol`, `type`, `payload`, `sequence`, `source`, `schemaVersion`, and `tier`. Additional provenance fields (such as connector identifiers or integrity flags on every row) are not yet part of the canonical envelope.
-* **Schema evolution:** Payload records are versioned via `schemaVersion` at the event level, but per-payload explicit version fields remain a planned enhancement.
-* **Symbol mapping:** Symbol normalization lives in configuration/UI tooling; ingestion does not yet emit both raw and canonical symbols in the event payloads.
-* **Retention and manifests:** Storage retention policies exist, but manifest files and standardized partition-level quality scores are still roadmap items.
+## Implementation status summary
+
+| Feature | Status | Key class |
+|---------|--------|-----------|
+| Canonical envelope fields | ✅ Done | `MarketEvent` (`CanonicalSymbol`, `CanonicalVenue`, `CanonicalizationVersion`) |
+| Symbol mapping in ingestion | ✅ Done | `CanonicalSymbolRegistry` + `CanonicalizingPublisher` |
+| Condition code normalization | ✅ Done | `ConditionCodeMapper` + `CanonicalTradeCondition` enum |
+| Venue normalization (ISO MIC) | ✅ Done | `VenueMicMapper` with `config/venue-mapping.json` |
+| Clock skew estimation | ✅ Done | `ClockSkewEstimator` (EWMA per provider) |
+| Schema validation | ✅ Done | `EventSchemaValidator` (contract validation at ingestion) |
+| Manifest files | ✅ Done | `PackageManifest` with per-file metadata |
+| Downstream-readiness score | ✅ Done | `DataQualityScoringService` (multi-dimension, A–F grades) |
+| Quarantine channel | ⚠️ Partial | Naming convention recognized; auto-routing not yet wired |
+| Replay filtering API | ⚠️ Partial | `JsonlReplayer` present; filter parameters not yet exposed |
+
+## Current implementation snapshot (2026-02-25)
+* **Envelope fields:** `MarketEvent` now includes `CanonicalSymbol`, `CanonicalVenue`, `CanonicalizationVersion`, `ExchangeTimestamp`, `ReceivedAtUtc`, and `ReceivedAtMonotonic` alongside the original `Symbol`, `Source`, `Timestamp`, `Type`, `Payload`, `Sequence`, `SchemaVersion`, and `Tier`.
+* **Schema evolution:** Payload records are versioned via `schemaVersion` at the event level; per-payload version fields remain a future enhancement.
+* **Symbol mapping:** `CanonicalSymbolRegistry` resolves symbols by alias, ISIN, FIGI, SEDOL, CUSIP, or provider ticker and is wired into the `CanonicalizingPublisher` decorator so ingestion emits both raw and canonical symbols.
+* **Retention and manifests:** Retention policies are active. `PackageManifest` writes per-file metadata (path, event count, checksum, timestamp range, quality score) alongside data exports. `DataQualityScoringService` computes composite readiness scores exposed in the status dashboard.
 
 ## Canonical JSONL schema
 * **Single envelope:** Persist `MarketEvent` with consistent envelope fields for every row so downstream tools do not need per-provider readers.
@@ -16,11 +31,11 @@ This note expands on the data-quality goals for the collector so downstream user
 * **Nullable fields:** Represent missing provider values explicitly (`null` for sequence/venue/stream) instead of omitting fields; keeps JSON column order consistent for parquet conversion.
 
 ## Metadata and identifiers
-* **Provider provenance:** Include `provider` and optional `connectorId` on every row to make side-by-side comparisons and reconciliation easier.
-* **Symbol mapping registry:** Maintain a mapping table of provider symbols → canonical symbols (ISIN/FIGI where available) and apply it during ingestion; emit both the canonical and raw values when mappings exist. The [Deterministic Canonicalization](../architecture/deterministic-canonicalization.md) design specifies how `CanonicalSymbolRegistry` is wired into the ingestion path to populate a `CanonicalSymbol` field on the `MarketEvent` envelope while preserving the raw `Symbol`.
-* **Clock domains:** Persist both provider and collector timestamps when available so analysts can measure latency and clock skew. The `ExchangeTimestamp`, `ReceivedAtUtc`, and `ReceivedAtMonotonic` fields on `MarketEvent` already support this pattern. A planned `ClockQuality` enum will qualify timestamp trustworthiness per provider.
-* **Condition code normalization:** Map provider-specific trade condition codes (CTA plan codes from Alpaca, SEC numeric codes from Polygon, IB field codes) to a canonical enum. See the [condition code mapping](../architecture/deterministic-canonicalization.md#c-condition-code-mapping) section of the canonicalization design.
-* **Venue normalization:** Normalize freeform venue identifiers to ISO 10383 MIC codes for consistent exchange identification across providers. See the [venue normalization](../architecture/deterministic-canonicalization.md#d-venue-normalization) section.
+* **Provider provenance** ✅ — `MarketEvent.Source` carries the provider name on every row; `CanonicalizingPublisher` preserves both raw and canonical values.
+* **Symbol mapping registry** ✅ — `CanonicalSymbolRegistry` resolves provider symbols → canonical identifiers (ISIN/FIGI/alias). The [Deterministic Canonicalization](../architecture/deterministic-canonicalization.md) design describes how this populates `CanonicalSymbol` on the `MarketEvent` envelope while preserving the raw `Symbol`.
+* **Clock domains** ✅ — `ExchangeTimestamp`, `ReceivedAtUtc`, and `ReceivedAtMonotonic` fields on `MarketEvent` are populated. `ClockSkewEstimator` tracks per-provider drift using EWMA. A `ClockQuality` enum to qualify timestamp trustworthiness remains a future enhancement.
+* **Condition code normalization** ✅ — `ConditionCodeMapper` maps provider-specific codes to `CanonicalTradeCondition` using `config/condition-codes.json`. See [condition code mapping](../architecture/deterministic-canonicalization.md#c-condition-code-mapping).
+* **Venue normalization** ✅ — `VenueMicMapper` normalizes venue identifiers to ISO 10383 MIC codes using `config/venue-mapping.json`. See [venue normalization](../architecture/deterministic-canonicalization.md#d-venue-normalization).
 
 ## Precision, units, and currencies
 * **Decimals for prices:** Store prices as `decimal` in code and stringified decimals in JSON to avoid floating-point drift during parquet/duckdb conversion.
@@ -28,9 +43,9 @@ This note expands on the data-quality goals for the collector so downstream user
 * **Currency context:** Emit a `quoteCurrency` field for multi-currency feeds (e.g., crypto vs. equities) and default to `USD` when unknown to make aggregation consistent.
 
 ## Validation and integrity tagging
-* **Schema validators:** Add JSON schema checks per payload type to reject malformed rows before persistence and to surface reasons in integrity events.
-* **Integrity codes:** Standardize machine-readable codes (`SEQ_GAP`, `SEQ_OOO`, `DEPTH_STALE`, `UNKNOWN_SYMBOL`, `CLOCK_DRIFT`) with human-readable messages so filters and dashboards can group issues.
-* **Quarantine channel:** Route events with critical integrity failures to a `quarantine` sink while still persisting them with flags for forensic analysis.
+* **Schema validators** ✅ — `EventSchemaValidator` enforces contract validation (timestamp, symbol, type, schema version, payload presence) at ingestion before events reach the pipeline.
+* **Integrity codes** ✅ — Machine-readable codes (`SEQ_GAP`, `SEQ_OOO`, `DEPTH_STALE`, `UNKNOWN_SYMBOL`, `CLOCK_DRIFT`) are emitted as `IntegrityEvent` payloads and tracked in dashboards.
+* **Quarantine channel** ⚠️ Partial — The storage layer recognizes `_quarantine/` directory naming convention, but automatic routing of critically-failed events to a quarantine sink is not yet wired.
 
 ## File organization and retention
 * **Folder conventions:** Default to `YYYY/MM/DD/<provider>/<symbol>.jsonl` for `ByDate` and `<symbol>/YYYY/MM/DD.jsonl` for `BySymbol`; record the active convention in metadata and the dashboard.
@@ -38,16 +53,16 @@ This note expands on the data-quality goals for the collector so downstream user
 * **Manifest files:** Write a small manifest (`manifest.json`) alongside each partition listing file paths, counts, min/max timestamps, and integrity stats to speed up downstream discovery.
 
 ## Observability and quality metrics
-* **Uniform counters:** Export Prometheus metrics for row count, dropped rows, integrity events by code, and per-symbol late/early arrival; mirror the same fields into `/status` and the dashboard.
-* **Data freshness:** Track `maxTimestamp` per symbol/provider and surface time since last event to highlight stalled feeds.
-* **Downstream-readiness score:** Compute a simple score per partition (e.g., `1 - integrityEvents/totalRows`) and expose it in manifests and the UI for quick triage.
+* **Uniform counters** ✅ — `PrometheusMetrics` exports row counts, dropped rows, integrity events by code, and per-symbol arrival metrics. Mirrored in `/api/status` and the web dashboard.
+* **Data freshness** ✅ — `DataFreshnessSlaMonitor` tracks max timestamp per symbol/provider and surfaces time-since-last-event for stalled feed detection.
+* **Downstream-readiness score** ✅ — `DataQualityScoringService` computes a multi-dimension composite score (completeness, sequence integrity, freshness, format quality, source reliability) with A–F grades. Exposed in manifests via `PackageManifest.Quality` and in the status UI.
 
 ## Replay and interoperability
-* **Replay filters:** Allow JSONL replays filtered by provider, symbol, time window, and integrity code so analysts can reproduce issues without manual slicing.
-* **Columnar exports:** Provide first-class parquet exports with stable column order matching the canonical schema to keep analyst tools fast.
-* **Compatibility adapters:** Ship lightweight adapters for common research stacks (pandas/duckdb/polars) that apply the same schema, units, and integrity decoding.
+* **Replay filters** ⚠️ Partial — `JsonlReplayer` and `MemoryMappedJsonlReader` support JSONL replay with configurable chunk/batch sizes. Provider/symbol/time-window filter parameters are not yet exposed in the public API.
+* **Columnar exports** ✅ — `ParquetStorageSink` and `AnalysisExportService` produce Parquet exports with stable column order matching the canonical schema. Arrow and XLSX export formats are also supported.
+* **Compatibility adapters** — Portable data packages include SQL loader scripts and import helpers. Dedicated pandas/polars/duckdb adapters are a future enhancement.
 
 ## Governance and evolution
-* **Versioned schemas:** Version the canonical schema and payloads; publish changelogs and migration helpers in docs so downstream users can adapt safely.
-* **Contract tests:** Add integration tests that validate new providers against the canonical schema, symbol mapping, and integrity codes before deployment.
-* **Config-driven rollout:** Allow operators to enable new fields or stricter validators via config flags with safe defaults to avoid breaking existing pipelines.
+* **Versioned schemas** ✅ — `SchemaVersionManager` tracks schema versions and coordinates migrations. `MarketEvent.SchemaVersion` tags every event.
+* **Contract tests** ✅ — `ContractVerificationService` validates provider implementations against canonical contracts. Integration endpoint tests in `tests/MarketDataCollector.Tests/Integration/` verify schema compliance.
+* **Config-driven rollout** ✅ — Canonicalization is enabled via `CanonicalizationConfig` with `PilotSymbols` list and `EnableDualWrite` flag. Operators can gradually roll out new normalization rules without disrupting existing pipelines.

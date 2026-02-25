@@ -1,7 +1,7 @@
 # Market Data Collector - Project Roadmap
 
-**Version:** 1.6.1
-**Last Updated:** 2026-02-22
+**Version:** 1.6.2
+**Last Updated:** 2026-02-25
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
 **Repository Snapshot:** `src/` files: **664** | `tests/` files: **219** | HTTP route constants: **283** | Remaining stub routes: **0** | Test methods: **~3,444**
 
@@ -34,6 +34,9 @@ Remaining work is minimal, tracked in `docs/status/IMPROVEMENTS.md`:
   - ✅ Completed: 5 (H1, H3, H4, I1, I2)
   - 🔄 Partial: 1 (I3 — Configuration Schema Validation)
   - 📝 Open: 2 (H2 — Multi-Instance Coordination, I4 — Provider SDK Doc Generator)
+- **8 canonicalization items** (theme J)
+  - ✅ Completed: 7 (J1–J7 — design, MarketEvent fields, canonicalizer, condition codes, venue normalization, provider wiring, metrics)
+  - 🔄 Partial: 1 (J8 — Golden fixture test suite)
 - Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete.
 
 ---
@@ -131,13 +134,13 @@ This section supersedes the prior effort model and aligns with the current activ
 | ID | Title | Status | Description |
 |----|-------|--------|-------------|
 | J1 | Deterministic Canonicalization Design | ✅ Complete | Design document with provider field audit, condition code mapping, venue normalization, and 3-phase rollout plan. See [deterministic-canonicalization.md](../architecture/deterministic-canonicalization.md). |
-| J2 | MarketEvent Canonical Fields | 📝 Open | Add `CanonicalSymbol`, `CanonicalizationVersion`, `CanonicalVenue` fields to `MarketEvent` envelope. Update `MarketDataJsonContext` source generator. |
-| J3 | EventCanonicalizer Implementation | 📝 Open | `IEventCanonicalizer` interface and `EventCanonicalizer` class. Wire `CanonicalSymbolRegistry.TryResolve()` for symbol resolution with provider hint. |
-| J4 | Condition Code Mapping Registry | 📝 Open | `ConditionCodeMapper` with `config/condition-codes.json` mapping Alpaca CTA plan codes, Polygon SEC numeric codes, and IB field codes to canonical enum. |
-| J5 | Venue Normalization to ISO 10383 MIC | 📝 Open | `VenueMicMapper` with `config/venue-mapping.json` for normalizing raw venue strings to ISO 10383 MIC codes. |
-| J6 | Provider Adapter Wiring | 📝 Open | Wire canonicalization into Alpaca, Polygon, IB, and StockSharp provider adapters between `StampReceiveTime()` and `EventPipeline.PublishAsync()`. |
-| J7 | Canonicalization Metrics & Monitoring | 📝 Open | Prometheus counters for canonicalization events, duration, unresolved mappings. Alert thresholds for degraded mapping rates. |
-| J8 | Golden Fixture Test Suite | 📝 Open | Curated provider payloads with `.raw.json` / `.expected.json` pairs. Property tests for idempotency, determinism, and backward compatibility. |
+| J2 | MarketEvent Canonical Fields | ✅ Complete | `CanonicalSymbol`, `CanonicalizationVersion`, `CanonicalVenue` fields added to `MarketEvent`. `EffectiveSymbol` property for downstream consumers. `MarketDataJsonContext` updated. |
+| J3 | EventCanonicalizer Implementation | ✅ Complete | `IEventCanonicalizer` interface and `EventCanonicalizer` class. Resolves symbols via `CanonicalSymbolRegistry`, maps venues, extracts venue from typed payloads. |
+| J4 | Condition Code Mapping Registry | ✅ Complete | `ConditionCodeMapper` with `config/condition-codes.json` — 17 Alpaca, 19 Polygon, 8 IB mappings to canonical enum. `FrozenDictionary` for hot-path performance. |
+| J5 | Venue Normalization to ISO 10383 MIC | ✅ Complete | `VenueMicMapper` with `config/venue-mapping.json` — 29 Alpaca, 17 Polygon, 17 IB venue mappings to ISO 10383 MIC codes. |
+| J6 | Provider Adapter Wiring | ✅ Complete | `CanonicalizingPublisher` decorator wraps `IMarketEventPublisher` with DI registration in `ServiceCompositionRoot`. Pilot symbol filtering, dual-write mode, lock-free metrics. |
+| J7 | Canonicalization Metrics & Monitoring | ✅ Complete | `CanonicalizationMetrics` with per-provider parity stats. API endpoints for status, parity, and config. Thread-safe counters for success/fail/unresolved. |
+| J8 | Golden Fixture Test Suite | 🔄 Partial | Unit tests cover core correctness and idempotency. Remaining: curated `.raw.json`/`.expected.json` fixture pairs and drift canary CI job. |
 
 ---
 
@@ -174,10 +177,11 @@ This section supersedes the prior effort model and aligns with the current activ
 - ✅ Provider degradation scoring via `ProviderDegradationScorer`.
 - 📝 H2 multi-instance coordination pending (not needed for single-instance).
 
-### Objective 6: Cross-Provider Data Canonicalization 📝 Planned
+### Objective 6: Cross-Provider Data Canonicalization ✅ Substantially Achieved
 
 - ✅ Design document complete with provider field audit and 3-phase rollout plan.
-- 📝 J2–J8 implementation pending (contract fields, canonicalizer, mappers, provider wiring, tests).
+- ✅ J2–J7 fully implemented: canonical fields on `MarketEvent`, `EventCanonicalizer`, `ConditionCodeMapper`, `VenueMicMapper`, `CanonicalizingPublisher` decorator with DI wiring, `CanonicalizationMetrics` with API endpoints.
+- 🔄 J8 partial: unit tests cover correctness; golden fixture files and drift canary CI pending.
 - Target: >= 99.5% canonical identity match rate across providers for US liquid equities.
 
 ---
@@ -199,7 +203,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | OpenTelemetry instrumentation | Pipeline metrics + activity spans | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
 | Canonicalization design | Complete | Implementation complete |
-| Canonicalization implementation (J2–J8) | 0 / 7 | 6+ / 7 |
+| Canonicalization implementation (J2–J8) | 6 / 7 | 7 / 7 |
 | Cross-provider canonical identity match | N/A | >= 99.5% |
 
 ---
@@ -217,4 +221,4 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ---
 
-*Last Updated: 2026-02-24*
+*Last Updated: 2026-02-25*

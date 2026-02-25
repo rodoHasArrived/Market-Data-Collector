@@ -1,6 +1,6 @@
 # Deterministic Canonicalization Across Providers
 
-> **Status:** Proposal
+> **Status:** Implemented (Phase 1–3 complete)
 > **Related ADRs:** ADR-001 (Provider Abstraction), ADR-006 (Domain Events Polymorphic Payload), ADR-009 (F# Type-Safe Domain)
 > **Related:** [Data Uniformity Plan](../reference/data-uniformity.md), [Storage Design](storage-design.md)
 
@@ -503,8 +503,8 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
 - `CanonicalizationConfig` added to `AppConfig` with `Enabled`, `PilotSymbols`, `DualWriteRawAndCanonical`, `ConditionCodesPath`, `VenueMappingPath`, and `Version` settings.
 - `AddCanonicalizationServices()` in `ServiceCompositionRoot` registers mapping tables, canonicalizer, and publisher decorator via DI.
 - Canonicalization Prometheus metrics added: `mdc_canonicalization_events_total`, `mdc_canonicalization_skipped_total`, `mdc_canonicalization_unresolved_total`, `mdc_canonicalization_dual_writes_total`, `mdc_canonicalization_duration_seconds`, `mdc_canonicalization_version_active`.
-- Stand up parity dashboard view in the web UI showing match rates per symbol/provider *(TODO)*.
-- Run drift canaries in nightly CI *(TODO)*.
+- ~~Stand up parity dashboard view in the web UI showing match rates per symbol/provider~~ **Done:** `CanonicalizationEndpoints` exposes `/api/canonicalization/status`, `/api/canonicalization/parity`, and `/api/canonicalization/parity/{provider}` endpoints.
+- Run drift canaries in nightly CI *(TODO — pending J8 golden fixture completion)*.
 - **Gate:** >= 99% canonical identity match rate for pilot symbols. < 0.5% unresolved mapping rate.
 
 ### Phase 3: Default Canonical Read Path *(Implemented)*
@@ -519,8 +519,8 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
   - `CatalogSyncSink` — catalog metadata
   - `DroppedEventAuditTrail` — audit trail grouping
 - Stop dual-writing raw events once parity is confirmed (configurable cutover flag): set `DualWriteRawAndCanonical = false`.
-- Add `book_update` / `L2Snapshot` event type canonicalization *(TODO)*.
-- Finalize schema evolution SOP document *(TODO)*.
+- ~~Add `book_update` / `L2Snapshot` event type canonicalization~~ **Done:** `EventCanonicalizer.ExtractVenue()` handles `LOBSnapshot` and `L2SnapshotPayload` payloads for venue extraction.
+- Finalize schema evolution SOP document *(TODO — low priority, versioning already enforced via `CanonicalizationVersion` field)*.
 - **Gate:** All acceptance criteria met. Rollback automation tested.
 
 ## Risks and Mitigations

@@ -51,12 +51,53 @@ MarketDataCollector (Host/Exe)   →  Application (+ transitive)
 3. **CI Gate**: The `pr-checks.yml` workflow runs `dotnet build` which catches
    any project reference violations at compile time.
 
+## Examples
+
+### Allowed: Application using Infrastructure
+
+```csharp
+// In MarketDataCollector.Application/Services/SomeService.cs
+using MarketDataCollector.Infrastructure.Providers; // ✅ OK — Application may reference Infrastructure
+```
+
+### Forbidden: Infrastructure using Application
+
+```csharp
+// In MarketDataCollector.Infrastructure/Providers/SomeProvider.cs
+using MarketDataCollector.Application.Services; // ❌ COMPILE ERROR — Infrastructure cannot reference Application
+```
+
+The compiler enforces this because `MarketDataCollector.Infrastructure.csproj` does not have a `<ProjectReference>` to `MarketDataCollector.Application`.
+
+### Forbidden: Domain using Core
+
+```csharp
+// In MarketDataCollector.Domain/Collectors/TradeDataCollector.cs
+using MarketDataCollector.Core.Logging; // ❌ FORBIDDEN — Domain must remain pure business logic
+```
+
+Domain uses only `Contracts` and `ProviderSdk`. If Domain needs a utility from Core, the utility should be moved to Contracts or an interface defined in ProviderSdk.
+
+### Common Pattern: Extracting Shared Types
+
+When Infrastructure and Storage both need the same type, define it in Contracts or Core:
+
+```
+❌ Bad: Infrastructure.Providers.SomeSharedModel → Storage cannot see it
+✅ Good: Contracts.Domain.Models.SomeSharedModel → Both can reference it
+```
+
 ## Adding a New Layer Dependency
 
 If a new cross-layer dependency is needed:
 
 1. Check this document to see if it is allowed.
-2. If it creates a **circular dependency**, extract the shared type to `Core`.
+2. If it creates a **circular dependency**, extract the shared type to `Core` or `Contracts`.
 3. Update the `.csproj` `<ProjectReference>` entries.
 4. Update this document.
 5. Verify with `dotnet build -c Release`.
+6. The `pr-checks.yml` CI workflow will catch any violations on pull request.
+
+## BannedReferences.txt
+
+The `MarketDataCollector.Domain` project includes a `BannedReferences.txt` file that explicitly lists assemblies that Domain must never reference. This provides an additional safety net beyond project references.
