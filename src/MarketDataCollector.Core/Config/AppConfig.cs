@@ -57,31 +57,6 @@ public sealed record ProviderRegistryConfig(
 );
 
 /// <summary>
-/// Configuration for deterministic canonicalization (Phase 2+).
-/// Controls how raw market events are transformed into structurally comparable canonical records.
-/// </summary>
-/// <param name="Enabled">Master switch for canonicalization. When false, events pass through unchanged.</param>
-/// <param name="PilotSymbols">
-/// Optional list of symbols to canonicalize during dual-write validation (Phase 2).
-/// If empty or null, all symbols are canonicalized when <see cref="Enabled"/> is true.
-/// </param>
-/// <param name="DualWriteRawAndCanonical">
-/// When true, persists both raw and enriched events. Used during Phase 2 to validate
-/// parity before committing to canonical-only writes.
-/// </param>
-/// <param name="ConditionCodesPath">Path to condition-codes.json. Defaults to config/condition-codes.json.</param>
-/// <param name="VenueMappingPath">Path to venue-mapping.json. Defaults to config/venue-mapping.json.</param>
-/// <param name="Version">Canonicalization version stamp applied to enriched events.</param>
-public sealed record CanonicalizationConfig(
-    bool Enabled = false,
-    string[]? PilotSymbols = null,
-    bool DualWriteRawAndCanonical = true,
-    string ConditionCodesPath = "config/condition-codes.json",
-    string VenueMappingPath = "config/venue-mapping.json",
-    int Version = 1
-);
-
-/// <summary>
 /// Storage configuration for file naming and organization.
 /// Conversion to StorageOptions is available via extension methods in the Application layer.
 /// </summary>
