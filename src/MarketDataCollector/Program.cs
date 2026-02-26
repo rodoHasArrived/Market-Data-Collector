@@ -371,9 +371,6 @@ public partial class Program
             log.Error(ex, "Failed to connect to {DataSource} data provider (ErrorCode={ErrorCode}, ExitCode={ExitCode}). Check credentials and connectivity.",
                 cfg.DataSource, errorCode, errorCode.ToExitCode());
 
-            // Display user-friendly error with actionable suggestions
-            FriendlyErrorFormatter.DisplayError(FriendlyErrorFormatter.Format(ex));
-
             return errorCode.ToExitCode();
         }
 
