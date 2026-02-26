@@ -58,7 +58,7 @@ public abstract class ThemeServiceBase
 
     /// <summary>
     /// When overridden, applies the theme to the platform-specific UI framework
-    /// (e.g., WPF ResourceDictionary or WinUI ElementTheme).
+    /// (e.g., WPF ResourceDictionary theme tokens).
     /// </summary>
     protected abstract void ApplyThemeCore(AppTheme theme);
 

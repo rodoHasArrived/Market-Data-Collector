@@ -233,7 +233,10 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
                 catch (OperationCanceledException) { }
             }
         }
-        catch { /* ignore */ }
+        catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+        {
+            _log.Debug(ex, "Error during Interactive Brokers disconnect cleanup");
+        }
 
         if (IsConnected)
             _clientSocket.eDisconnect();
@@ -300,7 +303,10 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
             {
                 try { await _readerLoop.ConfigureAwait(false); }
                 catch (OperationCanceledException) { }
-                catch (Exception ex) { _log.Debug(ex, "Reader loop cleanup failed"); }
+                catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+                {
+                    _log.Debug(ex, "Reader loop cleanup failed");
+                }
             }
 
             if (IsConnected)
