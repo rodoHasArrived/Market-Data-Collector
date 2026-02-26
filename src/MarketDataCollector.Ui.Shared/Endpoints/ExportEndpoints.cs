@@ -234,7 +234,7 @@ public static class ExportEndpoints
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
-                EventTypes = new[] { "IntegrityEvent" },
+                EventTypes = new[] { "Integrity" },
                 StartDate = DateTime.UtcNow.AddDays(-30),
                 EndDate = DateTime.UtcNow,
                 OutputDirectory = outputDir,
