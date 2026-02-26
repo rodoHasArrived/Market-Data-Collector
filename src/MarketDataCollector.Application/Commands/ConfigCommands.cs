@@ -109,7 +109,7 @@ internal sealed class ConfigCommands : ICliCommand
             Console.WriteLine();
             Console.WriteLine("  researcher    - Optimized for quantitative research & analysis");
             Console.WriteLine("                  Compression enabled, Research storage profile,");
-            Console.WriteLine("                  S&P 500 top 20 symbols, backfill enabled");
+            Console.WriteLine("                  S&P 500 top 20 symbols, backfill enabled.");
             Console.WriteLine();
             Console.WriteLine("  daytrader     - Optimized for real-time trading & monitoring");
             Console.WriteLine("                  Low-latency storage, L2 depth data,");
