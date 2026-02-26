@@ -225,6 +225,7 @@ Market-Data-Collector/
 │   │   ├── docker.yml
 │   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
+│   │   ├── export-project-artifact.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
