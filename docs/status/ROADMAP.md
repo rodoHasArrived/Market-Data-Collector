@@ -63,6 +63,8 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 11: WPF Full UX Parity | 📝 Planned | Wire live data to remaining static-data pages. |
 | Phase 12: Provider Completeness | 📝 Planned | Validate Polygon/StockSharp feeds; simplify IB/NYSE setup. |
 | Phase 13: Observability Completion | 📝 Planned | End-to-end OTel trace propagation; correlation IDs. |
+| Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
+| Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
 
 ---
 
