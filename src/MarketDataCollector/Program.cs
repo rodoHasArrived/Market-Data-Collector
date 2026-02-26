@@ -67,9 +67,6 @@ public partial class Program
             log.Fatal(ex, "MarketDataCollector terminated unexpectedly (ErrorCode={ErrorCode}, ExitCode={ExitCode})",
                 errorCode, errorCode.ToExitCode());
 
-            // Display user-friendly error with actionable suggestions
-            FriendlyErrorFormatter.DisplayError(FriendlyErrorFormatter.Format(ex));
-
             return errorCode.ToExitCode();
         }
         finally
