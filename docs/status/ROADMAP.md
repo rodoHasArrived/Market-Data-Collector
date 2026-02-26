@@ -1,11 +1,13 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.2
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-02-26
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
 **Repository Snapshot:** `src/` files: **664** | `tests/` files: **219** | HTTP route constants: **283** | Remaining stub routes: **0** | Test methods: **~3,444**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
+
+For a complete per-feature status breakdown see [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md).
 
 ---
 
@@ -24,7 +26,7 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 ### What remains
 
-Remaining work is minimal, tracked in `docs/status/IMPROVEMENTS.md`:
+Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md):
 
 - **35 tracked improvement items total** (core themes A–G)
   - ✅ Completed: 33
@@ -38,6 +40,8 @@ Remaining work is minimal, tracked in `docs/status/IMPROVEMENTS.md`:
   - ✅ Completed: 7 (J1–J7 — design, MarketEvent fields, canonicalizer, condition codes, venue normalization, provider wiring, metrics)
   - 🔄 Partial: 1 (J8 — Golden fixture test suite; curated fixtures + fixture-runner tests added, drift-canary CI still pending)
 - Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete.
+- **WPF UX parity**: Navigation complete; ~6 pages still show static placeholder data instead of live service data.
+- **Provider completeness**: Polygon and StockSharp functional with credentials; IB and NYSE require external setup steps.
 
 ---
 
@@ -56,6 +60,11 @@ Remaining work is minimal, tracked in `docs/status/IMPROVEMENTS.md`:
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
 | Phase 9: Final Production Release | 🔄 Active target | 94.3% of core improvements complete; remaining: C3 WebSocket refactor, G2 trace propagation. |
 | Phase 10: Scalability & Multi-Instance | 📝 Planned | New phase for horizontal scaling and multi-instance coordination. |
+| Phase 11: WPF Full UX Parity | 📝 Planned | Wire live data to remaining static-data pages. |
+| Phase 12: Provider Completeness | 📝 Planned | Validate Polygon/StockSharp feeds; simplify IB/NYSE setup. |
+| Phase 13: Observability Completion | 📝 Planned | End-to-end OTel trace propagation; correlation IDs. |
+| Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
+| Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
 
 ---
 
@@ -205,11 +214,88 @@ This section supersedes the prior effort model and aligns with the current activ
 | Canonicalization design | Complete | Implementation complete |
 | Canonicalization implementation (J2–J8) | 6 / 7 | 7 / 7 |
 | Cross-provider canonical identity match | N/A | >= 99.5% |
+| WPF pages with live data | ~42 / 49 | 49 / 49 |
+
+---
+
+## Phases 11–13: Full-Implementation Roadmap
+
+These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md) full-inventory audit. They bring every started feature to complete implementation.
+
+### Phase 11: WPF Full UX Parity
+
+**Goal:** Replace all static placeholder values with live data from backend services.
+
+| Item | File(s) | Work |
+|------|---------|------|
+| P11-1 | `StoragePage.xaml` / `.cs` | Wire storage stats (total size, record count, symbol count, tier sizes) to `StorageServiceBase`; replace hardcoded strings with bound properties |
+| P11-2 | `WelcomePage.xaml` / `.cs` | Wire connection status, symbol count, and storage path to `StatusService` / `ConnectionService` / `ConfigService`; remove placeholder comments |
+| P11-3 | `TradingHoursPage.xaml` / `.cs` | Verify `TradingCalendar` integration is driving market hours display; add live next-open / next-close countdowns |
+| P11-4 | All pages | Audit remaining pages for static text masquerading as live data; update or remove as appropriate |
+
+**Exit criteria:** Every page in the WPF application shows live data or clearly-labeled static reference content. No hardcoded metric values remain.
+
+---
+
+### Phase 12: Provider Completeness
+
+**Goal:** Bring all 5 streaming providers to verified, documentable production status.
+
+| Item | Provider | Work |
+|------|----------|------|
+| P12-1 | **Polygon** | Capture a recorded Polygon v2 WebSocket session (free or paying account); add a replay-based integration test that validates message parsing for trades, quotes, aggregates, and status messages end-to-end |
+| P12-2 | **StockSharp** | Document all supported `ConnectorType` values (QuikJson, Transaq, LMAX, etc.) in `docs/providers/`; add a validated `appsettings.sample.stocksharp.json`; fix `NotSupportedException` paths when connector type is unset |
+| P12-3 | **Interactive Brokers** | Write `docs/providers/interactive-brokers-build.md` with step-by-step IBAPI download, reference, and build instructions (`dotnet build -p:DefineConstants=IBAPI`); add a CI matrix job that builds with a mocked IBApi stub |
+| P12-4 | **NYSE** | Document NYSE Connect credential registration process; add connectivity smoke-test to `--test-connectivity` output |
+| P12-5 | **All WebSocket (C3)** | Refactor Polygon, NYSE, StockSharp to extend `WebSocketProviderBase`; eliminate ~800 LOC of duplicated connection-lifecycle code; verify provider tests pass after refactor |
+
+**Exit criteria:** All 5 streaming providers have documented setup paths. Polygon parsing validated against recorded feed. C3 refactor complete.
+
+---
+
+### Phase 13: Observability Completion
+
+**Goal:** Complete end-to-end distributed tracing and improve log correlation.
+
+| Item | Area | Work |
+|------|------|------|
+| P13-1 | **G2 trace propagation** | Wire `System.Diagnostics.Activity` context from each provider's receive loop through `EventPipeline.PublishAsync` to `IStorageSink.AppendAsync`; use `Activity.Current` baggage or W3C TraceContext headers for cross-component propagation |
+| P13-2 | **Correlation IDs in logs** | Add `correlation_id` / `trace_id` structured log properties to all `ILogger` call sites in the pipeline hot path (`EventPipeline`, `JsonlStorageSink`, provider adapters) |
+| P13-3 | **Backfill worker tracing** | Wire `StartBackfillActivity` spans per-symbol in `BackfillWorkerService`; propagate through `CompositeHistoricalDataProvider` |
+| P13-4 | **OTLP export docs** | Add `docs/operations/opentelemetry-setup.md` with OTLP collector configuration for Jaeger and Zipkin; include Docker Compose sample |
+
+**Exit criteria:** A single live request can be traced from provider receive → pipeline publish → storage write in Jaeger/Zipkin. Correlation IDs appear in all pipeline log entries.
+
+---
+
+### Phase 14: Configuration Schema & Test Completeness
+
+**Goal:** Close the remaining I3 and J8 items.
+
+| Item | Area | Work |
+|------|------|------|
+| P14-1 | **I3 Config JSON Schema** | Add a build step (or `dotnet run` tool) that generates `config/appsettings.schema.json` from `AppConfig` using `NJsonSchema` or `System.Text.Json.Schema`; add `$schema` pointer to `appsettings.sample.json`; enables IDE auto-complete and validation |
+| P14-2 | **J8 Drift-canary CI** | Add a GitHub Actions workflow job that runs `CanonicalizationGoldenFixtureTests` on every push and posts a PR comment listing any new unmapped condition codes or venue identifiers found in the fixture files |
+
+**Exit criteria:** `appsettings.schema.json` present and linked; IDE shows validation on `appsettings.json`. CI fails on unrecognized condition codes or venues.
+
+---
+
+### Phase 15: Scalability (Optional)
+
+**Goal:** Support multiple collector instances without subscription conflicts.
+
+| Item | Area | Work |
+|------|------|------|
+| P15-1 | **H2 Multi-instance coordination** | Design and implement distributed locking for symbol subscription assignment (Redis or file-based lock); leader election for scheduled backfill; documented topology for 2-node active/active deployment |
+
+**Exit criteria:** Two collector instances can run simultaneously against the same symbol universe without duplicate subscriptions or conflicting backfill jobs.
 
 ---
 
 ## Reference Documents
 
+- `docs/status/FEATURE_INVENTORY.md` — **new** comprehensive feature inventory with per-area status.
 - `docs/status/IMPROVEMENTS.md` — canonical improvement tracking and sprint recommendations.
 - `docs/status/EVALUATIONS_AND_AUDITS.md` — consolidated architecture evaluations, code audits, and assessments.
 - `docs/status/production-status.md` — production readiness assessment narrative.
@@ -221,4 +307,4 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ---
 
-*Last Updated: 2026-02-25*
+*Last Updated: 2026-02-26*

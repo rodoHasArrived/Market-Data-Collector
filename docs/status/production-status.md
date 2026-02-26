@@ -1,6 +1,5 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-02-22
 **Version:** 1.6.2
 **Status:** Development / Pilot Ready
 
@@ -26,12 +25,12 @@ The Market Data Collector is a feature-rich system with a working CLI, backfill 
 | StockSharp Provider | ⚠️ Integration scaffold | Requires StockSharp setup |
 | Monitoring | ✅ Implemented | HTTP server + Prometheus metrics + OpenTelemetry |
 | Data Quality | ✅ Implemented | Completeness, gap analysis, anomaly detection, SLA monitoring |
-| WPF Desktop App | ⚠️ Partial UX parity | Windows desktop UI (sole desktop client); several navigable pages still show placeholder "Coming Soon" content |
+| WPF Desktop App | ⚠️ Partial UX parity | Windows desktop UI (sole desktop client); ~42 of 49 pages wired to live services; ~6 pages show static placeholder data (StoragePage, WelcomePage, TradingHoursPage). See [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) §10. |
 | QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
 | Symbol Search Providers | ✅ Implemented | 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp) |
 | API Surface | ✅ Implemented | 283 route constants, typed OpenAPI annotations across all endpoint families |
 | Architecture | ✅ Monolithic | Single-process runtime, unified DI composition |
-| Improvement Tracking | ✅ Near complete | 33/35 core items completed (94.3%), see [IMPROVEMENTS.md](IMPROVEMENTS.md) |
+| Improvement Tracking | ✅ Near complete | 33/35 core items completed (94.3%), see [IMPROVEMENTS.md](IMPROVEMENTS.md) and [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) |
 
 ---
 
@@ -109,7 +108,7 @@ Multiple storage strategies:
 ### WPF UX Parity
 
 **Status:** ⚠️ Partial implementation  
-The WPF shell and navigation model are in place, but multiple pages are still placeholder screens. Treat current WPF status as "navigation-complete, workflow-parity in progress" until those pages are functionally implemented.
+The WPF shell and navigation model are in place, and approximately 42 of 49 pages are wired to live backend services. The remaining pages (`StoragePage`, `WelcomePage`, `TradingHoursPage`, and a few others) currently display static placeholder values. Phase 11 of the roadmap addresses this. See [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md) §10 for the full page-by-page breakdown.
 
 ### Polygon Streaming
 
@@ -271,6 +270,7 @@ Refer to the `tests/` directory for the current suite and to the CI pipelines fo
 
 ## Related Documentation
 
+- [Feature Inventory](FEATURE_INVENTORY.md) - Complete per-feature status across all functional areas
 - [Roadmap](ROADMAP.md) - Feature backlog and development priorities
 - [Changelog](CHANGELOG.md) - Recent changes and improvements
 - [Configuration](../HELP.md#configuration) - Detailed configuration reference
