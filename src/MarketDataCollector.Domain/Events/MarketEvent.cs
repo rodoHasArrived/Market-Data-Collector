@@ -45,6 +45,21 @@ public sealed record MarketEvent(
     public static MarketEvent DepthIntegrity(DateTimeOffset ts, string symbol, DepthIntegrityEvent integrity, long seq = 0, string source = "IB")
         => new(ts, symbol, MarketEventType.Integrity, integrity, seq == 0 ? integrity.SequenceNumber : seq, source);
 
+
+    public static MarketEvent ResyncRequested(DateTimeOffset ts, string symbol, string reason, string? streamId = null, string? venue = null, long seq = 0, string source = "IB")
+    {
+        var payload = new IntegrityEvent(
+            Timestamp: ts,
+            Symbol: symbol,
+            Severity: IntegritySeverity.Error,
+            Description: $"Resync requested: {reason}",
+            ErrorCode: 2001,
+            SequenceNumber: seq,
+            StreamId: streamId,
+            Venue: venue);
+
+        return new(ts, symbol, MarketEventType.Integrity, payload, seq, source);
+    }
     public static MarketEvent Heartbeat(DateTimeOffset ts, string source = "IB")
         => new(ts, "SYSTEM", MarketEventType.Heartbeat, Payload: null, Sequence: 0, Source: source);
 
