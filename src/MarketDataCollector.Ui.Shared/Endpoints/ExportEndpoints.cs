@@ -115,10 +115,10 @@ public static class ExportEndpoints
             }).ToArray() ?? new[]
             {
                 new { id = "python-pandas", name = "Python / Pandas", format = "parquet", description = "Parquet export optimized for pandas" },
-                new { id = "r-dataframe", name = "R / data.frame", format = "csv", description = "CSV export for R" },
+                new { id = "r-stats", name = "R / data.frame", format = "csv", description = "CSV export for R" },
                 new { id = "quantconnect-lean", name = "QuantConnect Lean", format = "lean", description = "QuantConnect Lean Engine format" },
                 new { id = "excel", name = "Microsoft Excel", format = "xlsx", description = "Excel workbook format" },
-                new { id = "sql-postgres", name = "PostgreSQL / TimescaleDB", format = "csv", description = "CSV for PostgreSQL COPY" }
+                new { id = "postgresql", name = "PostgreSQL / TimescaleDB", format = "csv", description = "CSV for PostgreSQL COPY" }
             };
 
             return Results.Json(new { formats, profiles, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
