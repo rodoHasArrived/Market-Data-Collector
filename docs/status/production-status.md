@@ -1,6 +1,5 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-02-26
 **Version:** 1.6.2
 **Status:** Development / Pilot Ready
 
