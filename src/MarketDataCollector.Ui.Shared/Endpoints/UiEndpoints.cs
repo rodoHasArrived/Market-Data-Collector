@@ -200,6 +200,9 @@ public static class UiEndpoints
         // Checkpoint and ingestion job endpoints (P0)
         app.MapCheckpointEndpoints(jsonOptions);
 
+        // Options / Derivatives endpoints
+        app.MapOptionsEndpoints(jsonOptions);
+
         // Map quality drops endpoints (C3/#16)
         var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();
         app.MapQualityDropsEndpoints(auditTrail, jsonOptions);
