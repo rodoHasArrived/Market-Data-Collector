@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-02-26T17:46:12.756328+00:00",
+  "workflow": "code-quality.yml",
+  "run_id": 22453995852,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22453995852",
+  "run_conclusion": "unknown",
+  "repository": "rodoHasArrived/Market-Data-Collector",
+  "failed_jobs": [
+    "Code Quality Checks"
+  ],
+  "findings_by_category": {},
+  "total_error_codes": 0,
+  "total_failed_tests": 0,
+  "existing_prompts": 11,
+  "generated_prompts": [
+    {
+      "file": "workflow-results-code-quality.prompt.yml",
+      "category": "summary",
+      "action": "create",
+      "findings_count": 0,
+      "error_codes": [],
+      "failed_tests": []
+    }
+  ],
+  "total_generated": 1
+}
