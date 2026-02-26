@@ -583,15 +583,19 @@ public sealed class PreflightChecker
             // Validate key format (Alpaca keys start with PK or AK)
             if (keyId!.Length < 10 || keyId.Contains("YOUR_") || keyId.Contains("REPLACE"))
             {
+                var keyPrefix = keyId[..Math.Min(4, keyId.Length)];
+
                 return PreflightCheckResult.Warning(checkName,
                     "Alpaca API key appears to be a placeholder value",
                     "Replace the placeholder with your actual Alpaca API key from https://app.alpaca.markets",
-                    new Dictionary<string, object> { ["provider"] = "Alpaca", ["keyPreview"] = keyId[..Math.Min(4, keyId.Length)] + "..." });
+                    new Dictionary<string, object> { ["provider"] = "Alpaca", ["keyPreview"] = keyPrefix + "..." });
             }
 
-            _log.Debug("Alpaca credentials validated: KeyId={KeyPrefix}...", keyId[..Math.Min(4, keyId.Length)]);
+            var keyPrefix = keyId[..Math.Min(4, keyId.Length)];
+
+            _log.Debug("Alpaca credentials validated: KeyId={KeyPrefix}...", keyPrefix);
             return PreflightCheckResult.Passed(checkName,
-                $"Alpaca credentials present (KeyId: {keyId[..Math.Min(4, keyId.Length)]}...)",
+                $"Alpaca credentials present (KeyId: {keyPrefix}...)",
                 new Dictionary<string, object> { ["provider"] = "Alpaca" });
         }
 
