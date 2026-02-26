@@ -192,7 +192,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Metrics (Prometheus) | `/api/metrics` | ✅ |
 | SSE stream | `/api/events/stream` | ✅ |
 | OpenAPI / Swagger | `/swagger` | ✅ |
-| API authentication | `X-Api-Key` header / `api_key` query | ✅ |
+| API authentication | `X-Api-Key` header only (no query-string auth) | ✅ |
 | Rate limiting | 120 req/min per key, sliding window | ✅ |
 | **Total route constants** | **283** | **0 stubs remaining** |
 
