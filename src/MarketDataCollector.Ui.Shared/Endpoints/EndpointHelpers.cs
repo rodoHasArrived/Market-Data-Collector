@@ -117,7 +117,8 @@ internal static class EndpointHelpers
         FileNotFoundException or DirectoryNotFoundException => 404,
         InvalidOperationException => 409,
         NotSupportedException or NotImplementedException => 501,
-        TimeoutException or OperationCanceledException => 504,
+        TimeoutException => 504,
+        OperationCanceledException => 408,
         _ => 500
     };
 }
