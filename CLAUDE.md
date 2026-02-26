@@ -548,6 +548,7 @@ Market-Data-Collector/
 │   ├── status/
 │   │   ├── CHANGELOG.md
 │   │   ├── EVALUATIONS_AND_AUDITS.md
+│   │   ├── FEATURE_INVENTORY.md
 │   │   ├── health-dashboard.md
 │   │   ├── IMPROVEMENTS.md
 │   │   ├── production-status.md
