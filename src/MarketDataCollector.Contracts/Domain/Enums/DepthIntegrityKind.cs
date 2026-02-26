@@ -6,27 +6,32 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 public enum DepthIntegrityKind
 {
     /// <summary>
+    /// No integrity issue detected.
+    /// </summary>
+    Ok = 0,
+
+    /// <summary>
     /// Unknown integrity issue.
     /// </summary>
-    Unknown = 0,
+    Unknown = 1,
 
     /// <summary>
     /// Sequence gap detected.
     /// </summary>
-    Gap = 1,
+    Gap = 2,
 
     /// <summary>
     /// Out-of-order message received.
     /// </summary>
-    OutOfOrder = 2,
+    OutOfOrder = 3,
 
     /// <summary>
     /// Invalid position in order book.
     /// </summary>
-    InvalidPosition = 3,
+    InvalidPosition = 4,
 
     /// <summary>
     /// Stale data detected.
     /// </summary>
-    Stale = 4
+    Stale = 5
 }
