@@ -77,7 +77,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Prevention checklist**:
   - [ ] When adding a new `<PackageReference>` to any `.csproj` or `.fsproj` file, NEVER include a `Version` attribute
   - [ ] Always add the package version to `Directory.Packages.props` using `<PackageVersion Include="PackageName" Version="x.y.z" />`
-  - [ ] Search for the appropriate section label in `Directory.Packages.props` (e.g., "Storage", "Testing", "WinUI / Desktop")
+  - [ ] Search for the appropriate section label in `Directory.Packages.props` (e.g., "Storage", "Testing", "Desktop / WPF")
   - [ ] After adding package references, run `dotnet restore` to verify no NU1008 errors
   - [ ] Check existing packages in `Directory.Packages.props` for version compatibility before adding new ones
 - **Verification commands**:

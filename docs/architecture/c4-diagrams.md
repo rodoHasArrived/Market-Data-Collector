@@ -39,17 +39,17 @@ flowchart LR
     HIST[Historical Providers\nYahoo/Stooq/Nasdaq]:::ext
     OPR[Operator]:::person
     UI[Web Dashboard\nASP.NET]:::container
-    UWP[Desktop App\nWinUI 3/UWP]:::container
+    WPF[Desktop App\nWPF]:::container
     COL[Market Data Collector\nService]:::system
     DISK[(Local Storage\nJSONL / Parquet)]:::store
     MQ[Message Bus\nRabbitMQ / Azure SB]:::ext
 
     OPR --> UI
-    OPR --> UWP
+    OPR --> WPF
     UI <--> DISK
-    UWP <--> DISK
+    WPF <--> DISK
     UI --> COL
-    UWP --> COL
+    WPF --> COL
     IB --> COL
     ALP --> COL
     HIST --> COL
@@ -84,13 +84,13 @@ flowchart TB
     DISK[(Filesystem\n./data)]:::store
     MQ[(Message Bus\nRabbitMQ)]:::store
     UI[Web Dashboard\nMarketDataCollector.Ui]:::container
-    UWP[Desktop App\nMarketDataCollector.Uwp]:::container
+    WPF[Desktop App\nMarketDataCollector.Wpf]:::container
     OPR[Operator]:::person
 
     OPR --> UI
-    OPR --> UWP
+    OPR --> WPF
     UI <--> DISK
-    UWP <--> DISK
+    WPF <--> DISK
 
     IB --> INFRA
     ALP --> INFRA
@@ -229,6 +229,6 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 
 ---
 
-**Version:** 1.6.1
-**Last Updated:** 2026-01-28
+**Version:** 1.6.2
+**Last Updated:** 2026-03-01
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [ADR Index](../adr/README.md)

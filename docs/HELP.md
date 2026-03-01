@@ -1266,7 +1266,7 @@ Visualize data coverage and identify gaps across your archive:
 - **Red (<80%)**: Major issues
 - **Gray**: Non-trading day (weekend/holiday)
 
-**Via UWP Desktop App:**
+**Via WPF Desktop App:**
 1. Navigate to "Data Completeness" page
 2. Select date range and symbols
 3. View calendar heatmap
@@ -1289,7 +1289,7 @@ Browse and inspect archived data files:
 - **Export**: Copy files to another location
 - **Search**: Find events by timestamp or content
 
-**Via UWP Desktop App:**
+**Via WPF Desktop App:**
 1. Navigate to "Archive Browser" page
 2. Browse the hierarchical tree
 3. Right-click files for context menu
@@ -1441,14 +1441,13 @@ The application includes dedicated pages for all collector functions:
 
 ### Secure Credential Management
 
-The desktop app uses Windows CredentialPicker for secure API key management:
+The WPF desktop app uses Windows Credential Manager for secure API key management:
 
 **How it works:**
 1. Navigate to the Provider page
 2. Click "Set Credentials" for your chosen provider
-3. Windows CredentialPicker dialog appears
-4. Enter your API credentials securely
-5. Credentials are stored in Windows Credential Manager
+3. Enter your API credentials in the secure dialog
+4. Credentials are stored in Windows Credential Manager
 
 **Benefits:**
 - Credentials never stored in plain text files
@@ -1467,7 +1466,7 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 |---------|-------------|---------------|
 | Platform | Windows only | Any browser |
 | Credential Storage | Windows Credential Manager | appsettings.json |
-| UI Framework | UWP/XAML + WinUI 3 | HTML/CSS/JavaScript |
+| UI Framework | WPF/XAML (.NET 9.0) | HTML/CSS/JavaScript |
 | Offline Use | Yes | Requires collector running |
 | Native Integration | Full Windows features | Browser sandboxed |
 

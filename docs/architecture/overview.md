@@ -20,7 +20,6 @@ provider failover, and data quality monitoring.
 The architecture supports multiple deployment modes:
 - **Standalone Console Application** – Single-process data collection with local storage
 - **WPF Desktop Application** – Recommended Windows desktop app for configuration and monitoring
-- **UWP Desktop Application** – Legacy Windows 10+ companion app (WinUI 3)
 - **Web Dashboard** – Browser-based monitoring and management interface
 
 See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI contracts, storage profiles, pipeline policy, and configuration-service details.
@@ -32,12 +31,12 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                           Presentation Layer                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
-│  │  Web Dashboard  │  │  WPF Desktop   │  │  UWP Desktop    │          │
-│  │  (ASP.NET)      │  │  (Recommended) │  │  (Legacy)       │          │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘          │
-└───────────┼────────────────────┼────────────────────┼────────────────────┘
-            │ JSON/FS            │ Config/Status      │ Config/Status
+│  ┌─────────────────┐  ┌─────────────────┐                               │
+│  │  Web Dashboard  │  │  WPF Desktop   │                               │
+│  │  (ASP.NET)      │  │  (Recommended) │                               │
+│  └────────┬────────┘  └────────┬────────┘                               │
+└───────────┼────────────────────┼────────────────────────────────────────┘
+            │ JSON/FS            │ Config/Status
 ┌───────────┼────────────────────┼────────────────────────────────────────┐
 │           ▼                    ▼                                        │
 │                       Application Layer                                  │
@@ -207,7 +206,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
    - `MarketDepthCollector.OnDepth(MarketDepthUpdate)`
    - `QuoteCollector.OnQuote(MarketQuoteUpdate)`
 4. Collectors emit strongly-typed `MarketEvent` objects via `IMarketEventPublisher`
-5. *(Planned)* `EventCanonicalizer` resolves canonical symbol, maps condition codes, and normalizes venue identifiers — see [Deterministic Canonicalization](deterministic-canonicalization.md)
+5. `EventCanonicalizer` resolves canonical symbol, maps condition codes, and normalizes venue identifiers via the `CanonicalizingPublisher` decorator — see [Deterministic Canonicalization](deterministic-canonicalization.md)
 6. `EventPipeline` routes events through a bounded channel to decouple producers from I/O
 7. `JsonlStorageSink` appends events as JSONL
 8. `StatusWriter` periodically dumps health snapshots for UI/monitoring
@@ -369,8 +368,6 @@ See [lean-integration.md](../integrations/lean-integration.md) for detailed inte
 
 ---
 
----
-
 ## Archival Storage Pipeline
 
 The system implements an archival-first storage strategy for crash-safe persistence:
@@ -420,9 +417,9 @@ The system implements an archival-first storage strategy for crash-safe persiste
 
 The system supports multiple credential sources with priority resolution:
 
-1. **Environment Variables** – `NYSE_API_KEY`, `ALPACA_API_KEY`, etc.
-2. **Windows Credential Store** – Via UWP CredentialPicker
-3. **Configuration File** – `appsettings.json` (development only)
+1. **Environment Variables** – `NYSE_API_KEY`, `ALPACA_API_KEY`, etc. (recommended)
+2. **Windows Credential Manager** – Via WPF desktop app credential service
+3. **Configuration File** – `appsettings.json` (development only, not recommended for secrets)
 
 Note: Cloud secret managers (Azure Key Vault, AWS Secrets Manager) are not currently implemented.
 
@@ -446,5 +443,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.6.2
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-03-01
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [deterministic-canonicalization.md](deterministic-canonicalization.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)
