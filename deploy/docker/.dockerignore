@@ -61,8 +61,21 @@ secrets.json
 *.ps1
 !publish.sh
 
-# UWP project (Windows only, not for containers)
-src/MarketDataCollector.Uwp/
+# Desktop projects (Windows only, not for containers)
+src/MarketDataCollector.Wpf/
+tests/MarketDataCollector.Wpf.Tests/
 
 # Benchmarks (not needed in production)
 benchmarks/
+
+# Build tooling (not needed in container)
+build/node/
+build/python/
+build/scripts/
+
+# Deploy configs (not needed inside the image)
+deploy/
+
+# Claude / AI configuration
+.claude/
+CLAUDE.md

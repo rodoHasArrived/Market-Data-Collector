@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-data-collector
+  namespace: market-data-collector
+  labels:
+    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/component: collector
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: market-data-collector
