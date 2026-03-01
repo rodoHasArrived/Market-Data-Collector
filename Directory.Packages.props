@@ -103,7 +103,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Storage">
-    <PackageVersion Include="Apache.Arrow" Version="18.1.0" />
+    <PackageVersion Include="Apache.Arrow" Version="22.1.0" />
     <PackageVersion Include="Parquet.Net" Version="5.5.0" />
     <PackageVersion Include="ZstdSharp.Port" Version="0.8.7" />
   </ItemGroup>
