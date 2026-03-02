@@ -325,8 +325,8 @@ public sealed class TradeDataCollector
                 }
 
                 _tradeWindow.Enqueue(trade);
-                foreach (var window in _rollingByWindow.Keys.ToArray())
-                    AddToRollingWindow(_rollingByWindow[window], trade);
+                foreach (var rollingWindow in _rollingByWindow.Values)
+                    AddToRollingWindow(rollingWindow, trade);
 
                 TrimRollingWindows(trade.Timestamp);
 
