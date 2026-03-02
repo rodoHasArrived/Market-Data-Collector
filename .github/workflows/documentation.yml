@@ -357,9 +357,9 @@ jobs:
               - added|deleted: 'src/**'
               - added|deleted: 'docs/**'
             providers:
-              - 'src/MarketDataCollector/Infrastructure/Adapters/**'
+              - 'src/MarketDataCollector.Infrastructure/Adapters/**'
             interfaces:
-              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
+              - 'src/MarketDataCollector.Infrastructure/IMarketDataClient.cs'
               - 'src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider*.cs'
             adrs:
               - 'docs/adr/**'
