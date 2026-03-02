@@ -79,18 +79,26 @@ public sealed class DataSourceRegistry
                     continue;
                 }
 
+                var isAdapterModule = typeof(MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule).IsAssignableFrom(type);
+                var isLegacyModule = ImplementsLegacyProviderModuleInterface(type);
+
+                if (!isAdapterModule && !isLegacyModule)
+                {
+                    continue;
+                }
+
                 if (Activator.CreateInstance(type) is not { } moduleInstance)
                 {
                     continue;
                 }
 
-                if (moduleInstance is MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule module)
+                if (isAdapterModule && moduleInstance is MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule module)
                 {
                     module.Register(services, this);
                     continue;
                 }
 
-                if (ImplementsLegacyProviderModuleInterface(type))
+                if (isLegacyModule)
                 {
                     InvokeModuleRegisterMethod(moduleInstance, services);
                 }
