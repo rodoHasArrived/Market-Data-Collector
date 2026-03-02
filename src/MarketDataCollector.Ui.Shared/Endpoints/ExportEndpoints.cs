@@ -95,10 +95,10 @@ public static class ExportEndpoints
                 ?? new[]
                 {
                     new { id = "python-pandas", name = "Python / Pandas", format = "parquet", compression = "snappy" },
-                    new { id = "r-dataframe", name = "R / data.frame", format = "csv", compression = "none" },
+                    new { id = "r-stats", name = "R / data.frame", format = "csv", compression = "none" },
                     new { id = "quantconnect-lean", name = "QuantConnect Lean", format = "lean", compression = "zip" },
                     new { id = "excel", name = "Microsoft Excel", format = "xlsx", compression = "none" },
-                    new { id = "sql-postgres", name = "PostgreSQL / TimescaleDB", format = "csv", compression = "none" }
+                    new { id = "postgresql", name = "PostgreSQL / TimescaleDB", format = "csv", compression = "none" }
                 };
 
             return Results.Json(new { formats, profiles, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
