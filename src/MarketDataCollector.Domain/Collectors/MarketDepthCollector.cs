@@ -98,9 +98,9 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                 update.Timestamp,
                 symbol,
                 evt.Description,
-                sequenceNumber: update.SequenceNumber,
-                streamId: update.StreamId,
-                venue: update.Venue));
+                update.SequenceNumber,
+                update.StreamId,
+                update.Venue));
             return;
         }
 
