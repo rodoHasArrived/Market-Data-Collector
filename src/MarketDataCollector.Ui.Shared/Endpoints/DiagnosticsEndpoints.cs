@@ -86,7 +86,7 @@ public static class DiagnosticsEndpoints
                         };
                     }
                 }
-                catch { /* ignore access errors */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* ignore access errors */ }
             }
 
             return Results.Json(new

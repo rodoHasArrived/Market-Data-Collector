@@ -43,7 +43,7 @@ public static class ReplayEndpoints
                         });
                     }
                 }
-                catch { /* ignore access errors */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* skip inaccessible paths */ }
             }
 
             return Results.Json(new { files = files.Take(500), total = files.Count, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
@@ -179,7 +179,7 @@ public static class ReplayEndpoints
                         events.Add(line);
                 }
             }
-            catch { /* ignore read errors */ }
+            catch (IOException) { /* ignore read errors */ }
 
             return Results.Json(new { events, total = events.Count, filePath }, jsonOptions);
         })

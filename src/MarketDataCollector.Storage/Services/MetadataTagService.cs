@@ -255,7 +255,14 @@ public sealed class MetadataTagService : IMetadataTagService
     private async Task SaveInBackgroundAsync()
     {
         try { await SaveAsync(); }
-        catch { /* Background save failure is non-critical */ }
+        catch (IOException)
+        {
+            // Background save failure is non-critical
+        }
+        catch (JsonException)
+        {
+            // Serialization failure is non-critical for background save
+        }
     }
 
     private sealed class MetadataStore

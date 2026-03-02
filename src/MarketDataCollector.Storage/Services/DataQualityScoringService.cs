@@ -266,7 +266,8 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                         }
                     }
                 }
-                catch { /* Skip parse errors */ }
+                catch (FormatException) { /* Skip parse errors */ }
+                catch (ArgumentOutOfRangeException) { /* Skip malformed lines */ }
 
                 if (total >= 10000) break;
             }
@@ -275,9 +276,9 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
             var errorRate = (double)(gaps + outOfOrder) / total;
             return Math.Clamp(1.0 - (errorRate * 10), 0.0, 1.0);
         }
-        catch
+        catch (IOException)
         {
-            return 0.5; // Unknown quality
+            return 0.5; // Unknown quality on file read failure
         }
     }
 

@@ -240,27 +240,29 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     private void StartMessageProcessor()
     {
         _processorCts = new CancellationTokenSource();
-        _messageProcessorTask = Task.Run(async () =>
+        _messageProcessorTask = ProcessMessagesAsync(_processorCts.Token);
+    }
+
+    private async Task ProcessMessagesAsync(CancellationToken ct)
+    {
+        try
         {
-            try
+            await foreach (var action in _messageChannel.Reader.ReadAllAsync(ct))
             {
-                await foreach (var action in _messageChannel.Reader.ReadAllAsync(_processorCts.Token))
+                try
                 {
-                    try
-                    {
-                        action();
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Warning(ex, "Error processing buffered message");
-                    }
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Error processing buffered message");
                 }
             }
-            catch (OperationCanceledException)
-            {
-                // Normal shutdown
-            }
-        }, _processorCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal shutdown
+        }
     }
 
     /// <summary>
@@ -322,17 +324,19 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         _reconnectCts?.Cancel();
         _reconnectCts = new CancellationTokenSource();
 
-        _reconnectTask = Task.Run(async () =>
+        _reconnectTask = ReconnectAndClearAsync(_reconnectCts.Token);
+    }
+
+    private async Task ReconnectAndClearAsync(CancellationToken ct)
+    {
+        try
         {
-            try
-            {
-                await ReconnectWithRecoveryAsync(_reconnectCts.Token).ConfigureAwait(false);
-            }
-            finally
-            {
-                _reconnectTask = null;
-            }
-        });
+            await ReconnectWithRecoveryAsync(ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _reconnectTask = null;
+        }
     }
 
     /// <summary>

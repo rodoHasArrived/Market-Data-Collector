@@ -53,7 +53,7 @@ public static class CronEndpoints
             if (!string.IsNullOrWhiteSpace(req.TimeZoneId))
             {
                 try { timeZone = TimeZoneInfo.FindSystemTimeZoneById(req.TimeZoneId); }
-                catch { /* fall back to UTC */ }
+                catch (TimeZoneNotFoundException) { /* fall back to UTC */ }
             }
 
             var nextRuns = new List<DateTimeOffset>();

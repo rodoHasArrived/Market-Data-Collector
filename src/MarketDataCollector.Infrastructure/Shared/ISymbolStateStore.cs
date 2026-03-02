@@ -268,7 +268,7 @@ public sealed class SymbolStateStore<T> : ISymbolStateStore<T> where T : class
             if (value is IDisposable disposable)
             {
                 try { disposable.Dispose(); }
-                catch { /* ignore */ }
+                catch (ObjectDisposedException) { /* already disposed */ }
             }
         }
 

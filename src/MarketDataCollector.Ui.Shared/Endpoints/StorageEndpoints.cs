@@ -51,7 +51,7 @@ public static class StorageEndpoints
                     }
                     totalDirs = Directory.EnumerateDirectories(rootPath, "*", SearchOption.AllDirectories).Count();
                 }
-                catch { /* permission issues etc */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* permission or I/O issues */ }
             }
 
             return Results.Json(new
@@ -220,7 +220,7 @@ public static class StorageEndpoints
                     File.Delete(testFile);
                     writable = true;
                 }
-                catch { /* not writable */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* not writable */ }
             }
 
             return Results.Json(new
@@ -256,7 +256,7 @@ public static class StorageEndpoints
                         }
                     }
                 }
-                catch { /* permission issues */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* permission issues */ }
             }
 
             return Results.Json(new
@@ -325,7 +325,7 @@ public static class StorageEndpoints
                         archiveSize += new FileInfo(file).Length;
                     }
                 }
-                catch { /* permission issues */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* permission issues */ }
             }
 
             return Results.Json(new
