@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
 using Xunit;
 using Xunit.Abstractions;
 

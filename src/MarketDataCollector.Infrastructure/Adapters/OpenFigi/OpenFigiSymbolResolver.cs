@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
 using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 

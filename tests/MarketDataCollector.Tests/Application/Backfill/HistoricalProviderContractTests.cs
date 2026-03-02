@@ -3,6 +3,8 @@ using System.Text;
 using FluentAssertions;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Stooq;
+using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
 using Moq;
 using Moq.Protected;
 using Xunit;

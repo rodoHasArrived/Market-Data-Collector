@@ -2,7 +2,11 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Adapters.Alpaca;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Finnhub;
+using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
+using MarketDataCollector.Infrastructure.Adapters.Polygon;
 using Serilog;
 
 namespace MarketDataCollector.Application.Subscriptions.Services;
