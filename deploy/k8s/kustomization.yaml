@@ -1,0 +1,28 @@
+# =============================================================================
+# Market Data Collector - Kustomize Configuration
+# =============================================================================
+#
+# Deploy with:
+#   kubectl apply -k deploy/k8s/
+#
+# Preview rendered manifests:
+#   kubectl kustomize deploy/k8s/
+#
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: market-data-collector
+
+commonLabels:
+  app.kubernetes.io/part-of: mdc
+  app.kubernetes.io/managed-by: kustomize
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - configmap.yaml
+  - secret.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
