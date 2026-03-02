@@ -4,6 +4,10 @@
 **Date:** 2026-02-12
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data events come in many forms: trades, quotes, order book snapshots, aggregated bars, option data, and integrity events. The application needs to:

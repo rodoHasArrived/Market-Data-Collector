@@ -144,7 +144,7 @@ public abstract class NotificationServiceBase
         Debug.WriteLine($"[NotificationService] {type}: {title} - {message}");
     }
 
-    public async Task NotifyErrorAsync(string title, string message, Exception? exception = null)
+    public async Task NotifyErrorAsync(string title, string message, Exception? exception = null, CancellationToken ct = default)
     {
         if (!_settings.Enabled || !_settings.NotifyErrors) return;
         if (IsQuietHours()) return;
@@ -162,10 +162,10 @@ public abstract class NotificationServiceBase
         ShowNotification(title, message, NotificationType.Warning, 5000);
     }
 
-    public async Task NotifyWarningAsync(string title, string message)
+    public async Task NotifyWarningAsync(string title, string message, CancellationToken ct = default)
         => await Task.Run(() => NotifyWarning(title, message));
 
-    public async Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info)
+    public async Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info, CancellationToken ct = default)
     {
         await Task.Run(() => ShowNotification(title, message, type));
     }
@@ -173,7 +173,7 @@ public abstract class NotificationServiceBase
     public void NotifyInfo(string title, string message)
         => ShowNotification(title, message, NotificationType.Info, 4000);
 
-    public async Task NotifyConnectionStatusAsync(bool connected, string providerName, string? details = null)
+    public async Task NotifyConnectionStatusAsync(bool connected, string providerName, string? details = null, CancellationToken ct = default)
     {
         if (!_settings.Enabled || !_settings.NotifyConnectionStatus) return;
         if (IsQuietHours()) return;
@@ -190,7 +190,7 @@ public abstract class NotificationServiceBase
             connected ? 3000 : 0));
     }
 
-    public async Task NotifyBackfillCompleteAsync(bool success, int symbolCount, int barsWritten, TimeSpan duration)
+    public async Task NotifyBackfillCompleteAsync(bool success, int symbolCount, int barsWritten, TimeSpan duration, CancellationToken ct = default)
     {
         if (!_settings.Enabled || !_settings.NotifyBackfillComplete) return;
         if (IsQuietHours()) return;
@@ -203,7 +203,7 @@ public abstract class NotificationServiceBase
         await Task.Run(() => ShowNotification(title, message, success ? NotificationType.Success : NotificationType.Error));
     }
 
-    public async Task NotifyScheduledJobAsync(string jobName, bool started, bool success = true)
+    public async Task NotifyScheduledJobAsync(string jobName, bool started, bool success = true, CancellationToken ct = default)
     {
         if (!_settings.Enabled) return;
         if (IsQuietHours()) return;
@@ -215,7 +215,7 @@ public abstract class NotificationServiceBase
         await Task.Run(() => ShowNotification(title, message, type, started ? 3000 : 5000));
     }
 
-    public async Task NotifyDataGapAsync(string symbol, DateTime gapStart, DateTime gapEnd, int missingBars)
+    public async Task NotifyDataGapAsync(string symbol, DateTime gapStart, DateTime gapEnd, int missingBars, CancellationToken ct = default)
     {
         if (!_settings.Enabled || !_settings.NotifyDataGaps) return;
         if (IsQuietHours()) return;
@@ -226,7 +226,7 @@ public abstract class NotificationServiceBase
             NotificationType.Warning));
     }
 
-    public async Task NotifyStorageWarningAsync(double usedPercent, long freeSpaceBytes)
+    public async Task NotifyStorageWarningAsync(double usedPercent, long freeSpaceBytes, CancellationToken ct = default)
     {
         if (!_settings.Enabled || !_settings.NotifyStorageWarnings) return;
         if (IsQuietHours()) return;

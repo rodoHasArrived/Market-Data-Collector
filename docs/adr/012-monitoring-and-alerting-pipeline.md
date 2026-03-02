@@ -4,6 +4,10 @@
 **Date:** 2026-02-02
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data ingestion relies on continuous health checks, data quality validation, and operational alerts. Components such as providers, storage, and background services need a consistent way to:

@@ -221,7 +221,8 @@ public static class CredentialStoreExtensions
     /// <summary>
     /// Gets a key/secret pair for a provider (e.g., Alpaca).
     /// </summary>
-    public static async Task<(string? KeyId, string? SecretKey)> GetKeySecretPairAsync(
+    public static async Task<(string? KeyId, string? SecretKey,
+        CancellationToken ct = default)> GetKeySecretPairAsync(
         this ICredentialStore store, string provider, CancellationToken ct = default)
     {
         var keyResult = await store.GetCredentialAsync(provider, "keyId", ct).ConfigureAwait(false);

@@ -425,7 +425,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         );
     }
 
-    private async Task ConsumeAsync()
+    private async Task ConsumeAsync(CancellationToken ct = default)
     {
         // Set thread priority for consistent throughput
         ThreadingUtilities.SetAboveNormalPriority();
@@ -506,7 +506,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         }
     }
 
-    private async Task PeriodicFlushAsync()
+    private async Task PeriodicFlushAsync(CancellationToken ct = default)
     {
         try
         {

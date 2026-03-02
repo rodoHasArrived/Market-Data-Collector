@@ -87,7 +87,8 @@ public sealed class ActivityFeedService
         string? description = null,
         string? symbol = null,
         string? provider = null,
-        Dictionary<string, object>? metadata = null)
+        Dictionary<string, object>? metadata = null,
+        CancellationToken ct = default)
     {
         var activity = new ActivityItem
         {
@@ -248,13 +249,13 @@ public sealed class ActivityFeedService
     /// <summary>
     /// Clears all activities.
     /// </summary>
-    public async Task ClearActivitiesAsync()
+    public async Task ClearActivitiesAsync(CancellationToken ct = default)
     {
         _activities.Clear();
         await SaveActivitiesAsync();
     }
 
-    private async Task LoadActivitiesAsync()
+    private async Task LoadActivitiesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -277,7 +278,7 @@ public sealed class ActivityFeedService
         }
     }
 
-    private async Task SaveActivitiesAsync()
+    private async Task SaveActivitiesAsync(CancellationToken ct = default)
     {
         try
         {

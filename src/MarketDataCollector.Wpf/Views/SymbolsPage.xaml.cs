@@ -78,7 +78,7 @@ public partial class SymbolsPage : Page
         await LoadWatchlistsAsync();
     }
 
-    private async Task LoadSymbolsFromConfigAsync()
+    private async Task LoadSymbolsFromConfigAsync(CancellationToken ct = default)
     {
         _symbols.Clear();
 
@@ -117,7 +117,7 @@ public partial class SymbolsPage : Page
         SymbolCountText.Text = $"{_symbols.Count} symbols";
     }
 
-    private async Task LoadWatchlistsAsync()
+    private async Task LoadWatchlistsAsync(CancellationToken ct = default)
     {
         _loadCts?.Cancel();
         _loadCts = new CancellationTokenSource();
@@ -690,7 +690,7 @@ public partial class SymbolsPage : Page
         LastRefreshText.Text = "Last refreshed: just now";
     }
 
-    private async Task PersistSymbolsToConfigAsync()
+    private async Task PersistSymbolsToConfigAsync(CancellationToken ct = default)
     {
         try
         {

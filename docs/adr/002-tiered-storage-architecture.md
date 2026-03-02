@@ -4,6 +4,10 @@
 **Date:** 2024-07-20
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data collection generates high-volume, time-series data with varying access patterns:

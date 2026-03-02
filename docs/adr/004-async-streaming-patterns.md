@@ -4,6 +4,10 @@
 **Date:** 2024-08-05
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data streams are continuous and potentially unbounded. Traditional collection-based APIs have problems:

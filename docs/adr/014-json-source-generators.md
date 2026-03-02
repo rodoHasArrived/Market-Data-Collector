@@ -4,6 +4,10 @@
 **Date:** 2026-02-12
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data collection involves serializing millions of events per day:

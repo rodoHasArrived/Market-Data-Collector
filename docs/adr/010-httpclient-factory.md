@@ -4,6 +4,10 @@
 **Date:** 2024-11-20
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 The Market Data Collector makes numerous HTTP calls to external APIs:

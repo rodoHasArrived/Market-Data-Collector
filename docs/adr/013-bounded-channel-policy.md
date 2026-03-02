@@ -4,6 +4,10 @@
 **Date:** 2026-02-12
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 The application uses `System.Threading.Channels` for in-process producer-consumer pipelines. Channels handle:

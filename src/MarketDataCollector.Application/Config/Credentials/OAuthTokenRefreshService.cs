@@ -57,14 +57,14 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         if (_refreshLoop != null) return;
 
         _cts = new CancellationTokenSource();
-        _refreshLoop = Task.Run(() => RefreshLoopAsync(_cts.Token), _cts.Token);
+        _refreshLoop = RefreshLoopAsync(_cts.Token);
         _log.Information("OAuth token refresh service started");
     }
 
     /// <summary>
     /// Stops the background refresh loop.
     /// </summary>
-    public async Task StopAsync()
+    public async Task StopAsync(CancellationToken ct = default)
     {
         if (_cts == null) return;
 
@@ -96,7 +96,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// <summary>
     /// Stores an OAuth token for a provider.
     /// </summary>
-    public async Task StoreTokenAsync(string providerName, OAuthToken token)
+    public async Task StoreTokenAsync(string providerName, OAuthToken token, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(token);
         _tokens[providerName] = token;
@@ -144,7 +144,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// <summary>
     /// Removes stored token for a provider.
     /// </summary>
-    public async Task RemoveTokenAsync(string providerName)
+    public async Task RemoveTokenAsync(string providerName, CancellationToken ct = default)
     {
         _tokens.TryRemove(providerName, out _);
         await PersistTokensAsync();
@@ -343,7 +343,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         }
     }
 
-    private async Task PersistTokensAsync()
+    private async Task PersistTokensAsync(CancellationToken ct = default)
     {
         try
         {

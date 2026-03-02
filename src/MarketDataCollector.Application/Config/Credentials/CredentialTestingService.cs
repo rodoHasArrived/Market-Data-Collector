@@ -267,7 +267,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
 
     #region Provider-Specific Tests
 
-    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
+    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt,
+        CancellationToken ct = default)>
         TestAlpacaCredentialsAsync(string keyId, string? secretKey, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(secretKey))
@@ -292,7 +293,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
         };
     }
 
-    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
+    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt,
+        CancellationToken ct = default)>
         TestPolygonCredentialsAsync(string apiKey, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.polygon.io/v3/reference/tickers?limit=1");
@@ -313,7 +315,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
         };
     }
 
-    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
+    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt,
+        CancellationToken ct = default)>
         TestTiingoCredentialsAsync(string apiToken, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.tiingo.com/api/test");
@@ -334,7 +337,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
         };
     }
 
-    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
+    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt,
+        CancellationToken ct = default)>
         TestFinnhubCredentialsAsync(string apiKey, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://finnhub.io/api/v1/stock/symbol?exchange=US");
@@ -355,7 +359,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
         };
     }
 
-    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
+    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt,
+        CancellationToken ct = default)>
         TestAlphaVantageCredentialsAsync(string apiKey, CancellationToken ct)
     {
         // Alpha Vantage uses a simple query parameter approach
@@ -385,7 +390,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
         return (CredentialAuthStatus.TestFailed, $"Unexpected response: {response.StatusCode}", null);
     }
 
-    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
+    private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt,
+        CancellationToken ct = default)>
         TestNasdaqDataLinkCredentialsAsync(string apiKey, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get,
@@ -485,7 +491,7 @@ public sealed class CredentialTestingService : IAsyncDisposable
         }
     }
 
-    private async Task PersistStatusAsync()
+    private async Task PersistStatusAsync(CancellationToken ct = default)
     {
         try
         {

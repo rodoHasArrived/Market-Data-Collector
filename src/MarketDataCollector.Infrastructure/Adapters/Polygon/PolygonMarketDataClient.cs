@@ -286,7 +286,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _isAuthenticated = true;
 
             // Start receive loop
-            _receiveLoop = Task.Run(() => ReceiveLoopAsync(_cts.Token), CancellationToken.None);
+            _receiveLoop = ReceiveLoopAsync(_cts.Token);
 
             _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "Polygon"));
 
@@ -825,7 +825,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// Replaces ~60 lines of manual reconnection logic with the shared helper that provides
     /// gated exponential backoff with jitter.
     /// </summary>
-    private async Task TryReconnectAsync()
+    private async Task TryReconnectAsync(CancellationToken ct = default)
     {
         if (_isDisposing) return;
 
@@ -1094,7 +1094,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// <summary>
     /// Sends a subscribe message to the WebSocket.
     /// </summary>
-    private async Task SendSubscribeAsync(string channel)
+    private async Task SendSubscribeAsync(string channel, CancellationToken ct = default)
     {
         try
         {
@@ -1111,7 +1111,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// <summary>
     /// Sends an unsubscribe message to the WebSocket.
     /// </summary>
-    private async Task SendUnsubscribeAsync(string channel)
+    private async Task SendUnsubscribeAsync(string channel, CancellationToken ct = default)
     {
         try
         {

@@ -4,6 +4,10 @@
 **Date:** 2024-07-15
 **Deciders:** Core Team
 
+## Status
+
+Rejected
+
 ## Context
 
 As the Market Data Collector grew in complexity with multiple data providers, storage tiers, and processing pipelines, the team evaluated whether to decompose the monolithic architecture into microservices.

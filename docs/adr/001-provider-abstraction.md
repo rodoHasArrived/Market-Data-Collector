@@ -4,6 +4,10 @@
 **Date:** 2024-06-15
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 The Market Data Collector needs to support multiple data providers (Interactive Brokers, Alpaca, NYSE, etc.) for both real-time streaming and historical data retrieval. Each provider has different:

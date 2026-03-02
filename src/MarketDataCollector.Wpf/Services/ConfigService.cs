@@ -70,7 +70,7 @@ public sealed class ConfigService : ConfigServiceBase
     /// <summary>
     /// Validates the current configuration (WPF-specific result type).
     /// </summary>
-    public async Task<ConfigServiceValidationResult> ValidateConfigAsync()
+    public async Task<ConfigServiceValidationResult> ValidateConfigAsync(CancellationToken ct = default)
     {
         var result = await ValidateConfigDetailAsync();
         return new ConfigServiceValidationResult
@@ -183,7 +183,7 @@ public sealed class ConfigService : ConfigServiceBase
     /// Adds or updates a single backfill provider configuration entry.
     /// Records the change in the audit trail.
     /// </summary>
-    public async Task SetBackfillProviderOptionsAsync(string providerId, BackfillProviderOptionsDto options)
+    public async Task SetBackfillProviderOptionsAsync(string providerId, BackfillProviderOptionsDto options, CancellationToken ct = default)
     {
         var (previousJson, newJson) = await base.SetBackfillProviderOptionsAsync(providerId, options);
 
@@ -197,7 +197,7 @@ public sealed class ConfigService : ConfigServiceBase
     /// <summary>
     /// Resets a provider's configuration back to defaults.
     /// </summary>
-    public async Task ResetBackfillProviderOptionsAsync(string providerId)
+    public async Task ResetBackfillProviderOptionsAsync(string providerId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(providerId))
         {

@@ -34,7 +34,7 @@ public static class DataQualityEndpoints
     /// <summary>
     /// Wraps an async handler with consistent error handling and JSON serialization.
     /// </summary>
-    private static async Task<IResult> HandleAsync(Func<Task<IResult>> handler)
+    private static async Task<IResult> HandleAsync(Func<Task<IResult>> handler, CancellationToken ct = default)
     {
         try
         {

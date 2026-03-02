@@ -129,7 +129,7 @@ public sealed class OAuthRefreshService : IDisposable
     /// <summary>
     /// Manually triggers a refresh for a specific provider.
     /// </summary>
-    public async Task<bool> RefreshTokenAsync(string providerId)
+    public async Task<bool> RefreshTokenAsync(string providerId, CancellationToken ct = default)
     {
         try
         {
@@ -154,7 +154,7 @@ public sealed class OAuthRefreshService : IDisposable
     /// <summary>
     /// Enables or disables auto-refresh for a specific provider.
     /// </summary>
-    public async Task SetAutoRefreshAsync(string providerId, bool enabled)
+    public async Task SetAutoRefreshAsync(string providerId, bool enabled, CancellationToken ct = default)
     {
         var resource = $"{CredentialService.OAuthTokenResource}.{providerId}";
         await _credentialService.UpdateMetadataAsync(resource, m => m.AutoRefreshEnabled = enabled);
@@ -172,7 +172,7 @@ public sealed class OAuthRefreshService : IDisposable
         _ = SafeCheckExpiringTokensAsync();
     }
 
-    private async Task SafeCheckAndRefreshTokensAsync()
+    private async Task SafeCheckAndRefreshTokensAsync(CancellationToken ct = default)
     {
         try
         {
@@ -184,7 +184,7 @@ public sealed class OAuthRefreshService : IDisposable
         }
     }
 
-    private async Task SafeCheckExpiringTokensAsync()
+    private async Task SafeCheckExpiringTokensAsync(CancellationToken ct = default)
     {
         try
         {
@@ -196,7 +196,7 @@ public sealed class OAuthRefreshService : IDisposable
         }
     }
 
-    private async Task CheckAndRefreshTokensAsync()
+    private async Task CheckAndRefreshTokensAsync(CancellationToken ct = default)
     {
         var credentials = _credentialService.GetAllCredentialsWithMetadata();
         var oauthTokens = credentials.Where(c => c.IsOAuthToken);

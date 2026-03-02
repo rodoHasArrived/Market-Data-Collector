@@ -4,6 +4,10 @@
 **Date:** 2026-02-12
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data has heterogeneous access patterns requiring different storage formats:

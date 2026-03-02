@@ -136,7 +136,7 @@ public sealed class ScheduledMaintenanceService
     /// <summary>
     /// Runs a maintenance task immediately.
     /// </summary>
-    public async Task<MaintenanceResult> RunTaskNowAsync(string taskId, bool dryRun = false)
+    public async Task<MaintenanceResult> RunTaskNowAsync(string taskId, bool dryRun = false, CancellationToken ct = default)
     {
         var task = _tasks.FirstOrDefault(t => t.Id == taskId);
         if (task == null)
@@ -256,7 +256,7 @@ public sealed class ScheduledMaintenanceService
         });
     }
 
-    private async Task CheckAndExecuteScheduledTasksAsync()
+    private async Task CheckAndExecuteScheduledTasksAsync(CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
 
@@ -271,7 +271,7 @@ public sealed class ScheduledMaintenanceService
         await Task.CompletedTask;
     }
 
-    private async Task<MaintenanceResult> ExecuteTaskAsync(MaintenanceTask task, bool dryRun)
+    private async Task<MaintenanceResult> ExecuteTaskAsync(MaintenanceTask task, bool dryRun, CancellationToken ct = default)
     {
         var result = new MaintenanceResult
         {

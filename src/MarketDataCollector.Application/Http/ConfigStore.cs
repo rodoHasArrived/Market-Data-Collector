@@ -86,7 +86,7 @@ public sealed class ConfigStore
     /// </summary>
     public AppConfig Load() => LoadConfig(ConfigPath);
 
-    public async Task SaveAsync(AppConfig cfg)
+    public async Task SaveAsync(AppConfig cfg, CancellationToken ct = default)
     {
         try
         {

@@ -46,7 +46,7 @@ public sealed class SymbolMappingService
     /// <summary>
     /// Loads symbol mappings from disk.
     /// </summary>
-    public async Task LoadAsync()
+    public async Task LoadAsync(CancellationToken ct = default)
     {
         try
         {
@@ -72,7 +72,7 @@ public sealed class SymbolMappingService
     /// <summary>
     /// Saves symbol mappings to disk.
     /// </summary>
-    public async Task SaveAsync()
+    public async Task SaveAsync(CancellationToken ct = default)
     {
         try
         {
@@ -113,7 +113,7 @@ public sealed class SymbolMappingService
     /// <summary>
     /// Adds or updates a symbol mapping.
     /// </summary>
-    public async Task AddOrUpdateMappingAsync(SymbolMapping mapping)
+    public async Task AddOrUpdateMappingAsync(SymbolMapping mapping, CancellationToken ct = default)
     {
         var mappings = _config.Mappings?.ToList() ?? new List<SymbolMapping>();
 
@@ -139,7 +139,7 @@ public sealed class SymbolMappingService
     /// <summary>
     /// Removes a symbol mapping.
     /// </summary>
-    public async Task RemoveMappingAsync(string canonicalSymbol)
+    public async Task RemoveMappingAsync(string canonicalSymbol, CancellationToken ct = default)
     {
         var mappings = _config.Mappings?.ToList() ?? new List<SymbolMapping>();
         mappings.RemoveAll(m =>
@@ -252,7 +252,7 @@ public sealed class SymbolMappingService
     /// <summary>
     /// Imports mappings from CSV.
     /// </summary>
-    public async Task<int> ImportFromCsvAsync(string csvContent)
+    public async Task<int> ImportFromCsvAsync(string csvContent, CancellationToken ct = default)
     {
         var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2) return 0;

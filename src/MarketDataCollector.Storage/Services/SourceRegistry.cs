@@ -196,7 +196,7 @@ public sealed class SourceRegistry : ISourceRegistry
         _ = SaveToDiskAsync();
     }
 
-    private async Task SaveToDiskAsync()
+    private async Task SaveToDiskAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_persistencePath))
             return;

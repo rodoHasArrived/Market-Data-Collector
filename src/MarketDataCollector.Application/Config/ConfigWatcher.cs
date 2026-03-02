@@ -82,7 +82,7 @@ public sealed class ConfigWatcher : IDisposable
         _ = FlushAsyncCore();
     }
 
-    private async Task FlushAsyncCore()
+    private async Task FlushAsyncCore(CancellationToken ct = default)
     {
         try
         {
@@ -97,7 +97,7 @@ public sealed class ConfigWatcher : IDisposable
         }
     }
 
-    private static async Task<AppConfig?> TryLoadWithRetriesAsync(string path, int attempts, int delayMs)
+    private static async Task<AppConfig?> TryLoadWithRetriesAsync(string path, int attempts, int delayMs, CancellationToken ct = default)
     {
         for (int i = 0; i < attempts; i++)
         {

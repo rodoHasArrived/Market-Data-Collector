@@ -104,7 +104,7 @@ public sealed class BackfillWorkerService : IDisposable
     /// <summary>
     /// Stop the worker service.
     /// </summary>
-    public async Task StopAsync()
+    public async Task StopAsync(CancellationToken ct = default)
     {
         if (!_isRunning) return;
 
@@ -749,7 +749,7 @@ public sealed class BackfillServices : IDisposable
     /// <summary>
     /// Stop the worker service.
     /// </summary>
-    public async Task StopWorkerAsync()
+    public async Task StopWorkerAsync(CancellationToken ct = default)
     {
         await Worker.StopAsync().ConfigureAwait(false);
     }

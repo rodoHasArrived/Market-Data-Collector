@@ -248,7 +248,8 @@ public abstract class ConfigServiceBase
     /// Sets backfill provider options.
     /// Returns the previous and new JSON for audit trail purposes.
     /// </summary>
-    public async Task<(string? PreviousJson, string NewJson)> SetBackfillProviderOptionsAsync(
+    public async Task<(string? PreviousJson, string NewJson,
+        CancellationToken ct = default)> SetBackfillProviderOptionsAsync(
         string providerId,
         BackfillProviderOptionsDto options,
         CancellationToken ct = default)

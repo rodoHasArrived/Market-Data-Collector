@@ -430,7 +430,7 @@ public partial class DashboardPage : Page
         return points;
     }
 
-    private async Task StartCollectorAsync()
+    private async Task StartCollectorAsync(CancellationToken ct = default)
     {
         try
         {
@@ -461,7 +461,7 @@ public partial class DashboardPage : Page
         }
     }
 
-    private async Task StopCollectorAsync()
+    private async Task StopCollectorAsync(CancellationToken ct = default)
     {
         try
         {

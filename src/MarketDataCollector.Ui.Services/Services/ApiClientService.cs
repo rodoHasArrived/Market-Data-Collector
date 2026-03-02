@@ -286,7 +286,8 @@ public sealed class ApiClientService : IDisposable
         string endpoint,
         object? body = null,
         CancellationToken ct = default,
-        HttpClient? customClient = null) where T : class
+        HttpClient? customClient = null,
+        CancellationToken ct = default) where T : class
     {
         var url = BuildUrl(endpoint);
         var client = customClient ?? _httpClient;

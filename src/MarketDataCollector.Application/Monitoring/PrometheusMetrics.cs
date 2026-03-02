@@ -542,7 +542,7 @@ public sealed class PrometheusMetricsUpdater : IAsyncDisposable
         _updateTask = UpdateLoopAsync();
     }
 
-    private async Task UpdateLoopAsync()
+    private async Task UpdateLoopAsync(CancellationToken ct = default)
     {
         try
         {

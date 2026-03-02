@@ -4,6 +4,10 @@
 **Date:** 2024-10-15
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 As the number of data providers grows (currently 10+ historical providers, 5+ streaming providers), manual DI registration becomes:

@@ -117,7 +117,7 @@ public partial class ProviderHealthPage : Page
         }
     }
 
-    private async Task RefreshDataAsync()
+    private async Task RefreshDataAsync(CancellationToken ct = default)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();

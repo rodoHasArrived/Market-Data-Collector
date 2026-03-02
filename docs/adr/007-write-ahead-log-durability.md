@@ -4,6 +4,10 @@
 **Date:** 2026-02-12
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 Market data collection involves processing millions of events per day. Process crashes, OS failures, or power outages can result in:

@@ -108,7 +108,8 @@ public sealed class BackfillService
         DateTime fromDate,
         DateTime toDate,
         string granularity = "Daily",
-        Action<BackfillProgress>? progressCallback = null)
+        Action<BackfillProgress>? progressCallback = null,
+        CancellationToken ct = default)
     {
         if (IsRunning)
         {
@@ -293,7 +294,8 @@ public sealed class BackfillService
     public async Task StartGapFillAsync(
         string[] symbols,
         int lookbackDays = 30,
-        Action<BackfillProgress>? progressCallback = null)
+        Action<BackfillProgress>? progressCallback = null,
+        CancellationToken ct = default)
     {
         if (IsRunning)
         {
@@ -503,7 +505,7 @@ public sealed class BackfillService
     /// <summary>
     /// Gets the last backfill status.
     /// </summary>
-    public async Task<BackfillResultDto?> GetLastStatusAsync()
+    public async Task<BackfillResultDto?> GetLastStatusAsync(CancellationToken ct = default)
     {
         // In real implementation, this would load from storage
         await Task.Delay(10);
@@ -515,7 +517,7 @@ public sealed class BackfillService
     /// <summary>
     /// Runs a simple backfill operation (for UI compatibility).
     /// </summary>
-    public async Task<BackfillResultDto?> RunBackfillAsync(string provider, string[] symbols, string? from, string? to)
+    public async Task<BackfillResultDto?> RunBackfillAsync(string provider, string[] symbols, string? from, string? to, CancellationToken ct = default)
     {
         var fromDate = from != null ? DateTime.Parse(from) : DateTime.Today.AddYears(-1);
         var toDate = to != null ? DateTime.Parse(to) : DateTime.Today;
@@ -754,7 +756,8 @@ public sealed class BackfillService
     /// </summary>
     public async Task ResumeBackfillAsync(
         string checkpointJobId,
-        Action<BackfillProgress>? progressCallback = null)
+        Action<BackfillProgress>? progressCallback = null,
+        CancellationToken ct = default)
     {
         var checkpoint = await _checkpointService.LoadCheckpointAsync(checkpointJobId);
         if (checkpoint == null)

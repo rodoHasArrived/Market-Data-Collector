@@ -52,7 +52,7 @@ public partial class ServiceManagerPage : Page
         await RefreshStatusAsync();
     }
 
-    private async Task ExecuteOperationAsync(Func<Task<BackendServiceOperationResult>> operation)
+    private async Task ExecuteOperationAsync(Func<Task<BackendServiceOperationResult>> operation, CancellationToken ct = default)
     {
         if (_busy)
         {
@@ -77,7 +77,7 @@ public partial class ServiceManagerPage : Page
         }
     }
 
-    private async Task RefreshStatusAsync()
+    private async Task RefreshStatusAsync(CancellationToken ct = default)
     {
         var status = await _serviceManager.GetStatusAsync();
 

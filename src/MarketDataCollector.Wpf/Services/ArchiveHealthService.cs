@@ -42,7 +42,7 @@ public sealed class ArchiveHealthService
     public event EventHandler<VerificationJobEventArgs>? VerificationCompleted;
     public event EventHandler<ArchiveIssueEventArgs>? IssueResolved;
 
-    public async Task<ArchiveHealthStatus> GetHealthStatusAsync(bool forceRefresh = false)
+    public async Task<ArchiveHealthStatus> GetHealthStatusAsync(bool forceRefresh = false, CancellationToken ct = default)
     {
         if (!forceRefresh && _cachedHealthStatus != null &&
             DateTime.UtcNow - _lastHealthCheck < _cacheExpiration)
@@ -77,7 +77,7 @@ public sealed class ArchiveHealthService
         return localStatus;
     }
 
-    public async Task<VerificationJob> StartFullVerificationAsync(IProgress<VerificationProgress>? progress = null)
+    public async Task<VerificationJob> StartFullVerificationAsync(IProgress<VerificationProgress>? progress = null, CancellationToken ct = default)
     {
         if (_currentVerificationJob?.Status == "Running")
         {
@@ -118,7 +118,7 @@ public sealed class ArchiveHealthService
         return _currentVerificationJob;
     }
 
-    public async Task<VerificationJob> StartIncrementalVerificationAsync(DateTime since, IProgress<VerificationProgress>? progress = null)
+    public async Task<VerificationJob> StartIncrementalVerificationAsync(DateTime since, IProgress<VerificationProgress>? progress = null, CancellationToken ct = default)
     {
         if (_currentVerificationJob?.Status == "Running")
         {
@@ -165,7 +165,7 @@ public sealed class ArchiveHealthService
 
     public VerificationJob? GetCurrentVerificationJob() => _currentVerificationJob;
 
-    public async Task ResolveIssueAsync(string issueId)
+    public async Task ResolveIssueAsync(string issueId, CancellationToken ct = default)
     {
         var status = await GetHealthStatusAsync();
         var issue = status.Issues?.FirstOrDefault(i => i.Id == issueId);
@@ -178,7 +178,7 @@ public sealed class ArchiveHealthService
         }
     }
 
-    private async Task<ArchiveHealthStatus> CalculateHealthStatusAsync()
+    private async Task<ArchiveHealthStatus> CalculateHealthStatusAsync(CancellationToken ct = default)
     {
         var config = await ConfigService.Instance.LoadConfigAsync();
         var dataRoot = config?.DataRoot ?? "data";
@@ -275,7 +275,7 @@ public sealed class ArchiveHealthService
         return status;
     }
 
-    private static async Task<StorageHealthInfo> GetStorageHealthInfoAsync(string basePath)
+    private static async Task<StorageHealthInfo> GetStorageHealthInfoAsync(string basePath, CancellationToken ct = default)
     {
         var info = new StorageHealthInfo();
 
@@ -390,7 +390,7 @@ public sealed class ArchiveHealthService
         job.Errors = errors.ToArray();
     }
 
-    private static async Task<bool> VerifyFileAsync(string filePath)
+    private static async Task<bool> VerifyFileAsync(string filePath, CancellationToken ct = default)
     {
         return await Task.Run(() =>
         {
@@ -450,7 +450,7 @@ public sealed class ArchiveHealthService
         return Math.Max(0, Math.Min(100, score));
     }
 
-    private async Task SaveHealthStatusAsync(ArchiveHealthStatus status)
+    private async Task SaveHealthStatusAsync(ArchiveHealthStatus status, CancellationToken ct = default)
     {
         try
         {

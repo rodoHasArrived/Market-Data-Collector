@@ -48,7 +48,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
         _options = options ?? new AutoResubscribeOptions();
         _log = log ?? LoggingSetup.ForContext<AutoResubscribePolicy>();
 
-        _cleanupTask = Task.Run(CleanupLoopAsync);
+        _cleanupTask = CleanupLoopAsync();
 
         _log.Information(
             "AutoResubscribePolicy initialized: " +
@@ -319,7 +319,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
         ResubscriptionMetrics.SetSymbolsCircuitOpen(SymbolsWithOpenCircuit);
     }
 
-    private async Task CleanupLoopAsync()
+    private async Task CleanupLoopAsync(CancellationToken ct = default)
     {
         try
         {

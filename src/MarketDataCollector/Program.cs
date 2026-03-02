@@ -37,7 +37,7 @@ public partial class Program
     private const string DefaultConfigFileName = "appsettings.json";
     private const string ConfigPathEnvVar = "MDC_CONFIG_PATH";
 
-    public static async Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args, CancellationToken ct = default)
     {
         // Parse CLI arguments once into a typed record
         var cliArgs = CliArguments.Parse(args);
@@ -79,7 +79,7 @@ public partial class Program
         }
     }
 
-    private static async Task<int> RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
+    private static async Task<int> RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment, CancellationToken ct = default)
     {
 
         // Build all CLI command handlers and dispatch through a single dispatcher.

@@ -408,7 +408,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         }
     }
 
-    private async Task OnConnectionLostAsync()
+    private async Task OnConnectionLostAsync(CancellationToken ct = default)
     {
         if (ConnectionLost != null)
         {
@@ -416,7 +416,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         }
     }
 
-    private async Task CleanupConnectionAsync()
+    private async Task CleanupConnectionAsync(CancellationToken ct = default)
     {
         var ws = _webSocket;
         var cts = _connectionCts;

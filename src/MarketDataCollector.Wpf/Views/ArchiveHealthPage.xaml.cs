@@ -48,7 +48,7 @@ public sealed partial class ArchiveHealthPage : Page
         await LoadDictionaryStatusAsync();
     }
 
-    private async Task LoadHealthStatusAsync()
+    private async Task LoadHealthStatusAsync(CancellationToken ct = default)
     {
         try
         {
@@ -153,7 +153,7 @@ public sealed partial class ArchiveHealthPage : Page
         NoRecommendationsText.Visibility = _recommendations.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async Task LoadDictionaryStatusAsync()
+    private async Task LoadDictionaryStatusAsync(CancellationToken ct = default)
     {
         try
         {

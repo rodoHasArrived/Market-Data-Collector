@@ -82,7 +82,7 @@ public partial class BackfillPage : Page
         _backfillService.BackfillCompleted -= OnBackfillCompleted;
     }
 
-    private async Task LoadScheduledJobsAsync()
+    private async Task LoadScheduledJobsAsync(CancellationToken ct = default)
     {
         _scheduledJobs.Clear();
 
@@ -106,7 +106,7 @@ public partial class BackfillPage : Page
         NoScheduledJobsText.Visibility = _scheduledJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async Task RefreshStatusFromApiAsync()
+    private async Task RefreshStatusFromApiAsync(CancellationToken ct = default)
     {
         try
         {
@@ -153,7 +153,7 @@ public partial class BackfillPage : Page
         });
     }
 
-    private async Task LoadResumableJobsAsync()
+    private async Task LoadResumableJobsAsync(CancellationToken ct = default)
     {
         _resumableJobs.Clear();
 

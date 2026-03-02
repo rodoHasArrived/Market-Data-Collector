@@ -105,7 +105,7 @@ public partial class OrderBookPage : Page
         });
     }
 
-    private async Task LoadSymbolsAsync()
+    private async Task LoadSymbolsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -134,7 +134,7 @@ public partial class OrderBookPage : Page
         }
     }
 
-    private async Task RefreshOrderBookAsync()
+    private async Task RefreshOrderBookAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_selectedSymbol))
             return;
@@ -405,7 +405,7 @@ public partial class OrderBookPage : Page
         AskBarColumn.Width = new GridLength(1 - bidRatio, GridUnitType.Star);
     }
 
-    private async Task RefreshRecentTradesAsync()
+    private async Task RefreshRecentTradesAsync(CancellationToken ct = default)
     {
         try
         {

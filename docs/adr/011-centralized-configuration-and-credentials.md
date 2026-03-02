@@ -4,6 +4,10 @@
 **Date:** 2026-02-02
 **Deciders:** Core Team
 
+## Status
+
+Accepted
+
 ## Context
 
 The system runs across multiple host types (console, web, desktop) and integrates with numerous providers. Configuration and credentials are needed by:

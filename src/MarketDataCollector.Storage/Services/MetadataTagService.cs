@@ -252,7 +252,7 @@ public sealed class MetadataTagService : IMetadataTagService
         _ = SaveInBackgroundAsync();
     }
 
-    private async Task SaveInBackgroundAsync()
+    private async Task SaveInBackgroundAsync(CancellationToken ct = default)
     {
         try { await SaveAsync(); }
         catch { /* Background save failure is non-critical */ }

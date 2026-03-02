@@ -507,7 +507,7 @@ public sealed class StatusEndpointHandlers
     /// <summary>
     /// Gets detailed health report (async).
     /// </summary>
-    public async Task<(DetailedHealthReport? Report, string? Error)> GetDetailedHealthAsync()
+    public async Task<(DetailedHealthReport? Report, string? Error)> GetDetailedHealthAsync(CancellationToken ct = default)
     {
         if (_detailedHealthProvider == null)
         {

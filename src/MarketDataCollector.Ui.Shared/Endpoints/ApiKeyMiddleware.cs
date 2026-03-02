@@ -33,7 +33,7 @@ public sealed class ApiKeyMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, CancellationToken ct = default)
     {
         // Re-read on each request to support key rotation without restart
         var expectedApiKey = Environment.GetEnvironmentVariable(ApiKeyEnvVar);
@@ -114,7 +114,7 @@ public sealed class ApiKeyRateLimitMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, CancellationToken ct = default)
     {
         var path = context.Request.Path.Value ?? "";
 

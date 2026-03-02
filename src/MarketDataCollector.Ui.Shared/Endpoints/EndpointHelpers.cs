@@ -38,7 +38,8 @@ internal static class EndpointHelpers
     internal static async Task<IResult> HandleAsync<TService>(
         TService? service,
         Func<TService, Task<object>> handler,
-        JsonSerializerOptions opts) where TService : class
+        JsonSerializerOptions opts,
+        CancellationToken ct = default) where TService : class
     {
         if (service is null)
             return Results.Json(new { error = "Service unavailable" }, opts);

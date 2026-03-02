@@ -123,7 +123,7 @@ public partial class ActivityLogPage : Page
         });
     }
 
-    private async Task LoadLogsAsync()
+    private async Task LoadLogsAsync(CancellationToken ct = default)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();

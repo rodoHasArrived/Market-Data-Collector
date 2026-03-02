@@ -53,7 +53,7 @@ public sealed class FirstRunService
     /// Determines whether this is the first run of the application.
     /// </summary>
     /// <returns>True if this is the first run; otherwise, false.</returns>
-    public async Task<bool> IsFirstRunAsync()
+    public async Task<bool> IsFirstRunAsync(CancellationToken ct = default)
     {
         if (_isFirstRun.HasValue)
         {
@@ -91,7 +91,7 @@ public sealed class FirstRunService
     /// Creates necessary directories and default configuration.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken ct = default)
     {
         if (_isInitialized)
         {
@@ -153,7 +153,7 @@ public sealed class FirstRunService
     /// Resets the first-run state, useful for testing or reconfiguration.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
-    public async Task ResetAsync()
+    public async Task ResetAsync(CancellationToken ct = default)
     {
         await Task.Run(() =>
         {

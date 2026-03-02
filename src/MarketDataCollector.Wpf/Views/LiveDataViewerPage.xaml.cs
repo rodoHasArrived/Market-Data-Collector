@@ -131,7 +131,7 @@ public partial class LiveDataViewerPage : Page
         PauseResumeButton.IsEnabled = isConnected;
     }
 
-    private async Task LoadSymbolsAsync()
+    private async Task LoadSymbolsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -170,7 +170,7 @@ public partial class LiveDataViewerPage : Page
         }
     }
 
-    private async Task RefreshLiveDataAsync()
+    private async Task RefreshLiveDataAsync(CancellationToken ct = default)
     {
         if (_isPaused || string.IsNullOrEmpty(_selectedSymbol))
             return;
@@ -249,7 +249,7 @@ public partial class LiveDataViewerPage : Page
         }
     }
 
-    private async Task RefreshQuoteAsync()
+    private async Task RefreshQuoteAsync(CancellationToken ct = default)
     {
         try
         {

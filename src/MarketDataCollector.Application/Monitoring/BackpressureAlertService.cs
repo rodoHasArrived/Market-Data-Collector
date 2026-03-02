@@ -105,7 +105,7 @@ public sealed class BackpressureAlertService : IDisposable
         _ = CheckBackpressureCoreAsync();
     }
 
-    private async Task CheckBackpressureCoreAsync()
+    private async Task CheckBackpressureCoreAsync(CancellationToken ct = default)
     {
         try
         {
@@ -219,7 +219,7 @@ public sealed class BackpressureAlertService : IDisposable
         return timeSinceLastAlert >= minInterval;
     }
 
-    private async Task SendWebhookAsync(string message)
+    private async Task SendWebhookAsync(string message, CancellationToken ct = default)
     {
         if (_webhook == null) return;
 

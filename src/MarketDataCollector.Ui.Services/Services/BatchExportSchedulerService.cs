@@ -60,14 +60,14 @@ public sealed class BatchExportSchedulerService : IAsyncDisposable
     /// <summary>
     /// Starts the scheduler.
     /// </summary>
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         await LoadJobsAsync();
 
         // Start worker tasks
         for (int i = 0; i < 4; i++)
         {
-            _workers.Add(Task.Run(() => ProcessQueueAsync(_cts.Token)));
+            _workers.Add(ProcessQueueAsync(_cts.Token));
         }
 
         // Start scheduler timer (check every minute for scheduled jobs)
@@ -77,7 +77,7 @@ public sealed class BatchExportSchedulerService : IAsyncDisposable
     /// <summary>
     /// Stops the scheduler.
     /// </summary>
-    public async Task StopAsync()
+    public async Task StopAsync(CancellationToken ct = default)
     {
         _schedulerTimer?.Dispose();
         _cts.Cancel();
@@ -533,7 +533,7 @@ public sealed class BatchExportSchedulerService : IAsyncDisposable
         };
     }
 
-    private async Task LoadJobsAsync()
+    private async Task LoadJobsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -558,7 +558,7 @@ public sealed class BatchExportSchedulerService : IAsyncDisposable
         }
     }
 
-    private async Task SaveJobsAsync()
+    private async Task SaveJobsAsync(CancellationToken ct = default)
     {
         try
         {
