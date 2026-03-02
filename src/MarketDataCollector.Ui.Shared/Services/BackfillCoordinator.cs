@@ -1,8 +1,8 @@
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
@@ -103,13 +103,13 @@ public sealed class BackfillCoordinator : IDisposable
     /// <summary>
     /// Gets health status of all providers.
     /// </summary>
-    public Task<IReadOnlyDictionary<string, Infrastructure.Providers.Backfill.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
+    public Task<IReadOnlyDictionary<string, Infrastructure.Adapters.Core.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
         => _core.CheckProviderHealthAsync(ct);
 
     /// <summary>
     /// Resolve a symbol using OpenFIGI.
     /// </summary>
-    public Task<MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution.SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
+    public Task<MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution.SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
         => _core.ResolveSymbolAsync(symbol, ct);
 
     /// <summary>

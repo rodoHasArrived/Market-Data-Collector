@@ -1,6 +1,6 @@
 using FluentAssertions;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Xunit;
 using Xunit.Abstractions;
 

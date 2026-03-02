@@ -63,7 +63,7 @@ using MarketDataCollector.Infrastructure.Providers; // ✅ OK — Application ma
 ### Forbidden: Infrastructure using Application
 
 ```csharp
-// In MarketDataCollector.Infrastructure/Providers/SomeProvider.cs
+// In MarketDataCollector.Infrastructure/Adapters/SomeProvider.cs
 using MarketDataCollector.Application.Services; // ❌ COMPILE ERROR — Infrastructure cannot reference Application
 ```
 

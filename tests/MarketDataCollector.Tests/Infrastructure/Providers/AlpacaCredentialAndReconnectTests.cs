@@ -2,7 +2,7 @@ using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Providers.Alpaca;
+using MarketDataCollector.Infrastructure.Adapters.Alpaca;
 using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 

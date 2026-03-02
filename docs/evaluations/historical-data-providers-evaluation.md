@@ -94,7 +94,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Pagination: 10,000 bars per request
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/Alpaca/`
+- Location: `Infrastructure/Adapters/Alpaca/`
 - Error handling: Comprehensive with retry logic
 - Rate limit tracking: Integrated with `ProviderRateLimitTracker`
 
@@ -160,7 +160,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Re-check limits whenever subscription tier changes
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/Polygon/`
+- Location: `Infrastructure/Adapters/Polygon/`
 - Features: Aggregates, trades, quotes, reference data
 - Circuit breaker: Polly-based resilience
 
@@ -220,7 +220,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Concurrent: 3 historical data connections max
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/InteractiveBrokers/`
+- Location: `Infrastructure/Adapters/InteractiveBrokers/`
 - Connection: TWS/Gateway via IBApi
 - Pacing: Implemented with adaptive throttling
 
@@ -280,7 +280,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Commercial: Higher limits
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/Tiingo/`
+- Location: `Infrastructure/Adapters/Tiingo/`
 - Clean implementation with proper error handling
 
 ---
@@ -341,7 +341,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Can be blocked without warning
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/YahooFinance/`
+- Location: `Infrastructure/Adapters/YahooFinance/`
 - Defensive implementation with fallback handling
 
 ---
@@ -402,7 +402,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - No official documentation
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/Stooq/`
+- Location: `Infrastructure/Adapters/Stooq/`
 - CSV parsing with robust error handling
 
 ---
@@ -459,7 +459,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Premium: Higher limits
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/Finnhub/`
+- Location: `Infrastructure/Adapters/Finnhub/`
 - Well-structured with rate limit handling
 
 ---
@@ -516,7 +516,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Premium: 75 calls/minute
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/AlphaVantage/`
+- Location: `Infrastructure/Adapters/AlphaVantage/`
 - Basic implementation, suitable for fallback
 
 ---
@@ -574,7 +574,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Premium: Based on subscription
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/NasdaqDataLink/`
+- Location: `Infrastructure/Adapters/NasdaqDataLink/`
 - Supports multiple dataset types
 
 ---
@@ -632,7 +632,7 @@ This document evaluates the 10 historical data providers integrated into the Mar
 - Framework handles rate limiting per connector
 
 **Implementation Quality:**
-- Location: `Infrastructure/Providers/Historical/StockSharp/`
+- Location: `Infrastructure/Adapters/StockSharp/`
 - Leverages StockSharp.Algo library
 
 ---

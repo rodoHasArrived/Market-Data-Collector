@@ -98,7 +98,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
   - `IHistoricalDataSource` – Historical data retrieval (bars, dividends, splits)
   - `DataSourceCapabilities` – Declarative capability flags for feature discovery
   - `DataSourceRegistry` – Attribute-based automatic discovery via `[DataSource]`
-* **Streaming Provider implementations** in `Infrastructure/Providers/`:
+* **Streaming Provider implementations** in `Infrastructure/Adapters/`:
   - `InteractiveBrokers/IBMarketDataClient` – IB TWS/Gateway connectivity with free equity data support
   - `InteractiveBrokers/IBSimulationClient` – IB simulation mode for testing without live connection
   - `Alpaca/AlpacaMarketDataClient` – Alpaca WebSocket client with IEX/SIP feeds

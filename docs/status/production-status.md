@@ -148,8 +148,8 @@ The Polygon provider runs in stub mode without credentials and requires full Web
 
 | Component | File | Current Behavior | Production Action |
 |-----------|------|------------------|-------------------|
-| Polygon Provider | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` | Stub or partial streaming | Complete WebSocket message parsing |
-| IB Provider (no IBAPI) | `Infrastructure/Providers/InteractiveBrokers/EnhancedIBConnectionManager.cs` | Throws NotSupportedException | Build with IBAPI flag |
+| Polygon Provider | `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs` | Stub or partial streaming | Complete WebSocket message parsing |
+| IB Provider (no IBAPI) | `Infrastructure/Adapters/InteractiveBrokers/EnhancedIBConnectionManager.cs` | Throws NotSupportedException | Build with IBAPI flag |
 
 ---
 

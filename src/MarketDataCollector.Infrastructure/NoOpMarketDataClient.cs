@@ -1,6 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using System.Threading;
 
 namespace MarketDataCollector.Infrastructure;
