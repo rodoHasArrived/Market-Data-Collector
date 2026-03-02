@@ -180,6 +180,7 @@ public static class ReplayEndpoints
                 }
             }
             catch (IOException) { /* ignore read errors */ }
+            catch (UnauthorizedAccessException) { /* ignore access errors to keep preview resilient */ }
 
             return Results.Json(new { events, total = events.Count, filePath }, jsonOptions);
         })
