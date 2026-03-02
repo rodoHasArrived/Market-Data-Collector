@@ -80,15 +80,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
-            - name: config
-              mountPath: /app/appsettings.json
-              subPath: appsettings.json
-              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: mdc-data
-        - name: config
-          configMap:
-            name: mdc-appsettings
-            optional: true
