@@ -4,7 +4,8 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
-      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      Loaded="OnPageLoaded">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">
@@ -30,7 +31,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="2.4 GB" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="TotalSizeText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Total Size" HorizontalAlignment="Center"
@@ -40,17 +41,17 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="1,234,567" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="TotalFilesText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="Total Records" HorizontalAlignment="Center"
+                        <TextBlock Text="Total Files" HorizontalAlignment="Center"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" />
                     </StackPanel>
                 </Border>
 
                 <Border Grid.Column="4" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="45" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="SymbolCountText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Symbols" HorizontalAlignment="Center"
@@ -115,19 +116,19 @@
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
                             <TextBlock Text="Hot Tier" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock Text="Last 7 days" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
-                            <TextBlock Text="450 MB" Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
+                            <TextBlock x:Name="HotTierSizeText" Text="--" Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="8,0">
                             <TextBlock Text="Warm Tier" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock Text="8-30 days" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
-                            <TextBlock Text="800 MB" Foreground="{StaticResource WarningColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
+                            <TextBlock x:Name="WarmTierSizeText" Text="--" Foreground="{StaticResource WarningColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Margin="8,0,0,0">
                             <TextBlock Text="Cold Tier" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock Text="30+ days" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
-                            <TextBlock Text="1.2 GB" Foreground="{StaticResource InfoColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
+                            <TextBlock x:Name="ColdTierSizeText" Text="--" Foreground="{StaticResource InfoColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
