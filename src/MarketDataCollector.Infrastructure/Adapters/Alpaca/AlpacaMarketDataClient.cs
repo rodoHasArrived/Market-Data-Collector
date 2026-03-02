@@ -311,7 +311,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
             if (string.IsNullOrWhiteSpace(sym)) return;
 
-            var price = el.TryGetProperty("p", out var pProp) ? (decimal)pProp.GetDouble() : 0m;
+            var price = el.TryGetProperty("p", out var pProp) ? pProp.GetDecimal() : 0m;
             var size = el.TryGetProperty("s", out var szProp) ? szProp.GetInt32() : 0;
             var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
             var venue = el.TryGetProperty("x", out var xProp) ? xProp.GetString() : null;
@@ -342,9 +342,9 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
             if (string.IsNullOrWhiteSpace(sym)) return;
 
-            var bidPrice = el.TryGetProperty("bp", out var bpProp) ? (decimal)bpProp.GetDouble() : 0m;
+            var bidPrice = el.TryGetProperty("bp", out var bpProp) ? bpProp.GetDecimal() : 0m;
             var bidSize = el.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt64() : 0L;
-            var askPrice = el.TryGetProperty("ap", out var apProp) ? (decimal)apProp.GetDouble() : 0m;
+            var askPrice = el.TryGetProperty("ap", out var apProp) ? apProp.GetDecimal() : 0m;
             var askSize = el.TryGetProperty("as", out var asProp) ? asProp.GetInt64() : 0L;
             var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
 

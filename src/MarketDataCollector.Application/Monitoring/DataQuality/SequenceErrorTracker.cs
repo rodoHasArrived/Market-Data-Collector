@@ -314,9 +314,22 @@ public sealed class SequenceErrorTracker : IDisposable
                 _errors.TryRemove(key, out _);
             }
 
-            if (keysToClean.Count > 0)
+            // Also evict symbol states that have not been seen since the cutoff.
+            var staleStateKeys = _symbolStates
+                .Where(kvp => kvp.Value.LastSeenAt < cutoff)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in staleStateKeys)
             {
-                _log.Debug("Sequence error tracker cleanup: removed {Count} empty error lists", keysToClean.Count);
+                _symbolStates.TryRemove(key, out _);
+            }
+
+            var totalRemoved = keysToClean.Count + staleStateKeys.Count;
+            if (totalRemoved > 0)
+            {
+                _log.Debug("Sequence error tracker cleanup: removed {ErrorCount} empty error lists and {StateCount} stale symbol states",
+                    keysToClean.Count, staleStateKeys.Count);
             }
         }
         catch (Exception ex)
@@ -341,6 +354,7 @@ public sealed class SequenceErrorTracker : IDisposable
     {
         private long _lastSequence = -1;
         private long _totalEvents;
+        private long _lastSeenTicks = DateTimeOffset.UtcNow.Ticks;
         private readonly HashSet<long> _recentSequences = new();
         private readonly Queue<long> _sequenceHistory = new();
         private const int MaxHistorySize = 1000;
@@ -349,6 +363,7 @@ public sealed class SequenceErrorTracker : IDisposable
         public string EventType { get; }
         public string? StreamId { get; }
         public long TotalEvents => Interlocked.Read(ref _totalEvents);
+        public DateTimeOffset LastSeenAt => new DateTimeOffset(Interlocked.Read(ref _lastSeenTicks), TimeSpan.Zero);
 
         public SymbolSequenceState(string symbol, string eventType, string? streamId)
         {
@@ -360,6 +375,7 @@ public sealed class SequenceErrorTracker : IDisposable
         public SequenceError? CheckSequence(long sequence, DateTimeOffset timestamp, string? provider, SequenceErrorConfig config)
         {
             Interlocked.Increment(ref _totalEvents);
+            Interlocked.Exchange(ref _lastSeenTicks, timestamp.UtcTicks);
 
             var lastSeq = Interlocked.Read(ref _lastSequence);
             SequenceError? error = null;

@@ -460,6 +460,22 @@ public sealed class AnomalyDetector : IDisposable
                 }
             }
 
+            // Evict symbol statistics for symbols not seen since the cutoff.
+            var staleStatKeys = _symbolStats
+                .Where(kvp => kvp.Value.LastEventTime < cutoff)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in staleStatKeys)
+            {
+                _symbolStats.TryRemove(key, out _);
+            }
+
+            if (staleStatKeys.Count > 0)
+            {
+                _log.Debug("Anomaly detector cleanup: evicted {Count} stale symbol statistics", staleStatKeys.Count);
+            }
+
             // Clean up alert cooldown times
             var alertCutoff = DateTimeOffset.UtcNow.AddHours(-1);
             var keysToRemove = _lastAlertTimes

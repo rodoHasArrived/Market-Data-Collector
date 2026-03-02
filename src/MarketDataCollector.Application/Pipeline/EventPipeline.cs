@@ -370,6 +370,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// </summary>
     public async Task FlushAsync(CancellationToken ct = default)
     {
+        // Snapshot drop count at flush start so we can detect new drops during the wait.
+        var droppedAtStart = Interlocked.Read(ref _droppedCount);
+
         // Wait for the consumer to process all currently-queued events.
         // In DropOldest mode the channel silently discards events, so
         // consumed + dropped may never reach published. Fall back to
@@ -399,6 +402,16 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             {
                 await Task.Delay(1, ct).ConfigureAwait(false);
             }
+        }
+
+        // Warn if any events were dropped since the flush started — the sink will NOT
+        // receive those events, so callers must not treat flush success as full persistence.
+        var newDrops = Interlocked.Read(ref _droppedCount) - droppedAtStart;
+        if (newDrops > 0)
+        {
+            _logger.LogWarning(
+                "FlushAsync completed but {DroppedCount} event(s) were dropped due to backpressure and will NOT be persisted to storage",
+                newDrops);
         }
 
         await _sink.FlushAsync(ct).ConfigureAwait(false);

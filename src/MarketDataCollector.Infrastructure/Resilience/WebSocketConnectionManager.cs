@@ -373,6 +373,21 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
                     }
 
                     messageBuilder.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
+
+                    // Guard against unbounded message accumulation.
+                    if (messageBuilder.Length > _config.MaxMessageSizeBytes)
+                    {
+                        _log.Warning(
+                            "{Provider} WebSocket message exceeds maximum allowed size of {MaxBytes} bytes — dropping message",
+                            _providerName, _config.MaxMessageSizeBytes);
+                        messageBuilder.Clear();
+                        // Drain remaining frames of this oversized message without processing.
+                        while (!result.EndOfMessage)
+                        {
+                            result = await _webSocket.ReceiveAsync(buffer, ct).ConfigureAwait(false);
+                        }
+                        break;
+                    }
                 }
                 while (!result.EndOfMessage);
 
