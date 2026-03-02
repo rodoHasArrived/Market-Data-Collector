@@ -111,7 +111,7 @@ internal sealed class ConfigCommands : ICliCommand
         {
             var currentConfig = _configService.GetConfig();
             var newConfig = ConfigurationPresets.ApplyPreset(presetName, currentConfig);
-            _configService.SaveConfig(newConfig);
+            _configService.SaveConfig(newConfig).GetAwaiter().GetResult();
 
             Console.WriteLine();
             Console.WriteLine($"  Applied preset: {presetName}");
