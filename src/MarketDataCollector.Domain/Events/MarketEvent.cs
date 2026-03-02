@@ -53,7 +53,7 @@ public sealed record MarketEvent(
             Symbol: symbol,
             Severity: IntegritySeverity.Error,
             Description: $"Resync requested: {reason}",
-            ErrorCode: 2001,
+            ErrorCode: 1007,
             SequenceNumber: seq,
             StreamId: streamId,
             Venue: venue);
