@@ -447,6 +447,28 @@ public static class SymbolEndpoints
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
     }
+
+    /// <summary>
+    /// Maps the /api/indices endpoints for index constituent data.
+    /// </summary>
+    public static void MapIndexEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
+    {
+        var group = app.MapGroup("").WithTags("Indices");
+
+        // Index constituents
+        group.MapGet(UiApiRoutes.IndicesConstituents, (string indexName) =>
+        {
+            return Results.Json(new
+            {
+                index = indexName,
+                constituents = Array.Empty<object>(),
+                message = $"Index '{indexName}' constituent data is not yet available. Configure an index data provider.",
+                timestamp = DateTimeOffset.UtcNow
+            }, jsonOptions);
+        })
+        .WithName("GetIndexConstituents")
+        .Produces(200);
+    }
 }
 
 // Request DTOs
