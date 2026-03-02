@@ -125,7 +125,7 @@ public static class ExportEndpoints
                 Symbols = req?.Symbols,
                 OutputDirectory = outputDir,
                 ValidateBeforeExport = true,
-                EventTypes = req?.EventTypes ?? new[] { "Trade", "BboQuote" }
+                EventTypes = new[] { "Trade", "BboQuote" }
             };
 
             var result = await exportService.ExportAsync(exportRequest, ct);
