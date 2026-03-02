@@ -263,6 +263,18 @@ public sealed class MetadataTagService : IMetadataTagService
         {
             // Serialization failure is non-critical for background save
         }
+        catch (UnauthorizedAccessException)
+        {
+            // Access-related failure is non-critical for background save
+        }
+        catch (NotSupportedException)
+        {
+            // Path or operation not supported - non-critical for background save
+        }
+        catch (ArgumentException)
+        {
+            // Invalid path or argument - non-critical for background save
+        }
     }
 
     private sealed class MetadataStore
