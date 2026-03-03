@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-03 21:37:25 UTC
+> Auto-generated on 2026-03-03 22:32:12 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -529,10 +529,13 @@ Market-Data-Collector/
 │   │   │   ├── TickSizeValidator.cs
 │   │   │   └── TimestampMonotonicityChecker.cs
 │   │   ├── Pipeline/
+│   │   │   ├── DeadLetterSink.cs
 │   │   │   ├── DroppedEventAuditTrail.cs
 │   │   │   ├── EventPipeline.cs
+│   │   │   ├── IEventValidator.cs
 │   │   │   ├── IngestionJobService.cs
-│   │   │   └── PersistentDedupLedger.cs
+│   │   │   ├── PersistentDedupLedger.cs
+│   │   │   └── SchemaUpcasterRegistry.cs
 │   │   ├── Results/
 │   │   │   ├── ErrorCode.cs
 │   │   │   ├── OperationError.cs

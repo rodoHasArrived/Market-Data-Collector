@@ -706,10 +706,13 @@ Market-Data-Collector/
 │   │   │   ├── TickSizeValidator.cs
 │   │   │   └── TimestampMonotonicityChecker.cs
 │   │   ├── Pipeline/
+│   │   │   ├── DeadLetterSink.cs
 │   │   │   ├── DroppedEventAuditTrail.cs
 │   │   │   ├── EventPipeline.cs
+│   │   │   ├── IEventValidator.cs
 │   │   │   ├── IngestionJobService.cs
-│   │   │   └── PersistentDedupLedger.cs
+│   │   │   ├── PersistentDedupLedger.cs
+│   │   │   └── SchemaUpcasterRegistry.cs
 │   │   ├── Results/
 │   │   │   ├── ErrorCode.cs
 │   │   │   ├── OperationError.cs
