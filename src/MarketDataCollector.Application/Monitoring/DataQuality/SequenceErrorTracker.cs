@@ -375,7 +375,7 @@ public sealed class SequenceErrorTracker : IDisposable
         public SequenceError? CheckSequence(long sequence, DateTimeOffset timestamp, string? provider, SequenceErrorConfig config)
         {
             Interlocked.Increment(ref _totalEvents);
-            Interlocked.Exchange(ref _lastSeenTicks, timestamp.UtcTicks);
+            Interlocked.Exchange(ref _lastSeenTicks, DateTimeOffset.UtcNow.Ticks);
 
             var lastSeq = Interlocked.Read(ref _lastSequence);
             SequenceError? error = null;
