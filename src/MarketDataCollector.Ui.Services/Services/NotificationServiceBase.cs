@@ -144,13 +144,14 @@ public abstract class NotificationServiceBase
         Debug.WriteLine($"[NotificationService] {type}: {title} - {message}");
     }
 
-    public async Task NotifyErrorAsync(string title, string message, Exception? exception = null)
+    public Task NotifyErrorAsync(string title, string message, Exception? exception = null)
     {
-        if (!_settings.Enabled || !_settings.NotifyErrors) return;
-        if (IsQuietHours()) return;
+        if (!_settings.Enabled || !_settings.NotifyErrors) return Task.CompletedTask;
+        if (IsQuietHours()) return Task.CompletedTask;
 
         var fullMessage = exception != null ? $"{message}: {exception.Message}" : message;
-        await Task.Run(() => ShowNotification(title, fullMessage, NotificationType.Error, 0));
+        ShowNotification(title, fullMessage, NotificationType.Error, 0);
+        return Task.CompletedTask;
     }
 
     public void NotifySuccess(string title, string message)
@@ -162,21 +163,25 @@ public abstract class NotificationServiceBase
         ShowNotification(title, message, NotificationType.Warning, 5000);
     }
 
-    public async Task NotifyWarningAsync(string title, string message)
-        => await Task.Run(() => NotifyWarning(title, message));
-
-    public async Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info)
+    public Task NotifyWarningAsync(string title, string message)
     {
-        await Task.Run(() => ShowNotification(title, message, type));
+        NotifyWarning(title, message);
+        return Task.CompletedTask;
+    }
+
+    public Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info)
+    {
+        ShowNotification(title, message, type);
+        return Task.CompletedTask;
     }
 
     public void NotifyInfo(string title, string message)
         => ShowNotification(title, message, NotificationType.Info, 4000);
 
-    public async Task NotifyConnectionStatusAsync(bool connected, string providerName, string? details = null)
+    public Task NotifyConnectionStatusAsync(bool connected, string providerName, string? details = null)
     {
-        if (!_settings.Enabled || !_settings.NotifyConnectionStatus) return;
-        if (IsQuietHours()) return;
+        if (!_settings.Enabled || !_settings.NotifyConnectionStatus) return Task.CompletedTask;
+        if (IsQuietHours()) return Task.CompletedTask;
 
         var title = connected ? "Connected" : "Connection Lost";
         var message = connected
@@ -185,58 +190,63 @@ public abstract class NotificationServiceBase
 
         if (!string.IsNullOrEmpty(details)) message += $". {details}";
 
-        await Task.Run(() => ShowNotification(title, message,
+        ShowNotification(title, message,
             connected ? NotificationType.Success : NotificationType.Error,
-            connected ? 3000 : 0));
+            connected ? 3000 : 0);
+        return Task.CompletedTask;
     }
 
-    public async Task NotifyBackfillCompleteAsync(bool success, int symbolCount, int barsWritten, TimeSpan duration)
+    public Task NotifyBackfillCompleteAsync(bool success, int symbolCount, int barsWritten, TimeSpan duration)
     {
-        if (!_settings.Enabled || !_settings.NotifyBackfillComplete) return;
-        if (IsQuietHours()) return;
+        if (!_settings.Enabled || !_settings.NotifyBackfillComplete) return Task.CompletedTask;
+        if (IsQuietHours()) return Task.CompletedTask;
 
         var title = success ? "Backfill Complete" : "Backfill Failed";
         var message = success
             ? $"Downloaded {barsWritten:N0} bars for {symbolCount} symbol(s) in {FormatDuration(duration)}"
             : $"Backfill failed after {FormatDuration(duration)}";
 
-        await Task.Run(() => ShowNotification(title, message, success ? NotificationType.Success : NotificationType.Error));
+        ShowNotification(title, message, success ? NotificationType.Success : NotificationType.Error);
+        return Task.CompletedTask;
     }
 
-    public async Task NotifyScheduledJobAsync(string jobName, bool started, bool success = true)
+    public Task NotifyScheduledJobAsync(string jobName, bool started, bool success = true)
     {
-        if (!_settings.Enabled) return;
-        if (IsQuietHours()) return;
+        if (!_settings.Enabled) return Task.CompletedTask;
+        if (IsQuietHours()) return Task.CompletedTask;
 
         var title = started ? "Scheduled Job Started" : (success ? "Scheduled Job Complete" : "Scheduled Job Failed");
         var message = started ? $"Job '{jobName}' is now running" : $"Job '{jobName}' has completed";
         var type = started ? NotificationType.Info : (success ? NotificationType.Success : NotificationType.Error);
 
-        await Task.Run(() => ShowNotification(title, message, type, started ? 3000 : 5000));
+        ShowNotification(title, message, type, started ? 3000 : 5000);
+        return Task.CompletedTask;
     }
 
-    public async Task NotifyDataGapAsync(string symbol, DateTime gapStart, DateTime gapEnd, int missingBars)
+    public Task NotifyDataGapAsync(string symbol, DateTime gapStart, DateTime gapEnd, int missingBars)
     {
-        if (!_settings.Enabled || !_settings.NotifyDataGaps) return;
-        if (IsQuietHours()) return;
+        if (!_settings.Enabled || !_settings.NotifyDataGaps) return Task.CompletedTask;
+        if (IsQuietHours()) return Task.CompletedTask;
 
-        await Task.Run(() => ShowNotification(
+        ShowNotification(
             "Data Gap Detected",
             $"{symbol}: {missingBars} missing bars from {gapStart:yyyy-MM-dd} to {gapEnd:yyyy-MM-dd}",
-            NotificationType.Warning));
+            NotificationType.Warning);
+        return Task.CompletedTask;
     }
 
-    public async Task NotifyStorageWarningAsync(double usedPercent, long freeSpaceBytes)
+    public Task NotifyStorageWarningAsync(double usedPercent, long freeSpaceBytes)
     {
-        if (!_settings.Enabled || !_settings.NotifyStorageWarnings) return;
-        if (IsQuietHours()) return;
+        if (!_settings.Enabled || !_settings.NotifyStorageWarnings) return Task.CompletedTask;
+        if (IsQuietHours()) return Task.CompletedTask;
 
         var freeSpaceFormatted = FormatHelpers.FormatBytes(freeSpaceBytes);
         var title = usedPercent >= 95 ? "Critical: Storage Almost Full" : "Storage Warning";
         var type = usedPercent >= 95 ? NotificationType.Error : NotificationType.Warning;
 
-        await Task.Run(() => ShowNotification(title,
-            $"Data drive is {usedPercent:F1}% full. Only {freeSpaceFormatted} remaining.", type));
+        ShowNotification(title,
+            $"Data drive is {usedPercent:F1}% full. Only {freeSpaceFormatted} remaining.", type);
+        return Task.CompletedTask;
     }
 
     public void SendTestNotification()
