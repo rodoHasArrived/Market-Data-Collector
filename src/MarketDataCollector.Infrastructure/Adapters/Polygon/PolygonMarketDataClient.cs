@@ -68,8 +68,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly SemaphoreSlim _sendLock = new(1, 1);
 
     // Connection state
-    private bool _isConnected;
-    private bool _isAuthenticated;
+    private volatile bool _isConnected;
+    private volatile bool _isAuthenticated;
     private long _messageSequence;
     private volatile bool _isDisposing;
 

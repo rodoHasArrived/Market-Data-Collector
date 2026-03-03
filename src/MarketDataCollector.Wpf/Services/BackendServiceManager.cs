@@ -85,7 +85,7 @@ public sealed class BackendServiceManager : BackendServiceManagerBase
             process.Dispose();
             return true;
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
         {
             return false;
         }
@@ -98,7 +98,7 @@ public sealed class BackendServiceManager : BackendServiceManagerBase
             var process = Process.GetProcessById(processId);
             return !process.HasExited;
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             return false;
         }
@@ -111,7 +111,7 @@ public sealed class BackendServiceManager : BackendServiceManagerBase
             var response = await _httpClient.GetAsync($"{ConnectionService.Instance.ServiceUrl}/healthz", ct);
             return response.IsSuccessStatusCode;
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
         {
             return false;
         }
