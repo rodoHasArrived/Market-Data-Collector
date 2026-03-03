@@ -161,7 +161,10 @@ public sealed class ParquetStorageSink : IStorageSink
 
     private async Task FlushBufferAsync(string bufferKey, MarketEventBuffer buffer, CancellationToken ct)
     {
-        var events = buffer.DrainAll().ToList();
+        // DrainAll() uses a swap-buffer strategy — no copy allocation.
+        // Flushes are serialised by _flushGate so the returned list is not cleared
+        // before this method returns.
+        var events = buffer.DrainAll();
         if (events.Count == 0) return;
 
         try
@@ -200,7 +203,7 @@ public sealed class ParquetStorageSink : IStorageSink
         }
     }
 
-    private async Task WriteTradesAsync(string path, List<MarketEvent> events, CancellationToken ct)
+    private async Task WriteTradesAsync(string path, IReadOnlyList<MarketEvent> events, CancellationToken ct)
     {
         // Count valid trades first to size arrays exactly
         var count = 0;
@@ -250,7 +253,7 @@ public sealed class ParquetStorageSink : IStorageSink
         await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[7], sources));
     }
 
-    private async Task WriteQuotesAsync(string path, List<MarketEvent> events, CancellationToken ct)
+    private async Task WriteQuotesAsync(string path, IReadOnlyList<MarketEvent> events, CancellationToken ct)
     {
         var count = 0;
         for (var i = 0; i < events.Count; i++)
@@ -301,7 +304,7 @@ public sealed class ParquetStorageSink : IStorageSink
         await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[8], sources));
     }
 
-    private async Task WriteL2SnapshotsAsync(string path, List<MarketEvent> events, CancellationToken ct)
+    private async Task WriteL2SnapshotsAsync(string path, IReadOnlyList<MarketEvent> events, CancellationToken ct)
     {
         var snapshots = events
             .Select(e => (Event: e, Data: ExtractL2Data(e)))
@@ -341,7 +344,7 @@ public sealed class ParquetStorageSink : IStorageSink
         return bestBid > 0 && bestAsk > 0 ? bestAsk - bestBid : null;
     }
 
-    private async Task WriteBarsAsync(string path, List<MarketEvent> events, CancellationToken ct)
+    private async Task WriteBarsAsync(string path, IReadOnlyList<MarketEvent> events, CancellationToken ct)
     {
         var count = 0;
         for (var i = 0; i < events.Count; i++)
@@ -392,7 +395,7 @@ public sealed class ParquetStorageSink : IStorageSink
         await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[8], sources));
     }
 
-    private async Task WriteGenericEventsAsync(string path, List<MarketEvent> events, CancellationToken ct)
+    private async Task WriteGenericEventsAsync(string path, IReadOnlyList<MarketEvent> events, CancellationToken ct)
     {
         // For generic events, write as JSON strings in a simple schema
         var genericSchema = new ParquetSchema(

@@ -3,49 +3,76 @@ using MarketDataCollector.Domain.Events;
 namespace MarketDataCollector.Storage.Services;
 
 /// <summary>
-/// Thread-safe generic event buffer to eliminate duplicate buffer implementations
-/// across JsonlStorageSink (BatchBuffer) and ParquetStorageSink (ParquetBufferState).
-/// Both were implementing identical lock-based buffer patterns.
+/// Thread-safe generic event buffer using a swap-buffer drain strategy to eliminate
+/// per-drain allocations. Maintains two <see cref="List{T}"/> instances: <c>_active</c>
+/// (receives new events) and <c>_standby</c> (returned to callers from
+/// <see cref="DrainAll"/> so they can process events without holding the lock).
+///
+/// <para>
+/// Eliminates the duplicate lock-based buffer implementations that existed in
+/// JsonlStorageSink and ParquetStorageSink.
+/// </para>
 /// </summary>
 /// <typeparam name="T">Type of events to buffer.</typeparam>
 public class EventBuffer<T> : IDisposable where T : class
 {
-    private readonly object _lock = new();
-    private readonly List<T> _events;
-    private readonly int _capacity;
+    /// <summary>Lock protecting <see cref="_active"/> and <see cref="_standby"/>.</summary>
+    protected readonly object _lock = new();
+
+    /// <summary>
+    /// Active list that receives new events. Swapped with <see cref="_standby"/> on drain.
+    /// Accessible to subclasses for single-lock operations such as per-symbol partitioning.
+    /// </summary>
+    protected List<T> _active;
+
+    /// <summary>
+    /// Approximate count of buffered events. Updated inside <see cref="_lock"/> but readable
+    /// without the lock (volatile) so that <see cref="ShouldFlush"/> and <see cref="IsEmpty"/>
+    /// avoid lock acquisition on every incoming event.
+    /// </summary>
+    protected volatile int _count;
+
+    private List<T> _standby;
+    private readonly int _maxCapacity;
     private bool _disposed;
 
     /// <summary>
-    /// Creates a new event buffer with optional initial capacity.
+    /// Creates a new event buffer.
     /// </summary>
-    /// <param name="initialCapacity">Initial capacity (default: 1000).</param>
-    public EventBuffer(int initialCapacity = 1000)
+    /// <param name="initialCapacity">Initial backing-list capacity hint (default: 1000).</param>
+    /// <param name="maxCapacity">
+    /// Maximum number of events to retain. When the limit is reached the oldest event is
+    /// silently dropped to make room for the new one (drop-oldest policy). Defaults to
+    /// <see cref="int.MaxValue"/> (unbounded).
+    /// </param>
+    public EventBuffer(int initialCapacity = 1000, int maxCapacity = int.MaxValue)
     {
-        _capacity = initialCapacity;
-        _events = new List<T>(initialCapacity);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(initialCapacity, nameof(initialCapacity));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCapacity, nameof(maxCapacity));
+        var cap = Math.Min(initialCapacity, maxCapacity);
+        _active = new List<T>(cap);
+        _standby = new List<T>(cap);
+        _maxCapacity = maxCapacity;
     }
 
     /// <summary>
-    /// Gets the current count of buffered events.
+    /// Gets the approximate current count of buffered events.
+    /// This is a lock-free volatile read; callers should tolerate minor staleness.
     /// </summary>
-    public int Count
-    {
-        get
-        {
-            lock (_lock)
-            {
-                return _events.Count;
-            }
-        }
-    }
+    public int Count => _count;
+
+    /// <summary>Gets whether the buffer is empty (lock-free).</summary>
+    public bool IsEmpty => _count == 0;
 
     /// <summary>
-    /// Gets whether the buffer is empty.
+    /// Returns <see langword="true"/> when the buffered event count meets or exceeds
+    /// <paramref name="threshold"/>. Lock-free — safe to call on every incoming event.
     /// </summary>
-    public bool IsEmpty => Count == 0;
+    public bool ShouldFlush(int threshold) => _count >= threshold;
 
     /// <summary>
-    /// Add a single event to the buffer.
+    /// Add a single event to the buffer. When the buffer is at <c>maxCapacity</c> the
+    /// oldest buffered event is dropped to make room (drop-oldest policy).
     /// </summary>
     public void Add(T evt)
     {
@@ -54,12 +81,16 @@ public class EventBuffer<T> : IDisposable where T : class
 
         lock (_lock)
         {
-            _events.Add(evt);
+            if (_active.Count >= _maxCapacity)
+                _active.RemoveAt(0); // drop oldest; net count change is zero
+            else
+                _count++;
+            _active.Add(evt);
         }
     }
 
     /// <summary>
-    /// Add multiple events to the buffer.
+    /// Add multiple events to the buffer, applying the drop-oldest policy as needed.
     /// </summary>
     public void AddRange(IEnumerable<T> events)
     {
@@ -68,13 +99,27 @@ public class EventBuffer<T> : IDisposable where T : class
 
         lock (_lock)
         {
-            _events.AddRange(events);
+            foreach (var evt in events)
+            {
+                ArgumentNullException.ThrowIfNull(evt, nameof(evt));
+                if (_active.Count >= _maxCapacity)
+                    _active.RemoveAt(0);
+                else
+                    _count++;
+                _active.Add(evt);
+            }
         }
     }
 
     /// <summary>
-    /// Drain all events from the buffer and return them.
-    /// Buffer is cleared after this call.
+    /// Atomically drains all buffered events via a buffer swap — no copy allocation.
+    ///
+    /// <para>
+    /// The returned <see cref="IReadOnlyList{T}"/> is the buffer's internal backing store
+    /// and will be cleared and reused on the <em>next</em> call to <see cref="DrainAll"/>.
+    /// Callers must complete all processing of the returned list before the next drain
+    /// cycle begins on the same buffer instance.
+    /// </para>
     /// </summary>
     public IReadOnlyList<T> DrainAll()
     {
@@ -82,18 +127,27 @@ public class EventBuffer<T> : IDisposable where T : class
 
         lock (_lock)
         {
-            if (_events.Count == 0)
+            if (_active.Count == 0)
                 return Array.Empty<T>();
 
-            var result = _events.ToList();
-            _events.Clear();
-            return result;
+            // Swap: hand the active list to the caller; adopt the cleared standby as active.
+            var drained = _active;
+            _active = _standby;
+            _active.Clear();  // prepare ex-standby for incoming events
+            _standby = drained;
+            _count = 0;
+            return drained;
         }
     }
 
     /// <summary>
-    /// Drain up to maxCount events from the buffer.
+    /// Drain up to <paramref name="maxCount"/> events from the front of the buffer.
     /// </summary>
+    /// <remarks>
+    /// This operation is O(n) in the number of <em>remaining</em> elements because
+    /// <see cref="List{T}.RemoveRange"/> must shift the tail. For high-frequency partial
+    /// drains consider using <see cref="DrainAll"/> with an external cap instead.
+    /// </remarks>
     public IReadOnlyList<T> Drain(int maxCount)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -101,24 +155,26 @@ public class EventBuffer<T> : IDisposable where T : class
 
         lock (_lock)
         {
-            if (_events.Count == 0)
+            if (_active.Count == 0)
                 return Array.Empty<T>();
 
-            var count = Math.Min(maxCount, _events.Count);
-            var result = _events.Take(count).ToList();
-            _events.RemoveRange(0, count);
+            var count = Math.Min(maxCount, _active.Count);
+            var result = _active.GetRange(0, count); // allocates only the result list
+            _active.RemoveRange(0, count);
+            _count = _active.Count;
             return result;
         }
     }
 
     /// <summary>
-    /// Peek at all events without removing them.
+    /// Returns a snapshot of all buffered events without removing them.
+    /// Allocates a new list on every call; intended for diagnostics/monitoring only.
     /// </summary>
     public IReadOnlyList<T> PeekAll()
     {
         lock (_lock)
         {
-            return _events.ToList();
+            return _active.ToList();
         }
     }
 
@@ -129,16 +185,9 @@ public class EventBuffer<T> : IDisposable where T : class
     {
         lock (_lock)
         {
-            _events.Clear();
+            _active.Clear();
+            _count = 0;
         }
-    }
-
-    /// <summary>
-    /// Check if buffer should be flushed based on count threshold.
-    /// </summary>
-    public bool ShouldFlush(int threshold)
-    {
-        return Count >= threshold;
     }
 
     public void Dispose()
@@ -148,13 +197,15 @@ public class EventBuffer<T> : IDisposable where T : class
 
         lock (_lock)
         {
-            _events.Clear();
+            _active.Clear();
         }
+
+        GC.SuppressFinalize(this);
     }
 }
 
 /// <summary>
-/// Specialized event buffer for MarketEvent types.
+/// Specialized event buffer for <see cref="MarketEvent"/> types.
 /// </summary>
 public sealed class MarketEventBuffer : EventBuffer<MarketEvent>
 {
@@ -163,17 +214,43 @@ public sealed class MarketEventBuffer : EventBuffer<MarketEvent>
     }
 
     /// <summary>
-    /// Drain events filtered by symbol.
+    /// Drain events for a specific symbol in a single lock acquisition.
+    /// Non-matching events remain in the buffer and preserve their original ordering.
     /// </summary>
+    /// <remarks>
+    /// The previous implementation called <see cref="EventBuffer{T}.DrainAll"/> followed by
+    /// <see cref="EventBuffer{T}.AddRange"/> in two separate lock acquisitions, creating a
+    /// race window where concurrently produced events could be silently reordered. This
+    /// implementation partitions events in a single pass under one lock.
+    /// </remarks>
     public IReadOnlyList<MarketEvent> DrainBySymbol(string symbol)
     {
-        var all = DrainAll();
-        var matching = all.Where(e => e.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)).ToList();
+        ArgumentException.ThrowIfNullOrEmpty(symbol, nameof(symbol));
 
-        // Re-add non-matching events
-        var nonMatching = all.Except(matching);
-        AddRange(nonMatching);
+        lock (_lock)
+        {
+            if (_active.Count == 0)
+                return Array.Empty<MarketEvent>();
 
-        return matching;
+            var matching = new List<MarketEvent>();
+            var remaining = new List<MarketEvent>();
+
+            foreach (var evt in _active)
+            {
+                if (evt.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase))
+                    matching.Add(evt);
+                else
+                    remaining.Add(evt);
+            }
+
+            if (matching.Count == 0)
+                return Array.Empty<MarketEvent>();
+
+            _active.Clear();
+            _active.AddRange(remaining);
+            _count = _active.Count;
+
+            return matching;
+        }
     }
 }
