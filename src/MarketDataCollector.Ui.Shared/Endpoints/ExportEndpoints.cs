@@ -14,6 +14,9 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// </summary>
 public static class ExportEndpoints
 {
+    private static readonly string ExportBaseDir = Path.Combine(Path.GetTempPath(), "mdc-exports");
+    private static readonly TimeSpan ExportMaxAge = TimeSpan.FromHours(24);
+
     public static void MapExportEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
         var group = app.MapGroup("").WithTags("Export");
@@ -33,7 +36,9 @@ public static class ExportEndpoints
                 }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", Guid.NewGuid().ToString("N")[..12]);
+            CleanupOldExportDirectories();
+
+            var outputDir = Path.Combine(ExportBaseDir, Guid.NewGuid().ToString("N")[..12]);
 
             var formatOverride = req.Format?.ToLowerInvariant() switch
             {
@@ -137,7 +142,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "quality-" + Guid.NewGuid().ToString("N")[..8]);
+            var outputDir = Path.Combine(ExportBaseDir, "quality-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -184,7 +189,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "orderflow-" + Guid.NewGuid().ToString("N")[..8]);
+            var outputDir = Path.Combine(ExportBaseDir, "orderflow-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -230,7 +235,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "integrity-" + Guid.NewGuid().ToString("N")[..8]);
+            var outputDir = Path.Combine(ExportBaseDir, "integrity-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -247,7 +252,7 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
-                format = "csv",
+                format = "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
                 outputDirectory = result.Success ? outputDir : null,
@@ -270,7 +275,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "research-" + Guid.NewGuid().ToString("N")[..8]);
+            var outputDir = Path.Combine(ExportBaseDir, "research-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -316,4 +321,39 @@ public static class ExportEndpoints
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
+
+    /// <summary>
+    /// Removes export directories older than <see cref="ExportMaxAge"/> to prevent unbounded disk usage.
+    /// </summary>
+    private static void CleanupOldExportDirectories()
+    {
+        try
+        {
+            if (!Directory.Exists(ExportBaseDir)) return;
+
+            foreach (var dir in Directory.EnumerateDirectories(ExportBaseDir))
+            {
+                try
+                {
+                    var created = Directory.GetCreationTimeUtc(dir);
+                    if (DateTime.UtcNow - created > ExportMaxAge)
+                    {
+                        Directory.Delete(dir, recursive: true);
+                    }
+                }
+                catch (IOException)
+                {
+                    // Directory may be in use or already deleted
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Insufficient permissions to delete
+                }
+            }
+        }
+        catch (IOException)
+        {
+            // Base directory inaccessible, skip cleanup
+        }
+    }
 }

@@ -6,7 +6,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Core.Config;
+using MarketDataCollector.Application.Config;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -101,9 +101,9 @@ public sealed class PreflightChecker
     /// <summary>
     /// Runs checks and throws if any critical check fails.
     /// </summary>
-    public async Task EnsureReadyAsync(string dataRoot, CancellationToken ct = default)
+    public async Task EnsureReadyAsync(string dataRoot, CancellationToken ct = default, DataSourceKind? activeDataSource = null)
     {
-        var result = await RunChecksAsync(dataRoot, ct);
+        var result = await RunChecksAsync(dataRoot, ct, activeDataSource);
 
         if (!result.AllChecksPassed)
         {
@@ -583,12 +583,12 @@ public sealed class PreflightChecker
             // Validate key format (Alpaca keys start with PK or AK)
             if (keyId!.Length < 10 || keyId.Contains("YOUR_") || keyId.Contains("REPLACE"))
             {
-                var keyPrefix = keyId[..Math.Min(4, keyId.Length)];
+                var preview = keyId[..Math.Min(4, keyId.Length)];
 
                 return PreflightCheckResult.Warning(checkName,
                     "Alpaca API key appears to be a placeholder value",
                     "Replace the placeholder with your actual Alpaca API key from https://app.alpaca.markets",
-                    new Dictionary<string, object> { ["provider"] = "Alpaca", ["keyPreview"] = keyPrefix + "..." });
+                    new Dictionary<string, object> { ["provider"] = "Alpaca", ["keyPreview"] = preview + "..." });
             }
 
             var keyPrefix = keyId[..Math.Min(4, keyId.Length)];
@@ -641,19 +641,22 @@ public sealed class PreflightChecker
                 try
                 {
                     using var client = new TcpClient();
-                    var result = client.BeginConnect("127.0.0.1", port, null, null);
-                    var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(200));
-                    if (success && client.Connected)
+                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+                    client.ConnectAsync("127.0.0.1", port, cts.Token).GetAwaiter().GetResult();
+                    if (client.Connected)
                     {
-                        client.EndConnect(result);
                         return PreflightCheckResult.Passed(checkName,
                             $"Interactive Brokers gateway detected on port {port}",
                             new Dictionary<string, object> { ["provider"] = "IB", ["port"] = port });
                     }
                 }
-                catch
+                catch (OperationCanceledException)
                 {
-                    // Continue trying other ports
+                    // Timeout - continue trying other ports
+                }
+                catch (SocketException)
+                {
+                    // Connection refused - continue trying other ports
                 }
             }
 

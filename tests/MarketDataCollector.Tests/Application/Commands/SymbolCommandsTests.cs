@@ -100,6 +100,123 @@ public sealed class SymbolCommandsTests
         SymbolCommands.FormatBytes(1536).Should().Be("1.5 KB");
     }
 
+    #region ParseSymbolFile Tests
+
+    [Fact]
+    public void ParseSymbolFile_OnePerLine_ParsesCorrectly()
+    {
+        var path = WriteTempFile("AAPL\nMSFT\nGOOGL\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_CommaSeparated_ParsesCorrectly()
+    {
+        var path = WriteTempFile("AAPL,MSFT,GOOGL");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_CsvWithHeader_ExtractsFirstColumn()
+    {
+        var path = WriteTempFile("Symbol,Name,Exchange\nAAPL,Apple Inc.,NASDAQ\nMSFT,Microsoft,NASDAQ\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_SkipsComments()
+    {
+        var path = WriteTempFile("# This is a comment\nAAPL\n# Another comment\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_SkipsEmptyLines()
+    {
+        var path = WriteTempFile("AAPL\n\n\nMSFT\n  \nGOOGL\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_InvalidSymbols_AreExcluded()
+    {
+        var path = WriteTempFile("AAPL\nINVALID SYMBOL WITH SPACES\n@#$%\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_Deduplicates_CaseInsensitive()
+    {
+        var path = WriteTempFile("AAPL\naapl\nAapl\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().HaveCount(2);
+        result.Should().Contain("AAPL");
+        result.Should().Contain("MSFT");
+    }
+
+    [Fact]
+    public void ParseSymbolFile_NormalizesToUpperCase()
+    {
+        var path = WriteTempFile("aapl\nmsft\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_EmptyFile_ReturnsEmpty()
+    {
+        var path = WriteTempFile("");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ParseSymbolFile_SymbolsWithDotsAndSlashes_AreValid()
+    {
+        var path = WriteTempFile("BRK.B\nBTC/USD\nSPY-P\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "BRK.B", "BTC/USD", "SPY-P" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_SymbolTooLong_IsExcluded()
+    {
+        var longSymbol = new string('A', 21);
+        var path = WriteTempFile($"AAPL\n{longSymbol}\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_CommaSeparatedOnMultipleLines_ParsesAll()
+    {
+        var path = WriteTempFile("AAPL,MSFT\nGOOGL,AMZN\n");
+        var result = SymbolCommands.ParseSymbolFile(path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL", "AMZN" });
+    }
+
+    [Fact]
+    public void CanHandle_WithSymbolsImportFlag_ReturnsTrue()
+    {
+        var cmd = CreateCommandWithStubService();
+        cmd.CanHandle(new[] { "--symbols-import" }).Should().BeTrue();
+    }
+
+    private static string WriteTempFile(string content)
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"mdc-test-symbols-{Guid.NewGuid():N}.txt");
+        File.WriteAllText(path, content);
+        return path;
+    }
+
+    #endregion
+
     /// <summary>
     /// Creates a SymbolCommands with a stub SymbolManagementService.
     /// Uses a temp directory as config path to avoid file I/O.
