@@ -38,7 +38,7 @@ class ScriptResult:
 SCRIPT_CONFIG: Dict[str, Dict[str, Sequence[str] | str]] = {
     "scan-todos": {
         "script": "scan-todos.py",
-        "args": ["--output", "docs/status/TODO.md"],
+        "args": ["--output", "docs/status/TODO.md", "--json-output", "docs/status/todo-scan-results.json"],
         "output": "docs/status/TODO.md",
     },
     "generate-structure-docs": {
