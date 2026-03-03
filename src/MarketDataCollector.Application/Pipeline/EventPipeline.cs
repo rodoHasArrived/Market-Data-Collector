@@ -409,9 +409,14 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         var droppedAtStart = Interlocked.Read(ref _droppedCount);
 
         // Wait for the consumer to process all currently-queued events.
-        // In DropOldest mode the channel silently discards events, so
-        // consumed + dropped may never reach published. Fall back to
-        // checking whether the channel is empty and the consumer is idle.
+        // IMPORTANT: We only wait for _consumed_ events to reach the target,
+        // NOT consumed + dropped. Dropped events were never consumed and are
+        // NOT in storage, so counting them as "accounted for" would let
+        // FlushAsync return success while data is silently missing.
+        // The secondary check (channel empty + consumer idle) handles the
+        // DropOldest case where published events are silently discarded by
+        // the channel — those events will never be consumed, but we should
+        // wait until the channel is drained and the consumer is quiescent.
         var targetPublished = Interlocked.Read(ref _publishedCount);
 
         while (true)
@@ -419,13 +424,15 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             ct.ThrowIfCancellationRequested();
 
             var consumed = Interlocked.Read(ref _consumedCount);
-            var dropped = Interlocked.Read(ref _droppedCount);
 
-            // All published events accounted for
-            if (consumed + dropped >= targetPublished)
+            // All published events have been consumed (accounting for rejected events
+            // which were read from the channel but not persisted to the primary sink)
+            if (consumed + Interlocked.Read(ref _rejectedCount) >= targetPublished)
                 break;
 
-            // Channel is empty — check if the consumer has finished its batch
+            // Channel is empty — check if the consumer has finished its batch.
+            // This handles the DropOldest case where events were silently discarded
+            // by the channel before reaching the consumer.
             if (_channel.Reader.Count == 0 && !_consumerBusy)
             {
                 await Task.Delay(10, ct).ConfigureAwait(false);

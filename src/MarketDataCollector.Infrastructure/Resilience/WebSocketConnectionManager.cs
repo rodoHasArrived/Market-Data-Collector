@@ -289,9 +289,11 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         Func<Task>? onReconnected = null,
         CancellationToken ct = default)
     {
-        if (_isReconnecting) return false;
-
-        if (!await _reconnectGate.WaitAsync(0, ct))
+        // Use the semaphore as the sole gating mechanism.
+        // The previous fast-path check on _isReconnecting without holding
+        // the semaphore allowed two threads to both see false and race,
+        // potentially causing duplicate reconnection attempts.
+        if (!await _reconnectGate.WaitAsync(0, ct).ConfigureAwait(false))
         {
             _log.Debug("{Provider} reconnection already in progress, skipping duplicate attempt", _providerName);
             return false;

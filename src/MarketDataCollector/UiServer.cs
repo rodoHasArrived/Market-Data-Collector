@@ -245,6 +245,9 @@ public sealed class UiServer : IAsyncDisposable
         // Canonicalization parity dashboard (Phase 2)
         _app.MapCanonicalizationEndpoints(s_jsonOptions);
 
+        // Resilience, cost estimation, and compliance API
+        _app.MapResilienceEndpoints(s_jsonOptions);
+
         // UI API
         _app.MapUiEndpoints(s_jsonOptions);
     }

@@ -16,6 +16,7 @@ public sealed class GapAnalyzer : IDisposable
     private readonly ConcurrentDictionary<string, SymbolGapState> _symbolStates = new();
     private readonly ConcurrentDictionary<string, List<DataGap>> _detectedGaps = new();
     private readonly ConcurrentDictionary<string, LiquidityProfile> _symbolLiquidity = new();
+    private readonly ConcurrentDictionary<string, GapAnalyzerConfig> _effectiveConfigCache = new();
     private readonly GapAnalyzerConfig _config;
     private readonly Timer _cleanupTimer;
     private volatile bool _isDisposed;
@@ -44,7 +45,10 @@ public sealed class GapAnalyzer : IDisposable
     /// </summary>
     public void RegisterSymbolLiquidity(string symbol, LiquidityProfile profile)
     {
-        _symbolLiquidity[symbol.ToUpperInvariant()] = profile;
+        var normalizedSymbol = symbol.ToUpperInvariant();
+        _symbolLiquidity[normalizedSymbol] = profile;
+        // Invalidate cached effective config so it's recomputed with the new profile
+        _effectiveConfigCache.TryRemove(normalizedSymbol, out _);
         _log.Debug("Registered liquidity profile {Profile} for {Symbol}", profile, symbol);
     }
 
@@ -84,17 +88,24 @@ public sealed class GapAnalyzer : IDisposable
     private GapAnalyzerConfig GetEffectiveConfig(string symbol)
     {
         var normalizedSymbol = symbol.ToUpperInvariant();
-        if (!_symbolLiquidity.TryGetValue(normalizedSymbol, out var profile))
+        if (!_symbolLiquidity.TryGetValue(normalizedSymbol, out _))
         {
             return _config;
         }
 
-        var thresholds = LiquidityProfileProvider.GetThresholds(profile);
-        return _config with
+        // Use a per-symbol cache to avoid allocating a new GapAnalyzerConfig record
+        // on every single event. The cache is invalidated when the liquidity profile
+        // changes via RegisterSymbolLiquidity.
+        return _effectiveConfigCache.GetOrAdd(normalizedSymbol, key =>
         {
-            GapThresholdSeconds = thresholds.GapThresholdSeconds,
-            ExpectedEventsPerHour = thresholds.ExpectedEventsPerHour
-        };
+            var profile = _symbolLiquidity[key];
+            var thresholds = LiquidityProfileProvider.GetThresholds(profile);
+            return _config with
+            {
+                GapThresholdSeconds = thresholds.GapThresholdSeconds,
+                ExpectedEventsPerHour = thresholds.ExpectedEventsPerHour
+            };
+        });
     }
 
     /// <summary>
