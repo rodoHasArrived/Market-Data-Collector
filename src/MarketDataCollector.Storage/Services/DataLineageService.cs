@@ -222,7 +222,15 @@ public sealed class DataLineageService : IDataLineageService
     private async Task SaveInBackgroundAsync()
     {
         try { await SaveAsync(); }
-        catch (Exception ex)
+        catch (IOException ex)
+        {
+            _logger.LogDebug(ex, "Background lineage save failed (non-critical)");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogDebug(ex, "Background lineage save failed (non-critical)");
+        }
+        catch (JsonException ex)
         {
             _logger.LogDebug(ex, "Background lineage save failed (non-critical)");
         }

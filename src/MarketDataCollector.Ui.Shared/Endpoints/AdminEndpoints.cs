@@ -136,7 +136,7 @@ public static class AdminEndpoints
                         breakdown[subDir.Name] = new { fileCount = files.Length, bytes = dirBytes };
                     }
                 }
-                catch { /* ignore */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* skip inaccessible dirs */ }
             }
 
             return Results.Json(new
@@ -217,7 +217,7 @@ public static class AdminEndpoints
                         }
                     }
                 }
-                catch { /* ignore */ }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* skip inaccessible files */ }
             }
 
             return Results.Json(new
@@ -264,10 +264,10 @@ public static class AdminEndpoints
                         File.Delete(testFile);
                         writable = true;
                     }
-                    catch { /* not writable */ }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* not writable */ }
                 }
             }
-            catch { /* not readable */ }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* not readable */ }
 
             return Results.Json(new { rootPath, readable, writable, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })

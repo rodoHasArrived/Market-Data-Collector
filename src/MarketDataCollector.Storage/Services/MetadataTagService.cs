@@ -255,7 +255,26 @@ public sealed class MetadataTagService : IMetadataTagService
     private async Task SaveInBackgroundAsync()
     {
         try { await SaveAsync(); }
-        catch { /* Background save failure is non-critical */ }
+        catch (IOException)
+        {
+            // Background save failure is non-critical
+        }
+        catch (JsonException)
+        {
+            // Serialization failure is non-critical for background save
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Access-related failure is non-critical for background save
+        }
+        catch (NotSupportedException)
+        {
+            // Path or operation not supported - non-critical for background save
+        }
+        catch (ArgumentException)
+        {
+            // Invalid path or argument - non-critical for background save
+        }
     }
 
     private sealed class MetadataStore

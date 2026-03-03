@@ -396,7 +396,7 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
         if (int.TryParse(year, out var y) && int.TryParse(month, out var m) && int.TryParse(day, out var d))
         {
             try { date = new DateTimeOffset(new DateTime(y, m, d), TimeSpan.Zero); }
-            catch { /* invalid date */ }
+            catch (ArgumentOutOfRangeException) { /* invalid date components */ }
         }
 
         return new ParsedPathMetadata(symbol, eventType, source, date);

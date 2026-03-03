@@ -255,7 +255,7 @@ public static class SymbolEndpoints
                         eventTypes = catalog.EventTypes
                     };
                 }
-                catch (Exception ex) when (ex is IOException or InvalidOperationException) { /* non-critical */ }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException) { /* non-critical */ }
             }
 
             return Results.Json(new
