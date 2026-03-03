@@ -27,7 +27,7 @@ namespace MarketDataCollector.Application.Pipeline;
 /// and commits the WAL after each batch is flushed. For callers using
 /// <see cref="PublishAsync"/>, the WAL write occurs at publish time for full durability.
 /// </remarks>
-public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFlushable
+public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, IAsyncDisposable, IFlushable
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly IStorageSink _sink;
@@ -208,6 +208,16 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
     /// <summary>Gets whether a WAL is configured for this pipeline.</summary>
     public bool IsWalEnabled => _wal != null;
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the queue utilization has reached or exceeded 80 %.
+    /// Upstream producers should observe this signal and slow down publishing to avoid data loss.
+    /// </summary>
+    public bool IsUnderPressure => _highWaterMarkWarned;
+
+    // IBackpressureSignal: return a 0–1 fraction while the public property keeps 0–100 for
+    // backwards compatibility with callers that already use it for display purposes.
+    double IBackpressureSignal.QueueUtilization => QueueUtilization / 100.0;
 
     #endregion
 
