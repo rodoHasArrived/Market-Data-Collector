@@ -385,6 +385,13 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
                         while (!result.EndOfMessage)
                         {
                             result = await _webSocket.ReceiveAsync(buffer, ct).ConfigureAwait(false);
+
+                            if (result.MessageType == WebSocketMessageType.Close)
+                            {
+                                _log.Information("{Provider} WebSocket closed by server while draining oversized message", _providerName);
+                                StateChanged?.Invoke(WebSocketState.CloseReceived);
+                                return;
+                            }
                         }
                         break;
                     }
