@@ -792,7 +792,10 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Models/
 │   │   │   │   ...
-│   │   │   └── MarketDataModels.cs
+│   │   │   ├── MarketDataModels.cs
+│   │   │   ├── ProviderId.cs
+│   │   │   ├── SymbolId.cs
+│   │   │   └── VenueCode.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportModels.cs
 │   │   │   └── ExportPreset.cs
@@ -802,7 +805,8 @@ Market-Data-Collector/
 │   │   │   ├── IngestionJob.cs
 │   │   │   └── PipelinePolicyConstants.cs
 │   │   ├── Schema/
-│   │   │   └── EventSchema.cs
+│   │   │   ├── EventSchema.cs
+│   │   │   └── ISchemaUpcaster.cs
 │   │   ├── Session/
 │   │   │   └── CollectionSession.cs
 │   │   └── MarketDataCollector.Contracts.csproj
@@ -865,6 +869,7 @@ Market-Data-Collector/
 │   │   ├── Events/
 │   │   │   ├── Publishers/
 │   │   │   │   ...
+│   │   │   ├── IBackpressureSignal.cs
 │   │   │   ├── IMarketEventPublisher.cs
 │   │   │   ├── MarketEvent.cs
 │   │   │   └── MarketEventPayload.cs
@@ -1384,8 +1389,9 @@ Market-Data-Collector/
 │   │   ├── Domain/
 │   │   │   ├── Collectors/
 │   │   │   │   ...
-│   │   │   └── Models/
-│   │   │       ...
+│   │   │   ├── Models/
+│   │   │   │   ...
+│   │   │   └── StrongDomainTypeTests.cs
 │   │   ├── Infrastructure/
 │   │   │   ├── DataSources/
 │   │   │   │   ...

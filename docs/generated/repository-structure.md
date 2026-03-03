@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-03 05:04:11 UTC
+> Auto-generated on 2026-03-03 05:25:15 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -615,7 +615,10 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Models/
 │   │   │   │   ...
-│   │   │   └── MarketDataModels.cs
+│   │   │   ├── MarketDataModels.cs
+│   │   │   ├── ProviderId.cs
+│   │   │   ├── SymbolId.cs
+│   │   │   └── VenueCode.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportModels.cs
 │   │   │   └── ExportPreset.cs
@@ -625,7 +628,8 @@ Market-Data-Collector/
 │   │   │   ├── IngestionJob.cs
 │   │   │   └── PipelinePolicyConstants.cs
 │   │   ├── Schema/
-│   │   │   └── EventSchema.cs
+│   │   │   ├── EventSchema.cs
+│   │   │   └── ISchemaUpcaster.cs
 │   │   ├── Session/
 │   │   │   └── CollectionSession.cs
 │   │   └── MarketDataCollector.Contracts.csproj
@@ -688,6 +692,7 @@ Market-Data-Collector/
 │   │   ├── Events/
 │   │   │   ├── Publishers/
 │   │   │   │   ...
+│   │   │   ├── IBackpressureSignal.cs
 │   │   │   ├── IMarketEventPublisher.cs
 │   │   │   ├── MarketEvent.cs
 │   │   │   └── MarketEventPayload.cs
@@ -1207,8 +1212,9 @@ Market-Data-Collector/
 │   │   ├── Domain/
 │   │   │   ├── Collectors/
 │   │   │   │   ...
-│   │   │   └── Models/
-│   │   │       ...
+│   │   │   ├── Models/
+│   │   │   │   ...
+│   │   │   └── StrongDomainTypeTests.cs
 │   │   ├── Infrastructure/
 │   │   │   ├── DataSources/
 │   │   │   │   ...
