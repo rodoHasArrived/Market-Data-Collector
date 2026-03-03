@@ -308,22 +308,6 @@ public sealed class TradeDataCollector
             lock (_sync)
             {
                 _tradeCount++;
-                _vwapNumerator += trade.Price * trade.Size;
-                _vwapDenominator += trade.Size;
-
-                switch (trade.Aggressor)
-                {
-                    case AggressorSide.Buy:
-                        _buyVolume += trade.Size;
-                        break;
-                    case AggressorSide.Sell:
-                        _sellVolume += trade.Size;
-                        break;
-                    default:
-                        _unknownVolume += trade.Size;
-                        break;
-                }
-
                 _tradeWindow.Enqueue(trade);
                 foreach (var rollingWindow in _rollingByWindow.Values)
                     AddToRollingWindow(rollingWindow, trade);
