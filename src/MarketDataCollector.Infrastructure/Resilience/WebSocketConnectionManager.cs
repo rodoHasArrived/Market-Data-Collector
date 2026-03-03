@@ -392,6 +392,13 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
                                 StateChanged?.Invoke(WebSocketState.CloseReceived);
                                 return;
                             }
+
+                            if (result.MessageType == WebSocketMessageType.Close)
+                            {
+                                _log.Information("{Provider} WebSocket closed by server while draining oversized message", _providerName);
+                                StateChanged?.Invoke(WebSocketState.CloseReceived);
+                                return;
+                            }
                         }
                         break;
                     }
