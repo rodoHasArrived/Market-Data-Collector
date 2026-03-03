@@ -593,6 +593,19 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var tradeId = elem.TryGetProperty("i", out var idProp) ? idProp.GetString() : null;
             var exchange = elem.TryGetProperty("x", out var xProp) ? xProp.GetInt32() : 0;
 
+            // Reject trades with invalid price or size to prevent corrupt data in storage
+            if (price <= 0)
+            {
+                _log.Debug("Skipping Polygon trade for {Symbol} with invalid price {Price}", symbol, price);
+                return;
+            }
+
+            if (size <= 0)
+            {
+                _log.Debug("Skipping Polygon trade for {Symbol} with invalid size {Size}", symbol, size);
+                return;
+            }
+
             // Parse conditions to determine aggressor side using comprehensive mapping
             var aggressor = AggressorSide.Unknown;
             if (elem.TryGetProperty("c", out var conditions) && conditions.ValueKind == JsonValueKind.Array)
@@ -642,6 +655,21 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var askSize = elem.TryGetProperty("as", out var asProp) ? asProp.GetInt64() : 0L;
             var timestamp = elem.TryGetProperty("t", out var tsProp) ? tsProp.GetInt64() : 0L;
             var exchange = elem.TryGetProperty("x", out var xProp) ? xProp.GetInt32() : 0;
+
+            // Reject quotes where both bid and ask are missing/zero
+            if (bidPrice <= 0 && askPrice <= 0)
+            {
+                _log.Debug("Skipping Polygon quote for {Symbol} with no valid prices", symbol);
+                return;
+            }
+
+            // Reject inverted spreads (ask < bid) which indicate bad data
+            if (bidPrice > 0 && askPrice > 0 && askPrice < bidPrice)
+            {
+                _log.Debug("Skipping Polygon quote for {Symbol} with inverted spread: bid={Bid} ask={Ask}",
+                    symbol, bidPrice, askPrice);
+                return;
+            }
 
             var ts = timestamp > 0
                 ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
@@ -696,6 +724,14 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 return;
             }
 
+            // Validate OHLC ordering: low must be <= all others, high must be >= all others
+            if (low > high || low > open || low > close || high < open || high < close)
+            {
+                _log.Warning("Skipping aggregate for {Symbol} with inconsistent OHLC: O={Open} H={High} L={Low} C={Close}",
+                    symbol, open, high, low, close);
+                return;
+            }
+
             // Parse additional fields
             var vwap = elem.TryGetProperty("vw", out var vwProp) ? vwProp.GetDecimal() : 0m;
             var startTimestamp = elem.TryGetProperty("s", out var sProp) ? sProp.GetInt64() : 0L;
@@ -747,12 +783,19 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         var status = elem.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
         var message = elem.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : null;
 
-        _log.Debug("Polygon status: {Status} - {Message}", status, message);
+        if (status == "error" || status == "auth_failed")
+        {
+            _log.Error("Polygon server error: {Status} - {Message}", status, message);
+            return;
+        }
 
         if (status == "success" && message?.Contains("subscribed") == true)
         {
             _log.Information("Polygon subscription confirmed: {Message}", message);
+            return;
         }
+
+        _log.Debug("Polygon status: {Status} - {Message}", status, message);
     }
 
     /// <summary>

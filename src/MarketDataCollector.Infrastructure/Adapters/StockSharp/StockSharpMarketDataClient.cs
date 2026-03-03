@@ -240,27 +240,41 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     private void StartMessageProcessor()
     {
         _processorCts = new CancellationTokenSource();
-        _messageProcessorTask = Task.Run(async () =>
+        _messageProcessorTask = ProcessMessagesAsync(_processorCts.Token);
+    }
+
+    /// <summary>
+    /// Background message processing loop. Runs for the lifetime of the connection.
+    /// </summary>
+    private async Task ProcessMessagesAsync(CancellationToken ct)
+    {
+        try
         {
-            try
+            await foreach (var action in _messageChannel.Reader.ReadAllAsync(ct))
             {
-                await foreach (var action in _messageChannel.Reader.ReadAllAsync(_processorCts.Token))
+                try
                 {
-                    try
-                    {
-                        action();
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Warning(ex, "Error processing buffered message");
-                    }
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Error processing buffered message");
                 }
             }
-            catch (OperationCanceledException)
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Normal shutdown
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Message processor crashed unexpectedly");
+            if (!_disposed && CurrentState == ConnectionState.Connected)
             {
-                // Normal shutdown
+                SetConnectionState(ConnectionState.Error);
+                TriggerReconnection();
             }
-        }, _processorCts.Token);
+        }
     }
 
     /// <summary>
@@ -322,17 +336,30 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         _reconnectCts?.Cancel();
         _reconnectCts = new CancellationTokenSource();
 
-        _reconnectTask = Task.Run(async () =>
+        _reconnectTask = RunReconnectionAsync(_reconnectCts.Token);
+    }
+
+    /// <summary>
+    /// Wrapper that ensures _reconnectTask is cleared when reconnection completes.
+    /// </summary>
+    private async Task RunReconnectionAsync(CancellationToken ct)
+    {
+        try
         {
-            try
-            {
-                await ReconnectWithRecoveryAsync(_reconnectCts.Token).ConfigureAwait(false);
-            }
-            finally
-            {
-                _reconnectTask = null;
-            }
-        });
+            await ReconnectWithRecoveryAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Normal cancellation during shutdown
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Unexpected error in reconnection task");
+        }
+        finally
+        {
+            _reconnectTask = null;
+        }
     }
 
     /// <summary>
@@ -413,8 +440,25 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             }
         }
 
-        _log.Error("Failed to reconnect after {Attempts} attempts", _reconnectAttempt);
+        _log.Error("Failed to reconnect after {Attempts} attempts. Will retry in 5 minutes.", _reconnectAttempt);
         SetConnectionState(ConnectionState.Error);
+
+        // Schedule a deferred reconnection attempt to avoid permanent disconnection
+        // in unattended mode. Reset the attempt counter so the next round starts fresh.
+        try
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5), ct).ConfigureAwait(false);
+            if (!_disposed)
+            {
+                _reconnectAttempt = 0;
+                _log.Information("Retrying reconnection after deferred delay");
+                await ReconnectWithRecoveryAsync(ct).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Shutdown requested during deferred wait
+        }
     }
 
     /// <summary>
@@ -920,49 +964,56 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// </summary>
     private void OnNewTrade(Trade trade)
     {
-        if (trade == null) return;
-
-        // Update heartbeat timestamp (thread-safe)
-        UpdateLastDataReceived();
-
-        var symbol = trade.Security?.Code ?? trade.Security?.Id ?? "UNKNOWN";
-
-        // Buffer the message for processing (Hydra pattern)
-        // This prevents blocking the connector's callback thread during bursts
-        if (!_messageChannel.Writer.TryWrite(() =>
+        try
         {
-            try
-            {
-                var update = new MarketTradeUpdate(
-                    Timestamp: trade.Time,
-                    Symbol: symbol,
-                    Price: trade.Price,
-                    Size: (long)trade.Volume,
-                    Aggressor: trade.OrderDirection switch
-                    {
-                        Sides.Buy => AggressorSide.Buy,
-                        Sides.Sell => AggressorSide.Sell,
-                        _ => AggressorSide.Unknown
-                    },
-                    SequenceNumber: trade.Id,
-                    StreamId: "STOCKSHARP",
-                    Venue: trade.Security?.Board?.Code ?? _config.ConnectorType
-                );
+            if (trade?.Security == null) return;
 
-                _tradeCollector.OnTrade(update);
-            }
-            catch (Exception ex)
+            // Update heartbeat timestamp (thread-safe)
+            UpdateLastDataReceived();
+
+            var symbol = trade.Security.Code ?? trade.Security.Id ?? "UNKNOWN";
+
+            // Buffer the message for processing (Hydra pattern)
+            // This prevents blocking the connector's callback thread during bursts
+            if (!_messageChannel.Writer.TryWrite(() =>
             {
-                _log.Warning(ex, "Error processing StockSharp trade for {Symbol}", symbol);
+                try
+                {
+                    var update = new MarketTradeUpdate(
+                        Timestamp: trade.Time,
+                        Symbol: symbol,
+                        Price: trade.Price,
+                        Size: (long)trade.Volume,
+                        Aggressor: trade.OrderDirection switch
+                        {
+                            Sides.Buy => AggressorSide.Buy,
+                            Sides.Sell => AggressorSide.Sell,
+                            _ => AggressorSide.Unknown
+                        },
+                        SequenceNumber: trade.Id,
+                        StreamId: "STOCKSHARP",
+                        Venue: trade.Security?.Board?.Code ?? _config.ConnectorType
+                    );
+
+                    _tradeCollector.OnTrade(update);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Error processing StockSharp trade for {Symbol}", symbol);
+                }
+            }))
+            {
+                // Track message drops for monitoring
+                var dropCount = Interlocked.Increment(ref _messageDropCount);
+                if (dropCount % 1000 == 0)
+                {
+                    _log.Warning("StockSharp message buffer overflow: {DropCount} messages dropped total", dropCount);
+                }
             }
-        }))
+        }
+        catch (Exception ex)
         {
-            // Track message drops for monitoring
-            var dropCount = Interlocked.Increment(ref _messageDropCount);
-            if (dropCount % 1000 == 0)
-            {
-                _log.Warning("StockSharp message buffer overflow: {DropCount} messages dropped total", dropCount);
-            }
+            _log.Error(ex, "Critical error in OnNewTrade event handler");
         }
     }
 
@@ -972,83 +1023,90 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// </summary>
     private void OnMarketDepthChanged(MarketDepth depth)
     {
-        if (depth?.Security == null) return;
-
-        // Update heartbeat timestamp (thread-safe)
-        UpdateLastDataReceived();
-
-        var symbol = depth.Security.Code ?? depth.Security.Id ?? "UNKNOWN";
-        var timestamp = depth.LastChangeTime;
-        var venue = depth.Security.Board?.Code ?? _config.ConnectorType;
-
-        // Capture lightweight price/volume snapshots instead of full Quote objects
-        // to reduce per-message GC pressure in this hot path
-        var bidCount = depth.Bids.Count;
-        var askCount = depth.Asks.Count;
-        var bidData = System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Rent(bidCount);
-        var askData = System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Rent(askCount);
-        var bc = 0;
-        foreach (var q in depth.Bids) { bidData[bc++] = (q.Price, q.Volume); }
-        var ac = 0;
-        foreach (var q in depth.Asks) { askData[ac++] = (q.Price, q.Volume); }
-
-        // Buffer the message for processing (Hydra pattern)
-        if (!_messageChannel.Writer.TryWrite(() =>
+        try
         {
-            try
-            {
-                // Process bids
-                for (int i = 0; i < bidCount; i++)
-                {
-                    var (price, volume) = bidData[i];
-                    var update = new MarketDepthUpdate(
-                        Timestamp: timestamp,
-                        Symbol: symbol,
-                        Position: i,
-                        Operation: DepthOperation.Update,
-                        Side: OrderBookSide.Bid,
-                        Price: price,
-                        Size: volume,
-                        MarketMaker: null,
-                        SequenceNumber: 0,
-                        StreamId: "STOCKSHARP",
-                        Venue: venue
-                    );
-                    _depthCollector.OnDepth(update);
-                }
+            if (depth?.Security == null) return;
 
-                // Process asks
-                for (int i = 0; i < askCount; i++)
+            // Update heartbeat timestamp (thread-safe)
+            UpdateLastDataReceived();
+
+            var symbol = depth.Security.Code ?? depth.Security.Id ?? "UNKNOWN";
+            var timestamp = depth.LastChangeTime;
+            var venue = depth.Security.Board?.Code ?? _config.ConnectorType;
+
+            // Capture lightweight price/volume snapshots instead of full Quote objects
+            // to reduce per-message GC pressure in this hot path
+            var bidCount = depth.Bids.Count;
+            var askCount = depth.Asks.Count;
+            var bidData = System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Rent(bidCount);
+            var askData = System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Rent(askCount);
+            var bc = 0;
+            foreach (var q in depth.Bids) { bidData[bc++] = (q.Price, q.Volume); }
+            var ac = 0;
+            foreach (var q in depth.Asks) { askData[ac++] = (q.Price, q.Volume); }
+
+            // Buffer the message for processing (Hydra pattern)
+            if (!_messageChannel.Writer.TryWrite(() =>
+            {
+                try
                 {
-                    var (price, volume) = askData[i];
-                    var update = new MarketDepthUpdate(
-                        Timestamp: timestamp,
-                        Symbol: symbol,
-                        Position: i,
-                        Operation: DepthOperation.Update,
-                        Side: OrderBookSide.Ask,
-                        Price: price,
-                        Size: volume,
-                        MarketMaker: null,
-                        SequenceNumber: 0,
-                        StreamId: "STOCKSHARP",
-                        Venue: venue
-                    );
-                    _depthCollector.OnDepth(update);
+                    // Process bids
+                    for (int i = 0; i < bidCount; i++)
+                    {
+                        var (price, volume) = bidData[i];
+                        var update = new MarketDepthUpdate(
+                            Timestamp: timestamp,
+                            Symbol: symbol,
+                            Position: i,
+                            Operation: DepthOperation.Update,
+                            Side: OrderBookSide.Bid,
+                            Price: price,
+                            Size: volume,
+                            MarketMaker: null,
+                            SequenceNumber: 0,
+                            StreamId: "STOCKSHARP",
+                            Venue: venue
+                        );
+                        _depthCollector.OnDepth(update);
+                    }
+
+                    // Process asks
+                    for (int i = 0; i < askCount; i++)
+                    {
+                        var (price, volume) = askData[i];
+                        var update = new MarketDepthUpdate(
+                            Timestamp: timestamp,
+                            Symbol: symbol,
+                            Position: i,
+                            Operation: DepthOperation.Update,
+                            Side: OrderBookSide.Ask,
+                            Price: price,
+                            Size: volume,
+                            MarketMaker: null,
+                            SequenceNumber: 0,
+                            StreamId: "STOCKSHARP",
+                            Venue: venue
+                        );
+                        _depthCollector.OnDepth(update);
+                    }
                 }
-            }
-            catch (Exception ex)
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Error processing StockSharp depth for {Symbol}", symbol);
+                }
+                finally
+                {
+                    System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Return(bidData);
+                    System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Return(askData);
+                }
+            }))
             {
-                _log.Warning(ex, "Error processing StockSharp depth for {Symbol}", symbol);
+                Interlocked.Increment(ref _messageDropCount);
             }
-            finally
-            {
-                System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Return(bidData);
-                System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Return(askData);
-            }
-        }))
+        }
+        catch (Exception ex)
         {
-            Interlocked.Increment(ref _messageDropCount);
+            _log.Error(ex, "Critical error in OnMarketDepthChanged event handler");
         }
     }
 
@@ -1058,66 +1116,73 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// </summary>
     private void OnValuesChanged(Security security, IEnumerable<KeyValuePair<Level1Fields, object>> changes, DateTimeOffset serverTime, DateTimeOffset localTime)
     {
-        if (security == null) return;
-
-        // Update heartbeat timestamp (thread-safe)
-        UpdateLastDataReceived();
-
-        var symbol = security.Code ?? security.Id ?? "UNKNOWN";
-        var venue = security.Board?.Code ?? _config.ConnectorType;
-
-        // Pre-process values before buffering
-        decimal bidPrice = 0, askPrice = 0;
-        long bidSize = 0, askSize = 0;
-
-        foreach (var change in changes)
+        try
         {
-            switch (change.Key)
+            if (security == null) return;
+
+            // Update heartbeat timestamp (thread-safe)
+            UpdateLastDataReceived();
+
+            var symbol = security.Code ?? security.Id ?? "UNKNOWN";
+            var venue = security.Board?.Code ?? _config.ConnectorType;
+
+            // Pre-process values before buffering
+            decimal bidPrice = 0, askPrice = 0;
+            long bidSize = 0, askSize = 0;
+
+            foreach (var change in changes)
             {
-                case Level1Fields.BestBidPrice when change.Value is decimal d:
-                    bidPrice = d;
-                    break;
-                case Level1Fields.BestBidVolume when change.Value is decimal d:
-                    bidSize = (long)d;
-                    break;
-                case Level1Fields.BestAskPrice when change.Value is decimal d:
-                    askPrice = d;
-                    break;
-                case Level1Fields.BestAskVolume when change.Value is decimal d:
-                    askSize = (long)d;
-                    break;
+                switch (change.Key)
+                {
+                    case Level1Fields.BestBidPrice when change.Value is decimal d:
+                        bidPrice = d;
+                        break;
+                    case Level1Fields.BestBidVolume when change.Value is decimal d:
+                        bidSize = (long)d;
+                        break;
+                    case Level1Fields.BestAskPrice when change.Value is decimal d:
+                        askPrice = d;
+                        break;
+                    case Level1Fields.BestAskVolume when change.Value is decimal d:
+                        askSize = (long)d;
+                        break;
+                }
+            }
+
+            // Only emit quote if we have valid bid/ask prices
+            if (bidPrice <= 0 && askPrice <= 0) return;
+
+            // Buffer the message for processing (Hydra pattern)
+            if (!_messageChannel.Writer.TryWrite(() =>
+            {
+                try
+                {
+                    var quoteUpdate = new MarketQuoteUpdate(
+                        Timestamp: serverTime,
+                        Symbol: symbol,
+                        BidPrice: bidPrice,
+                        BidSize: bidSize,
+                        AskPrice: askPrice,
+                        AskSize: askSize,
+                        SequenceNumber: null,
+                        StreamId: "STOCKSHARP",
+                        Venue: venue
+                    );
+
+                    _quoteCollector.OnQuote(quoteUpdate);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Error processing StockSharp Level1 for {Symbol}", symbol);
+                }
+            }))
+            {
+                Interlocked.Increment(ref _messageDropCount);
             }
         }
-
-        // Only emit quote if we have valid bid/ask prices
-        if (bidPrice <= 0 && askPrice <= 0) return;
-
-        // Buffer the message for processing (Hydra pattern)
-        if (!_messageChannel.Writer.TryWrite(() =>
+        catch (Exception ex)
         {
-            try
-            {
-                var quoteUpdate = new MarketQuoteUpdate(
-                    Timestamp: serverTime,
-                    Symbol: symbol,
-                    BidPrice: bidPrice,
-                    BidSize: bidSize,
-                    AskPrice: askPrice,
-                    AskSize: askSize,
-                    SequenceNumber: null,
-                    StreamId: "STOCKSHARP",
-                    Venue: venue
-                );
-
-                _quoteCollector.OnQuote(quoteUpdate);
-            }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Error processing StockSharp Level1 for {Symbol}", symbol);
-            }
-        }))
-        {
-            Interlocked.Increment(ref _messageDropCount);
+            _log.Error(ex, "Critical error in OnValuesChanged event handler");
         }
     }
 
