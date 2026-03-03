@@ -357,10 +357,10 @@ jobs:
               - added|deleted: 'src/**'
               - added|deleted: 'docs/**'
             providers:
-              - 'src/MarketDataCollector/Infrastructure/Providers/**'
+              - 'src/MarketDataCollector.Infrastructure/Adapters/**'
             interfaces:
-              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
-              - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
+              - 'src/MarketDataCollector.Infrastructure/IMarketDataClient.cs'
+              - 'src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider*.cs'
             adrs:
               - 'docs/adr/**'
             config:

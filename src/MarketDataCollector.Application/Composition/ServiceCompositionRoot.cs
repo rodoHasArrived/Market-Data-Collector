@@ -17,8 +17,8 @@ using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Providers.Core;
-using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Export;
 using MarketDataCollector.Storage.Interfaces;
@@ -549,7 +549,7 @@ public static class ServiceCompositionRoot
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            return new Infrastructure.Providers.InteractiveBrokers.IBMarketDataClient(
+            return new Infrastructure.Adapters.InteractiveBrokers.IBMarketDataClient(
                 publisher, tradeCollector, depthCollector);
         });
 
@@ -560,7 +560,7 @@ public static class ServiceCompositionRoot
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
             var (keyId, secretKey) = credentialResolver.ResolveAlpacaCredentials(
                 config.Alpaca?.KeyId, config.Alpaca?.SecretKey);
-            return new Infrastructure.Providers.Alpaca.AlpacaMarketDataClient(
+            return new Infrastructure.Adapters.Alpaca.AlpacaMarketDataClient(
                 tradeCollector, quoteCollector,
                 config.Alpaca! with { KeyId = keyId ?? "", SecretKey = secretKey ?? "" });
         });
@@ -572,7 +572,7 @@ public static class ServiceCompositionRoot
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
             var reconnMetrics = sp.GetRequiredService<IReconnectionMetrics>();
-            return new Infrastructure.Providers.Polygon.PolygonMarketDataClient(
+            return new Infrastructure.Adapters.Polygon.PolygonMarketDataClient(
                 publisher, tradeCollector, quoteCollector,
                 reconnectionMetrics: reconnMetrics);
         });
@@ -583,7 +583,7 @@ public static class ServiceCompositionRoot
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            return new Infrastructure.Providers.StockSharp.StockSharpMarketDataClient(
+            return new Infrastructure.Adapters.StockSharp.StockSharpMarketDataClient(
                 tradeCollector, depthCollector, quoteCollector,
                 config.StockSharp ?? new StockSharpConfig());
         });
@@ -594,7 +594,7 @@ public static class ServiceCompositionRoot
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            return new Infrastructure.Providers.InteractiveBrokers.IBMarketDataClient(
+            return new Infrastructure.Adapters.InteractiveBrokers.IBMarketDataClient(
                 publisher, tradeCollector, depthCollector);
         });
 
@@ -909,7 +909,7 @@ public static class ServiceCompositionRoot
         {
             var collector = sp.GetRequiredService<OptionDataCollector>();
             var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OptionsChainService>>();
-            var provider = sp.GetService<Infrastructure.Providers.IOptionsChainProvider>();
+            var provider = sp.GetService<Infrastructure.Adapters.Core.IOptionsChainProvider>();
             return new OptionsChainService(collector, logger, provider);
         });
 

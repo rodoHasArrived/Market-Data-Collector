@@ -89,9 +89,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 **Files:**
 - `Infrastructure/Resilience/WebSocketConnectionManager.cs`
-- `Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
-- `Infrastructure/Providers/Shared/SubscriptionManager.cs`
+- `Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+- `Infrastructure/Adapters/Shared/SubscriptionManager.cs`
 
 **ROADMAP:** Phase 0 (Critical Fixes)
 
@@ -134,11 +134,11 @@ This document consolidates **functional improvements** (features, reliability, U
 - Providers honor `Retry-After` values from HTTP 429 responses
 
 **Files:**
-- `Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs`
+- `Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
 - `Core/Exceptions/RateLimitException.cs`
 - `ProviderSdk/ProviderHttpUtilities.cs`
 - `Infrastructure/Http/SharedResiliencePolicies.cs`
-- `Infrastructure/Providers/Core/ProviderRateLimitTracker.cs`
+- `Infrastructure/Adapters/Core/ProviderRateLimitTracker.cs`
 
 **ROADMAP:** Phase 1 (Core Stability)
 
@@ -156,7 +156,7 @@ This document consolidates **functional improvements** (features, reliability, U
 - All lifecycle events logged at Debug level
 
 **Files:**
-- `Infrastructure/Providers/Shared/SubscriptionManager.cs`
+- `Infrastructure/Adapters/Shared/SubscriptionManager.cs`
 
 **ROADMAP:** Phase 0 (Critical Fixes)
 
@@ -175,7 +175,7 @@ This document consolidates **functional improvements** (features, reliability, U
 - Failover chain creates client instances dynamically from factory
 
 **Files:**
-- `Infrastructure/Providers/MarketDataClientFactory.cs`
+- `Infrastructure/Adapters/MarketDataClientFactory.cs`
 - `Program.cs`
 - `Ui.Shared/Endpoints/ConfigEndpoints.cs`
 
@@ -319,18 +319,18 @@ This document consolidates **functional improvements** (features, reliability, U
   - Backfill: retry-after header handling
 
 **Files:**
-- `tests/.../Infrastructure/Providers/AlpacaCredentialAndReconnectTests.cs`
-- `tests/.../Infrastructure/Providers/AlpacaQuoteRoutingTests.cs`
-- `tests/.../Infrastructure/Providers/BackfillRetryAfterTests.cs`
-- `tests/.../Infrastructure/Providers/FailoverAwareMarketDataClientTests.cs`
-- `tests/.../Infrastructure/Providers/IBSimulationClientTests.cs`
-- `tests/.../Infrastructure/Providers/NYSEMessageParsingTests.cs`
-- `tests/.../Infrastructure/Providers/PolygonMarketDataClientTests.cs`
-- `tests/.../Infrastructure/Providers/PolygonMessageParsingTests.cs`
-- `tests/.../Infrastructure/Providers/PolygonSubscriptionTests.cs`
-- `tests/.../Infrastructure/Providers/StockSharpMessageConversionTests.cs`
-- `tests/.../Infrastructure/Providers/StockSharpSubscriptionTests.cs`
-- `tests/.../Infrastructure/Providers/StreamingFailoverServiceTests.cs`
+- `tests/.../Infrastructure/Adapters/AlpacaCredentialAndReconnectTests.cs`
+- `tests/.../Infrastructure/Adapters/AlpacaQuoteRoutingTests.cs`
+- `tests/.../Infrastructure/Adapters/BackfillRetryAfterTests.cs`
+- `tests/.../Infrastructure/Adapters/FailoverAwareMarketDataClientTests.cs`
+- `tests/.../Infrastructure/Adapters/IBSimulationClientTests.cs`
+- `tests/.../Infrastructure/Adapters/NYSEMessageParsingTests.cs`
+- `tests/.../Infrastructure/Adapters/PolygonMarketDataClientTests.cs`
+- `tests/.../Infrastructure/Adapters/PolygonMessageParsingTests.cs`
+- `tests/.../Infrastructure/Adapters/PolygonSubscriptionTests.cs`
+- `tests/.../Infrastructure/Adapters/StockSharpMessageConversionTests.cs`
+- `tests/.../Infrastructure/Adapters/StockSharpSubscriptionTests.cs`
+- `tests/.../Infrastructure/Adapters/StreamingFailoverServiceTests.cs`
 
 **ROADMAP:** Sprint 4 (tranche 1), Sprint 7 (tranche 2) — both complete
 
@@ -416,8 +416,8 @@ This document consolidates **functional improvements** (features, reliability, U
 - `Program.cs` resolves providers exclusively through DI; no direct `new` instantiation of providers
 
 **Files:**
-- `Infrastructure/Providers/Core/ProviderFactory.cs` (unified creation)
-- `Infrastructure/Providers/Core/ProviderRegistry.cs` (single entry point)
+- `Infrastructure/Adapters/Core/ProviderFactory.cs` (unified creation)
+- `Infrastructure/Adapters/Core/ProviderRegistry.cs` (single entry point)
 - `Application/Composition/ServiceCompositionRoot.cs` (centralized DI registration)
 - `Program.cs` (DI-only resolution)
 - `ProviderSdk/DataSourceAttribute.cs`
@@ -478,9 +478,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 **Files:**
 - `Infrastructure/Shared/WebSocketProviderBase.cs`
-- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs`
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+- `Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs`
+- `Infrastructure/Adapters/NYSE/NYSEDataSource.cs`
 
 **Benefit:** Eliminates ~800 lines duplicated connection management. Bug fixes apply everywhere.
 
@@ -651,8 +651,8 @@ No clear contract for what each validates or when it runs.
 - Exposed via `/api/backfill/progress` endpoint
 
 **Files:**
-- `Infrastructure/Providers/Backfill/BackfillProgressTracker.cs`
-- `Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs`
+- `Infrastructure/Adapters/Core/BackfillProgressTracker.cs`
+- `Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
 - `Ui.Shared/Endpoints/BackfillEndpoints.cs`
 
 **ROADMAP:** Phase 3 (API Completeness)
@@ -824,8 +824,8 @@ No clear contract for what each validates or when it runs.
   - Proper exception-safe return-to-pool patterns
 
 **Files:**
-- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs` (ArrayPool)
-- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMessageConversion.cs` (ObjectPool)
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs` (ArrayPool)
+- `Infrastructure/Adapters/StockSharp/StockSharpMessageConversion.cs` (ObjectPool)
 
 **ROADMAP:** Phase 7 (Extended Capabilities)
 

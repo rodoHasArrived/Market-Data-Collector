@@ -39,7 +39,7 @@ This document catalogs available free and freemium data sources for historical e
 
 ### 1. Alpaca Historical Data
 
-**File:** `Infrastructure/Providers/Backfill/AlpacaHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/AlpacaHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -58,7 +58,7 @@ This document catalogs available free and freemium data sources for historical e
 
 ### 2. Yahoo Finance
 
-**File:** `Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/YahooFinanceHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -83,7 +83,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 
 ### 3. Stooq
 
-**File:** `Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/StooqHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -102,7 +102,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 
 ### 4. Nasdaq Data Link (formerly Quandl)
 
-**File:** `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/NasdaqDataLinkHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -121,7 +121,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 
 ### 5. Composite Provider
 
-**File:** `Infrastructure/Providers/Backfill/CompositeHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 **Features:**
@@ -168,7 +168,7 @@ dotnet build -p:DefineConstants=IBAPI
 
 ### 6. Tiingo
 
-**File:** `Infrastructure/Providers/Backfill/TiingoHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/TiingoHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -189,7 +189,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 
 ### 7. Finnhub
 
-**File:** `Infrastructure/Providers/Backfill/FinnhubHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/FinnhubHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -204,7 +204,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 
 ### 8. Alpha Vantage
 
-**File:** `Infrastructure/Providers/Backfill/AlphaVantageHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/AlphaVantageHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -219,7 +219,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 
 ### 9. Polygon (Historical)
 
-**File:** `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/Core/PolygonHistoricalDataProvider.cs`
 **Status:** ✅ Implemented
 
 | Attribute | Details |
@@ -235,7 +235,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 
 ### 10. Interactive Brokers (Historical)
 
-**File:** `Infrastructure/Providers/InteractiveBrokers/IBHistoricalDataProvider.cs`
+**File:** `Infrastructure/Adapters/InteractiveBrokers/IBHistoricalDataProvider.cs`
 **Status:** ⚠️ Requires IBAPI build flag
 
 | Attribute | Details |

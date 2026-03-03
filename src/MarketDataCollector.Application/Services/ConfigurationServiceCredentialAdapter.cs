@@ -1,4 +1,4 @@
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 
 namespace MarketDataCollector.Application.Services;
 

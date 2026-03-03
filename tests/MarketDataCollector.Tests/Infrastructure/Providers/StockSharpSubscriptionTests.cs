@@ -5,11 +5,11 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Providers.StockSharp;
+using MarketDataCollector.Infrastructure.Adapters.StockSharp;
 using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace MarketDataCollector.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Unit tests for StockSharp client subscription lifecycle, configuration, and error handling.

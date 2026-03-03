@@ -46,8 +46,8 @@ Use `IHttpClientFactory` from `Microsoft.Extensions.Http` for all HTTP client cr
 | Client Names | `src/MarketDataCollector.Infrastructure/Http/HttpClientConfiguration.cs` | Named client identifiers |
 | Registration | `src/MarketDataCollector.Infrastructure/Http/HttpClientConfiguration.cs` | DI configuration |
 | Resilience Policies | `src/MarketDataCollector.Infrastructure/Http/SharedResiliencePolicies.cs` | Retry/circuit breaker |
-| Alpaca Provider | `src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Usage example |
-| Historical Providers | `src/MarketDataCollector.Infrastructure/Providers/Historical/` | Provider implementations |
+| Alpaca Provider | `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Usage example |
+| Historical Providers | `src/MarketDataCollector.Infrastructure/Adapters/Core/` | Provider implementations |
 
 ## Rationale
 

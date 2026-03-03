@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-02 04:16:41 UTC
+> Auto-generated on 2026-03-02 18:17:26 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -218,6 +218,7 @@ Market-Data-Collector/
 │   │   ├── deterministic-canonicalization.md
 │   │   ├── domains.md
 │   │   ├── layer-boundaries.md
+│   │   ├── nautilus-inspired-restructuring-proposal.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
 │   │   ├── storage-design.md
@@ -708,6 +709,35 @@ Market-Data-Collector/
 │   │   ├── Interop.fs
 │   │   └── MarketDataCollector.FSharp.fsproj
 │   ├── MarketDataCollector.Infrastructure/
+│   │   ├── Adapters/
+│   │   │   ├── Alpaca/
+│   │   │   │   ...
+│   │   │   ├── AlphaVantage/
+│   │   │   │   ...
+│   │   │   ├── Core/
+│   │   │   │   ...
+│   │   │   ├── Failover/
+│   │   │   │   ...
+│   │   │   ├── Finnhub/
+│   │   │   │   ...
+│   │   │   ├── InteractiveBrokers/
+│   │   │   │   ...
+│   │   │   ├── NasdaqDataLink/
+│   │   │   │   ...
+│   │   │   ├── NYSE/
+│   │   │   │   ...
+│   │   │   ├── OpenFigi/
+│   │   │   │   ...
+│   │   │   ├── Polygon/
+│   │   │   │   ...
+│   │   │   ├── StockSharp/
+│   │   │   │   ...
+│   │   │   ├── Stooq/
+│   │   │   │   ...
+│   │   │   ├── Tiingo/
+│   │   │   │   ...
+│   │   │   └── YahooFinance/
+│   │   │       ...
 │   │   ├── Contracts/
 │   │   │   ├── ContractVerificationExtensions.cs
 │   │   │   └── ContractVerificationService.cs
@@ -717,17 +747,6 @@ Market-Data-Collector/
 │   │   ├── Http/
 │   │   │   ├── HttpClientConfiguration.cs
 │   │   │   └── SharedResiliencePolicies.cs
-│   │   ├── Providers/
-│   │   │   ├── Backfill/
-│   │   │   │   ...
-│   │   │   ├── Core/
-│   │   │   │   ...
-│   │   │   ├── Historical/
-│   │   │   │   ...
-│   │   │   ├── Streaming/
-│   │   │   │   ...
-│   │   │   └── SymbolSearch/
-│   │   │       ...
 │   │   ├── Resilience/
 │   │   │   ├── HttpResiliencePolicy.cs
 │   │   │   ├── WebSocketConnectionConfig.cs

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using MarketDataCollector.Core.Scheduling;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 
 namespace MarketDataCollector.Application.Scheduling;
 

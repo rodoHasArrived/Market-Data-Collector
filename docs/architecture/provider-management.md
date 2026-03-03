@@ -143,11 +143,11 @@ public interface IDataSource : IAsyncDisposable
 | Interface | Location | Extends | Purpose |
 |-----------|----------|---------|---------|
 | `IMarketDataClient` | `ProviderSdk/IMarketDataClient.cs` | `IProviderMetadata`, `IAsyncDisposable` | Streaming: `ConnectAsync`, `DisconnectAsync`, `SubscribeMarketDepth`, `SubscribeTrades` |
-| `IHistoricalDataProvider` | `Infrastructure/Providers/Historical/IHistoricalDataProvider.cs` | `IProviderMetadata`, `IDisposable` | Backfill: `GetDailyBarsAsync`, `GetHistoricalQuotesAsync`, `GetHistoricalTradesAsync`, `GetHistoricalAuctionsAsync` |
+| `IHistoricalDataProvider` | `Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` | `IProviderMetadata`, `IDisposable` | Backfill: `GetDailyBarsAsync`, `GetHistoricalQuotesAsync`, `GetHistoricalTradesAsync`, `GetHistoricalAuctionsAsync` |
 | `IRealtimeDataSource` | `ProviderSdk/IRealtimeDataSource.cs` | `IDataSource` | Real-time with `IObservable<T>` streams for trades, quotes, depth |
 | `IHistoricalDataSource` | `ProviderSdk/IHistoricalDataSource.cs` | `IDataSource` | Historical bars, intraday bars, dividends, splits |
-| `ISymbolSearchProvider` | `Infrastructure/Providers/SymbolSearch/ISymbolSearchProvider.cs` | `IProviderMetadata` | Symbol lookup: `SearchAsync`, `GetDetailsAsync` |
-| `IFilterableSymbolSearchProvider` | `Infrastructure/Providers/SymbolSearch/ISymbolSearchProvider.cs` | `ISymbolSearchProvider` | Adds asset type and exchange filtering |
+| `ISymbolSearchProvider` | `Infrastructure/Adapters/Core/ISymbolSearchProvider.cs` | `IProviderMetadata` | Symbol lookup: `SearchAsync`, `GetDetailsAsync` |
+| `IFilterableSymbolSearchProvider` | `Infrastructure/Adapters/Core/ISymbolSearchProvider.cs` | `ISymbolSearchProvider` | Adds asset type and exchange filtering |
 
 ---
 
@@ -206,7 +206,7 @@ public interface IProviderModule
 | Failover | `FailoverAwareMarketDataClient` | `Streaming/Failover/` | Delegated | Delegated | Delegated | Composite wrapper |
 | NoOp | `NoOpMarketDataClient` | `Infrastructure/` | N/A | N/A | N/A | Placeholder |
 
-All locations relative to `src/MarketDataCollector.Infrastructure/Providers/`.
+All locations relative to `src/MarketDataCollector.Infrastructure/Adapters/`.
 
 ---
 
@@ -225,7 +225,7 @@ All locations relative to `src/MarketDataCollector.Infrastructure/Providers/`.
 | Interactive Brokers | `IBHistoricalDataProvider` | With account | IB pacing | All types |
 | StockSharp | `StockSharpHistoricalDataProvider` | With account | Varies | Multi-exchange |
 
-All located under `src/MarketDataCollector.Infrastructure/Providers/Historical/`.
+All located under `src/MarketDataCollector.Infrastructure/Adapters/`.
 
 ---
 
@@ -239,7 +239,7 @@ All located under `src/MarketDataCollector.Infrastructure/Providers/Historical/`
 | OpenFIGI | `OpenFigiClient` | No | Global (ID mapping) | Varies |
 | StockSharp | `StockSharpSymbolSearchProvider` | No | Multi-exchange | Varies |
 
-All located under `src/MarketDataCollector.Infrastructure/Providers/SymbolSearch/`.
+All located under `src/MarketDataCollector.Infrastructure/Adapters/Core/`.
 
 ---
 
@@ -247,7 +247,7 @@ All located under `src/MarketDataCollector.Infrastructure/Providers/SymbolSearch
 
 ### StreamingFailoverService
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Streaming/Failover/StreamingFailoverService.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/StreamingFailoverService.cs`
 
 Orchestrates automatic failover between streaming providers. Monitors provider health via `IConnectionHealthMonitor`, evaluates configured failover rules, and triggers switchover when failures exceed the threshold.
 
@@ -270,7 +270,7 @@ Orchestrates automatic failover between streaming providers. Monitors provider h
 
 ### FailoverAwareMarketDataClient
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Streaming/Failover/FailoverAwareMarketDataClient.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/FailoverAwareMarketDataClient.cs`
 
 A composite `IMarketDataClient` that wraps multiple provider clients and delegates to the currently active one. Transparent to callers.
 
@@ -284,7 +284,7 @@ A composite `IMarketDataClient` that wraps multiple provider clients and delegat
 
 ### StreamingFailoverRegistry
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Streaming/Failover/StreamingFailoverRegistry.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/StreamingFailoverRegistry.cs`
 
 Singleton that holds the runtime `StreamingFailoverService` instance, allowing API endpoint handlers to query failover state without direct project references.
 
@@ -294,7 +294,7 @@ Singleton that holds the runtime `StreamingFailoverService` instance, allowing A
 
 ### CompositeHistoricalDataProvider
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs`
 
 Multi-provider router for historical data with automatic failover. Chains providers ordered by priority and routes requests with:
 
@@ -307,7 +307,7 @@ Multi-provider router for historical data with automatic failover. Chains provid
 
 ### PriorityBackfillQueue
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Historical/Queue/PriorityBackfillQueue.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Queue/PriorityBackfillQueue.cs`
 
 Backfill job queue with priority-based ordering:
 
@@ -318,13 +318,13 @@ Backfill job queue with priority-based ordering:
 
 ### BackfillWorkerService
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
 
 Background service that dequeues jobs from `PriorityBackfillQueue` (or `BackfillRequestQueue`) and executes them through `CompositeHistoricalDataProvider`.
 
 ### Rate Limiting
 
-**`ProviderRateLimitTracker`** and **`RateLimiter`** (`Infrastructure/Providers/Historical/RateLimiting/`) enforce per-provider request pacing derived from provider metadata. The `IRateLimitAwareProvider` interface allows providers to report real-time rate limit status and emit `OnRateLimitHit` events.
+**`ProviderRateLimitTracker`** and **`RateLimiter`** (`Infrastructure/Adapters/RateLimiting/`) enforce per-provider request pacing derived from provider metadata. The `IRateLimitAwareProvider` interface allows providers to report real-time rate limit status and emit `OnRateLimitHit` events.
 
 ---
 
@@ -332,7 +332,7 @@ Background service that dequeues jobs from `PriorityBackfillQueue` (or `Backfill
 
 ### DataGapAnalyzer
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapAnalyzer.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/GapAnalysis/DataGapAnalyzer.cs`
 
 Analyzes expected vs. stored data periods and classifies gaps:
 
@@ -343,13 +343,13 @@ Analyzes expected vs. stored data periods and classifies gaps:
 
 ### DataGapRepair
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/GapAnalysis/DataGapRepair.cs`
 
 Attempts automated repair using the preferred provider chain. Writes repaired bars through `IHistoricalBarWriter` (defined in `ProviderSdk` to break the Infrastructure-Storage circular dependency).
 
 ### DataQualityMonitor
 
-**Location:** `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataQualityMonitor.cs`
+**Location:** `src/MarketDataCollector.Infrastructure/Adapters/GapAnalysis/DataQualityMonitor.cs`
 
 Computes weighted quality scores across dimensions: completeness, accuracy, timeliness, consistency, and validity. Scores drive follow-up repair flows and operational dashboards.
 

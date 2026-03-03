@@ -3,7 +3,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Services;
 using Microsoft.AspNetCore.Builder;

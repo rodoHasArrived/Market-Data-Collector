@@ -37,7 +37,7 @@ Use `System.Threading.Channels` for producer-consumer scenarios with backpressur
 | Trade Collector | `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` | Stream consumer |
 | Quote Collector | `src/MarketDataCollector.Domain/Collectors/QuoteCollector.cs` | Stream consumer |
 | Event Buffer | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Bounded buffering |
-| Backfill Streaming | `src/MarketDataCollector.Infrastructure/Providers/Historical/` | Historical streaming |
+| Backfill Streaming | `src/MarketDataCollector.Infrastructure/Adapters/Core/` | Historical streaming |
 | Async Tests | `tests/MarketDataCollector.Tests/Application/Pipeline/` | Pattern verification |
 
 ## Rationale

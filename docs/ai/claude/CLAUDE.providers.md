@@ -69,21 +69,21 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 ### Provider Core Framework
 | File | Purpose |
 |------|---------|
-| `Infrastructure/Providers/Core/ProviderFactory.cs` | Factory for creating providers |
-| `Infrastructure/Providers/Core/ProviderRegistry.cs` | Registry of available providers |
-| `Infrastructure/Providers/Core/ProviderServiceExtensions.cs` | DI service extensions |
-| `Infrastructure/Providers/Core/ProviderSubscriptionRanges.cs` | Subscription range management |
-| `Infrastructure/Providers/Core/ProviderTemplate.cs` | Provider template/base |
+| `Infrastructure/Adapters/Core/ProviderFactory.cs` | Factory for creating providers |
+| `Infrastructure/Adapters/Core/ProviderRegistry.cs` | Registry of available providers |
+| `Infrastructure/Adapters/Core/ProviderServiceExtensions.cs` | DI service extensions |
+| `Infrastructure/Adapters/Core/ProviderSubscriptionRanges.cs` | Subscription range management |
+| `Infrastructure/Adapters/Core/ProviderTemplate.cs` | Provider template/base |
 
 ### Streaming Providers
 | Provider | Location | Files |
 |----------|----------|-------|
-| Alpaca | `Infrastructure/Providers/Streaming/Alpaca/` | 1 |
-| Interactive Brokers | `Infrastructure/Providers/Streaming/InteractiveBrokers/` | 8 |
-| StockSharp | `Infrastructure/Providers/Streaming/StockSharp/` | 6 |
-| NYSE | `Infrastructure/Providers/Streaming/NYSE/` | 3 |
-| Polygon | `Infrastructure/Providers/Streaming/Polygon/` | 1 |
-| Failover | `Infrastructure/Providers/Streaming/Failover/` | 3 |
+| Alpaca | `Infrastructure/Adapters/Alpaca/` | 1 |
+| Interactive Brokers | `Infrastructure/Adapters/InteractiveBrokers/` | 8 |
+| StockSharp | `Infrastructure/Adapters/StockSharp/` | 6 |
+| NYSE | `Infrastructure/Adapters/NYSE/` | 3 |
+| Polygon | `Infrastructure/Adapters/Polygon/` | 1 |
+| Failover | `Infrastructure/Adapters/Failover/` | 3 |
 
 **Interactive Brokers files:**
 - `IBMarketDataClient.cs` - Main streaming client
@@ -111,28 +111,28 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 ### Historical Providers
 | Provider | Location |
 |----------|----------|
-| Base class | `Infrastructure/Providers/Historical/BaseHistoricalDataProvider.cs` |
-| Interface | `Infrastructure/Providers/Historical/IHistoricalDataProvider.cs` |
-| Composite (failover) | `Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` |
-| Alpaca | `Infrastructure/Providers/Historical/Alpaca/AlpacaHistoricalDataProvider.cs` |
-| Yahoo Finance | `Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` |
-| Stooq | `Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` |
-| Tiingo | `Infrastructure/Providers/Historical/Tiingo/TiingoHistoricalDataProvider.cs` |
-| Finnhub | `Infrastructure/Providers/Historical/Finnhub/FinnhubHistoricalDataProvider.cs` |
-| Alpha Vantage | `Infrastructure/Providers/Historical/AlphaVantage/AlphaVantageHistoricalDataProvider.cs` |
-| Nasdaq Data Link | `Infrastructure/Providers/Historical/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` |
-| Polygon | `Infrastructure/Providers/Historical/Polygon/PolygonHistoricalDataProvider.cs` |
-| StockSharp | `Infrastructure/Providers/Historical/StockSharp/StockSharpHistoricalDataProvider.cs` |
-| Interactive Brokers | `Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` |
+| Base class | `Infrastructure/Adapters/BaseHistoricalDataProvider.cs` |
+| Interface | `Infrastructure/Adapters/IHistoricalDataProvider.cs` |
+| Composite (failover) | `Infrastructure/Adapters/CompositeHistoricalDataProvider.cs` |
+| Alpaca | `Infrastructure/Adapters/Alpaca/AlpacaHistoricalDataProvider.cs` |
+| Yahoo Finance | `Infrastructure/Adapters/YahooFinance/YahooFinanceHistoricalDataProvider.cs` |
+| Stooq | `Infrastructure/Adapters/Stooq/StooqHistoricalDataProvider.cs` |
+| Tiingo | `Infrastructure/Adapters/Tiingo/TiingoHistoricalDataProvider.cs` |
+| Finnhub | `Infrastructure/Adapters/Finnhub/FinnhubHistoricalDataProvider.cs` |
+| Alpha Vantage | `Infrastructure/Adapters/AlphaVantage/AlphaVantageHistoricalDataProvider.cs` |
+| Nasdaq Data Link | `Infrastructure/Adapters/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` |
+| Polygon | `Infrastructure/Adapters/Polygon/PolygonHistoricalDataProvider.cs` |
+| StockSharp | `Infrastructure/Adapters/StockSharp/StockSharpHistoricalDataProvider.cs` |
+| Interactive Brokers | `Infrastructure/Adapters/InteractiveBrokers/IBHistoricalDataProvider.cs` |
 
 ### Historical Support Modules
 | Module | Location | Purpose |
 |--------|----------|---------|
-| Gap Analysis | `Infrastructure/Providers/Historical/GapAnalysis/` | Data gap detection and repair |
-| Rate Limiting | `Infrastructure/Providers/Historical/RateLimiting/` | Per-provider rate limit tracking |
-| Queue | `Infrastructure/Providers/Historical/Queue/` | Backfill job queue and workers |
-| Symbol Resolution | `Infrastructure/Providers/Historical/SymbolResolution/` | Cross-provider symbol resolution |
-| Core | `Infrastructure/Providers/Historical/Core/` | Response handling utilities |
+| Gap Analysis | `Infrastructure/Adapters/GapAnalysis/` | Data gap detection and repair |
+| Rate Limiting | `Infrastructure/Adapters/RateLimiting/` | Per-provider rate limit tracking |
+| Queue | `Infrastructure/Adapters/Queue/` | Backfill job queue and workers |
+| Symbol Resolution | `Infrastructure/Adapters/SymbolResolution/` | Cross-provider symbol resolution |
+| Core | `Infrastructure/Adapters/Core/` | Response handling utilities |
 
 **Gap Analysis files:**
 - `DataGapAnalyzer.cs` - Gap analysis and reporting
@@ -157,10 +157,10 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 ### Symbol Search Providers
 | Provider | Location |
 |----------|----------|
-| Alpaca | `Infrastructure/Providers/SymbolSearch/AlpacaSymbolSearchProviderRefactored.cs` |
-| Polygon | `Infrastructure/Providers/SymbolSearch/PolygonSymbolSearchProvider.cs` |
-| Finnhub | `Infrastructure/Providers/SymbolSearch/FinnhubSymbolSearchProviderRefactored.cs` |
-| OpenFIGI | `Infrastructure/Providers/SymbolSearch/OpenFigiClient.cs` |
+| Alpaca | `Infrastructure/Adapters/Core/AlpacaSymbolSearchProviderRefactored.cs` |
+| Polygon | `Infrastructure/Adapters/Core/PolygonSymbolSearchProvider.cs` |
+| Finnhub | `Infrastructure/Adapters/Core/FinnhubSymbolSearchProviderRefactored.cs` |
+| OpenFIGI | `Infrastructure/Adapters/Core/OpenFigiClient.cs` |
 
 Supporting files:
 - `ISymbolSearchProvider.cs` - Base interface
@@ -175,7 +175,7 @@ Supporting files:
 | `Infrastructure/Resilience/WebSocketConnectionManager.cs` | WebSocket connection lifecycle |
 | `Infrastructure/Resilience/WebSocketConnectionConfig.cs` | WebSocket configuration |
 | `Infrastructure/Http/SharedResiliencePolicies.cs` | Shared Polly policies |
-| `Infrastructure/Providers/Backfill/BackfillProgressTracker.cs` | Backfill progress tracking |
+| `Infrastructure/Adapters/Core/BackfillProgressTracker.cs` | Backfill progress tracking |
 
 ---
 
@@ -281,7 +281,7 @@ public interface IHistoricalDataProvider
 ### Step 1: Create the Provider Class
 
 ```csharp
-// Location: Infrastructure/Providers/{ProviderName}/{ProviderName}DataSource.cs
+// Location: Infrastructure/Adapters/{ProviderName}/{ProviderName}DataSource.cs
 
 [DataSource(
     "myprovider",
@@ -330,7 +330,7 @@ public sealed class MyProviderDataSource : IRealtimeDataSource
 ### Step 2: Create Options Class
 
 ```csharp
-// Location: Infrastructure/Providers/{ProviderName}/{ProviderName}Options.cs
+// Location: Infrastructure/Adapters/{ProviderName}/{ProviderName}Options.cs
 
 public sealed class MyProviderOptions
 {
@@ -397,7 +397,7 @@ public class MyProviderDataSourceTests
 ### Step 1: Create the Provider Class
 
 ```csharp
-// Location: Infrastructure/Providers/Backfill/{ProviderName}HistoricalDataProvider.cs
+// Location: Infrastructure/Adapters/Core/{ProviderName}HistoricalDataProvider.cs
 
 public sealed class MyHistoricalProvider : IHistoricalDataProvider
 {

@@ -1,7 +1,7 @@
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 
-namespace MarketDataCollector.Infrastructure.Providers.Core;
+namespace MarketDataCollector.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Types of market data providers.

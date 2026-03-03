@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using FluentAssertions;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Moq;
 using Moq.Protected;
 using Xunit;

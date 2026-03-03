@@ -1,6 +1,6 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Config;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Backfill;

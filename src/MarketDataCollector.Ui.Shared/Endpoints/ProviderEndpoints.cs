@@ -2,7 +2,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Ui.Shared;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;

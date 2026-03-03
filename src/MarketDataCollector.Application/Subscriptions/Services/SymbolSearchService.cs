@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Serilog;
 
 namespace MarketDataCollector.Application.Subscriptions.Services;

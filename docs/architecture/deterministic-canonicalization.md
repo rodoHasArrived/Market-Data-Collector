@@ -541,11 +541,11 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
 | `src/MarketDataCollector.Contracts/Domain/Events/MarketEvent.cs` | Mirror new fields in contract |
 | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs` | Register new types for source generation |
 | `src/MarketDataCollector.Application/Services/CanonicalSymbolRegistry.cs` | Add `TryResolve(symbol, provider)` overload |
-| `src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Wire canonicalization before publish |
-| `src/MarketDataCollector.Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs` | Wire canonicalization before publish |
-| `src/MarketDataCollector.Infrastructure/Providers/Streaming/IB/IBMarketDataClient.cs` | Wire canonicalization before publish |
-| `src/MarketDataCollector.Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs` | Wire canonicalization before publish |
-| `src/MarketDataCollector.Infrastructure/Providers/Streaming/StockSharp/Converters/MessageConverter.cs` | Populate `ExchangeTimestamp` from `msg.ServerTime` |
+| `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Wire canonicalization before publish |
+| `src/MarketDataCollector.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs` | Wire canonicalization before publish |
+| `src/MarketDataCollector.Infrastructure/Adapters/Streaming/IB/IBMarketDataClient.cs` | Wire canonicalization before publish |
+| `src/MarketDataCollector.Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs` | Wire canonicalization before publish |
+| `src/MarketDataCollector.Infrastructure/Adapters/StockSharp/Converters/MessageConverter.cs` | Populate `ExchangeTimestamp` from `msg.ServerTime` |
 | `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` | Add canonicalization counters |
 | `config/condition-codes.json` | New file: provider condition code mapping table |
 | `config/venue-mapping.json` | New file: raw venue to ISO 10383 MIC mapping |
