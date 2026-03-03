@@ -90,7 +90,7 @@ public static class ExportEndpoints
 
             // Pull real profiles from the service if available
             var profiles = exportService?.GetProfiles()
-                .Select(p => new { id = p.Id, name = p.Name, format = p.Format.ToString().ToLowerInvariant(), compression = p.Compression.ToString().ToLowerInvariant() })
+                .Select(p => new { id = p.Id, name = p.Name, format = p.Format.ToString().ToLowerInvariant(), compression = p.Compression.Type.ToString().ToLowerInvariant() })
                 .ToArray()
                 ?? new[]
                 {
