@@ -114,7 +114,7 @@ public sealed class WalEventPipelineTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task PublishAsync_WithWal_EventWrittenToWalAtPublishTime()
+    public async Task PublishAsync_WithWal_EventWrittenToWalByConsumer()
     {
         var wal = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.EveryWrite });
         await wal.InitializeAsync();

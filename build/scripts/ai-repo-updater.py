@@ -367,8 +367,11 @@ def audit_docs(root: Path, report: AuditReport) -> None:
                 continue
             rel = str(path.relative_to(root))
             text = path.read_text(encoding="utf-8", errors="replace")
+            # Detect sections as ## headings or **Section:** metadata lines
             headings = set(re.findall(r"^##\s+(.+)", text, re.MULTILINE))
-            missing = required_sections - headings
+            metadata = set(re.findall(r"^\*\*(\w+):\*\*", text, re.MULTILINE))
+            found_sections = headings | metadata
+            missing = required_sections - found_sections
             if missing:
                 report.add(Finding(
                     category="adr-missing-sections",

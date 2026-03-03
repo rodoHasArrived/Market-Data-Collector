@@ -13,6 +13,7 @@ public sealed class CompositeSink : IStorageSink
 {
     private readonly IReadOnlyList<IStorageSink> _sinks;
     private readonly ILogger<CompositeSink> _logger;
+    private long _appendFailures;
 
     public CompositeSink(IEnumerable<IStorageSink> sinks, ILogger<CompositeSink>? logger = null)
     {
@@ -26,6 +27,9 @@ public sealed class CompositeSink : IStorageSink
     /// <summary>Gets the number of underlying sinks.</summary>
     public int SinkCount => _sinks.Count;
 
+    /// <summary>Gets the total number of individual sink append failures since startup.</summary>
+    public long AppendFailures => Interlocked.Read(ref _appendFailures);
+
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
         for (var i = 0; i < _sinks.Count; i++)
@@ -36,6 +40,7 @@ public sealed class CompositeSink : IStorageSink
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                Interlocked.Increment(ref _appendFailures);
                 _logger.LogWarning(ex,
                     "Sink {SinkIndex}/{SinkCount} ({SinkType}) failed to append event for {Symbol}",
                     i + 1, _sinks.Count, _sinks[i].GetType().Name, evt.Symbol);

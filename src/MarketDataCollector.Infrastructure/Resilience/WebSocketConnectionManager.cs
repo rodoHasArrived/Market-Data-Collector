@@ -459,18 +459,36 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         var cts = _connectionCts;
         var heartbeat = _heartbeat;
         var receiveLoopCts = _receiveLoopCts;
+        var receiveTask = _receiveTask;
 
         _webSocket = null;
         _connectionCts = null;
         _receiveLoopCts = null;
         _heartbeat = null;
+        _receiveTask = null;
 
+        // 1. Stop heartbeat to prevent new reconnection attempts
         if (heartbeat != null)
         {
             heartbeat.ConnectionLost -= OnConnectionLostAsync;
             await heartbeat.DisposeAsync();
         }
 
+        // 2. Cancel tokens to signal the receive loop to stop
+        if (cts != null)
+        {
+            try { cts.Cancel(); }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} CTS cancel failed during cleanup", _providerName); }
+        }
+
+        // 3. Wait for the receive task to complete before disposing resources it uses
+        if (receiveTask != null)
+        {
+            try { await receiveTask.ConfigureAwait(false); }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} receive task failed during cleanup", _providerName); }
+        }
+
+        // 4. Now safe to dispose CTS and WebSocket — receive loop has exited
         if (receiveLoopCts != null)
         {
             try { receiveLoopCts.Dispose(); }
@@ -479,8 +497,6 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
         if (cts != null)
         {
-            try { cts.Cancel(); }
-            catch (Exception ex) { _log.Debug(ex, "{Provider} CTS cancel failed during cleanup", _providerName); }
             try { cts.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} CTS dispose failed during cleanup", _providerName); }
         }
@@ -489,13 +505,6 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         {
             try { ws.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} WebSocket dispose failed during cleanup", _providerName); }
-        }
-
-        if (_receiveTask != null)
-        {
-            try { await _receiveTask.ConfigureAwait(false); }
-            catch (Exception ex) { _log.Debug(ex, "{Provider} receive task failed during cleanup", _providerName); }
-            _receiveTask = null;
         }
     }
 

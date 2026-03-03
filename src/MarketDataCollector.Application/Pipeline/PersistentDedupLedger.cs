@@ -252,25 +252,33 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
             var cutoff = nowTicks - _entryTtl.Ticks;
             var kept = 0;
 
-            await using (var writer = new StreamWriter(tempPath, false, Encoding.UTF8))
+            try
             {
-                foreach (var (key, ticks) in _cache)
+                await using (var writer = new StreamWriter(tempPath, false, Encoding.UTF8))
                 {
-                    if (ticks > cutoff)
+                    foreach (var (key, ticks) in _cache)
                     {
-                        await writer.WriteLineAsync($"{{\"k\":\"{EscapeJson(key)}\",\"t\":{ticks}}}").ConfigureAwait(false);
-                        kept++;
+                        if (ticks > cutoff)
+                        {
+                            await writer.WriteLineAsync($"{{\"k\":\"{EscapeJson(key)}\",\"t\":{ticks}}}").ConfigureAwait(false);
+                            kept++;
+                        }
                     }
                 }
+
+                File.Move(tempPath, _ledgerPath, overwrite: true);
+                _log.Information("Compacted dedup ledger: {KeptCount} entries retained", kept);
+            }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Dedup ledger compaction failed, cleaning up temp file");
+                try { File.Delete(tempPath); }
+                catch { /* best effort */ }
             }
 
-            File.Move(tempPath, _ledgerPath, overwrite: true);
-
-            // Reopen writer
+            // Always reopen writer so subsequent writes are not silently dropped
             var fs = new FileStream(_ledgerPath, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, useAsync: true);
             _writer = new StreamWriter(fs, Encoding.UTF8, 4096, leaveOpen: false) { AutoFlush = false };
-
-            _log.Information("Compacted dedup ledger: {KeptCount} entries retained", kept);
         }
         finally
         {
