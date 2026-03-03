@@ -162,7 +162,7 @@ def ensure_label(repo: str, token: str, label: str, dry_run: bool) -> None:
 
 
 def find_existing_issue(repo: str, token: str, marker: str) -> int | None:
-    query = urllib.parse.quote(f'repo:{repo} "{marker}" in:body')
+    query = urllib.parse.quote(f'repo:{repo} "{marker}" in:body is:issue is:open')
     url = f"https://api.github.com/search/issues?q={query}&per_page=1"
     try:
         result = gh_request("GET", url, token)
