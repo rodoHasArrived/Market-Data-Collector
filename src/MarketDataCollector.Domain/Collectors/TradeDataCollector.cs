@@ -404,7 +404,7 @@ public sealed class TradeDataCollector
             }
         }
 
-        private readonly record struct SequenceCheckResult(bool IsOutOfOrder, bool IsGap, long Last, long Expected);
+        internal readonly record struct SequenceCheckResult(bool IsOutOfOrder, bool IsGap, long Last, long Expected);
 
         private sealed class RollingWindowState
         {

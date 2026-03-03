@@ -43,7 +43,7 @@ public partial class WelcomePage : Page
     private async System.Threading.Tasks.Task UpdateSystemOverviewAsync()
     {
         // Connection status from ConnectionService
-        var isConnected = _connectionService.IsConnected;
+        var isConnected = _connectionService.State == ConnectionState.Connected;
         if (isConnected)
         {
             ConnectionStatusText.Text = "Connected";

@@ -36,7 +36,7 @@ public static class UiEndpoints
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
             {
                 Title = "Market Data Collector API",
                 Version = "v1",
