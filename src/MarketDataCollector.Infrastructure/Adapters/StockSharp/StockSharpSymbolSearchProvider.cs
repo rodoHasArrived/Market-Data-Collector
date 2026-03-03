@@ -8,7 +8,6 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;

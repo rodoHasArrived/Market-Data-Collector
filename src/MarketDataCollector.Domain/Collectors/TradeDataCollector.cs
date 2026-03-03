@@ -257,15 +257,7 @@ public sealed class TradeDataCollector
 
         private long? _lastSequenceNumber;
 
-        private long _buyVolume;
-        private long _sellVolume;
-        private long _unknownVolume;
-
-        private decimal _vwapNumerator;
-        private long _vwapDenominator;
-
         private int _tradeCount;
-        private bool _isStale;
 
         public SymbolTradeState(IEnumerable<TimeSpan> rollingWindows)
         {
@@ -287,7 +279,6 @@ public sealed class TradeDataCollector
                     var expected = last + 1;
                     if (sequenceNumber > expected)
                     {
-                        _isStale = true;
                         _lastSequenceNumber = sequenceNumber;
                         return new SequenceCheckResult(false, true, last, expected);
                     }

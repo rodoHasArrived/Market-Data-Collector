@@ -14,7 +14,6 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using MarketDataCollector.Infrastructure.Shared;
 using Serilog;

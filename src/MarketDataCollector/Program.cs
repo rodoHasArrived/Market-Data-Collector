@@ -20,7 +20,6 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Adapters.Failover;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Application.ResultTypes;
