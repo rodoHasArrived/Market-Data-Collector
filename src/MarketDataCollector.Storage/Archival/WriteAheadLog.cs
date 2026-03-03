@@ -29,6 +29,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
     private int _uncommittedRecords;
     private DateTime _lastFlushTime = DateTime.UtcNow;
     private bool _disposed;
+    private long _corruptedRecordCount;
+    private long _skippedRecordCount;
 
     // WAL file header constants
     private const string WalMagic = "MDCWAL01";
@@ -50,6 +52,16 @@ public sealed class WriteAheadLog : IAsyncDisposable
     /// Gets the duration of the last recovery in milliseconds.
     /// </summary>
     public double LastRecoveryDurationMs { get; private set; }
+
+    /// <summary>
+    /// Gets the total number of corrupted records encountered across all reads and recoveries.
+    /// </summary>
+    public long CorruptedRecordCount => Interlocked.Read(ref _corruptedRecordCount);
+
+    /// <summary>
+    /// Gets the total number of records skipped due to corruption across all reads and recoveries.
+    /// </summary>
+    public long SkippedRecordCount => Interlocked.Read(ref _skippedRecordCount);
 
     /// <summary>
     /// Initialize the WAL, recovering any uncommitted transactions.
@@ -395,29 +407,31 @@ public sealed class WriteAheadLog : IAsyncDisposable
     {
         _log.Information("Recovering WAL file: {File}", walFile);
 
-        var validRecords = 0;
-        var invalidRecords = 0;
+        // Capture corruption counter before reading so we can determine
+        // how many records were corrupted in this specific file.
+        var corruptedBefore = Interlocked.Read(ref _corruptedRecordCount);
+
+        long validRecords = 0;
 
         await foreach (var record in ReadWalFileAsync(walFile, ct))
         {
-            // Verify checksum
-            var expectedChecksum = ComputeChecksum(
-                record.Sequence, record.Timestamp, record.RecordType, record.Payload);
-
-            if (record.Checksum == expectedChecksum)
-            {
-                validRecords++;
-            }
-            else
-            {
-                invalidRecords++;
-                _log.Warning("Invalid checksum for record {Sequence} in {File}",
-                    record.Sequence, walFile);
-            }
+            // ReadWalFileAsync already validates checksums and only yields valid records.
+            // Corrupted records are logged and counted within ReadWalFileAsync.
+            validRecords++;
         }
 
-        _log.Information("Recovered {Valid} valid records, {Invalid} invalid from {File}",
-            validRecords, invalidRecords, walFile);
+        var corruptedInFile = Interlocked.Read(ref _corruptedRecordCount) - corruptedBefore;
+
+        if (corruptedInFile > 0)
+        {
+            _log.Warning(
+                "WAL recovery found {CorruptedCount} corrupted records in {File}",
+                corruptedInFile, walFile);
+        }
+
+        _log.Information(
+            "Recovered {ValidCount} valid records, {CorruptedCount} corrupted from {File}",
+            validRecords, corruptedInFile, walFile);
 
         return validRecords;
     }
@@ -444,18 +458,57 @@ public sealed class WriteAheadLog : IAsyncDisposable
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             var parts = line.Split('|', 5);
-            if (parts.Length < 5) continue;
+            if (parts.Length < 5)
+            {
+                _log.Warning(
+                    "Malformed WAL record skipped in {File}: expected 5 fields but found {FieldCount}",
+                    walFile, parts.Length);
+                Interlocked.Increment(ref _corruptedRecordCount);
+                Interlocked.Increment(ref _skippedRecordCount);
+                continue;
+            }
 
-            if (!long.TryParse(parts[0], out var sequence)) continue;
-            if (!DateTime.TryParse(parts[1], out var timestamp)) continue;
+            if (!long.TryParse(parts[0], out var sequence))
+            {
+                _log.Warning("Malformed WAL record skipped in {File}: unable to parse sequence", walFile);
+                Interlocked.Increment(ref _corruptedRecordCount);
+                Interlocked.Increment(ref _skippedRecordCount);
+                continue;
+            }
+
+            if (!DateTime.TryParse(parts[1], out var timestamp))
+            {
+                _log.Warning(
+                    "Malformed WAL record skipped in {File}: unable to parse timestamp for sequence {Sequence}",
+                    walFile, sequence);
+                Interlocked.Increment(ref _corruptedRecordCount);
+                Interlocked.Increment(ref _skippedRecordCount);
+                continue;
+            }
+
+            var recordType = parts[2];
+            var checksum = parts[3];
+            var payload = parts[4];
+
+            // Validate checksum
+            var expectedChecksum = ComputeChecksum(sequence, timestamp, recordType, payload);
+            if (!string.Equals(checksum, expectedChecksum, StringComparison.Ordinal))
+            {
+                _log.Warning(
+                    "Invalid checksum for WAL record with sequence {Sequence} in {File}, skipping",
+                    sequence, walFile);
+                Interlocked.Increment(ref _corruptedRecordCount);
+                Interlocked.Increment(ref _skippedRecordCount);
+                continue;
+            }
 
             yield return new WalRecord
             {
                 Sequence = sequence,
                 Timestamp = timestamp,
-                RecordType = parts[2],
-                Checksum = parts[3],
-                Payload = parts[4]
+                RecordType = recordType,
+                Checksum = checksum,
+                Payload = payload
             };
         }
     }
@@ -482,6 +535,138 @@ public sealed class WriteAheadLog : IAsyncDisposable
         var bytes = Encoding.UTF8.GetBytes(data);
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Repairs all WAL files by scanning every record, validating checksums,
+    /// and rewriting only valid records into new WAL files.
+    /// Corrupted records are discarded and counted in the result.
+    /// </summary>
+    public async Task<WalRepairResult> RepairAsync(CancellationToken ct = default)
+    {
+        _log.Information("Starting WAL repair in {WalDirectory}", _walDirectory);
+
+        var walFiles = Directory.GetFiles(_walDirectory, "*.wal")
+            .OrderBy(f => f)
+            .ToList();
+
+        int totalRecords = 0;
+        int validRecords = 0;
+        int corruptedRecords = 0;
+        int repairedFiles = 0;
+
+        foreach (var walFile in walFiles)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // Skip the currently active WAL file
+            if (string.Equals(walFile, _currentWalPath, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var fileValidRecords = new List<WalRecord>();
+            int fileCorruptedCount = 0;
+
+            // Read the raw file directly to count both valid and corrupted records,
+            // rather than going through ReadWalFileAsync which filters corrupted ones out.
+            await using var stream = new FileStream(
+                walFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+
+            // Read and validate header
+            var header = await reader.ReadLineAsync();
+            if (header == null || !header.StartsWith(WalMagic))
+            {
+                _log.Warning("Skipping WAL file with invalid header during repair: {File}", walFile);
+                continue;
+            }
+
+            while (!reader.EndOfStream && !ct.IsCancellationRequested)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                totalRecords++;
+
+                var parts = line.Split('|', 5);
+                if (parts.Length < 5 ||
+                    !long.TryParse(parts[0], out var sequence) ||
+                    !DateTime.TryParse(parts[1], out var timestamp))
+                {
+                    fileCorruptedCount++;
+                    corruptedRecords++;
+                    continue;
+                }
+
+                var recordType = parts[2];
+                var checksum = parts[3];
+                var payload = parts[4];
+
+                var expectedChecksum = ComputeChecksum(sequence, timestamp, recordType, payload);
+                if (!string.Equals(checksum, expectedChecksum, StringComparison.Ordinal))
+                {
+                    _log.Warning(
+                        "Repair: corrupted record with sequence {Sequence} in {File}",
+                        sequence, walFile);
+                    fileCorruptedCount++;
+                    corruptedRecords++;
+                    continue;
+                }
+
+                validRecords++;
+                fileValidRecords.Add(new WalRecord
+                {
+                    Sequence = sequence,
+                    Timestamp = timestamp,
+                    RecordType = recordType,
+                    Checksum = checksum,
+                    Payload = payload
+                });
+            }
+
+            // Only rewrite the file if corruption was found
+            if (fileCorruptedCount > 0)
+            {
+                var tempPath = walFile + ".repair";
+
+                await using var outStream = new FileStream(
+                    tempPath, FileMode.Create, FileAccess.Write, FileShare.None,
+                    bufferSize: 64 * 1024, FileOptions.WriteThrough | FileOptions.Asynchronous);
+                await using var writer = new StreamWriter(outStream, Encoding.UTF8, bufferSize: 32 * 1024);
+
+                // Write header
+                await writer.WriteLineAsync($"{WalMagic}|{WalVersion}|{DateTime.UtcNow:O}");
+
+                // Write valid records
+                foreach (var record in fileValidRecords)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var recordLine = $"{record.Sequence}|{record.Timestamp:O}|{record.RecordType}|{record.Checksum}|{record.Payload}";
+                    await writer.WriteLineAsync(recordLine);
+                }
+
+                await writer.FlushAsync();
+
+                // Replace original with repaired file
+                File.Delete(walFile);
+                File.Move(tempPath, walFile);
+
+                repairedFiles++;
+
+                _log.Information(
+                    "Repaired WAL file {File}: kept {ValidCount} records, removed {CorruptedCount} corrupted",
+                    walFile, fileValidRecords.Count, fileCorruptedCount);
+            }
+        }
+
+        var result = new WalRepairResult(totalRecords, validRecords, corruptedRecords, repairedFiles);
+
+        _log.Information(
+            "WAL repair complete: {TotalRecords} total, {ValidRecords} valid, {CorruptedRecords} corrupted, {RepairedFiles} files repaired",
+            result.TotalRecords, result.ValidRecords, result.CorruptedRecords, result.RepairedFiles);
+
+        return result;
     }
 
     public async ValueTask DisposeAsync()
@@ -594,3 +779,12 @@ public enum WalSyncMode
     /// </summary>
     EveryWrite
 }
+
+/// <summary>
+/// Result of a WAL repair operation.
+/// </summary>
+public sealed record WalRepairResult(
+    int TotalRecords,
+    int ValidRecords,
+    int CorruptedRecords,
+    int RepairedFiles);

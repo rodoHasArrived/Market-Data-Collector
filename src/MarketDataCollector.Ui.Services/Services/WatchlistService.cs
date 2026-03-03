@@ -41,7 +41,7 @@ public class WatchlistService
 /// <summary>
 /// Watchlist data containing watched symbols.
 /// </summary>
-public class WatchlistData
+public sealed class WatchlistData
 {
     public List<WatchlistItem> Symbols { get; set; } = new();
     public List<WatchlistGroup> Groups { get; set; } = new();
@@ -50,7 +50,7 @@ public class WatchlistData
 /// <summary>
 /// A single item in a watchlist.
 /// </summary>
-public class WatchlistItem
+public sealed class WatchlistItem
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Notes { get; set; }
@@ -60,7 +60,7 @@ public class WatchlistItem
 /// <summary>
 /// A group of symbols in a watchlist.
 /// </summary>
-public class WatchlistGroup
+public sealed class WatchlistGroup
 {
     public string Name { get; set; } = string.Empty;
     public List<string> Symbols { get; set; } = new();

@@ -317,32 +317,37 @@ public static class ReplayEndpoints
 
         /// <summary>
         /// Starts a background task to count events in the file using JsonlReplayer.
+        /// Uses an async method directly instead of Task.Run to avoid wasting thread pool
+        /// threads on I/O-bound work.
         /// </summary>
         public void StartEventCounting()
         {
-            _ = Task.Run(async () =>
+            _ = CountEventsAsync();
+        }
+
+        private async Task CountEventsAsync()
+        {
+            try
             {
-                try
+                var replayer = new JsonlReplayer(FileDirectory);
+                long count = 0;
+                await foreach (var _ in replayer.ReadEventsAsync(_cts.Token))
                 {
-                    var replayer = new JsonlReplayer(FileDirectory);
-                    long count = 0;
-                    await foreach (var _ in replayer.ReadEventsAsync(_cts.Token))
-                    {
-                        count++;
-                        EventsProcessed = count;
-                    }
-                    TotalEvents = count;
-                    Status = "completed";
+                    count++;
+                    EventsProcessed = count;
                 }
-                catch (OperationCanceledException)
-                {
-                    Status = "stopped";
-                }
-                catch
-                {
-                    Status = "error";
-                }
-            });
+                TotalEvents = count;
+                Status = "completed";
+            }
+            catch (OperationCanceledException)
+            {
+                Status = "stopped";
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Observed to prevent unobserved task exception
+                Status = "error";
+            }
         }
     }
 

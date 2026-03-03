@@ -41,6 +41,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly bool _metricsEnabled;
     private readonly DroppedEventAuditTrail? _auditTrail;
     private readonly IEventMetrics _metrics;
+    private readonly IEventValidator? _validator;
+    private readonly DeadLetterSink? _deadLetterSink;
     private int _disposed;
     private volatile bool _consumerBusy;
 
@@ -49,6 +51,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private long _droppedCount;
     private long _consumedCount;
     private long _recoveredCount;
+    private long _rejectedCount;
     private long _peakQueueSize;
     private long _totalProcessingTimeNs;
     private long _lastFlushTimestamp;
@@ -87,6 +90,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// to replay any uncommitted records from a prior crash.</param>
     /// <param name="metrics">Optional event metrics for tracking pipeline throughput.</param>
     /// <param name="finalFlushTimeout">Optional timeout for the final flush during shutdown. Defaults to 30 seconds.</param>
+    /// <param name="validator">Optional event validator for pre-persistence validation.</param>
+    /// <param name="deadLetterSink">Optional dead-letter sink for rejected events.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -98,7 +103,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         DroppedEventAuditTrail? auditTrail = null,
         WriteAheadLog? wal = null,
         IEventMetrics? metrics = null,
-        TimeSpan? finalFlushTimeout = null)
+        TimeSpan? finalFlushTimeout = null,
+        IEventValidator? validator = null,
+        DeadLetterSink? deadLetterSink = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -109,13 +116,18 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             auditTrail,
             wal,
             metrics,
-            finalFlushTimeout)
+            finalFlushTimeout,
+            validator,
+            deadLetterSink)
     {
     }
 
     /// <summary>
     /// Creates a new EventPipeline with a shared policy for capacity and backpressure.
     /// </summary>
+    /// <param name="validator">Optional event validator. When provided, events that fail validation
+    /// are routed to the <paramref name="deadLetterSink"/> and excluded from primary storage.</param>
+    /// <param name="deadLetterSink">Optional dead-letter sink for events rejected by the validator.</param>
     public EventPipeline(
         IStorageSink sink,
         EventPipelinePolicy policy,
@@ -126,13 +138,17 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         DroppedEventAuditTrail? auditTrail = null,
         WriteAheadLog? wal = null,
         IEventMetrics? metrics = null,
-        TimeSpan? finalFlushTimeout = null)
+        TimeSpan? finalFlushTimeout = null,
+        IEventValidator? validator = null,
+        DeadLetterSink? deadLetterSink = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
         _auditTrail = auditTrail;
         _wal = wal;
         _metrics = metrics ?? new DefaultEventMetrics();
+        _validator = validator;
+        _deadLetterSink = deadLetterSink;
         _finalFlushTimeout = finalFlushTimeout ?? DefaultFinalFlushTimeout;
         _disposeTaskTimeout = _finalFlushTimeout + TimeSpan.FromSeconds(5);
         if (policy is null)
@@ -175,6 +191,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// <summary>Gets the total number of events recovered from WAL on startup.</summary>
     public long RecoveredCount => Interlocked.Read(ref _recoveredCount);
 
+    /// <summary>Gets the total number of events rejected by the validator and sent to the dead-letter sink.</summary>
+    public long RejectedCount => Interlocked.Read(ref _rejectedCount);
+
     /// <summary>Gets the peak queue size observed during operation.</summary>
     public long PeakQueueSize => Interlocked.Read(ref _peakQueueSize);
 
@@ -209,6 +228,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
     /// <summary>Gets whether a WAL is configured for this pipeline.</summary>
     public bool IsWalEnabled => _wal != null;
+
+    /// <summary>Gets whether event validation is enabled for this pipeline.</summary>
+    public bool IsValidationEnabled => _validator != null;
 
     /// <summary>
     /// Returns <see langword="true"/> when the queue utilization has reached or exceeded 80 %.
@@ -477,10 +499,25 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
                     long maxWalSequence = _lastCommittedWalSequence;
 
-                    // Write each event: WAL first (if enabled), then sink
+                    // Write each event: validate → WAL (if enabled) → sink
                     for (var i = 0; i < batchBuffer.Count; i++)
                     {
                         var evt = batchBuffer[i];
+
+                        // Validate event before persistence (when a validator is configured)
+                        if (_validator != null)
+                        {
+                            var validationResult = _validator.Validate(in evt);
+                            if (!validationResult.IsValid)
+                            {
+                                Interlocked.Increment(ref _rejectedCount);
+                                if (_deadLetterSink != null)
+                                {
+                                    await _deadLetterSink.RecordAsync(evt, validationResult.Errors, _cts.Token).ConfigureAwait(false);
+                                }
+                                continue; // Skip persisting invalid events
+                            }
+                        }
 
                         if (_wal != null)
                         {
@@ -651,6 +688,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         if (_auditTrail != null)
         {
             await _auditTrail.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (_deadLetterSink != null)
+        {
+            await _deadLetterSink.DisposeAsync().ConfigureAwait(false);
         }
     }
 
