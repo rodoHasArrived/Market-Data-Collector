@@ -142,10 +142,25 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
+            var formatOverride = req?.Format?.ToLowerInvariant() switch
+            {
+                "csv" => ExportFormat.Csv,
+                "parquet" => ExportFormat.Parquet,
+                "jsonl" => ExportFormat.Jsonl,
+                "lean" => ExportFormat.Lean,
+                "sql" => ExportFormat.Sql,
+                "xlsx" => ExportFormat.Xlsx,
+                "arrow" => ExportFormat.Arrow,
+                _ => (ExportFormat?)null
+            };
+
             var outputDir = Path.Combine(ExportBaseDir, "quality-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
+                CustomProfile = formatOverride.HasValue
+                    ? new ExportProfile { Id = "quality-report", Format = formatOverride.Value }
+                    : null,
                 Symbols = req?.Symbols,
                 StartDate = DateTime.UtcNow.AddDays(-30),
                 EndDate = DateTime.UtcNow,
@@ -161,7 +176,7 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
-                format = "parquet",
+                format = req?.Format ?? "parquet",
                 qualitySummary = result.QualitySummary is not null ? new
                 {
                     overallScore = result.QualitySummary.OverallScore,
