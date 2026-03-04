@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22690545924
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -34,15 +34,15 @@ messages:
       - `CS8602`
 
       ## Failure Patterns
-      - `2026-03-04T21:06:16.8186089Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests.cs(330,51): error CS0506: 'ConfigServiceTests.Test...`
-      - `2026-03-04T21:06:16.8189400Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests.cs(338,36): error CS0506: 'ConfigServiceTests.Test...`
-      - `2026-03-04T21:06:16.8191860Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTests.cs(223,50): error CS0509: 'CredentialServiceTe...`
-      - `2026-03-04T21:06:16.8195015Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTests.cs(326,44): error CS0509: 'WatchlistServiceTest...`
-      - `2026-03-04T21:06:16.8197426Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTests.cs(328,45): error CS0115: 'WatchlistServiceTest...`
-      - `2026-03-04T21:06:16.8199693Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(98,42): error CS0509: 'PortfolioImport...`
-      - `2026-03-04T21:06:16.8202043Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(111,45): error CS0509: 'PortfolioImpor...`
-      - `2026-03-04T21:06:16.8204828Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(103,36): error CS0115: 'PortfolioImpor...`
-      - `2026-03-04T21:06:16.8207628Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(113,36): error CS0115: 'PortfolioImpor...`
+      - `2026-03-04T21:41:39.8978149Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests.cs(330,51): error CS0506: 'ConfigServiceTests.Test...`
+      - `2026-03-04T21:41:39.8983661Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests.cs(338,36): error CS0506: 'ConfigServiceTests.Test...`
+      - `2026-03-04T21:41:39.8987789Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTests.cs(223,50): error CS0509: 'CredentialServiceTe...`
+      - `2026-03-04T21:41:39.8991847Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(98,42): error CS0509: 'PortfolioImport...`
+      - `2026-03-04T21:41:39.8995616Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(111,45): error CS0509: 'PortfolioImpor...`
+      - `2026-03-04T21:41:39.8999841Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(103,36): error CS0115: 'PortfolioImpor...`
+      - `2026-03-04T21:41:39.9004812Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(113,36): error CS0115: 'PortfolioImpor...`
+      - `2026-03-04T21:41:39.9008882Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTests.cs(326,44): error CS0509: 'WatchlistServiceTest...`
+      - `2026-03-04T21:41:39.9012508Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTests.cs(328,45): error CS0115: 'WatchlistServiceTest...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

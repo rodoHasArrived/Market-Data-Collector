@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22690545924
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,18 +19,18 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-04T21:06:16.8186089Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
-      - `2026-03-04T21:06:16.8189400Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
-      - `2026-03-04T21:06:16.8191860Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTe...`
-      - `2026-03-04T21:06:16.8195015Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
-      - `2026-03-04T21:06:16.8197426Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
+      - `2026-03-04T21:41:39.8978149Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
+      - `2026-03-04T21:41:39.8983661Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
+      - `2026-03-04T21:41:39.8987789Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTe...`
+      - `2026-03-04T21:41:39.8991847Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServ...`
+      - `2026-03-04T21:41:39.8995616Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServ...`
 
       ### Code Quality
-      - `2026-03-04T21:06:16.7855245Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T21:06:16.7857267Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T21:06:16.7859599Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T21:06:16.7862320Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T21:06:16.7864744Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:41:39.8386948Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:41:39.8393891Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:41:39.8401097Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:41:39.8408197Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:41:39.8415451Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
 
 
       ## Error Codes
@@ -56,7 +56,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22690545924
 
       Additional context:
       {{additional_context}}
