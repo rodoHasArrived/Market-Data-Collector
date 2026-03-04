@@ -183,7 +183,8 @@ CONFIG FILE PRIORITY:
     3. appsettings.json (default)
 
 FIRST-TIME SETUP:
-    --wizard                Interactive configuration wizard (recommended)
+    --quickstart            Auto-detect, validate, and configure (fastest)
+    --wizard                Interactive configuration wizard (step-by-step)
     --auto-config           Auto-configure from environment variables
     --detect-providers      Show available providers and their status
     --generate-config       Generate a config template
@@ -191,7 +192,10 @@ FIRST-TIME SETUP:
                             backfill, production, docker
 
 EXAMPLES:
-    # First-time setup
+    # Fastest setup (auto-detect everything)
+    MarketDataCollector --quickstart
+
+    # Interactive first-time setup
     MarketDataCollector --wizard
 
     # Validate before starting
@@ -370,6 +374,7 @@ MODES:
     --help, -h              Show this help message
 
 AUTO-CONFIGURATION (First-time setup):
+    --quickstart            Zero-config setup: auto-detect, validate, and configure (fastest)
     --wizard                Interactive configuration wizard (recommended for new users)
     --auto-config           Quick auto-configuration based on environment variables
     --detect-providers      Show available data providers and their status
@@ -580,9 +585,10 @@ SUPPORT:
     Documentation: ./HELP.md
 
 ╔══════════════════════════════════════════════════════════════════════╗
+║  QUICKSTART:   Run: ./MarketDataCollector --quickstart                ║
 ║  NEW USER?     Run: ./MarketDataCollector --wizard                   ║
 ║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
-║  START UI:     Run: ./MarketDataCollector --ui                       ║
+║  START UI:     Run: ./MarketDataCollector --mode web                 ║
 ║  Then open http://localhost:8080 in your browser                     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ");

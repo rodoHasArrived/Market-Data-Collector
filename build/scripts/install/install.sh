@@ -211,13 +211,15 @@ install_docker() {
         echo "║                    Installation Complete!                            ║"
         echo "╠══════════════════════════════════════════════════════════════════════╣"
         echo "║  Dashboard:   http://localhost:8080                                  ║"
-        echo "║  Metrics:     http://localhost:8080/metrics                          ║"
-        echo "║  Status:      http://localhost:8080/status                           ║"
         echo "║  Health:      http://localhost:8080/health                           ║"
+        echo "║  Status:      http://localhost:8080/api/status                       ║"
         echo "╠══════════════════════════════════════════════════════════════════════╣"
         echo "║  View logs:   docker compose logs -f                                 ║"
         echo "║  Stop:        docker compose down                                    ║"
         echo "║  Restart:     docker compose restart                                 ║"
+        echo "╠══════════════════════════════════════════════════════════════════════╣"
+        echo "║  NOTE: Set API credentials as environment variables in               ║"
+        echo "║  deploy/docker/docker-compose.override.yml or .env file              ║"
         echo "╚══════════════════════════════════════════════════════════════════════╝"
     else
         print_error "Failed to start container"
@@ -260,14 +262,50 @@ install_native() {
 
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════╗"
+    echo "║                    Build Complete!                                   ║"
+    echo "╚══════════════════════════════════════════════════════════════════════╝"
+    echo ""
+
+    # Offer to run configuration wizard
+    echo "Would you like to configure the collector now?"
+    echo "  1) Quickstart - auto-detect and configure (fastest)"
+    echo "  2) Interactive wizard - step-by-step setup (recommended for new users)"
+    echo "  3) Skip - configure later"
+    echo ""
+    read -p "Enter choice [1-3] (default: 1): " config_choice
+
+    case "${config_choice:-1}" in
+        1)
+            print_info "Running quickstart configuration..."
+            dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --quickstart
+            ;;
+        2)
+            print_info "Starting configuration wizard..."
+            dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --wizard
+            ;;
+        3)
+            print_info "Skipping configuration. You can run it later with:"
+            echo "  dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard"
+            ;;
+        *)
+            print_info "Skipping configuration."
+            ;;
+    esac
+
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════════════╗"
     echo "║                    Installation Complete!                            ║"
     echo "╠══════════════════════════════════════════════════════════════════════╣"
-    echo "║  Start dashboard:                                                    ║"
-    echo "║    dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui                           ║"
+    echo "║  Start with dashboard:                                              ║"
+    echo "║    dotnet run --project src/MarketDataCollector -- --mode web        ║"
     echo "║                                                                      ║"
-    echo "║  Or use the publish script for a standalone executable:              ║"
-    echo "║    ./publish.sh linux-x64                                            ║"
-    echo "║    ./publish/linux-x64/MarketDataCollector --ui                      ║"
+    echo "║  Quickstart (auto-configure + validate):                            ║"
+    echo "║    dotnet run --project src/MarketDataCollector -- --quickstart      ║"
+    echo "║                                                                      ║"
+    echo "║  Validate setup:                                                    ║"
+    echo "║    dotnet run --project src/MarketDataCollector -- --dry-run         ║"
+    echo "║                                                                      ║"
+    echo "║  Dashboard: http://localhost:8080                                    ║"
     echo "╚══════════════════════════════════════════════════════════════════════╝"
 }
 

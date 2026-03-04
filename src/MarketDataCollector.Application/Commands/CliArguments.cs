@@ -12,6 +12,7 @@ internal sealed record CliArguments
     public bool SimulateFeed { get; init; }
     public bool Backfill { get; init; }
     public bool DryRun { get; init; }
+    public bool Quickstart { get; init; }
     public bool Offline { get; init; }
     public bool ValidateConfig { get; init; }
     public bool ValidateSchemas { get; init; }
@@ -71,6 +72,7 @@ internal sealed record CliArguments
             SimulateFeed = HasFlag(args, "--simulate-feed"),
             Backfill = HasFlag(args, "--backfill"),
             DryRun = HasFlag(args, "--dry-run"),
+            Quickstart = HasFlag(args, "--quickstart"),
             Offline = HasFlag(args, "--offline"),
             ValidateConfig = HasFlag(args, "--validate-config"),
             ValidateSchemas = HasFlag(args, "--validate-schemas"),

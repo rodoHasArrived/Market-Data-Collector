@@ -67,6 +67,12 @@ public sealed class DryRunService
             result.ProviderValidation = await ValidateProvidersAsync(config, ct);
         }
 
+        // Credential authentication validation (live API calls)
+        if (options.ValidateProviders && options.ValidateConnectivity)
+        {
+            result.CredentialAuthValidation = await ValidateCredentialAuthAsync(config, ct);
+        }
+
         // Symbol validation
         if (options.ValidateSymbols)
         {
@@ -133,6 +139,11 @@ public sealed class DryRunService
         if (result.ResourceValidation != null)
         {
             AppendValidationSection(sb, "Resources", result.ResourceValidation);
+        }
+
+        if (result.CredentialAuthValidation != null)
+        {
+            AppendValidationSection(sb, "Credential Authentication", result.CredentialAuthValidation);
         }
 
         sb.AppendLine("══════════════════════════════════════════════════════════════════");
@@ -449,6 +460,47 @@ public sealed class DryRunService
         return Task.FromResult(section);
     }
 
+    private async Task<ValidationSection> ValidateCredentialAuthAsync(AppConfig config, CancellationToken ct)
+    {
+        var section = new ValidationSection { Name = "CredentialAuth" };
+
+        try
+        {
+            await using var validator = new CredentialValidationService();
+            var summary = await validator.ValidateAllAsync(config, ct);
+
+            foreach (var result in summary.Results)
+            {
+                section.AddCheck(
+                    result.Provider,
+                    result.IsValid,
+                    result.IsValid
+                        ? $"Authenticated ({result.ResponseTime.TotalMilliseconds:F0}ms){(result.AccountInfo != null ? $" - {result.AccountInfo}" : "")}"
+                        : $"Failed: {result.Message}",
+                    result.IsValid ? "" : $"{result.Provider} credentials are invalid or expired"
+                );
+            }
+
+            foreach (var warning in summary.Warnings)
+            {
+                section.Warnings.Add(warning);
+            }
+
+            if (summary.Results.Count == 0)
+            {
+                section.AddCheck("Credentials", true,
+                    "No API credentials configured (using free providers only)", "");
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            section.Warnings.Add($"Credential validation failed: {ex.Message}");
+        }
+
+        section.Success = section.Errors.Count == 0;
+        return section;
+    }
+
     private static bool CalculateOverallSuccess(DryRunResult result)
     {
         return (result.ConfigurationValidation?.Success ?? true) &&
@@ -456,7 +508,8 @@ public sealed class DryRunService
                (result.ConnectivityValidation?.Success ?? true) &&
                (result.ProviderValidation?.Success ?? true) &&
                (result.SymbolValidation?.Success ?? true) &&
-               (result.ResourceValidation?.Success ?? true);
+               (result.ResourceValidation?.Success ?? true) &&
+               (result.CredentialAuthValidation?.Success ?? true);
     }
 }
 
@@ -489,6 +542,7 @@ public sealed class DryRunResult
     public ValidationSection? ProviderValidation { get; set; }
     public ValidationSection? SymbolValidation { get; set; }
     public ValidationSection? ResourceValidation { get; set; }
+    public ValidationSection? CredentialAuthValidation { get; set; }
 }
 
 /// <summary>

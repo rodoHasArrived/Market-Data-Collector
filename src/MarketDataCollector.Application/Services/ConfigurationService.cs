@@ -65,6 +65,11 @@ public sealed class ConfigurationService : IAsyncDisposable
     public WizardResult RunAutoConfig() => _wizard.RunQuickSetup();
 
     /// <summary>
+    /// Runs quickstart: auto-configures, validates credentials, and prepares for launch.
+    /// </summary>
+    public Task<WizardResult> RunQuickstartAsync(CancellationToken ct = default) => _wizard.RunQuickstartAsync(ct);
+
+    /// <summary>
     /// Auto-configures the application based on detected providers and environment.
     /// Returns a comprehensive result with detected providers, applied fixes, and recommendations.
     /// </summary>
