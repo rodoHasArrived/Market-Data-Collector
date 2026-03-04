@@ -82,7 +82,7 @@ public sealed class ScheduledMaintenanceServiceTests
     public void IsSchedulerRunning_ByDefault_ShouldBeFalse()
     {
         // Fresh singleton - scheduler should not be running unless StartScheduler was called.
-        // Note: since this is a singleton shared across tests, if StartScheduler was
+        // NOTE: since this is a singleton shared across tests, if StartScheduler was
         // previously called, we stop it first to ensure test isolation.
         var service = ScheduledMaintenanceService.Instance;
         service.StopScheduler();
