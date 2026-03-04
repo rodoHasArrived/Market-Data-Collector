@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-03-04T20:27:40.068180+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 22687677797,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22687677797",
+  "run_conclusion": "unknown",
+  "repository": "rodoHasArrived/Market-Data-Collector",
+  "failed_jobs": [
+    "Test (Linux)",
+    "Test (Windows)"
+  ],
+  "findings_by_category": {
+    "build": 9,
+    "test": 2,
+    "code-quality": 10
+  },
+  "total_error_codes": 5,
+  "total_failed_tests": 2,
+  "existing_prompts": 11,
+  "generated_prompts": [
+    {
+      "file": "fix-build-errors.prompt.yml",
+      "category": "build",
+      "action": "create",
+      "findings_count": 9,
+      "error_codes": [
+        "CS0067",
+        "CS0628",
+        "CS1573",
+        "CS1739",
+        "CS1998"
+      ],
+      "failed_tests": []
+    },
+    {
+      "file": "fix-test-failures.prompt.yml",
+      "category": "test",
+      "action": "create",
+      "findings_count": 2,
+      "error_codes": [
+        "CS0067",
+        "CS0628",
+        "CS1573",
+        "CS1739",
+        "CS1998"
+      ],
+      "failed_tests": [
+        "2026-03-04T20:25:22.2748489Z   Failed MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent [64 ms]",
+        "MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent"
+      ]
+    },
+    {
+      "file": "fix-code-quality.prompt.yml",
+      "category": "code-quality",
+      "action": "create",
+      "findings_count": 10,
+      "error_codes": [],
+      "failed_tests": []
+    },
+    {
+      "file": "workflow-results-test-matrix.prompt.yml",
+      "category": "summary",
+      "action": "create",
+      "findings_count": 21,
+      "error_codes": [
+        "CS0067",
+        "CS0628",
+        "CS1573",
+        "CS1739",
+        "CS1998"
+      ],
+      "failed_tests": [
+        "2026-03-04T20:25:22.2748489Z   Failed MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent [64 ms]",
+        "MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent"
+      ]
+    }
+  ],
+  "total_generated": 4
+}
