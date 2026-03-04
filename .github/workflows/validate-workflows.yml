@@ -150,7 +150,7 @@ jobs:
         exit $EXIT_CODE
 
     - name: Run actionlint
-      uses: rhysd/actionlint@v1
+      uses: rhysd/actionlint@v1.7.7
 
   check-permissions:
     name: Check Workflow Permissions
