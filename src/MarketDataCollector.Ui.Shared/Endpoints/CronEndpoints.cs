@@ -55,6 +55,7 @@ public static class CronEndpoints
                 try { timeZone = TimeZoneInfo.FindSystemTimeZoneById(req.TimeZoneId); }
                 catch (TimeZoneNotFoundException) { /* fall back to UTC */ }
                 catch (InvalidTimeZoneException) { /* fall back to UTC */ }
+                catch (System.Security.SecurityException) { /* fall back to UTC */ }
             }
 
             var nextRuns = new List<DateTimeOffset>();
