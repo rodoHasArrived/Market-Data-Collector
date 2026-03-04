@@ -66,9 +66,6 @@ internal sealed class SymbolCommands : ICliCommand
         if (CliArguments.HasFlag(args, "--symbol-status"))
             return await RunStatusAsync(args, ct);
 
-        if (CliArguments.HasFlag(args, "--symbols-import"))
-            return await RunImportAsync(args, ct);
-
         if (CliArguments.HasFlag(args, "--symbols-export"))
             return RunExport(args);
 
@@ -286,91 +283,6 @@ internal sealed class SymbolCommands : ICliCommand
 
         Console.WriteLine();
         return CliResult.Ok();
-    }
-
-    /// <summary>
-    /// Import symbols from a CSV or text file.
-    /// Supports formats: one symbol per line, or CSV with symbol in the first column.
-    /// Lines starting with # are treated as comments.
-    /// </summary>
-    private async Task<CliResult> RunImportAsync(string[] args, CancellationToken ct)
-    {
-        var filePath = CliArguments.RequireValue(args, "--symbols-import", "--symbols-import symbols.csv");
-        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
-
-        if (!File.Exists(filePath))
-        {
-            Console.Error.WriteLine($"  Error: File not found: {filePath}");
-            return CliResult.Fail(ErrorCode.FileNotFound);
-        }
-
-        var lines = await File.ReadAllLinesAsync(filePath, ct);
-        var symbols = new List<string>();
-        var skipped = 0;
-
-        foreach (var rawLine in lines)
-        {
-            var line = rawLine.Trim();
-
-            // Skip empty lines and comments
-            if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
-            {
-                skipped++;
-                continue;
-            }
-
-            // CSV: take first column (handles "AAPL,Stock,..." or just "AAPL")
-            var symbol = line.Split(',', StringSplitOptions.TrimEntries)[0].Trim().ToUpperInvariant();
-
-            // Skip header rows
-            if (symbol.Equals("SYMBOL", StringComparison.OrdinalIgnoreCase) ||
-                symbol.Equals("TICKER", StringComparison.OrdinalIgnoreCase))
-            {
-                skipped++;
-                continue;
-            }
-
-            if (!string.IsNullOrEmpty(symbol) && !symbols.Contains(symbol))
-            {
-                symbols.Add(symbol);
-            }
-        }
-
-        if (symbols.Count == 0)
-        {
-            Console.Error.WriteLine("  Error: No valid symbols found in file.");
-            Console.Error.WriteLine("  Expected format: one symbol per line, or CSV with symbol in the first column.");
-            return CliResult.Fail(ErrorCode.ValidationFailed);
-        }
-
-        Console.WriteLine();
-        Console.WriteLine($"  Importing {symbols.Count} symbols from {Path.GetFileName(filePath)}...");
-
-        var options = new SymbolAddOptions(
-            SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
-            SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
-            DepthLevels: int.TryParse(CliArguments.GetValue(args, "--depth-levels"), out var levels) ? levels : 10,
-            UpdateExisting: CliArguments.HasFlag(args, "--update")
-        );
-
-        var result = await _symbolService.AddSymbolsAsync(symbols.ToArray(), options, ct);
-
-        Console.WriteLine();
-        Console.WriteLine(result.Success ? "  Import Result" : "  Import Failed");
-        Console.WriteLine("  " + new string('=', 50));
-        Console.WriteLine($"  {result.Message}");
-        Console.WriteLine($"  Symbols parsed: {symbols.Count}");
-        Console.WriteLine($"  Lines skipped: {skipped}");
-        if (result.AffectedSymbols.Length > 0)
-        {
-            Console.WriteLine($"  Added: {string.Join(", ", result.AffectedSymbols)}");
-        }
-        Console.WriteLine();
-
-        _log.Information("Bulk symbol import from {File}: {Count} symbols, {Skipped} skipped",
-            filePath, symbols.Count, skipped);
-
-        return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
     }
 
     /// <summary>
