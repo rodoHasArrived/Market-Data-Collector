@@ -99,6 +99,10 @@ public sealed class JsonlStorageSink : IStorageSink
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
 
+    // Cached factory delegates to avoid closure allocation on every GetOrAdd call
+    private readonly Func<string, WriterState> _writerFactory;
+    private readonly Func<string, MarketEventBuffer> _bufferFactory;
+
     // Metrics
     private long _eventsBuffered;
     private long _eventsWritten;
@@ -140,6 +144,12 @@ public sealed class JsonlStorageSink : IStorageSink
             ? null
             : new RetentionManager(options.RootPath, options.RetentionDays, options.MaxTotalBytes, _logger);
 
+        // Cache factory delegates once to avoid closure allocation on every GetOrAdd call
+        var compress = _options.Compress;
+        var batchSize = _batchOptions.BatchSize;
+        _writerFactory = p => WriterState.Create(p, compress);
+        _bufferFactory = _ => new MarketEventBuffer(batchSize);
+
         if (_batchOptions.Enabled)
         {
             _flushTimer = new Timer(
@@ -174,7 +184,7 @@ public sealed class JsonlStorageSink : IStorageSink
         }
 
         // Batched write mode
-        var buffer = _buffers.GetOrAdd(path, _ => new MarketEventBuffer(_batchOptions.BatchSize));
+        var buffer = _buffers.GetOrAdd(path, _bufferFactory);
         buffer.Add(evt);
         Interlocked.Increment(ref _eventsBuffered);
 
@@ -187,7 +197,7 @@ public sealed class JsonlStorageSink : IStorageSink
 
     private async ValueTask WriteEventImmediateAsync(string path, MarketEvent evt, CancellationToken ct)
     {
-        var writer = _writers.GetOrAdd(path, p => WriterState.Create(p, _options.Compress));
+        var writer = _writers.GetOrAdd(path, _writerFactory);
         var json = JsonSerializer.Serialize(evt, MarketDataJsonContext.HighPerformanceOptions);
         await writer.WriteLineAsync(json, ct).ConfigureAwait(false);
         Interlocked.Increment(ref _eventsWritten);
@@ -198,7 +208,7 @@ public sealed class JsonlStorageSink : IStorageSink
         var events = buffer.DrainAll();
         if (events.Count == 0) return;
 
-        var writer = _writers.GetOrAdd(path, p => WriterState.Create(p, _options.Compress));
+        var writer = _writers.GetOrAdd(path, _writerFactory);
 
         // Serialize events - use parallel serialization only for very large batches
         // where the parallelism savings outweigh context-switching overhead

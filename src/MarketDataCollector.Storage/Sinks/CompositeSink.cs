@@ -54,6 +54,7 @@ public enum FailurePolicy
 public sealed class CompositeSink : IStorageSink
 {
     private readonly IReadOnlyList<IStorageSink> _sinks;
+    private readonly string[] _sinkTypeNames;
     private readonly ILogger<CompositeSink> _logger;
     private readonly int _maxConsecutiveFailures;
     private readonly TimeSpan _circuitResetTimeout;
@@ -91,9 +92,11 @@ public sealed class CompositeSink : IStorageSink
         _maxConsecutiveFailures = maxConsecutiveFailures;
         _circuitResetTimeout = circuitResetTimeout ?? TimeSpan.FromSeconds(60);
 
+        _sinkTypeNames = new string[_sinks.Count];
         _circuitStates = new SinkCircuitState[_sinks.Count];
         for (var i = 0; i < _sinks.Count; i++)
         {
+            _sinkTypeNames[i] = _sinks[i].GetType().Name;
             _circuitStates[i] = new SinkCircuitState();
         }
     }
@@ -144,7 +147,7 @@ public sealed class CompositeSink : IStorageSink
                 // Circuit is open and reset timeout has not elapsed; skip this sink.
                 _logger.LogDebug(
                     "Skipping sink {SinkIndex}/{SinkCount} ({SinkType}) — circuit breaker open until {CircuitResetTime}",
-                    i + 1, _sinks.Count, _sinks[i].GetType().Name, state.CircuitResetTime);
+                    i + 1, _sinks.Count, _sinkTypeNames[i], state.CircuitResetTime);
                 continue;
             }
 
@@ -161,7 +164,7 @@ public sealed class CompositeSink : IStorageSink
                     {
                         _logger.LogInformation(
                             "Sink {SinkIndex}/{SinkCount} ({SinkType}) circuit breaker closed — write succeeded after reset timeout",
-                            i + 1, _sinks.Count, _sinks[i].GetType().Name);
+                            i + 1, _sinks.Count, _sinkTypeNames[i]);
                     }
 
                     state.RecordSuccess();
@@ -182,21 +185,21 @@ public sealed class CompositeSink : IStorageSink
                     _logger.LogError(ex,
                         "Sink {SinkIndex}/{SinkCount} ({SinkType}) circuit breaker OPENED after {ConsecutiveFailures} consecutive failures. " +
                         "Writes will be skipped until {CircuitResetTime}",
-                        i + 1, _sinks.Count, _sinks[i].GetType().Name, state.ConsecutiveFailures, resetTime);
+                        i + 1, _sinks.Count, _sinkTypeNames[i], state.ConsecutiveFailures, resetTime);
                 }
                 else
                 {
                     _logger.LogWarning(ex,
                         "Sink {SinkIndex}/{SinkCount} ({SinkType}) failed to append event for {Symbol} " +
                         "({ConsecutiveFailures}/{MaxConsecutiveFailures} consecutive failures)",
-                        i + 1, _sinks.Count, _sinks[i].GetType().Name, evt.Symbol,
+                        i + 1, _sinks.Count, _sinkTypeNames[i], evt.Symbol,
                         state.ConsecutiveFailures, _maxConsecutiveFailures);
                 }
 
                 if (_failurePolicy == FailurePolicy.FailOnAnyFailure)
                 {
                     throw new InvalidOperationException(
-                        $"Sink {_sinks[i].GetType().Name} failed and FailurePolicy is FailOnAnyFailure.", ex);
+                        $"Sink {_sinkTypeNames[i]} failed and FailurePolicy is FailOnAnyFailure.", ex);
                 }
             }
         }
@@ -204,7 +207,7 @@ public sealed class CompositeSink : IStorageSink
 
     public async Task FlushAsync(CancellationToken ct = default)
     {
-        var exceptions = new List<Exception>();
+        List<Exception>? exceptions = null;
         var now = _timeProvider.GetUtcNow();
 
         for (var i = 0; i < _sinks.Count; i++)
@@ -214,7 +217,7 @@ public sealed class CompositeSink : IStorageSink
             {
                 _logger.LogDebug(
                     "Skipping flush for sink {SinkIndex}/{SinkCount} ({SinkType}) — circuit breaker open",
-                    i + 1, _sinks.Count, _sinks[i].GetType().Name);
+                    i + 1, _sinks.Count, _sinkTypeNames[i]);
                 continue;
             }
 
@@ -226,12 +229,12 @@ public sealed class CompositeSink : IStorageSink
             {
                 _logger.LogWarning(ex,
                     "Sink {SinkIndex}/{SinkCount} ({SinkType}) failed to flush",
-                    i + 1, _sinks.Count, _sinks[i].GetType().Name);
-                exceptions.Add(ex);
+                    i + 1, _sinks.Count, _sinkTypeNames[i]);
+                (exceptions ??= new List<Exception>()).Add(ex);
             }
         }
 
-        if (exceptions.Count > 0)
+        if (exceptions is { Count: > 0 })
         {
             throw new AggregateException("One or more sinks failed to flush.", exceptions);
         }
@@ -249,7 +252,7 @@ public sealed class CompositeSink : IStorageSink
             {
                 _logger.LogWarning(ex,
                     "Sink {SinkIndex}/{SinkCount} ({SinkType}) failed during disposal",
-                    i + 1, _sinks.Count, _sinks[i].GetType().Name);
+                    i + 1, _sinks.Count, _sinkTypeNames[i]);
             }
         }
     }
@@ -269,7 +272,7 @@ public sealed class CompositeSink : IStorageSink
             var effectiveState = GetEffectiveState(state, now);
 
             report[i] = new SinkHealth(
-                SinkType: _sinks[i].GetType().Name,
+                SinkType: _sinkTypeNames[i],
                 SinkIndex: i,
                 State: effectiveState,
                 ConsecutiveFailures: state.ConsecutiveFailures,

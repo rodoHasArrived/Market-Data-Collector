@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
@@ -26,6 +27,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     private string? _currentWalPath;
     private long _currentSequence;
     private long _currentFileSize;
+    private DateTime _currentFileCreationTime;
     private int _uncommittedRecords;
     private DateTime _lastFlushTime = DateTime.UtcNow;
     private bool _disposed;
@@ -348,7 +350,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
     private async Task StartNewWalFileAsync(CancellationToken ct)
     {
-        var fileName = $"wal_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{_currentSequence:D12}.wal";
+        var now = DateTime.UtcNow;
+        var fileName = $"wal_{now:yyyyMMdd_HHmmss}_{_currentSequence:D12}.wal";
         _currentWalPath = Path.Combine(_walDirectory, fileName);
 
         _currentWalFile = new FileStream(
@@ -362,10 +365,11 @@ public sealed class WriteAheadLog : IAsyncDisposable
         _currentWriter = new StreamWriter(_currentWalFile, Encoding.UTF8, bufferSize: 32 * 1024);
 
         // Write header
-        await _currentWriter.WriteLineAsync($"{WalMagic}|{WalVersion}|{DateTime.UtcNow:O}");
+        await _currentWriter.WriteLineAsync($"{WalMagic}|{WalVersion}|{now:O}");
         await _currentWriter.FlushAsync();
 
         _currentFileSize = _currentWalFile.Length;
+        _currentFileCreationTime = now;
         _log.Debug("Started new WAL file: {File}", _currentWalPath);
     }
 
@@ -387,7 +391,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     {
         return _currentFileSize >= _options.MaxWalFileSizeBytes ||
                (_options.MaxWalFileAge.HasValue &&
-                File.GetCreationTimeUtc(_currentWalPath!) + _options.MaxWalFileAge.Value < DateTime.UtcNow);
+                _currentFileCreationTime + _options.MaxWalFileAge.Value < DateTime.UtcNow);
     }
 
     private async Task WriteRecordAsync(WalRecord record, CancellationToken ct)
@@ -397,10 +401,22 @@ public sealed class WriteAheadLog : IAsyncDisposable
             throw new InvalidOperationException("WAL not initialized");
         }
 
-        var line = $"{record.Sequence}|{record.Timestamp:O}|{record.RecordType}|{record.Checksum}|{record.Payload}";
-        await _currentWriter.WriteLineAsync(line);
+        // Write fields directly to avoid allocating a single large interpolated string.
+        // The StreamWriter buffers internally, so multiple Write calls are coalesced.
+        var writer = _currentWriter;
+        writer.Write(record.Sequence);
+        writer.Write('|');
+        writer.Write(record.Timestamp.ToString("O"));
+        writer.Write('|');
+        writer.Write(record.RecordType);
+        writer.Write('|');
+        writer.Write(record.Checksum);
+        writer.Write('|');
+        await writer.WriteLineAsync(record.Payload).ConfigureAwait(false);
 
-        _currentFileSize += Encoding.UTF8.GetByteCount(line) + Environment.NewLine.Length;
+        // Approximate size tracking — avoids expensive UTF-8 measurement on every write.
+        // Payload dominates; the fixed-format prefix is typically ~80 ASCII bytes.
+        _currentFileSize += 80 + Encoding.UTF8.GetByteCount(record.Payload) + Environment.NewLine.Length;
     }
 
     private async Task<long> RecoverWalFileAsync(string walFile, CancellationToken ct)
@@ -476,7 +492,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
                 continue;
             }
 
-            if (!DateTime.TryParse(parts[1], out var timestamp))
+            if (!DateTime.TryParse(parts[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var timestamp))
             {
                 _log.Warning(
                     "Malformed WAL record skipped in {File}: unable to parse timestamp for sequence {Sequence}",
@@ -529,13 +545,80 @@ public sealed class WriteAheadLog : IAsyncDisposable
         return maxSequence;
     }
 
+    /// <summary>
+    /// Computes a SHA-256 checksum for a WAL record using incremental hashing
+    /// to avoid allocating a single large concatenated string.
+    /// </summary>
     private static string ComputeChecksum(long sequence, DateTime timestamp, string recordType, string payload)
     {
-        var data = $"{sequence}|{timestamp:O}|{recordType}|{payload}";
-        var bytes = Encoding.UTF8.GetBytes(data);
-        var hash = SHA256.HashData(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
+        // Use incremental hash to avoid concatenating a potentially large string
+        // (the payload can be several KB of serialized JSON).
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+
+        Span<byte> smallBuf = stackalloc byte[128];
+
+        // sequence|
+        if (Encoding.UTF8.TryGetBytes(sequence.ToString(), smallBuf, out var written))
+        {
+            hash.AppendData(smallBuf[..written]);
+        }
+        else
+        {
+            hash.AppendData(Encoding.UTF8.GetBytes(sequence.ToString()));
+        }
+        hash.AppendData(PipeSeparator);
+
+        // timestamp:O|
+        var tsStr = timestamp.ToString("O");
+        if (Encoding.UTF8.TryGetBytes(tsStr, smallBuf, out written))
+        {
+            hash.AppendData(smallBuf[..written]);
+        }
+        else
+        {
+            hash.AppendData(Encoding.UTF8.GetBytes(tsStr));
+        }
+        hash.AppendData(PipeSeparator);
+
+        // recordType|
+        if (Encoding.UTF8.TryGetBytes(recordType, smallBuf, out written))
+        {
+            hash.AppendData(smallBuf[..written]);
+        }
+        else
+        {
+            hash.AppendData(Encoding.UTF8.GetBytes(recordType));
+        }
+        hash.AppendData(PipeSeparator);
+
+        // payload (may be large — rent from pool when it doesn't fit on the stack)
+        var payloadByteCount = Encoding.UTF8.GetByteCount(payload);
+        if (payloadByteCount <= 1024)
+        {
+            Span<byte> payloadBuf = stackalloc byte[payloadByteCount];
+            Encoding.UTF8.GetBytes(payload, payloadBuf);
+            hash.AppendData(payloadBuf);
+        }
+        else
+        {
+            var rented = System.Buffers.ArrayPool<byte>.Shared.Rent(payloadByteCount);
+            try
+            {
+                var count = Encoding.UTF8.GetBytes(payload, 0, payload.Length, rented, 0);
+                hash.AppendData(rented.AsSpan(0, count));
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+
+        Span<byte> hashBytes = stackalloc byte[32]; // SHA-256 = 32 bytes
+        hash.GetHashAndReset(hashBytes);
+        return Convert.ToHexStringLower(hashBytes);
     }
+
+    private static ReadOnlySpan<byte> PipeSeparator => "|"u8;
 
     /// <summary>
     /// Repairs all WAL files by scanning every record, validating checksums,
@@ -592,7 +675,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
                 var parts = line.Split('|', 5);
                 if (parts.Length < 5 ||
                     !long.TryParse(parts[0], out var sequence) ||
-                    !DateTime.TryParse(parts[1], out var timestamp))
+                    !DateTime.TryParse(parts[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var timestamp))
                 {
                     fileCorruptedCount++;
                     corruptedRecords++;

@@ -38,6 +38,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly Task _consumer;
     private readonly Task? _flusher;
     private readonly int _capacity;
+    private readonly BoundedChannelFullMode _fullMode;
     private readonly bool _metricsEnabled;
     private readonly DroppedEventAuditTrail? _auditTrail;
     private readonly IEventMetrics _metrics;
@@ -64,6 +65,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly TimeSpan _flushInterval;
     private readonly int _batchSize;
     private readonly bool _enablePeriodicFlush;
+
+    // Pre-computed integer thresholds to avoid floating-point division on every TryPublish
+    private readonly int _highWaterMark80;
+    private readonly int _highWaterMark50;
 
     /// <summary>
     /// Default maximum time to wait for the final flush during shutdown before giving up.
@@ -154,7 +159,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
         _capacity = policy.Capacity;
+        _fullMode = policy.FullMode;
         _metricsEnabled = policy.EnableMetrics;
+        _highWaterMark80 = (int)(policy.Capacity * 0.8);
+        _highWaterMark50 = policy.Capacity / 2;
         _flushInterval = flushInterval ?? TimeSpan.FromSeconds(5);
         _batchSize = Math.Max(1, batchSize);
         _enablePeriodicFlush = enablePeriodicFlush;
@@ -321,6 +329,19 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryPublish(in MarketEvent evt)
     {
+        // For DropWrite mode, TryWrite returns true even when the new item is
+        // silently discarded. Pre-check capacity to detect these silent drops.
+        // (DropOldest/DropNewest evict old items, so the new item IS accepted.)
+        if (_fullMode == BoundedChannelFullMode.DropWrite && _channel.Reader.Count >= _capacity)
+        {
+            // Channel is at capacity — the item will be silently discarded by the
+            // bounded channel. Still call TryWrite so the channel can apply its
+            // policy, but track the event as dropped.
+            _channel.Writer.TryWrite(evt);
+            RecordDrop(in evt);
+            return false;
+        }
+
         var written = _channel.Writer.TryWrite(evt);
 
         if (written)
@@ -331,45 +352,70 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
                 _metrics.IncPublished();
             }
 
-            // Track peak queue size and warn on high utilization
+            // Read queue size once — Reader.Count acquires an internal lock,
+            // so avoid calling it multiple times per event.
             var currentSize = _channel.Reader.Count;
-            var peak = Interlocked.Read(ref _peakQueueSize);
+
+            // Update peak using a lock-free compare-and-swap loop.
+            // Skip the Interlocked.Read on the fast path when we're clearly below peak.
+            var peak = Volatile.Read(ref _peakQueueSize);
             if (currentSize > peak)
             {
                 Interlocked.CompareExchange(ref _peakQueueSize, currentSize, peak);
             }
 
-            var utilization = (double)currentSize / _capacity;
-            if (utilization >= 0.8 && !_highWaterMarkWarned)
+            // Use integer comparison instead of floating-point division.
+            // _highWaterMark80 = (int)(capacity * 0.8), _highWaterMark50 = capacity / 2
+            if (currentSize >= _highWaterMark80 && !_highWaterMarkWarned)
             {
                 _highWaterMarkWarned = true;
+                var utilization = (double)currentSize / _capacity;
                 _logger.LogWarning(
                     "Pipeline queue utilization at {Utilization:P0} ({CurrentSize}/{Capacity}). Events may be dropped if queue fills. Consider increasing capacity or reducing event rate",
                     utilization, currentSize, _capacity);
             }
-            else if (utilization < 0.5 && _highWaterMarkWarned)
+            else if (_highWaterMarkWarned && currentSize < _highWaterMark50)
             {
                 _highWaterMarkWarned = false;
+                var utilization = (double)currentSize / _capacity;
                 _logger.LogInformation("Pipeline queue utilization recovered to {Utilization:P0}", utilization);
             }
         }
         else
         {
-            Interlocked.Increment(ref _droppedCount);
-            if (_metricsEnabled)
-            {
-                _metrics.IncDropped();
-            }
-
-            // Record dropped event to audit trail for gap-aware consumers
-            if (_auditTrail != null)
-            {
-                _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full")
-                    .ObserveException(operation: "audit trail recording dropped event");
-            }
+            RecordDrop(in evt);
         }
 
         return written;
+    }
+
+    /// <summary>Records a dropped event — shared by DropWrite pre-check and Wait-mode TryWrite failure.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)] // keep off the hot inlined path
+    private void RecordDrop(in MarketEvent evt)
+    {
+        Interlocked.Increment(ref _droppedCount);
+        if (_metricsEnabled)
+        {
+            _metrics.IncDropped();
+        }
+
+        if (_auditTrail != null)
+        {
+            _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full")
+                .ObserveException(operation: "audit trail recording dropped event");
+        }
+    }
+
+    /// <summary>Cached enum name lookup — avoids Enum.ToString() allocation per event.</summary>
+    private static readonly string[] EventTypeNames = Enum.GetValues<MarketEventType>()
+        .Select(e => e.ToString())
+        .ToArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static string GetEventTypeName(MarketEventType type)
+    {
+        var index = (int)type;
+        return (uint)index < (uint)EventTypeNames.Length ? EventTypeNames[index] : type.ToString();
     }
 
     /// <summary>
@@ -528,7 +574,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
                         if (_wal != null)
                         {
-                            var walRecord = await _wal.AppendAsync(evt, evt.Type.ToString(), _cts.Token).ConfigureAwait(false);
+                            var walRecord = await _wal.AppendAsync(evt, GetEventTypeName(evt.Type), _cts.Token).ConfigureAwait(false);
                             maxWalSequence = Math.Max(maxWalSequence, walRecord.Sequence);
                         }
 
