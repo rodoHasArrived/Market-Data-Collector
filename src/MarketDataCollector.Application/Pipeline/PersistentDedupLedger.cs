@@ -135,7 +135,7 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
             await _writeLock.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                await _writer.WriteLineAsync($"{{\"k\":\"{EscapeJson(key)}\",\"t\":{nowTicks}}}").ConfigureAwait(false);
+                await _writer.WriteLineAsync($"{{\"k\":\"{EscapeJson(key)}\",\"t\":{nowTicks}}}".AsMemory(), ct).ConfigureAwait(false);
             }
             finally
             {
@@ -260,7 +260,7 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
                     {
                         if (ticks > cutoff)
                         {
-                            await writer.WriteLineAsync($"{{\"k\":\"{EscapeJson(key)}\",\"t\":{ticks}}}").ConfigureAwait(false);
+                            await writer.WriteLineAsync($"{{\"k\":\"{EscapeJson(key)}\",\"t\":{ticks}}}".AsMemory(), ct).ConfigureAwait(false);
                             kept++;
                         }
                     }

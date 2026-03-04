@@ -162,6 +162,7 @@ public sealed class GracefulShutdownService : IHostedService
         catch (Exception ex)
         {
             _log.Error(ex, "Failed to flush {Component}", name);
+            throw;
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Domain.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -66,7 +67,7 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
             try
             {
                 var writer = EnsureWriter();
-                var json = JsonSerializer.Serialize(record);
+                var json = JsonSerializer.Serialize(record, MarketDataJsonContext.HighPerformanceOptions);
                 await writer.WriteLineAsync(json).ConfigureAwait(false);
             }
             finally

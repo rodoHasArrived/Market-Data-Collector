@@ -221,7 +221,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     {
         if (_currentWriter == null || _currentWalFile == null) return;
 
-        await _currentWriter.FlushAsync();
+        await _currentWriter.FlushAsync().ConfigureAwait(false);
 
         if (_options.SyncMode != WalSyncMode.NoSync)
         {
@@ -365,8 +365,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
         _currentWriter = new StreamWriter(_currentWalFile, Encoding.UTF8, bufferSize: 32 * 1024);
 
         // Write header
-        await _currentWriter.WriteLineAsync($"{WalMagic}|{WalVersion}|{now:O}");
-        await _currentWriter.FlushAsync();
+        await _currentWriter.WriteLineAsync($"{WalMagic}|{WalVersion}|{now:O}").ConfigureAwait(false);
+        await _currentWriter.FlushAsync().ConfigureAwait(false);
 
         _currentFileSize = _currentWalFile.Length;
         _currentFileCreationTime = now;
@@ -377,8 +377,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
     {
         if (_currentWriter != null)
         {
-            await _currentWriter.FlushAsync();
-            await _currentWriter.DisposeAsync();
+            await _currentWriter.FlushAsync().ConfigureAwait(false);
+            await _currentWriter.DisposeAsync().ConfigureAwait(false);
             // _currentWriter.DisposeAsync() already closes the underlying _currentWalFile stream
             _currentWriter = null;
             _currentWalFile = null;

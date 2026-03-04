@@ -39,16 +39,13 @@ public sealed class CircuitBreakerStatusService
                 TripCount = newState == CircuitBreakerState.Open ? 1 : 0,
                 LastError = lastError
             },
-            (_, existing) =>
+            (_, existing) => new CircuitBreakerInfo
             {
-                var oldState = existing.State;
-                existing.State = newState;
-                existing.LastStateChange = now;
-                if (newState == CircuitBreakerState.Open)
-                    existing.TripCount++;
-                if (lastError != null)
-                    existing.LastError = lastError;
-                return existing;
+                Name = existing.Name,
+                State = newState,
+                LastStateChange = now,
+                TripCount = newState == CircuitBreakerState.Open ? existing.TripCount + 1 : existing.TripCount,
+                LastError = lastError ?? existing.LastError
             });
 
         _log.Information(

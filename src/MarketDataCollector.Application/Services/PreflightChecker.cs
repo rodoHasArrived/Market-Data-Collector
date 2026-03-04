@@ -35,7 +35,7 @@ public sealed class PreflightChecker
     /// <returns>Pre-flight check results with pass/fail status and details.</returns>
     public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default, DataSourceKind? activeDataSource = null)
     {
-        return await RunChecksAsync(dataRoot, activeDataSource: null, ct);
+        return await RunChecksAsync(dataRoot, activeDataSource: activeDataSource?.ToString(), ct);
     }
 
     /// <summary>
@@ -62,12 +62,6 @@ public sealed class PreflightChecker
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
         checks.Add(ValidateProviderCredentials());
-
-        // Validate provider credentials for the active data source
-        if (activeDataSource.HasValue)
-        {
-            checks.Add(ValidateProviderCredentials(activeDataSource.Value));
-        }
 
         // Validate provider credentials if active data source is known
         if (!string.IsNullOrEmpty(activeDataSource))

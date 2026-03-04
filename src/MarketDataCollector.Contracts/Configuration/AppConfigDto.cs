@@ -207,7 +207,7 @@ public sealed class StorageConfigDto
 /// <summary>
 /// Symbol subscription configuration.
 /// </summary>
-public class SymbolConfigDto
+public sealed class SymbolConfigDto
 {
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = string.Empty;

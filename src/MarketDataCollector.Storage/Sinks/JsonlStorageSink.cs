@@ -238,7 +238,7 @@ public sealed class JsonlStorageSink : IStorageSink
 
     private async Task FlushAllBuffersAsync(CancellationToken ct = default)
     {
-        if (Volatile.Read(ref _disposed) != 0 && _disposalCts.IsCancellationRequested) return;
+        if (Volatile.Read(ref _disposed) != 0 || _disposalCts.IsCancellationRequested) return;
 
         await _flushGate.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -327,7 +327,7 @@ public sealed class JsonlStorageSink : IStorageSink
         {
             try
             {
-                await _flushGate.WaitAsync().ConfigureAwait(false);
+                await _flushGate.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
                 try
                 {
                     var tasks = new List<Task>();
