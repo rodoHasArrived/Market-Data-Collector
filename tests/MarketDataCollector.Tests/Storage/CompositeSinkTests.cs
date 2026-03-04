@@ -351,7 +351,7 @@ public sealed class CompositeSinkTests
     }
 
     [Fact]
-    public async Task GetSinkHealthReport_SinkType_ReflectsActualClassName()
+    public void GetSinkHealthReport_SinkType_ReflectsActualClassName()
     {
         var sink = new Mock<IStorageSink>();
         var composite = new CompositeSink(new[] { sink.Object });
