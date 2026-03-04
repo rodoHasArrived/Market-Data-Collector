@@ -25,7 +25,7 @@ public class BackfillWorkerServiceTests
         var config = new BackfillJobsConfig(MaxConcurrentRequests: maxConcurrentRequests);
 
         // Act & Assert
-        // Note: Using null! because validation throws before dependencies are accessed
+        // NOTE: Using null! because validation throws before dependencies are accessed
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
             new BackfillWorkerService(
                 null!,
@@ -52,7 +52,7 @@ public class BackfillWorkerServiceTests
         var config = new BackfillJobsConfig(MaxConcurrentRequests: maxConcurrentRequests);
 
         // Act & Assert
-        // Note: Using null! because validation throws before dependencies are accessed
+        // NOTE: Using null! because validation throws before dependencies are accessed
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
             new BackfillWorkerService(
                 null!,
@@ -81,7 +81,7 @@ public class BackfillWorkerServiceTests
         var config = new BackfillJobsConfig(MaxConcurrentRequests: maxConcurrentRequests);
 
         // Act & Assert
-        // Note: Using null! dependencies - we only verify that ArgumentOutOfRangeException is not thrown
+        // NOTE: Using null! dependencies - we only verify that ArgumentOutOfRangeException is not thrown
         // The constructor may throw other exceptions (e.g., NullReferenceException) when accessing null dependencies
         var exception = Record.Exception(() =>
         {

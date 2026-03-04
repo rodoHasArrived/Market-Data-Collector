@@ -54,7 +54,7 @@ public sealed class NavigationServiceTests
     [Fact]
     public void CanGoBack_BeforeInitialization_ShouldReturnFalse()
     {
-        // Note: This test assumes NavigationService might not be initialized
+        // NOTE: This test assumes NavigationService might not be initialized
         // In production, Initialize should be called during app startup
         
         // Arrange

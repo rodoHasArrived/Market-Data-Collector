@@ -20,7 +20,7 @@ public sealed class WatchlistService
         set => _instance = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public virtual Task<WatchlistData> LoadWatchlistAsync()
+    public Task<WatchlistData> LoadWatchlistAsync()
         => Task.FromResult(new WatchlistData());
 
     /// <summary>
@@ -31,7 +31,7 @@ public sealed class WatchlistService
     /// <param name="symbols">The symbols to add.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if successful, false otherwise.</returns>
-    public virtual Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
+    public Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
     {
         // Default implementation - platform-specific implementations should override
         return Task.FromResult(false);

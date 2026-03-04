@@ -15,7 +15,7 @@ namespace MarketDataCollector.Ui.Services;
 /// Provides basic config loading/saving from the standard appsettings path.
 /// Platform-specific projects may override this by setting the Instance property.
 /// </summary>
-public sealed class ConfigService : IConfigService
+public class ConfigService : IConfigService
 {
     private static readonly Lazy<ConfigService> _instance = new(() => new ConfigService());
 
@@ -34,14 +34,14 @@ public sealed class ConfigService : IConfigService
         ConfigPath = Path.Combine(AppContext.BaseDirectory, "config", "appsettings.json");
     }
 
-    public virtual async Task<AppConfig?> LoadConfigAsync(CancellationToken ct = default)
+    public async Task<AppConfig?> LoadConfigAsync(CancellationToken ct = default)
     {
         if (!File.Exists(ConfigPath)) return null;
         var json = await File.ReadAllTextAsync(ConfigPath, ct);
         return JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions);
     }
 
-    public virtual async Task SaveConfigAsync(AppConfig config, CancellationToken ct = default)
+    public async Task SaveConfigAsync(AppConfig config, CancellationToken ct = default)
     {
         var dir = Path.GetDirectoryName(ConfigPath);
         if (dir != null) Directory.CreateDirectory(dir);
@@ -49,21 +49,21 @@ public sealed class ConfigService : IConfigService
         await File.WriteAllTextAsync(ConfigPath, json, ct);
     }
 
-    public virtual async Task SaveDataSourceAsync(string dataSource, CancellationToken ct = default)
+    public async Task SaveDataSourceAsync(string dataSource, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         config.DataSource = dataSource;
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task SaveAlpacaOptionsAsync(AlpacaOptions options, CancellationToken ct = default)
+    public async Task SaveAlpacaOptionsAsync(AlpacaOptions options, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         config.Alpaca = options;
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task SaveStorageConfigAsync(string dataRoot, bool compress, StorageConfig storage, CancellationToken ct = default)
+    public async Task SaveStorageConfigAsync(string dataRoot, bool compress, StorageConfig storage, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         config.DataRoot = dataRoot;
@@ -72,7 +72,7 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task AddOrUpdateSymbolAsync(SymbolConfig symbol, CancellationToken ct = default)
+    public async Task AddOrUpdateSymbolAsync(SymbolConfig symbol, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var symbols = config.Symbols?.ToList() ?? new List<SymbolConfig>();
@@ -86,10 +86,10 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual Task AddSymbolAsync(SymbolConfig symbol, CancellationToken ct = default)
+    public Task AddSymbolAsync(SymbolConfig symbol, CancellationToken ct = default)
         => AddOrUpdateSymbolAsync(symbol, ct);
 
-    public virtual async Task DeleteSymbolAsync(string symbol, CancellationToken ct = default)
+    public async Task DeleteSymbolAsync(string symbol, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var symbols = config.Symbols?.ToList() ?? new List<SymbolConfig>();
@@ -98,19 +98,19 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task<DataSourceConfig[]> GetDataSourcesAsync(CancellationToken ct = default)
+    public async Task<DataSourceConfig[]> GetDataSourcesAsync(CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct);
         return config?.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
     }
 
-    public virtual async Task<DataSourcesConfig> GetDataSourcesConfigAsync(CancellationToken ct = default)
+    public async Task<DataSourcesConfig> GetDataSourcesConfigAsync(CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct);
         return config?.DataSources ?? new DataSourcesConfig();
     }
 
-    public virtual async Task AddOrUpdateDataSourceAsync(DataSourceConfig dataSource, CancellationToken ct = default)
+    public async Task AddOrUpdateDataSourceAsync(DataSourceConfig dataSource, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var dataSources = config.DataSources ?? new DataSourcesConfig();
@@ -126,7 +126,7 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task DeleteDataSourceAsync(string id, CancellationToken ct = default)
+    public async Task DeleteDataSourceAsync(string id, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var dataSources = config.DataSources ?? new DataSourcesConfig();
@@ -137,7 +137,7 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task SetDefaultDataSourceAsync(string id, bool isHistorical, CancellationToken ct = default)
+    public async Task SetDefaultDataSourceAsync(string id, bool isHistorical, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var dataSources = config.DataSources ?? new DataSourcesConfig();
@@ -149,7 +149,7 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual async Task ToggleDataSourceAsync(string id, bool enabled, CancellationToken ct = default)
+    public async Task ToggleDataSourceAsync(string id, bool enabled, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var dataSources = config.DataSources ?? new DataSourcesConfig();
@@ -162,7 +162,7 @@ public sealed class ConfigService : IConfigService
         }
     }
 
-    public virtual async Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds, CancellationToken ct = default)
+    public async Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds, CancellationToken ct = default)
     {
         var config = await LoadConfigAsync(ct) ?? new AppConfig();
         var dataSources = config.DataSources ?? new DataSourcesConfig();
@@ -172,21 +172,21 @@ public sealed class ConfigService : IConfigService
         await SaveConfigAsync(config, ct);
     }
 
-    public virtual Task<AppSettings> GetAppSettingsAsync(CancellationToken ct = default)
+    public Task<AppSettings> GetAppSettingsAsync(CancellationToken ct = default)
         => Task.FromResult(new AppSettings());
 
-    public virtual Task SaveAppSettingsAsync(AppSettings settings, CancellationToken ct = default)
+    public Task SaveAppSettingsAsync(AppSettings settings, CancellationToken ct = default)
         => Task.CompletedTask;
 
-    public virtual Task UpdateServiceUrlAsync(string serviceUrl, int timeoutSeconds = 30, int backfillTimeoutMinutes = 60, CancellationToken ct = default)
+    public Task UpdateServiceUrlAsync(string serviceUrl, int timeoutSeconds = 30, int backfillTimeoutMinutes = 60, CancellationToken ct = default)
     {
         ApiClientService.Instance.Configure(serviceUrl, timeoutSeconds, backfillTimeoutMinutes);
         return Task.CompletedTask;
     }
 
-    public virtual Task InitializeAsync(CancellationToken ct = default)
+    public Task InitializeAsync(CancellationToken ct = default)
         => Task.CompletedTask;
 
-    public virtual Task<ConfigValidationResult> ValidateConfigAsync(CancellationToken ct = default)
+    public Task<ConfigValidationResult> ValidateConfigAsync(CancellationToken ct = default)
         => Task.FromResult(new ConfigValidationResult { IsValid = true });
 }

@@ -378,6 +378,18 @@ public sealed class CompositeSink : IStorageSink
             Interlocked.Increment(ref _circuitBreakCount);
         }
 
+
+        private static DateTimeOffset ReadUtcTicks(ref long utcTicks)
+        {
+            var ticks = Interlocked.Read(ref utcTicks);
+            return new DateTimeOffset(ticks, TimeSpan.Zero);
+        }
+
+        private static void WriteUtcTicks(ref long utcTicks, DateTimeOffset value)
+        {
+            Interlocked.Exchange(ref utcTicks, value.UtcTicks);
+        }
+
         /// <summary>
         /// Returns true when the sink is in half-open state: the circuit was tripped
         /// (consecutive failures >= threshold) and the reset timeout has elapsed.
