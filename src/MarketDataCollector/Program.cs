@@ -376,6 +376,7 @@ public partial class Program
                 errorCode = ErrorCode.ConnectionFailed;
             log.Error(ex, "Failed to connect to {DataSource} data provider (ErrorCode={ErrorCode}, ExitCode={ExitCode}). Check credentials and connectivity.",
                 cfg.DataSource, errorCode, errorCode.ToExitCode());
+
             return errorCode.ToExitCode();
         }
 

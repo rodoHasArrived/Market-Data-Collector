@@ -111,4 +111,39 @@ internal static class EndpointHelpers
 
         return DateOnly.TryParse(dateStr, out var date) ? date : DateOnly.FromDateTime(DateTime.UtcNow);
     }
+
+    /// <summary>
+    /// Formats an exception into a structured JSON error response using FriendlyErrorFormatter.
+    /// Returns a consistent error envelope with error code, message, and actionable suggestion.
+    /// </summary>
+    private static IResult FormatErrorResult(Exception ex, JsonSerializerOptions opts)
+    {
+        var formatted = FriendlyErrorFormatter.Format(ex);
+        var statusCode = GetHttpStatusCode(ex);
+
+        return Results.Json(new
+        {
+            error = formatted.Title,
+            code = formatted.Code,
+            message = formatted.Message,
+            suggestion = formatted.Suggestion,
+            docsLink = formatted.DocsLink,
+            timestamp = DateTimeOffset.UtcNow
+        }, opts, statusCode: statusCode);
+    }
+
+    /// <summary>
+    /// Maps exception types to appropriate HTTP status codes.
+    /// </summary>
+    private static int GetHttpStatusCode(Exception ex) => ex switch
+    {
+        ArgumentException or ArgumentNullException => 400,
+        UnauthorizedAccessException => 403,
+        FileNotFoundException or DirectoryNotFoundException => 404,
+        InvalidOperationException => 409,
+        NotSupportedException or NotImplementedException => 501,
+        TimeoutException => 504,
+        OperationCanceledException => 408,
+        _ => 500
+    };
 }

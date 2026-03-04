@@ -6,6 +6,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Storage.Services;
+using MarketDataCollector.Application.Config;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -30,8 +31,9 @@ public sealed class PreflightChecker
     /// </summary>
     /// <param name="dataRoot">The data directory path to check.</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="activeDataSource">Active data source to validate credentials for.</param>
     /// <returns>Pre-flight check results with pass/fail status and details.</returns>
-    public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default)
+    public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default, DataSourceKind? activeDataSource = null)
     {
         var startTime = Stopwatch.GetTimestamp();
         var checks = new List<PreflightCheckResult>();
@@ -52,6 +54,12 @@ public sealed class PreflightChecker
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
         checks.Add(ValidateProviderCredentials());
+
+        // Validate provider credentials for the active data source
+        if (activeDataSource.HasValue)
+        {
+            checks.Add(ValidateProviderCredentials(activeDataSource.Value));
+        }
 
         // Run provider-specific checks if configured
         if (_config.CheckProviderConnectivity)
@@ -94,9 +102,9 @@ public sealed class PreflightChecker
     /// <summary>
     /// Runs checks and throws if any critical check fails.
     /// </summary>
-    public async Task EnsureReadyAsync(string dataRoot, CancellationToken ct = default)
+    public async Task EnsureReadyAsync(string dataRoot, CancellationToken ct = default, DataSourceKind? activeDataSource = null)
     {
-        var result = await RunChecksAsync(dataRoot, ct);
+        var result = await RunChecksAsync(dataRoot, ct, activeDataSource);
 
         if (!result.AllChecksPassed)
         {

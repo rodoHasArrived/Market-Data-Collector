@@ -15,6 +15,9 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// </summary>
 public static class ExportEndpoints
 {
+    private static readonly string ExportBaseDir = Path.Combine(Path.GetTempPath(), "mdc-exports");
+    private static readonly TimeSpan ExportMaxAge = TimeSpan.FromHours(24);
+
     public static void MapExportEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
         var group = app.MapGroup("").WithTags("Export");
@@ -376,4 +379,39 @@ public static class ExportEndpoints
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
+
+    /// <summary>
+    /// Removes export directories older than <see cref="ExportMaxAge"/> to prevent unbounded disk usage.
+    /// </summary>
+    private static void CleanupOldExportDirectories()
+    {
+        try
+        {
+            if (!Directory.Exists(ExportBaseDir)) return;
+
+            foreach (var dir in Directory.EnumerateDirectories(ExportBaseDir))
+            {
+                try
+                {
+                    var created = Directory.GetCreationTimeUtc(dir);
+                    if (DateTime.UtcNow - created > ExportMaxAge)
+                    {
+                        Directory.Delete(dir, recursive: true);
+                    }
+                }
+                catch (IOException)
+                {
+                    // Directory may be in use or already deleted
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Insufficient permissions to delete
+                }
+            }
+        }
+        catch (IOException)
+        {
+            // Base directory inaccessible, skip cleanup
+        }
+    }
 }
