@@ -34,14 +34,14 @@ public class ConfigService : IConfigService
         ConfigPath = Path.Combine(AppContext.BaseDirectory, "config", "appsettings.json");
     }
 
-    public async Task<AppConfig?> LoadConfigAsync(CancellationToken ct = default)
+    public virtual async Task<AppConfig?> LoadConfigAsync(CancellationToken ct = default)
     {
         if (!File.Exists(ConfigPath)) return null;
         var json = await File.ReadAllTextAsync(ConfigPath, ct);
         return JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions);
     }
 
-    public async Task SaveConfigAsync(AppConfig config, CancellationToken ct = default)
+    public virtual async Task SaveConfigAsync(AppConfig config, CancellationToken ct = default)
     {
         var dir = Path.GetDirectoryName(ConfigPath);
         if (dir != null) Directory.CreateDirectory(dir);
