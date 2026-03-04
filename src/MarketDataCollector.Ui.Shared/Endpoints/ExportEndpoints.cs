@@ -142,6 +142,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
+            CleanupOldExportDirectories();
+
             var outputDir = Path.Combine(ExportBaseDir, "quality-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
@@ -189,6 +191,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
+            CleanupOldExportDirectories();
+
             var outputDir = Path.Combine(ExportBaseDir, "orderflow-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
@@ -235,6 +239,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
+            CleanupOldExportDirectories();
+
             var outputDir = Path.Combine(ExportBaseDir, "integrity-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
             {
@@ -274,6 +280,8 @@ public static class ExportEndpoints
             {
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
+
+            CleanupOldExportDirectories();
 
             var outputDir = Path.Combine(ExportBaseDir, "research-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
