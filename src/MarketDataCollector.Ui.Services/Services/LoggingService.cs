@@ -14,17 +14,17 @@ public sealed class LoggingService
 
     public static LoggingService Instance => _instance.Value;
 
-    public virtual void LogError(string message, Exception? exception = null, params (string key, string value)[] properties)
+    public void LogError(string message, Exception? exception = null, params (string key, string value)[] properties)
     {
         Debug.WriteLine($"[ERROR] {message} {exception?.Message}");
     }
 
-    public virtual void LogWarning(string message, Exception? exception = null)
+    public void LogWarning(string message, Exception? exception = null)
     {
         Debug.WriteLine($"[WARN] {message} {exception?.Message}");
     }
 
-    public virtual void LogInfo(string message, params (string key, string value)[] properties)
+    public void LogInfo(string message, params (string key, string value)[] properties)
     {
         Debug.WriteLine($"[INFO] {message}");
     }
