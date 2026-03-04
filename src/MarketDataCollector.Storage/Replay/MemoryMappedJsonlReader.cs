@@ -262,6 +262,7 @@ public sealed class MemoryMappedJsonlReader
                                 yield return evt;
                             }
                             pendingLines.Clear();
+                            ct.ThrowIfCancellationRequested();
                         }
                     }
                 }

@@ -1012,6 +1012,81 @@ function stopPolling() {{
   }}
 }}
 
+// --- Data Freshness Bar ---
+let lastEventTimestamp = null;
+let eventCountSinceLastCheck = 0;
+
+async function updateFreshnessBar() {{
+  const container = document.getElementById('freshnessProviders');
+  const lastEventEl = document.getElementById('freshnessLastEvent');
+  const throughputEl = document.getElementById('freshnessThroughput');
+
+  try {{
+    const r = await fetch('/api/providers/status');
+    if (!r.ok) {{
+      container.innerHTML = `<span class=""freshness-label"">Providers:</span><span class=""freshness-loading"">Unavailable</span>`;
+      return;
+    }}
+    const data = await r.json();
+    const providers = data.providers || data || [];
+
+    // Build provider dots
+    let html = `<span class=""freshness-label"">Providers:</span>`;
+    if (Array.isArray(providers) && providers.length > 0) {{
+      providers.forEach(p => {{
+        const name = p.name || p.id || 'Unknown';
+        const isConnected = p.isConnected || p.status === 'Connected' || p.status === 'Active';
+        const isEnabled = p.isEnabled !== false;
+        const dotClass = isConnected ? 'green' : (isEnabled ? 'red' : 'gray');
+        const title = `${{name}}: ${{isConnected ? 'Connected' : (isEnabled ? 'Disconnected' : 'Disabled')}}`;
+        html += `<span title=""${{title}}"" class=""freshness-dot ${{dotClass}}""></span><span style=""margin-right:8px"">${{name}}</span>`;
+      }});
+    }} else {{
+      html += `<span class=""freshness-dot gray""></span><span>No providers</span>`;
+    }}
+    container.innerHTML = html;
+
+    // Update last event time from status
+    const sr = await fetch('/api/status');
+    if (sr.ok) {{
+      const status = await sr.json();
+      const ts = status.timestampUtc || status.lastEventUtc;
+      if (ts) {{
+        const eventDate = new Date(ts);
+        const ageSeconds = (Date.now() - eventDate.getTime()) / 1000;
+        lastEventTimestamp = eventDate;
+
+        if (ageSeconds < 30) {{
+          lastEventEl.textContent = 'Just now';
+          lastEventEl.className = 'freshness-value';
+        }} else if (ageSeconds < 120) {{
+          lastEventEl.textContent = `${{Math.floor(ageSeconds)}}s ago`;
+          lastEventEl.className = 'freshness-value';
+        }} else if (ageSeconds < 3600) {{
+          lastEventEl.textContent = `${{Math.floor(ageSeconds / 60)}}m ago`;
+          lastEventEl.className = 'freshness-value stale';
+        }} else {{
+          lastEventEl.textContent = `${{Math.floor(ageSeconds / 3600)}}h ago`;
+          lastEventEl.className = 'freshness-value dead';
+        }}
+      }} else {{
+        lastEventEl.textContent = '--';
+        lastEventEl.className = 'freshness-value';
+      }}
+
+      // Throughput from metrics
+      const metrics = status.metrics || {{}};
+      const published = metrics.published || 0;
+      const rate = published > prevMetrics.published
+        ? ((published - prevMetrics.published) / 3).toFixed(1)
+        : '0';
+      throughputEl.textContent = `${{rate}} evt/s`;
+    }}
+  }} catch (e) {{
+    // Silently handle network errors
+  }}
+}}
+
 // Initial load
 loadConfig();
 loadStatus();
@@ -1019,8 +1094,10 @@ loadBackfillStatus();
 loadDataSources();
 loadDerivativesConfig();
 refreshOptionsSummary();
+updateFreshnessBar();
 startSSE();
 setInterval(loadBackfillStatus, 5000);
 setInterval(refreshOptionsSummary, 10000);
+setInterval(updateFreshnessBar, 3000);
 ";
 }

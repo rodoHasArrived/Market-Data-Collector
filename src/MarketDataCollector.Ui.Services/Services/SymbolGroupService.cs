@@ -307,7 +307,7 @@ public sealed class SymbolGroupService
 /// <summary>
 /// Symbol group event args.
 /// </summary>
-public class SymbolGroupEventArgs : EventArgs
+public sealed class SymbolGroupEventArgs : EventArgs
 {
     public SymbolGroup? Group { get; set; }
 }

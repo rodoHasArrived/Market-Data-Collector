@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using MarketDataCollector.Wpf.ViewModels;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -43,6 +47,55 @@ public partial class DataBrowserPage : Page
     {
         _viewModel.GoToNextPage();
     }
+
+    private void SortChanged_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SortCombo.SelectedItem is ComboBoxItem item && item.Tag is string sortKey)
+        {
+            _viewModel.SortField = sortKey;
+            _viewModel.RefreshResults();
+        }
+    }
+
+    private void ExportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ExportToCsv();
+    }
+
+    private void ResultsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ResultsGrid.SelectedItem is DataBrowserRecord record)
+        {
+            DetailPanel.Visibility = Visibility.Visible;
+            DetailSymbol.Text = record.Symbol;
+            DetailVenue.Text = record.Venue;
+            DetailDataType.Text = record.DataType;
+            DetailTimestamp.Text = record.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            DetailPrice.Text = record.Price.ToString("N2");
+            DetailSize.Text = record.Size.ToString("N0");
+        }
+        else
+        {
+            DetailPanel.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void CopyJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (ResultsGrid.SelectedItem is not DataBrowserRecord record) return;
+
+        var json = JsonSerializer.Serialize(new
+        {
+            record.Symbol,
+            record.DataType,
+            record.Venue,
+            Timestamp = record.Timestamp.ToString("O"),
+            record.Price,
+            record.Size
+        }, new JsonSerializerOptions { WriteIndented = true });
+
+        Clipboard.SetText(json);
+    }
 }
 
 public sealed class DataBrowserViewModel : BindableBase, IDataErrorInfo
@@ -57,6 +110,8 @@ public sealed class DataBrowserViewModel : BindableBase, IDataErrorInfo
     private int _pageSize = 25;
     private int _currentPage = 1;
     private string _validationSummary = string.Empty;
+    private string _sortField = "TimestampDesc";
+    private string _filteredCountText = "0 records";
 
     public DataBrowserViewModel()
     {
@@ -73,6 +128,18 @@ public sealed class DataBrowserViewModel : BindableBase, IDataErrorInfo
     public ObservableCollection<int> PageSizes { get; }
 
     public ObservableCollection<DataBrowserRecord> PagedRecords => _pagedRecords;
+
+    public string SortField
+    {
+        get => _sortField;
+        set => SetProperty(ref _sortField, value);
+    }
+
+    public string FilteredCountText
+    {
+        get => _filteredCountText;
+        private set => SetProperty(ref _filteredCountText, value);
+    }
 
     public string SymbolFilter
     {
@@ -190,8 +257,20 @@ public sealed class DataBrowserViewModel : BindableBase, IDataErrorInfo
             query = query.Where(record => record.Timestamp <= ToDate.Value);
         }
 
-        var filtered = query.OrderByDescending(record => record.Timestamp).ToList();
+        var sorted = SortField switch
+        {
+            "TimestampAsc" => query.OrderBy(r => r.Timestamp),
+            "SymbolAsc" => query.OrderBy(r => r.Symbol).ThenByDescending(r => r.Timestamp),
+            "SymbolDesc" => query.OrderByDescending(r => r.Symbol).ThenByDescending(r => r.Timestamp),
+            "PriceDesc" => query.OrderByDescending(r => r.Price),
+            "PriceAsc" => query.OrderBy(r => r.Price),
+            "SizeDesc" => query.OrderByDescending(r => r.Size),
+            _ => query.OrderByDescending(r => r.Timestamp), // TimestampDesc default
+        };
+
+        var filtered = sorted.ToList();
         FilteredCount = filtered.Count;
+        FilteredCountText = $"{FilteredCount:N0} records";
 
         var paged = filtered.Skip((_currentPage - 1) * PageSize).Take(PageSize).ToList();
         _pagedRecords.Clear();
@@ -239,6 +318,26 @@ public sealed class DataBrowserViewModel : BindableBase, IDataErrorInfo
         RefreshResults();
     }
 
+    public void ExportToCsv()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV files (*.csv)|*.csv",
+            FileName = $"data-browser-export-{DateTime.Now:yyyyMMdd-HHmmss}.csv"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Timestamp,Symbol,DataType,Venue,Price,Size");
+        foreach (var record in _pagedRecords)
+        {
+            sb.AppendLine($"{record.Timestamp:O},{record.Symbol},{record.DataType},{record.Venue},{record.Price},{record.Size}");
+        }
+
+        File.WriteAllText(dialog.FileName, sb.ToString());
+    }
+
     private void UpdateValidationSummary()
     {
         ValidationSummary = this[nameof(FromDate)];
@@ -275,6 +374,10 @@ public sealed class DataBrowserViewModel : BindableBase, IDataErrorInfo
 
 public sealed class DataBrowserRecord
 {
+    private static readonly SolidColorBrush TradeBrush = new(Color.FromRgb(0x4E, 0xC9, 0xB0)); // teal
+    private static readonly SolidColorBrush QuoteBrush = new(Color.FromRgb(0x56, 0x9C, 0xD6)); // blue
+    private static readonly SolidColorBrush DepthBrush = new(Color.FromRgb(0xDC, 0xDC, 0xAA)); // gold
+
     public DateTime Timestamp { get; init; }
 
     public string Symbol { get; init; } = string.Empty;
@@ -286,4 +389,12 @@ public sealed class DataBrowserRecord
     public double Price { get; init; }
 
     public int Size { get; init; }
+
+    public SolidColorBrush DataTypeColor => DataType switch
+    {
+        "Trades" => TradeBrush,
+        "Quotes" => QuoteBrush,
+        "Depth" => DepthBrush,
+        _ => QuoteBrush
+    };
 }

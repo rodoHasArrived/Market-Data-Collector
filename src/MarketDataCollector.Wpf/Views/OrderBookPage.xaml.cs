@@ -486,7 +486,7 @@ public partial class OrderBookPage : Page
 /// <summary>
 /// Model for order book level display.
 /// </summary>
-public class OrderBookDisplayLevel
+public sealed class OrderBookDisplayLevel
 {
     public decimal RawPrice { get; set; }
     public string Price { get; set; } = string.Empty;
@@ -500,7 +500,7 @@ public class OrderBookDisplayLevel
 /// <summary>
 /// Model for recent trade display.
 /// </summary>
-public class RecentTradeModel
+public sealed class RecentTradeModel
 {
     public string Time { get; set; } = string.Empty;
     public string Price { get; set; } = string.Empty;

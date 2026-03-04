@@ -13,7 +13,7 @@ namespace MarketDataCollector.Application.Services;
 /// </summary>
 public sealed class GracefulShutdownService : IHostedService
 {
-    private readonly IEnumerable<IFlushable> _flushables;
+    private readonly IReadOnlyList<IFlushable> _flushables;
     private readonly ILogger _log;
     private readonly TimeSpan _shutdownTimeout;
     private readonly Stopwatch _sessionStopwatch = new();
@@ -27,7 +27,8 @@ public sealed class GracefulShutdownService : IHostedService
         IEnumerable<IFlushable> flushables,
         TimeSpan? shutdownTimeout = null)
     {
-        _flushables = flushables ?? throw new ArgumentNullException(nameof(flushables));
+        ArgumentNullException.ThrowIfNull(flushables, nameof(flushables));
+        _flushables = flushables.ToList();
         _shutdownTimeout = shutdownTimeout ?? TimeSpan.FromSeconds(30);
         _log = Log.ForContext<GracefulShutdownService>();
     }
@@ -36,7 +37,7 @@ public sealed class GracefulShutdownService : IHostedService
     {
         _sessionStopwatch.Start();
         _log.Information("Graceful shutdown service initialized with {Count} flushable components",
-            _flushables.Count());
+            _flushables.Count);
         return Task.CompletedTask;
     }
 
@@ -50,9 +51,8 @@ public sealed class GracefulShutdownService : IHostedService
             cancellationToken, timeoutCts.Token);
 
         var flushTasks = new List<Task>();
-        var flushableList = _flushables.ToList();
 
-        foreach (var flushable in flushableList)
+        foreach (var flushable in _flushables)
         {
             var name = flushable.GetType().Name;
             _log.Debug("Flushing {Component}...", name);
@@ -63,7 +63,7 @@ public sealed class GracefulShutdownService : IHostedService
         try
         {
             await Task.WhenAll(flushTasks).ConfigureAwait(false);
-            _log.Information("All {Count} buffers flushed successfully", flushableList.Count);
+            _log.Information("All {Count} buffers flushed successfully", _flushables.Count);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
         {

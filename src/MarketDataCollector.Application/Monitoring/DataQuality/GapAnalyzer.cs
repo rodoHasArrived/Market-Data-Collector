@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring.DataQuality;
@@ -14,6 +15,8 @@ public sealed class GapAnalyzer : IDisposable
     private readonly ILogger _log = LoggingSetup.ForContext<GapAnalyzer>();
     private readonly ConcurrentDictionary<string, SymbolGapState> _symbolStates = new();
     private readonly ConcurrentDictionary<string, List<DataGap>> _detectedGaps = new();
+    private readonly ConcurrentDictionary<string, LiquidityProfile> _symbolLiquidity = new();
+    private readonly ConcurrentDictionary<string, GapAnalyzerConfig> _effectiveConfigCache = new();
     private readonly GapAnalyzerConfig _config;
     private readonly Timer _cleanupTimer;
     private volatile bool _isDisposed;
@@ -38,7 +41,30 @@ public sealed class GapAnalyzer : IDisposable
     }
 
     /// <summary>
+    /// Registers a liquidity profile for a symbol, adjusting gap detection thresholds.
+    /// </summary>
+    public void RegisterSymbolLiquidity(string symbol, LiquidityProfile profile)
+    {
+        var normalizedSymbol = symbol.ToUpperInvariant();
+        _symbolLiquidity[normalizedSymbol] = profile;
+        // Invalidate cached effective config so it's recomputed with the new profile
+        _effectiveConfigCache.TryRemove(normalizedSymbol, out _);
+        _log.Debug("Registered liquidity profile {Profile} for {Symbol}", profile, symbol);
+    }
+
+    /// <summary>
+    /// Gets the liquidity profile for a symbol, defaulting to <see cref="LiquidityProfile.High"/>.
+    /// </summary>
+    public LiquidityProfile GetSymbolLiquidity(string symbol)
+    {
+        return _symbolLiquidity.TryGetValue(symbol.ToUpperInvariant(), out var profile)
+            ? profile
+            : LiquidityProfile.High;
+    }
+
+    /// <summary>
     /// Records an event timestamp for gap detection.
+    /// Uses per-symbol liquidity thresholds when registered, falling back to global config.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RecordEvent(string symbol, string eventType, DateTimeOffset timestamp, long? sequenceNumber = null)
@@ -50,11 +76,36 @@ public sealed class GapAnalyzer : IDisposable
         var key = GetKey(symbol, eventType);
         var state = _symbolStates.GetOrAdd(key, _ => new SymbolGapState(symbol, eventType));
 
-        var gap = state.RecordEvent(timestamp, sequenceNumber, _config);
+        var effectiveConfig = GetEffectiveConfig(symbol);
+        var liquidityProfile = GetSymbolLiquidity(symbol);
+        var gap = state.RecordEvent(timestamp, sequenceNumber, effectiveConfig, liquidityProfile);
         if (gap != null)
         {
             RecordGap(gap);
         }
+    }
+
+    private GapAnalyzerConfig GetEffectiveConfig(string symbol)
+    {
+        var normalizedSymbol = symbol.ToUpperInvariant();
+        if (!_symbolLiquidity.TryGetValue(normalizedSymbol, out _))
+        {
+            return _config;
+        }
+
+        // Use a per-symbol cache to avoid allocating a new GapAnalyzerConfig record
+        // on every single event. The cache is invalidated when the liquidity profile
+        // changes via RegisterSymbolLiquidity.
+        return _effectiveConfigCache.GetOrAdd(normalizedSymbol, key =>
+        {
+            var profile = _symbolLiquidity[key];
+            var thresholds = LiquidityProfileProvider.GetThresholds(profile);
+            return _config with
+            {
+                GapThresholdSeconds = thresholds.GapThresholdSeconds,
+                ExpectedEventsPerHour = thresholds.ExpectedEventsPerHour
+            };
+        });
     }
 
     /// <summary>
@@ -411,7 +462,7 @@ public sealed class GapAnalyzer : IDisposable
             EventType = eventType;
         }
 
-        public DataGap? RecordEvent(DateTimeOffset timestamp, long? sequenceNumber, GapAnalyzerConfig config)
+        public DataGap? RecordEvent(DateTimeOffset timestamp, long? sequenceNumber, GapAnalyzerConfig config, LiquidityProfile liquidityProfile = LiquidityProfile.High)
         {
             DataGap? detectedGap = null;
             var previousTime = _lastEventTime;
@@ -431,13 +482,13 @@ public sealed class GapAnalyzer : IDisposable
                 return null;
             }
 
-            // Check for time-based gap
+            // Check for time-based gap using the (potentially liquidity-adjusted) threshold
             var timeDelta = timestamp - previousTime;
             if (timeDelta.TotalSeconds >= config.GapThresholdSeconds)
             {
-                var severity = ClassifyGapSeverity(timeDelta);
+                var severity = LiquidityProfileProvider.ClassifyGapSeverity(timeDelta, liquidityProfile);
                 var estimatedMissed = EstimateMissedEvents(timeDelta, config.ExpectedEventsPerHour);
-                var possibleCause = InferGapCause(timeDelta, previousTime, timestamp);
+                var possibleCause = LiquidityProfileProvider.InferGapCause(timeDelta, previousTime, timestamp, liquidityProfile);
 
                 detectedGap = new DataGap(
                     Symbol: Symbol,
@@ -456,45 +507,9 @@ public sealed class GapAnalyzer : IDisposable
             return detectedGap;
         }
 
-        private static GapSeverity ClassifyGapSeverity(TimeSpan duration)
-        {
-            return duration.TotalMinutes switch
-            {
-                < 1 => GapSeverity.Minor,
-                < 5 => GapSeverity.Moderate,
-                < 30 => GapSeverity.Significant,
-                < 60 => GapSeverity.Major,
-                _ => GapSeverity.Critical
-            };
-        }
-
         private static long EstimateMissedEvents(TimeSpan duration, long eventsPerHour)
         {
             return (long)(duration.TotalHours * eventsPerHour);
-        }
-
-        private static string? InferGapCause(TimeSpan duration, DateTimeOffset start, DateTimeOffset end)
-        {
-            // Check if gap spans market close/open
-            var startHour = start.Hour;
-            var endHour = end.Hour;
-
-            if ((startHour >= 20 || startHour < 13) && (endHour >= 13 && endHour < 20))
-            {
-                return "Market closed overnight";
-            }
-
-            if (duration.TotalMinutes >= 30 && duration.TotalMinutes <= 120)
-            {
-                return "Possible connection interruption";
-            }
-
-            if (duration.TotalSeconds < 120)
-            {
-                return "Brief data delay";
-            }
-
-            return "Unknown cause - investigate provider";
         }
     }
 }

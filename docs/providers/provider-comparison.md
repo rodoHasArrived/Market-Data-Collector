@@ -64,8 +64,8 @@ This document provides a comprehensive comparison of all data providers supporte
 - US equities only
 
 **Files:**
-- `Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs`
-- `Infrastructure/Providers/Backfill/AlpacaHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
+- `Infrastructure/Adapters/Core/AlpacaHistoricalDataProvider.cs`
 
 ---
 
@@ -97,9 +97,9 @@ This document provides a comprehensive comparison of all data providers supporte
 - API learning curve
 
 **Files:**
-- `Infrastructure/Providers/InteractiveBrokers/IBMarketDataClient.cs`
-- `Infrastructure/Providers/InteractiveBrokers/EnhancedIBConnectionManager.cs`
-- `Infrastructure/Providers/Backfill/IBHistoricalDataProvider.cs` (with IBAPI)
+- `Infrastructure/Adapters/InteractiveBrokers/IBMarketDataClient.cs`
+- `Infrastructure/Adapters/InteractiveBrokers/EnhancedIBConnectionManager.cs`
+- `Infrastructure/Adapters/Core/IBHistoricalDataProvider.cs` (with IBAPI)
 
 ---
 
@@ -130,7 +130,7 @@ This document provides a comprehensive comparison of all data providers supporte
 - Occasional data gaps
 
 **Files:**
-- `Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Core/YahooFinanceHistoricalDataProvider.cs`
 
 ---
 
@@ -160,7 +160,7 @@ This document provides a comprehensive comparison of all data providers supporte
 - US focus primarily
 
 **Files:**
-- `Infrastructure/Providers/Backfill/TiingoHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Core/TiingoHistoricalDataProvider.cs`
 
 ---
 
@@ -189,7 +189,7 @@ This document provides a comprehensive comparison of all data providers supporte
 - Premium features require subscription
 
 **Files:**
-- `Infrastructure/Providers/Backfill/FinnhubHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Core/FinnhubHistoricalDataProvider.cs`
 
 ---
 
@@ -219,7 +219,7 @@ This document provides a comprehensive comparison of all data providers supporte
 - Less reliable than paid sources
 
 **Files:**
-- `Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Core/StooqHistoricalDataProvider.cs`
 
 ---
 
@@ -248,7 +248,7 @@ This document provides a comprehensive comparison of all data providers supporte
 - Not primarily for equity prices
 
 **Files:**
-- `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Core/NasdaqDataLinkHistoricalDataProvider.cs`
 
 ---
 
@@ -276,7 +276,7 @@ This document provides a comprehensive comparison of all data providers supporte
 - Slow data updates
 
 **Files:**
-- `Infrastructure/Providers/Backfill/AlphaVantageHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Core/AlphaVantageHistoricalDataProvider.cs`
 
 ---
 
@@ -304,8 +304,8 @@ This document provides a comprehensive comparison of all data providers supporte
 - Expensive premium tiers
 
 **Files:**
-- `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs`
-- `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` (stub)
+- `Infrastructure/Adapters/Core/PolygonHistoricalDataProvider.cs`
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs` (stub)
 
 ---
 
@@ -349,8 +349,8 @@ This document provides a comprehensive comparison of all data providers supporte
 - Build flags required for each connector
 
 **Files:**
-- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/StockSharp/StockSharpConnectorFactory.cs`
+- `Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs`
+- `Infrastructure/Adapters/StockSharp/StockSharpConnectorFactory.cs`
 
 ---
 

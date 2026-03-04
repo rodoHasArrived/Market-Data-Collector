@@ -428,7 +428,7 @@ public sealed class ManifestService
     {
         using var sha256 = SHA256.Create();
         await using var stream = File.OpenRead(filePath);
-        var hash = await Task.Run(() => sha256.ComputeHash(stream));
+        var hash = await sha256.ComputeHashAsync(stream);
         return Convert.ToHexString(hash).ToLower();
     }
 
@@ -523,7 +523,7 @@ public sealed class ManifestService
 /// <summary>
 /// Event args for manifest events.
 /// </summary>
-public class ManifestEventArgs : EventArgs
+public sealed class ManifestEventArgs : EventArgs
 {
     public DataManifest? Manifest { get; set; }
     public string? Path { get; set; }
@@ -532,7 +532,7 @@ public class ManifestEventArgs : EventArgs
 /// <summary>
 /// Event args for manifest verification.
 /// </summary>
-public class ManifestVerificationEventArgs : EventArgs
+public sealed class ManifestVerificationEventArgs : EventArgs
 {
     public ManifestVerificationResult? Result { get; set; }
 }
@@ -540,7 +540,7 @@ public class ManifestVerificationEventArgs : EventArgs
 /// <summary>
 /// Result of manifest verification.
 /// </summary>
-public class ManifestVerificationResult
+public sealed class ManifestVerificationResult
 {
     public string ManifestId { get; set; } = string.Empty;
     public bool IsValid { get; set; }
@@ -556,7 +556,7 @@ public class ManifestVerificationResult
 /// <summary>
 /// Checksum mismatch details.
 /// </summary>
-public class ChecksumMismatch
+public sealed class ChecksumMismatch
 {
     public string FilePath { get; set; } = string.Empty;
     public string ExpectedChecksum { get; set; } = string.Empty;

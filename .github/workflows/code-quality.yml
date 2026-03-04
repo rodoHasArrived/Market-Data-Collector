@@ -227,6 +227,26 @@ jobs:
             const sha = context.sha;
             const shortSha = sha.substring(0, 7);
 
+            // Close all existing open code-quality issues to avoid accumulation
+            const existingIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'copilot,code-quality',
+              state: 'open',
+              per_page: 100
+            });
+            for (const issue of existingIssues) {
+              if (issue.title.startsWith('[Copilot Task] Resolve code quality issues')) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'not_planned'
+                });
+              }
+            }
+
             const title = `[Copilot Task] Resolve code quality issues (${shortSha})`;
             const body = [
               '## Copilot task',

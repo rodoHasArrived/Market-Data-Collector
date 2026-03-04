@@ -77,12 +77,12 @@ public sealed class DataSourceRegistry
                     continue;
                 }
 
-                if (!typeof(MarketDataCollector.Infrastructure.Providers.IProviderModule).IsAssignableFrom(type))
+                if (!typeof(MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule).IsAssignableFrom(type))
                 {
                     continue;
                 }
 
-                if (Activator.CreateInstance(type) is MarketDataCollector.Infrastructure.Providers.IProviderModule module)
+                if (Activator.CreateInstance(type) is MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule module)
                 {
                     module.Register(services, this);
                 }

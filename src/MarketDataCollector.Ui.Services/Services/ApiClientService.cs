@@ -14,9 +14,9 @@ namespace MarketDataCollector.Ui.Services;
 public sealed class ApiClientService : IDisposable
 {
     private static readonly Lazy<ApiClientService> _instance = new(() => new ApiClientService());
-    private static readonly object _lock = new();
     private HttpClient _httpClient;
     private HttpClient? _backfillHttpClient;
+    private readonly object _backfillClientLock = new();
     private string _baseUrl;
     private int _timeoutSeconds;
     private int _backfillTimeoutMinutes;
@@ -74,14 +74,23 @@ public sealed class ApiClientService : IDisposable
 
         var urlChanged = !string.Equals(_baseUrl, newUrl, StringComparison.OrdinalIgnoreCase);
         var timeoutChanged = _timeoutSeconds != newTimeout;
+        var backfillTimeoutChanged = _backfillTimeoutMinutes != newBackfillTimeout;
 
-        if (urlChanged || timeoutChanged)
+        if (urlChanged || timeoutChanged || backfillTimeoutChanged)
         {
             var oldUrl = _baseUrl;
             _baseUrl = newUrl.TrimEnd('/');
             _timeoutSeconds = newTimeout;
             _backfillTimeoutMinutes = newBackfillTimeout;
             _uiApiClient.UpdateBaseUrl(_baseUrl);
+
+            lock (_backfillClientLock)
+            {
+                if (_backfillHttpClient != null)
+                {
+                    _backfillHttpClient.Timeout = TimeSpan.FromMinutes(_backfillTimeoutMinutes);
+                }
+            }
 
             // Recreate HTTP client with new timeout
             var oldClient = _httpClient;
@@ -129,7 +138,7 @@ public sealed class ApiClientService : IDisposable
     {
         if (_backfillHttpClient == null)
         {
-            lock (_lock)
+            lock (_backfillClientLock)
             {
                 if (_backfillHttpClient == null)
                 {

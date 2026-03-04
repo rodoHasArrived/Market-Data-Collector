@@ -384,7 +384,7 @@ public abstract class SchemaServiceBase : ISchemaService
 /// <summary>
 /// Event args for data dictionary generation events.
 /// </summary>
-public class DataDictionaryEventArgs : EventArgs
+public sealed class DataDictionaryEventArgs : EventArgs
 {
     public DataDictionary? Dictionary { get; set; }
 }

@@ -32,5 +32,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
     <ProjectReference Include="..\MarketDataCollector.Application\MarketDataCollector.Application.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Storage\MarketDataCollector.Storage.csproj" />
   </ItemGroup>
 </Project>

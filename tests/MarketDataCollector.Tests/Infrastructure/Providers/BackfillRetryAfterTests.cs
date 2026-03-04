@@ -1,9 +1,9 @@
 using System.Net.Http;
 using System.Net;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace MarketDataCollector.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Unit tests for Retry-After header parsing in BackfillWorkerService.

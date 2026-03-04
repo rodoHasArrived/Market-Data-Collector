@@ -356,7 +356,7 @@ public enum ActivityType
 /// <summary>
 /// Individual activity item.
 /// </summary>
-public class ActivityItem
+public sealed class ActivityItem
 {
     public string Id { get; set; } = string.Empty;
     public ActivityType Type { get; set; }

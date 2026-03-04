@@ -1,8 +1,10 @@
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using MarketDataCollector.Ui.Services.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -14,33 +16,80 @@ public partial class WelcomePage : Page
 {
     private readonly WpfServices.NavigationService _navigationService;
     private readonly WpfServices.NotificationService _notificationService;
+    private readonly WpfServices.StatusService _statusService;
+    private readonly WpfServices.ConnectionService _connectionService;
+    private readonly WpfServices.ConfigService _configService;
 
     public WelcomePage(
         WpfServices.NavigationService navigationService,
-        WpfServices.NotificationService notificationService)
+        WpfServices.NotificationService notificationService,
+        WpfServices.StatusService statusService,
+        WpfServices.ConnectionService connectionService,
+        WpfServices.ConfigService configService)
     {
         InitializeComponent();
         _navigationService = navigationService;
         _notificationService = notificationService;
+        _statusService = statusService;
+        _connectionService = connectionService;
+        _configService = configService;
     }
 
-    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        UpdateSystemOverview();
+        await UpdateSystemOverviewAsync();
     }
 
-    private void UpdateSystemOverview()
+    private async System.Threading.Tasks.Task UpdateSystemOverviewAsync()
     {
-        // Connection status placeholder - updated when real status is available
-        ConnectionStatusText.Text = "Disconnected";
-        ConnectionStatusDot.Fill = (Brush)FindResource("ConsoleTextMutedBrush");
-        ConnectionProviderText.Text = "No provider connected";
+        // Connection status from ConnectionService
+        var isConnected = _connectionService.State == ConnectionState.Connected;
+        if (isConnected)
+        {
+            ConnectionStatusText.Text = "Connected";
+            ConnectionStatusDot.Fill = (Brush)FindResource("SuccessColorBrush");
 
-        // Symbols count placeholder
-        SymbolsCountText.Text = "0";
+            // Try to get the active provider name from StatusService
+            try
+            {
+                var providerInfo = await _statusService.GetProviderStatusAsync();
+                ConnectionProviderText.Text = providerInfo?.ActiveProvider is { Length: > 0 }
+                    ? providerInfo.ActiveProvider
+                    : "Provider connected";
+            }
+            catch (Exception)
+            {
+                ConnectionProviderText.Text = "Provider connected";
+            }
+        }
+        else
+        {
+            ConnectionStatusText.Text = "Disconnected";
+            ConnectionStatusDot.Fill = (Brush)FindResource("ConsoleTextMutedBrush");
+            ConnectionProviderText.Text = "No provider connected";
+        }
 
-        // Storage path placeholder
-        StoragePathText.Text = "./data";
+        // Symbol count from ConfigService
+        try
+        {
+            var symbols = await _configService.GetSymbolsAsync();
+            SymbolsCountText.Text = (symbols?.Length ?? 0).ToString();
+        }
+        catch (Exception)
+        {
+            SymbolsCountText.Text = "0";
+        }
+
+        // Storage path from ConfigService
+        try
+        {
+            var config = await _configService.LoadConfigAsync();
+            StoragePathText.Text = config?.DataRoot ?? "./data";
+        }
+        catch (Exception)
+        {
+            StoragePathText.Text = "./data";
+        }
     }
 
     // -- Quick-start step card click handlers (Border.MouseLeftButtonUp) --

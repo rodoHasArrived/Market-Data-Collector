@@ -10,7 +10,7 @@ namespace MarketDataCollector.Ui.Services;
 /// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
-public class WatchlistService
+public sealed class WatchlistService
 {
     private static WatchlistService _instance = new WatchlistService();
 
@@ -20,7 +20,7 @@ public class WatchlistService
         set => _instance = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public virtual Task<WatchlistData> LoadWatchlistAsync()
+    public Task<WatchlistData> LoadWatchlistAsync()
         => Task.FromResult(new WatchlistData());
 
     /// <summary>
@@ -31,7 +31,7 @@ public class WatchlistService
     /// <param name="symbols">The symbols to add.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if successful, false otherwise.</returns>
-    public virtual Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
+    public Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
     {
         // Default implementation - platform-specific implementations should override
         return Task.FromResult(false);
@@ -41,7 +41,7 @@ public class WatchlistService
 /// <summary>
 /// Watchlist data containing watched symbols.
 /// </summary>
-public class WatchlistData
+public sealed class WatchlistData
 {
     public List<WatchlistItem> Symbols { get; set; } = new();
     public List<WatchlistGroup> Groups { get; set; } = new();
@@ -50,7 +50,7 @@ public class WatchlistData
 /// <summary>
 /// A single item in a watchlist.
 /// </summary>
-public class WatchlistItem
+public sealed class WatchlistItem
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Notes { get; set; }
@@ -60,7 +60,7 @@ public class WatchlistItem
 /// <summary>
 /// A group of symbols in a watchlist.
 /// </summary>
-public class WatchlistGroup
+public sealed class WatchlistGroup
 {
     public string Name { get; set; } = string.Empty;
     public List<string> Symbols { get; set; } = new();

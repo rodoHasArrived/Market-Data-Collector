@@ -6,7 +6,7 @@ namespace MarketDataCollector.Contracts.Configuration;
 /// <summary>
 /// Application configuration DTO shared between core and desktop applications.
 /// </summary>
-public class AppConfigDto
+public sealed class AppConfigDto
 {
     [JsonPropertyName("dataRoot")]
     public string DataRoot { get; set; } = "data";
@@ -51,7 +51,7 @@ public class AppConfigDto
 /// <summary>
 /// Alpaca provider configuration.
 /// </summary>
-public class AlpacaOptionsDto
+public sealed class AlpacaOptionsDto
 {
     [JsonPropertyName("keyId")]
     public string? KeyId { get; set; }
@@ -72,7 +72,7 @@ public class AlpacaOptionsDto
 /// <summary>
 /// StockSharp connector configuration.
 /// </summary>
-public class StockSharpOptionsDto
+public sealed class StockSharpOptionsDto
 {
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
@@ -114,7 +114,7 @@ public class StockSharpOptionsDto
     public StockSharpIBOptionsDto? InteractiveBrokers { get; set; }
 }
 
-public class RithmicOptionsDto
+public sealed class RithmicOptionsDto
 {
     [JsonPropertyName("server")]
     public string Server { get; set; } = "Rithmic Test";
@@ -132,7 +132,7 @@ public class RithmicOptionsDto
     public bool UsePaperTrading { get; set; } = true;
 }
 
-public class IQFeedOptionsDto
+public sealed class IQFeedOptionsDto
 {
     [JsonPropertyName("host")]
     public string Host { get; set; } = "127.0.0.1";
@@ -153,7 +153,7 @@ public class IQFeedOptionsDto
     public string ProductVersion { get; set; } = "1.0";
 }
 
-public class CQGOptionsDto
+public sealed class CQGOptionsDto
 {
     [JsonPropertyName("userName")]
     public string? UserName { get; set; }
@@ -165,7 +165,7 @@ public class CQGOptionsDto
     public bool UseDemoServer { get; set; } = true;
 }
 
-public class StockSharpIBOptionsDto
+public sealed class StockSharpIBOptionsDto
 {
     [JsonPropertyName("host")]
     public string Host { get; set; } = "127.0.0.1";
@@ -180,7 +180,7 @@ public class StockSharpIBOptionsDto
 /// <summary>
 /// Storage configuration.
 /// </summary>
-public class StorageConfigDto
+public sealed class StorageConfigDto
 {
     [JsonPropertyName("namingConvention")]
     public string NamingConvention { get; set; } = "BySymbol";
@@ -261,7 +261,7 @@ public class SymbolConfigDto
 /// <summary>
 /// Backfill configuration.
 /// </summary>
-public class BackfillConfigDto
+public sealed class BackfillConfigDto
 {
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
@@ -294,7 +294,7 @@ public class BackfillConfigDto
 /// <summary>
 /// Backfill provider configuration container.
 /// </summary>
-public class BackfillProvidersConfigDto
+public sealed class BackfillProvidersConfigDto
 {
     [JsonPropertyName("alpaca")]
     public BackfillProviderOptionsDto? Alpaca { get; set; }
@@ -324,7 +324,7 @@ public class BackfillProvidersConfigDto
 /// <summary>
 /// Generic backfill provider runtime options.
 /// </summary>
-public class BackfillProviderOptionsDto
+public sealed class BackfillProviderOptionsDto
 {
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
@@ -350,7 +350,7 @@ public class BackfillProviderOptionsDto
 /// Provider metadata descriptor used for dynamic UI generation and runtime transparency.
 /// Drives the desktop provider settings panel without requiring custom pages per provider.
 /// </summary>
-public class BackfillProviderMetadataDto
+public sealed class BackfillProviderMetadataDto
 {
     [JsonPropertyName("providerId")]
     public string ProviderId { get; set; } = string.Empty;
@@ -392,7 +392,7 @@ public class BackfillProviderMetadataDto
 /// <summary>
 /// Combined view of provider configuration with runtime health status for the desktop UI.
 /// </summary>
-public class BackfillProviderStatusDto
+public sealed class BackfillProviderStatusDto
 {
     [JsonPropertyName("metadata")]
     public BackfillProviderMetadataDto Metadata { get; set; } = new();
@@ -422,7 +422,7 @@ public class BackfillProviderStatusDto
 /// <summary>
 /// Dry-run backfill plan showing which providers would be selected per symbol.
 /// </summary>
-public class BackfillDryRunPlanDto
+public sealed class BackfillDryRunPlanDto
 {
     [JsonPropertyName("symbols")]
     public BackfillSymbolPlanDto[] Symbols { get; set; } = [];
@@ -437,7 +437,7 @@ public class BackfillDryRunPlanDto
 /// <summary>
 /// Per-symbol plan entry showing the provider fallback sequence.
 /// </summary>
-public class BackfillSymbolPlanDto
+public sealed class BackfillSymbolPlanDto
 {
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = string.Empty;
@@ -455,7 +455,7 @@ public class BackfillSymbolPlanDto
 /// <summary>
 /// Audit trail entry for provider configuration changes.
 /// </summary>
-public class ProviderConfigAuditEntryDto
+public sealed class ProviderConfigAuditEntryDto
 {
     [JsonPropertyName("timestamp")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
@@ -479,7 +479,7 @@ public class ProviderConfigAuditEntryDto
 /// <summary>
 /// Multiple data source configuration.
 /// </summary>
-public class DataSourcesConfigDto
+public sealed class DataSourcesConfigDto
 {
     [JsonPropertyName("sources")]
     public DataSourceConfigDto[]? Sources { get; set; }
@@ -500,7 +500,7 @@ public class DataSourcesConfigDto
 /// <summary>
 /// Individual data source configuration.
 /// </summary>
-public class DataSourceConfigDto
+public sealed class DataSourceConfigDto
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
@@ -542,7 +542,7 @@ public class DataSourceConfigDto
 /// <summary>
 /// Polygon.io API configuration options.
 /// </summary>
-public class PolygonOptionsDto
+public sealed class PolygonOptionsDto
 {
     [JsonPropertyName("apiKey")]
     public string? ApiKey { get; set; }
@@ -566,7 +566,7 @@ public class PolygonOptionsDto
 /// <summary>
 /// Interactive Brokers connection options.
 /// </summary>
-public class IBOptionsDto
+public sealed class IBOptionsDto
 {
     [JsonPropertyName("host")]
     public string Host { get; set; } = "127.0.0.1";
@@ -593,7 +593,7 @@ public class IBOptionsDto
 /// <summary>
 /// Symbol groups configuration.
 /// </summary>
-public class SymbolGroupsConfigDto
+public sealed class SymbolGroupsConfigDto
 {
     [JsonPropertyName("groups")]
     public SymbolGroupDto[]? Groups { get; set; }
@@ -614,7 +614,7 @@ public class SymbolGroupsConfigDto
 /// <summary>
 /// Symbol group definition.
 /// </summary>
-public class SymbolGroupDto
+public sealed class SymbolGroupDto
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -656,7 +656,7 @@ public class SymbolGroupDto
 /// <summary>
 /// Criteria for smart/dynamic symbol groups.
 /// </summary>
-public class SmartGroupCriteriaDto
+public sealed class SmartGroupCriteriaDto
 {
     [JsonPropertyName("isSmartGroup")]
     public bool IsSmartGroup { get; set; }
@@ -683,7 +683,7 @@ public class SmartGroupCriteriaDto
 /// <summary>
 /// Extended symbol configuration with group membership and status.
 /// </summary>
-public class ExtendedSymbolConfigDto : SymbolConfigDto
+public sealed class ExtendedSymbolConfigDto : SymbolConfigDto
 {
     [JsonPropertyName("groupIds")]
     public string[]? GroupIds { get; set; }
@@ -710,7 +710,7 @@ public class ExtendedSymbolConfigDto : SymbolConfigDto
 /// <summary>
 /// Application UI settings.
 /// </summary>
-public class AppSettingsDto
+public sealed class AppSettingsDto
 {
     [JsonPropertyName("theme")]
     public string Theme { get; set; } = "System";

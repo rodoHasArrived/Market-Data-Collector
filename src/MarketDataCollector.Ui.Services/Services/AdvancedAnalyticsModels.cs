@@ -9,7 +9,7 @@ namespace MarketDataCollector.Ui.Services;
 
 #region Gap Analysis Models
 
-public class GapAnalysisOptions
+public sealed class GapAnalysisOptions
 {
     public string? Symbol { get; set; }
     public DateOnly? FromDate { get; set; }
@@ -18,7 +18,7 @@ public class GapAnalysisOptions
     public int MinGapMinutes { get; set; } = 5;
 }
 
-public class GapAnalysisResult
+public sealed class GapAnalysisResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -29,7 +29,7 @@ public class GapAnalysisResult
     public List<SymbolGapSummary> SymbolSummaries { get; set; } = new();
 }
 
-public class GapAnalysisResponse
+public sealed class GapAnalysisResponse
 {
     public DateTime AnalysisTime { get; set; }
     public int TotalGaps { get; set; }
@@ -38,7 +38,7 @@ public class GapAnalysisResponse
     public List<SymbolGapSummary>? SymbolSummaries { get; set; }
 }
 
-public class AnalyticsDataGap
+public sealed class AnalyticsDataGap
 {
     public string Symbol { get; set; } = string.Empty;
     public string EventType { get; set; } = string.Empty;
@@ -49,7 +49,7 @@ public class AnalyticsDataGap
     public bool IsRepairable { get; set; }
 }
 
-public class SymbolGapSummary
+public sealed class SymbolGapSummary
 {
     public string Symbol { get; set; } = string.Empty;
     public int GapCount { get; set; }
@@ -57,7 +57,7 @@ public class SymbolGapSummary
     public double CoveragePercent { get; set; }
 }
 
-public class GapRepairOptions
+public sealed class GapRepairOptions
 {
     public string? Symbol { get; set; }
     public List<string>? GapIds { get; set; }
@@ -65,7 +65,7 @@ public class GapRepairOptions
     public bool DryRun { get; set; }
 }
 
-public class AnalyticsGapRepairResult
+public sealed class AnalyticsGapRepairResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -76,7 +76,7 @@ public class AnalyticsGapRepairResult
     public List<GapRepairDetail> Details { get; set; } = new();
 }
 
-public class GapRepairResponse
+public sealed class GapRepairResponse
 {
     public int GapsAttempted { get; set; }
     public int GapsRepaired { get; set; }
@@ -85,7 +85,7 @@ public class GapRepairResponse
     public List<GapRepairDetail>? Details { get; set; }
 }
 
-public class GapRepairDetail
+public sealed class GapRepairDetail
 {
     public string Symbol { get; set; } = string.Empty;
     public DateTime GapStart { get; set; }
@@ -100,7 +100,7 @@ public class GapRepairDetail
 
 #region Cross-Provider Comparison Models
 
-public class CrossProviderComparisonOptions
+public sealed class CrossProviderComparisonOptions
 {
     public string Symbol { get; set; } = string.Empty;
     public DateOnly Date { get; set; }
@@ -108,7 +108,7 @@ public class CrossProviderComparisonOptions
     public string EventType { get; set; } = "trades";
 }
 
-public class CrossProviderComparisonResult
+public sealed class CrossProviderComparisonResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -119,7 +119,7 @@ public class CrossProviderComparisonResult
     public List<DataDiscrepancy> Discrepancies { get; set; } = new();
 }
 
-public class CrossProviderComparisonResponse
+public sealed class CrossProviderComparisonResponse
 {
     public DateTime ComparisonTime { get; set; }
     public double OverallConsistencyScore { get; set; }
@@ -128,7 +128,7 @@ public class CrossProviderComparisonResponse
     public List<DataDiscrepancy>? Discrepancies { get; set; }
 }
 
-public class ProviderComparison
+public sealed class ProviderComparison
 {
     public string Provider1 { get; set; } = string.Empty;
     public string Provider2 { get; set; } = string.Empty;
@@ -139,7 +139,7 @@ public class ProviderComparison
     public long RecordsOnlyIn2 { get; set; }
 }
 
-public class DataDiscrepancy
+public sealed class DataDiscrepancy
 {
     public DateTime Timestamp { get; set; }
     public string DiscrepancyType { get; set; } = string.Empty;
@@ -154,14 +154,14 @@ public class DataDiscrepancy
 
 #region Latency Analysis Models
 
-public class LatencyHistogramOptions
+public sealed class LatencyHistogramOptions
 {
     public string? Provider { get; set; }
     public int BucketCount { get; set; } = 20;
     public TimeSpan? Period { get; set; }
 }
 
-public class LatencyHistogramResult
+public sealed class LatencyHistogramResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -169,13 +169,13 @@ public class LatencyHistogramResult
     public List<ProviderLatencyData> Providers { get; set; } = new();
 }
 
-public class LatencyHistogramResponse
+public sealed class LatencyHistogramResponse
 {
     public string? Period { get; set; }
     public List<ProviderLatencyData>? Providers { get; set; }
 }
 
-public class ProviderLatencyData
+public sealed class ProviderLatencyData
 {
     public string Provider { get; set; } = string.Empty;
     public List<LatencyBucket> Buckets { get; set; } = new();
@@ -184,7 +184,7 @@ public class ProviderLatencyData
     public double P99Ms { get; set; }
 }
 
-public class LatencyBucket
+public sealed class LatencyBucket
 {
     public double MinMs { get; set; }
     public double MaxMs { get; set; }
@@ -192,19 +192,19 @@ public class LatencyBucket
     public double Percentage { get; set; }
 }
 
-public class LatencyStatisticsResult
+public sealed class LatencyStatisticsResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<ProviderLatencyStatistics> Statistics { get; set; } = new();
 }
 
-public class LatencyStatisticsResponse
+public sealed class LatencyStatisticsResponse
 {
     public List<ProviderLatencyStatistics>? Statistics { get; set; }
 }
 
-public class ProviderLatencyStatistics
+public sealed class ProviderLatencyStatistics
 {
     public string Provider { get; set; } = string.Empty;
     public double MinMs { get; set; }
@@ -223,7 +223,7 @@ public class ProviderLatencyStatistics
 
 #region Anomaly Detection Models
 
-public class AnomalyDetectionOptions
+public sealed class AnomalyDetectionOptions
 {
     public string? Symbol { get; set; }
     public DateOnly? FromDate { get; set; }
@@ -232,7 +232,7 @@ public class AnomalyDetectionOptions
     public double SensitivityThreshold { get; set; } = 0.95;
 }
 
-public class AnomalyDetectionResult
+public sealed class AnomalyDetectionResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -242,7 +242,7 @@ public class AnomalyDetectionResult
     public AnomalySummary? Summary { get; set; }
 }
 
-public class AnomalyDetectionResponse
+public sealed class AnomalyDetectionResponse
 {
     public DateTime AnalysisTime { get; set; }
     public int TotalAnomalies { get; set; }
@@ -250,7 +250,7 @@ public class AnomalyDetectionResponse
     public AnomalySummary? Summary { get; set; }
 }
 
-public class DataAnomaly
+public sealed class DataAnomaly
 {
     public string Symbol { get; set; } = string.Empty;
     public string AnomalyType { get; set; } = string.Empty;
@@ -262,7 +262,7 @@ public class DataAnomaly
     public double ConfidenceScore { get; set; }
 }
 
-public class AnomalySummary
+public sealed class AnomalySummary
 {
     public int NegativePrices { get; set; }
     public int FutureTimestamps { get; set; }
@@ -277,7 +277,7 @@ public class AnomalySummary
 
 #region Quality Report Models
 
-public class DataQualityReportOptions
+public sealed class DataQualityReportOptions
 {
     public string? Symbol { get; set; }
     public DateOnly? FromDate { get; set; }
@@ -285,7 +285,7 @@ public class DataQualityReportOptions
     public bool IncludeDetails { get; set; } = true;
 }
 
-public class DataQualityReportResult
+public sealed class DataQualityReportResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -297,7 +297,7 @@ public class DataQualityReportResult
     public List<string> Recommendations { get; set; } = new();
 }
 
-public class DataQualityReportResponse
+public sealed class DataQualityReportResponse
 {
     public DateTime ReportTime { get; set; }
     public double OverallScore { get; set; }
@@ -307,7 +307,7 @@ public class DataQualityReportResponse
     public List<string>? Recommendations { get; set; }
 }
 
-public class AnalyticsQualityMetrics
+public sealed class AnalyticsQualityMetrics
 {
     public double CompletenessScore { get; set; }
     public double IntegrityScore { get; set; }
@@ -319,7 +319,7 @@ public class AnalyticsQualityMetrics
     public long InvalidRecords { get; set; }
 }
 
-public class AnalyticsSymbolQualityReport
+public sealed class AnalyticsSymbolQualityReport
 {
     public string Symbol { get; set; } = string.Empty;
     public double OverallScore { get; set; }
@@ -331,14 +331,14 @@ public class AnalyticsSymbolQualityReport
     public List<string> Issues { get; set; } = new();
 }
 
-public class CompletenessAnalysisOptions
+public sealed class CompletenessAnalysisOptions
 {
     public string? Symbol { get; set; }
     public DateOnly? FromDate { get; set; }
     public DateOnly? ToDate { get; set; }
 }
 
-public class CompletenessAnalysisResult
+public sealed class CompletenessAnalysisResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -348,7 +348,7 @@ public class CompletenessAnalysisResult
     public List<SymbolCompleteness> SymbolCompleteness { get; set; } = new();
 }
 
-public class CompletenessAnalysisResponse
+public sealed class CompletenessAnalysisResponse
 {
     public double OverallCompleteness { get; set; }
     public int TradingDaysCovered { get; set; }
@@ -356,7 +356,7 @@ public class CompletenessAnalysisResponse
     public List<SymbolCompleteness>? SymbolCompleteness { get; set; }
 }
 
-public class SymbolCompleteness
+public sealed class SymbolCompleteness
 {
     public string Symbol { get; set; } = string.Empty;
     public double CompletenessPercent { get; set; }
@@ -398,14 +398,14 @@ public class SymbolCompleteness
 
 #region Throughput Analysis Models
 
-public class ThroughputAnalysisOptions
+public sealed class ThroughputAnalysisOptions
 {
     public string? Provider { get; set; }
     public TimeSpan? Period { get; set; }
     public int IntervalSeconds { get; set; } = 60;
 }
 
-public class ThroughputAnalysisResult
+public sealed class ThroughputAnalysisResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -416,7 +416,7 @@ public class ThroughputAnalysisResult
     public List<ThroughputDataPoint> Timeline { get; set; } = new();
 }
 
-public class ThroughputAnalysisResponse
+public sealed class ThroughputAnalysisResponse
 {
     public double CurrentThroughput { get; set; }
     public double AverageThroughput { get; set; }
@@ -425,7 +425,7 @@ public class ThroughputAnalysisResponse
     public List<ThroughputDataPoint>? Timeline { get; set; }
 }
 
-public class ThroughputDataPoint
+public sealed class ThroughputDataPoint
 {
     public DateTime Timestamp { get; set; }
     public double EventsPerSecond { get; set; }
@@ -436,19 +436,19 @@ public class ThroughputDataPoint
 
 #region Rate Limit Models
 
-public class RateLimitStatusResult
+public sealed class RateLimitStatusResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<ProviderRateLimitStatus> Providers { get; set; } = new();
 }
 
-public class RateLimitStatusResponse
+public sealed class RateLimitStatusResponse
 {
     public List<ProviderRateLimitStatus>? Providers { get; set; }
 }
 
-public class ProviderRateLimitStatus
+public sealed class ProviderRateLimitStatus
 {
     public string Provider { get; set; } = string.Empty;
     public int RequestsPerMinute { get; set; }
@@ -464,19 +464,19 @@ public class ProviderRateLimitStatus
 
 #region Symbol Models
 
-public class AnalyticsSymbolsResult
+public sealed class AnalyticsSymbolsResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<AnalyticsSymbolInfo> Symbols { get; set; } = new();
 }
 
-public class AnalyticsSymbolsResponse
+public sealed class AnalyticsSymbolsResponse
 {
     public List<AnalyticsSymbolInfo>? Symbols { get; set; }
 }
 
-public class AnalyticsSymbolInfo
+public sealed class AnalyticsSymbolInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Name { get; set; }

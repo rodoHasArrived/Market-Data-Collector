@@ -24,7 +24,7 @@ public sealed class OfflineTrackingPersistenceServiceTests
     [Fact]
     public void IsInitialized_Default_ShouldBeFalse()
     {
-        // Note: Singleton state may persist across tests.
+        // NOTE: Singleton state may persist across tests.
         // We explicitly shut down first to verify the default state transition.
         var service = OfflineTrackingPersistenceService.Instance;
 

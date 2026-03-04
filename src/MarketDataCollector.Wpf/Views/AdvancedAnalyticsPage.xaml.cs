@@ -428,7 +428,7 @@ public partial class AdvancedAnalyticsPage : Page
 
 #region Display Items
 
-public class SymbolQualityDisplayItem
+public sealed class SymbolQualityDisplayItem
 {
     public string Symbol { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
@@ -439,7 +439,7 @@ public class SymbolQualityDisplayItem
     public string IssueCount { get; set; } = string.Empty;
 }
 
-public class GapDisplayItem
+public sealed class GapDisplayItem
 {
     public string Symbol { get; set; } = string.Empty;
     public string EventType { get; set; } = string.Empty;
@@ -449,7 +449,7 @@ public class GapDisplayItem
     public SolidColorBrush? RepairableBackground { get; set; }
 }
 
-public class DiscrepancyDisplayItem
+public sealed class DiscrepancyDisplayItem
 {
     public string TimestampText { get; set; } = string.Empty;
     public string DiscrepancyType { get; set; } = string.Empty;
@@ -457,7 +457,7 @@ public class DiscrepancyDisplayItem
     public string DifferenceText { get; set; } = string.Empty;
 }
 
-public class LatencyDisplayItem
+public sealed class LatencyDisplayItem
 {
     public string Provider { get; set; } = string.Empty;
     public string P50Text { get; set; } = string.Empty;
@@ -466,7 +466,7 @@ public class LatencyDisplayItem
     public double LatencyPercent { get; set; }
 }
 
-public class RateLimitDisplayItem
+public sealed class RateLimitDisplayItem
 {
     public string Provider { get; set; } = string.Empty;
     public double UsagePercent { get; set; }

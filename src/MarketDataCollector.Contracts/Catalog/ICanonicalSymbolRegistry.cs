@@ -16,6 +16,15 @@ public interface ICanonicalSymbolRegistry
     string? ResolveToCanonical(string input);
 
     /// <summary>
+    /// Resolves a provider-specific symbol to canonical form.
+    /// Checks provider-specific mappings first, then falls back to generic resolution.
+    /// </summary>
+    /// <param name="symbol">Raw symbol from the provider.</param>
+    /// <param name="provider">Provider name (e.g., "ALPACA", "POLYGON", "IB").</param>
+    /// <returns>Canonical symbol or null if unresolved.</returns>
+    string? TryResolve(string symbol, string provider);
+
+    /// <summary>
     /// Registers a symbol with its canonical entry, updating aliases and identifier indexes.
     /// </summary>
     Task RegisterAsync(CanonicalSymbolDefinition definition, CancellationToken ct = default);
@@ -44,6 +53,13 @@ public interface ICanonicalSymbolRegistry
     /// Gets canonical definitions filtered by exchange.
     /// </summary>
     IReadOnlyList<CanonicalSymbolDefinition> GetByExchange(string exchange);
+
+    /// <summary>
+    /// Resolves a symbol to its canonical form using a provider hint for disambiguation.
+    /// Checks provider-specific mappings first, then falls back to general resolution.
+    /// Returns null if no match is found.
+    /// </summary>
+    string? TryResolveWithProvider(string symbol, string provider);
 
     /// <summary>
     /// Checks if a given identifier (canonical, alias, ISIN, FIGI, etc.) is known.

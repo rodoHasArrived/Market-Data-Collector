@@ -38,6 +38,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     // Reconnection gating - prevents reconnection storms
     private volatile bool _isReconnecting;
     private readonly SemaphoreSlim _reconnectGate = new(1, 1);
+    private readonly SemaphoreSlim _connectLock = new(1, 1);
     private int _reconnectAttempts;
 
     /// <summary>
@@ -98,6 +99,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
     /// <summary>
     /// Connects to the specified WebSocket endpoint with resilience.
+    /// A semaphore ensures only one concurrent connection attempt proceeds at a time,
+    /// preventing duplicate connections from concurrent callers.
     /// </summary>
     /// <param name="uri">The WebSocket URI to connect to.</param>
     /// <param name="configureSocket">Optional action to configure the ClientWebSocket before connecting.</param>
@@ -113,39 +116,54 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
             return;
         }
 
-        _log.Information("Connecting to {Provider} WebSocket at {Uri}", _providerName, uri);
-
-        await _resiliencePipeline.ExecuteAsync(async token =>
+        await _connectLock.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            _connectionCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-            _webSocket = new ClientWebSocket();
-
-            // Allow provider-specific configuration (headers, options, etc.)
-            configureSocket?.Invoke(_webSocket);
-
-            try
+            // Re-check after acquiring the lock — another thread may have connected first.
+            if (IsConnected)
             {
-                await _webSocket.ConnectAsync(uri, token).ConfigureAwait(false);
-                _log.Information("Successfully connected to {Provider} WebSocket", _providerName);
-                _reconnectAttempts = 0;
-                StateChanged?.Invoke(WebSocketState.Open);
+                _log.Debug("{Provider} WebSocket connected by concurrent caller, skipping", _providerName);
+                return;
             }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Connection attempt to {Provider} WebSocket failed. Will retry per policy.", _providerName);
-                CleanupFailedConnection();
-                throw;
-            }
-        }, ct).ConfigureAwait(false);
 
-        // Start heartbeat monitoring after successful connection
-        if (_webSocket != null)
+            _log.Information("Connecting to {Provider} WebSocket at {Uri}", _providerName, uri);
+
+            await _resiliencePipeline.ExecuteAsync(async token =>
+            {
+                _connectionCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                _webSocket = new ClientWebSocket();
+
+                // Allow provider-specific configuration (headers, options, etc.)
+                configureSocket?.Invoke(_webSocket);
+
+                try
+                {
+                    await _webSocket.ConnectAsync(uri, token).ConfigureAwait(false);
+                    _log.Information("Successfully connected to {Provider} WebSocket", _providerName);
+                    _reconnectAttempts = 0;
+                    StateChanged?.Invoke(WebSocketState.Open);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Connection attempt to {Provider} WebSocket failed. Will retry per policy.", _providerName);
+                    CleanupFailedConnection();
+                    throw;
+                }
+            }, ct).ConfigureAwait(false);
+
+            // Start heartbeat monitoring after successful connection
+            if (_webSocket != null)
+            {
+                _heartbeat = new WebSocketHeartbeat(
+                    _webSocket,
+                    _config.HeartbeatInterval,
+                    _config.HeartbeatTimeout);
+                _heartbeat.ConnectionLost += OnConnectionLostAsync;
+            }
+        }
+        finally
         {
-            _heartbeat = new WebSocketHeartbeat(
-                _webSocket,
-                _config.HeartbeatInterval,
-                _config.HeartbeatTimeout);
-            _heartbeat.ConnectionLost += OnConnectionLostAsync;
+            _connectLock.Release();
         }
     }
 
@@ -271,9 +289,11 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         Func<Task>? onReconnected = null,
         CancellationToken ct = default)
     {
-        if (_isReconnecting) return false;
-
-        if (!await _reconnectGate.WaitAsync(0, ct))
+        // Use the semaphore as the sole gating mechanism.
+        // The previous fast-path check on _isReconnecting without holding
+        // the semaphore allowed two threads to both see false and race,
+        // potentially causing duplicate reconnection attempts.
+        if (!await _reconnectGate.WaitAsync(0, ct).ConfigureAwait(false))
         {
             _log.Debug("{Provider} reconnection already in progress, skipping duplicate attempt", _providerName);
             return false;
@@ -343,6 +363,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     {
         await DisconnectAsync().ConfigureAwait(false);
         _reconnectGate.Dispose();
+        _connectLock.Dispose();
     }
 
     #region Private Methods
@@ -360,6 +381,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
             {
                 messageBuilder.Clear();
                 WebSocketReceiveResult result;
+                var oversized = false;
 
                 do
                 {
@@ -372,9 +394,26 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
                         return;
                     }
 
-                    messageBuilder.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
+                    // Guard against unbounded message accumulation: if the assembled
+                    // message has already exceeded the configured limit, continue
+                    // draining frames but discard the content.
+                    if (!oversized)
+                    {
+                        messageBuilder.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
+
+                        if (messageBuilder.Length > _config.MaxMessageSizeBytes)
+                        {
+                            _log.Warning(
+                                "{Provider} WebSocket message exceeds max size {MaxBytes} bytes — discarding",
+                                _providerName, _config.MaxMessageSizeBytes);
+                            messageBuilder.Clear();
+                            oversized = true;
+                        }
+                    }
                 }
                 while (!result.EndOfMessage);
+
+                if (oversized) continue;
 
                 var message = messageBuilder.ToString();
                 if (!string.IsNullOrWhiteSpace(message))
@@ -422,18 +461,36 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         var cts = _connectionCts;
         var heartbeat = _heartbeat;
         var receiveLoopCts = _receiveLoopCts;
+        var receiveTask = _receiveTask;
 
         _webSocket = null;
         _connectionCts = null;
         _receiveLoopCts = null;
         _heartbeat = null;
+        _receiveTask = null;
 
+        // 1. Stop heartbeat to prevent new reconnection attempts
         if (heartbeat != null)
         {
             heartbeat.ConnectionLost -= OnConnectionLostAsync;
             await heartbeat.DisposeAsync();
         }
 
+        // 2. Cancel tokens to signal the receive loop to stop
+        if (cts != null)
+        {
+            try { cts.Cancel(); }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} CTS cancel failed during cleanup", _providerName); }
+        }
+
+        // 3. Wait for the receive task to complete before disposing resources it uses
+        if (receiveTask != null)
+        {
+            try { await receiveTask.ConfigureAwait(false); }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} receive task failed during cleanup", _providerName); }
+        }
+
+        // 4. Now safe to dispose CTS and WebSocket — receive loop has exited
         if (receiveLoopCts != null)
         {
             try { receiveLoopCts.Dispose(); }
@@ -442,8 +499,6 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
         if (cts != null)
         {
-            try { cts.Cancel(); }
-            catch (Exception ex) { _log.Debug(ex, "{Provider} CTS cancel failed during cleanup", _providerName); }
             try { cts.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} CTS dispose failed during cleanup", _providerName); }
         }
@@ -452,13 +507,6 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         {
             try { ws.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} WebSocket dispose failed during cleanup", _providerName); }
-        }
-
-        if (_receiveTask != null)
-        {
-            try { await _receiveTask.ConfigureAwait(false); }
-            catch (Exception ex) { _log.Debug(ex, "{Provider} receive task failed during cleanup", _providerName); }
-            _receiveTask = null;
         }
     }
 

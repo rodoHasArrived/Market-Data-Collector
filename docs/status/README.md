@@ -6,7 +6,8 @@ This folder contains project status, roadmap, and changelog documentation for th
 
 | Document | Description |
 |----------|-------------|
-| [ROADMAP.md](ROADMAP.md) | Feature backlog, development priorities, and sprint plans |
+| [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) | **New** — Complete inventory of every feature area with implementation status |
+| [ROADMAP.md](ROADMAP.md) | Feature backlog, development priorities, sprint plans, and Phases 11–15 |
 | [IMPROVEMENTS.md](IMPROVEMENTS.md) | Consolidated improvement tracking (35 items across 7+ themes) |
 | [EVALUATIONS_AND_AUDITS.md](EVALUATIONS_AND_AUDITS.md) | Consolidated architecture evaluations, code audits, and assessments |
 | [production-status.md](production-status.md) | Architecture assessment and production readiness |
@@ -17,23 +18,26 @@ This folder contains project status, roadmap, and changelog documentation for th
 ## Quick Links
 
 ### Current Status
-- **Version:** 1.6.1 (tracking toward 1.6.2)
+- **Version:** 1.6.2
 - **Status:** Development / Pilot Ready
-- **Improvements:** 27/35 completed, 4 partial, 4 open
-- **Last Updated:** 2026-02-21
+- **Improvements:** 33/35 completed, 1 partial (G2), 1 open (C3)
+- **Last Updated:** 2026-02-26
 
 ### Key Metrics
-- See [production-status.md](production-status.md) for provider readiness, build-time requirements, and current desktop UX parity caveats.
-- See [ROADMAP.md](ROADMAP.md) for planned work and backlog tracking.
+- See [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) for a per-feature breakdown of what is complete, partial, or pending.
+- See [production-status.md](production-status.md) for provider readiness, build-time requirements, and desktop UX parity caveats.
+- See [ROADMAP.md](ROADMAP.md) for planned work and backlog tracking (Phases 11–15 for full implementation).
 - See [IMPROVEMENTS.md](IMPROVEMENTS.md) for detailed improvement item status across all themes.
 - See [EVALUATIONS_AND_AUDITS.md](EVALUATIONS_AND_AUDITS.md) for architecture evaluations, audit results, and desktop assessments.
 
 ## How Documents Relate
 
 ```
+FEATURE_INVENTORY.md    — What exists and its current status (per-feature audit)
+    │
 ROADMAP.md              — What we're building and when (phases, sprints, objectives)
     │
-    ├── IMPROVEMENTS.md — Detailed per-item tracking (35 items, themes A-I)
+    ├── IMPROVEMENTS.md — Detailed per-item tracking (35 items, themes A-J)
     │
     ├── EVALUATIONS_AND_AUDITS.md — Why and where (evaluations, audits, assessments)
     │       │

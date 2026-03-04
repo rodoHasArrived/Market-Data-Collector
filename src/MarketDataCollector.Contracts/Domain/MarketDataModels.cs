@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Domain;
 /// <summary>
 /// Trade data transfer object.
 /// </summary>
-public class TradeDto
+public sealed class TradeDto
 {
     /// <summary>
     /// Gets or sets the trade timestamp.
@@ -71,7 +71,7 @@ public class TradeDto
 /// <summary>
 /// Quote (BBO) data transfer object.
 /// </summary>
-public class QuoteDto
+public sealed class QuoteDto
 {
     /// <summary>
     /// Gets or sets the quote timestamp.
@@ -143,7 +143,7 @@ public class QuoteDto
 /// <summary>
 /// Order book level data transfer object.
 /// </summary>
-public class OrderBookLevelDto
+public sealed class OrderBookLevelDto
 {
     /// <summary>
     /// Gets or sets the order book side.
@@ -185,7 +185,7 @@ public class OrderBookLevelDto
 /// <summary>
 /// Order book snapshot data transfer object.
 /// </summary>
-public class OrderBookSnapshotDto
+public sealed class OrderBookSnapshotDto
 {
     /// <summary>
     /// Gets or sets the snapshot timestamp.
@@ -245,7 +245,7 @@ public class OrderBookSnapshotDto
 /// <summary>
 /// Historical bar data transfer object.
 /// </summary>
-public class HistoricalBarDto
+public sealed class HistoricalBarDto
 {
     /// <summary>
     /// Gets or sets the bar timestamp.
@@ -431,7 +431,7 @@ public static class BarIntervalValues
 /// <summary>
 /// Integrity event data transfer object.
 /// </summary>
-public class IntegrityEventDto
+public sealed class IntegrityEventDto
 {
     /// <summary>
     /// Gets or sets the event timestamp.

@@ -187,7 +187,7 @@ public sealed class PendingOperationsQueueService
             {
                 await handler(op.Payload).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
             {
                 if (op.RetryCount < op.MaxRetries)
                 {

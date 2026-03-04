@@ -2,11 +2,11 @@ using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Providers.Alpaca;
-using MarketDataCollector.Infrastructure.Providers.Core;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
-using MarketDataCollector.Infrastructure.Providers.Polygon;
-using MarketDataCollector.Infrastructure.Providers.StockSharp;
+using MarketDataCollector.Infrastructure.Adapters.Alpaca;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+using MarketDataCollector.Infrastructure.Adapters.Polygon;
+using MarketDataCollector.Infrastructure.Adapters.StockSharp;
 using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 

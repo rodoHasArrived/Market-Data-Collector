@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 namespace MarketDataCollector;
 
@@ -241,6 +241,12 @@ public sealed class UiServer : IAsyncDisposable
 
         // Export API
         _app.MapExportEndpoints(s_jsonOptions);
+
+        // Canonicalization parity dashboard (Phase 2)
+        _app.MapCanonicalizationEndpoints(s_jsonOptions);
+
+        // Resilience, cost estimation, and compliance API
+        _app.MapResilienceEndpoints(s_jsonOptions);
 
         // UI API
         _app.MapUiEndpoints(s_jsonOptions);

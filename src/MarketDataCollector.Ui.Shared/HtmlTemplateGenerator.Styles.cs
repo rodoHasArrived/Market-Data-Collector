@@ -74,6 +74,65 @@ public static partial class HtmlTemplateGenerator
       backdrop-filter: blur(10px);
     }}
 
+    /* Data Freshness Bar */
+    .freshness-bar {{
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-default);
+      padding: 6px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }}
+
+    .freshness-label {{
+      color: var(--text-muted);
+      margin-right: 6px;
+    }}
+
+    .freshness-providers {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+
+    .freshness-dot {{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }}
+
+    .freshness-dot.green {{ background: var(--accent-green); box-shadow: 0 0 6px rgba(63,185,80,0.5); }}
+    .freshness-dot.yellow {{ background: var(--accent-orange); box-shadow: 0 0 6px rgba(210,153,34,0.5); }}
+    .freshness-dot.red {{ background: var(--accent-red); box-shadow: 0 0 6px rgba(248,81,73,0.5); }}
+    .freshness-dot.gray {{ background: var(--text-muted); }}
+
+    .freshness-value {{
+      color: var(--text-primary);
+    }}
+
+    .freshness-value.stale {{ color: var(--accent-orange); }}
+    .freshness-value.dead {{ color: var(--accent-red); }}
+
+    .freshness-mode-badge {{
+      background: var(--accent-orange);
+      color: var(--bg-primary);
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      margin-left: auto;
+    }}
+
+    .freshness-loading {{
+      color: var(--text-muted);
+      font-style: italic;
+    }}
+
     .logo {{
       display: flex;
       align-items: center;

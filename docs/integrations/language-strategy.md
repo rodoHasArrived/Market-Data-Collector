@@ -32,7 +32,7 @@ C# remains the primary language for the system's orchestration and integration c
 | **Infrastructure** | `src/MarketDataCollector/Infrastructure/` | Provider clients (IB, Alpaca), subscription management |
 | **Storage Policy** | `src/MarketDataCollector/Storage/` | JSONL sinks, retention, tier migration orchestration |
 | **Web UI** | `src/MarketDataCollector/Application/StatusHttpServer.cs` | ASP.NET dashboard, REST API, Prometheus metrics |
-| **Provider Integration** | `src/MarketDataCollector/Infrastructure/Providers/` | Official SDK wrappers (IB API, Alpaca SDK) |
+| **Provider Integration** | `src/MarketDataCollector/Infrastructure/Adapters/` | Official SDK wrappers (IB API, Alpaca SDK) |
 | **WPF Desktop App** | `src/MarketDataCollector.Wpf/` | WPF desktop application (Windows) |
 
 ### Rationale for C#

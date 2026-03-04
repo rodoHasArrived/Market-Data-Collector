@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mdc-config
+  namespace: market-data-collector
+  labels:
+    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/component: config
+data:
+  # Timezone for the application
+  TZ: "UTC"
+
+  # Application settings (non-sensitive)
+  ASPNETCORE_URLS: "http://+:8080"
+  DOTNET_RUNNING_IN_CONTAINER: "true"
+  MDC_DATA_ROOT: "/app/data"
+
+  # Logging configuration
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"

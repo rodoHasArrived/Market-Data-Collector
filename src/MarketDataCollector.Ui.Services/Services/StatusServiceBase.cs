@@ -302,7 +302,8 @@ public abstract class StatusServiceBase
             }
         }
         catch (OperationCanceledException) { }
-        catch { }
+        catch (HttpRequestException) { }
+        catch (JsonException) { }
 
         return null;
     }
@@ -331,7 +332,9 @@ public abstract class StatusServiceBase
                 }
             }
         }
-        catch { }
+        catch (OperationCanceledException) { }
+        catch (HttpRequestException) { }
+        catch (JsonException) { }
 
         return null;
     }
@@ -349,7 +352,9 @@ public abstract class StatusServiceBase
                 return providers ?? new List<ProviderInfo>();
             }
         }
-        catch { }
+        catch (OperationCanceledException) { }
+        catch (HttpRequestException) { }
+        catch (JsonException) { }
 
         return new List<ProviderInfo>();
     }

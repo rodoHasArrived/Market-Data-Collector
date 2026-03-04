@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Infrastructure.DataSources;
 
-namespace MarketDataCollector.Infrastructure.Providers;
+namespace MarketDataCollector.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Defines a provider module that can register provider services and data sources.

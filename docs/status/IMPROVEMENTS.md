@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
 **Version:** 1.6.2
-**Last Updated:** 2026-02-22
+**Last Updated:** 2026-02-25
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -49,6 +49,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | E: Performance & Scalability | 3 | 0 | 0 | 3 |
 | F: User Experience | 3 | 0 | 0 | 3 |
 | G: Operations & Monitoring | 2 | 1 | 0 | 3 |
+| J: Data Canonicalization | 7 | 1 | 0 | 8 |
 
 ### Portfolio Health Snapshot
 
@@ -88,9 +89,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 **Files:**
 - `Infrastructure/Resilience/WebSocketConnectionManager.cs`
-- `Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
-- `Infrastructure/Providers/Shared/SubscriptionManager.cs`
+- `Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+- `Infrastructure/Adapters/Shared/SubscriptionManager.cs`
 
 **ROADMAP:** Phase 0 (Critical Fixes)
 
@@ -133,11 +134,11 @@ This document consolidates **functional improvements** (features, reliability, U
 - Providers honor `Retry-After` values from HTTP 429 responses
 
 **Files:**
-- `Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs`
+- `Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
 - `Core/Exceptions/RateLimitException.cs`
 - `ProviderSdk/ProviderHttpUtilities.cs`
 - `Infrastructure/Http/SharedResiliencePolicies.cs`
-- `Infrastructure/Providers/Core/ProviderRateLimitTracker.cs`
+- `Infrastructure/Adapters/Core/ProviderRateLimitTracker.cs`
 
 **ROADMAP:** Phase 1 (Core Stability)
 
@@ -155,7 +156,7 @@ This document consolidates **functional improvements** (features, reliability, U
 - All lifecycle events logged at Debug level
 
 **Files:**
-- `Infrastructure/Providers/Shared/SubscriptionManager.cs`
+- `Infrastructure/Adapters/Shared/SubscriptionManager.cs`
 
 **ROADMAP:** Phase 0 (Critical Fixes)
 
@@ -174,7 +175,7 @@ This document consolidates **functional improvements** (features, reliability, U
 - Failover chain creates client instances dynamically from factory
 
 **Files:**
-- `Infrastructure/Providers/MarketDataClientFactory.cs`
+- `Infrastructure/Adapters/MarketDataClientFactory.cs`
 - `Program.cs`
 - `Ui.Shared/Endpoints/ConfigEndpoints.cs`
 
@@ -318,18 +319,18 @@ This document consolidates **functional improvements** (features, reliability, U
   - Backfill: retry-after header handling
 
 **Files:**
-- `tests/.../Infrastructure/Providers/AlpacaCredentialAndReconnectTests.cs`
-- `tests/.../Infrastructure/Providers/AlpacaQuoteRoutingTests.cs`
-- `tests/.../Infrastructure/Providers/BackfillRetryAfterTests.cs`
-- `tests/.../Infrastructure/Providers/FailoverAwareMarketDataClientTests.cs`
-- `tests/.../Infrastructure/Providers/IBSimulationClientTests.cs`
-- `tests/.../Infrastructure/Providers/NYSEMessageParsingTests.cs`
-- `tests/.../Infrastructure/Providers/PolygonMarketDataClientTests.cs`
-- `tests/.../Infrastructure/Providers/PolygonMessageParsingTests.cs`
-- `tests/.../Infrastructure/Providers/PolygonSubscriptionTests.cs`
-- `tests/.../Infrastructure/Providers/StockSharpMessageConversionTests.cs`
-- `tests/.../Infrastructure/Providers/StockSharpSubscriptionTests.cs`
-- `tests/.../Infrastructure/Providers/StreamingFailoverServiceTests.cs`
+- `tests/.../Infrastructure/Adapters/AlpacaCredentialAndReconnectTests.cs`
+- `tests/.../Infrastructure/Adapters/AlpacaQuoteRoutingTests.cs`
+- `tests/.../Infrastructure/Adapters/BackfillRetryAfterTests.cs`
+- `tests/.../Infrastructure/Adapters/FailoverAwareMarketDataClientTests.cs`
+- `tests/.../Infrastructure/Adapters/IBSimulationClientTests.cs`
+- `tests/.../Infrastructure/Adapters/NYSEMessageParsingTests.cs`
+- `tests/.../Infrastructure/Adapters/PolygonMarketDataClientTests.cs`
+- `tests/.../Infrastructure/Adapters/PolygonMessageParsingTests.cs`
+- `tests/.../Infrastructure/Adapters/PolygonSubscriptionTests.cs`
+- `tests/.../Infrastructure/Adapters/StockSharpMessageConversionTests.cs`
+- `tests/.../Infrastructure/Adapters/StockSharpSubscriptionTests.cs`
+- `tests/.../Infrastructure/Adapters/StreamingFailoverServiceTests.cs`
 
 **ROADMAP:** Sprint 4 (tranche 1), Sprint 7 (tranche 2) — both complete
 
@@ -415,8 +416,8 @@ This document consolidates **functional improvements** (features, reliability, U
 - `Program.cs` resolves providers exclusively through DI; no direct `new` instantiation of providers
 
 **Files:**
-- `Infrastructure/Providers/Core/ProviderFactory.cs` (unified creation)
-- `Infrastructure/Providers/Core/ProviderRegistry.cs` (single entry point)
+- `Infrastructure/Adapters/Core/ProviderFactory.cs` (unified creation)
+- `Infrastructure/Adapters/Core/ProviderRegistry.cs` (single entry point)
 - `Application/Composition/ServiceCompositionRoot.cs` (centralized DI registration)
 - `Program.cs` (DI-only resolution)
 - `ProviderSdk/DataSourceAttribute.cs`
@@ -477,9 +478,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 **Files:**
 - `Infrastructure/Shared/WebSocketProviderBase.cs`
-- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
-- `Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs`
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+- `Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs`
+- `Infrastructure/Adapters/NYSE/NYSEDataSource.cs`
 
 **Benefit:** Eliminates ~800 lines duplicated connection management. Bug fixes apply everywhere.
 
@@ -650,8 +651,8 @@ No clear contract for what each validates or when it runs.
 - Exposed via `/api/backfill/progress` endpoint
 
 **Files:**
-- `Infrastructure/Providers/Backfill/BackfillProgressTracker.cs`
-- `Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs`
+- `Infrastructure/Adapters/Core/BackfillProgressTracker.cs`
+- `Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
 - `Ui.Shared/Endpoints/BackfillEndpoints.cs`
 
 **ROADMAP:** Phase 3 (API Completeness)
@@ -823,8 +824,8 @@ No clear contract for what each validates or when it runs.
   - Proper exception-safe return-to-pool patterns
 
 **Files:**
-- `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs` (ArrayPool)
-- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMessageConversion.cs` (ObjectPool)
+- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs` (ArrayPool)
+- `Infrastructure/Adapters/StockSharp/StockSharpMessageConversion.cs` (ObjectPool)
 
 **ROADMAP:** Phase 7 (Extended Capabilities)
 
@@ -976,6 +977,192 @@ No clear contract for what each validates or when it runs.
 - `Ui.Shared/Endpoints/MaintenanceScheduleEndpoints.cs`
 
 **ROADMAP:** Phase 5 (Operational Readiness)
+
+---
+
+## Theme J: Data Canonicalization
+
+### J1. ✅ Deterministic Canonicalization Design (COMPLETED)
+
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** Equivalent market events from different providers for the same instrument produce structurally incomparable records. The same instrument appears as different symbol strings, condition codes use different encoding systems, and venue identifiers are inconsistent across providers.
+
+**Solution Implemented:**
+- Comprehensive design document with provider field audit covering timestamp formats, aggressor side determination, venue identifiers, condition codes, and sequence numbers across Alpaca, Polygon, IB, and StockSharp
+- Detailed canonicalization stage design with `IEventCanonicalizer` interface and `EventCanonicalizer` class
+- Condition code mapping registry specification (CTA plan codes, SEC numeric codes, IB field codes → canonical enum)
+- Venue normalization to ISO 10383 MIC codes with complete Polygon exchange mapping
+- 3-phase rollout plan: Contract + Mapping Inventory → Dual-Write Validation → Default Canonical Read Path
+- Acceptance criteria, operational metrics, risk mitigations, and test strategy
+
+**Files:**
+- `docs/architecture/deterministic-canonicalization.md`
+
+**ROADMAP:** Theme J (Data Canonicalization)
+
+---
+
+### J2. ✅ MarketEvent Canonical Fields (COMPLETED)
+
+**Impact:** High | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** `MarketEvent` envelope lacks fields to distinguish raw vs. canonicalized events and carry resolved identifiers.
+
+**Solution Implemented:**
+- Added `CanonicalSymbol` (`string?`), `CanonicalizationVersion` (`int`), `CanonicalVenue` (`string?`) fields to `MarketEvent` sealed record
+- Updated `MarketDataJsonContext` source generator attributes for new fields and canonicalization types
+- New fields use `WhenWritingNull`/default omission for backward compatibility with existing JSONL files
+- Added `EffectiveSymbol` property (`CanonicalSymbol ?? Symbol`) for downstream consumers
+- Both Domain and Contracts `MarketEvent` records updated in sync
+
+**Files:**
+- `src/MarketDataCollector.Domain/Events/MarketEvent.cs`
+- `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs`
+
+**Dependencies:** None (additive change)
+
+---
+
+### J3. ✅ EventCanonicalizer Implementation (COMPLETED)
+
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** No canonicalization step exists between provider adapters and `EventPipeline`.
+
+**Solution Implemented:**
+- `IEventCanonicalizer` interface with `Canonicalize(MarketEvent raw, CancellationToken ct)` method
+- `EventCanonicalizer` class using `with` expression pattern (same as `StampReceiveTime()`)
+- Resolves symbols via `CanonicalSymbolRegistry.ResolveToCanonical()`, maps venues via `VenueMicMapper`, extracts venue from typed payloads (Trade, BboQuote, LOBSnapshot, L2Snapshot, OrderFlowStatistics, IntegrityEvent)
+- Skips heartbeats and already-canonicalized events (idempotent)
+- Sets `Tier = Enriched` on canonicalized events
+- 12+ unit tests covering symbol resolution, venue normalization, idempotency, and edge cases
+
+**Files:**
+- `src/MarketDataCollector.Application/Canonicalization/IEventCanonicalizer.cs`
+- `src/MarketDataCollector.Application/Canonicalization/EventCanonicalizer.cs`
+- `tests/MarketDataCollector.Tests/Application/Services/EventCanonicalizerTests.cs`
+
+**Dependencies:** J2 (canonical fields on MarketEvent)
+
+---
+
+### J4. ✅ Condition Code Mapping Registry (COMPLETED)
+
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** ✅ DONE
+
+**Problem:** Trade condition codes stored as raw `string[]?` with no cross-provider normalization.
+
+**Solution Implemented:**
+- `CanonicalTradeCondition` enum with 16+ canonical values (Regular, FormT_ExtendedHours, OddLot, Intermarket_Sweep, OpeningPrint, ClosingPrint, etc.)
+- `ConditionCodeMapper` class with `FrozenDictionary<(provider, raw_code), CanonicalTradeCondition>` for zero-allocation hot-path lookups
+- Mapping table in `config/condition-codes.json` covering 17 Alpaca CTA plan codes, 19 Polygon SEC numeric codes, 8 IB field codes
+- `MapConditions()` returns both canonical and raw arrays for auditability; `MapSingle()` for individual lookups
+- Loaded from JSON at startup with graceful fallback if file missing
+
+**Files:**
+- `src/MarketDataCollector.Application/Canonicalization/ConditionCodeMapper.cs`
+- `config/condition-codes.json`
+- `tests/MarketDataCollector.Tests/Application/Services/ConditionCodeMapperTests.cs`
+
+**Dependencies:** J3 (EventCanonicalizer to invoke mapper)
+
+---
+
+### J5. ✅ Venue Normalization to ISO 10383 MIC (COMPLETED)
+
+**Impact:** Medium | **Effort:** Low | **Priority:** P2 | **Status:** ✅ DONE
+
+**Problem:** Venue identifiers differ across providers for the same exchange.
+
+**Solution Implemented:**
+- `VenueMicMapper` class with `FrozenDictionary<(provider, rawVenue), string?>` for zero-allocation lookups
+- Mapping table in `config/venue-mapping.json`: 29 Alpaca text mappings, 17 Polygon numeric ID mappings, 17 IB routing name mappings (including `SMART → null` for unmappable IB meta-venues)
+- Case-insensitive venue matching with provider-scoped lookups
+- `CanonicalVenue` field populated on `MarketEvent` envelope via `EventCanonicalizer`
+- Loaded from JSON at startup with graceful fallback if file missing
+
+**Files:**
+- `src/MarketDataCollector.Application/Canonicalization/VenueMicMapper.cs`
+- `config/venue-mapping.json`
+- `tests/MarketDataCollector.Tests/Application/Services/VenueMicMapperTests.cs`
+
+**Dependencies:** J3 (EventCanonicalizer to invoke mapper)
+
+---
+
+### J6. ✅ Provider Adapter Wiring (COMPLETED)
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** Provider adapters publish raw events without canonicalization.
+
+**Solution Implemented:**
+- `CanonicalizingPublisher` decorator wraps `IMarketEventPublisher` with transparent canonicalization
+- DI wiring in `ServiceCompositionRoot.AddCanonicalizationServices()` — decorates the existing pipeline publisher
+- Configurable pilot symbol list for phased rollout (clear `PilotSymbols` for all-symbol canonicalization)
+- Dual-write mode: publishes both raw and canonicalized events for parity validation
+- Lock-free metrics tracking (canonicalized count, skipped count, unresolved count, average duration)
+- `CanonicalizationConfig` in `appsettings.json` controls `Enabled`, `PilotSymbols`, `DualWriteRawAndCanonical`, `ConditionCodesPath`, `VenueMappingPath`, and `Version`
+- 17+ unit tests covering pilot filtering, dual-write, metrics, and edge cases
+
+**Files:**
+- `src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs`
+- `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
+- `src/MarketDataCollector.Core/Config/CanonicalizationConfig.cs`
+- `tests/MarketDataCollector.Tests/Application/Services/CanonicalizingPublisherTests.cs`
+
+**Dependencies:** J3 (EventCanonicalizer implementation)
+
+---
+
+### J7. ✅ Canonicalization Metrics and Monitoring (COMPLETED)
+
+**Impact:** Medium | **Effort:** Low | **Priority:** P2 | **Status:** ✅ DONE
+
+**Problem:** No observability into canonicalization success rates, latency, or unresolved mappings.
+
+**Solution Implemented:**
+- `CanonicalizationMetrics` static class with thread-safe counters: success, soft-fail, hard-fail, dual-write totals
+- Per-provider parity statistics (`ProviderParityStats`) tracking match rates, unresolved breakdowns (symbol/venue/condition)
+- `CanonicalizationSnapshot` immutable record for point-in-time metric export
+- API endpoints via `CanonicalizationEndpoints`:
+  - `GET /api/canonicalization/status` — overall canonicalization metrics
+  - `GET /api/canonicalization/parity` — per-provider parity breakdown
+  - `GET /api/canonicalization/parity/{provider}` — single provider detail with unresolved field breakdown
+  - `GET /api/canonicalization/config` — current canonicalization configuration
+- `CanonicalizingPublisher` also exposes per-instance metrics (canonicalized count, average duration)
+
+**Files:**
+- `src/MarketDataCollector.Application/Canonicalization/CanonicalizationMetrics.cs`
+- `src/MarketDataCollector.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs`
+- `src/MarketDataCollector.Contracts/Api/UiApiRoutes.cs` (route constants)
+
+**Dependencies:** J3 (EventCanonicalizer must emit metrics)
+
+---
+
+### J8. 🔄 Golden Fixture Test Suite (PARTIAL)
+
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 🔄 PARTIAL
+
+**Problem:** No test fixtures for verifying canonicalization correctness across providers.
+
+**What exists:**
+- Unit tests for `EventCanonicalizer`, `ConditionCodeMapper`, `VenueMicMapper`, and `CanonicalizingPublisher` cover core correctness, idempotency, and edge cases
+- Property tests for idempotency (canonicalize twice = same result), raw symbol preservation, and tier progression are covered in `EventCanonicalizerTests`
+- **8 curated fixture JSON files** in `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/` covering Alpaca and Polygon regular, extended-hours, and odd-lot trade scenarios plus cross-provider XNAS identity checks
+- **`CanonicalizationGoldenFixtureTests`** loads all `.json` fixture files at runtime using `[Theory][MemberData]`, constructs `MarketEvent` from fixture inputs, applies production symbol and venue canonicalization (via `venue-mapping.json`), and asserts canonical symbol, venue, tier, and version fields match expected values
+
+**Remaining:**
+- Backward compatibility tests replaying archived JSONL files through canonicalizer
+- Drift canary CI job for detecting new unmapped codes
+
+**Files:**
+- `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/*.json` (8 fixture files)
+- `tests/MarketDataCollector.Tests/Application/Canonicalization/CanonicalizationGoldenFixtureTests.cs` (new)
+
+**Dependencies:** J3 (EventCanonicalizer to test against)
 
 ---
 
@@ -1144,6 +1331,7 @@ Improvements Tracker Update
 - **[TODO.md](TODO.md)** — Auto-generated TODO tracking from code comments
 - **[DEPENDENCIES.md](../DEPENDENCIES.md)** — NuGet package dependencies
 - **[production-status.md](production-status.md)** — Current production readiness assessment
+- **[deterministic-canonicalization.md](../architecture/deterministic-canonicalization.md)** — Cross-provider canonicalization design (Theme J)
 
 ### Archived Improvement Documents
 
@@ -1160,7 +1348,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-22
+**Last Updated:** 2026-02-25
 **Maintainer:** Project Team
-**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items)
+**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (7/8)
 **Next Review:** Weekly engineering sync (or immediately after any status change)

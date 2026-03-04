@@ -36,12 +36,12 @@ All providers must implement these interfaces, enabling provider-agnostic data c
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Streaming Interface | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` | Real-time data contract |
-| Historical Interface | `src/MarketDataCollector.Infrastructure/Providers/Historical/IHistoricalDataProvider.cs` | Historical data contract |
-| Alpaca Implementation | `src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Streaming provider |
-| IB Implementation | `src/MarketDataCollector.Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | Streaming provider |
-| Yahoo Finance | `src/MarketDataCollector.Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | Historical provider |
-| Stooq | `src/MarketDataCollector.Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` | Historical provider |
-| Composite Provider | `src/MarketDataCollector.Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` | Failover orchestration |
+| Historical Interface | `src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` | Historical data contract |
+| Alpaca Implementation | `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Streaming provider |
+| IB Implementation | `src/MarketDataCollector.Infrastructure/Adapters/InteractiveBrokers/IBMarketDataClient.cs` | Streaming provider |
+| Yahoo Finance | `src/MarketDataCollector.Infrastructure/Adapters/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | Historical provider |
+| Stooq | `src/MarketDataCollector.Infrastructure/Adapters/Stooq/StooqHistoricalDataProvider.cs` | Historical provider |
+| Composite Provider | `src/MarketDataCollector.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs` | Failover orchestration |
 | Interface Tests | `tests/MarketDataCollector.Tests/Infrastructure/` | Contract verification |
 
 ## Rationale

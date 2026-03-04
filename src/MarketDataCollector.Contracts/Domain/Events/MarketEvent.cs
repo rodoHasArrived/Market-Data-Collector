@@ -14,9 +14,18 @@ public sealed record MarketEvent(
     long Sequence = 0,
     string Source = "IB",
     int SchemaVersion = 1,
-    MarketEventTier Tier = MarketEventTier.Raw
+    MarketEventTier Tier = MarketEventTier.Raw,
+    string? CanonicalSymbol = null,
+    int CanonicalizationVersion = 0,
+    string? CanonicalVenue = null
 )
 {
+    /// <summary>
+    /// Returns the effective symbol for downstream consumers: <see cref="CanonicalSymbol"/>
+    /// when available, otherwise the raw <see cref="Symbol"/>.
+    /// </summary>
+    public string EffectiveSymbol => CanonicalSymbol ?? Symbol;
+
     /// <summary>
     /// Creates a trade market event.
     /// </summary>
