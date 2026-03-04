@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22690966586
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22692908360
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,27 +19,19 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-04T21:55:04.2684117Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
-      - `2026-03-04T21:55:04.2689714Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
-      - `2026-03-04T21:55:04.2694031Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTe...`
-      - `2026-03-04T21:55:04.2697729Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServ...`
-      - `2026-03-04T21:55:04.2701420Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
-
-      ### Test
-      - `2026-03-04T21:50:53.1353483Z Failed!  - Failed:     1, Passed:  2535, Skipped:     2, Total:  2538, Duration: 11 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-04T21:50:45.4519436Z [xUnit.net 00:00:07.69]     MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQ...`
+      - `2026-03-04T22:46:12.9558289Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
+      - `2026-03-04T22:46:12.9563634Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
+      - `2026-03-04T22:46:12.9568234Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTe...`
+      - `2026-03-04T22:46:12.9571887Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
+      - `2026-03-04T22:46:12.9575563Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
 
       ### Code Quality
-      - `2026-03-04T21:50:14.8114665Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
-      - `2026-03-04T21:50:14.8132570Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-04T21:50:14.8139779Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-04T21:50:14.8146319Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-04T21:50:14.8152289Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-04T22:46:12.8734309Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T22:46:12.8738147Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T22:46:12.8741641Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T22:46:12.8745099Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T22:46:12.8749189Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
 
-
-      ## Failed Tests
-      - `2026-03-04T21:50:45.4556130Z   Failed MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent [118 ms]`
-      - `MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent`
 
       ## Error Codes
       - `CA2022`
@@ -64,7 +56,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22690966586
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22692908360
 
       Additional context:
       {{additional_context}}
