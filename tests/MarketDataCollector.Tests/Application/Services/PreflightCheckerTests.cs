@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Services;
 using Xunit;
 
@@ -537,6 +538,173 @@ public sealed class PreflightCheckerTests : IDisposable
         result.Checks.Should().Contain(c => c.Name == "Memory Availability");
         result.Checks.Should().Contain(c => c.Name == "System Time");
         result.Checks.Should().Contain(c => c.Name == "Environment Variables");
+    }
+
+    #endregion
+
+    #region ValidateProviderCredentials (via RunChecksAsync with activeDataSource)
+
+    private static PreflightChecker MakeChecker() => new(new PreflightConfig
+    {
+        CheckNetworkConnectivity = false,
+        CheckProviderConnectivity = false,
+        MinDiskSpaceGb = 0.001,
+        WarnDiskSpaceGb = 0.01,
+        MinMemoryMb = 1,
+        WarnMemoryMb = 2,
+        NetworkTimeoutMs = 500
+    });
+
+    [Fact]
+    public async Task ValidateProviderCredentials_AlpacaMissingBoth_ReturnsFailed()
+    {
+        PreflightChecker.SetEnvironmentVariableProvider(_ => null);
+        try
+        {
+            var checker = MakeChecker();
+            var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None,
+                activeDataSource: DataSourceKind.Alpaca);
+
+            var credCheck = result.Checks.FirstOrDefault(c => c.Name == "Provider Credentials");
+            credCheck.Should().NotBeNull();
+            credCheck!.Status.Should().Be(PreflightCheckStatus.Failed);
+            credCheck.Message.Should().Contain("Alpaca credentials missing");
+            credCheck.Remediation.Should().Contain("ALPACA_KEY_ID");
+        }
+        finally
+        {
+            PreflightChecker.SetEnvironmentVariableProvider(null);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateProviderCredentials_AlpacaPlaceholderKey_ReturnsWarning()
+    {
+        PreflightChecker.SetEnvironmentVariableProvider(name => name switch
+        {
+            "ALPACA_KEY_ID" => "YOUR_KEY_HERE",
+            "ALPACA_SECRET_KEY" => "your-secret-key-placeholder",
+            _ => null
+        });
+        try
+        {
+            var checker = MakeChecker();
+            var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None,
+                activeDataSource: DataSourceKind.Alpaca);
+
+            var credCheck = result.Checks.FirstOrDefault(c => c.Name == "Provider Credentials");
+            credCheck.Should().NotBeNull();
+            credCheck!.Status.Should().Be(PreflightCheckStatus.Warning);
+            credCheck.Message.Should().Contain("placeholder");
+        }
+        finally
+        {
+            PreflightChecker.SetEnvironmentVariableProvider(null);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateProviderCredentials_AlpacaValidCredentials_ReturnsPassed()
+    {
+        PreflightChecker.SetEnvironmentVariableProvider(name => name switch
+        {
+            "ALPACA_KEY_ID" => "PKVALIDKEYID12345",
+            "ALPACA_SECRET_KEY" => "supersecretkeyvalue",
+            _ => null
+        });
+        try
+        {
+            var checker = MakeChecker();
+            var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None,
+                activeDataSource: DataSourceKind.Alpaca);
+
+            var credCheck = result.Checks.FirstOrDefault(c => c.Name == "Provider Credentials");
+            credCheck.Should().NotBeNull();
+            credCheck!.Status.Should().Be(PreflightCheckStatus.Passed);
+        }
+        finally
+        {
+            PreflightChecker.SetEnvironmentVariableProvider(null);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateProviderCredentials_AlpacaAlternativeEnvVar_ResolvesCorrectly()
+    {
+        // Test alias resolution: ALPACA__KEYID should be accepted
+        PreflightChecker.SetEnvironmentVariableProvider(name => name switch
+        {
+            "ALPACA__KEYID" => "PKVALIDKEYID67890",
+            "ALPACA__SECRETKEY" => "anothersecretvalue",
+            _ => null
+        });
+        try
+        {
+            var checker = MakeChecker();
+            var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None,
+                activeDataSource: DataSourceKind.Alpaca);
+
+            var credCheck = result.Checks.FirstOrDefault(c => c.Name == "Provider Credentials");
+            credCheck.Should().NotBeNull();
+            credCheck!.Status.Should().Be(PreflightCheckStatus.Passed);
+        }
+        finally
+        {
+            PreflightChecker.SetEnvironmentVariableProvider(null);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateProviderCredentials_PolygonMissingKey_ReturnsFailed()
+    {
+        PreflightChecker.SetEnvironmentVariableProvider(_ => null);
+        try
+        {
+            var checker = MakeChecker();
+            var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None,
+                activeDataSource: DataSourceKind.Polygon);
+
+            var credCheck = result.Checks.FirstOrDefault(c => c.Name == "Provider Credentials");
+            credCheck.Should().NotBeNull();
+            credCheck!.Status.Should().Be(PreflightCheckStatus.Failed);
+            credCheck.Message.Should().Contain("Polygon");
+        }
+        finally
+        {
+            PreflightChecker.SetEnvironmentVariableProvider(null);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateProviderCredentials_PolygonValidKey_ReturnsPassed()
+    {
+        PreflightChecker.SetEnvironmentVariableProvider(name =>
+            name == "POLYGON_API_KEY" ? "validpolygonkey12345" : null);
+        try
+        {
+            var checker = MakeChecker();
+            var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None,
+                activeDataSource: DataSourceKind.Polygon);
+
+            var credCheck = result.Checks.FirstOrDefault(c => c.Name == "Provider Credentials");
+            credCheck.Should().NotBeNull();
+            credCheck!.Status.Should().Be(PreflightCheckStatus.Passed);
+        }
+        finally
+        {
+            PreflightChecker.SetEnvironmentVariableProvider(null);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateProviderCredentials_NoActiveDataSource_SkipsCredentialCheck()
+    {
+        var checker = MakeChecker();
+
+        // No activeDataSource → Provider Credentials check should be absent
+        var result = await checker.RunChecksAsync(_tempDir, CancellationToken.None);
+
+        result.Checks.Should().NotContain(c => c.Name == "Provider Credentials");
     }
 
     #endregion

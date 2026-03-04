@@ -43,7 +43,7 @@ class ScriptResult:
 SCRIPT_CONFIG: Dict[str, Dict[str, Sequence[str] | str]] = {
     "scan-todos": {
         "script": "scan-todos.py",
-        "args": ["--output", "docs/status/TODO.md"],
+        "args": ["--output", "docs/status/TODO.md", "--json-output", "docs/status/todo-scan-results.json"],
         "output": "docs/status/TODO.md",
     },
     "generate-structure-docs": {
@@ -259,7 +259,7 @@ def write_markdown_summary(path: Path, results: Iterable[ScriptResult], dry_run:
             f"| `{result.name}` | `{result.status}` | `{result.duration_seconds:.3f}` | `{output}` |"
         )
 
-    failures = [r for r in rows if r.status != "success"]
+    failures = [r for r in rows if r.status == "failed"]
     if failures:
         lines.append("")
         lines.append("## Failures")
@@ -350,20 +350,18 @@ def main() -> int:
                 print("Stopping due to failure. Use --continue-on-error to continue.", file=sys.stderr)
                 break
 
-        # Only create issues if scan-todos succeeded
+        any_failed = any(r.status == "failed" for r in results)
+
         if args.auto_create_todos and "scan-todos" in selected:
-            if not scan_todos_succeeded:
-                print("Skipping create-todo-issues because scan-todos failed.", file=sys.stderr)
-                results.append(
-                    ScriptResult(
-                        name="create-todo-issues",
-                        command=["(skipped)"],
-                        return_code=-1,
-                        duration_seconds=0.0,
-                        status="skipped",
-                        error="scan-todos prerequisite failed",
-                    )
+            scan_result = next((result for result in results if result.name == "scan-todos"), None)
+            if any_failed and not args.continue_on_error:
+                print(
+                    "Skipping create-todo-issues because a prior script failed "
+                    "(use --continue-on-error to override).",
+                    file=sys.stderr,
                 )
+            elif scan_result is None or scan_result.status != "success":
+                print("Skipping create-todo-issues because scan-todos did not succeed.", file=sys.stderr)
             else:
                 # Build additional args beyond SCRIPT_CONFIG defaults
                 issue_args: List[str] = ["--max-issues", str(args.todo_max_issues)]

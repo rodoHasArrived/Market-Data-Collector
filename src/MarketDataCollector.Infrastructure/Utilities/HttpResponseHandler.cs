@@ -1,7 +1,7 @@
 using System.Net;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
 

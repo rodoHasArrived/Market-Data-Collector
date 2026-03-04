@@ -47,14 +47,14 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
         if (_disposed) return;
 
         Interlocked.Increment(ref _totalDropped);
-        _dropCountsBySymbol.AddOrUpdate(evt.Symbol, 1, (_, count) => count + 1);
+        _dropCountsBySymbol.AddOrUpdate(evt.EffectiveSymbol, 1, (_, count) => count + 1);
 
         var record = new
         {
             timestamp = DateTimeOffset.UtcNow,
             eventTimestamp = evt.Timestamp,
             eventType = evt.Type.ToString(),
-            symbol = evt.Symbol,
+            symbol = evt.EffectiveSymbol,
             sequence = evt.Sequence,
             source = evt.Source,
             reason
@@ -108,13 +108,22 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
 
-        if (_writer != null)
+        // Acquire the write lock to ensure no concurrent write is in progress
+        await _writeLock.WaitAsync().ConfigureAwait(false);
+        try
         {
-            await _writer.FlushAsync().ConfigureAwait(false);
-            await _writer.DisposeAsync().ConfigureAwait(false);
+            if (_writer != null)
+            {
+                await _writer.FlushAsync().ConfigureAwait(false);
+                await _writer.DisposeAsync().ConfigureAwait(false);
+                _writer = null;
+            }
         }
-
-        _writeLock.Dispose();
+        finally
+        {
+            _writeLock.Release();
+            _writeLock.Dispose();
+        }
     }
 }
 

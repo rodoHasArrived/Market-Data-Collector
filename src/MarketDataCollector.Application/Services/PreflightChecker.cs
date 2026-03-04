@@ -53,6 +53,7 @@ public sealed class PreflightChecker
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
+        checks.Add(ValidateProviderCredentials());
 
         // Validate provider credentials for the active data source
         if (activeDataSource.HasValue)
@@ -532,178 +533,120 @@ public sealed class PreflightChecker
     }
 
     /// <summary>
-    /// Validates credentials for the active data source, providing actionable error messages
-    /// with setup instructions specific to each provider.
+    /// Validates that all enabled providers have the credentials they require.
+    /// Returns a detailed table of missing credentials with exact env var names.
     /// </summary>
-    private PreflightCheckResult ValidateProviderCredentials(DataSourceKind dataSource)
+    public PreflightCheckResult ValidateProviderCredentials(IReadOnlyList<string>? enabledProviders = null)
     {
         const string checkName = "Provider Credentials";
 
-        return dataSource switch
+        // Provider credential requirements: (providerId, displayName, envVars[])
+        var providerCredentials = new (string Id, string Name, (string EnvVar, string Description)[] Required)[]
         {
-            DataSourceKind.Alpaca => ValidateAlpacaCredentials(),
-            DataSourceKind.Polygon => ValidateSimpleApiKey("Polygon", "POLYGON_API_KEY",
-                new[] { "POLYGON_API_KEY", "MDC_POLYGON_API_KEY", "POLYGON__APIKEY" },
-                "https://polygon.io/dashboard/api-keys"),
-            DataSourceKind.NYSE => ValidateSimpleApiKey("NYSE", "NYSE_API_KEY",
-                new[] { "NYSE_API_KEY", "MDC_NYSE_API_KEY" },
-                "https://developer.nyse.com"),
-            DataSourceKind.IB => ValidateIBConnection(),
-            _ => PreflightCheckResult.Passed(checkName,
-                $"No specific credential validation for {dataSource}",
-                new Dictionary<string, object> { ["dataSource"] = dataSource.ToString() })
+            ("alpaca", "Alpaca", new[]
+            {
+                ("ALPACA__KEYID", "API Key ID"),
+                ("ALPACA__SECRETKEY", "Secret Key")
+            }),
+            ("polygon", "Polygon", new[]
+            {
+                ("POLYGON__APIKEY", "API Key")
+            }),
+            ("finnhub", "Finnhub", new[]
+            {
+                ("FINNHUB__TOKEN", "API Token")
+            }),
+            ("tiingo", "Tiingo", new[]
+            {
+                ("TIINGO__TOKEN", "API Token")
+            }),
+            ("alphavantage", "Alpha Vantage", new[]
+            {
+                ("ALPHAVANTAGE__APIKEY", "API Key")
+            }),
+            ("nyse", "NYSE", new[]
+            {
+                ("NYSE__APIKEY", "API Key")
+            }),
+            ("nasdaq", "Nasdaq Data Link", new[]
+            {
+                ("NASDAQ__APIKEY", "API Key")
+            }),
+            ("ib", "Interactive Brokers", Array.Empty<(string, string)>())
         };
 
-        PreflightCheckResult ValidateAlpacaCredentials()
+        var configured = new List<string>();
+        var missingEntries = new List<(string Provider, string EnvVar, string Description)>();
+
+        foreach (var (id, name, required) in providerCredentials)
         {
-            var keyId = GetEnvVarValue("ALPACA_KEY_ID", "MDC_ALPACA_KEY_ID", "ALPACA__KEYID");
-            var secretKey = GetEnvVarValue("ALPACA_SECRET_KEY", "MDC_ALPACA_SECRET_KEY", "ALPACA__SECRETKEY");
-            var missing = new List<string>();
-
-            if (string.IsNullOrEmpty(keyId)) missing.Add("ALPACA_KEY_ID");
-            if (string.IsNullOrEmpty(secretKey)) missing.Add("ALPACA_SECRET_KEY");
-
-            if (missing.Count > 0)
+            // If enabledProviders is specified, only check those
+            if (enabledProviders is { Count: > 0 } &&
+                !enabledProviders.Any(p => p.Equals(id, StringComparison.OrdinalIgnoreCase) ||
+                                           p.Equals(name, StringComparison.OrdinalIgnoreCase)))
             {
-                return PreflightCheckResult.Failed(checkName,
-                    $"Alpaca credentials missing: {string.Join(", ", missing)}",
-                    $"Set the required environment variables:\n" +
-                    $"  export ALPACA_KEY_ID=your-key-id\n" +
-                    $"  export ALPACA_SECRET_KEY=your-secret-key\n" +
-                    $"Get your API keys at: https://app.alpaca.markets/paper/dashboard/overview\n" +
-                    $"Or configure in appsettings.json under Alpaca.KeyId / Alpaca.SecretKey",
-                    new Dictionary<string, object>
-                    {
-                        ["provider"] = "Alpaca",
-                        ["missingCredentials"] = missing,
-                        ["signupUrl"] = "https://app.alpaca.markets"
-                    });
+                continue;
             }
 
-            // Validate key format (Alpaca keys start with PK or AK)
-            if (keyId!.Length < 10 || keyId.Contains("YOUR_") || keyId.Contains("REPLACE"))
-            {
-                var preview = keyId[..Math.Min(4, keyId.Length)];
+            if (required.Length == 0) continue; // IB uses TWS gateway, not env vars
 
-                return PreflightCheckResult.Warning(checkName,
-                    "Alpaca API key appears to be a placeholder value",
-                    "Replace the placeholder with your actual Alpaca API key from https://app.alpaca.markets",
-                    new Dictionary<string, object> { ["provider"] = "Alpaca", ["keyPreview"] = preview + "..." });
+            var allFound = true;
+            foreach (var (envVar, desc) in required)
+            {
+                // Check both double-underscore and alternate formats
+                var value = Environment.GetEnvironmentVariable(envVar);
+                if (string.IsNullOrEmpty(value))
+                {
+                    // Also try alternate naming (ALPACA_KEY_ID vs ALPACA__KEYID)
+                    var altVar = envVar.Replace("__", "_");
+                    value = Environment.GetEnvironmentVariable(altVar);
+                }
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    missingEntries.Add((name, envVar, desc));
+                    allFound = false;
+                }
             }
 
-            var keyPrefix = keyId[..Math.Min(4, keyId.Length)];
-
-            _log.Debug("Alpaca credentials validated: KeyId={KeyPrefix}...", keyPrefix);
-            return PreflightCheckResult.Passed(checkName,
-                $"Alpaca credentials present (KeyId: {keyPrefix}...)",
-                new Dictionary<string, object> { ["provider"] = "Alpaca" });
+            if (allFound)
+            {
+                configured.Add(name);
+            }
         }
 
-        PreflightCheckResult ValidateSimpleApiKey(string providerName, string primaryEnvVar, string[] allEnvVars, string signupUrl)
+        var details = new Dictionary<string, object>
         {
-            var apiKey = GetEnvVarValue(allEnvVars);
+            ["configuredProviders"] = configured,
+            ["missingCredentials"] = missingEntries.Select(m => new { m.Provider, m.EnvVar, m.Description }).ToArray()
+        };
 
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                return PreflightCheckResult.Failed(checkName,
-                    $"{providerName} API key not found",
-                    $"Set the {primaryEnvVar} environment variable:\n" +
-                    $"  export {primaryEnvVar}=your-api-key\n" +
-                    $"Get your API key at: {signupUrl}\n" +
-                    $"Or configure in appsettings.json",
-                    new Dictionary<string, object>
-                    {
-                        ["provider"] = providerName,
-                        ["missingCredentials"] = new[] { primaryEnvVar },
-                        ["signupUrl"] = signupUrl
-                    });
-            }
+        if (missingEntries.Count > 0 && configured.Count == 0 && enabledProviders is { Count: > 0 })
+        {
+            // All enabled providers are missing credentials — this is a failure
+            var table = string.Join("\n", missingEntries.Select(m =>
+                $"    {m.Provider,-20} {m.EnvVar,-25} ({m.Description})"));
 
-            if (apiKey.Contains("YOUR_") || apiKey.Contains("REPLACE") || apiKey.StartsWith("__SET_ME__"))
-            {
-                return PreflightCheckResult.Warning(checkName,
-                    $"{providerName} API key appears to be a placeholder value",
-                    $"Replace the placeholder with your actual {providerName} API key from {signupUrl}",
-                    new Dictionary<string, object> { ["provider"] = providerName });
-            }
-
-            return PreflightCheckResult.Passed(checkName,
-                $"{providerName} credentials present",
-                new Dictionary<string, object> { ["provider"] = providerName });
+            return PreflightCheckResult.Failed(checkName,
+                $"Missing credentials for {missingEntries.Select(m => m.Provider).Distinct().Count()} enabled provider(s)",
+                $"Set the following environment variables:\n{table}",
+                details);
         }
 
-        PreflightCheckResult ValidateIBConnection()
+        if (missingEntries.Count > 0)
         {
-            // IB uses TWS/Gateway, not API keys - check if the gateway ports are accessible
-            var ports = new[] { 7496, 7497, 4001, 4002 };
-            foreach (var port in ports)
-            {
-                try
-                {
-                    using var client = new TcpClient();
-                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
-                    client.ConnectAsync("127.0.0.1", port, cts.Token).GetAwaiter().GetResult();
-                    if (client.Connected)
-                    {
-                        return PreflightCheckResult.Passed(checkName,
-                            $"Interactive Brokers gateway detected on port {port}",
-                            new Dictionary<string, object> { ["provider"] = "IB", ["port"] = port });
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // Timeout - continue trying other ports
-                }
-                catch (SocketException)
-                {
-                    // Connection refused - continue trying other ports
-                }
-            }
+            var table = string.Join("\n", missingEntries.Select(m =>
+                $"    {m.Provider,-20} {m.EnvVar,-25} ({m.Description})"));
 
             return PreflightCheckResult.Warning(checkName,
-                "Interactive Brokers TWS/Gateway not detected on standard ports (7496, 7497, 4001, 4002)",
-                "Ensure IB TWS or IB Gateway is running:\n" +
-                "  1. Start TWS or IB Gateway\n" +
-                "  2. Enable API connections: File > Global Configuration > API > Settings\n" +
-                "  3. Check 'Enable ActiveX and Socket Clients'\n" +
-                "  4. Verify the socket port matches (default: 7496 for TWS, 4001 for Gateway)\n" +
-                "  Or switch to a different provider with --data-source Alpaca",
-                new Dictionary<string, object>
-                {
-                    ["provider"] = "IB",
-                    ["checkedPorts"] = ports
-                });
+                $"Credentials configured for {configured.Count} provider(s); {missingEntries.Select(m => m.Provider).Distinct().Count()} provider(s) missing credentials",
+                $"To enable additional providers, set:\n{table}",
+                details);
         }
-    }
 
-    // Indirection for environment variable access to enable deterministic unit testing.
-    // Defaults to Environment.GetEnvironmentVariable but can be overridden in tests.
-    private static readonly Func<string, string?> DefaultEnvironmentVariableProvider = Environment.GetEnvironmentVariable;
-
-    // Per-execution-context override of the environment variable provider to avoid
-    // cross-test interference in parallel test runs.
-    private static readonly AsyncLocal<Func<string, string?>?> EnvironmentVariableProviderOverride = new();
-
-    // Internal hook for tests to override environment variable lookup without mutating
-    // the real process environment. Production code should not call this.
-    internal static void SetEnvironmentVariableProvider(Func<string, string?>? provider)
-    {
-        // When provider is null we clear the override and fall back to the default
-        // Environment.GetEnvironmentVariable implementation.
-        EnvironmentVariableProviderOverride.Value = provider;
-    }
-
-    private static string? GetEnvVarValue(params string[] names)
-    {
-        var provider = EnvironmentVariableProviderOverride.Value ?? DefaultEnvironmentVariableProvider;
-
-        foreach (var name in names)
-        {
-            var value = provider(name);
-            if (!string.IsNullOrEmpty(value))
-                return value;
-        }
-        return null;
+        return PreflightCheckResult.Passed(checkName,
+            $"All provider credentials configured: {string.Join(", ", configured)}",
+            details);
     }
 
     private async Task<PreflightCheckResult> CheckProviderEndpointsAsync(CancellationToken ct)

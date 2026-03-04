@@ -116,26 +116,24 @@ public sealed class StatusHttpServer : IAsyncDisposable
                 break;
             }
 
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await HandleRequestAsync(ctx);
-                }
-                catch (Exception ex)
-                {
-                    _log.Warning(ex, "Unhandled error processing HTTP request to {Path}",
-                        ctx.Request.Url?.AbsolutePath);
-                }
-                finally
-                {
-                    _requestLimiter.Release();
-                }
-            }, _cts.Token)
-            .ContinueWith(
-                t => _log.Warning(t.Exception!.InnerException ?? t.Exception,
-                    "HTTP request handler task faulted"),
-                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+            _ = ProcessRequestAsync(ctx);
+        }
+    }
+
+    private async Task ProcessRequestAsync(HttpListenerContext ctx)
+    {
+        try
+        {
+            await HandleRequestAsync(ctx);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Unhandled error processing HTTP request to {Path}",
+                ctx.Request.Url?.AbsolutePath);
+        }
+        finally
+        {
+            _requestLimiter.Release();
         }
     }
 
@@ -151,7 +149,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
 
             var path = ctx.Request.Url?.AbsolutePath?.Trim('/')?.ToLowerInvariant() ?? string.Empty;
 
-            // Support both /api/* and /* routes for desktop app compatibility
+            // Support both /api/* and /* routes for client compatibility
             if (path.StartsWith("api/"))
                 path = path.Substring(4);
 

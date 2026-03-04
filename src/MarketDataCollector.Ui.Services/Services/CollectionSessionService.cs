@@ -519,7 +519,7 @@ Verification: {(session.ManifestPath != null ? "✓ Manifest generated" : "Pendi
 /// <summary>
 /// Event args for collection session events.
 /// </summary>
-public class CollectionSessionEventArgs : EventArgs
+public sealed class CollectionSessionEventArgs : EventArgs
 {
     public CollectionSession? Session { get; set; }
 }

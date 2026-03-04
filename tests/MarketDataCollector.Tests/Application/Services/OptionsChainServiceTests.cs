@@ -4,7 +4,7 @@ using MarketDataCollector.Application.Services;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Infrastructure.Providers;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Tests.TestHelpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

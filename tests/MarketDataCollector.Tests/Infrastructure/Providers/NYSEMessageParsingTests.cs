@@ -2,7 +2,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace MarketDataCollector.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Golden-sample tests for NYSE WebSocket message parsing.

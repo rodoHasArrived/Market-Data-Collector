@@ -368,7 +368,7 @@ public sealed class OrderBookVisualizationService : IDisposable
 /// <summary>
 /// Current state of an order book.
 /// </summary>
-public class OrderBookState
+public sealed class OrderBookState
 {
     public string Symbol { get; set; } = string.Empty;
     public int DepthLevels { get; set; }
@@ -395,7 +395,7 @@ public class OrderBookState
 /// <summary>
 /// Order book snapshot for history.
 /// </summary>
-public class OrderBookHistorySnapshot
+public sealed class OrderBookHistorySnapshot
 {
     public DateTime Timestamp { get; set; }
     public decimal BestBid { get; set; }
@@ -410,7 +410,7 @@ public class OrderBookHistorySnapshot
 /// <summary>
 /// Data for heatmap visualization.
 /// </summary>
-public class OrderBookHeatmapData
+public sealed class OrderBookHeatmapData
 {
     public string Symbol { get; set; } = string.Empty;
     public List<HeatmapLevel> Levels { get; } = new();
@@ -425,7 +425,7 @@ public class OrderBookHeatmapData
 /// <summary>
 /// Single level in the heatmap.
 /// </summary>
-public class HeatmapLevel
+public sealed class HeatmapLevel
 {
     public decimal Price { get; set; }
     public decimal BidSize { get; set; }
@@ -438,7 +438,7 @@ public class HeatmapLevel
 /// <summary>
 /// Data for depth chart visualization.
 /// </summary>
-public class DepthChartData
+public sealed class DepthChartData
 {
     public string Symbol { get; set; } = string.Empty;
     public List<DepthPoint> BidPoints { get; } = new();
@@ -451,7 +451,7 @@ public class DepthChartData
 /// <summary>
 /// Point on the depth chart.
 /// </summary>
-public class DepthPoint
+public sealed class DepthPoint
 {
     public decimal Price { get; set; }
     public decimal Size { get; set; }
@@ -461,7 +461,7 @@ public class DepthPoint
 /// <summary>
 /// Time and sales data.
 /// </summary>
-public class TimeAndSalesData
+public sealed class TimeAndSalesData
 {
     public string Symbol { get; set; } = string.Empty;
     public List<TradeRecord> RecentTrades { get; set; } = new();
@@ -474,7 +474,7 @@ public class TimeAndSalesData
 /// <summary>
 /// Individual trade record.
 /// </summary>
-public class TradeRecord
+public sealed class TradeRecord
 {
     public DateTime Timestamp { get; set; }
     public decimal Price { get; set; }
@@ -495,7 +495,7 @@ public enum TradeSide
 /// <summary>
 /// Order flow statistics for order book visualization.
 /// </summary>
-public class OrderBookFlowStats
+public sealed class OrderBookFlowStats
 {
     public string Symbol { get; set; } = string.Empty;
     public decimal BidAskRatio { get; set; }
@@ -510,7 +510,7 @@ public class OrderBookFlowStats
 /// <summary>
 /// Event args for order book updates.
 /// </summary>
-public class OrderBookUpdateEventArgs : EventArgs
+public sealed class OrderBookUpdateEventArgs : EventArgs
 {
     public string Symbol { get; set; } = string.Empty;
 }
@@ -518,7 +518,7 @@ public class OrderBookUpdateEventArgs : EventArgs
 /// <summary>
 /// Event args for trade events.
 /// </summary>
-public class TradeEventArgs : EventArgs
+public sealed class TradeEventArgs : EventArgs
 {
     public string Symbol { get; set; } = string.Empty;
     public TradeRecord Trade { get; set; } = new();

@@ -141,6 +141,41 @@ jobs:
             });
           }
 
+  notify-on-success:
+    name: Close failure issue on success
+    needs: [test-matrix, benchmark, integration-tests]
+    runs-on: ubuntu-latest
+    if: success()
+    timeout-minutes: 5
+
+    steps:
+    - name: Close nightly failure issue if all tests pass
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'automated,nightly-tests',
+          });
+
+          for (const issue of issues.data) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `✅ Nightly tests passed in [run #${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId}). Closing as resolved.`,
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              state: 'closed',
+              state_reason: 'completed'
+            });
+          }
+
   # ─── AI Failure Analysis ────────────────────────────────────────────
 
   ai-failure-analysis:

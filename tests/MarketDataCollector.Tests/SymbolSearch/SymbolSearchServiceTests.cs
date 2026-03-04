@@ -1,7 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Moq;
 using Xunit;
 

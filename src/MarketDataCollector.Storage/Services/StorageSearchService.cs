@@ -635,7 +635,6 @@ public sealed record FacetedSearchQuery(
 public sealed record DiscoveryQuery;
 
 public enum SortField { Date, Size, Symbol, QualityScore }
-public enum AggressorSide { Buy, Sell }
 
 // Result types
 public sealed record SearchResult<T>(

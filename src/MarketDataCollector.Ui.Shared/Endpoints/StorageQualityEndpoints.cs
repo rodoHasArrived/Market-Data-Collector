@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Storage;
@@ -272,6 +273,70 @@ public static class StorageQualityEndpoints
         })
         .WithName("RunQualityCheck").Produces(200).Produces(400).Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+    }
+
+    /// <summary>
+    /// Maps the /api/quality/drops endpoints exposing dropped event statistics from the pipeline's audit trail.
+    /// </summary>
+    public static void MapQualityDropsEndpoints(
+        this WebApplication app,
+        DroppedEventAuditTrail? auditTrail,
+        JsonSerializerOptions jsonOptions)
+    {
+        var group = app.MapGroup("").WithTags("Quality Drops");
+
+        group.MapGet(UiApiRoutes.QualityDrops, () =>
+        {
+            if (auditTrail is null)
+            {
+                return Results.Json(new
+                {
+                    totalDropped = 0L,
+                    dropsBySymbol = new Dictionary<string, long>(),
+                    message = "Audit trail not configured",
+                    timestamp = DateTimeOffset.UtcNow
+                }, jsonOptions);
+            }
+
+            var stats = auditTrail.GetStatistics();
+            return Results.Json(new
+            {
+                totalDropped = stats.TotalDropped,
+                dropsBySymbol = stats.DropsBySymbol,
+                auditFilePath = stats.AuditFilePath,
+                timestamp = stats.Timestamp
+            }, jsonOptions);
+        })
+        .WithName("GetQualityDrops")
+        .Produces(200);
+
+        group.MapGet(UiApiRoutes.QualityDropsBySymbol, (string symbol) =>
+        {
+            if (auditTrail is null)
+            {
+                return Results.Json(new
+                {
+                    symbol,
+                    dropped = 0L,
+                    message = "Audit trail not configured",
+                    timestamp = DateTimeOffset.UtcNow
+                }, jsonOptions);
+            }
+
+            var stats = auditTrail.GetStatistics();
+            var normalizedSymbol = symbol.ToUpperInvariant();
+            var symbolDrops = stats.DropsBySymbol.TryGetValue(normalizedSymbol, out var count) ? count : 0;
+
+            return Results.Json(new
+            {
+                symbol,
+                dropped = symbolDrops,
+                totalDropped = stats.TotalDropped,
+                timestamp = stats.Timestamp
+            }, jsonOptions);
+        })
+        .WithName("GetQualityDropsBySymbol")
+        .Produces(200);
     }
 }
 

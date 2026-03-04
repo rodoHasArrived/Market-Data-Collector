@@ -295,7 +295,7 @@ public sealed class IntegrityEventsService
 /// <summary>
 /// Represents a data integrity event.
 /// </summary>
-public class IntegrityEvent
+public sealed class IntegrityEvent
 {
     public string Id { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; }
@@ -393,7 +393,7 @@ public enum IntegritySeverity
 /// <summary>
 /// Summary statistics for integrity events.
 /// </summary>
-public class IntegritySummary
+public sealed class IntegritySummary
 {
     public int TotalEvents { get; set; }
     public int CriticalCount { get; set; }

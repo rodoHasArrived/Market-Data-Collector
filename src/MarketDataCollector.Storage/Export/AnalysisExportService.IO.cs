@@ -271,6 +271,88 @@ load_trades <- function(symbol = NULL) {
         return sb.ToString();
     }
 
+    private async Task<string> GenerateLineageManifestAsync(
+        string outputDir,
+        ExportRequest request,
+        ExportProfile profile,
+        List<SourceFile> sourceFiles,
+        List<ExportedFile> exportedFiles,
+        CancellationToken ct)
+    {
+        var manifestPath = Path.Combine(outputDir, "lineage_manifest.json");
+
+        var manifest = new
+        {
+            version = "1.0.0",
+            generatedAtUtc = DateTime.UtcNow.ToString("o"),
+            generator = "MarketDataCollector",
+            exportProfile = new
+            {
+                id = profile.Id,
+                name = profile.Name,
+                format = profile.Format.ToString().ToLowerInvariant(),
+                targetTool = profile.TargetTool
+            },
+            request = new
+            {
+                symbols = request.Symbols,
+                eventTypes = request.EventTypes,
+                startDate = request.StartDate.ToString("o"),
+                endDate = request.EndDate.ToString("o"),
+                sessionFilter = request.SessionFilter.ToString(),
+                minQualityScore = request.MinQualityScore
+            },
+            sources = sourceFiles.Select(f =>
+            {
+                var fi = new FileInfo(f.Path);
+                return new
+                {
+                    path = Path.GetRelativePath(_dataRoot, f.Path),
+                    symbol = f.Symbol,
+                    eventType = f.EventType,
+                    date = f.Date?.ToString("yyyy-MM-dd"),
+                    isCompressed = f.IsCompressed,
+                    sizeBytes = fi.Exists ? fi.Length : 0L
+                };
+            }).ToArray(),
+            outputs = exportedFiles.Select(f => new
+            {
+                relativePath = f.RelativePath,
+                symbol = f.Symbol,
+                eventType = f.EventType,
+                format = f.Format,
+                sizeBytes = f.SizeBytes,
+                recordCount = f.RecordCount,
+                checksumSha256 = f.ChecksumSha256,
+                firstTimestamp = f.FirstTimestamp?.ToString("o"),
+                lastTimestamp = f.LastTimestamp?.ToString("o")
+            }).ToArray(),
+            summary = new
+            {
+                sourceFileCount = sourceFiles.Count,
+                outputFileCount = exportedFiles.Count,
+                totalRecords = exportedFiles.Sum(f => f.RecordCount),
+                totalSourceBytes = sourceFiles.Sum(f =>
+                {
+                    var fi = new FileInfo(f.Path);
+                    return fi.Exists ? fi.Length : 0L;
+                }),
+                totalOutputBytes = exportedFiles.Sum(f => f.SizeBytes),
+                distinctSymbols = exportedFiles.Where(f => f.Symbol != null)
+                    .Select(f => f.Symbol!).Distinct().Count()
+            }
+        };
+
+        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        await File.WriteAllTextAsync(manifestPath, json, ct);
+
+        return manifestPath;
+    }
+
     private async IAsyncEnumerable<Dictionary<string, object?>> ReadJsonlRecordsAsync(
         string path,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)

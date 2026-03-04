@@ -34,6 +34,11 @@ public sealed record SymbolConfig(
     // Instrument classification
     InstrumentType InstrumentType = InstrumentType.Equity,
 
+    // Liquidity classification - controls monitoring thresholds for gap detection,
+    // completeness scoring, SLA freshness, and anomaly detection.
+    // When null, defaults to High for large-cap equities / ETFs.
+    LiquidityProfile? LiquidityProfile = null,
+
     // Options contract fields (required when SecurityType = "OPT")
     decimal? Strike = null,                        // Strike price
     OptionRight? Right = null,                     // Call or Put

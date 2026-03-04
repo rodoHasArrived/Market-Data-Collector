@@ -1,7 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
+using MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
 using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 

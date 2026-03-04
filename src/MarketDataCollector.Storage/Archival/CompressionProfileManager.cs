@@ -2,8 +2,11 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using K4os.Compression.LZ4;
+using K4os.Compression.LZ4.Streams;
 using MarketDataCollector.Application.Logging;
 using Serilog;
+using ZstdSharp;
 
 namespace MarketDataCollector.Storage.Archival;
 
@@ -94,10 +97,8 @@ public sealed class CompressionProfileManager
             CompressionCodec.Deflate => new DeflateStream(output, GetDeflateLevel(profile.Level), leaveOpen: true),
             CompressionCodec.Brotli => new BrotliStream(output, GetBrotliLevel(profile.Level), leaveOpen: true),
             CompressionCodec.None => output,
-            // For LZ4 and ZSTD, fall back to Gzip as .NET doesn't have native support
-            // In production, you'd use K4os.Compression.LZ4 or ZstdNet packages
-            CompressionCodec.Lz4 => new GZipStream(output, CompressionLevel.Fastest, leaveOpen: true),
-            CompressionCodec.Zstd => new GZipStream(output, CompressionLevel.Optimal, leaveOpen: true),
+            CompressionCodec.Lz4 => LZ4Stream.Encode(output, GetLz4Level(profile.Level), leaveOpen: true),
+            CompressionCodec.Zstd => new CompressionStream(output, profile.Level, leaveOpen: true),
             _ => throw new NotSupportedException($"Codec {profile.Codec} is not supported")
         };
 
@@ -135,8 +136,8 @@ public sealed class CompressionProfileManager
             CompressionCodec.Deflate => new DeflateStream(input, CompressionMode.Decompress, leaveOpen: true),
             CompressionCodec.Brotli => new BrotliStream(input, CompressionMode.Decompress, leaveOpen: true),
             CompressionCodec.None => input,
-            CompressionCodec.Lz4 => new GZipStream(input, CompressionMode.Decompress, leaveOpen: true),
-            CompressionCodec.Zstd => new GZipStream(input, CompressionMode.Decompress, leaveOpen: true),
+            CompressionCodec.Lz4 => LZ4Stream.Decode(input, leaveOpen: true),
+            CompressionCodec.Zstd => new DecompressionStream(input, leaveOpen: true),
             _ => throw new NotSupportedException($"Codec {codec} is not supported")
         };
 
@@ -207,6 +208,14 @@ public sealed class CompressionProfileManager
         <= 3 => CompressionLevel.Fastest,
         >= 9 => CompressionLevel.SmallestSize,
         _ => CompressionLevel.Optimal
+    };
+
+    private static LZ4Level GetLz4Level(int level) => level switch
+    {
+        <= 0 => LZ4Level.L00_FAST,
+        <= 3 => LZ4Level.L03_HC,
+        <= 9 => LZ4Level.L09_HC,
+        _ => LZ4Level.L12_MAX
     };
 
     /// <summary>

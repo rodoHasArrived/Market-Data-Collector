@@ -139,7 +139,7 @@ jobs:
 
       - name: Dependency Review
         id: dependency-review
-        uses: actions/dependency-review-action@v4.8.2
+        uses: actions/dependency-review-action@v4.8.3
         with:
           fail-on-severity: high
           warn-on-severity: moderate

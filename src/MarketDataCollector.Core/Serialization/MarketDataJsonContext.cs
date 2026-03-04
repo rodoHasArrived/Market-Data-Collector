@@ -57,6 +57,10 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(OpenInterestUpdate))]
 [JsonSerializable(typeof(List<OptionQuote>))]
 [JsonSerializable(typeof(List<OptionTrade>))]
+// Canonicalization types
+[JsonSerializable(typeof(CanonicalTradeCondition))]
+[JsonSerializable(typeof(CanonicalTradeCondition[]))]
+[JsonSerializable(typeof(CanonicalizationConfig))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 // Configuration types
@@ -103,6 +107,10 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(BinanceConfig))]
 [JsonSerializable(typeof(CoinbaseConfig))]
 [JsonSerializable(typeof(KrakenConfig))]
+// Canonicalization enums
+[JsonSerializable(typeof(CanonicalTradeCondition))]
+[JsonSerializable(typeof(CanonicalTradeCondition[]))]
+[JsonSerializable(typeof(MarketEventTier))]
 public partial class MarketDataJsonContext : JsonSerializerContext
 {
     /// <summary>

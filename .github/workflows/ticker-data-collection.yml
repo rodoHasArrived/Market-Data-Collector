@@ -27,6 +27,14 @@ on:
         required: false
         default: ''
         type: string
+      output_format:
+        description: 'Output file format'
+        required: false
+        default: 'json'
+        type: choice
+        options:
+          - 'json'
+          - 'csv'
       retention_days:
         description: 'Artifact retention (days)'
         required: false
@@ -77,6 +85,7 @@ jobs:
           symbols_input='${{ github.event.inputs.symbols }}'
           date_from='${{ github.event.inputs.date_from }}'
           date_to='${{ github.event.inputs.date_to }}'
+          output_format='${{ github.event.inputs.output_format || 'json' }}'
 
           # Normalize symbols: uppercase, trim, dedupe, and keep comma-separated format.
           normalized_symbols=$(printf '%s' "$symbols_input" \
@@ -121,13 +130,21 @@ jobs:
             fi
           fi
 
+          output_format=$(printf '%s' "$output_format" | tr '[:upper:]' '[:lower:]' | xargs)
+          if [ "$output_format" != "json" ] && [ "$output_format" != "csv" ]; then
+            echo "Input validation failed: output_format must be one of: json, csv."
+            exit 1
+          fi
+
           echo "normalized_symbols=$normalized_symbols" >> "$GITHUB_OUTPUT"
           echo "validated_date_from=$date_from" >> "$GITHUB_OUTPUT"
           echo "validated_date_to=$date_to" >> "$GITHUB_OUTPUT"
+          echo "validated_output_format=$output_format" >> "$GITHUB_OUTPUT"
 
           echo "Normalized symbols: $normalized_symbols"
           echo "date_from: ${date_from:-<empty>}"
           echo "date_to: ${date_to:-<empty>}"
+          echo "output_format: $output_format"
 
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -141,8 +158,10 @@ jobs:
           YAHOO_TICKER_SYMBOLS: ${{ steps.normalize-inputs.outputs.normalized_symbols }}
           YAHOO_TICKER_DATE_FROM: ${{ steps.normalize-inputs.outputs.validated_date_from }}
           YAHOO_TICKER_DATE_TO: ${{ steps.normalize-inputs.outputs.validated_date_to }}
+          YAHOO_TICKER_OUTPUT_FORMAT: ${{ steps.normalize-inputs.outputs.validated_output_format }}
         run: |
           echo "Fetching data for symbols: $YAHOO_TICKER_SYMBOLS"
+          echo "Output format: $YAHOO_TICKER_OUTPUT_FORMAT"
           echo ""
 
           dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
@@ -201,6 +220,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Symbols:** \`${{ steps.normalize-inputs.outputs.normalized_symbols }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Date range:** \`${{ steps.normalize-inputs.outputs.validated_date_from || 'all history' }} → ${{ steps.normalize-inputs.outputs.validated_date_to || 'latest' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Output format:** \`${{ steps.normalize-inputs.outputs.validated_output_format }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Run:** #${{ github.run_number }} | **Commit:** \`${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -215,5 +235,5 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- **ticker-data-${{ github.run_number }}-${GITHUB_SHA}** — JSON files with historical bar data" >> $GITHUB_STEP_SUMMARY
+          echo "- **ticker-data-${{ github.run_number }}-${GITHUB_SHA}** — ${{ steps.normalize-inputs.outputs.validated_output_format }} files with historical bar data" >> $GITHUB_STEP_SUMMARY
           echo "- **ticker-test-results-${{ github.run_number }}** — Test result (.trx) file" >> $GITHUB_STEP_SUMMARY

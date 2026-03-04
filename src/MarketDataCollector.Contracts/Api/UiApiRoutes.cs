@@ -134,6 +134,7 @@ public static class UiApiRoutes
     public const string StorageTiersStatistics = "/api/storage/tiers/statistics";
     public const string StorageTiersPlan = "/api/storage/tiers/plan";
     public const string StorageMaintenanceDefrag = "/api/storage/maintenance/defrag";
+    public const string StorageConvertParquet = "/api/storage/convert-parquet";
     public const string StorageCapacityForecast = "/api/storage/capacity-forecast";
 
     // Historical data query endpoints
@@ -323,11 +324,13 @@ public static class UiApiRoutes
 
     // Export endpoints
     public const string ExportAnalysis = "/api/export/analysis";
+    public const string ExportPreview = "/api/export/preview";
     public const string ExportFormats = "/api/export/formats";
     public const string ExportQualityReport = "/api/export/quality-report";
     public const string ExportOrderflow = "/api/export/orderflow";
     public const string ExportIntegrity = "/api/export/integrity";
     public const string ExportResearchPackage = "/api/export/research-package";
+    public const string ExportDownload = "/api/export/download/{exportId}";
 
     // Lean integration endpoints
     public const string LeanStatus = "/api/lean/status";
@@ -358,6 +361,26 @@ public static class UiApiRoutes
 
     // Index endpoints
     public const string IndicesConstituents = "/api/indices/{indexName}/constituents";
+
+    // Canonicalization parity endpoints (Phase 2)
+    public const string CanonicalizationStatus = "/api/canonicalization/status";
+    public const string CanonicalizationParity = "/api/canonicalization/parity";
+    public const string CanonicalizationParityByProvider = "/api/canonicalization/parity/{provider}";
+    public const string CanonicalizationConfig = "/api/canonicalization/config";
+
+    // Authentication endpoints
+    public const string AuthLoginPage = "/login";
+    public const string AuthApiLogin = "/api/auth/login";
+    public const string AuthApiLogout = "/api/auth/logout";
+
+    // Resilience endpoints
+    public const string ResilienceCircuitBreakers = "/api/resilience/circuit-breakers";
+
+    // Backfill cost estimation
+    public const string BackfillCostEstimate = "/api/backfill/cost-estimate";
+
+    // Retention compliance
+    public const string RetentionComplianceReport = "/api/admin/retention/compliance-report";
 
     /// <summary>
     /// Replaces a route parameter with a value.

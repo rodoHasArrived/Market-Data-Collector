@@ -8,7 +8,7 @@ using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Storage.Interfaces;
 using Xunit;
 
