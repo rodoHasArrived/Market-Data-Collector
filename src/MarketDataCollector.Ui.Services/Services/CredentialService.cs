@@ -34,7 +34,7 @@ public sealed class CredentialService
     public CredentialMetadataInfo? GetMetadata(string resource)
         => null;
 
-    protected void OnCredentialExpiring(CredentialExpirationEventArgs e)
+    private void OnCredentialExpiring(CredentialExpirationEventArgs e)
         => CredentialExpiring?.Invoke(this, e);
 }
 

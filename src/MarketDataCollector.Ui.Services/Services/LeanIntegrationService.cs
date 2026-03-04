@@ -24,7 +24,9 @@ public sealed class LeanIntegrationService
     /// <summary>
     /// Raised when backtest status changes.
     /// </summary>
+#pragma warning disable CS0067 // Event is declared but never raised in this implementation
     public event EventHandler<BacktestStatusChangedEventArgs>? BacktestStatusChanged;
+#pragma warning restore CS0067
 
     /// <summary>
     /// Gets the current Lean integration status.

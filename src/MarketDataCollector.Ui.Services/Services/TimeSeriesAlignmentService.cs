@@ -24,7 +24,9 @@ public sealed class TimeSeriesAlignmentService
     /// <summary>
     /// Raised when alignment progress changes.
     /// </summary>
+#pragma warning disable CS0067 // Event is declared but never raised in this implementation
     public event EventHandler<AlignmentProgressEventArgs>? ProgressChanged;
+#pragma warning restore CS0067
 
     /// <summary>
     /// Aligns time series data with specified options.

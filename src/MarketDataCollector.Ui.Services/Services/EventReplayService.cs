@@ -29,12 +29,14 @@ public sealed class EventReplayService
     /// <summary>
     /// Raised when an event is replayed.
     /// </summary>
+#pragma warning disable CS0067 // Events are declared but never raised in this implementation
     public event EventHandler<ReplayEventArgs>? EventReplayed;
 
     /// <summary>
     /// Raised when replay progress updates.
     /// </summary>
     public event EventHandler<ReplayProgressEventArgs>? ProgressChanged;
+#pragma warning restore CS0067
 
     /// <summary>
     /// Gets available data files for replay.
