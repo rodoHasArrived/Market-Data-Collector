@@ -490,7 +490,7 @@ public class ArchiveIssueEventArgs : EventArgs
     public ArchiveIssue? Issue { get; set; }
 }
 
-public class VerificationProgress
+public sealed class VerificationProgress
 {
     public int ProcessedFiles { get; set; }
     public int TotalFiles { get; set; }

@@ -487,7 +487,7 @@ public partial class WatchlistPage : Page
 /// <summary>
 /// Display model for watchlist cards.
 /// </summary>
-public class WatchlistDisplayModel
+public sealed class WatchlistDisplayModel
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

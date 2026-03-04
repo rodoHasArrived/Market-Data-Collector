@@ -15,7 +15,7 @@ namespace MarketDataCollector.Ui.Services;
 /// Provides basic config loading/saving from the standard appsettings path.
 /// Platform-specific projects may override this by setting the Instance property.
 /// </summary>
-public class ConfigService : IConfigService
+public sealed class ConfigService : IConfigService
 {
     private static readonly Lazy<ConfigService> _instance = new(() => new ConfigService());
 

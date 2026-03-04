@@ -320,7 +320,7 @@ public partial class SettingsPage : Page
 /// <summary>
 /// Credential display information for the settings page.
 /// </summary>
-public class CredentialDisplayInfo
+public sealed class CredentialDisplayInfo
 {
     public string Name { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
@@ -331,7 +331,7 @@ public class CredentialDisplayInfo
 /// <summary>
 /// Activity item for recent activity list.
 /// </summary>
-public class SettingsActivityItem
+public sealed class SettingsActivityItem
 {
     public string Icon { get; set; } = string.Empty;
     public SolidColorBrush IconColor { get; set; } = new(Color.FromRgb(139, 148, 158));

@@ -739,7 +739,7 @@ public partial class SymbolsPage : Page
 /// <summary>
 /// Symbol view model for the symbols page.
 /// </summary>
-public class SymbolViewModel
+public sealed class SymbolViewModel
 {
     public bool IsSelected { get; set; }
     public string Symbol { get; set; } = string.Empty;
@@ -775,7 +775,7 @@ public class SymbolViewModel
 /// <summary>
 /// WpfServices.Watchlist information model for display.
 /// </summary>
-public class WatchlistInfo
+public sealed class WatchlistInfo
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

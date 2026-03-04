@@ -19,7 +19,7 @@ public enum NotificationType
 /// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
-public class NotificationService
+public sealed class NotificationService
 {
     private static readonly Lazy<NotificationService> _instance = new(() => new NotificationService());
 

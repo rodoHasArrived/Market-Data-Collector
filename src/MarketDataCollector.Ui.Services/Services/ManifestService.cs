@@ -428,7 +428,7 @@ public sealed class ManifestService
     {
         using var sha256 = SHA256.Create();
         await using var stream = File.OpenRead(filePath);
-        var hash = await Task.Run(() => sha256.ComputeHash(stream));
+        var hash = await sha256.ComputeHashAsync(stream);
         return Convert.ToHexString(hash).ToLower();
     }
 

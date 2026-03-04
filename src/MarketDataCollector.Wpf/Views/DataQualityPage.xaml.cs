@@ -1585,7 +1585,7 @@ public partial class DataQualityPage : Page
     }
 }
 
-public class TrendPoint
+public sealed class TrendPoint
 {
     public TrendPoint(double score, string label)
     {
@@ -1600,7 +1600,7 @@ public class TrendPoint
 /// <summary>
 /// Model for symbol quality display.
 /// </summary>
-public class SymbolQualityModel
+public sealed class SymbolQualityModel
 {
     public string Symbol { get; set; } = string.Empty;
     public double Score { get; set; }
@@ -1615,7 +1615,7 @@ public class SymbolQualityModel
 /// <summary>
 /// Model for gap display.
 /// </summary>
-public class GapModel
+public sealed class GapModel
 {
     public string GapId { get; set; } = string.Empty;
     public string Symbol { get; set; } = string.Empty;
@@ -1623,7 +1623,7 @@ public class GapModel
     public string Duration { get; set; } = string.Empty;
 }
 
-public class AlertModel
+public sealed class AlertModel
 {
     public string Id { get; set; } = string.Empty;
     public string Symbol { get; set; } = string.Empty;
@@ -1636,7 +1636,7 @@ public class AlertModel
 /// <summary>
 /// Model for anomaly display.
 /// </summary>
-public class AnomalyModel
+public sealed class AnomalyModel
 {
     public string Symbol { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;

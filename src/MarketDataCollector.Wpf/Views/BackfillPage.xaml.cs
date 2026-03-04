@@ -782,7 +782,7 @@ public partial class BackfillPage : Page
 /// <summary>
 /// Symbol progress information for backfill tracking.
 /// </summary>
-public class SymbolProgressInfo
+public sealed class SymbolProgressInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public double Progress { get; set; }
@@ -795,7 +795,7 @@ public class SymbolProgressInfo
 /// <summary>
 /// Scheduled job information.
 /// </summary>
-public class ScheduledJobInfo
+public sealed class ScheduledJobInfo
 {
     public string Name { get; set; } = string.Empty;
     public string NextRun { get; set; } = string.Empty;
@@ -804,7 +804,7 @@ public class ScheduledJobInfo
 /// <summary>
 /// Resumable job information for checkpoint-based resume.
 /// </summary>
-public class ResumableJobInfo
+public sealed class ResumableJobInfo
 {
     public string JobId { get; set; } = string.Empty;
     public string Provider { get; set; } = string.Empty;
