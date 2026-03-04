@@ -9,7 +9,7 @@ namespace MarketDataCollector.Ui.Services;
 /// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
-public class CredentialService
+public sealed class CredentialService
 {
     private static readonly Lazy<CredentialService> _instance = new(() => new CredentialService());
 
@@ -22,16 +22,16 @@ public class CredentialService
 
     public event EventHandler<CredentialExpirationEventArgs>? CredentialExpiring;
 
-    public virtual IReadOnlyList<CredentialWithMetadata> GetAllCredentialsWithMetadata()
+    public IReadOnlyList<CredentialWithMetadata> GetAllCredentialsWithMetadata()
         => Array.Empty<CredentialWithMetadata>();
 
-    public virtual Task<OAuthRefreshResult> RefreshOAuthTokenAsync(string providerId)
+    public Task<OAuthRefreshResult> RefreshOAuthTokenAsync(string providerId)
         => Task.FromResult(new OAuthRefreshResult { Success = false, ErrorMessage = "Not implemented" });
 
-    public virtual Task UpdateMetadataAsync(string resource, Action<CredentialMetadataUpdate> updateAction)
+    public Task UpdateMetadataAsync(string resource, Action<CredentialMetadataUpdate> updateAction)
         => Task.CompletedTask;
 
-    public virtual CredentialMetadataInfo? GetMetadata(string resource)
+    public CredentialMetadataInfo? GetMetadata(string resource)
         => null;
 
     protected void OnCredentialExpiring(CredentialExpirationEventArgs e)

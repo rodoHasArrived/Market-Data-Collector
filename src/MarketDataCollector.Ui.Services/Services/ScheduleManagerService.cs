@@ -186,7 +186,7 @@ public sealed class ScheduleManagerService
 
 // DTO classes for schedule management
 
-public class BackfillSchedule
+public sealed class BackfillSchedule
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -209,7 +209,7 @@ public class BackfillSchedule
     public DateTime UpdatedAt { get; set; }
 }
 
-public class CreateBackfillScheduleRequest
+public sealed class CreateBackfillScheduleRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -223,7 +223,7 @@ public class CreateBackfillScheduleRequest
     public bool IsEnabled { get; set; } = true;
 }
 
-public class UpdateBackfillScheduleRequest
+public sealed class UpdateBackfillScheduleRequest
 {
     public string? Name { get; set; }
     public string? Description { get; set; }
@@ -236,7 +236,7 @@ public class UpdateBackfillScheduleRequest
     public List<string>? Tags { get; set; }
 }
 
-public class MaintenanceSchedule
+public sealed class MaintenanceSchedule
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -258,7 +258,7 @@ public class MaintenanceSchedule
     public DateTime UpdatedAt { get; set; }
 }
 
-public class CreateMaintenanceScheduleRequest
+public sealed class CreateMaintenanceScheduleRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -271,7 +271,7 @@ public class CreateMaintenanceScheduleRequest
     public bool IsEnabled { get; set; } = true;
 }
 
-public class UpdateMaintenanceScheduleRequest
+public sealed class UpdateMaintenanceScheduleRequest
 {
     public string? Name { get; set; }
     public string? Description { get; set; }
@@ -282,7 +282,7 @@ public class UpdateMaintenanceScheduleRequest
     public int? MaxRetries { get; set; }
 }
 
-public class ScheduleExecutionLog
+public sealed class ScheduleExecutionLog
 {
     public string Id { get; set; } = string.Empty;
     public string ScheduleId { get; set; } = string.Empty;
@@ -297,14 +297,14 @@ public class ScheduleExecutionLog
     public Dictionary<string, object> Details { get; set; } = new();
 }
 
-public class ScheduleExecutionResult
+public sealed class ScheduleExecutionResult
 {
     public bool Success { get; set; }
     public string ExecutionId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
 }
 
-public class ScheduleTemplate
+public sealed class ScheduleTemplate
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -314,7 +314,7 @@ public class ScheduleTemplate
     public string Category { get; set; } = string.Empty;
 }
 
-public class CronValidationResult
+public sealed class CronValidationResult
 {
     public bool IsValid { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -322,13 +322,13 @@ public class CronValidationResult
     public List<DateTime> NextRuns { get; set; } = new();
 }
 
-public class DeleteResponse
+public sealed class DeleteResponse
 {
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
 }
 
-public class EnableResponse
+public sealed class EnableResponse
 {
     public bool Success { get; set; }
     public bool IsEnabled { get; set; }

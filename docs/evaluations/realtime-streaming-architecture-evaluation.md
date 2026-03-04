@@ -69,7 +69,7 @@ External Sources                    Internal Processing
 | `TradeDataCollector` | `Domain/Collectors/` | Trade event processing with sequence validation |
 | `MarketDepthCollector` | `Domain/Collectors/` | L2 order book maintenance |
 | `QuoteCollector` | `Domain/Collectors/` | BBO state tracking |
-| `FailoverAwareMarketDataClient` | `Infrastructure/Providers/Streaming/Failover/` | Automatic provider switching |
+| `FailoverAwareMarketDataClient` | `Infrastructure/Adapters/Failover/` | Automatic provider switching |
 | `WebSocketConnectionManager` | `Infrastructure/Resilience/` | Unified WebSocket lifecycle |
 | `WebSocketConnectionConfig` | `Infrastructure/Resilience/` | Profile-based resilience tuning |
 | `WebSocketReconnectionHelper` | `Infrastructure/Shared/` | Standardised reconnection with jitter |
@@ -125,7 +125,7 @@ Each provider operates in a non-overlapping subscription ID range to prevent con
 | Symbol limits | Max ~200 symbols per connection |
 
 **Implementation Assessment:**
-- Location: `Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs`
+- Location: `Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
 - Reconnection: `OnConnectionLostAsync()` re-authenticates, restarts receive loop, re-subscribes
 - Data: Trades → `TradeDataCollector`, Quotes → `QuoteCollector`
 
@@ -155,7 +155,7 @@ Each provider operates in a non-overlapping subscription ID range to prevent con
 | Complexity | Multiple subscription channels (stocks, options, forex, crypto) |
 
 **Implementation Assessment:**
-- Location: `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
+- Location: `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
 - Reconnection: Exponential backoff (base 2 s → max 60 s), max 10 attempts
 - Data: Trades, quotes, second/minute aggregates
 
@@ -186,7 +186,7 @@ Each provider operates in a non-overlapping subscription ID range to prevent con
 | Conditional compilation | `#if IBAPI` — falls back to simulation if library absent |
 
 **Implementation Assessment:**
-- Location: `Infrastructure/Providers/Streaming/InteractiveBrokers/`
+- Location: `Infrastructure/Adapters/InteractiveBrokers/`
 - Components: `IBMarketDataClient`, `IBCallbackRouter`, `EnhancedIBConnectionManager`, `ContractFactory`
 - Data: Trades, quotes (L1), depth (L2, up to 10 levels) via IB API callbacks
 
@@ -216,7 +216,7 @@ Each provider operates in a non-overlapping subscription ID range to prevent con
 | Conditional compilation | `#if STOCKSHARP` — stub otherwise |
 
 **Implementation Assessment:**
-- Location: `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
+- Location: `Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs`
 - Reconnection: Automatic with exponential backoff + jitter, connector recreation if needed
 - Data: Trades → `TradeDataCollector`, Quotes → `QuoteCollector`, Depth → `MarketDepthCollector`
 
@@ -247,7 +247,7 @@ Each provider operates in a non-overlapping subscription ID range to prevent con
 | Token management | OAuth token refresh with expiry tracking |
 
 **Implementation Assessment:**
-- Location: `Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs`
+- Location: `Infrastructure/Adapters/NYSE/NYSEDataSource.cs`
 - Features: Hybrid streaming + historical backfill, participant IDs, consolidated tape
 
 ---
@@ -542,7 +542,7 @@ Backpressure handling has been substantially enhanced since the prior review wit
 
 ### Failover Implementation
 
-Location: `Infrastructure/Providers/Streaming/Failover/FailoverAwareMarketDataClient.cs`
+Location: `Infrastructure/Adapters/Failover/FailoverAwareMarketDataClient.cs`
 
 The `FailoverAwareMarketDataClient` wraps multiple `IMarketDataClient` instances and transparently switches on failure:
 

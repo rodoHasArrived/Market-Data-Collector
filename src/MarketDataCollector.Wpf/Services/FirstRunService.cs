@@ -53,37 +53,34 @@ public sealed class FirstRunService
     /// Determines whether this is the first run of the application.
     /// </summary>
     /// <returns>True if this is the first run; otherwise, false.</returns>
-    public async Task<bool> IsFirstRunAsync()
+    public Task<bool> IsFirstRunAsync()
     {
         if (_isFirstRun.HasValue)
         {
-            return _isFirstRun.Value;
+            return Task.FromResult(_isFirstRun.Value);
         }
 
-        return await Task.Run(() =>
+        lock (_lock)
         {
-            lock (_lock)
+            if (_isFirstRun.HasValue)
             {
-                if (_isFirstRun.HasValue)
-                {
-                    return _isFirstRun.Value;
-                }
-
-                // Check for presence of config file or first-run marker
-                var configExists = File.Exists(ConfigFilePath);
-                var markerExists = File.Exists(FirstRunMarkerPath);
-
-                _isFirstRun = !configExists && !markerExists;
-
-                LoggingService.Instance.LogInfo(
-                    "First run detection completed",
-                    ("IsFirstRun", _isFirstRun.Value.ToString()),
-                    ("ConfigExists", configExists.ToString()),
-                    ("MarkerExists", markerExists.ToString()));
-
-                return _isFirstRun.Value;
+                return Task.FromResult(_isFirstRun.Value);
             }
-        });
+
+            // Check for presence of config file or first-run marker
+            var configExists = File.Exists(ConfigFilePath);
+            var markerExists = File.Exists(FirstRunMarkerPath);
+
+            _isFirstRun = !configExists && !markerExists;
+
+            LoggingService.Instance.LogInfo(
+                "First run detection completed",
+                ("IsFirstRun", _isFirstRun.Value.ToString()),
+                ("ConfigExists", configExists.ToString()),
+                ("MarkerExists", markerExists.ToString()));
+
+            return Task.FromResult(_isFirstRun.Value);
+        }
     }
 
     /// <summary>
@@ -91,98 +88,95 @@ public sealed class FirstRunService
     /// Creates necessary directories and default configuration.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
         if (_isInitialized)
         {
             LoggingService.Instance.LogWarning("FirstRunService is already initialized");
-            return;
+            return Task.CompletedTask;
         }
 
-        await Task.Run(() =>
+        lock (_lock)
         {
-            lock (_lock)
+            if (_isInitialized)
             {
-                if (_isInitialized)
-                {
-                    return;
-                }
-
-                try
-                {
-                    StatusService.Instance.SetBusy("Initializing application");
-
-                    // Create application data directory if it doesn't exist
-                    if (!Directory.Exists(AppDataPath))
-                    {
-                        Directory.CreateDirectory(AppDataPath);
-                        LoggingService.Instance.LogInfo(
-                            "Created application data directory",
-                            ("Path", AppDataPath));
-                    }
-
-                    // Create default configuration if it doesn't exist
-                    if (!File.Exists(ConfigFilePath))
-                    {
-                        CreateDefaultConfiguration();
-                    }
-
-                    // Create first-run marker to indicate initialization is complete
-                    CreateFirstRunMarker();
-
-                    _isInitialized = true;
-                    _isFirstRun = false;
-
-                    StatusService.Instance.SetReady();
-
-                    LoggingService.Instance.LogInfo("First run initialization completed successfully");
-                }
-                catch (Exception ex)
-                {
-                    LoggingService.Instance.LogError("First run initialization failed", ex);
-                    StatusService.Instance.SetError("Initialization failed");
-                    throw;
-                }
+                return Task.CompletedTask;
             }
-        });
+
+            try
+            {
+                StatusService.Instance.SetBusy("Initializing application");
+
+                // Create application data directory if it doesn't exist
+                if (!Directory.Exists(AppDataPath))
+                {
+                    Directory.CreateDirectory(AppDataPath);
+                    LoggingService.Instance.LogInfo(
+                        "Created application data directory",
+                        ("Path", AppDataPath));
+                }
+
+                // Create default configuration if it doesn't exist
+                if (!File.Exists(ConfigFilePath))
+                {
+                    CreateDefaultConfiguration();
+                }
+
+                // Create first-run marker to indicate initialization is complete
+                CreateFirstRunMarker();
+
+                _isInitialized = true;
+                _isFirstRun = false;
+
+                StatusService.Instance.SetReady();
+
+                LoggingService.Instance.LogInfo("First run initialization completed successfully");
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.LogError("First run initialization failed", ex);
+                StatusService.Instance.SetError("Initialization failed");
+                throw;
+            }
+        }
 
         OnInitialized(new FirstRunInitializedEventArgs(_isFirstRun ?? false));
+        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Resets the first-run state, useful for testing or reconfiguration.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
-    public async Task ResetAsync()
+    public Task ResetAsync()
     {
-        await Task.Run(() =>
+        lock (_lock)
         {
-            lock (_lock)
+            try
             {
-                try
+                if (File.Exists(FirstRunMarkerPath))
                 {
-                    if (File.Exists(FirstRunMarkerPath))
-                    {
-                        File.Delete(FirstRunMarkerPath);
-                    }
-
-                    if (File.Exists(ConfigFilePath))
-                    {
-                        File.Delete(ConfigFilePath);
-                    }
-
-                    _isFirstRun = null;
-                    _isInitialized = false;
-
-                    LoggingService.Instance.LogInfo("First run state reset");
+                    File.Delete(FirstRunMarkerPath);
                 }
-                catch (Exception ex)
+
+                if (File.Exists(ConfigFilePath))
                 {
-                    LoggingService.Instance.LogError("Failed to reset first run state", ex);
-                    throw;
+                    File.Delete(ConfigFilePath);
                 }
+
+                _isFirstRun = null;
+                _isInitialized = false;
+
+                LoggingService.Instance.LogInfo("First run state reset");
             }
-        });
+            catch (Exception ex)
+            {
+                LoggingService.Instance.LogError("Failed to reset first run state", ex);
+                throw;
+            }
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

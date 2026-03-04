@@ -516,7 +516,7 @@ public enum ChartTimeframe
 /// <summary>
 /// OHLCV candlestick data.
 /// </summary>
-public class CandlestickData
+public sealed class CandlestickData
 {
     public string Symbol { get; set; } = string.Empty;
     public ChartTimeframe Timeframe { get; set; }
@@ -530,7 +530,7 @@ public class CandlestickData
 /// <summary>
 /// Single OHLCV candlestick.
 /// </summary>
-public class Candlestick
+public sealed class Candlestick
 {
     public DateTime Timestamp { get; set; }
     public decimal Open { get; set; }
@@ -559,7 +559,7 @@ public enum IndicatorType
 /// <summary>
 /// Generic indicator data.
 /// </summary>
-public class IndicatorData
+public sealed class IndicatorData
 {
     public string Name { get; set; } = string.Empty;
     public IndicatorType Type { get; set; }
@@ -573,7 +573,7 @@ public class IndicatorData
 /// <summary>
 /// Single indicator value.
 /// </summary>
-public class IndicatorValue
+public sealed class IndicatorValue
 {
     public DateTime Timestamp { get; set; }
     public decimal Value { get; set; }
@@ -582,7 +582,7 @@ public class IndicatorValue
 /// <summary>
 /// MACD indicator data.
 /// </summary>
-public class MacdData
+public sealed class MacdData
 {
     public string Name { get; set; } = string.Empty;
     public List<IndicatorValue> MacdLine { get; } = new();
@@ -593,7 +593,7 @@ public class MacdData
 /// <summary>
 /// Bollinger Bands data.
 /// </summary>
-public class BollingerBandsData
+public sealed class BollingerBandsData
 {
     public string Name { get; set; } = string.Empty;
     public List<IndicatorValue> UpperBand { get; } = new();
@@ -605,7 +605,7 @@ public class BollingerBandsData
 /// <summary>
 /// Volume profile data.
 /// </summary>
-public class VolumeProfileData
+public sealed class VolumeProfileData
 {
     public List<VolumePriceLevel> Levels { get; } = new();
     public decimal PointOfControl { get; set; }
@@ -616,7 +616,7 @@ public class VolumeProfileData
 /// <summary>
 /// Volume at price level.
 /// </summary>
-public class VolumePriceLevel
+public sealed class VolumePriceLevel
 {
     public decimal PriceLevel { get; set; }
     public decimal Volume { get; set; }
@@ -626,7 +626,7 @@ public class VolumePriceLevel
 /// <summary>
 /// Technical indicator info.
 /// </summary>
-public class TechnicalIndicatorInfo
+public sealed class TechnicalIndicatorInfo
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

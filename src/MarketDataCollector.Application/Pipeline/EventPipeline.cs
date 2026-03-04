@@ -24,10 +24,11 @@ namespace MarketDataCollector.Application.Pipeline;
 /// persisted to the WAL before being written to the primary storage sink. On startup,
 /// <see cref="RecoverAsync"/> replays any uncommitted WAL records to the sink, preventing
 /// data loss from crashes. The consumer writes each event to the WAL, then to the sink,
-/// and commits the WAL after each batch is flushed. For callers using
-/// <see cref="PublishAsync"/>, the WAL write occurs at publish time for full durability.
+/// and commits the WAL after each batch is flushed. Both <see cref="TryPublish"/> and
+/// <see cref="PublishAsync"/> defer WAL writes to the consumer to ensure each event is
+/// recorded exactly once, preventing duplicate records during recovery.
 /// </remarks>
-public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFlushable
+public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, IAsyncDisposable, IFlushable
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly IStorageSink _sink;
@@ -37,15 +38,21 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly Task _consumer;
     private readonly Task? _flusher;
     private readonly int _capacity;
+    private readonly BoundedChannelFullMode _fullMode;
     private readonly bool _metricsEnabled;
     private readonly DroppedEventAuditTrail? _auditTrail;
     private readonly IEventMetrics _metrics;
+    private readonly IEventValidator? _validator;
+    private readonly DeadLetterSink? _deadLetterSink;
+    private int _disposed;
+    private volatile bool _consumerBusy;
 
     // Performance metrics
     private long _publishedCount;
     private long _droppedCount;
     private long _consumedCount;
     private long _recoveredCount;
+    private long _rejectedCount;
     private long _peakQueueSize;
     private long _totalProcessingTimeNs;
     private long _lastFlushTimestamp;
@@ -58,6 +65,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly TimeSpan _flushInterval;
     private readonly int _batchSize;
     private readonly bool _enablePeriodicFlush;
+
+    // Pre-computed integer thresholds to avoid floating-point division on every TryPublish
+    private readonly int _highWaterMark80;
+    private readonly int _highWaterMark50;
 
     /// <summary>
     /// Default maximum time to wait for the final flush during shutdown before giving up.
@@ -84,6 +95,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// to replay any uncommitted records from a prior crash.</param>
     /// <param name="metrics">Optional event metrics for tracking pipeline throughput.</param>
     /// <param name="finalFlushTimeout">Optional timeout for the final flush during shutdown. Defaults to 30 seconds.</param>
+    /// <param name="validator">Optional event validator for pre-persistence validation.</param>
+    /// <param name="deadLetterSink">Optional dead-letter sink for rejected events.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -95,7 +108,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         DroppedEventAuditTrail? auditTrail = null,
         WriteAheadLog? wal = null,
         IEventMetrics? metrics = null,
-        TimeSpan? finalFlushTimeout = null)
+        TimeSpan? finalFlushTimeout = null,
+        IEventValidator? validator = null,
+        DeadLetterSink? deadLetterSink = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -106,13 +121,18 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             auditTrail,
             wal,
             metrics,
-            finalFlushTimeout)
+            finalFlushTimeout,
+            validator,
+            deadLetterSink)
     {
     }
 
     /// <summary>
     /// Creates a new EventPipeline with a shared policy for capacity and backpressure.
     /// </summary>
+    /// <param name="validator">Optional event validator. When provided, events that fail validation
+    /// are routed to the <paramref name="deadLetterSink"/> and excluded from primary storage.</param>
+    /// <param name="deadLetterSink">Optional dead-letter sink for events rejected by the validator.</param>
     public EventPipeline(
         IStorageSink sink,
         EventPipelinePolicy policy,
@@ -123,19 +143,26 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         DroppedEventAuditTrail? auditTrail = null,
         WriteAheadLog? wal = null,
         IEventMetrics? metrics = null,
-        TimeSpan? finalFlushTimeout = null)
+        TimeSpan? finalFlushTimeout = null,
+        IEventValidator? validator = null,
+        DeadLetterSink? deadLetterSink = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
         _auditTrail = auditTrail;
         _wal = wal;
         _metrics = metrics ?? new DefaultEventMetrics();
+        _validator = validator;
+        _deadLetterSink = deadLetterSink;
         _finalFlushTimeout = finalFlushTimeout ?? DefaultFinalFlushTimeout;
         _disposeTaskTimeout = _finalFlushTimeout + TimeSpan.FromSeconds(5);
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
         _capacity = policy.Capacity;
+        _fullMode = policy.FullMode;
         _metricsEnabled = policy.EnableMetrics;
+        _highWaterMark80 = (int)(policy.Capacity * 0.8);
+        _highWaterMark50 = policy.Capacity / 2;
         _flushInterval = flushInterval ?? TimeSpan.FromSeconds(5);
         _batchSize = Math.Max(1, batchSize);
         _enablePeriodicFlush = enablePeriodicFlush;
@@ -172,6 +199,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// <summary>Gets the total number of events recovered from WAL on startup.</summary>
     public long RecoveredCount => Interlocked.Read(ref _recoveredCount);
 
+    /// <summary>Gets the total number of events rejected by the validator and sent to the dead-letter sink.</summary>
+    public long RejectedCount => Interlocked.Read(ref _rejectedCount);
+
     /// <summary>Gets the peak queue size observed during operation.</summary>
     public long PeakQueueSize => Interlocked.Read(ref _peakQueueSize);
 
@@ -206,6 +236,19 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
     /// <summary>Gets whether a WAL is configured for this pipeline.</summary>
     public bool IsWalEnabled => _wal != null;
+
+    /// <summary>Gets whether event validation is enabled for this pipeline.</summary>
+    public bool IsValidationEnabled => _validator != null;
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the queue utilization has reached or exceeded 80 %.
+    /// Upstream producers should observe this signal and slow down publishing to avoid data loss.
+    /// </summary>
+    public bool IsUnderPressure => _highWaterMarkWarned;
+
+    // IBackpressureSignal: return a 0–1 fraction while the public property keeps 0–100 for
+    // backwards compatibility with callers that already use it for display purposes.
+    double IBackpressureSignal.QueueUtilization => QueueUtilization / 100.0;
 
     #endregion
 
@@ -286,6 +329,19 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryPublish(in MarketEvent evt)
     {
+        // For DropWrite mode, TryWrite returns true even when the new item is
+        // silently discarded. Pre-check capacity to detect these silent drops.
+        // (DropOldest/DropNewest evict old items, so the new item IS accepted.)
+        if (_fullMode == BoundedChannelFullMode.DropWrite && _channel.Reader.Count >= _capacity)
+        {
+            // Channel is at capacity — the item will be silently discarded by the
+            // bounded channel. Still call TryWrite so the channel can apply its
+            // policy, but track the event as dropped.
+            _channel.Writer.TryWrite(evt);
+            RecordDrop(in evt);
+            return false;
+        }
+
         var written = _channel.Writer.TryWrite(evt);
 
         if (written)
@@ -296,59 +352,79 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 _metrics.IncPublished();
             }
 
-            // Track peak queue size and warn on high utilization
+            // Read queue size once — Reader.Count acquires an internal lock,
+            // so avoid calling it multiple times per event.
             var currentSize = _channel.Reader.Count;
-            var peak = Interlocked.Read(ref _peakQueueSize);
+
+            // Update peak using a lock-free compare-and-swap loop.
+            // Skip the Interlocked.Read on the fast path when we're clearly below peak.
+            var peak = Volatile.Read(ref _peakQueueSize);
             if (currentSize > peak)
             {
                 Interlocked.CompareExchange(ref _peakQueueSize, currentSize, peak);
             }
 
-            var utilization = (double)currentSize / _capacity;
-            if (utilization >= 0.8 && !_highWaterMarkWarned)
+            // Use integer comparison instead of floating-point division.
+            // _highWaterMark80 = (int)(capacity * 0.8), _highWaterMark50 = capacity / 2
+            if (currentSize >= _highWaterMark80 && !_highWaterMarkWarned)
             {
                 _highWaterMarkWarned = true;
+                var utilization = (double)currentSize / _capacity;
                 _logger.LogWarning(
                     "Pipeline queue utilization at {Utilization:P0} ({CurrentSize}/{Capacity}). Events may be dropped if queue fills. Consider increasing capacity or reducing event rate",
                     utilization, currentSize, _capacity);
             }
-            else if (utilization < 0.5 && _highWaterMarkWarned)
+            else if (_highWaterMarkWarned && currentSize < _highWaterMark50)
             {
                 _highWaterMarkWarned = false;
+                var utilization = (double)currentSize / _capacity;
                 _logger.LogInformation("Pipeline queue utilization recovered to {Utilization:P0}", utilization);
             }
         }
         else
         {
-            Interlocked.Increment(ref _droppedCount);
-            if (_metricsEnabled)
-            {
-                _metrics.IncDropped();
-            }
-
-            // Record dropped event to audit trail for gap-aware consumers
-            if (_auditTrail != null)
-            {
-                _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full")
-                    .ObserveException(operation: "audit trail recording dropped event");
-            }
+            RecordDrop(in evt);
         }
 
         return written;
     }
 
+    /// <summary>Records a dropped event — shared by DropWrite pre-check and Wait-mode TryWrite failure.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)] // keep off the hot inlined path
+    private void RecordDrop(in MarketEvent evt)
+    {
+        Interlocked.Increment(ref _droppedCount);
+        if (_metricsEnabled)
+        {
+            _metrics.IncDropped();
+        }
+
+        if (_auditTrail != null)
+        {
+            _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full")
+                .ObserveException(operation: "audit trail recording dropped event");
+        }
+    }
+
+    /// <summary>Cached enum name lookup — avoids Enum.ToString() allocation per event.</summary>
+    private static readonly string[] EventTypeNames = Enum.GetValues<MarketEventType>()
+        .Select(e => e.ToString())
+        .ToArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static string GetEventTypeName(MarketEventType type)
+    {
+        var index = (int)type;
+        return (uint)index < (uint)EventTypeNames.Length ? EventTypeNames[index] : type.ToString();
+    }
+
     /// <summary>
     /// Publishes an event to the pipeline, waiting if necessary.
-    /// When WAL is enabled, the event is written to the WAL before being queued,
-    /// providing full durability for the async publish path.
+    /// When WAL is enabled, the WAL write is performed by the consumer task
+    /// to avoid duplicate records during recovery.
     /// </summary>
     public async ValueTask PublishAsync(MarketEvent evt, CancellationToken ct = default)
     {
-        if (_wal != null)
-        {
-            await _wal.AppendAsync(evt, evt.Type.ToString(), ct).ConfigureAwait(false);
-        }
-
         await _channel.Writer.WriteAsync(evt, ct).ConfigureAwait(false);
         Interlocked.Increment(ref _publishedCount);
         if (_metricsEnabled)
@@ -363,12 +439,72 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     public void Complete() => _channel.Writer.TryComplete();
 
     /// <summary>
-    /// Forces an immediate flush of buffered data to storage.
+    /// Waits for the consumer to process all currently-queued events, then forces
+    /// an immediate flush of buffered data to storage.
     /// </summary>
+    /// <remarks>
+    /// If events were dropped due to backpressure during the flush window, a warning
+    /// is logged. The flush still writes all events that <em>were</em> consumed to
+    /// storage — it does not suppress the flush because of drops — but callers should
+    /// treat the warning as an indication that the result set is incomplete.
+    /// </remarks>
     public async Task FlushAsync(CancellationToken ct = default)
     {
+        // Capture the drop baseline so we can report new drops that occurred
+        // during this flush window (indicates data loss the caller may not expect).
+        var droppedAtStart = Interlocked.Read(ref _droppedCount);
+
+        // Wait for the consumer to process all currently-queued events.
+        // IMPORTANT: We only wait for _consumed_ events to reach the target,
+        // NOT consumed + dropped. Dropped events were never consumed and are
+        // NOT in storage, so counting them as "accounted for" would let
+        // FlushAsync return success while data is silently missing.
+        // The secondary check (channel empty + consumer idle) handles the
+        // DropOldest case where published events are silently discarded by
+        // the channel — those events will never be consumed, but we should
+        // wait until the channel is drained and the consumer is quiescent.
+        var targetPublished = Interlocked.Read(ref _publishedCount);
+
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var consumed = Interlocked.Read(ref _consumedCount);
+
+            // All published events have been consumed (accounting for rejected events
+            // which were read from the channel but not persisted to the primary sink)
+            if (consumed + Interlocked.Read(ref _rejectedCount) >= targetPublished)
+                break;
+
+            // Channel is empty — check if the consumer has finished its batch.
+            // This handles the DropOldest case where events were silently discarded
+            // by the channel before reaching the consumer.
+            if (_channel.Reader.Count == 0 && !_consumerBusy)
+            {
+                await Task.Delay(10, ct).ConfigureAwait(false);
+                var newConsumed = Interlocked.Read(ref _consumedCount);
+                if (_channel.Reader.Count == 0 && !_consumerBusy && newConsumed == consumed)
+                    break; // Consumer is idle, nothing left to process
+            }
+            else
+            {
+                await Task.Delay(1, ct).ConfigureAwait(false);
+            }
+        }
+
         await _sink.FlushAsync(ct).ConfigureAwait(false);
         Interlocked.Exchange(ref _lastFlushTimestamp, Stopwatch.GetTimestamp());
+
+        // Warn callers if events were dropped during this flush window so they
+        // understand that the returned flush is not a full-fidelity confirmation.
+        var newDrops = Interlocked.Read(ref _droppedCount) - droppedAtStart;
+        if (newDrops > 0)
+        {
+            _logger.LogWarning(
+                "FlushAsync completed but {DroppedCount} event(s) were dropped due to backpressure during this flush window and are NOT in storage. " +
+                "Consider increasing pipeline capacity or reducing event rate.",
+                newDrops);
+        }
     }
 
     /// <summary>
@@ -402,40 +538,63 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
             while (await _channel.Reader.WaitToReadAsync(_cts.Token).ConfigureAwait(false))
             {
+                _consumerBusy = true;
                 var startTs = Stopwatch.GetTimestamp();
 
-                // Drain up to _batchSize events from the channel
-                batchBuffer.Clear();
-                while (batchBuffer.Count < _batchSize && _channel.Reader.TryRead(out var evt))
+                try
                 {
-                    batchBuffer.Add(evt);
-                }
-
-                long maxWalSequence = _lastCommittedWalSequence;
-
-                // Write each event: WAL first (if enabled), then sink
-                for (var i = 0; i < batchBuffer.Count; i++)
-                {
-                    var evt = batchBuffer[i];
-
-                    if (_wal != null)
+                    // Drain up to _batchSize events from the channel
+                    batchBuffer.Clear();
+                    while (batchBuffer.Count < _batchSize && _channel.Reader.TryRead(out var evt))
                     {
-                        var walRecord = await _wal.AppendAsync(evt, evt.Type.ToString(), _cts.Token).ConfigureAwait(false);
-                        maxWalSequence = Math.Max(maxWalSequence, walRecord.Sequence);
+                        batchBuffer.Add(evt);
                     }
 
-                    await _sink.AppendAsync(evt, _cts.Token).ConfigureAwait(false);
-                }
+                    long maxWalSequence = _lastCommittedWalSequence;
 
-                // Commit the WAL batch after all events are written to the sink
-                if (_wal != null && maxWalSequence > _lastCommittedWalSequence)
+                    // Write each event: validate → WAL (if enabled) → sink
+                    for (var i = 0; i < batchBuffer.Count; i++)
+                    {
+                        var evt = batchBuffer[i];
+
+                        // Validate event before persistence (when a validator is configured)
+                        if (_validator != null)
+                        {
+                            var validationResult = _validator.Validate(in evt);
+                            if (!validationResult.IsValid)
+                            {
+                                Interlocked.Increment(ref _rejectedCount);
+                                if (_deadLetterSink != null)
+                                {
+                                    await _deadLetterSink.RecordAsync(evt, validationResult.Errors, _cts.Token).ConfigureAwait(false);
+                                }
+                                continue; // Skip persisting invalid events
+                            }
+                        }
+
+                        if (_wal != null)
+                        {
+                            var walRecord = await _wal.AppendAsync(evt, GetEventTypeName(evt.Type), _cts.Token).ConfigureAwait(false);
+                            maxWalSequence = Math.Max(maxWalSequence, walRecord.Sequence);
+                        }
+
+                        await _sink.AppendAsync(evt, _cts.Token).ConfigureAwait(false);
+                    }
+
+                    // Commit the WAL batch after all events are written to the sink
+                    if (_wal != null && maxWalSequence > _lastCommittedWalSequence)
+                    {
+                        await _sink.FlushAsync(_cts.Token).ConfigureAwait(false);
+                        await _wal.CommitAsync(maxWalSequence, _cts.Token).ConfigureAwait(false);
+                        _lastCommittedWalSequence = maxWalSequence;
+                    }
+
+                    Interlocked.Add(ref _consumedCount, batchBuffer.Count);
+                }
+                finally
                 {
-                    await _sink.FlushAsync(_cts.Token).ConfigureAwait(false);
-                    await _wal.CommitAsync(maxWalSequence, _cts.Token).ConfigureAwait(false);
-                    _lastCommittedWalSequence = maxWalSequence;
+                    _consumerBusy = false;
                 }
-
-                Interlocked.Add(ref _consumedCount, batchBuffer.Count);
 
                 // Track processing time amortized across the batch
                 var elapsedNs = (long)(HighResolutionTimestamp.GetElapsedNanoseconds(startTs));
@@ -507,12 +666,15 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
     public async ValueTask DisposeAsync()
     {
-        _cts.Cancel();
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return; // Already disposed
+
+        // Signal no more events will be published so the consumer can drain
+        // remaining items from the channel and exit naturally.
         _channel.Writer.TryComplete();
 
-        // Wait for consumer with timeout to prevent indefinite hang
-        // (the consumer's finally block has its own _finalFlushTimeout, but this
-        // acts as a defense-in-depth safeguard)
+        // Wait for consumer to drain the channel. Only force-cancel as a
+        // timeout fallback to prevent indefinite hang.
         try
         {
             var completed = await Task.WhenAny(
@@ -523,8 +685,13 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             {
                 _logger.LogWarning(
                     "Consumer task did not complete within {TimeoutSeconds}s during disposal. " +
-                    "Published: {PublishedCount}, consumed: {ConsumedCount}. Proceeding with disposal",
+                    "Published: {PublishedCount}, consumed: {ConsumedCount}. Force-cancelling",
                     _disposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
+
+                await _cts.CancelAsync().ConfigureAwait(false);
+
+                // Give a short grace period after force-cancel
+                await Task.WhenAny(_consumer, Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
             }
             else
             {
@@ -535,6 +702,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         {
             _logger.LogError(ex, "Consumer task failed during disposal. Published: {PublishedCount}, consumed: {ConsumedCount}", _publishedCount, _consumedCount);
         }
+
+        // Cancel the CTS to stop the periodic flusher
+        if (!_cts.IsCancellationRequested)
+            await _cts.CancelAsync().ConfigureAwait(false);
 
         if (_flusher is not null)
         {
@@ -570,6 +741,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         if (_auditTrail != null)
         {
             await _auditTrail.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (_deadLetterSink != null)
+        {
+            await _deadLetterSink.DisposeAsync().ConfigureAwait(false);
         }
     }
 

@@ -200,6 +200,29 @@ public sealed class ExportProfile
     };
 
     /// <summary>
+    /// Creates a copy of this profile with only the format overridden.
+    /// All other settings (compression, timestamps, loader script, data dictionary, file naming, etc.) are preserved.
+    /// </summary>
+    public ExportProfile WithFormat(ExportFormat newFormat) => new()
+    {
+        Id = Id,
+        Name = Name,
+        Description = Description,
+        TargetTool = TargetTool,
+        Format = newFormat,
+        Compression = Compression,
+        TimestampSettings = TimestampSettings,
+        IncludeFields = IncludeFields,
+        ExcludeFields = ExcludeFields,
+        IncludeLoaderScript = IncludeLoaderScript,
+        IncludeDataDictionary = IncludeDataDictionary,
+        FileNamePattern = FileNamePattern,
+        SplitBySymbol = SplitBySymbol,
+        SplitByDate = SplitByDate,
+        MaxRecordsPerFile = MaxRecordsPerFile
+    };
+
+    /// <summary>
     /// Get all pre-built profiles.
     /// </summary>
     public static IReadOnlyList<ExportProfile> GetBuiltInProfiles() => new[]

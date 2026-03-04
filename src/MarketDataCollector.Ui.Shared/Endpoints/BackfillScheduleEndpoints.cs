@@ -2,7 +2,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Scheduling;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

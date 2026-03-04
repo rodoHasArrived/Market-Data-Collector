@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Credentials;
-using MarketDataCollector.Infrastructure.Providers.NYSE;
+using MarketDataCollector.Infrastructure.Adapters.NYSE;
 
 namespace MarketDataCollector.Infrastructure.DataSources;
 

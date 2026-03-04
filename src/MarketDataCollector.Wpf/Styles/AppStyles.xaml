@@ -985,4 +985,160 @@
     <Duration x:Key="NormalAnimationDuration">0:0:0.25</Duration>
     <Duration x:Key="SlowAnimationDuration">0:0:0.4</Duration>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- IMPLICIT DARK-THEME CONTROL STYLES                     -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <!-- DataGrid: Dark-themed with row hover, selection, and grid lines -->
+    <Style TargetType="DataGrid">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundDarkBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="RowBackground" Value="Transparent" />
+        <Setter Property="AlternatingRowBackground" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="RowHeaderWidth" Value="0" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="SeparatorBrush" Value="{StaticResource ConsoleBorderBrush}" />
+    </Style>
+
+    <Style TargetType="DataGridCell">
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
+                <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="DataGridRow">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource ConsoleBackgroundHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ListView: Dark-themed -->
+    <Style TargetType="ListView">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style TargetType="ListViewItem">
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource ConsoleBackgroundHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ProgressBar: Dark-themed with rounded corners -->
+    <Style TargetType="ProgressBar">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource SuccessColorBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Height" Value="6" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border x:Name="PART_Track"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3" />
+                        <Border x:Name="PART_Indicator"
+                                Background="{TemplateBinding Foreground}"
+                                CornerRadius="3"
+                                HorizontalAlignment="Left" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ToolTip: Dark-themed -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <!-- Separator: Dark-themed -->
+    <Style TargetType="Separator">
+        <Setter Property="Background" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="0,8" />
+    </Style>
+
+    <!-- GridViewColumnHeader: Dark-themed for GridView inside ListView -->
+    <Style TargetType="GridViewColumnHeader">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+    </Style>
+
 </ResourceDictionary>

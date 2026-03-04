@@ -178,7 +178,7 @@ public sealed class BackfillServiceTests
     [InlineData("Paused", false)]
     public void IsRunning_WithDifferentStatuses_ReturnsCorrectValue(string status, bool expectedRunning)
     {
-        // Note: This test verifies the IsRunning property logic
+        // NOTE: This test verifies the IsRunning property logic
         // In actual usage, CurrentProgress would be set during a backfill operation
         // We're testing the property getter logic here
         var service = BackfillService.Instance;
@@ -195,7 +195,7 @@ public sealed class BackfillServiceTests
     [InlineData("Completed", false)]
     public void IsPaused_WithDifferentStatuses_ReturnsCorrectValue(string status, bool expectedPaused)
     {
-        // Note: Similar to IsRunning test, this verifies the property logic
+        // NOTE: Similar to IsRunning test, this verifies the property logic
         var service = BackfillService.Instance;
         
         // Assert

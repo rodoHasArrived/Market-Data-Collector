@@ -3,7 +3,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Application.Services;

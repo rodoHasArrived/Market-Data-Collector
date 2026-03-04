@@ -143,9 +143,17 @@ public sealed class SloDefinitionRegistryTests
             RunbookSection = "docs/custom-runbook.md"
         });
 
-        var retrieved = registry.Get("SLO-CUSTOM-001");
-        retrieved.Should().NotBeNull();
-        retrieved!.Name.Should().Be("Custom Test SLO");
+        try
+        {
+            var retrieved = registry.Get("SLO-CUSTOM-001");
+            retrieved.Should().NotBeNull();
+            retrieved!.Name.Should().Be("Custom Test SLO");
+        }
+        finally
+        {
+            // Clean up to avoid polluting the singleton for other tests
+            registry.Unregister("SLO-CUSTOM-001");
+        }
     }
 }
 

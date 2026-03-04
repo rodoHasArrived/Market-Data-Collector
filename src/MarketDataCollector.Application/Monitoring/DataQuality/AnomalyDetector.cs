@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring.DataQuality;
@@ -15,6 +16,7 @@ public sealed class AnomalyDetector : IDisposable
     private readonly ConcurrentDictionary<string, SymbolStatistics> _symbolStats = new();
     private readonly ConcurrentDictionary<string, List<DataAnomaly>> _anomalies = new();
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastAlertTimes = new();
+    private readonly ConcurrentDictionary<string, int> _symbolStaleThresholds = new();
     private readonly AnomalyDetectionConfig _config;
     private readonly Timer _cleanupTimer;
     private readonly Timer _staleCheckTimer;
@@ -38,6 +40,18 @@ public sealed class AnomalyDetector : IDisposable
         _log.Information("AnomalyDetector initialized with price spike threshold: {PriceThreshold}%, " +
             "volume spike multiplier: {VolumeSpikeMultiplier}x, volume drop threshold: {VolumeDropMultiplier}x",
             _config.PriceSpikeThresholdPercent, _config.VolumeSpikeThresholdMultiplier, _config.VolumeDropThresholdMultiplier);
+    }
+
+    /// <summary>
+    /// Registers a liquidity profile for a symbol, adjusting the stale data threshold
+    /// so that illiquid instruments do not generate false stale-data anomalies.
+    /// </summary>
+    public void RegisterSymbolLiquidity(string symbol, LiquidityProfile profile)
+    {
+        var thresholds = LiquidityProfileProvider.GetThresholds(profile);
+        _symbolStaleThresholds[symbol.ToUpperInvariant()] = thresholds.StaleDataThresholdSeconds;
+        _log.Debug("Registered liquidity profile {Profile} for {Symbol} (stale threshold: {Threshold}s)",
+            profile, symbol, thresholds.StaleDataThresholdSeconds);
     }
 
     /// <summary>
@@ -273,13 +287,20 @@ public sealed class AnomalyDetector : IDisposable
     }
 
     /// <summary>
-    /// Gets symbols currently marked as stale.
+    /// Gets symbols currently marked as stale (using per-symbol thresholds when registered).
     /// </summary>
     public IReadOnlyList<string> GetStaleSymbols()
     {
-        var threshold = DateTimeOffset.UtcNow.AddSeconds(-_config.StaleDataThresholdSeconds);
+        var now = DateTimeOffset.UtcNow;
         return _symbolStats
-            .Where(kvp => kvp.Value.LastEventTime < threshold && kvp.Value.LastEventTime != DateTimeOffset.MinValue)
+            .Where(kvp =>
+            {
+                if (kvp.Value.LastEventTime == DateTimeOffset.MinValue) return false;
+                var staleThreshold = _symbolStaleThresholds.TryGetValue(kvp.Key, out var perSymbol)
+                    ? perSymbol
+                    : _config.StaleDataThresholdSeconds;
+                return (now - kvp.Value.LastEventTime).TotalSeconds >= staleThreshold;
+            })
             .Select(kvp => kvp.Key)
             .ToList();
     }
@@ -392,20 +413,25 @@ public sealed class AnomalyDetector : IDisposable
 
         try
         {
-            var threshold = DateTimeOffset.UtcNow.AddSeconds(-_config.StaleDataThresholdSeconds);
             foreach (var kvp in _symbolStats)
             {
                 var stats = kvp.Value;
-                if (stats.LastEventTime != DateTimeOffset.MinValue &&
-                    stats.LastEventTime < threshold &&
-                    !stats.IsMarkedStale)
+                if (stats.LastEventTime == DateTimeOffset.MinValue || stats.IsMarkedStale)
+                    continue;
+
+                // Use per-symbol stale threshold if registered, otherwise global config
+                var staleThreshold = _symbolStaleThresholds.TryGetValue(kvp.Key, out var perSymbol)
+                    ? perSymbol
+                    : _config.StaleDataThresholdSeconds;
+
+                var timeSinceLastEvent = DateTimeOffset.UtcNow - stats.LastEventTime;
+                if (timeSinceLastEvent.TotalSeconds >= staleThreshold)
                 {
-                    var timeSinceLastEvent = DateTimeOffset.UtcNow - stats.LastEventTime;
                     var anomaly = CreateAnomaly(
                         kvp.Key, DateTimeOffset.UtcNow, AnomalyType.StaleData, AnomalySeverity.Warning,
-                        $"No data received for {timeSinceLastEvent.TotalSeconds:F0}s (threshold: {_config.StaleDataThresholdSeconds}s)",
-                        _config.StaleDataThresholdSeconds, timeSinceLastEvent.TotalSeconds,
-                        (timeSinceLastEvent.TotalSeconds / _config.StaleDataThresholdSeconds - 1) * 100);
+                        $"No data received for {timeSinceLastEvent.TotalSeconds:F0}s (threshold: {staleThreshold}s)",
+                        staleThreshold, timeSinceLastEvent.TotalSeconds,
+                        (timeSinceLastEvent.TotalSeconds / staleThreshold - 1) * 100);
 
                     anomaly = anomaly with { Id = GenerateAnomalyId() };
                     RecordAnomaly(anomaly);

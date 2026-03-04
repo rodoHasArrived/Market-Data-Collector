@@ -26,7 +26,7 @@
   - Provider message parsing tests for Polygon, NYSE, StockSharp.
 - **Key files:**
   - `tests/MarketDataCollector.Tests/Integration/EndpointTests/*` (18 files)
-  - `tests/MarketDataCollector.Tests/Infrastructure/Providers/*` (12 files)
+  - `tests/MarketDataCollector.Tests/Infrastructure/Adapters/*` (12 files)
 
 ### Step 0.2 — Add temporary observability counters for migration ✅
 - **Status:** Complete.
@@ -43,12 +43,12 @@
 ### Step 1.1 — Introduce `ProviderRegistry` abstraction ✅
 - **Status:** Complete.
 - **What was done:**
-  - `ProviderRegistry` in `Infrastructure/Providers/Core/` serves as the single source of truth for all provider types.
+  - `ProviderRegistry` in `Infrastructure/Adapters/Core/` serves as the single source of truth for all provider types.
   - Streaming factories registered as `Dictionary<DataSourceKind, Func<IMarketDataClient>>`.
   - Universal queries: `GetAllProviderMetadata()`, `GetProvider<T>()`, `GetProviders<T>()`, `GetBestAvailableProviderAsync<T>()`.
   - `IProviderMetadata` unified identity and capabilities contract.
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Providers/Core/ProviderRegistry.cs`
+  - `src/MarketDataCollector.Infrastructure/Adapters/Core/ProviderRegistry.cs`
 
 ### Step 1.2 — Wire attribute-based discovery into registry (behind switch) ✅
 - **Status:** Complete.
@@ -102,13 +102,13 @@
 ### Step 3.1 — Define migration contract on `WebSocketProviderBase` ✅
 - **Status:** Complete.
 - **What was done:**
-  - Created `WebSocketProviderBase` abstract class in `Infrastructure/Providers/Core/`.
+  - Created `WebSocketProviderBase` abstract class in `Infrastructure/Adapters/Core/`.
   - Delegates connection lifecycle to `WebSocketConnectionManager` (resilience, heartbeat, reconnection gating).
   - Template method hooks: `BuildWebSocketUri()`, `AuthenticateAsync()`, `HandleMessageAsync()`, `ResubscribeAsync()`, `ConfigureWebSocket()`.
   - Automatic reconnection with `MigrationDiagnostics` counter integration.
   - Clean `IAsyncDisposable` implementation.
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Providers/Core/WebSocketProviderBase.cs` (new)
+  - `src/MarketDataCollector.Infrastructure/Adapters/Core/WebSocketProviderBase.cs` (new)
 
 ### Step 3.2 — Migrate Polygon reconnection to shared helper ✅
 - **Status:** Complete (partial migration).
@@ -117,7 +117,7 @@
   - Polygon still manages its own `ClientWebSocket` directly (required for protocol-specific handshake: sync message exchange for `WaitForConnectionMessage` and `Authenticate` before receive loop).
   - Full migration to `WebSocketProviderBase` deferred due to Polygon's sync handshake pattern (send auth → wait for response → then start receive loop).
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
+  - `src/MarketDataCollector.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
 
 ### Step 3.3 — Migrate NYSE to base class ⏳ DEFERRED
 - **Status:** Deferred.
@@ -134,7 +134,7 @@
   - Removed `CalculateReconnectDelay()` method.
   - Reconnection now delegated to `WebSocketReconnectionHelper` which provides identical behavior (gated exponential backoff with jitter).
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
+  - `src/MarketDataCollector.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
 
 ---
 

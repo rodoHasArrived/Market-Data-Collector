@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 
 namespace MarketDataCollector.Application.Scheduling;
 

@@ -95,6 +95,13 @@ public sealed record WebSocketConnectionConfig
     public int MaxReconnectAttempts { get; init; } = 10;
 
     /// <summary>
+    /// Maximum total size (bytes) of a single WebSocket message after all frames are
+    /// assembled. Messages exceeding this limit are discarded and a warning is logged.
+    /// Default is 10 MiB — large enough for any normal market data payload.
+    /// </summary>
+    public int MaxMessageSizeBytes { get; init; } = 10 * 1024 * 1024; // 10 MiB
+
+    /// <summary>
     /// Default configuration used by all streaming providers.
     /// These values match the previously duplicated settings in Alpaca and Polygon clients.
     /// </summary>

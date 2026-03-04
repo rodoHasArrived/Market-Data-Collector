@@ -18,9 +18,8 @@ using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
-using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Failover;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Application.ResultTypes;
@@ -67,6 +66,10 @@ public partial class Program
             log.Fatal(ex, "MarketDataCollector terminated unexpectedly (ErrorCode={ErrorCode}, ExitCode={ExitCode})",
                 errorCode, errorCode.ToExitCode());
 
+            // Display user-friendly error with actionable suggestions
+            var friendlyError = FriendlyErrorFormatter.Format(ex);
+            FriendlyErrorFormatter.DisplayError(friendlyError);
+
             return errorCode.ToExitCode();
         }
         finally
@@ -91,7 +94,10 @@ public partial class Program
             new ValidateConfigCommand(configService, cfgPath, log),
             new DryRunCommand(cfg, configService, log),
             new SelfTestCommand(log),
-            new PackageCommands(cfg, log)
+            new PackageCommands(cfg, log),
+            new ConfigPresetCommand(new AutoConfigurationService(), log),
+            new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log),
+            new GenerateLoaderCommand(cfg.DataRoot, log)
         );
 
         var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);

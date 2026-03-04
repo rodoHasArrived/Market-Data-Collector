@@ -46,6 +46,22 @@ public static partial class HtmlTemplateGenerator
     </div>
   </div>
 
+  <!-- Data Freshness Status Bar -->
+  <div class=""freshness-bar"" id=""freshnessBar"">
+    <div class=""freshness-providers"" id=""freshnessProviders"">
+      <span class=""freshness-label"">Providers:</span>
+      <span class=""freshness-loading"">Loading...</span>
+    </div>
+    <div class=""freshness-event"">
+      <span class=""freshness-label"">Last event:</span>
+      <span id=""freshnessLastEvent"" class=""freshness-value"">--</span>
+    </div>
+    <div class=""freshness-throughput"">
+      <span id=""freshnessThroughput"" class=""freshness-value"">-- evt/s</span>
+    </div>
+    <div id=""freshnessModeBadge"" class=""freshness-mode-badge"" style=""display:none;"">DEMO MODE</div>
+  </div>
+
   <div class=""main-container"">
     <!-- Sidebar Navigation -->
     <nav class=""sidebar"">

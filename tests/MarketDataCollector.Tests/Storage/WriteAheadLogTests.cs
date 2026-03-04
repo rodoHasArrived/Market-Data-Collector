@@ -127,7 +127,7 @@ public sealed class WriteAheadLogTests : IAsyncDisposable
             uncommitted.Add(record);
         }
 
-        uncommitted.Should().HaveCountGreaterOrEqualTo(2);
+        uncommitted.Should().HaveCount(2, "exactly 2 records were appended and none were committed");
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public sealed class WriteAheadLogTests : IAsyncDisposable
         await wal.TruncateAsync(lastRecord.Sequence);
 
         var walFilesAfter = Directory.GetFiles(_walDir, "*.wal");
-        walFilesAfter.Length.Should().BeLessThanOrEqualTo(walFilesBefore.Length,
+        walFilesAfter.Length.Should().BeLessThan(walFilesBefore.Length,
             "committed WAL files should be truncated");
     }
 
@@ -197,11 +197,10 @@ public sealed class WriteAheadLogTests : IAsyncDisposable
         await wal.TruncateAsync(lastRecord.Sequence);
 
         var archiveDir = Path.Combine(_walDir, "archive");
-        if (Directory.Exists(archiveDir))
-        {
-            Directory.GetFiles(archiveDir, "*.gz").Should().NotBeEmpty(
-                "truncated WAL files should be archived as .gz");
-        }
+        Directory.Exists(archiveDir).Should().BeTrue(
+            "archive directory should be created when ArchiveAfterTruncate is true");
+        Directory.GetFiles(archiveDir, "*.gz").Should().NotBeEmpty(
+            "truncated WAL files should be archived as .gz");
     }
 
     [Fact]

@@ -237,9 +237,9 @@ public sealed class MetadataTagService : IMetadataTagService
                 }
             }
         }
-        catch
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
-            // Silently fail on load errors - start fresh
+            // Expected I/O or parse errors on load - start fresh
         }
     }
 
@@ -255,7 +255,7 @@ public sealed class MetadataTagService : IMetadataTagService
     private async Task SaveInBackgroundAsync()
     {
         try { await SaveAsync(); }
-        catch { /* Background save failure is non-critical */ }
+        catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException) { /* Background save failure is non-critical */ }
     }
 
     private sealed class MetadataStore
