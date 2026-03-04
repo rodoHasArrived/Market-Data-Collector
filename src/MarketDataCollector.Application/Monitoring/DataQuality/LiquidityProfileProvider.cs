@@ -13,22 +13,22 @@ public static class LiquidityProfileProvider
     /// Monitoring thresholds for a given liquidity tier.
     /// </summary>
     public sealed record LiquidityThresholds(
-        /// <summary>Minimum gap duration (seconds) before it is flagged as a data gap.</summary>
+        // <summary>Minimum gap duration (seconds) before it is flagged as a data gap.</summary>
         int GapThresholdSeconds,
 
-        /// <summary>Expected events per hour for completeness scoring.</summary>
+        // <summary>Expected events per hour for completeness scoring.</summary>
         long ExpectedEventsPerHour,
 
-        /// <summary>Data freshness SLA threshold (seconds) before a warning/violation fires.</summary>
+        // <summary>Data freshness SLA threshold (seconds) before a warning/violation fires.</summary>
         int FreshnessThresholdSeconds,
 
-        /// <summary>Stale data threshold (seconds) for anomaly detection.</summary>
+        // <summary>Stale data threshold (seconds) for anomaly detection.</summary>
         int StaleDataThresholdSeconds,
 
-        /// <summary>Acceptable bid-ask spread (basis points) before flagging.</summary>
+        // <summary>Acceptable bid-ask spread (basis points) before flagging.</summary>
         double SpreadThresholdBps,
 
-        /// <summary>Minimum samples needed before enabling statistical anomaly detection.</summary>
+        // <summary>Minimum samples needed before enabling statistical anomaly detection.</summary>
         int MinSamplesForStatistics
     );
 

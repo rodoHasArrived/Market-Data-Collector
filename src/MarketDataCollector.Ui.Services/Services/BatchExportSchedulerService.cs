@@ -67,7 +67,7 @@ public sealed class BatchExportSchedulerService : IAsyncDisposable
         // Start worker tasks
         for (int i = 0; i < 4; i++)
         {
-            _workers.Add(Task.Run(() => ProcessQueueAsync(_cts.Token)));
+            _workers.Add(ProcessQueueAsync(_cts.Token));
         }
 
         // Start scheduler timer (check every minute for scheduled jobs)

@@ -1,7 +1,7 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-02T23:23:21.565388+00:00
+> Last updated: 2026-03-04T15:08:12.670004+00:00
 
 ## Overall Health Score
 
@@ -14,10 +14,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 161 |
-| Total lines | 67,763 |
-| Average file size (lines) | 420.9 |
-| Orphaned files | 49 |
+| Total documentation files | 165 |
+| Total lines | 69,511 |
+| Average file size (lines) | 421.3 |
+| Orphaned files | 53 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 152 |
@@ -56,6 +56,7 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
 - `.github/workflows/TESTING_AI_SYNC.md`
+- `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/architecture/crystallized-storage-format.md`
 - `docs/architecture/nautilus-inspired-restructuring-proposal.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
@@ -64,8 +65,7 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md`
 - `docs/archived/CHANGES_SUMMARY.md`
 - `docs/archived/CONFIG_CONSOLIDATION_REPORT.md`
-- `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
-- ... and 29 more
+- ... and 33 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-02 | 87 | 161 | 49 | 0 |
+| 2026-03-04 | 87 | 165 | 53 | 0 |
 
 ---
 

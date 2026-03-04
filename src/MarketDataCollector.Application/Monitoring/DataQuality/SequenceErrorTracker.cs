@@ -314,9 +314,24 @@ public sealed class SequenceErrorTracker : IDisposable
                 _errors.TryRemove(key, out _);
             }
 
-            if (keysToClean.Count > 0)
+            // Evict stale symbol state entries that haven't received events
+            // within the retention window. This prevents unbounded memory growth
+            // when symbols are rotated (e.g., options chains expiring).
+            var staleActivityCutoff = DateTimeOffset.UtcNow.AddHours(-6);
+            var staleStateKeys = _symbolStates
+                .Where(kvp => kvp.Value.LastActivityTime < staleActivityCutoff)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in staleStateKeys)
             {
-                _log.Debug("Sequence error tracker cleanup: removed {Count} empty error lists", keysToClean.Count);
+                _symbolStates.TryRemove(key, out _);
+            }
+
+            if (keysToClean.Count > 0 || staleStateKeys.Count > 0)
+            {
+                _log.Debug("Sequence error tracker cleanup: removed {ErrorKeys} empty error lists and {StateKeys} stale symbol states",
+                    keysToClean.Count, staleStateKeys.Count);
             }
         }
         catch (Exception ex)
@@ -341,6 +356,7 @@ public sealed class SequenceErrorTracker : IDisposable
     {
         private long _lastSequence = -1;
         private long _totalEvents;
+        private DateTimeOffset _lastActivityTime = DateTimeOffset.UtcNow;
         private readonly HashSet<long> _recentSequences = new();
         private readonly Queue<long> _sequenceHistory = new();
         private const int MaxHistorySize = 1000;
@@ -348,6 +364,7 @@ public sealed class SequenceErrorTracker : IDisposable
         public string Symbol { get; }
         public string EventType { get; }
         public string? StreamId { get; }
+        public DateTimeOffset LastActivityTime => _lastActivityTime;
         public long TotalEvents => Interlocked.Read(ref _totalEvents);
 
         public SymbolSequenceState(string symbol, string eventType, string? streamId)
@@ -360,6 +377,7 @@ public sealed class SequenceErrorTracker : IDisposable
         public SequenceError? CheckSequence(long sequence, DateTimeOffset timestamp, string? provider, SequenceErrorConfig config)
         {
             Interlocked.Increment(ref _totalEvents);
+            _lastActivityTime = DateTimeOffset.UtcNow;
 
             var lastSeq = Interlocked.Read(ref _lastSequence);
             SequenceError? error = null;

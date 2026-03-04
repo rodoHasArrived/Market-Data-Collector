@@ -277,16 +277,21 @@ public class EventPipelineTests : IAsyncLifetime
             fullMode: BoundedChannelFullMode.DropWrite,
             enablePeriodicFlush: false);
 
-        // Fill exactly capacity + 1 so the consumer takes one and blocks, leaving 4 queued.
+        // Publish one event to trigger the consumer.
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+
+        // Wait until the consumer has started and is blocked on the first event.
+        // NOTE: the consumer drains the entire batch from the channel before processing,
+        // so the channel is empty once the consumer is blocked.
+        await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(2));
+
+        // Re-fill the channel to capacity now that the consumer is blocked and cannot drain it.
         for (int i = 0; i < 5; i++)
         {
             pipeline.TryPublish(CreateTradeEvent("SPY"));
         }
 
-        // Wait until the consumer has started and is blocked — the queue now has 4 items.
-        await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(2));
-
-        // Publish enough additional events to overflow the now-full queue.
+        // Publish additional events to overflow the now-full queue.
         var dropCount = 0;
         for (int i = 0; i < 10; i++)
         {
@@ -504,13 +509,20 @@ public class EventPipelineTests : IAsyncLifetime
         await using var sink = new BlockingStorageSink(releaseConsumer.Task);
         await using var pipeline = new EventPipeline(sink, capacity: 2, fullMode: BoundedChannelFullMode.Wait, enablePeriodicFlush: false);
 
-        // Fill the channel completely (2 items) and wait for consumer to start blocking.
+        // Publish one event to trigger the consumer.
         pipeline.TryPublish(CreateTradeEvent("SPY"));
-        pipeline.TryPublish(CreateTradeEvent("MSFT"));
+
+        // Wait until the consumer has started and is blocked on the first event.
+        // NOTE: the consumer drains the entire batch from the channel before processing,
+        // so the channel is empty once the consumer is blocked.
         await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(2));
 
-        // The queue should now be full (consumer holds 1, queue has 1).
-        // A third publish must block because the channel is full in Wait mode.
+        // Re-fill the channel to capacity (2 items) now that the consumer is blocked.
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+        pipeline.TryPublish(CreateTradeEvent("MSFT"));
+
+        // The channel is now full. A further PublishAsync must block because the channel
+        // is full in Wait mode, and the cancellation token fires after 200 ms.
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
         // Act & Assert

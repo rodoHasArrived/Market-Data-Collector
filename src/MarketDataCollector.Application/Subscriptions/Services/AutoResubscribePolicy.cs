@@ -48,7 +48,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
         _options = options ?? new AutoResubscribeOptions();
         _log = log ?? LoggingSetup.ForContext<AutoResubscribePolicy>();
 
-        _cleanupTask = Task.Run(CleanupLoopAsync);
+        _cleanupTask = CleanupLoopAsync();
 
         _log.Information(
             "AutoResubscribePolicy initialized: " +
@@ -143,7 +143,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
             _log.Information("Triggering auto-resubscribe for {Symbol} due to integrity event", symbol);
 
             // Force unsubscribe and resubscribe through the manager
-            await Task.Run(() => _subscriptionManager.Apply(config));
+            _subscriptionManager.Apply(config);
 
             sw.Stop();
             var elapsedMs = sw.ElapsedMilliseconds;

@@ -203,7 +203,7 @@ public static class FormValidationRules
 /// <summary>
 /// Represents the result of a validation operation.
 /// </summary>
-public class ValidationResult
+public sealed class ValidationResult
 {
     /// <summary>
     /// Gets whether the validation passed.

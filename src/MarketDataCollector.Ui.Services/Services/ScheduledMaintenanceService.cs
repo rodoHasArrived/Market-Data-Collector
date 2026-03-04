@@ -549,7 +549,7 @@ public sealed class ScheduledMaintenanceService
 /// <summary>
 /// Represents a scheduled maintenance task.
 /// </summary>
-public class MaintenanceTask
+public sealed class MaintenanceTask
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -639,7 +639,7 @@ public class MaintenanceTask
 /// <summary>
 /// Maintenance task schedule configuration.
 /// </summary>
-public class MaintenanceTimingConfig
+public sealed class MaintenanceTimingConfig
 {
     public ScheduleType ScheduleType { get; set; }
     public TimeSpan TimeOfDay { get; set; }
@@ -689,7 +689,7 @@ public enum MaintenanceScope
 /// <summary>
 /// Result of a maintenance task execution.
 /// </summary>
-public class MaintenanceResult
+public sealed class MaintenanceResult
 {
     public string TaskId { get; set; } = string.Empty;
     public string TaskName { get; set; } = string.Empty;
@@ -710,7 +710,7 @@ public class MaintenanceResult
 /// <summary>
 /// Log entry for maintenance task executions.
 /// </summary>
-public class MaintenanceExecutionLog
+public sealed class MaintenanceExecutionLog
 {
     public string TaskId { get; set; } = string.Empty;
     public string TaskName { get; set; } = string.Empty;

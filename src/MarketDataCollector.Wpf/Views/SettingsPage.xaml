@@ -29,6 +29,252 @@
                                VerticalAlignment="Center" />
                 </StackPanel>
 
+                <!-- Quick Actions -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconPlay}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="20"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Quick Actions"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Common configuration tasks"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   Margin="0,0,0,12" />
+
+                        <WrapPanel>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="AddProvider_Click"
+                                    Margin="0,0,8,8"
+                                    Padding="16,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconAdd}"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Add Provider" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="ConfigureStorage_Click"
+                                    Margin="0,0,8,8"
+                                    Padding="16,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconDatabase}"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Configure Storage" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="ManageCredentials_Click"
+                                    Margin="0,0,8,8"
+                                    Padding="16,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconLock}"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Credential Vault" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="RunSetupWizard_Click"
+                                    Margin="0,0,8,8"
+                                    Padding="16,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconChartLine}"
+                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Setup Wizard" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Credential Vault -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconLock}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="20"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Credential Vault"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Credential status for all data providers. Green = configured, yellow = partial, red = missing."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+
+                        <ListView x:Name="CredentialVaultList"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  MaxHeight="350">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                                            CornerRadius="8"
+                                            Padding="12"
+                                            Margin="0,3">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Ellipse Grid.Column="0" Width="12" Height="12"
+                                                     VerticalAlignment="Center"
+                                                     Fill="{Binding StatusBrush}" />
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                                                <TextBlock Text="{Binding DisplayName}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding StatusMessage}"
+                                                           Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                                           FontSize="12" />
+                                            </StackPanel>
+
+                                            <Button Grid.Column="2"
+                                                    Content="Configure"
+                                                    Style="{StaticResource GhostButtonStyle}"
+                                                    Tag="{Binding ProviderId}"
+                                                    Click="ConfigureProviderCredential_Click"
+                                                    Visibility="{Binding ConfigureVisibility}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Storage Preview -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconFolder}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="20"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Storage Preview"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                <TextBlock Text="Naming Convention" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox x:Name="PreviewNamingCombo"
+                                          Style="{StaticResource FormComboBoxStyle}"
+                                          SelectionChanged="PreviewSettings_Changed">
+                                    <ComboBoxItem Content="By Symbol" Tag="BySymbol" IsSelected="True" />
+                                    <ComboBoxItem Content="By Date" Tag="ByDate" />
+                                    <ComboBoxItem Content="By Type" Tag="ByType" />
+                                    <ComboBoxItem Content="Flat" Tag="Flat" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Compression" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox x:Name="PreviewCompressionCombo"
+                                          Style="{StaticResource FormComboBoxStyle}"
+                                          SelectionChanged="PreviewSettings_Changed">
+                                    <ComboBoxItem Content="Gzip" Tag="gzip" IsSelected="True" />
+                                    <ComboBoxItem Content="None" Tag="none" />
+                                    <ComboBoxItem Content="LZ4 (Fast)" Tag="lz4" />
+                                    <ComboBoxItem Content="ZSTD (Best)" Tag="zstd" />
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="File structure preview:" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+
+                        <Border Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                                CornerRadius="6"
+                                Padding="12">
+                            <TextBlock x:Name="StoragePreviewText"
+                                       FontFamily="Cascadia Code, Consolas, monospace"
+                                       FontSize="12"
+                                       Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                       Text="data/&#10;  ├── SPY/&#10;  │   ├── trades/&#10;  │   │   └── 2026-03-03.jsonl.gz&#10;  │   └── quotes/&#10;  │       └── 2026-03-03.jsonl.gz&#10;  └── AAPL/&#10;      ├── trades/&#10;      │   └── 2026-03-03.jsonl.gz&#10;      └── quotes/&#10;          └── 2026-03-03.jsonl.gz"
+                                       TextWrapping="NoWrap" />
+                        </Border>
+
+                        <TextBlock x:Name="StorageSizeEstimateText"
+                                   Text="Estimated daily size: ~14 MB for 2 symbols"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Configuration Profiles -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconSave}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="20"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Configuration Profiles"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Switch between pre-configured settings for different workflows."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+
+                        <ItemsControl x:Name="ProfilesList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="3" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,8,8"
+                                            Click="ProfileCard_Click"
+                                            Tag="{Binding Id}"
+                                            HorizontalContentAlignment="Stretch">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                                <Setter Property="Padding" Value="12,10" />
+                                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                            </Style>
+                                        </Button.Style>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="SemiBold" FontSize="13" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       TextWrapping="Wrap" FontSize="11"
+                                                       Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <!-- Appearance -->
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
                     <StackPanel>

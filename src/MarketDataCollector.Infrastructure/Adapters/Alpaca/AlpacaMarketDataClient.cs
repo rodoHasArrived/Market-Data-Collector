@@ -54,7 +54,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
     public AlpacaMarketDataClient(TradeDataCollector tradeCollector, QuoteCollector quoteCollector, AlpacaOptions opt)
     {
-        _tradeCollector = tradeCollector;
+        _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
         _opt = opt ?? throw new ArgumentNullException(nameof(opt));
         if (string.IsNullOrWhiteSpace(_opt.KeyId) || string.IsNullOrWhiteSpace(_opt.SecretKey))

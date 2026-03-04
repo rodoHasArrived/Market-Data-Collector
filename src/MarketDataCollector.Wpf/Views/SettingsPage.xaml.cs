@@ -1,23 +1,28 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Ui.Services.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
 /// Settings page for application configuration, notifications, and credentials.
+/// Enhanced with Quick Actions, Credential Vault, Storage Preview, and Configuration Profiles.
 /// </summary>
 public partial class SettingsPage : Page
 {
     private readonly WpfServices.ConfigService _configService;
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.StatusService _statusService;
+    private readonly SettingsConfigurationService _settingsConfigService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
     private readonly ObservableCollection<SettingsActivityItem> _recentActivity = new();
 
@@ -31,6 +36,7 @@ public partial class SettingsPage : Page
         _configService = configService;
         _notificationService = notificationService;
         _statusService = statusService;
+        _settingsConfigService = SettingsConfigurationService.Instance;
         StoredCredentialsList.ItemsSource = _storedCredentials;
         RecentActivityList.ItemsSource = _recentActivity;
     }
@@ -39,8 +45,120 @@ public partial class SettingsPage : Page
     {
         ConfigPathText.Text = _configService.ConfigPath;
         RefreshStoredCredentials();
+        RefreshCredentialVault();
+        RefreshStoragePreview();
+        RefreshProfiles();
         LoadRecentActivity();
         UpdateSystemStatus();
+    }
+
+    // ── Quick Actions ──────────────────────────────────────────────
+
+    private void AddProvider_Click(object sender, RoutedEventArgs e)
+    {
+        WpfServices.NavigationService.Instance.NavigateTo("AddProviderWizard");
+    }
+
+    private void ConfigureStorage_Click(object sender, RoutedEventArgs e)
+    {
+        WpfServices.NavigationService.Instance.NavigateTo("Storage");
+    }
+
+    private void ManageCredentials_Click(object sender, RoutedEventArgs e)
+    {
+        // Scroll to the Credential Vault section
+        CredentialVaultList.BringIntoView();
+    }
+
+    private void RunSetupWizard_Click(object sender, RoutedEventArgs e)
+    {
+        WpfServices.NavigationService.Instance.NavigateTo("SetupWizard");
+    }
+
+    // ── Credential Vault ──────────────────────────────────────────
+
+    private void RefreshCredentialVault()
+    {
+        var statuses = _settingsConfigService.GetProviderCredentialStatuses();
+        var viewModels = statuses.Select(s => new CredentialVaultItem
+        {
+            ProviderId = s.ProviderId,
+            DisplayName = s.DisplayName,
+            StatusMessage = s.State switch
+            {
+                CredentialState.Configured => "Configured via environment",
+                CredentialState.Partial => $"Missing: {string.Join(", ", s.MissingEnvVars)}",
+                CredentialState.Missing => $"Not configured ({string.Join(", ", s.MissingEnvVars)})",
+                CredentialState.NotRequired => "No credentials required",
+                _ => "Unknown",
+            },
+            StatusBrush = s.State switch
+            {
+                CredentialState.Configured => new SolidColorBrush(Color.FromRgb(63, 185, 80)),
+                CredentialState.Partial => new SolidColorBrush(Color.FromRgb(210, 153, 34)),
+                CredentialState.Missing => new SolidColorBrush(Color.FromRgb(248, 81, 73)),
+                CredentialState.NotRequired => new SolidColorBrush(Color.FromRgb(63, 185, 80)),
+                _ => new SolidColorBrush(Color.FromRgb(139, 148, 158)),
+            },
+            ConfigureVisibility = s.State is CredentialState.Missing or CredentialState.Partial
+                ? Visibility.Visible
+                : Visibility.Collapsed,
+        }).ToList();
+
+        CredentialVaultList.ItemsSource = viewModels;
+    }
+
+    private void ConfigureProviderCredential_Click(object sender, RoutedEventArgs e)
+    {
+        WpfServices.NavigationService.Instance.NavigateTo("AddProviderWizard");
+    }
+
+    // ── Storage Preview ──────────────────────────────────────────
+
+    private void RefreshStoragePreview()
+    {
+        var naming = GetSelectedTag(PreviewNamingCombo) ?? "BySymbol";
+        var compression = GetSelectedTag(PreviewCompressionCombo) ?? "gzip";
+        var symbols = new List<string> { "SPY", "AAPL" };
+
+        var preview = _settingsConfigService.GenerateStoragePreview("data", naming, "daily", compression, symbols);
+        StoragePreviewText.Text = preview;
+
+        var estimate = _settingsConfigService.EstimateDailyStorageSize(symbols.Count, trades: true, quotes: true, depth: false);
+        StorageSizeEstimateText.Text = $"Estimated daily size: ~{estimate} for {symbols.Count} symbols";
+    }
+
+    private void PreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        // Guard against calls during initialization
+        if (StoragePreviewText == null) return;
+        RefreshStoragePreview();
+    }
+
+    private static string? GetSelectedTag(ComboBox combo)
+    {
+        return (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+    }
+
+    // ── Configuration Profiles ──────────────────────────────────
+
+    private void RefreshProfiles()
+    {
+        ProfilesList.ItemsSource = _settingsConfigService.GetProfiles();
+    }
+
+    private void ProfileCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not string profileId) return;
+
+        var profiles = _settingsConfigService.GetProfiles();
+        var profile = profiles.FirstOrDefault(p => p.Id == profileId);
+        if (profile == null) return;
+
+        _notificationService.ShowNotification(
+            "Profile Selected",
+            $"Applied \"{profile.Name}\" profile: {profile.Description}",
+            NotificationType.Info);
     }
 
     private void RefreshStoredCredentials()
@@ -320,7 +438,7 @@ public partial class SettingsPage : Page
 /// <summary>
 /// Credential display information for the settings page.
 /// </summary>
-public class CredentialDisplayInfo
+public sealed class CredentialDisplayInfo
 {
     public string Name { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
@@ -331,10 +449,22 @@ public class CredentialDisplayInfo
 /// <summary>
 /// Activity item for recent activity list.
 /// </summary>
-public class SettingsActivityItem
+public sealed class SettingsActivityItem
 {
     public string Icon { get; set; } = string.Empty;
     public SolidColorBrush IconColor { get; set; } = new(Color.FromRgb(139, 148, 158));
     public string Message { get; set; } = string.Empty;
     public string Time { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// View model for credential vault list items showing per-provider credential status.
+/// </summary>
+public class CredentialVaultItem
+{
+    public string ProviderId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string StatusMessage { get; set; } = string.Empty;
+    public SolidColorBrush StatusBrush { get; set; } = new(Color.FromRgb(139, 148, 158));
+    public Visibility ConfigureVisibility { get; set; } = Visibility.Collapsed;
 }

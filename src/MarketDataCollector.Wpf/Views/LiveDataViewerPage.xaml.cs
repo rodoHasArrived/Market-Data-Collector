@@ -495,7 +495,7 @@ public partial class LiveDataViewerPage : Page
 /// <summary>
 /// Model for live data events in the feed.
 /// </summary>
-public class LiveDataEventModel
+public sealed class LiveDataEventModel
 {
     public string Id { get; set; } = string.Empty;
     public DateTime RawTimestamp { get; set; }
@@ -513,7 +513,7 @@ public class LiveDataEventModel
 /// <summary>
 /// Dialog for adding a new symbol to watch.
 /// </summary>
-public class AddSymbolDialog : Window
+public sealed class AddSymbolDialog : Window
 {
     private readonly TextBox _symbolBox;
 

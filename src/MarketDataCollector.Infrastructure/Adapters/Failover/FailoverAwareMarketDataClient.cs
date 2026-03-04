@@ -305,31 +305,39 @@ public sealed class FailoverAwareMarketDataClient : IMarketDataClient
 
     private async Task TryFailoverConnectAsync(CancellationToken ct)
     {
-        // Try each backup provider in the rule
-        foreach (var kvp in _providers)
+        await _switchLock.WaitAsync(ct);
+        try
         {
-            if (string.Equals(kvp.Key, _activeProviderId, StringComparison.OrdinalIgnoreCase))
-                continue;
+            // Try each backup provider in the rule
+            foreach (var kvp in _providers)
+            {
+                if (string.Equals(kvp.Key, _activeProviderId, StringComparison.OrdinalIgnoreCase))
+                    continue;
 
-            try
-            {
-                _log.Information("Attempting failover connect to {ProviderId}", kvp.Key);
-                await kvp.Value.ConnectAsync(ct);
-                _activeClient = kvp.Value;
-                _activeProviderId = kvp.Key;
-                _failoverService.RecordSuccess(kvp.Key);
-                _log.Information("Failover connect succeeded to {ProviderId}", kvp.Key);
-                return;
+                try
+                {
+                    _log.Information("Attempting failover connect to {ProviderId}", kvp.Key);
+                    await kvp.Value.ConnectAsync(ct);
+                    _activeClient = kvp.Value;
+                    _activeProviderId = kvp.Key;
+                    _failoverService.RecordSuccess(kvp.Key);
+                    _log.Information("Failover connect succeeded to {ProviderId}", kvp.Key);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Failover connect to {ProviderId} also failed", kvp.Key);
+                    _failoverService.RecordFailure(kvp.Key, $"ConnectAsync failed: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Failover connect to {ProviderId} also failed", kvp.Key);
-                _failoverService.RecordFailure(kvp.Key, $"ConnectAsync failed: {ex.Message}");
-            }
+
+            _log.Error("All failover providers exhausted during connect; no provider available");
+            throw new InvalidOperationException("All streaming providers failed to connect.");
         }
-
-        _log.Error("All failover providers exhausted during connect; no provider available");
-        throw new InvalidOperationException("All streaming providers failed to connect.");
+        finally
+        {
+            _switchLock.Release();
+        }
     }
 
     private Task ResubscribeAsync(IMarketDataClient newClient, CancellationToken ct)
