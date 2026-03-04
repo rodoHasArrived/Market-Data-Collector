@@ -502,7 +502,7 @@ public sealed class WatchlistDisplayModel
 /// <summary>
 /// Dialog for creating a new watchlist.
 /// </summary>
-public class CreateWatchlistDialog : Window
+public sealed class CreateWatchlistDialog : Window
 {
     private readonly TextBox _nameBox;
     private readonly TextBox _symbolsBox;
@@ -656,7 +656,7 @@ public class CreateWatchlistDialog : Window
 /// <summary>
 /// Dialog for editing an existing watchlist.
 /// </summary>
-public class EditWatchlistDialog : Window
+public sealed class EditWatchlistDialog : Window
 {
     private readonly TextBox _nameBox;
     private readonly TextBox _symbolsBox;

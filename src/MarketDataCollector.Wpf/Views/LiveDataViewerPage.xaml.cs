@@ -513,7 +513,7 @@ public sealed class LiveDataEventModel
 /// <summary>
 /// Dialog for adding a new symbol to watch.
 /// </summary>
-public class AddSymbolDialog : Window
+public sealed class AddSymbolDialog : Window
 {
     private readonly TextBox _symbolBox;
 

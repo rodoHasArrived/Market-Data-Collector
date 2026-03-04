@@ -806,7 +806,7 @@ public sealed class WatchlistInfo
 /// <summary>
 /// Dialog for saving watchlists.
 /// </summary>
-public class SaveWatchlistDialog : Window
+public sealed class SaveWatchlistDialog : Window
 {
     private readonly TextBox _nameBox;
     private readonly ComboBox _existingCombo;

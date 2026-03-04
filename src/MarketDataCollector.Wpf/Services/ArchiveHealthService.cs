@@ -275,39 +275,36 @@ public sealed class ArchiveHealthService
         return status;
     }
 
-    private static async Task<StorageHealthInfo> GetStorageHealthInfoAsync(string basePath)
+    private static Task<StorageHealthInfo> GetStorageHealthInfoAsync(string basePath)
     {
         var info = new StorageHealthInfo();
 
-        await Task.Run(() =>
+        try
         {
-            try
+            var root = Path.GetPathRoot(basePath);
+            if (string.IsNullOrEmpty(root))
             {
-                var root = Path.GetPathRoot(basePath);
-                if (string.IsNullOrEmpty(root))
-                {
-                    root = Path.GetPathRoot(AppContext.BaseDirectory) ?? "C:\\";
-                }
-
-                var driveInfo = new DriveInfo(root);
-                info.TotalCapacity = driveInfo.TotalSize;
-                info.FreeSpace = driveInfo.AvailableFreeSpace;
-                info.UsedPercent = (1.0 - (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize) * 100;
-                info.DriveType = driveInfo.DriveType.ToString();
-                info.HealthStatus = driveInfo.DriveType switch
-                {
-                    System.IO.DriveType.Fixed or System.IO.DriveType.Removable => "Good",
-                    System.IO.DriveType.Network => "Unknown",
-                    _ => "Unknown"
-                };
+                root = Path.GetPathRoot(AppContext.BaseDirectory) ?? "C:\\";
             }
-            catch (Exception ex)
+
+            var driveInfo = new DriveInfo(root);
+            info.TotalCapacity = driveInfo.TotalSize;
+            info.FreeSpace = driveInfo.AvailableFreeSpace;
+            info.UsedPercent = (1.0 - (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize) * 100;
+            info.DriveType = driveInfo.DriveType.ToString();
+            info.HealthStatus = driveInfo.DriveType switch
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to get drive info: {ex.Message}");
-            }
-        });
+                System.IO.DriveType.Fixed or System.IO.DriveType.Removable => "Good",
+                System.IO.DriveType.Network => "Unknown",
+                _ => "Unknown"
+            };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get drive info: {ex.Message}");
+        }
 
-        return info;
+        return Task.FromResult(info);
     }
 
     private async Task RunVerificationAsync(VerificationJob job, DateTime? since,
@@ -392,35 +389,32 @@ public sealed class ArchiveHealthService
 
     private static async Task<bool> VerifyFileAsync(string filePath)
     {
-        return await Task.Run(() =>
+        try
         {
-            try
+            var fileInfo = new FileInfo(filePath);
+            if (!fileInfo.Exists || fileInfo.Length == 0) return false;
+
+            using var sha256 = SHA256.Create();
+            await using var stream = File.OpenRead(filePath);
+
+            if (filePath.EndsWith(".gz"))
             {
-                var fileInfo = new FileInfo(filePath);
-                if (!fileInfo.Exists || fileInfo.Length == 0) return false;
-
-                using var sha256 = SHA256.Create();
-                using var stream = File.OpenRead(filePath);
-
-                if (filePath.EndsWith(".gz"))
-                {
-                    using var gzipStream = new System.IO.Compression.GZipStream(stream,
-                        System.IO.Compression.CompressionMode.Decompress);
-                    var buffer = new byte[1024];
-                    gzipStream.Read(buffer, 0, buffer.Length);
-                }
-                else
-                {
-                    sha256.ComputeHash(stream);
-                }
-
-                return true;
+                await using var gzipStream = new System.IO.Compression.GZipStream(stream,
+                    System.IO.Compression.CompressionMode.Decompress);
+                var buffer = new byte[1024];
+                await gzipStream.ReadAsync(buffer);
             }
-            catch
+            else
             {
-                return false;
+                await sha256.ComputeHashAsync(stream);
             }
-        });
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static double CalculateOverallHealthScore(ArchiveHealthStatus status)
@@ -475,17 +469,17 @@ public sealed class ArchiveHealthService
     }
 }
 
-public class ArchiveHealthEventArgs : EventArgs
+public sealed class ArchiveHealthEventArgs : EventArgs
 {
     public ArchiveHealthStatus? Status { get; set; }
 }
 
-public class VerificationJobEventArgs : EventArgs
+public sealed class VerificationJobEventArgs : EventArgs
 {
     public VerificationJob? Job { get; set; }
 }
 
-public class ArchiveIssueEventArgs : EventArgs
+public sealed class ArchiveIssueEventArgs : EventArgs
 {
     public ArchiveIssue? Issue { get; set; }
 }

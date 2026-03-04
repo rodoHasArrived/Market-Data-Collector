@@ -819,7 +819,7 @@ public sealed class ResumableJobInfo
 /// <summary>
 /// Dialog for configuring API keys.
 /// </summary>
-public class ApiKeyDialog : Window
+public sealed class ApiKeyDialog : Window
 {
     private readonly TextBox _apiKeyBox;
     private readonly string _providerName;
@@ -934,7 +934,7 @@ public class ApiKeyDialog : Window
 /// <summary>
 /// Dialog for editing scheduled jobs.
 /// </summary>
-public class EditScheduledJobDialog : Window
+public sealed class EditScheduledJobDialog : Window
 {
     private readonly TextBox _nameBox;
     private readonly ComboBox _frequencyCombo;
