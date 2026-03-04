@@ -18,6 +18,7 @@ namespace MarketDataCollector.Tests.Integration;
 /// Creates a full pipeline (FixtureClient -> EventPipeline -> InMemoryStorageSink),
 /// publishes events, then disposes the pipeline and verifies all events reached storage.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class GracefulShutdownIntegrationTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;
