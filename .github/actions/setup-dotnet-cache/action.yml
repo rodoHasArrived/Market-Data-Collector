@@ -4,13 +4,9 @@ author: 'Market Data Collector'
 
 inputs:
   dotnet-version:
-    description: '.NET SDK version to install'
+    description: '.NET SDK version pattern (e.g. 9.0.x). Uses pre-installed SDK when available.'
     required: false
     default: '9.0.x'
-  use-global-json:
-    description: 'When true, install SDK version from global.json for deterministic CI'
-    required: false
-    default: 'true'
   cache-suffix:
     description: 'Optional suffix for cache key to isolate caches between workflows'
     required: false
@@ -24,14 +20,7 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup .NET (global.json)
-      if: inputs.use-global-json == 'true'
-      uses: actions/setup-dotnet@v5.1.0
-      with:
-        global-json-file: global.json
-
-    - name: Setup .NET (version input fallback)
-      if: inputs.use-global-json != 'true'
+    - name: Setup .NET SDK
       uses: actions/setup-dotnet@v5.1.0
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
