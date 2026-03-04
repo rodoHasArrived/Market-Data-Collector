@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\MarketDataCollector.Application\MarketDataCollector.Application.csproj" />
     <ProjectReference Include="..\..\src\MarketDataCollector.Core\MarketDataCollector.Core.csproj" />
     <ProjectReference Include="..\..\src\MarketDataCollector.Domain\MarketDataCollector.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MarketDataCollector.Storage\MarketDataCollector.Storage.csproj" />
   </ItemGroup>
 
 </Project>
