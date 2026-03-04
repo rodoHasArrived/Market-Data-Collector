@@ -78,33 +78,6 @@ internal static class EndpointHelpers
     }
 
     /// <summary>
-    /// Converts an exception into a structured, user-friendly JSON error response
-    /// using FriendlyErrorFormatter for consistent error classification.
-    /// </summary>
-    private static IResult FormatErrorResult(Exception ex, JsonSerializerOptions opts)
-    {
-        var formatted = FriendlyErrorFormatter.Format(ex);
-
-        var statusCode = formatted.Code switch
-        {
-            var c when c.StartsWith("MDC-AUTH") => 401,
-            var c when c.StartsWith("MDC-RATE") => 429,
-            var c when c == "MDC-DATA-001" => 404,
-            _ => 500
-        };
-
-        return Results.Json(new
-        {
-            error = formatted.Title,
-            code = formatted.Code,
-            message = formatted.Message,
-            suggestion = formatted.Suggestion,
-            docs = formatted.DocsLink,
-            details = formatted.Details
-        }, opts, statusCode: statusCode);
-    }
-
-    /// <summary>
     /// Parses a date string or returns today's date.
     /// </summary>
     internal static DateOnly ParseDateOrToday(string? dateStr)

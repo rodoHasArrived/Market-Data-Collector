@@ -61,7 +61,6 @@ public sealed class PreflightChecker
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
-        checks.Add(ValidateProviderCredentials());
 
         // Validate provider credentials if active data source is known
         if (!string.IsNullOrEmpty(activeDataSource))

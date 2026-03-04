@@ -83,8 +83,6 @@ public static class ExportEndpoints
         // Available export formats — wired to real profiles from AnalysisExportService
         group.MapGet(UiApiRoutes.ExportFormats, ([FromServices] AnalysisExportService? exportService) =>
         {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
-
             var formats = new[]
             {
                 new { id = "parquet", name = "Apache Parquet", description = "Columnar format for analytics (Python/pandas, Spark)", extensions = new[] { ".parquet" } },
