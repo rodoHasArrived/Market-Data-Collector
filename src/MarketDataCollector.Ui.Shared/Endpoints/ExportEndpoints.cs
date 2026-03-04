@@ -52,11 +52,14 @@ public static class ExportEndpoints
                 _ => (ExportFormat?)null
             };
 
+            var profileId = req.ProfileId ?? "python-pandas";
+            var baseProfile = exportService.GetProfile(profileId) ?? ExportProfile.PythonPandas;
+
             var exportRequest = new ExportRequest
             {
-                ProfileId = req.ProfileId ?? "python-pandas",
+                ProfileId = profileId,
                 CustomProfile = formatOverride.HasValue
-                    ? new ExportProfile { Id = "custom", Format = formatOverride.Value }
+                    ? baseProfile.WithFormat(formatOverride.Value)
                     : null,
                 Symbols = req.Symbols,
                 StartDate = req.StartDate ?? DateTime.UtcNow.AddDays(-7),
@@ -203,7 +206,8 @@ public static class ExportEndpoints
 
             if (req?.Format?.Equals("parquet", StringComparison.OrdinalIgnoreCase) == true)
             {
-                exportRequest.CustomProfile = new ExportProfile { Id = "orderflow", Format = ExportFormat.Parquet };
+                var baseProfile = exportService.GetProfile(exportRequest.ProfileId) ?? ExportProfile.PythonPandas;
+                exportRequest.CustomProfile = baseProfile.WithFormat(ExportFormat.Parquet);
             }
 
             var result = await exportService.ExportAsync(exportRequest, ct);

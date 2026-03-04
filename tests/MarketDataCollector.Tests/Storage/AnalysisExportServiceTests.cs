@@ -324,4 +324,46 @@ public class AnalysisExportServiceTests : IDisposable
 
         await File.WriteAllTextAsync(filePath, sb.ToString());
     }
+
+    [Fact]
+    public void ExportProfile_WithFormat_ShouldPreserveAllSettingsExceptFormat()
+    {
+        // Arrange - use a profile with non-default settings to make the test meaningful
+        var original = ExportProfile.PythonPandas;
+
+        // Act
+        var modified = original.WithFormat(ExportFormat.Csv);
+
+        // Assert - format is changed
+        modified.Format.Should().Be(ExportFormat.Csv);
+
+        // All other settings should be preserved
+        modified.Id.Should().Be(original.Id);
+        modified.Name.Should().Be(original.Name);
+        modified.Description.Should().Be(original.Description);
+        modified.TargetTool.Should().Be(original.TargetTool);
+        modified.Compression.Type.Should().Be(original.Compression.Type);
+        modified.TimestampSettings.Format.Should().Be(original.TimestampSettings.Format);
+        modified.TimestampSettings.Timezone.Should().Be(original.TimestampSettings.Timezone);
+        modified.IncludeLoaderScript.Should().Be(original.IncludeLoaderScript);
+        modified.IncludeDataDictionary.Should().Be(original.IncludeDataDictionary);
+        modified.FileNamePattern.Should().Be(original.FileNamePattern);
+        modified.SplitBySymbol.Should().Be(original.SplitBySymbol);
+        modified.SplitByDate.Should().Be(original.SplitByDate);
+        modified.MaxRecordsPerFile.Should().Be(original.MaxRecordsPerFile);
+    }
+
+    [Fact]
+    public void ExportProfile_WithFormat_ShouldNotMutateOriginalProfile()
+    {
+        // Arrange
+        var original = ExportProfile.QuantConnectLean; // has Lean format
+
+        // Act
+        var modified = original.WithFormat(ExportFormat.Csv);
+
+        // Assert - original is not mutated
+        original.Format.Should().Be(ExportFormat.Lean);
+        modified.Format.Should().Be(ExportFormat.Csv);
+    }
 }
