@@ -29,16 +29,14 @@
                             <TextBlock Text="Dashboard"
                                        Style="{StaticResource PageTitleStyle}"
                                        VerticalAlignment="Center" />
-                            <Border x:Name="CollectorStatusBadge"
-                                    Background="{StaticResource SuccessColorBrush}"
+                            <Border Background="{Binding CollectorStatusBadgeBackground}"
                                     CornerRadius="4"
                                     Padding="10,4"
                                     Margin="12,0,0,0"
                                     VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal">
                                     <Ellipse Width="6" Height="6" Fill="White" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="CollectorStatusText"
-                                               Text="Running"
+                                    <TextBlock Text="{Binding CollectorStatusText}"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="White"
@@ -47,36 +45,34 @@
                             </Border>
 
                             <!-- Alert Summary Badges -->
-                            <Border x:Name="AlertCriticalBadge"
-                                    Background="{StaticResource ErrorColorBrush}"
+                            <Border Background="{StaticResource ErrorColorBrush}"
                                     CornerRadius="4"
                                     Padding="8,4"
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center"
-                                    Visibility="Collapsed"
+                                    Visibility="{Binding IsAlertCriticalBadgeVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                     ToolTip="Critical alerts requiring immediate attention">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconWarning}"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                FontSize="11" Foreground="White" />
-                                    <TextBlock x:Name="AlertCriticalCount" Text="0"
+                                    <TextBlock Text="{Binding AlertCriticalCount}"
                                                FontSize="12" FontWeight="SemiBold"
                                                Foreground="White" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Border>
-                            <Border x:Name="AlertWarningBadge"
-                                    Background="{StaticResource WarningColorBrush}"
+                            <Border Background="{StaticResource WarningColorBrush}"
                                     CornerRadius="4"
                                     Padding="8,4"
                                     Margin="4,0,0,0"
                                     VerticalAlignment="Center"
-                                    Visibility="Collapsed"
+                                    Visibility="{Binding IsAlertWarningBadgeVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                     ToolTip="Warnings that may need attention">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconInfo}"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                FontSize="11" Foreground="White" />
-                                    <TextBlock x:Name="AlertWarningCount" Text="0"
+                                    <TextBlock Text="{Binding AlertWarningCount}"
                                                FontSize="12" FontWeight="SemiBold"
                                                Foreground="White" Margin="4,0,0,0" />
                                 </StackPanel>
@@ -90,8 +86,7 @@
 
                 <!-- Quick Actions -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button x:Name="StartCollectorButton"
-                            Click="StartCollector_Click"
+                    <Button Command="{Binding StartCollectorCommand}"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
@@ -102,8 +97,7 @@
                             <TextBlock Text="Start" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="StopCollectorButton"
-                            Click="StopCollector_Click"
+                    <Button Command="{Binding StopCollectorCommand}"
                             Style="{StaticResource GhostButtonStyle}"
                             Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
@@ -114,7 +108,7 @@
                             <TextBlock Text="Stop" />
                         </StackPanel>
                     </Button>
-                    <Button Click="RefreshStatus_Click"
+                    <Button Command="{Binding RefreshStatusCommand}"
                             Style="{StaticResource IconButtonStyle}">
                         <TextBlock Text="{StaticResource IconRefresh}"
                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -144,19 +138,21 @@
 
                         <Border Grid.Row="0" HorizontalAlignment="Right"
                                 Background="{StaticResource ConsoleAccentGreenAlpha10Brush}" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
-                            <TextBlock x:Name="PublishedRateText" Text="+1,234/s"
+                            <TextBlock Text="{Binding PublishedRateText}"
                                        FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource SuccessColorBrush}" />
                         </Border>
 
-                        <TextBlock Grid.Row="1" x:Name="PublishedCount" Text="0"
+                        <TextBlock Grid.Row="1" Text="{Binding PublishedCount}"
                                    Style="{StaticResource MetricValueStyle}"
                                    Foreground="{StaticResource SuccessColorBrush}" />
                         <TextBlock Grid.Row="2" Text="PUBLISHED EVENTS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas x:Name="PublishedSparkline" Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline x:Name="PublishedSparklinePath"
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding PublishedSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentGreenAlpha10Brush}" />
+                            <Polyline Points="{Binding PublishedSparkline}"
                                       Stroke="{StaticResource SuccessColorBrush}"
                                       StrokeThickness="2" />
                         </Canvas>
@@ -175,19 +171,21 @@
 
                         <Border Grid.Row="0" HorizontalAlignment="Right"
                                 Background="{StaticResource ConsoleAccentRedAlpha10Brush}" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
-                            <TextBlock x:Name="DroppedRateText" Text="0.01%"
+                            <TextBlock Text="{Binding DroppedRateText}"
                                        FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource ErrorColorBrush}" />
                         </Border>
 
-                        <TextBlock Grid.Row="1" x:Name="DroppedCount" Text="0"
+                        <TextBlock Grid.Row="1" Text="{Binding DroppedCount}"
                                    Style="{StaticResource MetricValueStyle}"
                                    Foreground="{StaticResource ErrorColorBrush}" />
                         <TextBlock Grid.Row="2" Text="DROPPED EVENTS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas x:Name="DroppedSparkline" Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline x:Name="DroppedSparklinePath"
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding DroppedSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentRedAlpha10Brush}" />
+                            <Polyline Points="{Binding DroppedSparkline}"
                                       Stroke="{StaticResource ErrorColorBrush}" StrokeThickness="2" />
                         </Canvas>
                     </Grid>
@@ -205,19 +203,21 @@
 
                         <Border Grid.Row="0" HorizontalAlignment="Right"
                                 Background="{StaticResource ConsoleAccentOrangeAlpha10Brush}" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
-                            <TextBlock x:Name="IntegrityRateText" Text="2 gaps"
+                            <TextBlock Text="{Binding IntegrityRateText}"
                                        FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource WarningColorBrush}" />
                         </Border>
 
-                        <TextBlock Grid.Row="1" x:Name="IntegrityCount" Text="0"
+                        <TextBlock Grid.Row="1" Text="{Binding IntegrityCount}"
                                    Style="{StaticResource MetricValueStyle}"
                                    Foreground="{StaticResource WarningColorBrush}" />
                         <TextBlock Grid.Row="2" Text="INTEGRITY EVENTS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas x:Name="IntegritySparkline" Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline x:Name="IntegritySparklinePath"
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding IntegritySparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentOrangeAlpha10Brush}" />
+                            <Polyline Points="{Binding IntegritySparkline}"
                                       Stroke="{StaticResource WarningColorBrush}" StrokeThickness="2" />
                         </Canvas>
                     </Grid>
@@ -235,19 +235,21 @@
 
                         <Border Grid.Row="0" HorizontalAlignment="Right"
                                 Background="{StaticResource ConsoleAccentBlueAlpha10Brush}" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
-                            <TextBlock x:Name="HistoricalTrendText" Text="Last: 2h ago"
+                            <TextBlock Text="{Binding HistoricalTrendText}"
                                        FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource InfoColorBrush}" />
                         </Border>
 
-                        <TextBlock Grid.Row="1" x:Name="HistoricalCount" Text="0"
+                        <TextBlock Grid.Row="1" Text="{Binding HistoricalCount}"
                                    Style="{StaticResource MetricValueStyle}"
                                    Foreground="{StaticResource InfoColorBrush}" />
                         <TextBlock Grid.Row="2" Text="HISTORICAL BARS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas x:Name="HistoricalSparkline" Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline x:Name="HistoricalSparklinePath"
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding HistoricalSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
+                            <Polyline Points="{Binding HistoricalSparkline}"
                                       Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
                         </Canvas>
                     </Grid>
@@ -272,7 +274,7 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <ComboBox x:Name="ThroughputTimeRange" SelectedIndex="1" MinWidth="100">
+                            <ComboBox SelectedIndex="1" MinWidth="100">
                                 <ComboBoxItem Content="1 min" Tag="1" />
                                 <ComboBoxItem Content="5 min" Tag="5" />
                                 <ComboBoxItem Content="15 min" Tag="15" />
@@ -300,11 +302,10 @@
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" Margin="0,30,0,0" />
                             </StackPanel>
 
-                            <Canvas x:Name="ThroughputChart" Grid.Row="0" Margin="55,0,0,0">
-                                <Polyline x:Name="ThroughputChartPath" Stroke="{StaticResource InfoColorBrush}"
+                            <Canvas Grid.Row="0" Margin="55,0,0,0" ClipToBounds="True">
+                                <Polyline Points="{Binding ThroughputSparkline}"
+                                          Stroke="{StaticResource InfoColorBrush}"
                                           StrokeThickness="2" />
-                                <Polygon x:Name="ThroughputChartFill" Fill="{StaticResource InfoColorBrush}"
-                                         Opacity="0.2" />
                             </Canvas>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="55,8,0,0"
@@ -335,29 +336,29 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Current" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock x:Name="CurrentThroughputText" Text="1,234/s"
+                            <TextBlock Text="{Binding CurrentThroughputText}"
                                        Style="{StaticResource BodyStrongTextBlockStyle}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="24,0,0,0">
                             <TextBlock Text="Average" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock x:Name="AvgThroughputText" Text="1,156/s"
+                            <TextBlock Text="{Binding AvgThroughputText}"
                                        Style="{StaticResource BodyStrongTextBlockStyle}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="24,0,0,0">
                             <TextBlock Text="Peak" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock x:Name="PeakThroughputText" Text="2,045/s"
+                            <TextBlock Text="{Binding PeakThroughputText}"
                                        Style="{StaticResource BodyStrongTextBlockStyle}" />
                         </StackPanel>
                         <StackPanel Grid.Column="3" Margin="24,0,0,0">
                             <TextBlock Text="Data Health" Style="{StaticResource DataLabelStyle}" />
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="DataHealthText" Text="99.9%"
+                                <TextBlock Text="{Binding DataHealthText}"
                                            Style="{StaticResource BodyStrongTextBlockStyle}"
-                                           Foreground="{StaticResource SuccessColorBrush}" />
-                                <TextBlock x:Name="DataHealthIcon" Text="{StaticResource IconSuccess}"
+                                           Foreground="{Binding DataHealthForeground}" />
+                                <TextBlock Text="{Binding DataHealthIconGlyph}"
                                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                                            FontSize="14"
-                                           Foreground="{StaticResource SuccessColorBrush}"
+                                           Foreground="{Binding DataHealthIconForeground}"
                                            Margin="4,0,0,0" />
                             </StackPanel>
                         </StackPanel>
@@ -384,31 +385,31 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
-                            <Border x:Name="TradesStreamBadge" Background="{StaticResource SuccessColorBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,12,0">
+                            <Border Background="{StaticResource SuccessColorBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconExchange}"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                FontSize="12" Foreground="White" />
-                                    <TextBlock x:Name="TradesStreamText" Text="Trades" FontSize="12" Foreground="White" FontWeight="SemiBold" Margin="6,0,0,0" />
-                                    <TextBlock x:Name="TradesStreamCount" Text="(5)" FontSize="11" Foreground="White" Opacity="0.9" Margin="4,0,0,0" />
+                                    <TextBlock Text="Trades" FontSize="12" Foreground="White" FontWeight="SemiBold" Margin="6,0,0,0" />
+                                    <TextBlock Text="(5)" FontSize="11" Foreground="White" Opacity="0.9" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Border>
-                            <Border x:Name="DepthStreamBadge" Background="{StaticResource SuccessColorBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,12,0">
+                            <Border Background="{StaticResource SuccessColorBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconChartLine}"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                FontSize="12" Foreground="White" />
-                                    <TextBlock x:Name="DepthStreamText" Text="Depth" FontSize="12" Foreground="White" FontWeight="SemiBold" Margin="6,0,0,0" />
-                                    <TextBlock x:Name="DepthStreamCount" Text="(3)" FontSize="11" Foreground="White" Opacity="0.9" Margin="4,0,0,0" />
+                                    <TextBlock Text="Depth" FontSize="12" Foreground="White" FontWeight="SemiBold" Margin="6,0,0,0" />
+                                    <TextBlock Text="(3)" FontSize="11" Foreground="White" Opacity="0.9" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Border>
-                            <Border x:Name="QuotesStreamBadge" Background="{StaticResource ConsoleBackgroundActiveBrush}" CornerRadius="4" Padding="8,4">
+                            <Border Background="{StaticResource ConsoleBackgroundActiveBrush}" CornerRadius="4" Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconMarket}"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                FontSize="12" Foreground="White" />
-                                    <TextBlock x:Name="QuotesStreamText" Text="Quotes" FontSize="12" Foreground="White" FontWeight="SemiBold" Margin="6,0,0,0" />
-                                    <TextBlock x:Name="QuotesStreamCount" Text="(0)" FontSize="11" Foreground="White" Opacity="0.9" Margin="4,0,0,0" />
+                                    <TextBlock Text="Quotes" FontSize="12" Foreground="White" FontWeight="SemiBold" Margin="6,0,0,0" />
+                                    <TextBlock Text="(0)" FontSize="11" Foreground="White" Opacity="0.9" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -421,7 +422,7 @@
                                        Margin="0,0,8,0" />
                             <StackPanel>
                                 <TextBlock Text="Collector Uptime" Style="{StaticResource DataLabelStyle}" Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                                <TextBlock x:Name="CollectorUptimeText" Text="0h 0m 0s" FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="{Binding CollectorUptimeText}" FontWeight="SemiBold" FontSize="14" />
                             </StackPanel>
                         </StackPanel>
                     </Grid>
@@ -434,7 +435,7 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <Button x:Name="QuickStartCollectorButton" Style="{StaticResource AccentButtonStyle}" Click="QuickStartCollector_Click" Margin="0,0,8,0">
+                                <Button Command="{Binding StartCollectorCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconPlay}"
                                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -443,7 +444,7 @@
                                         <TextBlock Text="Start Collector" />
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="QuickStopCollectorButton" Click="QuickStopCollector_Click" Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0">
+                                <Button Command="{Binding StopCollectorCommand}" Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconStop}"
                                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -452,17 +453,17 @@
                                         <TextBlock Text="Stop Collector" />
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="QuickPauseCollectorButton" Click="QuickPauseCollector_Click" Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0">
+                                <Button Command="{Binding QuickPauseCollectorCommand}" Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock x:Name="PauseButtonIcon" Text="{StaticResource IconPause}"
+                                        <TextBlock Text="{Binding PauseButtonIconGlyph}"
                                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                    FontSize="14"
                                                    Margin="0,0,6,0" />
-                                        <TextBlock x:Name="PauseButtonText" Text="Pause Collection" />
+                                        <TextBlock Text="{Binding PauseButtonText}" />
                                     </StackPanel>
                                 </Button>
                                 <Rectangle Width="1" Fill="{StaticResource ConsoleBorderBrush}" Margin="8,4" />
-                                <Button Click="ViewLogs_Click" Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0">
+                                <Button Command="{Binding ViewLogsCommand}" Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconTerminal}"
                                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -471,7 +472,7 @@
                                         <TextBlock Text="View Logs" />
                                     </StackPanel>
                                 </Button>
-                                <Button Click="RunBackfill_Click" Style="{StaticResource GhostButtonStyle}">
+                                <Button Command="{Binding RunBackfillCommand}" Style="{StaticResource GhostButtonStyle}">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconCalendar}"
                                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -495,15 +496,15 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBox x:Name="QuickAddSymbolBox"
-                                     Grid.Column="0"
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding QuickAddSymbolText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="Enter symbol (e.g., AAPL)"
                                      MinWidth="200"
                                      Margin="0,0,8,0" />
-                            <CheckBox x:Name="QuickAddTradesCheck" Grid.Column="1" Content="Trades" IsChecked="True" Margin="0,0,8,0" />
-                            <CheckBox x:Name="QuickAddDepthCheck" Grid.Column="2" Content="Depth" Margin="0,0,8,0" />
-                            <CheckBox x:Name="QuickAddQuotesCheck" Grid.Column="3" Content="Quotes" Margin="0,0,8,0" />
-                            <Button Grid.Column="4" Content="Add" Style="{StaticResource AccentButtonStyle}" Click="QuickAddSymbol_Click" />
+                            <CheckBox Grid.Column="1" Content="Trades" IsChecked="True" Margin="0,0,8,0" />
+                            <CheckBox Grid.Column="2" Content="Depth" Margin="0,0,8,0" />
+                            <CheckBox Grid.Column="3" Content="Quotes" Margin="0,0,8,0" />
+                            <Button Grid.Column="4" Content="Add" Style="{StaticResource AccentButtonStyle}" Command="{Binding QuickAddSymbolCommand}" />
                         </Grid>
                     </StackPanel>
                 </StackPanel>
@@ -519,25 +520,25 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,24,0">
-                        <Ellipse x:Name="ConnectionStatusIndicator" Width="16" Height="16"
-                                 Fill="{StaticResource ErrorColorBrush}" />
+                        <Ellipse Width="16" Height="16"
+                                 Fill="{Binding ConnectionStatusFill}" />
                         <StackPanel Margin="12,0,0,0">
-                            <TextBlock x:Name="ConnectionStatusText" Text="Disconnected"
+                            <TextBlock Text="{Binding ConnectionStatusText}"
                                        Style="{StaticResource SectionHeaderStyle}" />
-                            <TextBlock x:Name="LastUpdateText" Text="Last update: --"
+                            <TextBlock Text="{Binding LastUpdateText}"
                                        Style="{StaticResource DataLabelStyle}"
-                                       Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                                       Foreground="{Binding LastUpdateForeground}" />
                         </StackPanel>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Uptime" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock x:Name="UptimeText" Text="2h 34m" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding UptimeText}" FontWeight="SemiBold" />
                         </StackPanel>
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Latency" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock x:Name="LatencyText" Text="12ms" FontWeight="SemiBold" Foreground="{StaticResource SuccessColorBrush}" />
+                            <TextBlock Text="{Binding LatencyText}" FontWeight="SemiBold" Foreground="{StaticResource SuccessColorBrush}" />
                         </StackPanel>
                         <ProgressBar IsIndeterminate="True"
                                      Width="80" Height="6" VerticalAlignment="Center" />
@@ -551,10 +552,10 @@
                     <TextBlock Text="Active Data Provider" Style="{StaticResource SectionHeaderStyle}" />
                     <StackPanel Orientation="Horizontal">
                         <Border Background="{StaticResource ConsoleAccentBlueAlpha10Brush}" CornerRadius="4" Padding="12,6" Margin="0,0,12,0">
-                            <TextBlock x:Name="SelectedDataSourceText" Text="Not Connected"
+                            <TextBlock Text="{Binding SelectedDataSourceText}"
                                        FontWeight="SemiBold" />
                         </Border>
-                        <TextBlock x:Name="ProviderDescriptionText" Text="Awaiting connection"
+                        <TextBlock Text="{Binding ProviderDescriptionText}"
                                    VerticalAlignment="Center"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" />
                     </StackPanel>
@@ -574,13 +575,13 @@
                             <TextBlock Text="Symbol Performance" Style="{StaticResource SectionHeaderStyle}" />
                             <Border Background="{StaticResource ConsoleBackgroundLightBrush}"
                                     CornerRadius="12" Padding="8,4" Margin="12,0,0,0">
-                                <TextBlock x:Name="SymbolCountText" Text="0"
+                                <TextBlock Text="{Binding SymbolCount}"
                                            Style="{StaticResource DataLabelStyle}" />
                             </Border>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <ComboBox x:Name="SymbolSortCombo" SelectedIndex="0" MinWidth="120">
+                            <ComboBox SelectedIndex="0" MinWidth="120">
                                 <ComboBoxItem Content="By Rate" />
                                 <ComboBoxItem Content="By Name" />
                                 <ComboBoxItem Content="By Status" />
@@ -611,8 +612,7 @@
                         </Grid>
                     </Border>
 
-                    <ListView x:Name="SymbolPerformanceList"
-                              ItemsSource="{Binding SymbolPerformanceItems}"
+                    <ListView ItemsSource="{Binding SymbolPerformanceItems}"
                               SelectionMode="Single"
                               MaxHeight="300">
                         <ListView.ItemsPanel>
@@ -686,7 +686,7 @@
                                 <TextBlock Text="Recent Activity" Style="{StaticResource SectionHeaderStyle}" />
                             </StackPanel>
 
-                            <Button Grid.Column="1" Click="ViewAllActivity_Click" Padding="8,4">
+                            <Button Grid.Column="1" Command="{Binding ViewAllActivityCommand}" Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="View All" FontSize="12" />
                                     <TextBlock Text="{StaticResource IconForward}"
@@ -696,7 +696,7 @@
                             </Button>
                         </Grid>
 
-                        <ListView x:Name="ActivityFeedList" MaxHeight="250" SelectionMode="Single"
+                        <ListView MaxHeight="250" SelectionMode="Single"
                                   ItemsSource="{Binding ActivityItems}">
                             <ListView.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -736,9 +736,10 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <TextBlock x:Name="NoActivityText" Text="No recent activity"
+                        <TextBlock Text="No recent activity"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                   FontStyle="Italic" HorizontalAlignment="Center" Visibility="Collapsed" />
+                                   FontStyle="Italic" HorizontalAlignment="Center"
+                                   Visibility="{Binding IsNoActivityVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
                 </Border>
 
@@ -762,7 +763,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                    <TextBlock x:Name="FreshnessScoreText" Text="98%"
+                                <TextBlock Text="98%"
                                                FontSize="32" FontWeight="Bold"
                                                Foreground="{StaticResource SuccessColorBrush}" />
                                     <TextBlock Text="Overall Health" FontSize="12"
@@ -817,7 +818,7 @@
                                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}"
                                            Margin="0,0,8,0" />
-                                <TextBlock x:Name="LastDataUpdateText" Text="Last update: Just now" FontSize="12"
+                                <TextBlock Text="{Binding LastDataUpdateText}" FontSize="12"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
                         </Border>
@@ -837,8 +838,7 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                        <TextBlock x:Name="TotalEventsToday"
-                                   Text="1.2M"
+                        <TextBlock Text="{Binding TotalEventsToday}"
                                    Style="{StaticResource DataValueStyle}"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
@@ -848,8 +848,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                        <TextBlock x:Name="ActiveSymbolsCount"
-                                   Text="8"
+                        <TextBlock Text="{Binding ActiveSymbolsCount}"
                                    Style="{StaticResource DataValueStyle}"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
@@ -859,8 +858,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                        <TextBlock x:Name="StorageUsedText"
-                                   Text="2.4 GB"
+                        <TextBlock Text="2.4 GB"
                                    Style="{StaticResource DataValueStyle}"
                                    Foreground="{StaticResource AccentCyanBrush}"
                                    HorizontalAlignment="Center" />
@@ -870,8 +868,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                        <TextBlock x:Name="DataQualityText"
-                                   Text="99.8%"
+                        <TextBlock Text="{Binding DataQualityText}"
                                    Style="{StaticResource DataValueStyle}"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
@@ -881,8 +878,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="4" HorizontalAlignment="Center">
-                        <TextBlock x:Name="AvgLatencyText"
-                                   Text="12ms"
+                        <TextBlock Text="{Binding AvgLatencyText}"
                                    Style="{StaticResource DataValueStyle}"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
@@ -909,28 +905,30 @@
                                        Margin="0,0,8,0" />
                             <TextBlock Text="Data Integrity Alerts" Style="{StaticResource SectionHeaderStyle}" />
 
-                            <Border x:Name="CriticalAlertsBadge" Background="{StaticResource ErrorColorBrush}" CornerRadius="10"
-                                    Padding="8,2" Margin="8,0,0,0" Visibility="Collapsed">
+                            <Border Background="{StaticResource ErrorColorBrush}" CornerRadius="10"
+                                    Padding="8,2" Margin="8,0,0,0"
+                                    Visibility="{Binding IsCriticalAlertsBadgeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconWarning}" FontSize="10" Foreground="White"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}" />
-                                    <TextBlock x:Name="CriticalAlertsCount" Text="0" FontSize="11"
+                                    <TextBlock Text="{Binding CriticalAlertsCount}" FontSize="11"
                                                Foreground="White" FontWeight="SemiBold" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Border>
-                            <Border x:Name="WarningAlertsBadge" Background="{StaticResource WarningColorBrush}" CornerRadius="10"
-                                    Padding="8,2" Margin="8,0,0,0" Visibility="Collapsed">
+                            <Border Background="{StaticResource WarningColorBrush}" CornerRadius="10"
+                                    Padding="8,2" Margin="8,0,0,0"
+                                    Visibility="{Binding IsWarningAlertsBadgeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconWarning}" FontSize="10" Foreground="White"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}" />
-                                    <TextBlock x:Name="WarningAlertsCount" Text="0" FontSize="11"
+                                    <TextBlock Text="{Binding WarningAlertsCount}" FontSize="11"
                                                Foreground="White" FontWeight="SemiBold" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button x:Name="ClearIntegrityAlertsButton" Click="ClearIntegrityAlerts_Click"
+                            <Button Command="{Binding ClearIntegrityAlertsCommand}"
                                     Padding="8,4" Margin="0,0,8,0">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconDelete}" FontSize="12"
@@ -938,17 +936,17 @@
                                     <TextBlock Text="Clear" FontSize="12" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="ExpandIntegrityPanelButton" Click="ExpandIntegrityPanel_Click" Padding="8,4">
+                            <Button Command="{Binding ExpandIntegrityPanelCommand}" Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock x:Name="ExpandIntegrityIcon" Text="{StaticResource IconChevronDown}" FontSize="12"
+                                    <TextBlock Text="{Binding ExpandIntegrityIconGlyph}" FontSize="12"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}" />
-                                    <TextBlock x:Name="ExpandIntegrityText" Text="Show Details" FontSize="12" Margin="4,0,0,0" />
+                                    <TextBlock Text="{Binding ExpandIntegrityText}" FontSize="12" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                     </Grid>
 
-                    <Grid x:Name="IntegritySummaryGrid" Margin="0,0,0,12">
+                    <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -959,7 +957,7 @@
                         <Border Grid.Column="0" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12,8" Margin="0,0,4,0">
                             <StackPanel>
-                                <TextBlock x:Name="IntegrityTotalEventsText" Text="0" FontSize="20" FontWeight="Bold" />
+                                <TextBlock Text="{Binding IntegrityTotalEventsText}" FontSize="20" FontWeight="Bold" />
                                 <TextBlock Text="Total Events" Style="{StaticResource DataLabelStyle}"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
@@ -968,7 +966,7 @@
                         <Border Grid.Column="1" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12,8" Margin="4,0">
                             <StackPanel>
-                                <TextBlock x:Name="IntegrityLast24hText" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding IntegrityLast24hText}" FontSize="20" FontWeight="Bold"
                                            Foreground="{StaticResource WarningColorBrush}" />
                                 <TextBlock Text="Last 24 Hours" Style="{StaticResource DataLabelStyle}"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" />
@@ -978,7 +976,7 @@
                         <Border Grid.Column="2" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12,8" Margin="4,0">
                             <StackPanel>
-                                <TextBlock x:Name="IntegrityUnacknowledgedText" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding IntegrityUnacknowledgedText}" FontSize="20" FontWeight="Bold"
                                            Foreground="{StaticResource ErrorColorBrush}" />
                                 <TextBlock Text="Unacknowledged" Style="{StaticResource DataLabelStyle}"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" />
@@ -988,19 +986,19 @@
                         <Border Grid.Column="3" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12,8" Margin="4,0,0,0">
                             <StackPanel>
-                                <TextBlock x:Name="IntegrityMostAffectedText" Text="N/A" FontSize="14" FontWeight="Bold" />
+                                <TextBlock Text="{Binding IntegrityMostAffectedText}" FontSize="14" FontWeight="Bold" />
                                 <TextBlock Text="Most Affected" Style="{StaticResource DataLabelStyle}"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <StackPanel x:Name="IntegrityDetailsPanel" Visibility="Collapsed">
+                    <StackPanel Visibility="{Binding IsIntegrityDetailsPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Rectangle Fill="{StaticResource ConsoleBorderBrush}" Height="1" Margin="0,4" />
 
                         <TextBlock Text="Recent Integrity Events" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,4,0,8" />
 
-                        <ListView x:Name="IntegrityEventsList" MaxHeight="300" SelectionMode="Single"
+                        <ListView MaxHeight="300" SelectionMode="Single"
                                   ItemsSource="{Binding IntegrityEventItems}">
                             <ListView.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -1046,12 +1044,14 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <TextBlock x:Name="NoIntegrityEventsText" Text="No integrity events recorded"
+                        <TextBlock Text="No integrity events recorded"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" FontStyle="Italic"
-                                   HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,8,0,0" />
+                                   HorizontalAlignment="Center"
+                                   Visibility="{Binding IsNoIntegrityEventsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                   Margin="0,8,0,0" />
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-                            <Button Click="ViewAllIntegrityEvents_Click" Margin="0,0,8,0">
+                            <Button Command="{Binding ViewAllIntegrityEventsCommand}" Margin="0,0,8,0">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="View All Events" FontSize="12" />
                                     <TextBlock Text="{StaticResource IconForward}"
@@ -1059,7 +1059,7 @@
                                                FontSize="10" Margin="4,0,0,0" />
                                 </StackPanel>
                             </Button>
-                            <Button Click="ExportIntegrityReport_Click">
+                            <Button Command="{Binding ExportIntegrityReportCommand}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{StaticResource IconExport}"
                                                FontFamily="{StaticResource SymbolThemeFontFamily}"

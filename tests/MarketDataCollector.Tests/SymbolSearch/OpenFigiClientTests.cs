@@ -2,7 +2,8 @@ using System.Net;
 using System.Text;
 using FluentAssertions;
 using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
 using Xunit;
 
 namespace MarketDataCollector.Tests.SymbolSearch;

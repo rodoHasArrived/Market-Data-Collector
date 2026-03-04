@@ -104,7 +104,8 @@ public static class SymbolEndpoints
                         files = result.Results?.Take(10).Select(f => new { f.Path, f.SizeBytes, f.EventCount })
                     };
                 }
-                catch { /* storage search not critical */ }
+                catch (IOException) { /* storage search not critical - file access issue */ }
+                catch (InvalidOperationException) { /* storage search not critical - service issue */ }
             }
 
             return Results.Json(new
@@ -445,6 +446,28 @@ public static class SymbolEndpoints
         .Produces(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+    }
+
+    /// <summary>
+    /// Maps the /api/indices endpoints for index constituent data.
+    /// </summary>
+    public static void MapIndexEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
+    {
+        var group = app.MapGroup("").WithTags("Indices");
+
+        // Index constituents
+        group.MapGet(UiApiRoutes.IndicesConstituents, (string indexName) =>
+        {
+            return Results.Json(new
+            {
+                index = indexName,
+                constituents = Array.Empty<object>(),
+                message = $"Index '{indexName}' constituent data is not yet available. Configure an index data provider.",
+                timestamp = DateTimeOffset.UtcNow
+            }, jsonOptions);
+        })
+        .WithName("GetIndexConstituents")
+        .Produces(200);
     }
 }
 

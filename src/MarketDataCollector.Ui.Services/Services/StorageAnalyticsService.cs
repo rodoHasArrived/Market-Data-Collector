@@ -409,7 +409,7 @@ public sealed class StorageAnalyticsService
 /// <summary>
 /// Storage analytics data.
 /// </summary>
-public class StorageAnalytics
+public sealed class StorageAnalytics
 {
     public DateTime? LastUpdated { get; set; }
     public long TotalSizeBytes { get; set; }
@@ -432,7 +432,7 @@ public class StorageAnalytics
 /// Per-symbol storage analytics information.
 /// Used internally by StorageAnalyticsService for analytics calculations.
 /// </summary>
-public class SymbolAnalyticsInfo
+public sealed class SymbolAnalyticsInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
@@ -445,7 +445,7 @@ public class SymbolAnalyticsInfo
 /// <summary>
 /// Storage analytics event args.
 /// </summary>
-public class StorageAnalyticsEventArgs : EventArgs
+public sealed class StorageAnalyticsEventArgs : EventArgs
 {
     public StorageAnalytics? Analytics { get; set; }
 }
@@ -453,7 +453,7 @@ public class StorageAnalyticsEventArgs : EventArgs
 /// <summary>
 /// Drive storage information.
 /// </summary>
-public class DriveStorageInfo
+public sealed class DriveStorageInfo
 {
     public string DriveName { get; set; } = string.Empty;
     public long TotalBytes { get; set; }

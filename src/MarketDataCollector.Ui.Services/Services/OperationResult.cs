@@ -3,7 +3,7 @@ namespace MarketDataCollector.Ui.Services;
 /// <summary>
 /// Generic operation result with success/failure status and messages.
 /// </summary>
-public class OperationResult
+public sealed class OperationResult
 {
     public bool Success { get; set; }
     public string? Message { get; set; }

@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Api;
 /// <summary>
 /// Status response from the core service.
 /// </summary>
-public class StatusResponse
+public sealed class StatusResponse
 {
     [JsonPropertyName("isConnected")]
     public bool IsConnected { get; set; }
@@ -26,7 +26,7 @@ public class StatusResponse
 /// <summary>
 /// Metrics data snapshot with staleness and provenance tracking.
 /// </summary>
-public class MetricsData
+public sealed class MetricsData
 {
     [JsonPropertyName("published")]
     public long Published { get; set; }
@@ -84,7 +84,7 @@ public class MetricsData
 /// <summary>
 /// Pipeline statistics.
 /// </summary>
-public class PipelineData
+public sealed class PipelineData
 {
     [JsonPropertyName("publishedCount")]
     public long PublishedCount { get; set; }
@@ -114,7 +114,7 @@ public class PipelineData
 /// <summary>
 /// Health check response.
 /// </summary>
-public class HealthCheckResponse
+public sealed class HealthCheckResponse
 {
     [JsonPropertyName("status")]
     public string Status { get; set; } = "unknown";
@@ -132,7 +132,7 @@ public class HealthCheckResponse
 /// <summary>
 /// Individual health check item.
 /// </summary>
-public class HealthCheckItem
+public sealed class HealthCheckItem
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -147,7 +147,7 @@ public class HealthCheckItem
 /// <summary>
 /// Health summary response for the /api/health/summary endpoint (D7).
 /// </summary>
-public class HealthSummaryResponse
+public sealed class HealthSummaryResponse
 {
     [JsonPropertyName("timestamp")]
     public DateTimeOffset Timestamp { get; set; }
@@ -168,7 +168,7 @@ public class HealthSummaryResponse
 /// <summary>
 /// Provider counts for health summary response (D7).
 /// </summary>
-public class HealthSummaryProviders
+public sealed class HealthSummaryProviders
 {
     [JsonPropertyName("streaming")]
     public int Streaming { get; set; }
@@ -186,7 +186,7 @@ public class HealthSummaryProviders
 /// <summary>
 /// Backfill provider information.
 /// </summary>
-public class BackfillProviderInfo
+public sealed class BackfillProviderInfo
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -207,7 +207,7 @@ public class BackfillProviderInfo
 /// <summary>
 /// Backfill operation result DTO for API responses.
 /// </summary>
-public class BackfillResultDto
+public sealed class BackfillResultDto
 {
     [JsonPropertyName("success")]
     public bool Success { get; set; }
@@ -237,7 +237,7 @@ public class BackfillResultDto
 /// <summary>
 /// Per-symbol backfill result.
 /// </summary>
-public class SymbolBackfillResult
+public sealed class SymbolBackfillResult
 {
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = string.Empty;
@@ -258,7 +258,7 @@ public class SymbolBackfillResult
 /// <summary>
 /// Backfill request.
 /// </summary>
-public class BackfillRequest
+public sealed class BackfillRequest
 {
     [JsonPropertyName("provider")]
     public string? Provider { get; set; }
@@ -280,7 +280,7 @@ public class BackfillRequest
 /// Tracks freshness and provenance of metrics for a specific symbol or subsystem.
 /// Used to show staleness indicators and provider source badges in the UI.
 /// </summary>
-public class MetricsFreshness
+public sealed class MetricsFreshness
 {
     /// <summary>
     /// The symbol or subsystem this freshness record applies to.
@@ -346,7 +346,7 @@ public static class FreshnessStates
 /// <summary>
 /// Storage analytics data.
 /// </summary>
-public class StorageAnalytics
+public sealed class StorageAnalytics
 {
     [JsonPropertyName("totalSizeBytes")]
     public long TotalSizeBytes { get; set; }
@@ -388,7 +388,7 @@ public class StorageAnalytics
 /// <summary>
 /// Per-symbol storage information for analytics breakdown.
 /// </summary>
-public class StorageSymbolBreakdown
+public sealed class StorageSymbolBreakdown
 {
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = string.Empty;

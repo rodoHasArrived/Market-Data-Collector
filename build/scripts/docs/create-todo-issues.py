@@ -99,10 +99,20 @@ def load_todos(path: Path) -> list[TodoItem]:
         raise ValueError(f"Expected 'todos' to be a list, got {type(todos_list).__name__}")
     
     items = []
-    for raw in todos_list:
+    for index, raw in enumerate(raw_todos):
         if not isinstance(raw, dict):
-            print(f"Warning: skipping non-dict TODO entry: {raw}", file=sys.stderr)
-            continue
+            raise ValueError(
+                f"TODO item at index {index} must be a JSON object, got {type(raw).__name__}"
+            )
+        try:
+            line_value = raw.get("line", 0)
+            line = int(line_value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid 'line' value for TODO item at index {index} "
+                f"in file {raw.get('file', '<unknown>')!r}: {line_value!r}"
+            ) from exc
+
         items.append(
             TodoItem(
                 type=str(raw.get("type", "TODO")),
@@ -151,7 +161,7 @@ def ensure_label(repo: str, token: str, label: str, dry_run: bool) -> None:
 
 
 def find_existing_issue(repo: str, token: str, marker: str) -> int | None:
-    query = urllib.parse.quote(f'repo:{repo} "{marker}" in:body')
+    query = urllib.parse.quote(f'repo:{repo} "{marker}" in:body is:issue is:open')
     url = f"https://api.github.com/search/issues?q={query}&per_page=1"
     try:
         result = gh_request("GET", url, token)
@@ -239,17 +249,20 @@ def main() -> int:
 
     if not untracked:
         print("No untracked TODO items found.")
-        summary = {
-            "created": 0,
-            "existing": 0,
-            "dry_run": 0,
-            "skipped": 0,
-            "total_untracked": 0,
-            "issues": [],
-        }
         if args.output_json:
+            empty_summary = {
+                "created": 0,
+                "existing": 0,
+                "failed": 0,
+                "skipped_limit": 0,
+                "total_untracked": 0,
+                "dry_run": args.dry_run,
+                "repo": args.repo,
+                "label": args.label,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+            }
             args.output_json.parent.mkdir(parents=True, exist_ok=True)
-            args.output_json.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+            args.output_json.write_text(json.dumps(empty_summary, indent=2) + "\n", encoding="utf-8")
         return 0
 
     if not args.dry_run:

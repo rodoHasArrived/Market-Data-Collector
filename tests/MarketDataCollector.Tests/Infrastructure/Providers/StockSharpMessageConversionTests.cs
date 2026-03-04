@@ -5,7 +5,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace MarketDataCollector.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Golden-sample tests for StockSharp message conversion output.
@@ -368,7 +368,7 @@ public sealed class StockSharpMessageConversionTests
     public void MessageConverter_Stub_ThrowsNotSupported_ForTrade()
     {
         // When STOCKSHARP is not defined, the converter stubs should throw
-        var act = () => MarketDataCollector.Infrastructure.Providers.StockSharp.Converters.MessageConverter.ToTrade(
+        var act = () => MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters.MessageConverter.ToTrade(
             new object(), "AAPL");
 
         act.Should().Throw<NotSupportedException>();
@@ -377,7 +377,7 @@ public sealed class StockSharpMessageConversionTests
     [Fact]
     public void MessageConverter_Stub_ThrowsNotSupported_ForLOBSnapshot()
     {
-        var act = () => MarketDataCollector.Infrastructure.Providers.StockSharp.Converters.MessageConverter.ToLOBSnapshot(
+        var act = () => MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters.MessageConverter.ToLOBSnapshot(
             new object(), "AAPL");
 
         act.Should().Throw<NotSupportedException>();
@@ -386,7 +386,7 @@ public sealed class StockSharpMessageConversionTests
     [Fact]
     public void MessageConverter_Stub_ThrowsNotSupported_ForBboQuote()
     {
-        var act = () => MarketDataCollector.Infrastructure.Providers.StockSharp.Converters.MessageConverter.ToBboQuote(
+        var act = () => MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters.MessageConverter.ToBboQuote(
             new object(), "AAPL");
 
         act.Should().Throw<NotSupportedException>();
@@ -395,7 +395,7 @@ public sealed class StockSharpMessageConversionTests
     [Fact]
     public void MessageConverter_Stub_ThrowsNotSupported_ForHistoricalBar()
     {
-        var act = () => MarketDataCollector.Infrastructure.Providers.StockSharp.Converters.MessageConverter.ToHistoricalBar(
+        var act = () => MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters.MessageConverter.ToHistoricalBar(
             new object(), "AAPL");
 
         act.Should().Throw<NotSupportedException>();

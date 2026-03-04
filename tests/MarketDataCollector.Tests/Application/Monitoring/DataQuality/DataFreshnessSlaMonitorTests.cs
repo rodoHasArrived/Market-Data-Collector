@@ -522,7 +522,7 @@ public sealed class DataFreshnessSlaMonitorMarketHoursTests : IDisposable
         var status = monitor.GetSymbolStatus("AAPL");
 
         // Assert - if outside market hours, state should be OutsideMarketHours
-        // Note: Actual result depends on current time, so we check the logic is working
+        // NOTE: Actual result depends on current time, so we check the logic is working
         status.Should().NotBeNull();
         if (!monitor.IsMarketOpen())
         {

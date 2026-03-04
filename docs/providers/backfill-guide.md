@@ -103,7 +103,7 @@ Check backfill status via:
 | Class | Location | Purpose |
 |-------|----------|---------|
 | `HistoricalBackfillService` | `Application/Subscriptions/` | Orchestrates backfill jobs |
-| `CompositeHistoricalDataProvider` | `Infrastructure/Providers/Backfill/` | Multi-provider failover |
+| `CompositeHistoricalDataProvider` | `Infrastructure/Adapters/Core/` | Multi-provider failover |
 | `BackfillJobQueue` | `Application/Subscriptions/` | Priority queue management |
 | `DataQualityService` | `Storage/Services/` | Quality assessment |
 

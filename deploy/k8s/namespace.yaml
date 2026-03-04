@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: market-data-collector
+  labels:
+    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/part-of: mdc

@@ -86,7 +86,7 @@ public sealed class ConfigStore
     /// </summary>
     public AppConfig Load() => LoadConfig(ConfigPath);
 
-    public async Task SaveAsync(AppConfig cfg)
+    public async Task SaveAsync(AppConfig cfg, CancellationToken ct = default)
     {
         try
         {
@@ -96,7 +96,7 @@ public sealed class ConfigStore
             {
                 Directory.CreateDirectory(dir);
             }
-            await File.WriteAllTextAsync(ConfigPath, json);
+            await File.WriteAllTextAsync(ConfigPath, json, ct);
         }
         catch (Exception ex)
         {

@@ -54,7 +54,7 @@ public sealed class ArchivalStorageService : IStorageSink
         await RecoverUncommittedRecordsAsync(ct);
 
         // Start background flush task
-        _backgroundFlushTask = Task.Run(() => BackgroundFlushLoopAsync(_cts.Token), _cts.Token);
+        _backgroundFlushTask = BackgroundFlushLoopAsync(_cts.Token);
 
         _log.Information("Archival storage service initialized");
     }

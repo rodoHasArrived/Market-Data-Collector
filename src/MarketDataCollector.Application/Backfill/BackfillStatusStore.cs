@@ -27,7 +27,11 @@ public sealed class BackfillStatusStore
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
         var json = JsonSerializer.Serialize(result, JsonOptions);
-        await File.WriteAllTextAsync(_path, json, ct);
+        // Write to temp file then rename for atomicity — prevents TryRead() from
+        // seeing a partially written file if called concurrently.
+        var tempPath = _path + ".tmp";
+        await File.WriteAllTextAsync(tempPath, json, ct);
+        File.Move(tempPath, _path, overwrite: true);
     }
 
     public BackfillResult? TryRead()

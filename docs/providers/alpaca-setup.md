@@ -249,7 +249,7 @@ var bars = await provider.GetBarsAsync(
 ### File Locations
 
 ```
-src/MarketDataCollector/Infrastructure/Providers/
+src/MarketDataCollector/Infrastructure/Adapters/
 ├── Alpaca/
 │   └── AlpacaMarketDataClient.cs     # Real-time streaming
 └── Backfill/

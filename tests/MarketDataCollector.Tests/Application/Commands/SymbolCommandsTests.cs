@@ -16,7 +16,7 @@ public sealed class SymbolCommandsTests
         .WriteTo.Console()
         .CreateLogger();
 
-    // Note: SymbolCommands requires a SymbolManagementService which needs a ConfigStore.
+    // NOTE: SymbolCommands requires a SymbolManagementService which needs a ConfigStore.
     // For CanHandle tests we can use a stub since CanHandle doesn't touch the service.
     // For ExecuteAsync tests that require validation (missing value), we need the real command.
 
@@ -105,56 +105,56 @@ public sealed class SymbolCommandsTests
     [Fact]
     public void ParseSymbolFile_OnePerLine_ParsesCorrectly()
     {
-        var path = WriteTempFile("AAPL\nMSFT\nGOOGL\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("AAPL\nMSFT\nGOOGL\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
     }
 
     [Fact]
     public void ParseSymbolFile_CommaSeparated_ParsesCorrectly()
     {
-        var path = WriteTempFile("AAPL,MSFT,GOOGL");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("AAPL,MSFT,GOOGL");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
     }
 
     [Fact]
     public void ParseSymbolFile_CsvWithHeader_ExtractsFirstColumn()
     {
-        var path = WriteTempFile("Symbol,Name,Exchange\nAAPL,Apple Inc.,NASDAQ\nMSFT,Microsoft,NASDAQ\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("Symbol,Name,Exchange\nAAPL,Apple Inc.,NASDAQ\nMSFT,Microsoft,NASDAQ\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
     }
 
     [Fact]
     public void ParseSymbolFile_SkipsComments()
     {
-        var path = WriteTempFile("# This is a comment\nAAPL\n# Another comment\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("# This is a comment\nAAPL\n# Another comment\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
     }
 
     [Fact]
     public void ParseSymbolFile_SkipsEmptyLines()
     {
-        var path = WriteTempFile("AAPL\n\n\nMSFT\n  \nGOOGL\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("AAPL\n\n\nMSFT\n  \nGOOGL\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
     }
 
     [Fact]
     public void ParseSymbolFile_InvalidSymbols_AreExcluded()
     {
-        var path = WriteTempFile("AAPL\nINVALID SYMBOL WITH SPACES\n@#$%\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("AAPL\nINVALID SYMBOL WITH SPACES\n@#$%\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
     }
 
     [Fact]
     public void ParseSymbolFile_Deduplicates_CaseInsensitive()
     {
-        var path = WriteTempFile("AAPL\naapl\nAapl\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("AAPL\naapl\nAapl\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().HaveCount(2);
         result.Should().Contain("AAPL");
         result.Should().Contain("MSFT");
@@ -163,24 +163,24 @@ public sealed class SymbolCommandsTests
     [Fact]
     public void ParseSymbolFile_NormalizesToUpperCase()
     {
-        var path = WriteTempFile("aapl\nmsft\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("aapl\nmsft\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
     }
 
     [Fact]
     public void ParseSymbolFile_EmptyFile_ReturnsEmpty()
     {
-        var path = WriteTempFile("");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEmpty();
     }
 
     [Fact]
     public void ParseSymbolFile_SymbolsWithDotsAndSlashes_AreValid()
     {
-        var path = WriteTempFile("BRK.B\nBTC/USD\nSPY-P\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("BRK.B\nBTC/USD\nSPY-P\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "BRK.B", "BTC/USD", "SPY-P" });
     }
 
@@ -188,17 +188,25 @@ public sealed class SymbolCommandsTests
     public void ParseSymbolFile_SymbolTooLong_IsExcluded()
     {
         var longSymbol = new string('A', 21);
-        var path = WriteTempFile($"AAPL\n{longSymbol}\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create($"AAPL\n{longSymbol}\nMSFT\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
     }
 
     [Fact]
     public void ParseSymbolFile_CommaSeparatedOnMultipleLines_ParsesAll()
     {
-        var path = WriteTempFile("AAPL,MSFT\nGOOGL,AMZN\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
+        using var tmp = TempFile.Create("AAPL,MSFT\nGOOGL,AMZN\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
         result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL", "AMZN" });
+    }
+
+    [Fact]
+    public void ParseSymbolFile_CsvWithTickerHeader_ExtractsFirstColumn()
+    {
+        using var tmp = TempFile.Create("Ticker,Name,Exchange\nAAPL,Apple Inc.,NASDAQ\nMSFT,Microsoft,NASDAQ\n");
+        var result = SymbolCommands.ParseSymbolFile(tmp.Path);
+        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
     }
 
     [Fact]
@@ -208,11 +216,24 @@ public sealed class SymbolCommandsTests
         cmd.CanHandle(new[] { "--symbols-import" }).Should().BeTrue();
     }
 
-    private static string WriteTempFile(string content)
+    // Disposable helper so callers can delete the temp file after the test completes.
+    private sealed class TempFile : IDisposable
     {
-        var path = Path.Combine(Path.GetTempPath(), $"mdc-test-symbols-{Guid.NewGuid():N}.txt");
-        File.WriteAllText(path, content);
-        return path;
+        public string Path { get; }
+
+        private TempFile(string path) => Path = path;
+
+        public static TempFile Create(string content)
+        {
+            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"mdc-test-symbols-{Guid.NewGuid():N}.txt");
+            File.WriteAllText(path, content);
+            return new TempFile(path);
+        }
+
+        public void Dispose()
+        {
+            try { File.Delete(Path); } catch (IOException) { }
+        }
     }
 
     #endregion

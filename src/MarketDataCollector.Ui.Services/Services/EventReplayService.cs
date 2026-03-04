@@ -259,18 +259,18 @@ public sealed class EventReplayService
 
 #region Event Args
 
-public class ReplayStateChangedEventArgs : EventArgs
+public sealed class ReplayStateChangedEventArgs : EventArgs
 {
     public string SessionId { get; set; } = string.Empty;
     public ReplayState State { get; set; }
 }
 
-public class ReplayEventArgs : EventArgs
+public sealed class ReplayEventArgs : EventArgs
 {
     public ReplayEvent? Event { get; set; }
 }
 
-public class ReplayProgressEventArgs : EventArgs
+public sealed class ReplayProgressEventArgs : EventArgs
 {
     public string SessionId { get; set; } = string.Empty;
     public long EventsReplayed { get; set; }
@@ -284,14 +284,14 @@ public class ReplayProgressEventArgs : EventArgs
 
 #region Result Classes
 
-public class ReplayFilesResult
+public sealed class ReplayFilesResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<ReplayFileInfo> Files { get; set; } = new();
 }
 
-public class ReplayFileInfo
+public sealed class ReplayFileInfo
 {
     public string Path { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
@@ -303,7 +303,7 @@ public class ReplayFileInfo
     public bool IsCompressed { get; set; }
 }
 
-public class ReplayOptions
+public sealed class ReplayOptions
 {
     public string? FilePath { get; set; }
     public string? Symbol { get; set; }
@@ -315,7 +315,7 @@ public class ReplayOptions
     public bool PreserveTiming { get; set; } = true;
 }
 
-public class ReplayStartResult
+public sealed class ReplayStartResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -324,7 +324,7 @@ public class ReplayStartResult
     public TimeSpan EstimatedDuration { get; set; }
 }
 
-public class ReplayStatus
+public sealed class ReplayStatus
 {
     public ReplayState State { get; set; }
     public string? SessionId { get; set; }
@@ -348,7 +348,7 @@ public enum ReplayState
     Error
 }
 
-public class EventPreviewResult
+public sealed class EventPreviewResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -356,7 +356,7 @@ public class EventPreviewResult
     public long TotalCount { get; set; }
 }
 
-public class ReplayEvent
+public sealed class ReplayEvent
 {
     public string EventType { get; set; } = string.Empty;
     public string Symbol { get; set; } = string.Empty;
@@ -364,7 +364,7 @@ public class ReplayEvent
     public string? Data { get; set; }
 }
 
-public class ReplayFileStats
+public sealed class ReplayFileStats
 {
     public long EventCount { get; set; }
     public DateTime FirstEventTime { get; set; }
@@ -377,19 +377,19 @@ public class ReplayFileStats
 
 #region API Response Classes
 
-public class ReplayFilesResponse
+public sealed class ReplayFilesResponse
 {
     public List<ReplayFileInfo>? Files { get; set; }
 }
 
-public class ReplayStartResponse
+public sealed class ReplayStartResponse
 {
     public string? SessionId { get; set; }
     public long TotalEvents { get; set; }
     public double EstimatedDurationSeconds { get; set; }
 }
 
-public class EventPreviewResponse
+public sealed class EventPreviewResponse
 {
     public List<ReplayEvent>? Events { get; set; }
     public long TotalCount { get; set; }

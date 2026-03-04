@@ -198,7 +198,7 @@ public class WebSocketHeartbeatTests : IAsyncLifetime
         };
 
         // Assert - Event subscription should not throw
-        // Note: We can't directly invoke the event from outside the class
+        // NOTE: We can't directly invoke the event from outside the class
         // The test validates that the subscription mechanism works
         heartbeat.Should().NotBeNull();
     }

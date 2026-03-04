@@ -1164,7 +1164,7 @@ public sealed class AnalysisExportWizardService
 /// <summary>
 /// Export profile for a specific analysis tool.
 /// </summary>
-public class ExportProfile
+public sealed class ExportProfile
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -1181,7 +1181,7 @@ public class ExportProfile
 /// <summary>
 /// Data type available for export.
 /// </summary>
-public class ExportDataType
+public sealed class ExportDataType
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -1192,7 +1192,7 @@ public class ExportDataType
 /// <summary>
 /// Export configuration.
 /// </summary>
-public class ExportConfiguration
+public sealed class ExportConfiguration
 {
     public ExportProfile Profile { get; set; } = new();
     public string[] Symbols { get; set; } = Array.Empty<string>();
@@ -1208,7 +1208,7 @@ public class ExportConfiguration
 /// <summary>
 /// Export size and duration estimate.
 /// </summary>
-public class ExportEstimate
+public sealed class ExportEstimate
 {
     public long TotalRecords { get; set; }
     public long AvailableRecords { get; set; }
@@ -1233,7 +1233,7 @@ public class ExportEstimate
 /// <summary>
 /// Pre-export data quality report.
 /// </summary>
-public class PreExportQualityReport
+public sealed class PreExportQualityReport
 {
     public DateTime GeneratedAt { get; set; }
     public string[] Symbols { get; set; } = Array.Empty<string>();
@@ -1250,7 +1250,7 @@ public class PreExportQualityReport
 /// <summary>
 /// Quality info for a single symbol.
 /// </summary>
-public class SymbolQualityInfo
+public sealed class SymbolQualityInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public double Completeness { get; set; }
@@ -1262,7 +1262,7 @@ public class SymbolQualityInfo
 /// <summary>
 /// Export progress information.
 /// </summary>
-public class ExportProgress
+public sealed class ExportProgress
 {
     public string CurrentSymbol { get; set; } = string.Empty;
     public int ProcessedSymbols { get; set; }

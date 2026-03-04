@@ -483,7 +483,7 @@ public sealed class SymbolManagementService
 
 #region Result Classes
 
-public class SymbolListResult
+public sealed class SymbolListResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -492,7 +492,7 @@ public class SymbolListResult
     public bool FromLocalConfig { get; set; }
 }
 
-public class SymbolInfo
+public sealed class SymbolInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public bool SubscribeTrades { get; set; }
@@ -510,7 +510,7 @@ public class SymbolInfo
     public long TotalQuotes { get; set; }
 }
 
-public class SymbolDetailedStatus
+public sealed class SymbolDetailedStatus
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Error { get; set; }
@@ -551,7 +551,7 @@ public class SymbolDetailedStatus
     public string? MappedProviderSymbol { get; set; }
 }
 
-public class SymbolOperationResult
+public sealed class SymbolOperationResult
 {
     public bool Success { get; set; }
     public string Symbol { get; set; } = string.Empty;
@@ -559,7 +559,7 @@ public class SymbolOperationResult
     public string? Error { get; set; }
 }
 
-public class BulkSymbolOperationResult
+public sealed class BulkSymbolOperationResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -568,7 +568,7 @@ public class BulkSymbolOperationResult
     public List<string> FailedSymbols { get; set; } = new();
 }
 
-public class SymbolStatistics
+public sealed class SymbolStatistics
 {
     public int TotalConfigured { get; set; }
     public int TotalMonitored { get; set; }
@@ -581,7 +581,7 @@ public class SymbolStatistics
     public DateTime? LastUpdateTime { get; set; }
 }
 
-public class SymbolValidationResult
+public sealed class SymbolValidationResult
 {
     public string Symbol { get; set; } = string.Empty;
     public bool IsValid { get; set; }
@@ -592,7 +592,7 @@ public class SymbolValidationResult
     public bool IsAvailableForTrading { get; set; }
 }
 
-public class SymbolArchiveInfo
+public sealed class SymbolArchiveInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public bool HasData { get; set; }
@@ -604,7 +604,7 @@ public class SymbolArchiveInfo
     public List<ArchiveFileInfo> Files { get; set; } = new();
 }
 
-public class ArchiveFileInfo
+public sealed class ArchiveFileInfo
 {
     public string FileName { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
@@ -618,7 +618,7 @@ public class ArchiveFileInfo
 
 #region API Request/Response Classes
 
-public class AddSymbolRequest
+public sealed class AddSymbolRequest
 {
     public string Symbol { get; set; } = string.Empty;
     public bool SubscribeTrades { get; set; }
@@ -629,20 +629,20 @@ public class AddSymbolRequest
     public string Currency { get; set; } = "USD";
 }
 
-public class SymbolListResponse
+public sealed class SymbolListResponse
 {
     public SymbolInfo[]? Symbols { get; set; }
     public int TotalCount { get; set; }
 }
 
-public class SymbolOperationResponse
+public sealed class SymbolOperationResponse
 {
     public bool Success { get; set; }
     public string? Message { get; set; }
     public string? Error { get; set; }
 }
 
-public class BulkSymbolOperationResponse
+public sealed class BulkSymbolOperationResponse
 {
     public bool Success { get; set; }
     public int SuccessCount { get; set; }
@@ -654,7 +654,7 @@ public class BulkSymbolOperationResponse
 /// <summary>
 /// Response from symbol search operation.
 /// </summary>
-public class SymbolSearchResponse
+public sealed class SymbolSearchResponse
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -668,7 +668,7 @@ public class SymbolSearchResponse
 /// <summary>
 /// Individual symbol search result item.
 /// </summary>
-public class SymbolSearchResultItem
+public sealed class SymbolSearchResultItem
 {
     public string Symbol { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -687,7 +687,7 @@ public class SymbolSearchResultItem
 /// <summary>
 /// API response model for symbol search endpoint.
 /// </summary>
-public class SymbolSearchApiResponse
+public sealed class SymbolSearchApiResponse
 {
     public SymbolSearchApiResult[]? Results { get; set; }
     public int TotalCount { get; set; }
@@ -699,7 +699,7 @@ public class SymbolSearchApiResponse
 /// <summary>
 /// Individual result from the API response.
 /// </summary>
-public class SymbolSearchApiResult
+public sealed class SymbolSearchApiResult
 {
     public string Symbol { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

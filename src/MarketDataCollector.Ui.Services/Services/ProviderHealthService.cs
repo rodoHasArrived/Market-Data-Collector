@@ -513,7 +513,7 @@ public sealed class FailoverThresholds
     public bool AutoFailoverEnabled { get; set; } = true;
 }
 
-// Note: ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison
+// NOTE: ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison
 // ProviderHealthComparison below is for overall provider ranking
 
 public sealed class ProviderHealthComparison

@@ -157,6 +157,19 @@ internal sealed class ConfigCommands : ICliCommand
             EnableCompression: useCase != UseCase.Development && useCase != UseCase.RealTimeTrading
         ));
 
+        // AutoConfigurationService.GenerateBackfillConfig always sets Enabled=false;
+        // patch it here so preset descriptions match the generated config.
+        var enableBackfill = useCase != UseCase.RealTimeTrading;
+        var enableCompression = useCase != UseCase.Development && useCase != UseCase.RealTimeTrading;
+
+        if (enableBackfill && config.Backfill is not null)
+        {
+            config = config with { Backfill = config.Backfill with { Enabled = true } };
+        }
+
+        // BackfillOnly use case should not start real-time streaming; Compress reflects preset intent.
+        config = config with { Compress = enableCompression };
+
         var json = System.Text.Json.JsonSerializer.Serialize(config, new System.Text.Json.JsonSerializerOptions
         {
             WriteIndented = true,

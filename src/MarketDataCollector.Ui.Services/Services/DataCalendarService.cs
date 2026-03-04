@@ -488,7 +488,7 @@ public sealed class DataCalendarService
 /// <summary>
 /// Calendar data for a year.
 /// </summary>
-public class CalendarYearData
+public sealed class CalendarYearData
 {
     public int Year { get; set; }
     public List<CalendarMonthData> Months { get; } = new();
@@ -501,7 +501,7 @@ public class CalendarYearData
 /// <summary>
 /// Calendar data for a month.
 /// </summary>
-public class CalendarMonthData
+public sealed class CalendarMonthData
 {
     public int Year { get; set; }
     public int Month { get; set; }
@@ -516,7 +516,7 @@ public class CalendarMonthData
 /// <summary>
 /// Calendar data for a day.
 /// </summary>
-public class CalendarDayData
+public sealed class CalendarDayData
 {
     public DateOnly Date { get; set; }
     public DayOfWeek DayOfWeek { get; set; }
@@ -536,7 +536,7 @@ public class CalendarDayData
 /// <summary>
 /// Symbol data for a single day.
 /// </summary>
-public class SymbolDayData
+public sealed class SymbolDayData
 {
     public string Symbol { get; set; } = string.Empty;
     public bool HasData { get; set; }
@@ -562,7 +562,7 @@ public enum CompletenessLevel
 /// <summary>
 /// Coverage matrix data (symbols x dates).
 /// </summary>
-public class CoverageMatrixData
+public sealed class CoverageMatrixData
 {
     public DateOnly FromDate { get; set; }
     public DateOnly ToDate { get; set; }
@@ -573,7 +573,7 @@ public class CoverageMatrixData
 /// <summary>
 /// Symbol coverage data.
 /// </summary>
-public class SymbolCoverageData
+public sealed class SymbolCoverageData
 {
     public string Symbol { get; set; } = string.Empty;
     public List<DayCoverageInfo> DayCoverage { get; } = new();
@@ -585,7 +585,7 @@ public class SymbolCoverageData
 /// <summary>
 /// Day coverage info.
 /// </summary>
-public class DayCoverageInfo
+public sealed class DayCoverageInfo
 {
     public DateOnly Date { get; set; }
     public bool HasData { get; set; }
@@ -595,7 +595,7 @@ public class DayCoverageInfo
 /// <summary>
 /// Gap summary data.
 /// </summary>
-public class GapSummaryData
+public sealed class GapSummaryData
 {
     public DateOnly FromDate { get; set; }
     public DateOnly ToDate { get; set; }
@@ -611,7 +611,7 @@ public class GapSummaryData
 /// <summary>
 /// Gap information.
 /// </summary>
-public class GapInfo
+public sealed class GapInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public DateOnly StartDate { get; set; }
@@ -625,7 +625,7 @@ public class GapInfo
 /// <summary>
 /// Gap repair result.
 /// </summary>
-public class GapRepairResult
+public sealed class GapRepairResult
 {
     public bool Success { get; set; }
     public int RepairedGaps { get; set; }
@@ -637,7 +637,7 @@ public class GapRepairResult
 /// <summary>
 /// Gap repair progress.
 /// </summary>
-public class GapRepairProgress
+public sealed class GapRepairProgress
 {
     public string CurrentSymbol { get; set; } = string.Empty;
     public DateOnly CurrentDate { get; set; }
@@ -649,7 +649,7 @@ public class GapRepairProgress
 /// <summary>
 /// Completeness trend data.
 /// </summary>
-public class CompletenessTrendData
+public sealed class CompletenessTrendData
 {
     public DateOnly FromDate { get; set; }
     public DateOnly ToDate { get; set; }
@@ -659,7 +659,7 @@ public class CompletenessTrendData
 /// <summary>
 /// Completeness trend point.
 /// </summary>
-public class CompletenessTrendPoint
+public sealed class CompletenessTrendPoint
 {
     public DateOnly PeriodStart { get; set; }
     public DateOnly PeriodEnd { get; set; }

@@ -4,7 +4,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Providers.Polygon;
+using MarketDataCollector.Infrastructure.Adapters.Polygon;
 using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 

@@ -13,7 +13,7 @@ namespace MarketDataCollector.Ui.Services;
 /// <summary>
 /// Result of getting the maintenance schedule.
 /// </summary>
-public class MaintenanceScheduleResult
+public sealed class MaintenanceScheduleResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -23,7 +23,7 @@ public class MaintenanceScheduleResult
 /// <summary>
 /// Response payload describing the current maintenance schedule.
 /// </summary>
-public class MaintenanceScheduleResponse
+public sealed class MaintenanceScheduleResponse
 {
     public bool Enabled { get; set; }
     public string? CronExpression { get; set; }
@@ -36,7 +36,7 @@ public class MaintenanceScheduleResponse
 /// <summary>
 /// Configuration for updating the maintenance schedule.
 /// </summary>
-public class MaintenanceScheduleConfig
+public sealed class MaintenanceScheduleConfig
 {
     public bool Enabled { get; set; }
     public string? CronExpression { get; set; }
@@ -53,7 +53,7 @@ public class MaintenanceScheduleConfig
 /// <summary>
 /// Options for triggering a maintenance run.
 /// </summary>
-public class MaintenanceRunOptions
+public sealed class MaintenanceRunOptions
 {
     public bool RunCompression { get; set; } = true;
     public bool RunCleanup { get; set; } = true;
@@ -65,7 +65,7 @@ public class MaintenanceRunOptions
 /// <summary>
 /// Result of a maintenance run operation.
 /// </summary>
-public class MaintenanceRunResult
+public sealed class MaintenanceRunResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -79,7 +79,7 @@ public class MaintenanceRunResult
 /// <summary>
 /// HTTP response payload for a maintenance run.
 /// </summary>
-public class MaintenanceRunResponse
+public sealed class MaintenanceRunResponse
 {
     public string? RunId { get; set; }
     public DateTime? StartTime { get; set; }
@@ -91,7 +91,7 @@ public class MaintenanceRunResponse
 /// <summary>
 /// Individual maintenance operation within a run.
 /// </summary>
-public class MaintenanceOperation
+public sealed class MaintenanceOperation
 {
     public string Name { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
@@ -109,7 +109,7 @@ public class MaintenanceOperation
 /// <summary>
 /// Result of getting maintenance history.
 /// </summary>
-public class MaintenanceHistoryResult
+public sealed class MaintenanceHistoryResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -119,7 +119,7 @@ public class MaintenanceHistoryResult
 /// <summary>
 /// HTTP response payload for maintenance history.
 /// </summary>
-public class MaintenanceHistoryResponse
+public sealed class MaintenanceHistoryResponse
 {
     public List<MaintenanceRunSummary>? Runs { get; set; }
 }
@@ -127,7 +127,7 @@ public class MaintenanceHistoryResponse
 /// <summary>
 /// Summary of a completed maintenance run.
 /// </summary>
-public class MaintenanceRunSummary
+public sealed class MaintenanceRunSummary
 {
     public string RunId { get; set; } = string.Empty;
     public DateTime StartTime { get; set; }
@@ -144,7 +144,7 @@ public class MaintenanceRunSummary
 /// <summary>
 /// Result of getting tier configuration.
 /// </summary>
-public class TierConfigResult
+public sealed class TierConfigResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -156,7 +156,7 @@ public class TierConfigResult
 /// <summary>
 /// HTTP response payload for tier configuration.
 /// </summary>
-public class TierConfigResponse
+public sealed class TierConfigResponse
 {
     public List<StorageTierConfig>? Tiers { get; set; }
     public bool AutoMigrationEnabled { get; set; }
@@ -166,7 +166,7 @@ public class TierConfigResponse
 /// <summary>
 /// Configuration for a single storage tier.
 /// </summary>
-public class StorageTierConfig
+public sealed class StorageTierConfig
 {
     public string Name { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
@@ -179,7 +179,7 @@ public class StorageTierConfig
 /// <summary>
 /// Options for tier migration.
 /// </summary>
-public class TierMigrationOptions
+public sealed class TierMigrationOptions
 {
     public DateOnly? OlderThan { get; set; }
     public List<string>? Symbols { get; set; }
@@ -190,7 +190,7 @@ public class TierMigrationOptions
 /// <summary>
 /// Result of a tier migration operation.
 /// </summary>
-public class TierMigrationResult
+public sealed class TierMigrationResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -203,7 +203,7 @@ public class TierMigrationResult
 /// <summary>
 /// HTTP response payload for tier migration.
 /// </summary>
-public class TierMigrationResponse
+public sealed class TierMigrationResponse
 {
     public int FilesProcessed { get; set; }
     public long BytesMigrated { get; set; }
@@ -214,7 +214,7 @@ public class TierMigrationResponse
 /// <summary>
 /// Result of getting tier usage statistics.
 /// </summary>
-public class TierUsageResult
+public sealed class TierUsageResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -226,7 +226,7 @@ public class TierUsageResult
 /// <summary>
 /// HTTP response payload for tier usage.
 /// </summary>
-public class TierUsageResponse
+public sealed class TierUsageResponse
 {
     public List<TierUsage>? TierUsage { get; set; }
     public long TotalSizeBytes { get; set; }
@@ -236,7 +236,7 @@ public class TierUsageResponse
 /// <summary>
 /// Usage statistics for a single storage tier.
 /// </summary>
-public class TierUsage
+public sealed class TierUsage
 {
     public string TierName { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
@@ -253,7 +253,7 @@ public class TierUsage
 /// <summary>
 /// Result of getting retention policies.
 /// </summary>
-public class RetentionPoliciesResult
+public sealed class RetentionPoliciesResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -264,7 +264,7 @@ public class RetentionPoliciesResult
 /// <summary>
 /// HTTP response payload for retention policies.
 /// </summary>
-public class RetentionPoliciesResponse
+public sealed class RetentionPoliciesResponse
 {
     public List<StorageRetentionPolicy>? Policies { get; set; }
     public StorageRetentionPolicy? DefaultPolicy { get; set; }
@@ -275,7 +275,7 @@ public class RetentionPoliciesResponse
 /// Note: Renamed from RetentionPolicy to avoid conflict with MarketDataCollector.Ui.Services.RetentionPolicy
 /// in RetentionAssuranceModels.cs which handles data retention periods.
 /// </summary>
-public class StorageRetentionPolicy
+public sealed class StorageRetentionPolicy
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -289,7 +289,7 @@ public class StorageRetentionPolicy
 /// <summary>
 /// Result of applying retention policies.
 /// </summary>
-public class RetentionApplyResult
+public sealed class RetentionApplyResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -302,7 +302,7 @@ public class RetentionApplyResult
 /// <summary>
 /// HTTP response payload for retention apply.
 /// </summary>
-public class RetentionApplyResponse
+public sealed class RetentionApplyResponse
 {
     public int FilesDeleted { get; set; }
     public long BytesFreed { get; set; }
@@ -316,7 +316,7 @@ public class RetentionApplyResponse
 /// <summary>
 /// Options for file cleanup operations.
 /// </summary>
-public class CleanupOptions
+public sealed class CleanupOptions
 {
     public bool DeleteEmptyDirectories { get; set; } = true;
     public bool DeleteTempFiles { get; set; } = true;
@@ -328,7 +328,7 @@ public class CleanupOptions
 /// <summary>
 /// Result of previewing cleanup candidates.
 /// </summary>
-public class CleanupPreviewResult
+public sealed class CleanupPreviewResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -340,7 +340,7 @@ public class CleanupPreviewResult
 /// <summary>
 /// HTTP response payload for cleanup preview.
 /// </summary>
-public class CleanupPreviewResponse
+public sealed class CleanupPreviewResponse
 {
     public List<CleanupFileInfo>? FilesToDelete { get; set; }
     public long TotalBytes { get; set; }
@@ -350,7 +350,7 @@ public class CleanupPreviewResponse
 /// <summary>
 /// Information about a file eligible for cleanup.
 /// </summary>
-public class CleanupFileInfo
+public sealed class CleanupFileInfo
 {
     public string Path { get; set; } = string.Empty;
     public string Reason { get; set; } = string.Empty;
@@ -361,7 +361,7 @@ public class CleanupFileInfo
 /// <summary>
 /// Result of executing cleanup.
 /// </summary>
-public class MaintenanceCleanupResult
+public sealed class MaintenanceCleanupResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -373,7 +373,7 @@ public class MaintenanceCleanupResult
 /// <summary>
 /// HTTP response payload for cleanup execution.
 /// </summary>
-public class CleanupResultResponse
+public sealed class CleanupResultResponse
 {
     public int FilesDeleted { get; set; }
     public long BytesFreed { get; set; }
@@ -387,7 +387,7 @@ public class CleanupResultResponse
 /// <summary>
 /// Result of permission validation.
 /// </summary>
-public class PermissionValidationResult
+public sealed class PermissionValidationResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -400,7 +400,7 @@ public class PermissionValidationResult
 /// <summary>
 /// HTTP response payload for permission validation.
 /// </summary>
-public class PermissionValidationResponse
+public sealed class PermissionValidationResponse
 {
     public bool CanRead { get; set; }
     public bool CanWrite { get; set; }
@@ -418,7 +418,7 @@ public class PermissionValidationResponse
 /// <summary>
 /// HTTP operation response used for POST mutations.
 /// </summary>
-public class OperationResponse
+public sealed class OperationResponse
 {
     public bool Success { get; set; }
     public string? Message { get; set; }

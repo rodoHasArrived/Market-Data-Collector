@@ -1,7 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
+using MarketDataCollector.Infrastructure.Adapters.Failover;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Providers;

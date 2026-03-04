@@ -240,7 +240,7 @@ public async Task ConnectWithRetryAsync(CancellationToken ct)
 
 ### Interface
 
-Location: `src/MarketDataCollector.Infrastructure/Providers/Historical/IHistoricalDataProvider.cs`
+Location: `src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs`
 
 ```csharp
 [ImplementsAdr("ADR-001", "Core historical data provider contract")]
@@ -278,7 +278,7 @@ public interface IHistoricalDataProvider : IProviderMetadata, IDisposable
 
 ### Base Class: `BaseHistoricalDataProvider`
 
-Location: `src/MarketDataCollector.Infrastructure/Providers/Historical/BaseHistoricalDataProvider.cs`
+Location: `src/MarketDataCollector.Infrastructure/Adapters/Core/BaseHistoricalDataProvider.cs`
 
 All historical providers should extend this base class. It provides:
 
@@ -423,7 +423,7 @@ Register your provider in the DI container and the composite provider picks it u
 
 ### Interface
 
-Location: `src/MarketDataCollector.Infrastructure/Providers/SymbolSearch/ISymbolSearchProvider.cs`
+Location: `src/MarketDataCollector.Infrastructure/Adapters/Core/ISymbolSearchProvider.cs`
 
 ```csharp
 public interface ISymbolSearchProvider : IProviderMetadata
@@ -753,7 +753,7 @@ export EXAMPLE__SECRETKEY=your-secret-key
 Place provider implementations in the appropriate subdirectory:
 
 ```
-src/MarketDataCollector.Infrastructure/Providers/
+src/MarketDataCollector.Infrastructure/Adapters/
 ├── Backfill/                          # Historical provider base + interface
 │   ├── IHistoricalDataProvider.cs     # Interface
 │   ├── BaseHistoricalDataProvider.cs  # Base class
@@ -889,18 +889,18 @@ public sealed class MockExampleClient : IMarketDataClient
 
 ### Streaming Provider
 
-1. Create `src/MarketDataCollector.Infrastructure/Providers/Streaming/{Provider}/{Provider}MarketDataClient.cs`
+1. Create `src/MarketDataCollector.Infrastructure/Adapters/Streaming/{Provider}/{Provider}MarketDataClient.cs`
 2. Implement `IMarketDataClient`
 3. Add `[ImplementsAdr("ADR-001", "...")]` and `[ImplementsAdr("ADR-004", "...")]`
 4. Create `{Provider}Options` configuration model
 5. Register in DI (`ServiceCompositionRoot.cs` or via `IProviderModule`)
 6. Add config section in `config/appsettings.sample.json`
-7. Add tests in `tests/MarketDataCollector.Tests/Infrastructure/Providers/`
+7. Add tests in `tests/MarketDataCollector.Tests/Infrastructure/Adapters/`
 8. Document in `docs/providers/`
 
 ### Historical Provider
 
-1. Create `src/MarketDataCollector.Infrastructure/Providers/Historical/{Provider}/{Provider}HistoricalDataProvider.cs`
+1. Create `src/MarketDataCollector.Infrastructure/Adapters/{Provider}/{Provider}HistoricalDataProvider.cs`
 2. Extend `BaseHistoricalDataProvider`
 3. Add `[ImplementsAdr]` attributes
 4. Override `Name`, `DisplayName`, `Description`, `HttpClientName`, `Capabilities`
@@ -910,7 +910,7 @@ public sealed class MockExampleClient : IMarketDataClient
 
 ### Symbol Search Provider
 
-1. Create `src/MarketDataCollector.Infrastructure/Providers/SymbolSearch/{Provider}SymbolSearchProvider.cs`
+1. Create `src/MarketDataCollector.Infrastructure/Adapters/Core/{Provider}SymbolSearchProvider.cs`
 2. Implement `ISymbolSearchProvider` (or `IFilterableSymbolSearchProvider`)
 3. Override `IProviderMetadata` defaults
 4. Register in DI

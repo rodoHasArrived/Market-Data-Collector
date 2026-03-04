@@ -537,6 +537,34 @@ public static class StorageEndpoints
         .WithName("RunDefragmentation").Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
+        // POST /api/storage/convert-parquet — convert completed JSONL files to Parquet
+        group.MapPost(UiApiRoutes.StorageConvertParquet, async (
+            StorageOptions opts,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var conversionService = new MarketDataCollector.Storage.Services.ParquetConversionService(opts);
+                var result = await conversionService.ConvertCompletedDaysAsync(ct: ct);
+                return Results.Json(new
+                {
+                    filesConverted = result.FilesConverted,
+                    recordsConverted = result.RecordsConverted,
+                    bytesSaved = result.BytesSaved,
+                    skippedAlreadyConverted = result.SkippedAlreadyConverted,
+                    skippedEmpty = result.SkippedEmpty,
+                    errors = result.Errors,
+                    outputDirectory = Path.Combine(opts.RootPath, "_parquet")
+                }, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Parquet conversion failed: {ex.Message}");
+            }
+        })
+        .WithName("ConvertToParquet").Produces(200)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+
         // GET /api/storage/capacity-forecast — predictive storage capacity warning
         group.MapGet(UiApiRoutes.StorageCapacityForecast, (StorageOptions opts) =>
         {

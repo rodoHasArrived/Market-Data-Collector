@@ -853,7 +853,7 @@ public sealed class BackfillService
 /// <summary>
 /// Backfill progress event args.
 /// </summary>
-public class BackfillProgressEventArgs : EventArgs
+public sealed class BackfillProgressEventArgs : EventArgs
 {
     public BackfillProgress? Progress { get; set; }
 }
@@ -861,7 +861,7 @@ public class BackfillProgressEventArgs : EventArgs
 /// <summary>
 /// Backfill completed event args.
 /// </summary>
-public class BackfillCompletedEventArgs : EventArgs
+public sealed class BackfillCompletedEventArgs : EventArgs
 {
     public bool Success { get; set; }
     public BackfillProgress? Progress { get; set; }

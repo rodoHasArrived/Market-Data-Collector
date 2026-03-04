@@ -4,7 +4,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Serilog;
 
 namespace MarketDataCollector.Application.Backfill;
