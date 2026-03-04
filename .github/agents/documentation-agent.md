@@ -75,6 +75,7 @@ Market-Data-Collector/
 │   ├── workflows/
 │   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
+│   │   ├── bottleneck-detection.yml
 │   │   ├── build-observability.yml
 │   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
@@ -188,6 +189,7 @@ Market-Data-Collector/
 │       │   ├── validate-api-docs.py
 │       │   └── validate-examples.py
 │       ├── hooks/
+│       │   ├── commit-msg
 │       │   ├── install-hooks.sh
 │       │   └── pre-commit
 │       ├── install/
@@ -1407,6 +1409,7 @@ Market-Data-Collector/
 │   ├── coverlet.runsettings
 │   ├── Directory.Build.props
 │   └── xunit.runner.json
+├── .editorconfig
 ├── .gitignore
 ├── .globalconfig
 ├── .markdownlint.json

@@ -1,6 +1,6 @@
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-04 21:04:21 UTC
+> Auto-generated on 2026-03-04 21:38:53 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -8,7 +8,8 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 | Workflow | File | Triggers |
 |----------|------|----------|
-| Benchmark Performance | `benchmark.yml` | push, PR, manual |
+| Benchmark Performance | `benchmark.yml` | push, manual |
+| Bottleneck Detection | `bottleneck-detection.yml` | PR, manual |
 | Build Observability | `build-observability.yml` | push, PR, manual |
 | Build and Release | `dotnet-desktop.yml` | push, PR, manual |
 | Close Duplicate and Stale Auto-Generated Issues | `close-duplicate-issues.yml` | manual, scheduled |
@@ -54,7 +55,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 24
+- **Total workflows:** 25
 
 ---
 

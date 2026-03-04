@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-04 21:04:21 UTC
+> Auto-generated on 2026-03-04 21:38:53 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -47,6 +47,7 @@ Market-Data-Collector/
 │   ├── workflows/
 │   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
+│   │   ├── bottleneck-detection.yml
 │   │   ├── build-observability.yml
 │   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
@@ -160,6 +161,7 @@ Market-Data-Collector/
 │       │   ├── validate-api-docs.py
 │       │   └── validate-examples.py
 │       ├── hooks/
+│       │   ├── commit-msg
 │       │   ├── install-hooks.sh
 │       │   └── pre-commit
 │       ├── install/
@@ -1379,6 +1381,7 @@ Market-Data-Collector/
 │   ├── coverlet.runsettings
 │   ├── Directory.Build.props
 │   └── xunit.runner.json
+├── .editorconfig
 ├── .gitignore
 ├── .globalconfig
 ├── .markdownlint.json
