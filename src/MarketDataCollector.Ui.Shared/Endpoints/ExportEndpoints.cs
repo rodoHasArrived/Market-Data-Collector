@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Export;
@@ -16,6 +17,12 @@ public static class ExportEndpoints
 {
     private static readonly string ExportBaseDir = Path.Combine(Path.GetTempPath(), "mdc-exports");
     private static readonly TimeSpan ExportMaxAge = TimeSpan.FromHours(24);
+
+    /// <summary>
+    /// Regex that matches only safe opaque export identifiers (lowercase hex characters).
+    /// Used to prevent path traversal in the download endpoint.
+    /// </summary>
+    private static readonly Regex SafeExportIdRegex = new(@"^[0-9a-f]{1,32}$", RegexOptions.Compiled);
 
     public static void MapExportEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
@@ -38,7 +45,8 @@ public static class ExportEndpoints
 
             CleanupOldExportDirectories();
 
-            var outputDir = Path.Combine(ExportBaseDir, Guid.NewGuid().ToString("N")[..12]);
+            var exportId = Guid.NewGuid().ToString("N")[..16];
+            var outputDir = Path.Combine(ExportBaseDir, exportId);
 
             var formatOverride = req.Format?.ToLowerInvariant() switch
             {
@@ -76,18 +84,19 @@ public static class ExportEndpoints
                 totalRecords = result.TotalRecords,
                 totalBytes = result.TotalBytes,
                 symbols = result.Symbols,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = result.Success ? exportId : null,
+                downloadUrl = result.Success ? $"/api/export/download/{exportId}" : null,
                 files = result.Files?.Select(f => new
                 {
-                    path = f.Path,
+                    relativePath = f.RelativePath,
                     symbol = f.Symbol,
                     eventType = f.EventType,
                     format = f.Format,
                     sizeBytes = f.SizeBytes,
                     recordCount = f.RecordCount
                 }),
-                dataDictionaryPath = result.DataDictionaryPath,
-                loaderScriptPath = result.LoaderScriptPath,
+                dataDictionaryPath = result.DataDictionaryPath is null ? null : Path.GetFileName(result.DataDictionaryPath),
+                loaderScriptPath = result.LoaderScriptPath is null ? null : Path.GetFileName(result.LoaderScriptPath),
                 warnings = result.Warnings,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
@@ -142,7 +151,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(ExportBaseDir, "quality-" + Guid.NewGuid().ToString("N")[..8]);
+            var exportId = Guid.NewGuid().ToString("N")[..16];
+            var outputDir = Path.Combine(ExportBaseDir, exportId);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -169,7 +179,8 @@ public static class ExportEndpoints
                     gapsDetected = result.QualitySummary.GapsDetected,
                     outliersDetected = result.QualitySummary.OutliersDetected
                 } : null,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = result.Success ? exportId : null,
+                downloadUrl = result.Success ? $"/api/export/download/{exportId}" : null,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -189,7 +200,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(ExportBaseDir, "orderflow-" + Guid.NewGuid().ToString("N")[..8]);
+            var exportId = Guid.NewGuid().ToString("N")[..16];
+            var outputDir = Path.Combine(ExportBaseDir, exportId);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -216,7 +228,8 @@ public static class ExportEndpoints
                 format = req?.Format ?? "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = result.Success ? exportId : null,
+                downloadUrl = result.Success ? $"/api/export/download/{exportId}" : null,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -235,7 +248,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(ExportBaseDir, "integrity-" + Guid.NewGuid().ToString("N")[..8]);
+            var exportId = Guid.NewGuid().ToString("N")[..16];
+            var outputDir = Path.Combine(ExportBaseDir, exportId);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -255,7 +269,8 @@ public static class ExportEndpoints
                 format = "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = result.Success ? exportId : null,
+                downloadUrl = result.Success ? $"/api/export/download/{exportId}" : null,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -275,7 +290,8 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(ExportBaseDir, "research-" + Guid.NewGuid().ToString("N")[..8]);
+            var exportId = Guid.NewGuid().ToString("N")[..16];
+            var outputDir = Path.Combine(ExportBaseDir, exportId);
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -304,9 +320,10 @@ public static class ExportEndpoints
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
                 totalBytes = result.TotalBytes,
-                dataDictionaryPath = result.DataDictionaryPath,
-                loaderScriptPath = result.LoaderScriptPath,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = result.Success ? exportId : null,
+                downloadUrl = result.Success ? $"/api/export/download/{exportId}" : null,
+                dataDictionaryPath = result.DataDictionaryPath is null ? null : Path.GetFileName(result.DataDictionaryPath),
+                loaderScriptPath = result.LoaderScriptPath is null ? null : Path.GetFileName(result.LoaderScriptPath),
                 warnings = result.Warnings,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
@@ -315,6 +332,81 @@ public static class ExportEndpoints
         .WithName("ExportResearchPackage")
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+
+        // Download a file from a completed export by opaque exportId + relative file path
+        group.MapGet(UiApiRoutes.ExportDownload, (
+            string exportId,
+            [FromQuery] string? file,
+            HttpContext http) =>
+        {
+            if (!SafeExportIdRegex.IsMatch(exportId))
+            {
+                return Results.Json(new { error = "Invalid export ID" }, jsonOptions, statusCode: 400);
+            }
+
+            var baseDir = Path.GetFullPath(ExportBaseDir);
+            var exportDir = Path.GetFullPath(Path.Combine(ExportBaseDir, exportId));
+
+            if (!exportDir.StartsWith(baseDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                && !exportDir.Equals(baseDir, StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Json(new { error = "Invalid export ID" }, jsonOptions, statusCode: 400);
+            }
+
+            if (!Directory.Exists(exportDir))
+            {
+                return Results.Json(new { error = "Export not found or expired" }, jsonOptions, statusCode: 404);
+            }
+
+            if (string.IsNullOrEmpty(file))
+            {
+                var files = Directory.GetFiles(exportDir, "*", SearchOption.AllDirectories)
+                    .Select(f => Path.GetRelativePath(exportDir, f))
+                    .ToArray();
+                return Results.Json(new
+                {
+                    exportId,
+                    files,
+                    downloadUrlTemplate = $"/api/export/download/{exportId}?file={{relativePath}}"
+                }, jsonOptions);
+            }
+
+            var filePath = Path.GetFullPath(Path.Combine(exportDir, file));
+            if (!filePath.StartsWith(exportDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                && !filePath.Equals(exportDir, StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Json(new { error = "Invalid file path" }, jsonOptions, statusCode: 400);
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return Results.Json(new { error = "File not found" }, jsonOptions, statusCode: 404);
+            }
+
+            var fileName = Path.GetFileName(filePath);
+            var contentType = Path.GetExtension(filePath).ToLowerInvariant() switch
+            {
+                ".parquet" => "application/octet-stream",
+                ".csv" => "text/csv",
+                ".jsonl" => "application/x-ndjson",
+                ".json" => "application/json",
+                ".md" => "text/markdown",
+                ".py" => "text/x-python",
+                ".r" => "text/plain",
+                ".sh" => "text/plain",
+                ".sql" => "text/plain",
+                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ".arrow" => "application/octet-stream",
+                ".zip" => "application/zip",
+                _ => "application/octet-stream"
+            };
+
+            return Results.File(filePath, contentType, fileName);
+        })
+        .WithName("DownloadExportFile")
+        .Produces(200)
+        .Produces(400)
+        .Produces(404);
     }
 
     private sealed record ExportAnalysisRequest(string? ProfileId, string[]? Symbols, string? Format, DateTime? StartDate, DateTime? EndDate);
