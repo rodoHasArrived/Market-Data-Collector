@@ -140,7 +140,7 @@ jobs:
           path: |
             src/**/bin/${{ inputs.configuration }}/
             !src/**/bin/${{ inputs.configuration }}/**/ref/
-          retention-days: 7
+          retention-days: 5
 
       - name: Upload diagnostics on failure
         if: failure()
@@ -150,4 +150,4 @@ jobs:
           path: |
             ./artifacts/test-results/**/*.trx
             ./artifacts/test-results/**/coverage.cobertura.xml
-          retention-days: 7
+          retention-days: 3

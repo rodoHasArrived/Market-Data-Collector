@@ -104,7 +104,7 @@ jobs:
         with:
           name: test-results-Linux
           path: ./TestResults/
-          retention-days: 5
+          retention-days: 3
 
       - name: Upload coverage to Codecov
         if: success()

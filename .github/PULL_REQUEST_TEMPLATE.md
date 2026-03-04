@@ -77,6 +77,10 @@ body:
           required: true
         - label: My changes generate no new warnings
           required: true
+        - label: I have run benchmarks for performance-sensitive changes (make bench-quick)
+          required: false
+        - label: I have checked docs/ai/ai-known-errors.md for relevant patterns
+          required: false
         - label: I have updated CHANGELOG.md (if applicable)
           required: false
 

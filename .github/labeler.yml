@@ -19,10 +19,21 @@ ci/cd:
     - any-glob-to-any-file: '.github/workflows/**/*'
     - any-glob-to-any-file: '.github/**/*.yml'
 
-# Benchmark files
+# Benchmark and hot-path performance code
 performance:
   - changed-files:
     - any-glob-to-any-file: 'benchmarks/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Application/Pipeline/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Domain/Collectors/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Core/Performance/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Core/Serialization/**/*'
+
+# Event pipeline and data flow
+pipeline:
+  - changed-files:
+    - any-glob-to-any-file: 'src/MarketDataCollector.Application/Pipeline/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Domain/Events/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Application/Canonicalization/**/*'
 
 # Docker related
 docker:

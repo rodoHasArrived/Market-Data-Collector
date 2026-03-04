@@ -40,7 +40,6 @@ jobs:
       uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-        cache-suffix: pr
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
@@ -48,13 +47,12 @@ jobs:
     - name: Check formatting
       run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal
 
-    - name: Upload lint diagnostics
+    - name: Formatting fix hint
       if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: lint-diagnostics
-        path: ./artifacts/dotnet-format-report.json
-        retention-days: 7
+      run: |
+        echo "::error::Code formatting issues detected. Run 'make format' locally to fix."
+        echo "## Formatting Fix" >> $GITHUB_STEP_SUMMARY
+        echo "Run \`make format\` locally, then commit the changes." >> $GITHUB_STEP_SUMMARY
 
   build-and-test:
     name: Build & Test
@@ -62,7 +60,6 @@ jobs:
     with:
       fetch-depth: 1
       collect-coverage: true
-      cache-suffix: pr
     secrets: inherit
 
   # ─── AI PR Review ──────────────────────────────────────────────────────

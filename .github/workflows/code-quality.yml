@@ -63,7 +63,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
-      # Format check (doesn't need build)
+      # Format check — on PRs this is already covered by pr-checks.yml lint job,
+      # but we still run it here on pushes to main for the quality report.
       - name: Check code formatting
         id: format-check
         run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal

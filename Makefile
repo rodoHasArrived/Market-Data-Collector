@@ -14,14 +14,17 @@
 # =============================================================================
 
 .PHONY: help quickstart install docker docker-build docker-up docker-down docker-logs \
-        run run-ui run-backfill test build publish clean check-deps \
-        setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
+        run run-ui run-backfill test test-unit test-integration test-fsharp test-all build build-quick \
+        publish clean check-deps watch watch-build \
+        setup-config setup-dev lint format-check benchmark bench-quick bench-filter \
+        pre-pr pre-pr-full \
+        docs verify-adrs verify-contracts gen-context \
         gen-interfaces gen-structure gen-providers gen-workflows update-claude-md docs-all \
-        doctor doctor-quick doctor-fix diagnose diagnose-build \
+        doctor doctor-ci doctor-quick doctor-fix diagnose diagnose-build \
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
         build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
         icons desktop desktop-publish install-hooks \
-        build-wpf build-uwp test-desktop-services desktop-dev-bootstrap uwp-xaml-diagnose \
+        build-wpf test-desktop-services desktop-dev-bootstrap \
         ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-verify ai-report
 
 # Default target
@@ -30,8 +33,8 @@
 # Project settings
 PROJECT := src/MarketDataCollector/MarketDataCollector.csproj
 UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
-DESKTOP_PROJECT := src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 WPF_PROJECT := src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+DESKTOP_PROJECT := $(WPF_PROJECT)
 TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
 DOCGEN_PROJECT := build/dotnet/DocGenerator/DocGenerator.csproj
@@ -87,7 +90,7 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docker' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Development:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'run|build|test|clean|bench|lint' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'run|build|test|clean|bench|lint|watch|setup-dev|format' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Documentation:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docs|verify-adr|verify-contract|gen-context|gen-interface|gen-structure|gen-provider|gen-workflow|update-claude' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -97,6 +100,9 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Desktop App:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'icons|desktop' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Pre-PR & Quality:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Diagnostics:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -215,9 +221,12 @@ docker-monitoring: ## Start with Prometheus and Grafana
 # Development
 # =============================================================================
 
-build: ## Build the project
+build: ## Build the project (Release)
 	@echo "$(BLUE)Building with observability...$(NC)"
 	@BUILD_VERBOSITY=$(BUILD_VERBOSITY) $(BUILDCTL) build --project $(PROJECT) --configuration Release
+
+build-quick: ## Fast incremental build (Debug, no analyzers)
+	@dotnet build MarketDataCollector.sln -c Debug --verbosity quiet --nologo /p:EnableWindowsTargeting=true
 
 run: setup-config ## Run the collector
 	@echo "$(BLUE)Running collector...$(NC)"
@@ -238,30 +247,104 @@ run-backfill: setup-config ## Run historical backfill
 run-selftest: ## Run self-tests
 	dotnet run --project $(PROJECT) -- --selftest
 
-test: ## Run unit tests
+test: ## Run unit tests (C# + F#)
 	@echo "$(BLUE)Running tests...$(NC)"
-	dotnet test $(TEST_PROJECT) --logger "console;verbosity=normal"
+	dotnet test $(TEST_PROJECT) --logger "console;verbosity=normal" --filter "Category!=Integration"
+	dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj --logger "console;verbosity=normal"
 
-test-coverage: ## Run tests with coverage
-	dotnet test $(TEST_PROJECT) --collect:"XPlat Code Coverage"
+test-unit: ## Run C# unit tests only (fastest)
+	@echo "$(BLUE)Running C# unit tests...$(NC)"
+	dotnet test $(TEST_PROJECT) --filter "Category!=Integration" --logger "console;verbosity=normal"
 
-benchmark: ## Run benchmarks
+test-fsharp: ## Run F# tests only
+	@echo "$(BLUE)Running F# tests...$(NC)"
+	dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj --logger "console;verbosity=normal"
+
+test-integration: ## Run integration tests
+	@echo "$(BLUE)Running integration tests...$(NC)"
+	dotnet test $(TEST_PROJECT) --filter "Category=Integration" --logger "console;verbosity=normal"
+
+test-all: ## Run all tests with coverage report
+	@echo "$(BLUE)Running all tests with coverage...$(NC)"
+	dotnet test MarketDataCollector.sln \
+		--collect:"XPlat Code Coverage" \
+		--results-directory ./TestResults \
+		--settings tests/coverlet.runsettings \
+		--logger "console;verbosity=normal" \
+		--filter "Category!=Integration" \
+		/p:EnableWindowsTargeting=true
+	@echo "$(GREEN)Coverage reports at ./TestResults/$(NC)"
+
+test-coverage: ## Run tests with coverage (alias for test-all)
+	@$(MAKE) test-all
+
+benchmark: ## Run full benchmarks
 	@echo "$(BLUE)Running benchmarks...$(NC)"
 	dotnet run --project $(BENCHMARK_PROJECT) -c Release
 
-lint: ## Check code formatting
-	dotnet format $(PROJECT) --verify-no-changes
+bench-quick: ## Run quick bottleneck benchmarks (~10 min)
+	@echo "$(BLUE)Running quick bottleneck benchmarks...$(NC)"
+	@if [ -x benchmarks/run-bottleneck-benchmarks.sh ]; then \
+		./benchmarks/run-bottleneck-benchmarks.sh --quick; \
+	else \
+		dotnet run --project $(BENCHMARK_PROJECT) -c Release -- --filter "*EndToEnd*|*Pipeline*" --job short; \
+	fi
 
-format: ## Format code
-	dotnet format $(PROJECT)
+bench-filter: ## Run specific benchmarks (FILTER required, e.g. FILTER=*Collector*)
+	@echo "$(BLUE)Running benchmarks matching $(FILTER)...$(NC)"
+	dotnet run --project $(BENCHMARK_PROJECT) -c Release -- --filter "$(FILTER)" --memory --job short
 
-install-hooks: ## Install git pre-commit hooks (enforces dotnet format)
+lint: ## Check code formatting (solution-wide)
+	dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal
+
+format: ## Auto-fix code formatting
+	dotnet format MarketDataCollector.sln
+	@echo "$(GREEN)Formatting applied$(NC)"
+
+format-check: ## Check formatting and show diff of needed changes
+	@dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic 2>&1 || \
+		{ echo ""; echo "$(YELLOW)Run 'make format' to auto-fix these issues.$(NC)"; exit 1; }
+
+watch: ## Watch for changes and re-run tests (C# unit tests)
+	@echo "$(BLUE)Watching for changes... (Ctrl+C to stop)$(NC)"
+	dotnet watch test --project $(TEST_PROJECT) -- --filter "Category!=Integration" --verbosity quiet --nologo
+
+watch-build: ## Watch for changes and rebuild
+	@echo "$(BLUE)Watching for changes... (Ctrl+C to stop)$(NC)"
+	dotnet watch build --project $(PROJECT)
+
+install-hooks: ## Install git pre-commit and commit-msg hooks
 	@./build/scripts/hooks/install-hooks.sh
+
+setup-dev: install-hooks setup-config ## Full local dev setup (hooks, config, restore, build)
+	@echo "$(BLUE)Setting up development environment...$(NC)"
+	@echo ""
+	@echo "$(BLUE)[1/4] Checking prerequisites...$(NC)"
+	@command -v dotnet >/dev/null 2>&1 || { echo "$(YELLOW)ERROR: .NET SDK not found. Install from https://dot.net/download$(NC)"; exit 1; }
+	@echo "  .NET SDK $$(dotnet --version)"
+	@command -v git >/dev/null 2>&1 || { echo "$(YELLOW)ERROR: git not found$(NC)"; exit 1; }
+	@echo "  git $$(git --version | cut -d' ' -f3)"
+	@echo ""
+	@echo "$(BLUE)[2/4] Restoring packages...$(NC)"
+	@dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity quiet
+	@echo "  $(GREEN)Packages restored$(NC)"
+	@echo ""
+	@echo "$(BLUE)[3/4] Building (Debug)...$(NC)"
+	@dotnet build MarketDataCollector.sln -c Debug --verbosity quiet --nologo /p:EnableWindowsTargeting=true
+	@echo "  $(GREEN)Build succeeded$(NC)"
+	@echo ""
+	@echo "$(BLUE)[4/4] Running quick test...$(NC)"
+	@dotnet test $(TEST_PROJECT) --verbosity quiet --nologo --no-build -c Debug --filter "Category!=Integration" 2>&1 | tail -3
+	@echo ""
+	@echo "$(GREEN)Development environment ready!$(NC)"
+	@echo "  Run 'make watch' to start test-on-save mode"
+	@echo "  Run 'make run-ui' to start the web dashboard"
 
 clean: ## Clean build artifacts
 	@echo "$(BLUE)Cleaning...$(NC)"
-	dotnet clean
-	rm -rf bin/ obj/ publish/
+	dotnet clean --verbosity quiet
+	rm -rf bin/ obj/ publish/ TestResults/
+	@echo "$(GREEN)Clean complete$(NC)"
 
 # =============================================================================
 # Publishing
@@ -294,7 +377,7 @@ app-metrics: ## Get Prometheus metrics from running app
 	@curl -s http://localhost:$(HTTP_PORT)/metrics
 
 version: ## Show version information
-	@echo "Market Data Collector v1.1.0"
+	@echo "Market Data Collector v1.6.2"
 	@dotnet --version 2>/dev/null && echo ".NET SDK: $$(dotnet --version)" || echo ".NET SDK: Not installed"
 	@docker --version 2>/dev/null || echo "Docker: Not installed"
 
@@ -448,22 +531,21 @@ icons: ## Generate desktop app icons from SVG
 	@echo "$(BLUE)Generating desktop app icons...$(NC)"
 	@npm ci --silent
 	@node build/node/generate-icons.mjs
-	@echo "$(GREEN)Icons generated in src/MarketDataCollector.Uwp/Assets/$(NC)"
+	@echo "$(GREEN)Icons generated$(NC)"
 
-desktop: icons ## Build desktop app (Windows only)
-	@echo "$(BLUE)Building desktop app...$(NC)"
+desktop: icons ## Build WPF desktop app (Windows only)
+	@echo "$(BLUE)Building WPF desktop app...$(NC)"
 ifeq ($(OS),Windows_NT)
-	dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64
+	dotnet build $(WPF_PROJECT) -c Release -r win-x64
 else
 	@echo "$(YELLOW)Desktop app build requires Windows. Use GitHub Actions for CI builds.$(NC)"
-	@echo "The desktop app can be built on Windows with:"
-	@echo "  dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64"
+	@echo "Run on Windows: dotnet build $(WPF_PROJECT) -c Release -r win-x64"
 endif
 
-desktop-publish: icons ## Publish desktop app (Windows only)
-	@echo "$(BLUE)Publishing desktop app...$(NC)"
+desktop-publish: icons ## Publish WPF desktop app as MSIX (Windows only)
+	@echo "$(BLUE)Publishing WPF desktop app...$(NC)"
 ifeq ($(OS),Windows_NT)
-	dotnet publish $(DESKTOP_PROJECT) -c Release -r win-x64 --self-contained true \
+	dotnet publish $(WPF_PROJECT) -c Release -r win-x64 --self-contained true \
 		-p:WindowsPackageType=MSIX \
 		-p:AppxPackageDir=publish/desktop/ \
 		$(MSIX_APPINSTALLER_FLAGS) \
@@ -474,23 +556,8 @@ else
 	@echo "Use GitHub Actions workflow 'Desktop App Build' for CI builds."
 endif
 
-build-wpf: ## Build WPF desktop app (Windows only)
-	@echo "$(BLUE)Building WPF desktop app...$(NC)"
-ifeq ($(OS),Windows_NT)
-	dotnet build $(WPF_PROJECT) -c Release -r win-x64
-else
-	@echo "$(YELLOW)WPF build requires Windows. Use GitHub Actions for CI builds.$(NC)"
-	@echo "Run on Windows: dotnet build $(WPF_PROJECT) -c Release -r win-x64"
-endif
-
-build-uwp: ## Build UWP desktop app (legacy, Windows only)
-	@echo "$(BLUE)Building UWP desktop app...$(NC)"
-ifeq ($(OS),Windows_NT)
-	dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64
-else
-	@echo "$(YELLOW)UWP build requires Windows. Use GitHub Actions for CI builds.$(NC)"
-	@echo "Run on Windows: dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64"
-endif
+build-wpf: ## Build WPF desktop app (alias for desktop)
+	@$(MAKE) desktop
 
 test-desktop-services: ## Run desktop-focused regression tests
 	@echo "$(BLUE)Running desktop-focused tests...$(NC)"
@@ -500,7 +567,7 @@ ifeq ($(OS),Windows_NT)
 	@echo "Running UI service tests..."
 	dotnet test tests/MarketDataCollector.Ui.Tests/MarketDataCollector.Ui.Tests.csproj -c Release
 	@echo "Running integration tests..."
-	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~UwpCoreIntegrationTests|FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
+	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
 else
 	@echo "$(YELLOW)Desktop service tests require Windows. Skipping WPF and UI tests.$(NC)"
 	@echo "Running available integration tests..."
@@ -511,9 +578,18 @@ desktop-dev-bootstrap: ## Run desktop development bootstrap checks (PowerShell)
 	@echo "$(BLUE)Running desktop development bootstrap checks...$(NC)"
 	pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/desktop-dev.ps1
 
-uwp-xaml-diagnose: ## Run UWP XAML preflight diagnostics (PowerShell)
-	@echo "$(BLUE)Running UWP XAML diagnostics...$(NC)"
-	pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/diagnose-uwp-xaml.ps1
+# =============================================================================
+# Pre-PR Validation
+# =============================================================================
+
+pre-pr: lint test ## Run pre-PR checks (format + tests) — run before pushing
+	@echo ""
+	@echo "$(GREEN)All pre-PR checks passed!$(NC)"
+	@echo "Ready to push and open a pull request."
+
+pre-pr-full: lint test-all ## Full pre-PR validation (format + all tests with coverage)
+	@echo ""
+	@echo "$(GREEN)Full pre-PR validation passed!$(NC)"
 
 # =============================================================================
 # AI Repository Updater

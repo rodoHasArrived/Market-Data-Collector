@@ -18,9 +18,9 @@
     "DOTNET_GENERATE_ASPNET_CERTIFICATE": "false"
   },
 
-  "onCreateCommand": "dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true && dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true && npm ci",
+  "onCreateCommand": "dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal && npm ci --silent",
 
-  "postCreateCommand": "cp -n config/appsettings.sample.json config/appsettings.json 2>/dev/null || true",
+  "postCreateCommand": "cp -n config/appsettings.sample.json config/appsettings.json 2>/dev/null || true && ./build/scripts/hooks/install-hooks.sh && mkdir -p data logs && dotnet build MarketDataCollector.sln -c Debug --no-restore /p:EnableWindowsTargeting=true --verbosity quiet",
 
   "forwardPorts": [8080],
   "portsAttributes": {
@@ -39,13 +39,19 @@
         "ms-python.python",
         "editorconfig.editorconfig",
         "DavidAnson.vscode-markdownlint",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "GitHub.copilot"
       ],
       "settings": {
         "dotnet.defaultSolution": "MarketDataCollector.sln",
         "omnisharp.enableRoslynAnalyzers": true,
         "editor.formatOnSave": true,
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": true,
+        "editor.bracketPairColorization.enabled": true,
+        "editor.guides.bracketPairs": "active",
+        "editor.stickyScroll.enabled": true,
+        "dotnet.server.useOmnisharp": false,
+        "testing.automaticallyOpenPeekView": "never"
       }
     }
   }

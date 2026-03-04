@@ -1,0 +1,52 @@
+#!/bin/sh
+# Commit message quality hook.
+# Validates commit messages follow basic conventions:
+#   - Non-empty subject line
+#   - Subject line <= 72 characters
+#   - No trailing period on subject line
+#   - Body separated from subject by blank line (if body exists)
+#
+# Install by running: build/scripts/hooks/install-hooks.sh
+
+set -e
+
+COMMIT_MSG_FILE="$1"
+
+if [ ! -f "$COMMIT_MSG_FILE" ]; then
+    exit 0
+fi
+
+# Read subject line (first non-comment, non-empty line)
+SUBJECT=$(grep -v '^#' "$COMMIT_MSG_FILE" | grep -v '^$' | head -1)
+
+if [ -z "$SUBJECT" ]; then
+    echo "Error: Commit message must have a non-empty subject line."
+    exit 1
+fi
+
+SUBJECT_LENGTH=${#SUBJECT}
+if [ "$SUBJECT_LENGTH" -gt 72 ]; then
+    echo "Error: Subject line is $SUBJECT_LENGTH characters (max 72)."
+    echo "  Subject: $SUBJECT"
+    exit 1
+fi
+
+# Check for trailing period
+case "$SUBJECT" in
+    *.)
+        echo "Warning: Subject line should not end with a period."
+        # Warning only, don't block
+        ;;
+esac
+
+# Check second line is blank (if there are more lines)
+LINE_COUNT=$(grep -cv '^#' "$COMMIT_MSG_FILE" | tr -d ' ' || true)
+if [ "$LINE_COUNT" -gt 1 ]; then
+    SECOND_LINE=$(grep -v '^#' "$COMMIT_MSG_FILE" | sed -n '2p')
+    if [ -n "$SECOND_LINE" ]; then
+        echo "Warning: Second line should be blank (separate subject from body)."
+        # Warning only, don't block
+    fi
+fi
+
+exit 0
