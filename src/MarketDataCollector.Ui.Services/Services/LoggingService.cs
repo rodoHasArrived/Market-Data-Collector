@@ -8,7 +8,7 @@ namespace MarketDataCollector.Ui.Services;
 /// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
-public class LoggingService
+public sealed class LoggingService
 {
     private static readonly Lazy<LoggingService> _instance = new(() => new LoggingService());
 
