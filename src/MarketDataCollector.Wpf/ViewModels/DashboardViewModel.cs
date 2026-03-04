@@ -22,6 +22,7 @@ namespace MarketDataCollector.Wpf.ViewModels;
 public sealed class DashboardViewModel : BindableBase, IDisposable
 {
     private const int MaxActivityItems = 25;
+    private const int SparklineCapacity = 30;
 
     private readonly WpfServices.NavigationService _navigationService;
     private readonly WpfServices.ConnectionService _connectionService;
@@ -33,6 +34,13 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
     private readonly DispatcherTimer _refreshTimer;
     private readonly DispatcherTimer _staleCheckTimer;
     private readonly CancellationTokenSource _cts = new();   // P6: lifecycle cancellation
+
+    // Sparkline history buffers – store last N data points for each metric card.
+    private readonly List<double> _publishedHistory = new(SparklineCapacity);
+    private readonly List<double> _droppedHistory = new(SparklineCapacity);
+    private readonly List<double> _integrityHistory = new(SparklineCapacity);
+    private readonly List<double> _historicalHistory = new(SparklineCapacity);
+    private readonly List<double> _throughputHistory = new(SparklineCapacity);
 
     // Cached brush and icon resources – fetched once at construction time (P2 fix).
     private readonly Brush _successBrush;
@@ -106,6 +114,44 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
 
     private string _alertWarningCount = "0";
     public string AlertWarningCount { get => _alertWarningCount; private set => SetProperty(ref _alertWarningCount, value); }
+
+    // ── Sparkline point collections (for metric card mini-charts) ─────────────────
+
+    private PointCollection _publishedSparkline = new();
+    public PointCollection PublishedSparkline { get => _publishedSparkline; private set => SetProperty(ref _publishedSparkline, value); }
+
+    private PointCollection _droppedSparkline = new();
+    public PointCollection DroppedSparkline { get => _droppedSparkline; private set => SetProperty(ref _droppedSparkline, value); }
+
+    private PointCollection _integritySparkline = new();
+    public PointCollection IntegritySparkline { get => _integritySparkline; private set => SetProperty(ref _integritySparkline, value); }
+
+    private PointCollection _historicalSparkline = new();
+    public PointCollection HistoricalSparkline { get => _historicalSparkline; private set => SetProperty(ref _historicalSparkline, value); }
+
+    private PointCollection _throughputSparkline = new();
+    public PointCollection ThroughputSparkline { get => _throughputSparkline; private set => SetProperty(ref _throughputSparkline, value); }
+
+    // ── Sparkline area fills (closed polygon underneath the line) ──────────────
+    private PointCollection _publishedSparklineFill = new();
+    public PointCollection PublishedSparklineFill { get => _publishedSparklineFill; private set => SetProperty(ref _publishedSparklineFill, value); }
+
+    private PointCollection _droppedSparklineFill = new();
+    public PointCollection DroppedSparklineFill { get => _droppedSparklineFill; private set => SetProperty(ref _droppedSparklineFill, value); }
+
+    private PointCollection _integritySparklineFill = new();
+    public PointCollection IntegritySparklineFill { get => _integritySparklineFill; private set => SetProperty(ref _integritySparklineFill, value); }
+
+    private PointCollection _historicalSparklineFill = new();
+    public PointCollection HistoricalSparklineFill { get => _historicalSparklineFill; private set => SetProperty(ref _historicalSparklineFill, value); }
+
+    // ── Throughput statistics ───────────────────────────────────────────────────
+
+    private string _avgThroughputText = "--";
+    public string AvgThroughputText { get => _avgThroughputText; private set => SetProperty(ref _avgThroughputText, value); }
+
+    private string _peakThroughputText = "--";
+    public string PeakThroughputText { get => _peakThroughputText; private set => SetProperty(ref _peakThroughputText, value); }
 
     // ── Throughput / data health ──────────────────────────────────────────────────
 
@@ -502,6 +548,38 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
             ? $"{FormatNumber(status.Historical)} bars"
             : "No data";
 
+        // Update sparkline history buffers and regenerate point collections.
+        AppendToHistory(_publishedHistory, status.Published);
+        AppendToHistory(_droppedHistory, status.Dropped);
+        AppendToHistory(_integrityHistory, status.Integrity);
+        AppendToHistory(_historicalHistory, status.Historical);
+
+        if (elapsed > 0 && _previousPublished > 0)
+        {
+            var rate = (status.Published - _previousPublished) / elapsed;
+            AppendToHistory(_throughputHistory, rate);
+        }
+
+        PublishedSparkline = BuildSparkline(_publishedHistory, 30);
+        DroppedSparkline = BuildSparkline(_droppedHistory, 30);
+        IntegritySparkline = BuildSparkline(_integrityHistory, 30);
+        HistoricalSparkline = BuildSparkline(_historicalHistory, 30);
+        ThroughputSparkline = BuildSparkline(_throughputHistory, 30);
+
+        PublishedSparklineFill = BuildSparklineFill(_publishedHistory, 30);
+        DroppedSparklineFill = BuildSparklineFill(_droppedHistory, 30);
+        IntegritySparklineFill = BuildSparklineFill(_integrityHistory, 30);
+        HistoricalSparklineFill = BuildSparklineFill(_historicalHistory, 30);
+
+        // Update throughput statistics.
+        if (_throughputHistory.Count > 0)
+        {
+            var avg = _throughputHistory.Average();
+            var peak = _throughputHistory.Max();
+            AvgThroughputText = $"{avg:N0}/s";
+            PeakThroughputText = $"{peak:N0}/s";
+        }
+
         if (status.Provider != null)
         {
             SelectedDataSourceText = status.Provider.ActiveProvider ?? "Not Connected";
@@ -691,6 +769,73 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
 
         AddActivityItem("Symbol added", $"Added {symbol} to watchlist");
         QuickAddSymbolText = string.Empty;
+    }
+
+    // ── Sparkline helpers ──────────────────────────────────────────────────────────
+
+    private static void AppendToHistory(List<double> history, double value)
+    {
+        history.Add(value);
+        while (history.Count > SparklineCapacity)
+        {
+            history.RemoveAt(0);
+        }
+    }
+
+    /// <summary>
+    /// Builds a WPF <see cref="PointCollection"/> suitable for a Polyline from a history buffer.
+    /// The points are normalised to fit within the given height.
+    /// </summary>
+    private static PointCollection BuildSparkline(List<double> history, double height)
+    {
+        var points = new PointCollection();
+        if (history.Count < 2) return points;
+
+        var max = history.Max();
+        var min = history.Min();
+        var range = max - min;
+        if (range < 0.001) range = 1;
+
+        var step = 200.0 / (history.Count - 1); // width assumed ~200px in the card canvas
+        for (var i = 0; i < history.Count; i++)
+        {
+            var x = i * step;
+            var y = height - ((history[i] - min) / range * (height - 4)) - 2;
+            points.Add(new Point(x, y));
+        }
+
+        return points;
+    }
+
+    /// <summary>
+    /// Builds a closed polygon that traces the sparkline and returns to the bottom,
+    /// creating a filled area effect beneath the line.
+    /// </summary>
+    private static PointCollection BuildSparklineFill(List<double> history, double height)
+    {
+        var points = new PointCollection();
+        if (history.Count < 2) return points;
+
+        var max = history.Max();
+        var min = history.Min();
+        var range = max - min;
+        if (range < 0.001) range = 1;
+
+        var step = 200.0 / (history.Count - 1);
+
+        // Top edge (same as sparkline)
+        for (var i = 0; i < history.Count; i++)
+        {
+            var x = i * step;
+            var y = height - ((history[i] - min) / range * (height - 4)) - 2;
+            points.Add(new Point(x, y));
+        }
+
+        // Close along the bottom
+        points.Add(new Point((history.Count - 1) * step, height));
+        points.Add(new Point(0, height));
+
+        return points;
     }
 
     // ── Static helpers ────────────────────────────────────────────────────────────

@@ -81,22 +81,62 @@
 
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="Naming Convention" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
-                        <ComboBox Style="{StaticResource FormComboBoxStyle}">
-                            <ComboBoxItem Content="By Symbol (symbol/type/date)" IsSelected="True" />
-                            <ComboBoxItem Content="By Date (date/symbol/type)" />
-                            <ComboBoxItem Content="By Type (type/symbol/date)" />
-                            <ComboBoxItem Content="Flat (symbol_type_date)" />
+                        <ComboBox x:Name="NamingConventionCombo"
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  SelectionChanged="StorageConfig_Changed">
+                            <ComboBoxItem Content="By Symbol (symbol/type/date)" Tag="BySymbol" IsSelected="True" />
+                            <ComboBoxItem Content="By Date (date/symbol/type)" Tag="ByDate" />
+                            <ComboBoxItem Content="By Type (type/symbol/date)" Tag="ByType" />
+                            <ComboBoxItem Content="Flat (symbol_type_date)" Tag="Flat" />
                         </ComboBox>
                     </StackPanel>
 
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="Compression" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
-                        <ComboBox Style="{StaticResource FormComboBoxStyle}">
-                            <ComboBoxItem Content="None" />
-                            <ComboBoxItem Content="Gzip" IsSelected="True" />
-                            <ComboBoxItem Content="LZ4 (Fast)" />
-                            <ComboBoxItem Content="ZSTD (Best)" />
+                        <ComboBox x:Name="CompressionCombo"
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  SelectionChanged="StorageConfig_Changed">
+                            <ComboBoxItem Content="None" Tag="none" />
+                            <ComboBoxItem Content="Gzip" Tag="gzip" IsSelected="True" />
+                            <ComboBoxItem Content="LZ4 (Fast)" Tag="lz4" />
+                            <ComboBoxItem Content="ZSTD (Best)" Tag="zstd" />
                         </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Live File Tree Preview -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="{StaticResource IconFolder}"
+                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="20"
+                                   Foreground="{StaticResource InfoColorBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="File Structure Preview"
+                                   Style="{StaticResource CardHeaderStyle}"
+                                   Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="Preview of how data files will be organized on disk based on your current settings."
+                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                               TextWrapping="Wrap" Margin="0,0,0,12" />
+
+                    <Border Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                            CornerRadius="6"
+                            Padding="16">
+                        <TextBlock x:Name="FileTreePreviewText"
+                                   FontFamily="Cascadia Code, Consolas, monospace"
+                                   FontSize="12"
+                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                   TextWrapping="NoWrap" />
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock x:Name="StorageEstimateText"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" />
                     </StackPanel>
                 </StackPanel>
             </Border>

@@ -221,6 +221,7 @@ public partial class App : Application
         services.AddTransient<SettingsPage>();
         services.AddTransient<KeyboardShortcutsPage>();
         services.AddTransient<SetupWizardPage>();
+        services.AddTransient<AddProviderWizardPage>();
         services.AddTransient<ActivityLogPage>();
         services.AddTransient<DataBrowserPage>();
     }

@@ -149,8 +149,11 @@
                         <TextBlock Grid.Row="2" Text="PUBLISHED EVENTS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline Stroke="{StaticResource SuccessColorBrush}"
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding PublishedSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentGreenAlpha10Brush}" />
+                            <Polyline Points="{Binding PublishedSparkline}"
+                                      Stroke="{StaticResource SuccessColorBrush}"
                                       StrokeThickness="2" />
                         </Canvas>
                     </Grid>
@@ -179,8 +182,11 @@
                         <TextBlock Grid.Row="2" Text="DROPPED EVENTS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline Stroke="{StaticResource ErrorColorBrush}" StrokeThickness="2" />
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding DroppedSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentRedAlpha10Brush}" />
+                            <Polyline Points="{Binding DroppedSparkline}"
+                                      Stroke="{StaticResource ErrorColorBrush}" StrokeThickness="2" />
                         </Canvas>
                     </Grid>
                 </Border>
@@ -208,8 +214,11 @@
                         <TextBlock Grid.Row="2" Text="INTEGRITY EVENTS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline Stroke="{StaticResource WarningColorBrush}" StrokeThickness="2" />
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding IntegritySparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentOrangeAlpha10Brush}" />
+                            <Polyline Points="{Binding IntegritySparkline}"
+                                      Stroke="{StaticResource WarningColorBrush}" StrokeThickness="2" />
                         </Canvas>
                     </Grid>
                 </Border>
@@ -237,8 +246,11 @@
                         <TextBlock Grid.Row="2" Text="HISTORICAL BARS"
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
-                        <Canvas Grid.Row="3" Height="30" Background="Transparent">
-                            <Polyline Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
+                        <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding HistoricalSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
+                            <Polyline Points="{Binding HistoricalSparkline}"
+                                      Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
                         </Canvas>
                     </Grid>
                 </Border>
@@ -290,11 +302,10 @@
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" Margin="0,30,0,0" />
                             </StackPanel>
 
-                            <Canvas Grid.Row="0" Margin="55,0,0,0">
-                                <Polyline Stroke="{StaticResource InfoColorBrush}"
+                            <Canvas Grid.Row="0" Margin="55,0,0,0" ClipToBounds="True">
+                                <Polyline Points="{Binding ThroughputSparkline}"
+                                          Stroke="{StaticResource InfoColorBrush}"
                                           StrokeThickness="2" />
-                                <Polygon Fill="{StaticResource InfoColorBrush}"
-                                         Opacity="0.2" />
                             </Canvas>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="55,8,0,0"
@@ -330,12 +341,12 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="24,0,0,0">
                             <TextBlock Text="Average" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock Text="1,156/s"
+                            <TextBlock Text="{Binding AvgThroughputText}"
                                        Style="{StaticResource BodyStrongTextBlockStyle}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="24,0,0,0">
                             <TextBlock Text="Peak" Style="{StaticResource DataLabelStyle}" />
-                            <TextBlock Text="2,045/s"
+                            <TextBlock Text="{Binding PeakThroughputText}"
                                        Style="{StaticResource BodyStrongTextBlockStyle}" />
                         </StackPanel>
                         <StackPanel Grid.Column="3" Margin="24,0,0,0">

@@ -120,6 +120,7 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
         RegisterPage("Settings", typeof(SettingsPage));
         RegisterPage("KeyboardShortcuts", typeof(KeyboardShortcutsPage));
         RegisterPage("SetupWizard", typeof(SetupWizardPage));
+        RegisterPage("AddProviderWizard", typeof(AddProviderWizardPage));
 
         // Activity Log (1 page)
         RegisterPage("ActivityLog", typeof(ActivityLogPage));

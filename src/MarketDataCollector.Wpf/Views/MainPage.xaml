@@ -347,6 +347,12 @@
                                         <TextBlock Text="Settings" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
+                                <ListBoxItem Tag="AddProviderWizard">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconPlugin}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Add Provider" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
                                 <ListBoxItem Tag="AdminMaintenance">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconSettings}" Style="{StaticResource NavIconStyle}" />
