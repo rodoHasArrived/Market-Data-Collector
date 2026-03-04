@@ -67,6 +67,7 @@ public partial class WelcomePage : Page { }
 public partial class SettingsPage : Page { }
 public partial class KeyboardShortcutsPage : Page { }
 public partial class SetupWizardPage : Page { }
+public partial class AddProviderWizardPage : Page { }
 
 // Activity Log page
 public partial class ActivityLogPage : Page { }

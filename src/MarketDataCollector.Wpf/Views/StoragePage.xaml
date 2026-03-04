@@ -4,7 +4,8 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
-      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      Loaded="OnPageLoaded">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">
@@ -30,7 +31,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="2.4 GB" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="TotalSizeText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Total Size" HorizontalAlignment="Center"
@@ -40,17 +41,17 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="1,234,567" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="TotalFilesText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="Total Records" HorizontalAlignment="Center"
+                        <TextBlock Text="Total Files" HorizontalAlignment="Center"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" />
                     </StackPanel>
                 </Border>
 
                 <Border Grid.Column="4" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="45" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="SymbolCountText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Symbols" HorizontalAlignment="Center"
@@ -80,22 +81,62 @@
 
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="Naming Convention" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
-                        <ComboBox Style="{StaticResource FormComboBoxStyle}">
-                            <ComboBoxItem Content="By Symbol (symbol/type/date)" IsSelected="True" />
-                            <ComboBoxItem Content="By Date (date/symbol/type)" />
-                            <ComboBoxItem Content="By Type (type/symbol/date)" />
-                            <ComboBoxItem Content="Flat (symbol_type_date)" />
+                        <ComboBox x:Name="NamingConventionCombo"
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  SelectionChanged="StorageConfig_Changed">
+                            <ComboBoxItem Content="By Symbol (symbol/type/date)" Tag="BySymbol" IsSelected="True" />
+                            <ComboBoxItem Content="By Date (date/symbol/type)" Tag="ByDate" />
+                            <ComboBoxItem Content="By Type (type/symbol/date)" Tag="ByType" />
+                            <ComboBoxItem Content="Flat (symbol_type_date)" Tag="Flat" />
                         </ComboBox>
                     </StackPanel>
 
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="Compression" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
-                        <ComboBox Style="{StaticResource FormComboBoxStyle}">
-                            <ComboBoxItem Content="None" />
-                            <ComboBoxItem Content="Gzip" IsSelected="True" />
-                            <ComboBoxItem Content="LZ4 (Fast)" />
-                            <ComboBoxItem Content="ZSTD (Best)" />
+                        <ComboBox x:Name="CompressionCombo"
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  SelectionChanged="StorageConfig_Changed">
+                            <ComboBoxItem Content="None" Tag="none" />
+                            <ComboBoxItem Content="Gzip" Tag="gzip" IsSelected="True" />
+                            <ComboBoxItem Content="LZ4 (Fast)" Tag="lz4" />
+                            <ComboBoxItem Content="ZSTD (Best)" Tag="zstd" />
                         </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Live File Tree Preview -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="{StaticResource IconFolder}"
+                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="20"
+                                   Foreground="{StaticResource InfoColorBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="File Structure Preview"
+                                   Style="{StaticResource CardHeaderStyle}"
+                                   Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="Preview of how data files will be organized on disk based on your current settings."
+                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                               TextWrapping="Wrap" Margin="0,0,0,12" />
+
+                    <Border Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                            CornerRadius="6"
+                            Padding="16">
+                        <TextBlock x:Name="FileTreePreviewText"
+                                   FontFamily="Cascadia Code, Consolas, monospace"
+                                   FontSize="12"
+                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                   TextWrapping="NoWrap" />
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock x:Name="StorageEstimateText"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" />
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -115,19 +156,19 @@
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
                             <TextBlock Text="Hot Tier" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock Text="Last 7 days" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
-                            <TextBlock Text="450 MB" Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
+                            <TextBlock x:Name="HotTierSizeText" Text="--" Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="8,0">
                             <TextBlock Text="Warm Tier" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock Text="8-30 days" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
-                            <TextBlock Text="800 MB" Foreground="{StaticResource WarningColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
+                            <TextBlock x:Name="WarmTierSizeText" Text="--" Foreground="{StaticResource WarningColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Margin="8,0,0,0">
                             <TextBlock Text="Cold Tier" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock Text="30+ days" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
-                            <TextBlock Text="1.2 GB" Foreground="{StaticResource InfoColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
+                            <TextBlock x:Name="ColdTierSizeText" Text="--" Foreground="{StaticResource InfoColorBrush}" FontWeight="SemiBold" Margin="0,4,0,0" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>

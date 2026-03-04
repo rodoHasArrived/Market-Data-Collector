@@ -189,10 +189,14 @@ public sealed class BackgroundTaskSchedulerService
                 {
                     break;
                 }
-                catch
+                catch (Exception) when (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
                     // Individual task failures don't stop the scheduler.
-                    // In a production system, log this via Serilog.
+                    System.Diagnostics.Debug.WriteLine($"Scheduled task failed: {ex.Message}");
                 }
             }
         }

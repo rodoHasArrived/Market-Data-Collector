@@ -286,7 +286,7 @@ public sealed class OAuthRefreshService : IDisposable
 /// <summary>
 /// Status information for an OAuth token.
 /// </summary>
-public class OAuthTokenStatus
+public sealed class OAuthTokenStatus
 {
     public string ProviderId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
@@ -331,7 +331,7 @@ public class OAuthTokenStatus
 /// <summary>
 /// Event args for successful token refresh.
 /// </summary>
-public class TokenRefreshEventArgs : EventArgs
+public sealed class TokenRefreshEventArgs : EventArgs
 {
     public string ProviderId { get; }
     public DateTime RefreshedAt { get; }
@@ -346,7 +346,7 @@ public class TokenRefreshEventArgs : EventArgs
 /// <summary>
 /// Event args for failed token refresh.
 /// </summary>
-public class TokenRefreshFailedEventArgs : EventArgs
+public sealed class TokenRefreshFailedEventArgs : EventArgs
 {
     public string ProviderId { get; }
     public string ErrorMessage { get; }
@@ -361,7 +361,7 @@ public class TokenRefreshFailedEventArgs : EventArgs
 /// <summary>
 /// Event args for token expiration warning.
 /// </summary>
-public class TokenExpirationWarningEventArgs : EventArgs
+public sealed class TokenExpirationWarningEventArgs : EventArgs
 {
     public string ProviderId { get; }
     public DateTime ExpiresAt { get; }

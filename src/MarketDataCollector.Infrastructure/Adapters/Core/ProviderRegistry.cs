@@ -6,7 +6,6 @@ using MarketDataCollector.Application.Monitoring.Core;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;

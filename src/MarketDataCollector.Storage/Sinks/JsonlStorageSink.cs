@@ -476,9 +476,6 @@ public sealed class JsonlStorageSink : IStorageSink
             if (_disposed || (_retentionDays is null && _maxBytes is null))
                 return;
 
-            if (_disposed)
-                return;
-
             // Fast path: check if cleanup is needed using read lock (allows concurrent reads)
             _lock.EnterReadLock();
             try

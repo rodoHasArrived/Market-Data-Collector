@@ -6,7 +6,7 @@ namespace MarketDataCollector.Ui.Services;
 // DTO classes for storage API responses
 // Shared across desktop applications.
 
-public class StorageStatsSummary
+public sealed class StorageStatsSummary
 {
     public long TotalSizeBytes { get; set; }
     public long UsedSizeBytes { get; set; }
@@ -18,7 +18,7 @@ public class StorageStatsSummary
     public DateTime NewestData { get; set; }
 }
 
-public class StorageCategory
+public sealed class StorageCategory
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -27,7 +27,7 @@ public class StorageCategory
     public double Percentage { get; set; }
 }
 
-public class SymbolStorageInfo
+public sealed class SymbolStorageInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Exchange { get; set; }
@@ -38,7 +38,7 @@ public class SymbolStorageInfo
     public List<string> DataTypes { get; set; } = new();
 }
 
-public class SymbolStorageStats
+public sealed class SymbolStorageStats
 {
     public string Symbol { get; set; } = string.Empty;
     public long TotalSizeBytes { get; set; }
@@ -50,7 +50,7 @@ public class SymbolStorageStats
     public Dictionary<string, long> EventsByType { get; set; } = new();
 }
 
-public class SymbolFileDto
+public sealed class SymbolFileDto
 {
     public string FileName { get; set; } = string.Empty;
     public string DataType { get; set; } = string.Empty;
@@ -60,13 +60,13 @@ public class SymbolFileDto
     public string? CompressionType { get; set; }
 }
 
-public class SymbolPathResponse
+public sealed class SymbolPathResponse
 {
     public string Symbol { get; set; } = string.Empty;
     public string FolderPath { get; set; } = string.Empty;
 }
 
-public class StorageHealthReport
+public sealed class StorageHealthReport
 {
     public string Status { get; set; } = string.Empty;
     public double HealthScore { get; set; }
@@ -75,7 +75,7 @@ public class StorageHealthReport
     public DateTime CheckedAt { get; set; }
 }
 
-public class StorageIssue
+public sealed class StorageIssue
 {
     public string Type { get; set; } = string.Empty;
     public string Severity { get; set; } = string.Empty;
@@ -83,7 +83,7 @@ public class StorageIssue
     public string? AffectedPath { get; set; }
 }
 
-public class CleanupCandidate
+public sealed class CleanupCandidate
 {
     public string Path { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
@@ -91,7 +91,7 @@ public class CleanupCandidate
     public string Reason { get; set; } = string.Empty;
 }
 
-public class CleanupResult
+public sealed class CleanupResult
 {
     public bool Success { get; set; }
     public int FilesRemoved { get; set; }
@@ -99,7 +99,7 @@ public class CleanupResult
     public List<string> Errors { get; set; } = new();
 }
 
-public class ArchiveStats
+public sealed class ArchiveStats
 {
     public int TotalArchives { get; set; }
     public long TotalSizeBytes { get; set; }

@@ -449,7 +449,7 @@ public partial class ProviderHealthPage : Page
 /// <summary>
 /// Model for streaming provider status display.
 /// </summary>
-public class ProviderStatusModel
+public sealed class ProviderStatusModel
 {
     public string ProviderId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -464,7 +464,7 @@ public class ProviderStatusModel
 /// <summary>
 /// Model for backfill provider status display.
 /// </summary>
-public class BackfillProviderModel
+public sealed class BackfillProviderModel
 {
     public string ProviderId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -477,7 +477,7 @@ public class BackfillProviderModel
 /// <summary>
 /// Model for connection history events.
 /// </summary>
-public class ConnectionEventModel
+public sealed class ConnectionEventModel
 {
     public string Message { get; set; } = string.Empty;
     public string Provider { get; set; } = string.Empty;

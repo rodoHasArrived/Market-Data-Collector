@@ -367,6 +367,7 @@ def audit_docs(root: Path, report: AuditReport) -> None:
                 continue
             rel = str(path.relative_to(root))
             text = path.read_text(encoding="utf-8", errors="replace")
+            # Detect sections as ## headings or **Section:** metadata lines
             headings = set(re.findall(r"^##\s+(.+)", text, re.MULTILINE))
             # Also recognise bold-metadata style: **Status:** Accepted
             if re.search(r"^\*\*Status:\*\*", text, re.MULTILINE):

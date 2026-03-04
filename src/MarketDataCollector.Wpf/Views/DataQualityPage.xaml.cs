@@ -1107,11 +1107,81 @@ public partial class DataQualityPage : Page
     {
         if (SymbolQualityList.SelectedItem is SymbolQualityModel selected)
         {
-            _notificationService.ShowNotification(
-                "Symbol Selected",
-                $"Viewing data quality details for {selected.Symbol}.",
-                NotificationType.Info);
+            ShowSymbolDrilldown(selected);
         }
+        else
+        {
+            SymbolDrilldownPanel.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ShowSymbolDrilldown(SymbolQualityModel model)
+    {
+        SymbolDrilldownPanel.Visibility = Visibility.Visible;
+        DrilldownSymbolHeader.Text = $"{model.Symbol} — Quality Drilldown";
+        DrilldownScoreText.Text = model.ScoreFormatted;
+        DrilldownScoreText.Foreground = model.Score >= 90
+            ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
+            : model.Score >= 70
+                ? new SolidColorBrush(Color.FromRgb(227, 179, 65))
+                : new SolidColorBrush(Color.FromRgb(244, 67, 54));
+
+        // Simulated drilldown metrics
+        var random = new Random(model.Symbol.GetHashCode());
+        DrilldownCompletenessText.Text = $"{random.Next(85, 100)}%";
+        DrilldownGapsText.Text = random.Next(0, 5).ToString();
+        DrilldownErrorsText.Text = random.Next(0, 3).ToString();
+        DrilldownLatencyText.Text = $"{random.Next(5, 120)}ms";
+
+        // Build heatmap
+        var heatmapCells = new[] { HeatmapCell0, HeatmapCell1, HeatmapCell2, HeatmapCell3, HeatmapCell4, HeatmapCell5, HeatmapCell6 };
+        var dayLabels = new[] { HeatmapDay0Label, HeatmapDay1Label, HeatmapDay2Label, HeatmapDay3Label, HeatmapDay4Label, HeatmapDay5Label, HeatmapDay6Label };
+
+        for (var i = 0; i < 7; i++)
+        {
+            var day = DateTime.Today.AddDays(-6 + i);
+            dayLabels[i].Text = day.ToString("ddd");
+
+            var dayScore = random.Next(60, 100);
+            heatmapCells[i].Background = dayScore >= 95
+                ? new SolidColorBrush(Color.FromArgb(200, 63, 185, 80))
+                : dayScore >= 85
+                    ? new SolidColorBrush(Color.FromArgb(200, 78, 201, 176))
+                    : dayScore >= 70
+                        ? new SolidColorBrush(Color.FromArgb(200, 227, 179, 65))
+                        : new SolidColorBrush(Color.FromArgb(200, 244, 67, 54));
+
+            heatmapCells[i].ToolTip = $"{day:MMM dd}: Score {dayScore}%";
+        }
+
+        // Build recent issues list
+        var issues = new ObservableCollection<DrilldownIssue>();
+        var issueTypes = new[] { "Sequence gap detected", "Stale data (>5s delay)", "Price spike anomaly", "Missing quotes window", "Volume irregularity" };
+        var issueCount = random.Next(0, 4);
+        for (var i = 0; i < issueCount; i++)
+        {
+            var severity = random.Next(0, 3);
+            issues.Add(new DrilldownIssue
+            {
+                Description = issueTypes[random.Next(issueTypes.Length)],
+                Timestamp = DateTime.Now.AddMinutes(-random.Next(10, 2880)).ToString("MMM dd HH:mm"),
+                SeverityBrush = severity == 0
+                    ? new SolidColorBrush(Color.FromRgb(244, 67, 54))
+                    : severity == 1
+                        ? new SolidColorBrush(Color.FromRgb(227, 179, 65))
+                        : new SolidColorBrush(Color.FromRgb(33, 150, 243))
+            });
+        }
+
+        DrilldownIssuesList.ItemsSource = issues;
+        NoDrilldownIssuesText.Visibility = issues.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        DrilldownIssuesList.Visibility = issues.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void CloseDrilldown_Click(object sender, RoutedEventArgs e)
+    {
+        SymbolDrilldownPanel.Visibility = Visibility.Collapsed;
+        SymbolQualityList.SelectedItem = null;
     }
 
     private void SeverityFilter_Changed(object sender, SelectionChangedEventArgs e)
@@ -1585,7 +1655,7 @@ public partial class DataQualityPage : Page
     }
 }
 
-public class TrendPoint
+public sealed class TrendPoint
 {
     public TrendPoint(double score, string label)
     {
@@ -1600,7 +1670,7 @@ public class TrendPoint
 /// <summary>
 /// Model for symbol quality display.
 /// </summary>
-public class SymbolQualityModel
+public sealed class SymbolQualityModel
 {
     public string Symbol { get; set; } = string.Empty;
     public double Score { get; set; }
@@ -1615,7 +1685,7 @@ public class SymbolQualityModel
 /// <summary>
 /// Model for gap display.
 /// </summary>
-public class GapModel
+public sealed class GapModel
 {
     public string GapId { get; set; } = string.Empty;
     public string Symbol { get; set; } = string.Empty;
@@ -1623,7 +1693,7 @@ public class GapModel
     public string Duration { get; set; } = string.Empty;
 }
 
-public class AlertModel
+public sealed class AlertModel
 {
     public string Id { get; set; } = string.Empty;
     public string Symbol { get; set; } = string.Empty;
@@ -1636,11 +1706,21 @@ public class AlertModel
 /// <summary>
 /// Model for anomaly display.
 /// </summary>
-public class AnomalyModel
+public sealed class AnomalyModel
 {
     public string Symbol { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Timestamp { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public SolidColorBrush SeverityColor { get; set; } = new(Colors.Gray);
+}
+
+/// <summary>
+/// Model for symbol drilldown issue display.
+/// </summary>
+public class DrilldownIssue
+{
+    public string Description { get; set; } = string.Empty;
+    public string Timestamp { get; set; } = string.Empty;
+    public SolidColorBrush SeverityBrush { get; set; } = new(Colors.Gray);
 }

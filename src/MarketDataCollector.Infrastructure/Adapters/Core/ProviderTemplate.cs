@@ -1,6 +1,5 @@
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
 

@@ -1,8 +1,8 @@
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Stooq;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;

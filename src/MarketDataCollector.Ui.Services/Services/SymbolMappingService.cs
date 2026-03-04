@@ -386,7 +386,7 @@ public sealed class SymbolMappingService
 /// <summary>
 /// Symbol mapping configuration stored on disk.
 /// </summary>
-public class SymbolMappingsConfig
+public sealed class SymbolMappingsConfig
 {
     public string Version { get; set; } = "1.0";
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
@@ -396,7 +396,7 @@ public class SymbolMappingsConfig
 /// <summary>
 /// A symbol mapping entry with provider-specific symbols.
 /// </summary>
-public class SymbolMapping
+public sealed class SymbolMapping
 {
     /// <summary>
     /// The canonical (internal) symbol representation.

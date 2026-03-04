@@ -367,6 +367,20 @@ public static class UiApiRoutes
     public const string CanonicalizationParityByProvider = "/api/canonicalization/parity/{provider}";
     public const string CanonicalizationConfig = "/api/canonicalization/config";
 
+    // Authentication endpoints
+    public const string AuthLoginPage = "/login";
+    public const string AuthApiLogin = "/api/auth/login";
+    public const string AuthApiLogout = "/api/auth/logout";
+
+    // Resilience endpoints
+    public const string ResilienceCircuitBreakers = "/api/resilience/circuit-breakers";
+
+    // Backfill cost estimation
+    public const string BackfillCostEstimate = "/api/backfill/cost-estimate";
+
+    // Retention compliance
+    public const string RetentionComplianceReport = "/api/admin/retention/compliance-report";
+
     /// <summary>
     /// Replaces a route parameter with a value.
     /// </summary>

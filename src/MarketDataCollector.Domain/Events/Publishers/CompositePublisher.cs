@@ -31,9 +31,10 @@ public sealed class CompositePublisher : IMarketEventPublisher
                     anySucceeded = true;
                 }
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
             {
-                // Continue to other publishers even if one fails
+                // Continue to other publishers even if one fails.
+                // OutOfMemoryException and OperationCanceledException are re-thrown.
             }
         }
 

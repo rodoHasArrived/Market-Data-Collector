@@ -25,6 +25,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="DataSources">Multiple data source configurations for real-time and historical data.</param>
 /// <param name="Derivatives">Derivatives (options) data collection configuration.</param>
 /// <param name="ProviderRegistry">Unified provider registry configuration controlling attribute-based discovery.</param>
+/// <param name="Canonicalization">Canonicalization configuration for condition codes and venue MICs.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool? Compress = null,
@@ -61,46 +62,46 @@ public sealed record ProviderRegistryConfig(
 /// Conversion to StorageOptions is available via extension methods in the Application layer.
 /// </summary>
 public sealed record StorageConfig(
-    /// <summary>
-    /// File naming convention: Flat, BySymbol, ByDate, ByType.
-    /// </summary>
+    // <summary>
+    // File naming convention: Flat, BySymbol, ByDate, ByType.
+    // </summary>
     string NamingConvention = "BySymbol",
 
-    /// <summary>
-    /// Date partitioning: None, Daily, Hourly, Monthly.
-    /// </summary>
+    // <summary>
+    // Date partitioning: None, Daily, Hourly, Monthly.
+    // </summary>
     string DatePartition = "Daily",
 
-    /// <summary>
-    /// Whether to include provider name in file path.
-    /// </summary>
+    // <summary>
+    // Whether to include provider name in file path.
+    // </summary>
     bool IncludeProvider = false,
 
-    /// <summary>
-    /// Optional file name prefix.
-    /// </summary>
+    // <summary>
+    // Optional file name prefix.
+    // </summary>
     string? FilePrefix = null,
 
-    /// <summary>
-    /// Optional storage profile preset (Research, LowLatency, Archival).
-    /// </summary>
+    // <summary>
+    // Optional storage profile preset (Research, LowLatency, Archival).
+    // </summary>
     string? Profile = null,
 
-    /// <summary>
-    /// Optional retention window (days). Files older than this are deleted during writes.
-    /// </summary>
+    // <summary>
+    // Optional retention window (days). Files older than this are deleted during writes.
+    // </summary>
     int? RetentionDays = null,
 
-    /// <summary>
-    /// Optional cap on total bytes (across all files). Oldest files are removed first when exceeded.
-    /// Value is expressed in megabytes for readability.
-    /// </summary>
+    // <summary>
+    // Optional cap on total bytes (across all files). Oldest files are removed first when exceeded.
+    // Value is expressed in megabytes for readability.
+    // </summary>
     long? MaxTotalMegabytes = null,
 
-    /// <summary>
-    /// Whether to enable Parquet storage as an additional sink alongside JSONL.
-    /// When enabled, events are written to both JSONL and Parquet via CompositeSink.
-    /// </summary>
+    // <summary>
+    // Whether to enable Parquet storage as an additional sink alongside JSONL.
+    // When enabled, events are written to both JSONL and Parquet via CompositeSink.
+    // </summary>
     bool EnableParquetSink = false
 );
 

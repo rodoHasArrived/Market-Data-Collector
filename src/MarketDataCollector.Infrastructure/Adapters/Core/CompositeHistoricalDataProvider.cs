@@ -124,13 +124,17 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
         return false;
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+        => GetDailyBarsInternalAsync(symbol, from, to, rateLimitRetries: 0, ct);
+
+    private async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsInternalAsync(string symbol, DateOnly? from, DateOnly? to, int rateLimitRetries, CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (string.IsNullOrWhiteSpace(symbol))
             throw new ArgumentException("Symbol is required", nameof(symbol));
 
+        const int maxRateLimitRetries = 3;
         List<(string Provider, Exception Error)> errors = [];
 
         // Get providers ordered by rate limit availability if rotation is enabled
@@ -214,17 +218,17 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
         }
 
         // All providers failed - check if any are just rate limited and we should wait
-        if (_enableRateLimitRotation && errors.All(e => IsRateLimitException(e.Error)))
+        if (_enableRateLimitRotation && errors.All(e => IsRateLimitException(e.Error)) && rateLimitRetries < maxRateLimitRetries)
         {
             var shortestWait = GetShortestRateLimitWait();
             if (shortestWait.HasValue && shortestWait.Value < TimeSpan.FromMinutes(5))
             {
-                _log.Information("All providers rate limited. Waiting {WaitTime} for rate limit reset...",
-                    shortestWait.Value);
+                _log.Information("All providers rate limited (attempt {Attempt}/{MaxRetries}). Waiting {WaitTime} for rate limit reset...",
+                    rateLimitRetries + 1, maxRateLimitRetries, shortestWait.Value);
                 await Task.Delay(shortestWait.Value, ct).ConfigureAwait(false);
 
-                // Retry after waiting
-                return await GetDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
+                // Retry after waiting with incremented counter
+                return await GetDailyBarsInternalAsync(symbol, from, to, rateLimitRetries + 1, ct).ConfigureAwait(false);
             }
         }
 

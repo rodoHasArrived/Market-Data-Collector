@@ -1,9 +1,17 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Infrastructure.Adapters.Alpaca;
+using MarketDataCollector.Infrastructure.Adapters.AlphaVantage;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.Finnhub;
+using MarketDataCollector.Infrastructure.Adapters.NasdaqDataLink;
+using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
+using MarketDataCollector.Infrastructure.Adapters.Polygon;
+using MarketDataCollector.Infrastructure.Adapters.Stooq;
+using MarketDataCollector.Infrastructure.Adapters.Tiingo;
+using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using Serilog;
 
 // Type aliases for clarity when dealing with backfill provider configs
@@ -14,7 +22,6 @@ using FinnhubBackfillConfig = MarketDataCollector.Application.Config.FinnhubConf
 using StooqBackfillConfig = MarketDataCollector.Application.Config.StooqConfig;
 using AlphaVantageBackfillConfig = MarketDataCollector.Application.Config.AlphaVantageConfig;
 using NasdaqBackfillConfig = MarketDataCollector.Application.Config.NasdaqDataLinkConfig;
-using SymbolResolution = MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
 
@@ -307,10 +314,10 @@ public sealed class ProviderFactory
         var openFigiApiKey = _config.Backfill?.Providers?.OpenFigi?.ApiKey;
         var enableSymbolResolution = _config.Backfill?.EnableSymbolResolution ?? true;
 
-        SymbolResolution.OpenFigiSymbolResolver? symbolResolver = null;
+        OpenFigiSymbolResolver? symbolResolver = null;
         if (enableSymbolResolution)
         {
-            symbolResolver = new SymbolResolution.OpenFigiSymbolResolver(openFigiApiKey, log: _log);
+            symbolResolver = new OpenFigiSymbolResolver(openFigiApiKey, log: _log);
         }
 
         return new CompositeHistoricalDataProvider(

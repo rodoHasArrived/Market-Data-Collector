@@ -321,6 +321,8 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
 
                 try
                 {
+                    // Dispose the previous CTS before creating a new one to prevent leaks
+                    _cts.Dispose();
                     _cts = new CancellationTokenSource();
                     await ConnectInternalAsync(_cts.Token).ConfigureAwait(false);
 
@@ -331,9 +333,9 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
                         break;
                     }
                 }
-                catch
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
-                    // Continue retry loop
+                    _log.Debug(ex, "Reconnection attempt {Attempt} failed", Interlocked.Read(ref _reconnectAttempts));
                 }
             }
         }

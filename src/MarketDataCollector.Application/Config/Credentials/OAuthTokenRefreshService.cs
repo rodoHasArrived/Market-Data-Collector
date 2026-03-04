@@ -57,7 +57,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         if (_refreshLoop != null) return;
 
         _cts = new CancellationTokenSource();
-        _refreshLoop = Task.Run(() => RefreshLoopAsync(_cts.Token), _cts.Token);
+        _refreshLoop = RefreshLoopAsync(_cts.Token);
         _log.Information("OAuth token refresh service started");
     }
 
@@ -96,11 +96,11 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// <summary>
     /// Stores an OAuth token for a provider.
     /// </summary>
-    public async Task StoreTokenAsync(string providerName, OAuthToken token)
+    public async Task StoreTokenAsync(string providerName, OAuthToken token, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(token);
         _tokens[providerName] = token;
-        await PersistTokensAsync();
+        await PersistTokensAsync(ct);
         _log.Debug("Stored OAuth token for {Provider}, expires at {ExpiresAt}", providerName, token.ExpiresAt);
     }
 
@@ -144,10 +144,10 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// <summary>
     /// Removes stored token for a provider.
     /// </summary>
-    public async Task RemoveTokenAsync(string providerName)
+    public async Task RemoveTokenAsync(string providerName, CancellationToken ct = default)
     {
         _tokens.TryRemove(providerName, out _);
-        await PersistTokensAsync();
+        await PersistTokensAsync(ct);
         _log.Information("Removed OAuth token for {Provider}", providerName);
     }
 
@@ -343,7 +343,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         }
     }
 
-    private async Task PersistTokensAsync()
+    private async Task PersistTokensAsync(CancellationToken ct = default)
     {
         try
         {
@@ -354,7 +354,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
             var tokens = _tokens.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             var json = JsonSerializer.Serialize(tokens, new JsonSerializerOptions { WriteIndented = true });
 
-            await File.WriteAllTextAsync(_tokenPersistencePath, json);
+            await File.WriteAllTextAsync(_tokenPersistencePath, json, ct);
             _log.Debug("Persisted OAuth tokens for {Count} providers", tokens.Count);
         }
         catch (Exception ex)

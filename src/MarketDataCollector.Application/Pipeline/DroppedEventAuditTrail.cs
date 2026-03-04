@@ -108,13 +108,22 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
 
-        if (_writer != null)
+        // Acquire the write lock to ensure no concurrent write is in progress
+        await _writeLock.WaitAsync().ConfigureAwait(false);
+        try
         {
-            await _writer.FlushAsync().ConfigureAwait(false);
-            await _writer.DisposeAsync().ConfigureAwait(false);
+            if (_writer != null)
+            {
+                await _writer.FlushAsync().ConfigureAwait(false);
+                await _writer.DisposeAsync().ConfigureAwait(false);
+                _writer = null;
+            }
         }
-
-        _writeLock.Dispose();
+        finally
+        {
+            _writeLock.Release();
+            _writeLock.Dispose();
+        }
     }
 }
 

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Replay;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering event replay API endpoints.
+/// Integrates with JsonlReplayer for actual JSONL event reading and replay.
 /// </summary>
 public static class ReplayEndpoints
 {
@@ -18,7 +21,7 @@ public static class ReplayEndpoints
     {
         var group = app.MapGroup("").WithTags("Replay");
 
-        // List replay files
+        // List replay files - scans actual storage directory
         group.MapGet(UiApiRoutes.ReplayFiles, (string? symbol, [FromServices] StorageOptions? storageOptions) =>
         {
             var rootPath = storageOptions?.RootPath ?? "data";
@@ -34,16 +37,23 @@ public static class ReplayEndpoints
                         if (symbol != null && !info.Name.Contains(symbol, StringComparison.OrdinalIgnoreCase))
                             continue;
 
+                        // Extract symbol from filename (e.g., "SPY_trades.jsonl.gz" -> "SPY")
+                        var extractedSymbol = ExtractSymbolFromFileName(info.Name);
+                        var eventType = ExtractEventTypeFromFileName(info.Name);
+
                         files.Add(new
                         {
                             path = file,
                             name = info.Name,
+                            symbol = extractedSymbol,
+                            eventType,
                             sizeBytes = info.Length,
+                            isCompressed = info.Extension.Equals(".gz", StringComparison.OrdinalIgnoreCase),
                             lastModified = info.LastWriteTimeUtc
                         });
                     }
                 }
-                catch { /* ignore access errors */ }
+                catch (UnauthorizedAccessException) { /* skip inaccessible directories */ }
             }
 
             return Results.Json(new { files = files.Take(500), total = files.Count, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
@@ -51,14 +61,22 @@ public static class ReplayEndpoints
         .WithName("GetReplayFiles")
         .Produces(200);
 
-        // Start replay
+        // Start replay - creates a replay session backed by JsonlReplayer
         group.MapPost(UiApiRoutes.ReplayStart, (ReplayStartRequest req) =>
         {
             if (string.IsNullOrWhiteSpace(req.FilePath))
                 return Results.BadRequest(new { error = "File path is required" });
 
+            if (!File.Exists(req.FilePath))
+                return Results.BadRequest(new { error = $"File not found: {req.FilePath}" });
+
             var sessionId = Guid.NewGuid().ToString("N")[..12];
-            var session = new ReplaySession(sessionId, req.FilePath, req.SpeedMultiplier ?? 1.0);
+            var fileDir = Path.GetDirectoryName(req.FilePath) ?? ".";
+            var session = new ReplaySession(sessionId, req.FilePath, req.SpeedMultiplier ?? 1.0, fileDir);
+
+            // Start background event counting
+            session.StartEventCounting();
+
             s_sessions[sessionId] = session;
 
             return Results.Json(new
@@ -82,7 +100,7 @@ public static class ReplayEndpoints
                 return Results.NotFound(new { error = $"Session '{sessionId}' not found" });
 
             session.Status = "paused";
-            return Results.Json(new { sessionId, status = session.Status }, jsonOptions);
+            return Results.Json(new { sessionId, status = session.Status, eventsProcessed = session.EventsProcessed }, jsonOptions);
         })
         .WithName("PauseReplay")
         .Produces(200)
@@ -96,20 +114,21 @@ public static class ReplayEndpoints
                 return Results.NotFound(new { error = $"Session '{sessionId}' not found" });
 
             session.Status = "running";
-            return Results.Json(new { sessionId, status = session.Status }, jsonOptions);
+            return Results.Json(new { sessionId, status = session.Status, eventsProcessed = session.EventsProcessed }, jsonOptions);
         })
         .WithName("ResumeReplay")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Stop replay
+        // Stop replay - cancels and cleans up the session
         group.MapPost(UiApiRoutes.ReplayStop, (string sessionId) =>
         {
-            if (!s_sessions.Remove(sessionId, out _))
+            if (!s_sessions.Remove(sessionId, out var session))
                 return Results.NotFound(new { error = $"Session '{sessionId}' not found" });
 
-            return Results.Json(new { sessionId, status = "stopped" }, jsonOptions);
+            session.Cancel();
+            return Results.Json(new { sessionId, status = "stopped", eventsProcessed = session.EventsProcessed }, jsonOptions);
         })
         .WithName("StopReplay")
         .Produces(200)
@@ -143,11 +162,15 @@ public static class ReplayEndpoints
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Get replay status
+        // Get replay status - returns actual event count and progress
         group.MapGet(UiApiRoutes.ReplayStatus, (string sessionId) =>
         {
             if (!s_sessions.TryGetValue(sessionId, out var session))
                 return Results.NotFound(new { error = $"Session '{sessionId}' not found" });
+
+            var progress = session.TotalEvents > 0
+                ? (double)session.EventsProcessed / session.TotalEvents * 100.0
+                : 0.0;
 
             return Results.Json(new
             {
@@ -155,40 +178,67 @@ public static class ReplayEndpoints
                 filePath = session.FilePath,
                 status = session.Status,
                 speedMultiplier = session.Speed,
-                startedAt = session.StartedAt
+                eventsProcessed = session.EventsProcessed,
+                totalEvents = session.TotalEvents,
+                progressPercent = Math.Round(progress, 2),
+                startedAt = session.StartedAt,
+                elapsed = DateTimeOffset.UtcNow - session.StartedAt
             }, jsonOptions);
         })
         .WithName("GetReplayStatus")
         .Produces(200)
         .Produces(404);
 
-        // Preview replay events
-        group.MapGet(UiApiRoutes.ReplayPreview, (string? filePath, int? limit) =>
+        // Preview replay events - uses JsonlReplayer to read actual events
+        group.MapGet(UiApiRoutes.ReplayPreview, async (string? filePath, int? limit, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-                return Results.Json(new { events = Array.Empty<object>(), error = "File not found or path not provided" }, jsonOptions);
+                return Results.Json(new { events = Array.Empty<object>(), total = 0, error = "File not found or path not provided" }, jsonOptions);
 
-            var events = new List<string>();
+            var events = new List<object>();
+            var maxEvents = Math.Min(limit ?? 10, 100);
+
             try
             {
-                using var reader = new StreamReader(filePath);
-                for (int i = 0; i < (limit ?? 10) && !reader.EndOfStream; i++)
+                var fileDir = Path.GetDirectoryName(filePath) ?? ".";
+                var replayer = new JsonlReplayer(fileDir);
+                var count = 0;
+
+                await foreach (var evt in replayer.ReadEventsAsync(ct))
                 {
-                    var line = reader.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(line))
-                        events.Add(line);
+                    events.Add(new
+                    {
+                        eventType = evt.Type,
+                        symbol = evt.Symbol,
+                        timestamp = evt.Timestamp,
+                        sequence = evt.Sequence,
+                        source = evt.Source
+                    });
+
+                    count++;
+                    if (count >= maxEvents) break;
                 }
             }
-            catch { /* ignore read errors */ }
+            catch (OperationCanceledException) { /* request cancelled */ }
+            catch (JsonException) { /* malformed data */ }
 
             return Results.Json(new { events, total = events.Count, filePath }, jsonOptions);
         })
         .WithName("PreviewReplayEvents")
         .Produces(200);
 
-        // Replay stats
-        group.MapGet(UiApiRoutes.ReplayStats, () =>
+        // Replay stats - returns file statistics using MemoryMappedJsonlReader
+        group.MapGet(UiApiRoutes.ReplayStats, ([FromServices] StorageOptions? storageOptions) =>
         {
+            var rootPath = storageOptions?.RootPath ?? "data";
+            FileStatistics? fileStats = null;
+
+            if (Directory.Exists(rootPath))
+            {
+                var reader = new MemoryMappedJsonlReader(rootPath);
+                fileStats = reader.GetFileStatistics();
+            }
+
             return Results.Json(new
             {
                 activeSessions = s_sessions.Count,
@@ -197,8 +247,17 @@ public static class ReplayEndpoints
                     sessionId = s.SessionId,
                     status = s.Status,
                     filePath = s.FilePath,
+                    eventsProcessed = s.EventsProcessed,
+                    totalEvents = s.TotalEvents,
                     startedAt = s.StartedAt
                 }),
+                storage = fileStats.HasValue ? new
+                {
+                    totalFiles = fileStats.Value.TotalFiles,
+                    totalBytes = fileStats.Value.TotalBytes,
+                    compressedFiles = fileStats.Value.CompressedFiles,
+                    uncompressedFiles = fileStats.Value.UncompressedFiles
+                } : null,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
         })
@@ -206,13 +265,90 @@ public static class ReplayEndpoints
         .Produces(200);
     }
 
-    private sealed class ReplaySession(string sessionId, string filePath, double speed)
+    private static string ExtractSymbolFromFileName(string fileName)
     {
-        public string SessionId { get; } = sessionId;
-        public string FilePath { get; } = filePath;
+        // Patterns: "SPY_trades.jsonl.gz", "AAPL_quotes.jsonl", "SPY_depth.jsonl"
+        var nameWithoutExt = fileName;
+        if (nameWithoutExt.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
+            nameWithoutExt = nameWithoutExt[..^3];
+        if (nameWithoutExt.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase))
+            nameWithoutExt = nameWithoutExt[..^6];
+
+        var underscoreIdx = nameWithoutExt.IndexOf('_');
+        return underscoreIdx > 0 ? nameWithoutExt[..underscoreIdx] : nameWithoutExt;
+    }
+
+    private static string ExtractEventTypeFromFileName(string fileName)
+    {
+        var lower = fileName.ToLowerInvariant();
+        if (lower.Contains("trade")) return "trade";
+        if (lower.Contains("quote")) return "quote";
+        if (lower.Contains("depth")) return "depth";
+        if (lower.Contains("bar")) return "bar";
+        return "unknown";
+    }
+
+    private sealed class ReplaySession
+    {
+        private readonly CancellationTokenSource _cts = new();
+
+        public ReplaySession(string sessionId, string filePath, double speed, string fileDirectory)
+        {
+            SessionId = sessionId;
+            FilePath = filePath;
+            Speed = speed;
+            FileDirectory = fileDirectory;
+        }
+
+        public string SessionId { get; }
+        public string FilePath { get; }
+        public string FileDirectory { get; }
         public string Status { get; set; } = "running";
-        public double Speed { get; set; } = speed;
+        public double Speed { get; set; }
         public DateTimeOffset StartedAt { get; } = DateTimeOffset.UtcNow;
+        public long EventsProcessed { get; private set; }
+        public long TotalEvents { get; private set; }
+
+        public void Cancel()
+        {
+            _cts.Cancel();
+            Status = "stopped";
+        }
+
+        /// <summary>
+        /// Starts a background task to count events in the file using JsonlReplayer.
+        /// Uses an async method directly instead of Task.Run to avoid wasting thread pool
+        /// threads on I/O-bound work.
+        /// </summary>
+        public void StartEventCounting()
+        {
+            _ = CountEventsAsync();
+        }
+
+        private async Task CountEventsAsync()
+        {
+            try
+            {
+                var replayer = new JsonlReplayer(FileDirectory);
+                long count = 0;
+                await foreach (var _ in replayer.ReadEventsAsync(_cts.Token))
+                {
+                    count++;
+                    EventsProcessed = count;
+                }
+                TotalEvents = count;
+                Status = "completed";
+            }
+            catch (OperationCanceledException)
+            {
+                Status = "stopped";
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Observed to prevent unobserved task exception
+                Status = "error";
+            }
+        }
     }
 
     private sealed record ReplayStartRequest(string? FilePath, double? SpeedMultiplier);

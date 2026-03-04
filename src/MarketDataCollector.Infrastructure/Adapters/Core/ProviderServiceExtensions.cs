@@ -3,7 +3,6 @@ using MarketDataCollector.Application.Monitoring.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
