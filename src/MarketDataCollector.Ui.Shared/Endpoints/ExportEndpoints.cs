@@ -44,6 +44,9 @@ public static class ExportEndpoints
                 "_exports",
                 DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"));
 
+            var baseProfileId = req.ProfileId ?? "python-pandas";
+            var baseProfile = exportService.GetProfile(baseProfileId) ?? ExportProfile.PythonPandas;
+
             var exportRequest = new ExportRequest
             {
                 ProfileId = req.ProfileId ?? "python-pandas",
@@ -253,7 +256,7 @@ public static class ExportEndpoints
                 jobId = result.JobId,
                 success = result.Success,
                 symbols = result.Symbols,
-                format = req?.Format ?? "parquet",
+                format = orderflowFormatOverride?.ToString().ToLowerInvariant() ?? "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
                 outputDirectory = result.OutputDirectory,
@@ -379,6 +382,29 @@ public static class ExportEndpoints
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
+
+    /// <summary>
+    /// Creates a copy of <paramref name="source"/> with only the <see cref="ExportProfile.Format"/> changed.
+    /// All other profile settings (compression, timestamps, flags, etc.) are preserved.
+    /// </summary>
+    private static ExportProfile CloneWithFormat(ExportProfile source, ExportFormat format) => new()
+    {
+        Id = "custom-" + format.ToString().ToLowerInvariant(),
+        Name = source.Name,
+        Description = source.Description,
+        TargetTool = source.TargetTool,
+        Format = format,
+        Compression = source.Compression,
+        TimestampSettings = source.TimestampSettings,
+        IncludeFields = source.IncludeFields,
+        ExcludeFields = source.ExcludeFields,
+        IncludeLoaderScript = source.IncludeLoaderScript,
+        IncludeDataDictionary = source.IncludeDataDictionary,
+        FileNamePattern = source.FileNamePattern,
+        SplitBySymbol = source.SplitBySymbol,
+        SplitByDate = source.SplitByDate,
+        MaxRecordsPerFile = source.MaxRecordsPerFile
+    };
 
     /// <summary>
     /// Removes export directories older than <see cref="ExportMaxAge"/> to prevent unbounded disk usage.
