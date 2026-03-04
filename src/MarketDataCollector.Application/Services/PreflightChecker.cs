@@ -35,6 +35,14 @@ public sealed class PreflightChecker
     /// <returns>Pre-flight check results with pass/fail status and details.</returns>
     public async Task<PreflightResult> RunChecksAsync(string dataRoot, CancellationToken ct = default, DataSourceKind? activeDataSource = null)
     {
+        return await RunChecksAsync(dataRoot, activeDataSource: null, ct);
+    }
+
+    /// <summary>
+    /// Runs all pre-flight checks including provider credential validation.
+    /// </summary>
+    public async Task<PreflightResult> RunChecksAsync(string dataRoot, string? activeDataSource, CancellationToken ct = default)
+    {
         var startTime = Stopwatch.GetTimestamp();
         var checks = new List<PreflightCheckResult>();
 
@@ -59,6 +67,12 @@ public sealed class PreflightChecker
         if (activeDataSource.HasValue)
         {
             checks.Add(ValidateProviderCredentials(activeDataSource.Value));
+        }
+
+        // Validate provider credentials if active data source is known
+        if (!string.IsNullOrEmpty(activeDataSource))
+        {
+            checks.Add(ValidateProviderCredentials(activeDataSource));
         }
 
         // Run provider-specific checks if configured
@@ -533,121 +547,117 @@ public sealed class PreflightChecker
     }
 
     /// <summary>
-    /// Validates that all enabled providers have the credentials they require.
-    /// Returns a detailed table of missing credentials with exact env var names.
+    /// Validates that all enabled providers have their required credentials configured.
+    /// Returns a detailed table of missing credentials with the exact env var names to set.
     /// </summary>
-    public PreflightCheckResult ValidateProviderCredentials(IReadOnlyList<string>? enabledProviders = null)
+    public PreflightCheckResult ValidateProviderCredentials(string activeDataSource)
     {
         const string checkName = "Provider Credentials";
 
-        // Provider credential requirements: (providerId, displayName, envVars[])
-        var providerCredentials = new (string Id, string Name, (string EnvVar, string Description)[] Required)[]
+        var providerCredentialMap = new Dictionary<string, ProviderCredentialRequirement>(StringComparer.OrdinalIgnoreCase)
         {
-            ("alpaca", "Alpaca", new[]
+            ["Alpaca"] = new("Alpaca Markets", new[]
             {
-                ("ALPACA__KEYID", "API Key ID"),
-                ("ALPACA__SECRETKEY", "Secret Key")
-            }),
-            ("polygon", "Polygon", new[]
+                new CredentialRequirement("ALPACA__KEYID", new[] { "ALPACA_KEY_ID", "MDC_ALPACA_KEY_ID" }),
+                new CredentialRequirement("ALPACA__SECRETKEY", new[] { "ALPACA_SECRET_KEY", "MDC_ALPACA_SECRET_KEY" })
+            }, "docs/providers/alpaca-setup.md"),
+            ["Polygon"] = new("Polygon.io", new[]
             {
-                ("POLYGON__APIKEY", "API Key")
-            }),
-            ("finnhub", "Finnhub", new[]
+                new CredentialRequirement("POLYGON__APIKEY", new[] { "POLYGON_API_KEY", "MDC_POLYGON_API_KEY" })
+            }, "docs/providers/data-sources.md"),
+            ["IB"] = new("Interactive Brokers", Array.Empty<CredentialRequirement>(),
+                "docs/providers/interactive-brokers-setup.md"),
+            ["NYSE"] = new("NYSE Direct", new[]
             {
-                ("FINNHUB__TOKEN", "API Token")
-            }),
-            ("tiingo", "Tiingo", new[]
+                new CredentialRequirement("NYSE__APIKEY", new[] { "NYSE_API_KEY", "MDC_NYSE_API_KEY" })
+            }, null),
+            ["Tiingo"] = new("Tiingo", new[]
             {
-                ("TIINGO__TOKEN", "API Token")
-            }),
-            ("alphavantage", "Alpha Vantage", new[]
+                new CredentialRequirement("TIINGO__TOKEN", new[] { "TIINGO_API_TOKEN", "TIINGO_TOKEN", "MDC_TIINGO_TOKEN" })
+            }, null),
+            ["Finnhub"] = new("Finnhub", new[]
             {
-                ("ALPHAVANTAGE__APIKEY", "API Key")
-            }),
-            ("nyse", "NYSE", new[]
+                new CredentialRequirement("FINNHUB__TOKEN", new[] { "FINNHUB_API_KEY", "MDC_FINNHUB_API_KEY" })
+            }, null),
+            ["AlphaVantage"] = new("Alpha Vantage", new[]
             {
-                ("NYSE__APIKEY", "API Key")
-            }),
-            ("nasdaq", "Nasdaq Data Link", new[]
-            {
-                ("NASDAQ__APIKEY", "API Key")
-            }),
-            ("ib", "Interactive Brokers", Array.Empty<(string, string)>())
+                new CredentialRequirement("ALPHAVANTAGE__APIKEY", new[] { "ALPHA_VANTAGE_API_KEY", "ALPHAVANTAGE_API_KEY", "MDC_ALPHA_VANTAGE_API_KEY" })
+            }, null)
         };
 
-        var configured = new List<string>();
-        var missingEntries = new List<(string Provider, string EnvVar, string Description)>();
-
-        foreach (var (id, name, required) in providerCredentials)
+        if (!providerCredentialMap.TryGetValue(activeDataSource, out var requirement))
         {
-            // If enabledProviders is specified, only check those
-            if (enabledProviders is { Count: > 0 } &&
-                !enabledProviders.Any(p => p.Equals(id, StringComparison.OrdinalIgnoreCase) ||
-                                           p.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            return PreflightCheckResult.Passed(checkName,
+                $"Provider '{activeDataSource}' has no credential requirements registered");
+        }
+
+        if (requirement.Credentials.Length == 0)
+        {
+            return PreflightCheckResult.Passed(checkName,
+                $"{requirement.DisplayName} does not require API credentials (uses local connection)");
+        }
+
+        var missing = new List<string>();
+        var found = new List<string>();
+
+        foreach (var cred in requirement.Credentials)
+        {
+            var value = Environment.GetEnvironmentVariable(cred.PrimaryEnvVar);
+
+            if (string.IsNullOrEmpty(value))
             {
-                continue;
+                value = cred.AlternativeEnvVars
+                    .Select(Environment.GetEnvironmentVariable)
+                    .FirstOrDefault(v => !string.IsNullOrEmpty(v));
             }
 
-            if (required.Length == 0) continue; // IB uses TWS gateway, not env vars
-
-            var allFound = true;
-            foreach (var (envVar, desc) in required)
+            if (string.IsNullOrEmpty(value))
             {
-                // Check both double-underscore and alternate formats
-                var value = Environment.GetEnvironmentVariable(envVar);
-                if (string.IsNullOrEmpty(value))
-                {
-                    // Also try alternate naming (ALPACA_KEY_ID vs ALPACA__KEYID)
-                    var altVar = envVar.Replace("__", "_");
-                    value = Environment.GetEnvironmentVariable(altVar);
-                }
-
-                if (string.IsNullOrEmpty(value))
-                {
-                    missingEntries.Add((name, envVar, desc));
-                    allFound = false;
-                }
+                missing.Add(cred.PrimaryEnvVar);
             }
-
-            if (allFound)
+            else
             {
-                configured.Add(name);
+                found.Add(cred.PrimaryEnvVar);
             }
         }
 
         var details = new Dictionary<string, object>
         {
-            ["configuredProviders"] = configured,
-            ["missingCredentials"] = missingEntries.Select(m => new { m.Provider, m.EnvVar, m.Description }).ToArray()
+            ["provider"] = requirement.DisplayName,
+            ["missingCredentials"] = missing,
+            ["foundCredentials"] = found
         };
 
-        if (missingEntries.Count > 0 && configured.Count == 0 && enabledProviders is { Count: > 0 })
+        if (missing.Count > 0)
         {
-            // All enabled providers are missing credentials — this is a failure
-            var table = string.Join("\n", missingEntries.Select(m =>
-                $"    {m.Provider,-20} {m.EnvVar,-25} ({m.Description})"));
+            var envVarList = string.Join(", ", missing);
+            var remediation = $"Set the following environment variables: {envVarList}";
+            if (requirement.DocsLink != null)
+            {
+                remediation += $"\n  Documentation: {requirement.DocsLink}";
+            }
 
             return PreflightCheckResult.Failed(checkName,
-                $"Missing credentials for {missingEntries.Select(m => m.Provider).Distinct().Count()} enabled provider(s)",
-                $"Set the following environment variables:\n{table}",
-                details);
-        }
-
-        if (missingEntries.Count > 0)
-        {
-            var table = string.Join("\n", missingEntries.Select(m =>
-                $"    {m.Provider,-20} {m.EnvVar,-25} ({m.Description})"));
-
-            return PreflightCheckResult.Warning(checkName,
-                $"Credentials configured for {configured.Count} provider(s); {missingEntries.Select(m => m.Provider).Distinct().Count()} provider(s) missing credentials",
-                $"To enable additional providers, set:\n{table}",
+                $"{requirement.DisplayName} is the active provider but is missing credentials: {envVarList}",
+                remediation,
                 details);
         }
 
         return PreflightCheckResult.Passed(checkName,
-            $"All provider credentials configured: {string.Join(", ", configured)}",
+            $"{requirement.DisplayName} credentials verified ({found.Count} credential(s) found)",
             details);
     }
+
+    private sealed record ProviderCredentialRequirement(
+        string DisplayName,
+        CredentialRequirement[] Credentials,
+        string? DocsLink
+    );
+
+    private sealed record CredentialRequirement(
+        string PrimaryEnvVar,
+        string[] AlternativeEnvVars
+    );
 
     private async Task<PreflightCheckResult> CheckProviderEndpointsAsync(CancellationToken ct)
     {

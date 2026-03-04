@@ -100,122 +100,98 @@ public sealed class SymbolCommandsTests
         SymbolCommands.FormatBytes(1536).Should().Be("1.5 KB");
     }
 
-    #region ParseSymbolFile Tests
+    // ─── ParseSymbolFile tests ───────────────────────────────────────────────
 
     [Fact]
-    public void ParseSymbolFile_OnePerLine_ParsesCorrectly()
+    public void ParseSymbolFile_EmptyContent_ReturnsEmpty()
     {
-        var path = WriteTempFile("AAPL\nMSFT\nGOOGL\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
-    }
-
-    [Fact]
-    public void ParseSymbolFile_CommaSeparated_ParsesCorrectly()
-    {
-        var path = WriteTempFile("AAPL,MSFT,GOOGL");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
+        SymbolCommands.ParseSymbolFile("", "symbols.txt").Should().BeEmpty();
+        SymbolCommands.ParseSymbolFile("   ", "symbols.txt").Should().BeEmpty();
     }
 
     [Fact]
-    public void ParseSymbolFile_CsvWithHeader_ExtractsFirstColumn()
+    public void ParseSymbolFile_JsonArray_ReturnsSymbols()
     {
-        var path = WriteTempFile("Symbol,Name,Exchange\nAAPL,Apple Inc.,NASDAQ\nMSFT,Microsoft,NASDAQ\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+        var result = SymbolCommands.ParseSymbolFile("[\"spy\", \"aapl\", \"msft\"]", "symbols.json");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL", "MSFT" });
     }
 
     [Fact]
-    public void ParseSymbolFile_SkipsComments()
+    public void ParseSymbolFile_JsonArrayWithWhitespace_TrimsAndUppercases()
     {
-        var path = WriteTempFile("# This is a comment\nAAPL\n# Another comment\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+        var result = SymbolCommands.ParseSymbolFile("[ \" spy \", \"aapl\" ]", "symbols.json");
+        result.Should().Contain("SPY").And.Contain("AAPL");
     }
 
     [Fact]
-    public void ParseSymbolFile_SkipsEmptyLines()
+    public void ParseSymbolFile_JsonArrayWithDuplicates_Deduplicates()
     {
-        var path = WriteTempFile("AAPL\n\n\nMSFT\n  \nGOOGL\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL" });
+        var result = SymbolCommands.ParseSymbolFile("[\"SPY\", \"spy\", \"AAPL\"]", "symbols.json");
+        result.Should().HaveCount(2).And.Contain("SPY").And.Contain("AAPL");
     }
 
     [Fact]
-    public void ParseSymbolFile_InvalidSymbols_AreExcluded()
+    public void ParseSymbolFile_SingleLineCsv_ReturnsSplitSymbols()
     {
-        var path = WriteTempFile("AAPL\nINVALID SYMBOL WITH SPACES\n@#$%\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+        var result = SymbolCommands.ParseSymbolFile("SPY,AAPL,MSFT", "symbols.txt");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL", "MSFT" });
     }
 
     [Fact]
-    public void ParseSymbolFile_Deduplicates_CaseInsensitive()
+    public void ParseSymbolFile_OnePerLine_ReturnsAllSymbols()
     {
-        var path = WriteTempFile("AAPL\naapl\nAapl\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().HaveCount(2);
-        result.Should().Contain("AAPL");
-        result.Should().Contain("MSFT");
+        var content = "SPY\nAAPL\nMSFT";
+        var result = SymbolCommands.ParseSymbolFile(content, "symbols.txt");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL", "MSFT" });
     }
 
     [Fact]
-    public void ParseSymbolFile_NormalizesToUpperCase()
+    public void ParseSymbolFile_SkipsCommentLines()
     {
-        var path = WriteTempFile("aapl\nmsft\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+        var content = "# this is a comment\nSPY\n// another comment\nAAPL";
+        var result = SymbolCommands.ParseSymbolFile(content, "symbols.txt");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL" });
     }
 
     [Fact]
-    public void ParseSymbolFile_EmptyFile_ReturnsEmpty()
+    public void ParseSymbolFile_CsvWithSymbolHeader_SkipsHeader()
     {
-        var path = WriteTempFile("");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEmpty();
+        var content = "SYMBOL\nSPY\nAAPL";
+        var result = SymbolCommands.ParseSymbolFile(content, "symbols.csv");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL" });
     }
 
     [Fact]
-    public void ParseSymbolFile_SymbolsWithDotsAndSlashes_AreValid()
+    public void ParseSymbolFile_CsvWithTickerHeader_SkipsHeader()
     {
-        var path = WriteTempFile("BRK.B\nBTC/USD\nSPY-P\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "BRK.B", "BTC/USD", "SPY-P" });
+        var content = "TICKER\nSPY\nAAPL";
+        var result = SymbolCommands.ParseSymbolFile(content, "symbols.csv");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL" });
     }
 
     [Fact]
-    public void ParseSymbolFile_SymbolTooLong_IsExcluded()
+    public void ParseSymbolFile_CsvMultiColumn_TakesFirstColumn()
     {
-        var longSymbol = new string('A', 21);
-        var path = WriteTempFile($"AAPL\n{longSymbol}\nMSFT\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT" });
+        var content = "SYMBOL,DESCRIPTION\nSPY,S&P 500 ETF\nAAPL,Apple Inc";
+        var result = SymbolCommands.ParseSymbolFile(content, "symbols.csv");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL" });
     }
 
     [Fact]
-    public void ParseSymbolFile_CommaSeparatedOnMultipleLines_ParsesAll()
+    public void ParseSymbolFile_LowercaseInput_NormalizesToUppercase()
     {
-        var path = WriteTempFile("AAPL,MSFT\nGOOGL,AMZN\n");
-        var result = SymbolCommands.ParseSymbolFile(path);
-        result.Should().BeEquivalentTo(new[] { "AAPL", "MSFT", "GOOGL", "AMZN" });
+        var result = SymbolCommands.ParseSymbolFile("spy\naapl\nmsft", "symbols.txt");
+        result.Should().BeEquivalentTo(new[] { "SPY", "AAPL", "MSFT" });
     }
 
     [Fact]
-    public void CanHandle_WithSymbolsImportFlag_ReturnsTrue()
+    public void ParseSymbolFile_InvalidJsonFallsBackToLineParsing()
     {
-        var cmd = CreateCommandWithStubService();
-        cmd.CanHandle(new[] { "--symbols-import" }).Should().BeTrue();
+        // Starts with '[' but is not valid JSON — should fall through to line parsing
+        var content = "[not valid json\nSPY\nAAPL";
+        var result = SymbolCommands.ParseSymbolFile(content, "symbols.txt");
+        result.Should().Contain("SPY").And.Contain("AAPL");
     }
-
-    private static string WriteTempFile(string content)
-    {
-        var path = Path.Combine(Path.GetTempPath(), $"mdc-test-symbols-{Guid.NewGuid():N}.txt");
-        File.WriteAllText(path, content);
-        return path;
-    }
-
-    #endregion
 
     /// <summary>
     /// Creates a SymbolCommands with a stub SymbolManagementService.

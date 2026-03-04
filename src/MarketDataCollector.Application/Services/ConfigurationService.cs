@@ -792,6 +792,25 @@ public sealed class ConfigurationService : IAsyncDisposable
         return generator.GetTemplate(templateName);
     }
 
+    /// <summary>
+    /// Returns the current on-disk config via ConfigStore.
+    /// </summary>
+    public AppConfig GetConfig(string? configPath = null)
+    {
+        var store = new ConfigStore(configPath);
+        return store.Load();
+    }
+
+    /// <summary>
+    /// Saves a modified config back to disk.
+    /// </summary>
+    public async Task SaveConfigAsync(AppConfig config, string? configPath = null)
+    {
+        var store = new ConfigStore(configPath);
+        await store.SaveAsync(config);
+        _log.Information("Configuration saved to {Path}", store.ConfigPath);
+    }
+
     #endregion
 
     public async ValueTask DisposeAsync()

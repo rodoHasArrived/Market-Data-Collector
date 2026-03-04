@@ -263,7 +263,8 @@ public sealed class LifecyclePolicyEngine : ILifecyclePolicyEngine
                     TotalBytes: filesInTier.Sum(f =>
                     {
                         try { return new FileInfo(f.Key).Length; }
-                        catch { return 0L; }
+                        catch (IOException) { return 0L; }
+                        catch (UnauthorizedAccessException) { return 0L; }
                     }),
                     OldestFileAge: filesInTier.Max(f => f.Value.FileAge),
                     NewestFileAge: filesInTier.Min(f => f.Value.FileAge));

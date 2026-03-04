@@ -540,4 +540,120 @@ public sealed class PreflightCheckerTests : IDisposable
     }
 
     #endregion
+
+    #region ValidateProviderCredentials
+
+    [Fact]
+    public void ValidateProviderCredentials_UnknownProvider_ReturnsPassed()
+    {
+        var checker = new PreflightChecker();
+        var result = checker.ValidateProviderCredentials("UnknownProvider");
+        result.Status.Should().Be(PreflightCheckStatus.Passed);
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_IB_PassesWithoutCredentials()
+    {
+        // Interactive Brokers uses a local connection — no API credentials required.
+        var checker = new PreflightChecker();
+        var result = checker.ValidateProviderCredentials("IB");
+        result.Status.Should().Be(PreflightCheckStatus.Passed);
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_Alpaca_FailsWhenCredentialsMissing()
+    {
+        // Ensure env vars are not set
+        Environment.SetEnvironmentVariable("ALPACA__KEYID", null);
+        Environment.SetEnvironmentVariable("ALPACA_KEY_ID", null);
+        Environment.SetEnvironmentVariable("MDC_ALPACA_KEY_ID", null);
+        Environment.SetEnvironmentVariable("ALPACA__SECRETKEY", null);
+        Environment.SetEnvironmentVariable("ALPACA_SECRET_KEY", null);
+        Environment.SetEnvironmentVariable("MDC_ALPACA_SECRET_KEY", null);
+
+        var checker = new PreflightChecker();
+        var result = checker.ValidateProviderCredentials("Alpaca");
+
+        result.Status.Should().Be(PreflightCheckStatus.Failed);
+        result.Message.Should().Contain("Alpaca");
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_Alpaca_PassesWhenPrimaryCredentialsSet()
+    {
+        Environment.SetEnvironmentVariable("ALPACA__KEYID", "test-key");
+        Environment.SetEnvironmentVariable("ALPACA__SECRETKEY", "test-secret");
+        try
+        {
+            var checker = new PreflightChecker();
+            var result = checker.ValidateProviderCredentials("Alpaca");
+            result.Status.Should().Be(PreflightCheckStatus.Passed);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ALPACA__KEYID", null);
+            Environment.SetEnvironmentVariable("ALPACA__SECRETKEY", null);
+        }
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_Alpaca_PassesWhenAlternativeCredentialSet()
+    {
+        Environment.SetEnvironmentVariable("ALPACA__KEYID", null);
+        Environment.SetEnvironmentVariable("MDC_ALPACA_KEY_ID", "alt-key");
+        Environment.SetEnvironmentVariable("ALPACA__SECRETKEY", null);
+        Environment.SetEnvironmentVariable("MDC_ALPACA_SECRET_KEY", "alt-secret");
+        try
+        {
+            var checker = new PreflightChecker();
+            var result = checker.ValidateProviderCredentials("Alpaca");
+            result.Status.Should().Be(PreflightCheckStatus.Passed);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("MDC_ALPACA_KEY_ID", null);
+            Environment.SetEnvironmentVariable("MDC_ALPACA_SECRET_KEY", null);
+        }
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_Polygon_FailsWhenMissing()
+    {
+        Environment.SetEnvironmentVariable("POLYGON__APIKEY", null);
+        Environment.SetEnvironmentVariable("POLYGON_API_KEY", null);
+        Environment.SetEnvironmentVariable("MDC_POLYGON_API_KEY", null);
+
+        var checker = new PreflightChecker();
+        var result = checker.ValidateProviderCredentials("Polygon");
+
+        result.Status.Should().Be(PreflightCheckStatus.Failed);
+        result.Message.Should().Contain("Polygon");
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_Polygon_PassesWhenSet()
+    {
+        Environment.SetEnvironmentVariable("POLYGON__APIKEY", "test-key");
+        try
+        {
+            var checker = new PreflightChecker();
+            var result = checker.ValidateProviderCredentials("Polygon");
+            result.Status.Should().Be(PreflightCheckStatus.Passed);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("POLYGON__APIKEY", null);
+        }
+    }
+
+    [Fact]
+    public void ValidateProviderCredentials_CaseInsensitive_ReturnsResult()
+    {
+        // Should handle case-insensitive provider name lookup
+        var checker = new PreflightChecker();
+        var act = () => checker.ValidateProviderCredentials("alpaca");
+        act.Should().NotThrow();
+    }
+
+    #endregion
 }

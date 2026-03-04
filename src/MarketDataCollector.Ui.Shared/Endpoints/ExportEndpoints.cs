@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Storage;
@@ -11,7 +12,7 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering data export API endpoints.
-/// Wired to real AnalysisExportService for actual data export operations.
+/// Wired to the real AnalysisExportService for actual data export.
 /// </summary>
 public static class ExportEndpoints
 {
@@ -22,27 +23,21 @@ public static class ExportEndpoints
     {
         var group = app.MapGroup("").WithTags("Export");
 
-        // Analysis export - wired to real AnalysisExportService
+        // Analysis export — wired to real AnalysisExportService
         group.MapPost(UiApiRoutes.ExportAnalysis, async (
             ExportAnalysisRequest req,
-            HttpContext ctx,
+            [FromServices] AnalysisExportService? exportService,
             CancellationToken ct) =>
         {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
             if (exportService is null)
             {
-                return Results.Json(new
-                {
-                    error = "Export service not available",
-                    suggestion = "Ensure the application is running in full mode with storage configured"
-                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
+                return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var storageOptions = ctx.RequestServices.GetService<StorageOptions>();
             var outputDir = Path.Combine(
-                storageOptions?.RootPath ?? "data",
-                "_exports",
-                DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"));
+                Path.GetTempPath(),
+                "mdc-exports",
+                $"{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}");
 
             var exportRequest = new ExportRequest
             {
@@ -50,7 +45,8 @@ public static class ExportEndpoints
                 Symbols = req.Symbols,
                 StartDate = req.StartDate ?? DateTime.UtcNow.AddDays(-7),
                 EndDate = req.EndDate ?? DateTime.UtcNow,
-                OutputDirectory = outputDir
+                OutputDirectory = outputDir,
+                EventTypes = new[] { "Trade", "BboQuote" }
             };
 
             var result = await exportService.ExportAsync(exportRequest, ct);
@@ -59,6 +55,7 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
+                status = result.Success ? "completed" : "failed",
                 profileId = result.ProfileId,
                 symbols = result.Symbols,
                 filesGenerated = result.FilesGenerated,
@@ -68,6 +65,14 @@ public static class ExportEndpoints
                 durationSeconds = result.DurationSeconds,
                 error = result.Error,
                 warnings = result.Warnings,
+                files = result.Files.Select(f => new
+                {
+                    path = f.RelativePath,
+                    symbol = f.Symbol,
+                    format = f.Format,
+                    sizeBytes = f.SizeBytes,
+                    recordCount = f.RecordCount
+                }),
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
         })
@@ -75,40 +80,8 @@ public static class ExportEndpoints
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Export preview - shows record counts, file sizes, and sample data without writing
-        group.MapPost(UiApiRoutes.ExportPreview, async (
-            ExportPreviewRequest req,
-            HttpContext ctx,
-            CancellationToken ct) =>
-        {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
-            if (exportService is null)
-            {
-                return Results.Json(new
-                {
-                    error = "Export service not available",
-                    suggestion = "Ensure the application is running in full mode with storage configured"
-                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
-
-            var exportRequest = new ExportRequest
-            {
-                ProfileId = req.ProfileId ?? "python-pandas",
-                Symbols = req.Symbols,
-                EventTypes = req.EventTypes ?? new[] { "Trade", "BboQuote" },
-                StartDate = req.StartDate ?? DateTime.UtcNow.AddDays(-7),
-                EndDate = req.EndDate ?? DateTime.UtcNow
-            };
-
-            var preview = await exportService.PreviewAsync(exportRequest, req.SampleSize ?? 5, ct);
-
-            return Results.Json(preview, jsonOptions);
-        })
-        .WithName("ExportPreview")
-        .Produces(200);
-
-        // Available export formats - returns real profiles from AnalysisExportService
-        group.MapGet(UiApiRoutes.ExportFormats, (HttpContext ctx) =>
+        // Available export formats — wired to real profiles from AnalysisExportService
+        group.MapGet(UiApiRoutes.ExportFormats, ([FromServices] AnalysisExportService? exportService) =>
         {
             var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
 
@@ -123,31 +96,18 @@ public static class ExportEndpoints
                 new { id = "arrow", name = "Apache Arrow IPC", description = "In-memory columnar format for zero-copy interchange", extensions = new[] { ".arrow" } }
             };
 
-            // Get real profiles from the service if available
-            object[] profiles;
-            if (exportService is not null)
-            {
-                profiles = exportService.GetProfiles().Select(p => (object)new
-                {
-                    id = p.Id,
-                    name = p.Name,
-                    format = p.Format.ToString().ToLowerInvariant(),
-                    compression = p.Compression,
-                    includeDataDictionary = p.IncludeDataDictionary,
-                    includeLoaderScript = p.IncludeLoaderScript
-                }).ToArray();
-            }
-            else
-            {
-                profiles = new object[]
+            // Pull real profiles from the service if available
+            var profiles = exportService?.GetProfiles()
+                .Select(p => new { id = p.Id, name = p.Name, format = p.Format.ToString().ToLowerInvariant(), compression = p.Compression.Type.ToString().ToLowerInvariant() })
+                .ToArray()
+                ?? new[]
                 {
                     new { id = "python-pandas", name = "Python / Pandas", format = "parquet", compression = "snappy" },
-                    new { id = "r-dataframe", name = "R / data.frame", format = "csv", compression = "none" },
+                    new { id = "r-stats", name = "R / data.frame", format = "csv", compression = "none" },
                     new { id = "quantconnect-lean", name = "QuantConnect Lean", format = "lean", compression = "zip" },
                     new { id = "excel", name = "Microsoft Excel", format = "xlsx", compression = "none" },
-                    new { id = "sql-postgres", name = "PostgreSQL / TimescaleDB", format = "csv", compression = "none" }
+                    new { id = "postgresql", name = "PostgreSQL / TimescaleDB", format = "csv", compression = "none" }
                 };
-            }
 
             return Results.Json(new
             {
@@ -160,35 +120,26 @@ public static class ExportEndpoints
         .WithName("GetExportFormats")
         .Produces(200);
 
-        // Quality report export
+        // Quality report export — wired to real backend
         group.MapPost(UiApiRoutes.ExportQualityReport, async (
             QualityReportExportRequest? req,
-            HttpContext ctx,
+            [FromServices] AnalysisExportService? exportService,
             CancellationToken ct) =>
         {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
             if (exportService is null)
             {
-                return Results.Json(new
-                {
-                    jobId = Guid.NewGuid().ToString("N")[..12],
-                    status = "unavailable",
-                    error = "Export service not configured"
-                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
+                return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var storageOptions = ctx.RequestServices.GetService<StorageOptions>();
-            var outputDir = Path.Combine(
-                storageOptions?.RootPath ?? "data",
-                "_exports",
-                "quality",
-                DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"));
+            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "quality-" + DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
 
             var exportRequest = new ExportRequest
             {
-                ProfileId = req?.Format == "parquet" ? "python-pandas" : "r-dataframe",
+                ProfileId = req?.Format == "csv" ? "r-stats" : "python-pandas",
                 Symbols = req?.Symbols,
-                OutputDirectory = outputDir
+                OutputDirectory = outputDir,
+                ValidateBeforeExport = true,
+                EventTypes = new[] { "Trade", "BboQuote" }
             };
 
             var result = await exportService.ExportAsync(exportRequest, ct);
@@ -197,10 +148,12 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
+                status = result.Success ? "completed" : "failed",
                 format = req?.Format ?? "csv",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
                 outputDirectory = result.OutputDirectory,
+                qualitySummary = result.QualitySummary,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -209,41 +162,32 @@ public static class ExportEndpoints
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Orderflow export
+        // Orderflow export — wired to real backend with Trade event type
         group.MapPost(UiApiRoutes.ExportOrderflow, async (
             OrderflowExportRequest? req,
-            HttpContext ctx,
+            [FromServices] AnalysisExportService? exportService,
             CancellationToken ct) =>
         {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
             if (exportService is null)
             {
-                return Results.Json(new
-                {
-                    jobId = Guid.NewGuid().ToString("N")[..12],
-                    status = "unavailable",
-                    error = "Export service not configured"
-                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
+                return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var storageOptions = ctx.RequestServices.GetService<StorageOptions>();
-            var outputDir = Path.Combine(
-                storageOptions?.RootPath ?? "data",
-                "_exports",
-                "orderflow",
-                DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"));
+            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "orderflow-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
+
+            var formatProfile = (req?.Format ?? "parquet") switch
+            {
+                "csv" => "r-stats",
+                "jsonl" => "python-pandas",
+                _ => "python-pandas"
+            };
 
             var exportRequest = new ExportRequest
             {
-                ProfileId = req?.Format == "csv" ? "r-dataframe" : "python-pandas",
+                ProfileId = formatProfile,
                 Symbols = req?.Symbols,
-                EventTypes = new[] { "Trade", "LOBSnapshot" },
                 OutputDirectory = outputDir,
-                Features = new FeatureSettings
-                {
-                    IncludeMicrostructure = true,
-                    IncludeReturns = true
-                }
+                EventTypes = new[] { "Trade" }
             };
 
             var result = await exportService.ExportAsync(exportRequest, ct);
@@ -252,10 +196,12 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
+                status = result.Success ? "completed" : "failed",
                 symbols = result.Symbols,
                 format = req?.Format ?? "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
+                totalBytes = result.TotalBytes,
                 outputDirectory = result.OutputDirectory,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
@@ -265,34 +211,22 @@ public static class ExportEndpoints
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Integrity export
+        // Integrity export — wired to real backend
         group.MapPost(UiApiRoutes.ExportIntegrity, async (
-            HttpContext ctx,
+            [FromServices] AnalysisExportService? exportService,
             CancellationToken ct) =>
         {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
             if (exportService is null)
             {
-                return Results.Json(new
-                {
-                    jobId = Guid.NewGuid().ToString("N")[..12],
-                    status = "unavailable",
-                    error = "Export service not configured"
-                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
+                return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var storageOptions = ctx.RequestServices.GetService<StorageOptions>();
-            var outputDir = Path.Combine(
-                storageOptions?.RootPath ?? "data",
-                "_exports",
-                "integrity",
-                DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"));
+            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "integrity-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
 
             var exportRequest = new ExportRequest
             {
-                ProfileId = "r-dataframe",
-                EventTypes = new[] { "IntegrityEvent" },
-                OutputDirectory = outputDir
+                ProfileId = "r-stats",
+                ValidateBeforeExport = true
             };
 
             var result = await exportService.ExportAsync(exportRequest, ct);
@@ -301,6 +235,7 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
+                status = result.Success ? "completed" : "failed",
                 format = "csv",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
@@ -313,42 +248,26 @@ public static class ExportEndpoints
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Research package export
+        // Research package export — wired to real backend
         group.MapPost(UiApiRoutes.ExportResearchPackage, async (
             ResearchPackageRequest? req,
-            HttpContext ctx,
+            [FromServices] AnalysisExportService? exportService,
             CancellationToken ct) =>
         {
-            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
             if (exportService is null)
             {
-                return Results.Json(new
-                {
-                    jobId = Guid.NewGuid().ToString("N")[..12],
-                    status = "unavailable",
-                    error = "Export service not configured"
-                }, jsonOptions, statusCode: StatusCodes.Status503ServiceUnavailable);
+                return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var storageOptions = ctx.RequestServices.GetService<StorageOptions>();
-            var outputDir = Path.Combine(
-                storageOptions?.RootPath ?? "data",
-                "_exports",
-                "research",
-                DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"));
+            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "research-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
 
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
                 Symbols = req?.Symbols,
                 OutputDirectory = outputDir,
-                Features = new FeatureSettings
-                {
-                    IncludeReturns = true,
-                    IncludeRollingStats = true,
-                    IncludeTechnicalIndicators = true,
-                    IncludeMicrostructure = true
-                }
+                EventTypes = new[] { "Trade", "BboQuote", "LOBSnapshot" },
+                ValidateBeforeExport = req?.IncludeMetadata ?? true
             };
 
             var result = await exportService.ExportAsync(exportRequest, ct);
@@ -357,14 +276,14 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
+                status = result.Success ? "completed" : "failed",
                 symbols = result.Symbols,
-                includeMetadata = req?.IncludeMetadata ?? true,
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
+                totalBytes = result.TotalBytes,
                 outputDirectory = result.OutputDirectory,
-                dataDictionary = result.DataDictionaryPath,
-                loaderScript = result.LoaderScriptPath,
-                qualitySummary = result.QualitySummary,
+                dataDictionaryPath = result.DataDictionaryPath,
+                loaderScriptPath = result.LoaderScriptPath,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
