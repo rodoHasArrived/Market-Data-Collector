@@ -2,7 +2,7 @@ name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22688471948
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -16,17 +16,20 @@ messages:
       - Async/await for all I/O operations with CancellationToken
       - Classes sealed unless designed for inheritance
 
+      ## Error Codes Found
+      - `CA2022`
+
       ## Failure Patterns
-      - `2026-03-04T20:47:47.7464872Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\CredentialService.cs(37,20): warning CS0628: 'CredentialService.On...`
-      - `2026-03-04T20:47:47.7511749Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\TimeSeriesAlignmentService.cs(27,60): warning CS0067: The event 'T...`
-      - `2026-03-04T20:47:47.7518305Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\EventReplayService.cs(32,49): warning CS0067: The event 'EventRepl...`
-      - `2026-03-04T20:47:47.7524807Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\EventReplayService.cs(37,57): warning CS0067: The event 'EventRepl...`
-      - `2026-03-04T20:47:47.7534610Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\LeanIntegrationService.cs(27,64): warning CS0067: The event 'LeanI...`
-      - `2026-03-04T20:48:11.8804550Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Application\Subscriptions\Services\AutoResubscribePolicy.cs(90,29): warning CS1998: Thi...`
-      - `2026-03-04T20:48:11.8828275Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Application\Pipeline\EventPipeline.cs(137,22): warning CS1573: Parameter 'sink' has no ...`
-      - `2026-03-04T20:48:11.8864345Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Application\Pipeline\EventPipeline.cs(138,29): warning CS1573: Parameter 'policy' has n...`
-      - `2026-03-04T20:48:11.8881942Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Application\Pipeline\EventPipeline.cs(139,19): warning CS1573: Parameter 'flushInterval...`
-      - `2026-03-04T20:48:11.8894142Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Application\Pipeline\EventPipeline.cs(140,13): warning CS1573: Parameter 'batchSize' ha...`
+      - `2026-03-04T21:06:16.7855245Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(49,22): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7857267Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(50,22): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7859599Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(51,22): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7862320Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(52,19): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7864744Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(53,19): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7866867Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(54,20): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7868878Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(57,21): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7870982Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(59,26): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7873053Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(60,22): warning CS1591: Missing XML comment fo...`
+      - `2026-03-04T21:06:16.7875070Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(61,22): warning CS1591: Missing XML comment fo...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

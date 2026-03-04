@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-03-04T20:48:56.503897+00:00",
+  "generated_at": "2026-03-04T21:06:48.750481+00:00",
   "workflow": "test-matrix.yml",
-  "run_id": 22688471948,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22688471948",
+  "run_id": 22689174337,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
@@ -12,7 +12,7 @@
     "build": 9,
     "code-quality": 10
   },
-  "total_error_codes": 5,
+  "total_error_codes": 10,
   "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
@@ -22,11 +22,15 @@
       "action": "update",
       "findings_count": 9,
       "error_codes": [
-        "CS0067",
-        "CS0628",
+        "CS0115",
+        "CS0219",
+        "CS0506",
+        "CS0509",
         "CS1573",
-        "CS1739",
-        "CS1998"
+        "CS1591",
+        "CS1998",
+        "CS4014",
+        "CS8602"
       ],
       "failed_tests": []
     },
@@ -35,7 +39,9 @@
       "category": "code-quality",
       "action": "update",
       "findings_count": 10,
-      "error_codes": [],
+      "error_codes": [
+        "CA2022"
+      ],
       "failed_tests": []
     },
     {
@@ -44,11 +50,16 @@
       "action": "update",
       "findings_count": 19,
       "error_codes": [
-        "CS0067",
-        "CS0628",
+        "CA2022",
+        "CS0115",
+        "CS0219",
+        "CS0506",
+        "CS0509",
         "CS1573",
-        "CS1739",
-        "CS1998"
+        "CS1591",
+        "CS1998",
+        "CS4014",
+        "CS8602"
       ],
       "failed_tests": []
     }

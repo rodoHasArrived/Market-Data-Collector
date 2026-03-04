@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22688471948
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,26 +19,31 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-04T20:47:47.7482783Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\SettingsConfigurat...`
-      - `2026-03-04T20:47:47.7489813Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\SettingsConfigurat...`
-      - `2026-03-04T20:47:47.7496718Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\SettingsConfigurat...`
-      - `2026-03-04T20:47:47.7503583Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\SettingsConfigurat...`
-      - `2026-03-04T20:48:25.9867737Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\SettingsConfigurat...`
+      - `2026-03-04T21:06:16.8186089Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
+      - `2026-03-04T21:06:16.8189400Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
+      - `2026-03-04T21:06:16.8191860Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTe...`
+      - `2026-03-04T21:06:16.8195015Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
+      - `2026-03-04T21:06:16.8197426Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
 
       ### Code Quality
-      - `2026-03-04T20:47:47.7464872Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\CredentialServic...`
-      - `2026-03-04T20:47:47.7511749Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\TimeSeriesAlignm...`
-      - `2026-03-04T20:47:47.7518305Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\EventReplayServi...`
-      - `2026-03-04T20:47:47.7524807Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\EventReplayServi...`
-      - `2026-03-04T20:47:47.7534610Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Ui.Services\Services\LeanIntegrationS...`
+      - `2026-03-04T21:06:16.7855245Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:06:16.7857267Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:06:16.7859599Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:06:16.7862320Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-04T21:06:16.7864744Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
 
 
       ## Error Codes
-      - `CS0067`
-      - `CS0628`
+      - `CA2022`
+      - `CS0115`
+      - `CS0219`
+      - `CS0506`
+      - `CS0509`
       - `CS1573`
-      - `CS1739`
+      - `CS1591`
       - `CS1998`
+      - `CS4014`
+      - `CS8602`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -51,7 +56,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22688471948
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22689174337
 
       Additional context:
       {{additional_context}}
