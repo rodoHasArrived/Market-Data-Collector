@@ -190,9 +190,25 @@ public static class ExportEndpoints
             }
 
             var outputDir = Path.Combine(ExportBaseDir, "orderflow-" + Guid.NewGuid().ToString("N")[..8]);
+
+            var formatOverride = req?.Format?.ToLowerInvariant() switch
+            {
+                "csv" => ExportFormat.Csv,
+                "parquet" => ExportFormat.Parquet,
+                "jsonl" => ExportFormat.Jsonl,
+                "lean" => ExportFormat.Lean,
+                "sql" => ExportFormat.Sql,
+                "xlsx" => ExportFormat.Xlsx,
+                "arrow" => ExportFormat.Arrow,
+                _ => (ExportFormat?)null
+            };
+
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
+                CustomProfile = formatOverride.HasValue
+                    ? new ExportProfile { Id = "orderflow", Format = formatOverride.Value }
+                    : null,
                 Symbols = req?.Symbols,
                 EventTypes = new[] { "Trade", "LOBSnapshot" },
                 StartDate = DateTime.UtcNow.AddDays(-7),
@@ -201,19 +217,18 @@ public static class ExportEndpoints
                 OverwriteExisting = true
             };
 
-            if (req?.Format?.Equals("parquet", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                exportRequest.CustomProfile = new ExportProfile { Id = "orderflow", Format = ExportFormat.Parquet };
-            }
-
             var result = await exportService.ExportAsync(exportRequest, ct);
+
+            var actualFormat = formatOverride.HasValue
+                ? formatOverride.Value.ToString().ToLowerInvariant()
+                : "parquet";
 
             return Results.Json(new
             {
                 jobId = result.JobId,
                 success = result.Success,
                 symbols = result.Symbols,
-                format = req?.Format ?? "parquet",
+                format = actualFormat,
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
                 outputDirectory = result.Success ? outputDir : null,
