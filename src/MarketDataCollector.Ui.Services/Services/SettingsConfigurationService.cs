@@ -24,9 +24,9 @@ public sealed class SettingsConfigurationService
     private SettingsConfigurationService()
     {
         // Seed built-in profiles
-        _profiles.Add(new ConfigProfile("research", "Research", "Balanced for analysis workflows. Gzip compression, BySymbol naming.", isBuiltIn: true));
-        _profiles.Add(new ConfigProfile("low-latency", "Low Latency", "Minimum ingest latency. No compression, hourly partitioning.", isBuiltIn: true));
-        _profiles.Add(new ConfigProfile("archival", "Archival", "Long-term retention. ZSTD compression, monthly partitioning.", isBuiltIn: true));
+        _profiles.Add(new ConfigProfile("research", "Research", "Balanced for analysis workflows. Gzip compression, BySymbol naming.", IsBuiltIn: true));
+        _profiles.Add(new ConfigProfile("low-latency", "Low Latency", "Minimum ingest latency. No compression, hourly partitioning.", IsBuiltIn: true));
+        _profiles.Add(new ConfigProfile("archival", "Archival", "Long-term retention. ZSTD compression, monthly partitioning.", IsBuiltIn: true));
     }
 
     /// <summary>
@@ -158,7 +158,7 @@ public sealed class SettingsConfigurationService
     public ConfigProfile CreateProfile(string name, string description)
     {
         var id = name.ToLowerInvariant().Replace(' ', '-');
-        var profile = new ConfigProfile(id, name, description, isBuiltIn: false);
+        var profile = new ConfigProfile(id, name, description, IsBuiltIn: false);
         _profiles.Add(profile);
         return profile;
     }
