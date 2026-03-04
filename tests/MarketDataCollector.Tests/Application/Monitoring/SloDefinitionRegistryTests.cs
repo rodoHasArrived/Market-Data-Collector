@@ -129,6 +129,20 @@ public sealed class SloDefinitionRegistryTests
     public void Register_CustomSlo_CanBeRetrieved()
     {
         var registry = SloDefinitionRegistry.Instance;
+        var alertRegistry = AlertRunbookRegistry.Instance;
+
+        // Register a matching alert entry so cross-registry consistency tests pass
+        // even when running in parallel.
+        alertRegistry.Register(new AlertRunbookEntry
+        {
+            AlertName = "CustomAlert",
+            Severity = "info",
+            IncidentPriority = "P3",
+            Summary = "Custom test alert",
+            RunbookUrl = "docs/operations/operator-runbook.md#custom",
+            ProbableCauses = new[] { "Test" },
+            ImmediateActions = new[] { "None" }
+        });
 
         registry.Register(new SloDefinition
         {
