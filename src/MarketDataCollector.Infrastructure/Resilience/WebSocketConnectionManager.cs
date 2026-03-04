@@ -41,6 +41,10 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     private readonly SemaphoreSlim _connectLock = new(1, 1);
     private int _reconnectAttempts;
 
+    // Gap tracking for reconnection-aware backfill
+    private DateTimeOffset _lastDisconnectTime;
+    private DateTimeOffset _lastConnectTime;
+
     /// <summary>
     /// Event raised when connection is lost (heartbeat timeout or WebSocket close).
     /// Subscribers should handle reconnection logic if desired.
@@ -50,8 +54,16 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     /// <summary>
     /// Event raised after a successful reconnection (including any onReconnected callback).
     /// Subscribers can use this for monitoring/logging reconnection events.
+    /// The int parameter is the number of reconnect attempts it took.
     /// </summary>
     public event Action<int>? Reconnected;
+
+    /// <summary>
+    /// Event raised when a reconnection gap is detected, providing the time window
+    /// during which data may have been missed. Subscribers should trigger gap backfill
+    /// for all active subscriptions covering this time range.
+    /// </summary>
+    public event Action<ReconnectionGap>? GapDetected;
 
     /// <summary>
     /// Event raised when connection state changes.
@@ -327,9 +339,35 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
                         await onReconnected().ConfigureAwait(false);
                     }
 
+                    _lastConnectTime = DateTimeOffset.UtcNow;
                     _log.Information("{Provider} successfully reconnected after {Attempts} attempts",
                         _providerName, _reconnectAttempts);
                     Reconnected?.Invoke(_reconnectAttempts);
+
+                    // Emit gap event so subscribers can trigger backfill
+                    if (_lastDisconnectTime != default)
+                    {
+                        var gap = new ReconnectionGap(
+                            _providerName,
+                            _lastDisconnectTime,
+                            _lastConnectTime,
+                            _reconnectAttempts);
+                        _log.Information(
+                            "{Provider} reconnection gap: {GapDuration}s ({DisconnectTime} to {ReconnectTime})",
+                            _providerName, gap.Duration.TotalSeconds,
+                            gap.DisconnectedAt.ToString("HH:mm:ss.fff"),
+                            gap.ReconnectedAt.ToString("HH:mm:ss.fff"));
+
+                        try
+                        {
+                            GapDetected?.Invoke(gap);
+                        }
+                        catch (Exception gapEx)
+                        {
+                            _log.Error(gapEx, "{Provider} error in gap detection handler", _providerName);
+                        }
+                    }
+
                     return true;
                 }
                 catch (Exception ex)
@@ -457,6 +495,9 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
     private async Task CleanupConnectionAsync()
     {
+        // Record when the disconnect happened for gap tracking
+        _lastDisconnectTime = DateTimeOffset.UtcNow;
+
         var ws = _webSocket;
         var cts = _connectionCts;
         var heartbeat = _heartbeat;
@@ -534,4 +575,20 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents a gap in data caused by a WebSocket disconnection and reconnection.
+/// Subscribers should use this to trigger backfill for the missed time window.
+/// </summary>
+public readonly record struct ReconnectionGap(
+    string ProviderName,
+    DateTimeOffset DisconnectedAt,
+    DateTimeOffset ReconnectedAt,
+    int ReconnectAttempts)
+{
+    /// <summary>
+    /// Duration of the gap (time without data).
+    /// </summary>
+    public TimeSpan Duration => ReconnectedAt - DisconnectedAt;
 }

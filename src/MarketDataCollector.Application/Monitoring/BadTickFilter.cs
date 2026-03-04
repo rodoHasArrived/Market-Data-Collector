@@ -21,6 +21,8 @@ public sealed class BadTickFilter : IDisposable
 {
     private readonly ILogger _log = LoggingSetup.ForContext<BadTickFilter>();
     private readonly ConcurrentDictionary<string, TickFilterState> _symbolStates = new();
+    private readonly ConcurrentDictionary<string, LuldBand> _luldBands = new();
+    private readonly ConcurrentDictionary<string, bool> _haltedSymbols = new();
     private readonly BadTickFilterConfig _config;
     private readonly Timer _cleanupTimer;
     private volatile bool _isDisposed;
@@ -87,6 +89,21 @@ public sealed class BadTickFilter : IDisposable
         if (size <= 0 && _config.RequirePositiveSize)
         {
             reasons.Add(BadTickReason.InvalidSize);
+        }
+
+        // Check if symbol is halted
+        if (_config.EnforceTradingHalts && _haltedSymbols.ContainsKey(symbol))
+        {
+            reasons.Add(BadTickReason.TradingHalted);
+        }
+
+        // Check LULD price bands (SEC Rule 201 / Reg NMS Plan)
+        if (_config.EnforceLuldBands && _luldBands.TryGetValue(symbol, out var band) && price > 0)
+        {
+            if (price < band.LowerLimit || price > band.UpperLimit)
+            {
+                reasons.Add(BadTickReason.OutsideLuldBand);
+            }
         }
 
         // Check for extreme deviation from recent prices
@@ -330,6 +347,70 @@ public sealed class BadTickFilter : IDisposable
         state.UpdateReference(price, DateTimeOffset.UtcNow);
     }
 
+    /// <summary>
+    /// Updates the LULD (Limit Up/Limit Down) price band for a symbol.
+    /// Called when LULD band updates are received from the exchange feed.
+    /// </summary>
+    /// <param name="symbol">The symbol ticker.</param>
+    /// <param name="lowerLimit">The lower price limit.</param>
+    /// <param name="upperLimit">The upper price limit.</param>
+    /// <param name="referencePrice">The reference price used to calculate the band.</param>
+    /// <param name="expiresAt">When this band expires (optional; bands refresh every 5 minutes during regular hours).</param>
+    public void UpdateLuldBand(string symbol, decimal lowerLimit, decimal upperLimit,
+        decimal referencePrice, DateTimeOffset? expiresAt = null)
+    {
+        if (lowerLimit <= 0 || upperLimit <= 0 || lowerLimit >= upperLimit)
+        {
+            _log.Warning("Invalid LULD band for {Symbol}: lower={Lower}, upper={Upper}",
+                symbol, lowerLimit, upperLimit);
+            return;
+        }
+
+        _luldBands[symbol] = new LuldBand(lowerLimit, upperLimit, referencePrice,
+            expiresAt ?? DateTimeOffset.UtcNow.AddMinutes(5));
+
+        _log.Debug("LULD band updated for {Symbol}: [{Lower:F2}, {Upper:F2}] ref={Ref:F2}",
+            symbol, lowerLimit, upperLimit, referencePrice);
+    }
+
+    /// <summary>
+    /// Removes the LULD band for a symbol (e.g., after market close).
+    /// </summary>
+    public void ClearLuldBand(string symbol) => _luldBands.TryRemove(symbol, out _);
+
+    /// <summary>
+    /// Marks a symbol as halted (trading paused). Trades during halt are flagged.
+    /// </summary>
+    /// <param name="symbol">The symbol ticker.</param>
+    /// <param name="reason">Halt reason (for logging).</param>
+    public void SetHalted(string symbol, string? reason = null)
+    {
+        _haltedSymbols[symbol] = true;
+        _log.Information("Trading halt set for {Symbol}: {Reason}", symbol, reason ?? "unknown");
+    }
+
+    /// <summary>
+    /// Removes the trading halt for a symbol (trading resumed).
+    /// </summary>
+    public void ClearHalt(string symbol)
+    {
+        if (_haltedSymbols.TryRemove(symbol, out _))
+        {
+            _log.Information("Trading halt cleared for {Symbol}", symbol);
+        }
+    }
+
+    /// <summary>
+    /// Gets whether a symbol is currently halted.
+    /// </summary>
+    public bool IsHalted(string symbol) => _haltedSymbols.ContainsKey(symbol);
+
+    /// <summary>
+    /// Gets the current LULD band for a symbol, if any.
+    /// </summary>
+    public LuldBand? GetLuldBand(string symbol) =>
+        _luldBands.TryGetValue(symbol, out var band) ? band : null;
+
     private void CleanupOldStates(object? state)
     {
         if (_isDisposed) return;
@@ -443,6 +524,19 @@ public sealed record BadTickFilterConfig
     public bool RequirePositiveSize { get; init; } = true;
 
     /// <summary>
+    /// Whether to enforce LULD (Limit Up/Limit Down) price bands.
+    /// When enabled, trades outside the current LULD band are flagged as bad ticks.
+    /// Bands must be set via <see cref="BadTickFilter.UpdateLuldBand"/>.
+    /// </summary>
+    public bool EnforceLuldBands { get; init; } = true;
+
+    /// <summary>
+    /// Whether to flag trades that arrive while a symbol is halted.
+    /// Halts must be set via <see cref="BadTickFilter.SetHalted"/>.
+    /// </summary>
+    public bool EnforceTradingHalts { get; init; } = true;
+
+    /// <summary>
     /// Minimum time between alerts for the same symbol in milliseconds.
     /// </summary>
     public int AlertCooldownMs { get; init; } = 5000;
@@ -486,7 +580,9 @@ public enum BadTickReason
     InvalidSize,
     ExtremeDeviation,
     CrossedMarket,
-    AbnormalSpread
+    AbnormalSpread,
+    OutsideLuldBand,
+    TradingHalted
 }
 
 /// <summary>
@@ -521,4 +617,23 @@ public readonly record struct SymbolBadTickStats(
     string Symbol,
     long TotalBadTicks,
     DateTimeOffset LastBadTickTime
+);
+
+/// <summary>
+/// Represents a LULD (Limit Up/Limit Down) price band for a symbol.
+/// Under SEC Rule 201 / Reg NMS Plan, trades outside these bands should be rejected.
+/// Bands are recalculated every 5 minutes during regular trading hours using
+/// the average reference price of the prior 5-minute period.
+/// </summary>
+/// <remarks>
+/// Price band percentages vary by tier:
+/// - Tier 1 (S&amp;P 500, Russell 1000, select ETPs): 5% for prices &gt;$3, lesser of $0.15 or 75% for prices &lt;=$3
+/// - Tier 2 (other NMS stocks): 10% for prices &gt;$3, lesser of $0.15 or 75% for prices &lt;=$3
+/// - During first/last 15 minutes of trading: bands are doubled
+/// </remarks>
+public readonly record struct LuldBand(
+    decimal LowerLimit,
+    decimal UpperLimit,
+    decimal ReferencePrice,
+    DateTimeOffset ExpiresAt
 );

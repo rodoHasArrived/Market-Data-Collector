@@ -44,6 +44,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly IEventMetrics _metrics;
     private readonly IEventValidator? _validator;
     private readonly DeadLetterSink? _deadLetterSink;
+    private readonly PersistentDedupLedger? _dedupLedger;
     private int _disposed;
     private volatile bool _consumerBusy;
 
@@ -53,6 +54,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private long _consumedCount;
     private long _recoveredCount;
     private long _rejectedCount;
+    private long _deduplicatedCount;
     private long _peakQueueSize;
     private long _totalProcessingTimeNs;
     private long _lastFlushTimestamp;
@@ -110,7 +112,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         IEventMetrics? metrics = null,
         TimeSpan? finalFlushTimeout = null,
         IEventValidator? validator = null,
-        DeadLetterSink? deadLetterSink = null)
+        DeadLetterSink? deadLetterSink = null,
+        PersistentDedupLedger? dedupLedger = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -123,7 +126,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             metrics,
             finalFlushTimeout,
             validator,
-            deadLetterSink)
+            deadLetterSink,
+            dedupLedger)
     {
     }
 
@@ -145,7 +149,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         IEventMetrics? metrics = null,
         TimeSpan? finalFlushTimeout = null,
         IEventValidator? validator = null,
-        DeadLetterSink? deadLetterSink = null)
+        DeadLetterSink? deadLetterSink = null,
+        PersistentDedupLedger? dedupLedger = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
@@ -154,6 +159,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         _metrics = metrics ?? new DefaultEventMetrics();
         _validator = validator;
         _deadLetterSink = deadLetterSink;
+        _dedupLedger = dedupLedger;
         _finalFlushTimeout = finalFlushTimeout ?? DefaultFinalFlushTimeout;
         _disposeTaskTimeout = _finalFlushTimeout + TimeSpan.FromSeconds(5);
         if (policy is null)
@@ -201,6 +207,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
     /// <summary>Gets the total number of events rejected by the validator and sent to the dead-letter sink.</summary>
     public long RejectedCount => Interlocked.Read(ref _rejectedCount);
+
+    /// <summary>Gets the total number of duplicate events filtered by the dedup ledger.</summary>
+    public long DeduplicatedCount => Interlocked.Read(ref _deduplicatedCount);
+
+    /// <summary>Gets whether deduplication is enabled for this pipeline.</summary>
+    public bool IsDeduplicationEnabled => _dedupLedger != null;
 
     /// <summary>Gets the peak queue size observed during operation.</summary>
     public long PeakQueueSize => Interlocked.Read(ref _peakQueueSize);
@@ -552,10 +564,20 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
                     long maxWalSequence = _lastCommittedWalSequence;
 
-                    // Write each event: validate → WAL (if enabled) → sink
+                    // Write each event: dedup → validate → WAL (if enabled) → sink
                     for (var i = 0; i < batchBuffer.Count; i++)
                     {
                         var evt = batchBuffer[i];
+
+                        // Deduplication check (when a dedup ledger is configured)
+                        if (_dedupLedger != null)
+                        {
+                            if (await _dedupLedger.IsDuplicateAsync(evt, _cts.Token).ConfigureAwait(false))
+                            {
+                                Interlocked.Increment(ref _deduplicatedCount);
+                                continue; // Skip duplicate events
+                            }
+                        }
 
                         // Validate event before persistence (when a validator is configured)
                         if (_validator != null)

@@ -324,19 +324,19 @@ public sealed class TimestampMonotonicityChecker : IDisposable
         private long _totalGaps;
         private int _consecutiveViolations;
 
-        public DateTimeOffset LastEventTimestamp => _lastEventTimestamp;
-        public DateTimeOffset LastEventTime => _lastEventTime;
-        public DateTimeOffset LastViolationTime => _lastViolationTime;
+        public DateTimeOffset LastEventTimestamp => Volatile.Read(ref _lastEventTimestamp);
+        public DateTimeOffset LastEventTime => Volatile.Read(ref _lastEventTime);
+        public DateTimeOffset LastViolationTime => Volatile.Read(ref _lastViolationTime);
         public long TotalEvents => Interlocked.Read(ref _totalEvents);
         public long TotalViolations => Interlocked.Read(ref _totalViolations);
         public long TotalGaps => Interlocked.Read(ref _totalGaps);
-        public int ConsecutiveViolations => _consecutiveViolations;
+        public int ConsecutiveViolations => Volatile.Read(ref _consecutiveViolations);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RecordEvent(DateTimeOffset timestamp)
         {
-            _lastEventTimestamp = timestamp;
-            _lastEventTime = DateTimeOffset.UtcNow;
+            Volatile.Write(ref _lastEventTimestamp, timestamp);
+            Volatile.Write(ref _lastEventTime, DateTimeOffset.UtcNow);
             Interlocked.Increment(ref _totalEvents);
         }
 
@@ -344,7 +344,7 @@ public sealed class TimestampMonotonicityChecker : IDisposable
         {
             Interlocked.Increment(ref _totalViolations);
             Interlocked.Increment(ref _consecutiveViolations);
-            _lastViolationTime = DateTimeOffset.UtcNow;
+            Volatile.Write(ref _lastViolationTime, DateTimeOffset.UtcNow);
         }
 
         public void IncrementGapCount()
@@ -354,7 +354,7 @@ public sealed class TimestampMonotonicityChecker : IDisposable
 
         public void ResetConsecutiveViolations()
         {
-            _consecutiveViolations = 0;
+            Interlocked.Exchange(ref _consecutiveViolations, 0);
         }
 
         public bool CanAlert(DateTimeOffset now, int cooldownMs)

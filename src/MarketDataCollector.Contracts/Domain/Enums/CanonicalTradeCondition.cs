@@ -108,6 +108,42 @@ public enum CanonicalTradeCondition
     PriorReferencePrice = 19,
 
     /// <summary>
+    /// Market-wide circuit breaker halt (MWCB Level 1: 7% drop in S&amp;P 500).
+    /// </summary>
+    CircuitBreakerLevel1 = 20,
+
+    /// <summary>
+    /// Market-wide circuit breaker halt (MWCB Level 2: 13% drop in S&amp;P 500).
+    /// </summary>
+    CircuitBreakerLevel2 = 21,
+
+    /// <summary>
+    /// Market-wide circuit breaker halt (MWCB Level 3: 20% drop in S&amp;P 500, trading halted for remainder of day).
+    /// </summary>
+    CircuitBreakerLevel3 = 22,
+
+    /// <summary>
+    /// LULD (Limit Up/Limit Down) trading pause. Individual stock halted due to
+    /// price moving outside its LULD band for more than 15 seconds.
+    /// </summary>
+    LuldPause = 23,
+
+    /// <summary>
+    /// Regulatory halt (SEC or exchange-imposed trading halt, e.g., news pending).
+    /// </summary>
+    RegulatoryHalt = 24,
+
+    /// <summary>
+    /// Trading resumed after halt.
+    /// </summary>
+    TradingResumed = 25,
+
+    /// <summary>
+    /// IPO halt (pre-opening, price discovery).
+    /// </summary>
+    IpoHalt = 26,
+
+    /// <summary>
     /// Unknown / unmapped condition code.
     /// </summary>
     Unknown = 255

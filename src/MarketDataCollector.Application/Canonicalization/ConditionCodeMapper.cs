@@ -122,4 +122,42 @@ public sealed class ConditionCodeMapper
     /// Gets the total number of mappings loaded.
     /// </summary>
     public int MappingCount => _map.Count;
+
+    /// <summary>
+    /// Determines whether any of the canonical conditions indicate a trading halt.
+    /// This includes LULD pauses, circuit breaker halts, regulatory halts, and IPO halts.
+    /// </summary>
+    /// <param name="conditions">Canonical conditions to check.</param>
+    /// <returns>True if any condition represents a halt state.</returns>
+    public static bool ContainsHaltCondition(CanonicalTradeCondition[] conditions)
+    {
+        for (var i = 0; i < conditions.Length; i++)
+        {
+            if (IsHaltCondition(conditions[i]))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Determines whether a single canonical condition represents a trading halt.
+    /// </summary>
+    public static bool IsHaltCondition(CanonicalTradeCondition condition)
+    {
+        return condition is CanonicalTradeCondition.Halted
+            or CanonicalTradeCondition.CircuitBreakerLevel1
+            or CanonicalTradeCondition.CircuitBreakerLevel2
+            or CanonicalTradeCondition.CircuitBreakerLevel3
+            or CanonicalTradeCondition.LuldPause
+            or CanonicalTradeCondition.RegulatoryHalt
+            or CanonicalTradeCondition.IpoHalt;
+    }
+
+    /// <summary>
+    /// Determines whether a canonical condition indicates trading has resumed after a halt.
+    /// </summary>
+    public static bool IsResumedCondition(CanonicalTradeCondition condition)
+    {
+        return condition == CanonicalTradeCondition.TradingResumed;
+    }
 }

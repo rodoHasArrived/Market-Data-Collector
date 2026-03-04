@@ -236,8 +236,14 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _heartbeatTask;
     private DateTimeOffset _lastPongReceived = DateTimeOffset.UtcNow;
+    private long _pingsSent;
 
     public event Func<Task>? ConnectionLost;
+
+    /// <summary>
+    /// Gets the total number of heartbeat pings sent during this connection's lifetime.
+    /// </summary>
+    public long PingsSent => Interlocked.Read(ref _pingsSent);
 
     public WebSocketHeartbeat(
         ClientWebSocket ws,
@@ -266,14 +272,39 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
                 if (_ws.State != WebSocketState.Open)
                     break;
 
-                // Send ping (empty message or specific ping frame).
-                // ClientWebSocket doesn't expose ping/pong frames directly.
-                // This is a simplified version - production code might use custom ping messages.
+                // Send an application-level ping to detect stale connections.
+                // .NET's ClientWebSocket handles RFC 6455 ping/pong frames at the
+                // transport layer automatically, but that doesn't guarantee the
+                // remote application is responsive. Sending a small binary payload
+                // exercises the full send path and confirms the socket is writable.
+                try
+                {
+                    var pingPayload = BitConverter.GetBytes(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                    await _ws.SendAsync(
+                        pingPayload,
+                        WebSocketMessageType.Binary,
+                        endOfMessage: true,
+                        _cts.Token).ConfigureAwait(false);
+                    Interlocked.Increment(ref _pingsSent);
+                }
+                catch (WebSocketException ex)
+                {
+                    _log.Warning(ex, "Failed to send heartbeat ping — connection may be broken");
+                    if (ConnectionLost != null)
+                        await ConnectionLost.Invoke();
+                    break;
+                }
+
+                // Check if we've received any data (pong or regular messages)
+                // within the expected window
                 var timeSinceLastPong = DateTimeOffset.UtcNow - _lastPongReceived;
                 if (timeSinceLastPong > _pongTimeout + _pingInterval)
                 {
-                    _log.Warning("No pong received for {Duration}s. Connection may be stale.",
-                        timeSinceLastPong.TotalSeconds);
+                    _log.Warning(
+                        "No data received for {Duration}s (last activity: {LastPong}). Connection is stale. Pings sent: {PingsSent}",
+                        timeSinceLastPong.TotalSeconds,
+                        _lastPongReceived.ToString("HH:mm:ss.fff"),
+                        Interlocked.Read(ref _pingsSent));
 
                     if (ConnectionLost != null)
                         await ConnectionLost.Invoke();
@@ -290,7 +321,8 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
             _log.Error(ex, "Heartbeat loop failed");
         }
 
-        _log.Debug("WebSocket heartbeat stopped");
+        _log.Debug("WebSocket heartbeat stopped (pings sent: {PingsSent})",
+            Interlocked.Read(ref _pingsSent));
     }
 
     public void RecordPongReceived()
