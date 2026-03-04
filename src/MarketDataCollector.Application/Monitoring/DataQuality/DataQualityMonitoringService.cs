@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring.DataQuality;
@@ -63,6 +64,22 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
         };
 
         _log.Information("DataQualityMonitoringService initialized");
+    }
+
+    /// <summary>
+    /// Registers a symbol's liquidity profile across all monitoring sub-services.
+    /// This adjusts gap detection thresholds, completeness expectations,
+    /// stale-data alerting, and SLA freshness for the symbol so that
+    /// illiquid instruments do not trigger false-positive quality alerts.
+    /// </summary>
+    public void RegisterSymbolLiquidity(string symbol, LiquidityProfile profile)
+    {
+        GapAnalyzer.RegisterSymbolLiquidity(symbol, profile);
+        Completeness.RegisterSymbolLiquidity(symbol, profile);
+        AnomalyDetector.RegisterSymbolLiquidity(symbol, profile);
+
+        _log.Information("Registered liquidity profile {Profile} for {Symbol} across all quality monitors",
+            profile, symbol);
     }
 
     /// <summary>
@@ -314,16 +331,21 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
 
         try
         {
-            // Update stale status for symbols
+            // Update stale status for symbols, using per-symbol liquidity-aware thresholds
             var now = DateTimeOffset.UtcNow;
-            var staleThreshold = TimeSpan.FromSeconds(60);
+            var defaultStaleThreshold = TimeSpan.FromSeconds(60);
 
             foreach (var key in _healthStatus.Keys)
             {
                 if (_healthStatus.TryGetValue(key, out var status))
                 {
                     var timeSinceLastEvent = now - status.LastEvent;
-                    if (timeSinceLastEvent > staleThreshold && status.State != HealthState.Stale)
+                    var symbolProfile = GapAnalyzer.GetSymbolLiquidity(key);
+                    var symbolThreshold = symbolProfile == LiquidityProfile.High
+                        ? defaultStaleThreshold
+                        : TimeSpan.FromSeconds(LiquidityProfileProvider.GetThresholds(symbolProfile).StaleDataThresholdSeconds);
+
+                    if (timeSinceLastEvent > symbolThreshold && status.State != HealthState.Stale)
                     {
                         _healthStatus[key] = status with
                         {

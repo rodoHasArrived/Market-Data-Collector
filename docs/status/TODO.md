@@ -1,39 +1,39 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-23T17:39:39.726518+00:00
+> Last updated: 2026-03-04T16:00:10.043705+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 20 |
+| **Total Items** | 22 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 20 |
+| **Untracked** | 22 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 20 | Important notes and documentation |
+| `NOTE` | 22 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 13 |
+| `tests/` | 15 |
 | `src/` | 5 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-20 items have no assignee and no issue tracking:
+22 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (20)
+### NOTE (22)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -70,6 +70,12 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Monitoring/DataQuality/DataFreshnessSlaMonitorTests.cs:525`
   > Actual result depends on current time, so we check the logic is working
+
+- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:284`
+  > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
+
+- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:516`
+  > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
 
 - [ ] `tests/MarketDataCollector.Tests/Infrastructure/Resilience/WebSocketResiliencePolicyTests.cs:201`
   > We can't directly invoke the event from outside the class The test validates that the subscription mechanism works

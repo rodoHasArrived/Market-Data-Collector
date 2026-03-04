@@ -381,7 +381,7 @@ public partial class ActivityLogPage : Page
 /// <summary>
 /// Model for log entry display.
 /// </summary>
-public class LogEntryModel
+public sealed class LogEntryModel
 {
     public DateTime RawTimestamp { get; set; }
     public string Timestamp { get; set; } = string.Empty;

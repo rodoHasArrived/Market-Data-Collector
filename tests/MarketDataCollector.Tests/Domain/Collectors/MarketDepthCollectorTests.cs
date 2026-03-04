@@ -214,8 +214,8 @@ public class MarketDepthCollectorTests
         // Act
         _collector.OnDepth(update);
 
-        // Assert
-        _publishedEvents.Should().HaveCount(1);
+        // Assert — DepthIntegrity + ResyncRequested events are published
+        _publishedEvents.Should().HaveCount(2);
         _publishedEvents[0].Type.Should().Be(MarketEventType.Integrity);
 
         var integrity = _publishedEvents[0].Payload as DepthIntegrityEvent;
@@ -232,8 +232,8 @@ public class MarketDepthCollectorTests
         // Act
         _collector.OnDepth(update);
 
-        // Assert
-        _publishedEvents.Should().HaveCount(1);
+        // Assert — DepthIntegrity + ResyncRequested events are published
+        _publishedEvents.Should().HaveCount(2);
         var integrity = _publishedEvents[0].Payload as DepthIntegrityEvent;
         integrity!.Kind.Should().Be(DepthIntegrityKind.OutOfOrder);
     }
@@ -247,8 +247,8 @@ public class MarketDepthCollectorTests
         // Act
         _collector.OnDepth(update);
 
-        // Assert
-        _publishedEvents.Should().HaveCount(1);
+        // Assert — DepthIntegrity + ResyncRequested events are published
+        _publishedEvents.Should().HaveCount(2);
         var integrity = _publishedEvents[0].Payload as DepthIntegrityEvent;
         integrity!.Kind.Should().Be(DepthIntegrityKind.InvalidPosition);
     }
@@ -276,8 +276,8 @@ public class MarketDepthCollectorTests
         // Act - Try to update again
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
 
-        // Assert
-        _publishedEvents.Should().HaveCount(1);
+        // Assert — DepthIntegrity + ResyncRequested events are published
+        _publishedEvents.Should().HaveCount(2);
         var integrity = _publishedEvents[0].Payload as DepthIntegrityEvent;
         integrity!.Kind.Should().Be(DepthIntegrityKind.Stale);
     }

@@ -129,6 +129,20 @@ public sealed class SloDefinitionRegistryTests
     public void Register_CustomSlo_CanBeRetrieved()
     {
         var registry = SloDefinitionRegistry.Instance;
+        var alertRegistry = AlertRunbookRegistry.Instance;
+
+        // Register a matching alert entry so cross-registry consistency tests pass
+        // even when running in parallel.
+        alertRegistry.Register(new AlertRunbookEntry
+        {
+            AlertName = "CustomAlert",
+            Severity = "info",
+            IncidentPriority = "P3",
+            Summary = "Custom test alert",
+            RunbookUrl = "docs/operations/operator-runbook.md#custom",
+            ProbableCauses = new[] { "Test" },
+            ImmediateActions = new[] { "None" }
+        });
 
         registry.Register(new SloDefinition
         {
@@ -143,9 +157,17 @@ public sealed class SloDefinitionRegistryTests
             RunbookSection = "docs/custom-runbook.md"
         });
 
-        var retrieved = registry.Get("SLO-CUSTOM-001");
-        retrieved.Should().NotBeNull();
-        retrieved!.Name.Should().Be("Custom Test SLO");
+        try
+        {
+            var retrieved = registry.Get("SLO-CUSTOM-001");
+            retrieved.Should().NotBeNull();
+            retrieved!.Name.Should().Be("Custom Test SLO");
+        }
+        finally
+        {
+            // Clean up to avoid polluting the singleton for other tests
+            registry.Unregister("SLO-CUSTOM-001");
+        }
     }
 }
 

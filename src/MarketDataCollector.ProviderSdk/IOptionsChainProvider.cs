@@ -1,9 +1,9 @@
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 
-namespace MarketDataCollector.Infrastructure.Providers;
+namespace MarketDataCollector.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Provider contract for retrieving options chain data.

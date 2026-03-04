@@ -210,7 +210,7 @@ public static class ConfigEndpoints
         .WithDescription("Updates the derivatives trading configuration.")
         .Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Note: Status endpoint is handled by StatusEndpoints.MapStatusEndpoints()
+        // NOTE: Status endpoint is handled by StatusEndpoints.MapStatusEndpoints()
         // which provides live status via StatusEndpointHandlers rather than loading from file
     }
 

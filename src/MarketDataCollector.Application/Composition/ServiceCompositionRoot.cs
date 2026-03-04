@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Backfill;
+using MarketDataCollector.Application.Canonicalization;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Logging;
@@ -13,12 +14,13 @@ using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Providers.Core;
-using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Export;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Maintenance;
 using MarketDataCollector.Storage.Policies;
@@ -124,6 +126,12 @@ public static class ServiceCompositionRoot
             services.AddCollectorServices(options);
         }
 
+        // Canonicalization services - must come after pipeline (decorates IMarketEventPublisher)
+        if (options.EnableCanonicalizationServices)
+        {
+            services.AddCanonicalizationServices(options);
+        }
+
         if (options.EnableHttpClientFactory)
         {
             services.AddHttpClientFactoryServices();
@@ -198,6 +206,13 @@ public static class ServiceCompositionRoot
         services.AddSingleton<IStorageSearchService, StorageSearchService>();
         services.AddSingleton<ITierMigrationService, TierMigrationService>();
 
+        // Analysis export service for data export operations
+        services.AddSingleton<AnalysisExportService>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            return new AnalysisExportService(storageOptions.RootPath);
+        });
+
         return services;
     }
 
@@ -215,6 +230,11 @@ public static class ServiceCompositionRoot
     /// </remarks>
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
+        // Canonical symbol registry - identity resolution for canonicalization
+        services.AddSingleton<CanonicalSymbolRegistry>();
+        services.AddSingleton<Contracts.Catalog.ICanonicalSymbolRegistry>(sp =>
+            sp.GetRequiredService<CanonicalSymbolRegistry>());
+
         // Symbol import/export
         services.AddSingleton<SymbolImportExportService>();
         services.AddSingleton<TemplateService>();
@@ -529,7 +549,7 @@ public static class ServiceCompositionRoot
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            return new Infrastructure.Providers.InteractiveBrokers.IBMarketDataClient(
+            return new Infrastructure.Adapters.InteractiveBrokers.IBMarketDataClient(
                 publisher, tradeCollector, depthCollector);
         });
 
@@ -540,7 +560,7 @@ public static class ServiceCompositionRoot
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
             var (keyId, secretKey) = credentialResolver.ResolveAlpacaCredentials(
                 config.Alpaca?.KeyId, config.Alpaca?.SecretKey);
-            return new Infrastructure.Providers.Alpaca.AlpacaMarketDataClient(
+            return new Infrastructure.Adapters.Alpaca.AlpacaMarketDataClient(
                 tradeCollector, quoteCollector,
                 config.Alpaca! with { KeyId = keyId ?? "", SecretKey = secretKey ?? "" });
         });
@@ -552,7 +572,7 @@ public static class ServiceCompositionRoot
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
             var reconnMetrics = sp.GetRequiredService<IReconnectionMetrics>();
-            return new Infrastructure.Providers.Polygon.PolygonMarketDataClient(
+            return new Infrastructure.Adapters.Polygon.PolygonMarketDataClient(
                 publisher, tradeCollector, quoteCollector,
                 reconnectionMetrics: reconnMetrics);
         });
@@ -563,7 +583,7 @@ public static class ServiceCompositionRoot
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            return new Infrastructure.Providers.StockSharp.StockSharpMarketDataClient(
+            return new Infrastructure.Adapters.StockSharp.StockSharpMarketDataClient(
                 tradeCollector, depthCollector, quoteCollector,
                 config.StockSharp ?? new StockSharpConfig());
         });
@@ -574,7 +594,7 @@ public static class ServiceCompositionRoot
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
             var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
             var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            return new Infrastructure.Providers.InteractiveBrokers.IBMarketDataClient(
+            return new Infrastructure.Adapters.InteractiveBrokers.IBMarketDataClient(
                 publisher, tradeCollector, depthCollector);
         });
 
@@ -785,12 +805,60 @@ public static class ServiceCompositionRoot
             return new EventPipeline(sink, EventPipelinePolicy.HighThroughput, metrics: metrics, wal: wal, auditTrail: auditTrail);
         });
 
-        // IMarketEventPublisher - facade for publishing events
+        // IMarketEventPublisher - facade for publishing events.
+        // When canonicalization is enabled, returns CanonicalizingPublisher (which
+        // wraps its own PipelinePublisher internally). Otherwise creates PipelinePublisher directly.
         services.AddSingleton<IMarketEventPublisher>(sp =>
         {
+            // Check if canonicalization should wrap the publisher
+            var canonPublisher = sp.GetService<CanonicalizingPublisher>();
+            if (canonPublisher is not null)
+            {
+                var configStore = sp.GetRequiredService<ConfigStore>();
+                var config = configStore.Load();
+                if (config.Canonicalization is { Enabled: true })
+                    return canonPublisher;
+            }
+
             var pipeline = sp.GetRequiredService<EventPipeline>();
             var metrics = sp.GetRequiredService<IEventMetrics>();
-            return new PipelinePublisher(pipeline, metrics);
+            IMarketEventPublisher publisher = new PipelinePublisher(pipeline, metrics);
+
+            var pipelineConfigStore = sp.GetRequiredService<ConfigStore>();
+            var pipelineConfig = pipelineConfigStore.Load();
+
+            if (pipelineConfig.Canonicalization is { Enabled: true })
+            {
+                var canonConfig = pipelineConfig.Canonicalization;
+                var symbolRegistry = sp.GetService<Contracts.Catalog.ICanonicalSymbolRegistry>();
+                if (symbolRegistry is null)
+                {
+                    Log.ForContext<EventPipeline>().Warning(
+                        "Canonicalization enabled but ICanonicalSymbolRegistry not registered; skipping");
+                    return publisher;
+                }
+                var conditionsPath = canonConfig.ConditionCodesPath
+                    ?? Path.Combine(AppContext.BaseDirectory, "config", "condition-codes.json");
+                var conditions = ConditionCodeMapper.LoadFromFile(conditionsPath);
+                var venuesPath = canonConfig.VenueMappingPath
+                    ?? Path.Combine(AppContext.BaseDirectory, "config", "venue-mapping.json");
+                var venues = VenueMicMapper.LoadFromFile(venuesPath);
+                var canonicalizer = new EventCanonicalizer(
+                    symbolRegistry, conditions, venues, canonConfig.Version);
+
+                CanonicalizationMetrics.SetActiveVersion(canonConfig.Version);
+
+                publisher = new CanonicalizingPublisher(
+                    publisher, canonicalizer, canonConfig.PilotSymbols, canonConfig.EnableDualWrite);
+
+                Log.ForContext<EventPipeline>().Information(
+                    "Canonicalization enabled (version={Version}, pilotSymbols={PilotCount}, dualWrite={DualWrite})",
+                    canonConfig.Version,
+                    canonConfig.PilotSymbols?.Length ?? 0,
+                    canonConfig.EnableDualWrite);
+            }
+
+            return publisher;
         });
 
         return services;
@@ -841,8 +909,78 @@ public static class ServiceCompositionRoot
         {
             var collector = sp.GetRequiredService<OptionDataCollector>();
             var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OptionsChainService>>();
-            var provider = sp.GetService<Infrastructure.Providers.IOptionsChainProvider>();
+            var provider = sp.GetService<Infrastructure.Adapters.Core.IOptionsChainProvider>();
             return new OptionsChainService(collector, logger, provider);
+        });
+
+        return services;
+    }
+
+    #endregion
+
+    #region Canonicalization Services
+
+    /// <summary>
+    /// Registers canonicalization services: mapping tables, the canonicalizer,
+    /// and the <see cref="CanonicalizingPublisher"/> decorator that wraps
+    /// <see cref="IMarketEventPublisher"/>.
+    /// </summary>
+    /// <remarks>
+    /// Must be called <b>after</b> <see cref="AddPipelineServices"/> because
+    /// the canonicalizing publisher decorates the existing IMarketEventPublisher
+    /// registration (PipelinePublisher).
+    /// </remarks>
+    private static IServiceCollection AddCanonicalizationServices(
+        this IServiceCollection services,
+        CompositionOptions options)
+    {
+        // Mapping tables (loaded once at startup, frozen for hot-path reads)
+        services.AddSingleton<ConditionCodeMapper>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var path = config.Canonicalization?.ConditionCodesPath ?? "config/condition-codes.json";
+            return ConditionCodeMapper.LoadFromFile(path);
+        });
+
+        services.AddSingleton<VenueMicMapper>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var path = config.Canonicalization?.VenueMappingPath ?? "config/venue-mapping.json";
+            return VenueMicMapper.LoadFromFile(path);
+        });
+
+        // EventCanonicalizer - the core canonicalization logic
+        services.AddSingleton<IEventCanonicalizer>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var symbols = sp.GetRequiredService<Contracts.Catalog.ICanonicalSymbolRegistry>();
+            var conditions = sp.GetRequiredService<ConditionCodeMapper>();
+            var venues = sp.GetRequiredService<VenueMicMapper>();
+            var version = config.Canonicalization?.Version ?? 1;
+            return new EventCanonicalizer(symbols, conditions, venues, version);
+        });
+
+        // CanonicalizingPublisher - wraps the inner IMarketEventPublisher (PipelinePublisher).
+        // Registered as a named singleton so the decorator can be manually composed below.
+        services.AddSingleton<CanonicalizingPublisher>(sp =>
+        {
+            var pipeline = sp.GetRequiredService<EventPipeline>();
+            var metrics = sp.GetRequiredService<IEventMetrics>();
+            var innerPublisher = new PipelinePublisher(pipeline, metrics);
+
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var canonConfig = config.Canonicalization;
+            var canonicalizer = sp.GetRequiredService<IEventCanonicalizer>();
+
+            return new CanonicalizingPublisher(
+                innerPublisher,
+                canonicalizer,
+                canonConfig?.PilotSymbols,
+                canonConfig?.EnableDualWrite ?? true);
         });
 
         return services;
@@ -911,7 +1049,8 @@ public sealed record CompositionOptions
         EnableProviderServices = true,
         EnablePipelineServices = true,
         EnableCollectorServices = true,
-        EnableHttpClientFactory = true
+        EnableHttpClientFactory = true,
+        EnableCanonicalizationServices = true
     };
 
     /// <summary>
@@ -943,7 +1082,8 @@ public sealed record CompositionOptions
         EnableProviderServices = true,
         EnablePipelineServices = true,
         EnableCollectorServices = true,
-        EnableHttpClientFactory = true
+        EnableHttpClientFactory = true,
+        EnableCanonicalizationServices = true
     };
 
     /// <summary>
@@ -959,7 +1099,8 @@ public sealed record CompositionOptions
         EnableProviderServices = true,
         EnablePipelineServices = true,
         EnableCollectorServices = true,
-        EnableHttpClientFactory = true
+        EnableHttpClientFactory = true,
+        EnableCanonicalizationServices = true
     };
 
     /// <summary>
@@ -1032,6 +1173,15 @@ public sealed record CompositionOptions
     /// Whether to enable HttpClientFactory for HTTP client lifecycle management.
     /// </summary>
     public bool EnableHttpClientFactory { get; init; }
+
+    /// <summary>
+    /// Whether to enable canonicalization services (symbol resolution, condition
+    /// code mapping, venue normalization). When enabled, a <see cref="CanonicalizingPublisher"/>
+    /// decorator wraps <see cref="IMarketEventPublisher"/> to enrich events before
+    /// they reach the pipeline. The actual canonicalization behavior is further gated
+    /// by <see cref="CanonicalizationConfig.Enabled"/> in <c>appsettings.json</c>.
+    /// </summary>
+    public bool EnableCanonicalizationServices { get; init; }
 
     /// <summary>
     /// Whether to enable OpenTelemetry tracing and metrics instrumentation.

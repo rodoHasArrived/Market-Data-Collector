@@ -21,14 +21,14 @@ messages:
       - Support hot configuration reload for symbol subscriptions
 
       ## Directory Structure
-      - `src/MarketDataCollector/Infrastructure/Providers/` - Provider implementations
+      - `src/MarketDataCollector/Infrastructure/Adapters/` - Provider implementations
       - `src/MarketDataCollector/Domain/` - Domain models and collectors
       - `src/MarketDataCollector/Contracts/` - Shared interfaces and DTOs
 
       ## Key Files to Reference
-      - `Infrastructure/Providers/AlpacaMarketDataClient.cs` - WebSocket streaming example
-      - `Infrastructure/Providers/IBMarketDataClient.cs` - TWS API integration example
-      - `Infrastructure/Providers/Historical/` - Historical data provider examples
+      - `Infrastructure/Adapters/AlpacaMarketDataClient.cs` - WebSocket streaming example
+      - `Infrastructure/Adapters/IBMarketDataClient.cs` - TWS API integration example
+      - `Infrastructure/Adapters/` - Historical data provider examples
 
   - role: user
     content: |

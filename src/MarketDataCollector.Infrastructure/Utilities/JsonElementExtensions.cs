@@ -10,7 +10,7 @@ namespace MarketDataCollector.Infrastructure.Utilities;
 /// <code>
 /// // Before
 /// var sym = elem.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
-/// var price = elem.TryGetProperty("p", out var pProp) ? (decimal)pProp.GetDouble() : 0m;
+/// var price = elem.TryGetProperty("p", out var pProp) ? pProp.GetDecimal() : 0m;
 ///
 /// // After
 /// var sym = elem.GetStringOrNull("S");

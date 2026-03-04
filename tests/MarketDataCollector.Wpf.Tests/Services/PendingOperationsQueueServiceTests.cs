@@ -27,7 +27,7 @@ public sealed class PendingOperationsQueueServiceTests
         // Arrange
         var service = PendingOperationsQueueService.Instance;
 
-        // Note: This may not be false if other tests have run InitializeAsync.
+        // NOTE: This may not be false if other tests have run InitializeAsync.
         // We test the lifecycle explicitly below.
 
         // Assert

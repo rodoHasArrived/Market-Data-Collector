@@ -1,6 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
+using MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 

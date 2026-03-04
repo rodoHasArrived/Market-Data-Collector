@@ -409,6 +409,29 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
         {
             kvp.Value.UpdateStatistics();
         }
+
+        // Evict connections that have been disconnected and had no activity for
+        // longer than the heartbeat timeout. This prevents unbounded dictionary
+        // growth when connections are not explicitly unregistered.
+        var staleThreshold = TimeSpan.FromSeconds(_config.HeartbeatTimeoutSeconds * 2);
+        var toRemove = new List<string>();
+        foreach (var kvp in _connections)
+        {
+            var conn = kvp.Value;
+            if (!conn.IsConnected &&
+                (DateTimeOffset.UtcNow - conn.LastActivityTime) > staleThreshold)
+            {
+                toRemove.Add(kvp.Key);
+            }
+        }
+
+        foreach (var key in toRemove)
+        {
+            if (_connections.TryRemove(key, out _))
+            {
+                _log.Debug("Evicted stale disconnected connection {ConnectionId} from health monitor", key);
+            }
+        }
     }
 
     public void Dispose()
@@ -447,7 +470,7 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
 
         public bool IsConnected => _isConnected;
         public DateTimeOffset LastActivityTime => _lastDataReceivedTime > _lastHeartbeatTime ? _lastDataReceivedTime : _lastHeartbeatTime;
-        public int MissedHeartbeats => _missedHeartbeats;
+        public int MissedHeartbeats => Volatile.Read(ref _missedHeartbeats);
         public TimeSpan UptimeDuration => _isConnected ? DateTimeOffset.UtcNow - _connectedSinceTime : TimeSpan.Zero;
         public TimeSpan DisconnectedDuration => !_isConnected ? DateTimeOffset.UtcNow - _disconnectedSinceTime : TimeSpan.Zero;
 
@@ -467,7 +490,7 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
             }
             _isConnected = true;
             _connectedSinceTime = DateTimeOffset.UtcNow;
-            _missedHeartbeats = 0;
+            Interlocked.Exchange(ref _missedHeartbeats, 0);
         }
 
         public void MarkDisconnected()
@@ -520,7 +543,7 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
 
         public void ResetMissedHeartbeats()
         {
-            _missedHeartbeats = 0;
+            Interlocked.Exchange(ref _missedHeartbeats, 0);
         }
 
         public void UpdateStatistics()
@@ -537,9 +560,10 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
                 ? (double)Interlocked.Read(ref _latencyTotalTicks) / samples / Stopwatch.Frequency * 1000
                 : 0;
 
-            var minLatencyMs = _minLatencyTicks == long.MaxValue
+            var minTicks = Interlocked.Read(ref _minLatencyTicks);
+            var minLatencyMs = minTicks == long.MaxValue
                 ? 0
-                : (double)_minLatencyTicks / Stopwatch.Frequency * 1000;
+                : (double)minTicks / Stopwatch.Frequency * 1000;
 
             var maxLatencyMs = (double)Interlocked.Read(ref _maxLatencyTicks) / Stopwatch.Frequency * 1000;
 
@@ -552,10 +576,10 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
                 ConnectionId: ConnectionId,
                 ProviderName: ProviderName,
                 IsConnected: _isConnected,
-                IsHealthy: _isConnected && _missedHeartbeats == 0,
+                IsHealthy: _isConnected && MissedHeartbeats == 0,
                 LastHeartbeatTime: _lastHeartbeatTime,
                 LastDataReceivedTime: _lastDataReceivedTime,
-                MissedHeartbeats: _missedHeartbeats,
+                MissedHeartbeats: MissedHeartbeats,
                 ReconnectCount: Interlocked.Read(ref _reconnectCount),
                 UptimeDuration: UptimeDuration,
                 TotalDataReceived: Interlocked.Read(ref _totalDataReceived),

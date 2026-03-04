@@ -6,6 +6,7 @@ using MarketDataCollector.Storage.Export;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -15,6 +16,9 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// </summary>
 public static class ExportEndpoints
 {
+    private static readonly string ExportBaseDir = Path.Combine(Path.GetTempPath(), "mdc-exports");
+    private static readonly TimeSpan ExportMaxAge = TimeSpan.FromHours(24);
+
     public static void MapExportEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
         var group = app.MapGroup("").WithTags("Export");
@@ -79,6 +83,8 @@ public static class ExportEndpoints
         // Available export formats — wired to real profiles from AnalysisExportService
         group.MapGet(UiApiRoutes.ExportFormats, ([FromServices] AnalysisExportService? exportService) =>
         {
+            var exportService = ctx.RequestServices.GetService<AnalysisExportService>();
+
             var formats = new[]
             {
                 new { id = "parquet", name = "Apache Parquet", description = "Columnar format for analytics (Python/pandas, Spark)", extensions = new[] { ".parquet" } },
@@ -86,7 +92,8 @@ public static class ExportEndpoints
                 new { id = "jsonl", name = "JSON Lines", description = "One JSON object per line (streaming, interchange)", extensions = new[] { ".jsonl", ".jsonl.gz" } },
                 new { id = "lean", name = "QuantConnect Lean", description = "Native Lean Engine format for backtesting", extensions = new[] { ".zip" } },
                 new { id = "xlsx", name = "Microsoft Excel", description = "Excel workbook with formatted sheets", extensions = new[] { ".xlsx" } },
-                new { id = "sql", name = "SQL", description = "SQL INSERT/COPY statements for databases", extensions = new[] { ".sql" } }
+                new { id = "sql", name = "SQL", description = "SQL INSERT/COPY statements for databases", extensions = new[] { ".sql" } },
+                new { id = "arrow", name = "Apache Arrow IPC", description = "In-memory columnar format for zero-copy interchange", extensions = new[] { ".arrow" } }
             };
 
             // Pull real profiles from the service if available
@@ -102,7 +109,13 @@ public static class ExportEndpoints
                     new { id = "postgresql", name = "PostgreSQL / TimescaleDB", format = "csv", compression = "none" }
                 };
 
-            return Results.Json(new { formats, profiles, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
+            return Results.Json(new
+            {
+                formats,
+                profiles,
+                serviceAvailable = exportService is not null,
+                timestamp = DateTimeOffset.UtcNow
+            }, jsonOptions);
         })
         .WithName("GetExportFormats")
         .Produces(200);
@@ -281,7 +294,43 @@ public static class ExportEndpoints
     }
 
     private sealed record ExportAnalysisRequest(string? ProfileId, string[]? Symbols, string? Format, DateTime? StartDate, DateTime? EndDate);
+    private sealed record ExportPreviewRequest(string? ProfileId, string[]? Symbols, string[]? EventTypes, DateTime? StartDate, DateTime? EndDate, int? SampleSize);
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
+
+    /// <summary>
+    /// Removes export directories older than <see cref="ExportMaxAge"/> to prevent unbounded disk usage.
+    /// </summary>
+    private static void CleanupOldExportDirectories()
+    {
+        try
+        {
+            if (!Directory.Exists(ExportBaseDir)) return;
+
+            foreach (var dir in Directory.EnumerateDirectories(ExportBaseDir))
+            {
+                try
+                {
+                    var created = Directory.GetCreationTimeUtc(dir);
+                    if (DateTime.UtcNow - created > ExportMaxAge)
+                    {
+                        Directory.Delete(dir, recursive: true);
+                    }
+                }
+                catch (IOException)
+                {
+                    // Directory may be in use or already deleted
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Insufficient permissions to delete
+                }
+            }
+        }
+        catch (IOException)
+        {
+            // Base directory inaccessible, skip cleanup
+        }
+    }
 }

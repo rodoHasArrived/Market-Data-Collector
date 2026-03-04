@@ -237,9 +237,9 @@ public sealed class MetadataTagService : IMetadataTagService
                 }
             }
         }
-        catch
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
-            // Silently fail on load errors - start fresh
+            // Expected I/O or parse errors on load - start fresh
         }
     }
 

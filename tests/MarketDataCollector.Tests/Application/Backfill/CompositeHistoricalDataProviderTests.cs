@@ -1,7 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Moq;
 using Xunit;
 

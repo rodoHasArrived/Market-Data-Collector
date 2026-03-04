@@ -294,11 +294,15 @@ async function loadStatus() {
     const s = await r.json();
     const isConnected = s.isConnected !== false;
 
+    // Calculate data freshness
+    const freshnessHtml = getDataFreshnessHtml(s);
+
     box.innerHTML = `
       <div class="status-badge ${isConnected ? 'status-connected' : 'status-disconnected'}">
         <span class="status-dot"></span>
         ${isConnected ? 'Connected' : 'Disconnected'}
       </div>
+      ${freshnessHtml}
       <div style="margin-top: 8px; font-size: 12px; color: #718096;">
         Last update: ${s.timestampUtc || 'n/a'}
       </div>
@@ -319,6 +323,60 @@ async function loadStatus() {
       </div>
     `;
   }
+}
+
+function getDataFreshnessHtml(status) {
+  const timestamp = status.timestampUtc || status.lastEventUtc;
+  if (!timestamp) return '';
+
+  const lastUpdate = new Date(timestamp);
+  if (Number.isNaN(lastUpdate.getTime())) {
+    // Invalid timestamp format; avoid displaying misleading freshness info
+    return '';
+  }
+  const now = new Date();
+  const diffMs = now - lastUpdate;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+
+  let freshnessText, freshnessColor, freshnessIcon;
+
+  if (diffSec < 30) {
+    freshnessText = 'Live';
+    freshnessColor = '#48bb78';
+    freshnessIcon = '🟢';
+  } else if (diffSec < 120) {
+    freshnessText = `${diffSec}s ago`;
+    freshnessColor = '#48bb78';
+    freshnessIcon = '🟢';
+  } else if (diffMin < 10) {
+    freshnessText = `${diffMin}m ago`;
+    freshnessColor = '#ecc94b';
+    freshnessIcon = '🟡';
+  } else if (diffMin < 60) {
+    freshnessText = `${diffMin}m ago`;
+    freshnessColor = '#ed8936';
+    freshnessIcon = '🟠';
+  } else if (diffHr < 24) {
+    freshnessText = `${diffHr}h ${diffMin % 60}m ago`;
+    freshnessColor = '#f56565';
+    freshnessIcon = '🔴';
+  } else {
+    const diffDays = Math.floor(diffHr / 24);
+    freshnessText = `${diffDays}d ago`;
+    freshnessColor = '#a0aec0';
+    freshnessIcon = '⚪';
+  }
+
+  return `
+    <div style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
+                padding: 4px 12px; border-radius: 8px; background: ${freshnessColor}15;
+                border: 1px solid ${freshnessColor}30; font-size: 12px;">
+      <span>${freshnessIcon}</span>
+      <span style="font-weight: 600; color: ${freshnessColor};">Data: ${freshnessText}</span>
+    </div>
+  `;
 }
 
 async function loadBackfillStatus() {

@@ -403,6 +403,7 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
             ["Schedules"] = routes.Count(r => r.Route.StartsWith("/api/schedules")),
             ["Alignment"] = routes.Count(r => r.Route.StartsWith("/api/alignment")),
             ["Indices"] = routes.Count(r => r.Route.StartsWith("/api/indices")),
+            ["Options"] = routes.Count(r => r.Route.StartsWith("/api/options")),
             ["Other"] = 0
         };
 

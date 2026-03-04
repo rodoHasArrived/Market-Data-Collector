@@ -26,7 +26,9 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
 
     <!-- Compression -->
+    <PackageReference Include="K4os.Compression.LZ4.Streams" />
     <PackageReference Include="System.IO.Compression" />
+    <PackageReference Include="ZstdSharp.Port" />
 
     <!-- Monitoring -->
     <PackageReference Include="prometheus-net" />

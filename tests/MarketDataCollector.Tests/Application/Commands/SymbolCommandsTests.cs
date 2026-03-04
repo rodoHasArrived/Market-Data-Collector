@@ -16,7 +16,7 @@ public sealed class SymbolCommandsTests
         .WriteTo.Console()
         .CreateLogger();
 
-    // Note: SymbolCommands requires a SymbolManagementService which needs a ConfigStore.
+    // NOTE: SymbolCommands requires a SymbolManagementService which needs a ConfigStore.
     // For CanHandle tests we can use a stub since CanHandle doesn't touch the service.
     // For ExecuteAsync tests that require validation (missing value), we need the real command.
 

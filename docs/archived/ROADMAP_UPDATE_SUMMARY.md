@@ -340,8 +340,8 @@ This update is successful if:
 ## References
 
 - [Project Roadmap](../status/ROADMAP.md)
-- [Repository Organization Guide](./repository-organization-guide.md)
-- [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md)
+- [Repository Organization Guide](../development/repository-organization-guide.md)
+- [Repository Cleanup Action Plan](../development/repository-cleanup-action-plan.md)
 - [Documentation Index](../README.md)
 - [Archived Documentation Index](../archived/INDEX.md)
 

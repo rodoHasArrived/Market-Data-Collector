@@ -35,7 +35,7 @@ docker:
 provider:
   - changed-files:
     - any-glob-to-any-file: '**/Providers/**/*'
-    - any-glob-to-any-file: '**/Infrastructure/Providers/**/*'
+    - any-glob-to-any-file: '**/Infrastructure/Adapters/**/*'
 
 # Storage implementations
 storage:

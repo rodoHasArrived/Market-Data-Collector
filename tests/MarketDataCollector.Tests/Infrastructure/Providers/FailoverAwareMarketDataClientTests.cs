@@ -2,7 +2,7 @@ using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
+using MarketDataCollector.Infrastructure.Adapters.Failover;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Providers;
@@ -195,8 +195,8 @@ public sealed class FailoverAwareMarketDataClientTests : IAsyncLifetime
         public string ProviderDisplayName => $"Fake {_id}";
         public string ProviderDescription => $"Fake provider {_id}";
         public int ProviderPriority => 50;
-        public MarketDataCollector.Infrastructure.Providers.Core.ProviderCapabilities ProviderCapabilities
-            => MarketDataCollector.Infrastructure.Providers.Core.ProviderCapabilities.Streaming();
+        public MarketDataCollector.Infrastructure.Adapters.Core.ProviderCapabilities ProviderCapabilities
+            => MarketDataCollector.Infrastructure.Adapters.Core.ProviderCapabilities.Streaming();
 
         public Task ConnectAsync(CancellationToken ct = default)
         {

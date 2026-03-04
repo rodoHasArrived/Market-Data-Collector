@@ -132,12 +132,13 @@ jobs:
         fi
         
         # Check for potentially insecure patterns
-        if grep -r "\${{.*github.event.issue.title" .github/workflows/; then
+        EXPR_OPEN='${''{' # avoid GitHub Actions expression parsing
+        if grep -r "${EXPR_OPEN}.*github.event.issue.title" .github/workflows/; then
           echo "❌ Error: Potential script injection via issue title"
           EXIT_CODE=1
         fi
-        
-        if grep -r "\${{.*github.event.comment.body" .github/workflows/; then
+
+        if grep -r "${EXPR_OPEN}.*github.event.comment.body" .github/workflows/; then
           echo "❌ Error: Potential script injection via comment body"
           EXIT_CODE=1
         fi
@@ -149,7 +150,7 @@ jobs:
         exit $EXIT_CODE
 
     - name: Run actionlint
-      uses: rhysd/actionlint@v1
+      uses: rhysd/actionlint@v1.7.7
 
   check-permissions:
     name: Check Workflow Permissions

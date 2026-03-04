@@ -249,7 +249,7 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
         _pongTimeout = pongTimeout ?? TimeSpan.FromSeconds(10);
         _log = LoggingSetup.ForContext<WebSocketHeartbeat>();
 
-        _heartbeatTask = Task.Run(HeartbeatLoopAsync);
+        _heartbeatTask = HeartbeatLoopAsync();
     }
 
     private async Task HeartbeatLoopAsync()

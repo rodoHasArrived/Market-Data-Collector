@@ -53,8 +53,17 @@ public sealed class WebSocketReconnectionHelper
     public bool IsReconnecting => _isReconnecting;
 
     /// <summary>
+    /// Event raised after a successful reconnection, providing the disconnect
+    /// and reconnect timestamps. Subscribers can use this to enqueue targeted
+    /// backfill requests covering the disconnection gap window.
+    /// </summary>
+    public event Action<ReconnectionEvent>? Reconnected;
+
+    /// <summary>
     /// Attempts reconnection with exponential backoff and jitter.
     /// Guarantees only one reconnection attempt runs at a time via semaphore gating.
+    /// On successful reconnection, raises the <see cref="Reconnected"/> event
+    /// with the disconnect/reconnect timestamps for gap backfill.
     /// </summary>
     /// <param name="reconnectAction">The async action that performs the actual reconnection
     /// (connect WebSocket, authenticate, resubscribe).</param>
@@ -71,6 +80,7 @@ public sealed class WebSocketReconnectionHelper
         }
 
         _isReconnecting = true;
+        var disconnectedAt = DateTimeOffset.UtcNow;
         try
         {
             for (int attempt = 1; attempt <= _maxAttempts; attempt++)
@@ -91,9 +101,19 @@ public sealed class WebSocketReconnectionHelper
                 {
                     await reconnectAction(ct).ConfigureAwait(false);
                     _metrics.RecordAttempt(_providerName, success: true);
+
+                    var reconnectedAt = DateTimeOffset.UtcNow;
+                    var gapDuration = reconnectedAt - disconnectedAt;
                     _log.Information(
-                        "{Provider} reconnected successfully on attempt {Attempt}/{MaxAttempts}",
-                        _providerName, attempt, _maxAttempts);
+                        "{Provider} reconnected successfully on attempt {Attempt}/{MaxAttempts}. " +
+                        "Gap window: {DisconnectedAt} to {ReconnectedAt} ({GapSeconds:F1}s)",
+                        _providerName, attempt, _maxAttempts,
+                        disconnectedAt, reconnectedAt, gapDuration.TotalSeconds);
+
+                    // Raise reconnection event for gap backfill
+                    RaiseReconnected(new ReconnectionEvent(
+                        _providerName, disconnectedAt, reconnectedAt, attempt));
+
                     return true;
                 }
                 catch (OperationCanceledException) { throw; }
@@ -118,6 +138,18 @@ public sealed class WebSocketReconnectionHelper
         }
     }
 
+    private void RaiseReconnected(ReconnectionEvent evt)
+    {
+        try
+        {
+            Reconnected?.Invoke(evt);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "{Provider} error in Reconnected event handler", _providerName);
+        }
+    }
+
     /// <summary>
     /// Calculates delay with exponential backoff and ±20% jitter.
     /// </summary>
@@ -131,4 +163,24 @@ public sealed class WebSocketReconnectionHelper
         var jitterFactor = 0.8 + (Random.Shared.NextDouble() * 0.4);
         return TimeSpan.FromMilliseconds(cappedDelay.TotalMilliseconds * jitterFactor);
     }
+}
+
+/// <summary>
+/// Event data for a successful reconnection, providing the gap window
+/// that can be used to trigger targeted backfill for missing data.
+/// </summary>
+/// <param name="ProviderName">The provider that reconnected.</param>
+/// <param name="DisconnectedAt">Approximate time the connection was lost.</param>
+/// <param name="ReconnectedAt">Time the connection was restored.</param>
+/// <param name="AttemptsUsed">Number of reconnection attempts before success.</param>
+public sealed record ReconnectionEvent(
+    string ProviderName,
+    DateTimeOffset DisconnectedAt,
+    DateTimeOffset ReconnectedAt,
+    int AttemptsUsed)
+{
+    /// <summary>
+    /// Duration of the gap window.
+    /// </summary>
+    public TimeSpan GapDuration => ReconnectedAt - DisconnectedAt;
 }

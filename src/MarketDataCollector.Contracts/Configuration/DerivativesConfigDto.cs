@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Configuration;
 /// <summary>
 /// Configuration for derivatives (options and futures) data collection.
 /// </summary>
-public class DerivativesConfigDto
+public sealed class DerivativesConfigDto
 {
     /// <summary>
     /// Whether derivatives tracking is enabled.
@@ -76,7 +76,7 @@ public class DerivativesConfigDto
 /// <summary>
 /// Configuration specific to index options.
 /// </summary>
-public class IndexOptionsConfigDto
+public sealed class IndexOptionsConfigDto
 {
     /// <summary>
     /// Whether index options tracking is enabled.

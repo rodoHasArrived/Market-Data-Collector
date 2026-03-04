@@ -177,9 +177,28 @@ public sealed class ProviderLatencyService : IDisposable
 
         try
         {
-            foreach (var tracker in _providers.Values)
+            var toRemove = new List<string>();
+
+            foreach (var kvp in _providers)
             {
-                tracker.Cleanup(_config.RetentionHours);
+                kvp.Value.Cleanup(_config.RetentionHours);
+
+                // Evict providers whose sample window is now empty (no activity
+                // within the retention period) to prevent unbounded dictionary growth.
+                if (kvp.Value.IsEmpty)
+                {
+                    toRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var key in toRemove)
+            {
+                _providers.TryRemove(key, out _);
+            }
+
+            if (toRemove.Count > 0)
+            {
+                _log.Debug("Evicted {Count} inactive provider(s) from latency tracking", toRemove.Count);
             }
         }
         catch (Exception ex)
@@ -306,6 +325,12 @@ public sealed class ProviderLatencyService : IDisposable
                 var cutoff = DateTimeOffset.UtcNow.AddHours(-retentionHours);
                 _samples.RemoveAll(s => s.Timestamp < cutoff);
             }
+        }
+
+        /// <summary>Returns true when the sample window is empty after a cleanup pass.</summary>
+        public bool IsEmpty
+        {
+            get { lock (_lock) { return _samples.Count == 0; } }
         }
 
         private static double GetPercentile(List<LatencySample> sorted, double percentile)

@@ -26,15 +26,18 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="LastUpdateText" Text="Last updated: --"
                                Foreground="{StaticResource ConsoleTextMutedBrush}"
-                               VerticalAlignment="Center" Margin="0,0,16,0"/>
+                               VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12"/>
                     <Button Content="Refresh" Click="Refresh_Click"
-                            Background="{DynamicResource ConsoleBackgroundMediumBrush}"
-                            Foreground="{DynamicResource ConsoleTextBrush}"
-                            BorderThickness="0" Padding="16,8" Margin="0,0,8,0"/>
-                    <Button Content="Run Quality Check" Click="RunQualityCheck_Click"
-                            Background="{StaticResource InfoColorBrush}"
-                            Foreground="White"
-                            BorderThickness="0" Padding="16,8"/>
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="0,0,8,0"/>
+                    <Button Click="RunQualityCheck_Click"
+                            Style="{StaticResource PrimaryButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D5;" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="Run Quality Check" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
 
@@ -424,6 +427,201 @@
                 </Border>
             </Grid>
 
+            <!-- Symbol Drilldown Panel -->
+            <Border x:Name="SymbolDrilldownPanel" Style="{StaticResource CardStyle}" Margin="0,0,0,24" Visibility="Collapsed">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="&#xE946;" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="18" Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock x:Name="DrilldownSymbolHeader" Text="Symbol Details"
+                                       Style="{StaticResource CardHeaderStyle}" />
+                        </StackPanel>
+
+                        <Button Grid.Column="2" Content="Close"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Click="CloseDrilldown_Click" />
+                    </Grid>
+
+                    <!-- Drilldown Metrics Row -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentGreenAlpha10Brush}"
+                                BorderThickness="0,0,0,2">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="DrilldownScoreText" Text="--" FontSize="26" FontWeight="Bold"
+                                           Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"
+                                           FontFamily="Consolas" />
+                                <TextBlock Text="QUALITY SCORE" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                           FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentBlueAlpha10Brush}"
+                                BorderThickness="0,0,0,2">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="DrilldownCompletenessText" Text="--" FontSize="26" FontWeight="Bold"
+                                           Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"
+                                           FontFamily="Consolas" />
+                                <TextBlock Text="COMPLETENESS" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                           FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentOrangeAlpha10Brush}"
+                                BorderThickness="0,0,0,2">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="DrilldownGapsText" Text="--" FontSize="26" FontWeight="Bold"
+                                           Foreground="{StaticResource WarningColorBrush}" HorizontalAlignment="Center"
+                                           FontFamily="Consolas" />
+                                <TextBlock Text="GAPS" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                           FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="6" Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentRedAlpha10Brush}"
+                                BorderThickness="0,0,0,2">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="DrilldownErrorsText" Text="--" FontSize="26" FontWeight="Bold"
+                                           Foreground="{StaticResource ErrorColorBrush}" HorizontalAlignment="Center"
+                                           FontFamily="Consolas" />
+                                <TextBlock Text="ERRORS" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                           FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="8" Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentBlueAlpha10Brush}"
+                                BorderThickness="0,0,0,2">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="DrilldownLatencyText" Text="--" FontSize="26" FontWeight="Bold"
+                                           Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"
+                                           FontFamily="Consolas" />
+                                <TextBlock Text="AVG LATENCY" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                           FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Quality Heatmap -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="&#xE787;" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="14" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Text="7-Day Quality Heatmap" Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                   FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock x:Name="HeatmapDay0Label" Grid.Row="0" Grid.Column="0" Text="Mon"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock x:Name="HeatmapDay1Label" Grid.Row="0" Grid.Column="1" Text="Tue"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock x:Name="HeatmapDay2Label" Grid.Row="0" Grid.Column="2" Text="Wed"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock x:Name="HeatmapDay3Label" Grid.Row="0" Grid.Column="3" Text="Thu"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock x:Name="HeatmapDay4Label" Grid.Row="0" Grid.Column="4" Text="Fri"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock x:Name="HeatmapDay5Label" Grid.Row="0" Grid.Column="5" Text="Sat"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock x:Name="HeatmapDay6Label" Grid.Row="0" Grid.Column="6" Text="Sun"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
+
+                        <Border x:Name="HeatmapCell0" Grid.Row="1" Grid.Column="0" Height="36"
+                                CornerRadius="6" Margin="3" />
+                        <Border x:Name="HeatmapCell1" Grid.Row="1" Grid.Column="1" Height="36"
+                                CornerRadius="6" Margin="3" />
+                        <Border x:Name="HeatmapCell2" Grid.Row="1" Grid.Column="2" Height="36"
+                                CornerRadius="6" Margin="3" />
+                        <Border x:Name="HeatmapCell3" Grid.Row="1" Grid.Column="3" Height="36"
+                                CornerRadius="6" Margin="3" />
+                        <Border x:Name="HeatmapCell4" Grid.Row="1" Grid.Column="4" Height="36"
+                                CornerRadius="6" Margin="3" />
+                        <Border x:Name="HeatmapCell5" Grid.Row="1" Grid.Column="5" Height="36"
+                                CornerRadius="6" Margin="3" />
+                        <Border x:Name="HeatmapCell6" Grid.Row="1" Grid.Column="6" Height="36"
+                                CornerRadius="6" Margin="3" />
+                    </Grid>
+
+                    <!-- Recent Issues for this Symbol -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="&#xE783;" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                   FontSize="14" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Text="Recent Issues" Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                   FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ListView x:Name="DrilldownIssuesList" MaxHeight="160"
+                              Background="Transparent" BorderThickness="0">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="120" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="4" CornerRadius="2" VerticalAlignment="Stretch"
+                                            Background="{Binding SeverityBrush}" Margin="0,0,8,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                               Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Timestamp}"
+                                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                               FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <TextBlock x:Name="NoDrilldownIssuesText" Text="No recent issues for this symbol."
+                               Foreground="{StaticResource SuccessColorBrush}" FontSize="12"
+                               Visibility="Collapsed" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+
             <!-- Gap Analysis -->
             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
                 <StackPanel>
@@ -434,24 +632,24 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Gap Analysis" Style="{StaticResource CardHeaderStyle}"/>
                         <Button Grid.Column="1" Content="Repair All" Click="RepairAllGaps_Click"
-                                Background="Transparent" Foreground="{StaticResource InfoColorBrush}"
-                                BorderThickness="0" Padding="8,4" FontSize="12"/>
+                                Style="{StaticResource GhostButtonStyle}" FontSize="12"/>
                     </Grid>
 
                     <ItemsControl x:Name="GapsControl">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource ConsoleBorderBrush}"
-                                        Padding="0,8">
+                                        Padding="4,10">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="80"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold"
+                                                   FontFamily="Consolas"
                                                    Foreground="{StaticResource ConsoleTextPrimaryBrush}"
                                                    VerticalAlignment="Center"/>
 
@@ -459,15 +657,18 @@
                                                    Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
-                                        <TextBlock Grid.Column="2" Text="{Binding Duration}"
-                                                   Foreground="{StaticResource WarningColorBrush}"
-                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Column="2" Background="{StaticResource ConsoleAccentOrangeAlpha10Brush}"
+                                                CornerRadius="8" Padding="8,3" Margin="8,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Duration}"
+                                                       Foreground="{StaticResource WarningColorBrush}"
+                                                       FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
 
                                         <Button Grid.Column="3" Content="Repair" Tag="{Binding GapId}"
                                                 Click="RepairGap_Click"
-                                                Background="{DynamicResource ConsoleBackgroundMediumBrush}"
-                                                Foreground="{DynamicResource ConsoleTextBrush}"
-                                                BorderThickness="0" Padding="12,4" FontSize="12"/>
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                FontSize="12" Padding="12,4"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

@@ -243,7 +243,7 @@ ProjectName/
 All provider implementations follow this structure:
 
 ```
-Infrastructure/Providers/
+Infrastructure/Adapters/
 ├── Core/                           # Shared provider infrastructure
 │   ├── ProviderBase.cs
 │   └── ProviderHelpers.cs
@@ -600,7 +600,7 @@ When adding new code, ask these questions:
 | Shared DTO | `Contracts/` | `MarketDataCollector.Contracts` |
 | Domain model | `Contracts/Domain/Models/` | `MarketDataCollector.Contracts` |
 | Business logic | `Domain/` | `MarketDataCollector.Domain` |
-| Provider implementation | `Infrastructure/Providers/` | `MarketDataCollector.Infrastructure` |
+| Provider implementation | `Infrastructure/Adapters/` | `MarketDataCollector.Infrastructure` |
 | HTTP API endpoint | `Application/Http/Endpoints/` | `MarketDataCollector.Application` |
 | UI service (desktop+web) | `Ui.Services/Services/` | `MarketDataCollector.Ui.Services` |
 | Platform-specific UI logic | `Wpf/` | `MarketDataCollector.Wpf` |
@@ -615,7 +615,7 @@ Follow this structure:
 
 1. **Create provider folder:**
    ```
-   Infrastructure/Providers/{Category}/{ProviderName}/
+   Infrastructure/Adapters/{Category}/{ProviderName}/
    ```
 
 2. **Implement required interface:**
@@ -636,7 +636,7 @@ Follow this structure:
 
 5. **Add tests:**
    ```
-   tests/MarketDataCollector.Tests/Infrastructure/Providers/{Provider}Tests.cs
+   tests/MarketDataCollector.Tests/Infrastructure/Adapters/{Provider}Tests.cs
    ```
 
 6. **Document setup:**

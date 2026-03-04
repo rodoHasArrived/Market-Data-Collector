@@ -2,8 +2,8 @@
 
 ## Market Data Collector — Deployment, Observability, and Incident Response Assessment
 
-**Date:** 2026-02-12  
-**Status:** Evaluation Complete  
+**Date:** 2026-02-12
+**Status:** Evaluation Complete — Recommendations Substantially Adopted
 **Author:** Architecture Review
 
 ---
@@ -122,3 +122,20 @@ Post-incident template should capture:
 ## Recommendation
 
 Adopt SLO-first operations and release-gate consolidation as the next reliability milestone. This creates a shared contract between engineering and operations, reduces noisy incidents, and increases confidence as data throughput and feature complexity grow.
+
+---
+
+## F. Implementation Follow-Up (2026-02-25)
+
+Many of the P0 and P1 recommendations from this evaluation have been adopted:
+
+| Recommendation | Status | Implementation |
+|----------------|--------|----------------|
+| Document SLOs per subsystem | ✅ Done | [Service-Level Objectives](../operations/service-level-objectives.md) — covers ingestion freshness, data completeness, and API availability |
+| Monitoring baseline with Prometheus | ✅ Done | `PrometheusMetrics`, `DataFreshnessSlaMonitor`, `DataQualityMonitoringService` |
+| Operator runbook | ✅ Done | [Operator Runbook](../operations/operator-runbook.md) — comprehensive incident procedures |
+| Health probes for Kubernetes | ✅ Done | `/healthz`, `/readyz`, `/livez` endpoints with detailed health checks |
+| Data quality enforcement | ✅ Done | `CompletenessScoreCalculator`, `GapAnalyzer`, `AnomalyDetector`, `SequenceErrorTracker` |
+| Alert-to-runbook linkage | ⚠️ Partial | Alert rule definitions exist in `deploy/monitoring/alert-rules.yml`; explicit runbook URLs in annotations are not yet embedded |
+| Consolidated release gate | ⚠️ Partial | PR checks and test matrix workflows exist; a single pre-release checklist is not yet formalized |
+| Rollback playbooks | 📝 Open | Standardized rollback procedures not yet documented |

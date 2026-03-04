@@ -2,7 +2,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

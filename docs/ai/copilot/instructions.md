@@ -218,12 +218,14 @@ Market-Data-Collector/
 │   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
+│   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
 │   │   ├── copilot-setup-steps.yml
 │   │   ├── desktop-builds.yml
 │   │   ├── docker.yml
 │   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
+│   │   ├── export-project-artifact.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
@@ -254,12 +256,17 @@ Market-Data-Collector/
 │   ├── TEST_MATRIX_FIX_SUMMARY.md
 │   └── WORKFLOW_IMPROVEMENTS.md
 ├── benchmarks/  # Performance benchmarks
-│   └── MarketDataCollector.Benchmarks/
-│       ├── EventPipelineBenchmarks.cs
-│       ├── IndicatorBenchmarks.cs
-│       ├── JsonSerializationBenchmarks.cs
-│       ├── MarketDataCollector.Benchmarks.csproj
-│       └── Program.cs
+│   ├── MarketDataCollector.Benchmarks/
+│   │   ├── CollectorBenchmarks.cs
+│   │   ├── EndToEndPipelineBenchmarks.cs
+│   │   ├── EventPipelineBenchmarks.cs
+│   │   ├── IndicatorBenchmarks.cs
+│   │   ├── JsonSerializationBenchmarks.cs
+│   │   ├── MarketDataCollector.Benchmarks.csproj
+│   │   ├── Program.cs
+│   │   └── StorageSinkBenchmarks.cs
+│   ├── BOTTLENECK_REPORT.md
+│   └── run-bottleneck-benchmarks.sh
 ├── build/
 │   ├── dotnet/
 │   │   ├── DocGenerator/
@@ -338,12 +345,24 @@ Market-Data-Collector/
 │       └── ai-repo-updater.py
 ├── config/  # Configuration files
 │   ├── appsettings.json
-│   └── appsettings.sample.json
+│   ├── appsettings.sample.json
+│   ├── condition-codes.json
+│   └── venue-mapping.json
 ├── deploy/  # Deployment configurations
 │   ├── docker/
 │   │   ├── .dockerignore
+│   │   ├── docker-compose.override.yml
 │   │   ├── docker-compose.yml
 │   │   └── Dockerfile
+│   ├── k8s/
+│   │   ├── configmap.yaml
+│   │   ├── deployment.yaml
+│   │   ├── kustomization.yaml
+│   │   ├── namespace.yaml
+│   │   ├── pvc.yaml
+│   │   ├── secret.yaml
+│   │   ├── service.yaml
+│   │   └── serviceaccount.yaml
 │   ├── monitoring/
 │   │   ├── grafana/
 │   │   │   └── provisioning/
@@ -388,8 +407,10 @@ Market-Data-Collector/
 │   │   ├── c4-diagrams.md
 │   │   ├── crystallized-storage-format.md
 │   │   ├── desktop-layers.md
+│   │   ├── deterministic-canonicalization.md
 │   │   ├── domains.md
 │   │   ├── layer-boundaries.md
+│   │   ├── nautilus-inspired-restructuring-proposal.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
 │   │   ├── storage-design.md
@@ -484,9 +505,12 @@ Market-Data-Collector/
 │   │   ├── docfx.json
 │   │   └── README.md
 │   ├── evaluations/
+│   │   ├── 2026-03-brainstorm-next-frontier.md
 │   │   ├── data-quality-monitoring-evaluation.md
 │   │   ├── desktop-end-user-improvements-shortlist.md
 │   │   ├── desktop-end-user-improvements.md
+│   │   ├── high-impact-improvement-brainstorm-2026-03.md
+│   │   ├── high-impact-improvements-brainstorm.md
 │   │   ├── high-value-low-cost-improvements-brainstorm.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── ingestion-orchestration-evaluation.md
@@ -540,6 +564,7 @@ Market-Data-Collector/
 │   ├── status/
 │   │   ├── CHANGELOG.md
 │   │   ├── EVALUATIONS_AND_AUDITS.md
+│   │   ├── FEATURE_INVENTORY.md
 │   │   ├── health-dashboard.md
 │   │   ├── IMPROVEMENTS.md
 │   │   ├── production-status.md
@@ -600,19 +625,31 @@ Market-Data-Collector/
 │   │   └── UiServer.cs
 │   ├── MarketDataCollector.Application/
 │   │   ├── Backfill/
+│   │   │   ├── BackfillCostEstimator.cs
 │   │   │   ├── BackfillRequest.cs
 │   │   │   ├── BackfillResult.cs
 │   │   │   ├── BackfillStatusStore.cs
+│   │   │   ├── GapBackfillService.cs
 │   │   │   └── HistoricalBackfillService.cs
+│   │   ├── Canonicalization/
+│   │   │   ├── CanonicalizationMetrics.cs
+│   │   │   ├── CanonicalizingPublisher.cs
+│   │   │   ├── ConditionCodeMapper.cs
+│   │   │   ├── EventCanonicalizer.cs
+│   │   │   ├── IEventCanonicalizer.cs
+│   │   │   └── VenueMicMapper.cs
 │   │   ├── Commands/
 │   │   │   ├── CliArguments.cs
 │   │   │   ├── CommandDispatcher.cs
 │   │   │   ├── ConfigCommands.cs
+│   │   │   ├── ConfigPresetCommand.cs
 │   │   │   ├── DiagnosticsCommands.cs
 │   │   │   ├── DryRunCommand.cs
+│   │   │   ├── GenerateLoaderCommand.cs
 │   │   │   ├── HelpCommand.cs
 │   │   │   ├── ICliCommand.cs
 │   │   │   ├── PackageCommands.cs
+│   │   │   ├── QueryCommand.cs
 │   │   │   ├── SchemaCheckCommand.cs
 │   │   │   ├── SelfTestCommand.cs
 │   │   │   ├── SymbolCommands.cs
@@ -654,6 +691,7 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── BackpressureAlertService.cs
 │   │   │   ├── BadTickFilter.cs
+│   │   │   ├── CircuitBreakerStatusService.cs
 │   │   │   ├── ClockSkewEstimator.cs
 │   │   │   ├── ConnectionHealthMonitor.cs
 │   │   │   ├── ConnectionStatusWebhook.cs
@@ -675,10 +713,13 @@ Market-Data-Collector/
 │   │   │   ├── TickSizeValidator.cs
 │   │   │   └── TimestampMonotonicityChecker.cs
 │   │   ├── Pipeline/
+│   │   │   ├── DeadLetterSink.cs
 │   │   │   ├── DroppedEventAuditTrail.cs
 │   │   │   ├── EventPipeline.cs
+│   │   │   ├── IEventValidator.cs
 │   │   │   ├── IngestionJobService.cs
-│   │   │   └── PersistentDedupLedger.cs
+│   │   │   ├── PersistentDedupLedger.cs
+│   │   │   └── SchemaUpcasterRegistry.cs
 │   │   ├── Results/
 │   │   │   ├── ErrorCode.cs
 │   │   │   ├── OperationError.cs
@@ -764,7 +805,10 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Models/
 │   │   │   │   ...
-│   │   │   └── MarketDataModels.cs
+│   │   │   ├── MarketDataModels.cs
+│   │   │   ├── ProviderId.cs
+│   │   │   ├── SymbolId.cs
+│   │   │   └── VenueCode.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportModels.cs
 │   │   │   └── ExportPreset.cs
@@ -774,7 +818,8 @@ Market-Data-Collector/
 │   │   │   ├── IngestionJob.cs
 │   │   │   └── PipelinePolicyConstants.cs
 │   │   ├── Schema/
-│   │   │   └── EventSchema.cs
+│   │   │   ├── EventSchema.cs
+│   │   │   └── ISchemaUpcaster.cs
 │   │   ├── Session/
 │   │   │   └── CollectionSession.cs
 │   │   └── MarketDataCollector.Contracts.csproj
@@ -783,6 +828,7 @@ Market-Data-Collector/
 │   │   │   ├── AlpacaOptions.cs
 │   │   │   ├── AppConfig.cs
 │   │   │   ├── BackfillConfig.cs
+│   │   │   ├── CanonicalizationConfig.cs
 │   │   │   ├── DataSourceConfig.cs
 │   │   │   ├── DataSourceKind.cs
 │   │   │   ├── DataSourceKindConverter.cs
@@ -836,6 +882,7 @@ Market-Data-Collector/
 │   │   ├── Events/
 │   │   │   ├── Publishers/
 │   │   │   │   ...
+│   │   │   ├── IBackpressureSignal.cs
 │   │   │   ├── IMarketEventPublisher.cs
 │   │   │   ├── MarketEvent.cs
 │   │   │   └── MarketEventPayload.cs
@@ -867,6 +914,35 @@ Market-Data-Collector/
 │   │   ├── Interop.fs
 │   │   └── MarketDataCollector.FSharp.fsproj
 │   ├── MarketDataCollector.Infrastructure/
+│   │   ├── Adapters/
+│   │   │   ├── Alpaca/
+│   │   │   │   ...
+│   │   │   ├── AlphaVantage/
+│   │   │   │   ...
+│   │   │   ├── Core/
+│   │   │   │   ...
+│   │   │   ├── Failover/
+│   │   │   │   ...
+│   │   │   ├── Finnhub/
+│   │   │   │   ...
+│   │   │   ├── InteractiveBrokers/
+│   │   │   │   ...
+│   │   │   ├── NasdaqDataLink/
+│   │   │   │   ...
+│   │   │   ├── NYSE/
+│   │   │   │   ...
+│   │   │   ├── OpenFigi/
+│   │   │   │   ...
+│   │   │   ├── Polygon/
+│   │   │   │   ...
+│   │   │   ├── StockSharp/
+│   │   │   │   ...
+│   │   │   ├── Stooq/
+│   │   │   │   ...
+│   │   │   ├── Tiingo/
+│   │   │   │   ...
+│   │   │   └── YahooFinance/
+│   │   │       ...
 │   │   ├── Contracts/
 │   │   │   ├── ContractVerificationExtensions.cs
 │   │   │   └── ContractVerificationService.cs
@@ -876,17 +952,6 @@ Market-Data-Collector/
 │   │   ├── Http/
 │   │   │   ├── HttpClientConfiguration.cs
 │   │   │   └── SharedResiliencePolicies.cs
-│   │   ├── Providers/
-│   │   │   ├── Backfill/
-│   │   │   │   ...
-│   │   │   ├── Core/
-│   │   │   │   ...
-│   │   │   ├── Historical/
-│   │   │   │   ...
-│   │   │   ├── Streaming/
-│   │   │   │   ...
-│   │   │   └── SymbolSearch/
-│   │   │       ...
 │   │   ├── Resilience/
 │   │   │   ├── HttpResiliencePolicy.cs
 │   │   │   ├── WebSocketConnectionConfig.cs
@@ -929,6 +994,7 @@ Market-Data-Collector/
 │   │   │   └── WriteAheadLog.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportService.cs
+│   │   │   ├── AnalysisExportService.Features.cs
 │   │   │   ├── AnalysisExportService.Formats.Arrow.cs
 │   │   │   ├── AnalysisExportService.Formats.cs
 │   │   │   ├── AnalysisExportService.Formats.Parquet.cs
@@ -976,7 +1042,9 @@ Market-Data-Collector/
 │   │   │   ├── LifecyclePolicyEngine.cs
 │   │   │   ├── MaintenanceScheduler.cs
 │   │   │   ├── MetadataTagService.cs
+│   │   │   ├── ParquetConversionService.cs
 │   │   │   ├── QuotaEnforcementService.cs
+│   │   │   ├── RetentionComplianceReporter.cs
 │   │   │   ├── SourceRegistry.cs
 │   │   │   ├── StorageCatalogService.cs
 │   │   │   ├── StorageChecksumService.cs
@@ -1085,6 +1153,7 @@ Market-Data-Collector/
 │   │   │   ├── SchemaService.cs
 │   │   │   ├── SchemaServiceBase.cs
 │   │   │   ├── SearchService.cs
+│   │   │   ├── SettingsConfigurationService.cs
 │   │   │   ├── SetupWizardService.cs
 │   │   │   ├── SmartRecommendationsService.cs
 │   │   │   ├── StatusServiceBase.cs
@@ -1106,12 +1175,13 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Ui.Shared/
 │   │   ├── Endpoints/
 │   │   │   ├── AdminEndpoints.cs
-│   │   │   ├── AlignmentEndpoints.cs
 │   │   │   ├── AnalyticsEndpoints.cs
 │   │   │   ├── ApiKeyMiddleware.cs
+│   │   │   ├── AuthEndpoints.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── BackfillScheduleEndpoints.cs
 │   │   │   ├── CalendarEndpoints.cs
+│   │   │   ├── CanonicalizationEndpoints.cs
 │   │   │   ├── CheckpointEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── CronEndpoints.cs
@@ -1122,18 +1192,18 @@ Market-Data-Collector/
 │   │   │   ├── HealthEndpoints.cs
 │   │   │   ├── HistoricalEndpoints.cs
 │   │   │   ├── IBEndpoints.cs
-│   │   │   ├── IndexEndpoints.cs
 │   │   │   ├── IngestionJobEndpoints.cs
 │   │   │   ├── LeanEndpoints.cs
 │   │   │   ├── LiveDataEndpoints.cs
+│   │   │   ├── LoginSessionMiddleware.cs
 │   │   │   ├── MaintenanceScheduleEndpoints.cs
 │   │   │   ├── MessagingEndpoints.cs
 │   │   │   ├── OptionsEndpoints.cs
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── ProviderExtendedEndpoints.cs
-│   │   │   ├── QualityDropsEndpoints.cs
 │   │   │   ├── ReplayEndpoints.cs
+│   │   │   ├── ResilienceEndpoints.cs
 │   │   │   ├── SamplingEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
 │   │   │   ├── StorageEndpoints.cs
@@ -1147,8 +1217,10 @@ Market-Data-Collector/
 │   │   │   └── ConfigStore.cs
 │   │   ├── DtoExtensions.cs
 │   │   ├── HtmlTemplateGenerator.cs
+│   │   ├── HtmlTemplateGenerator.Login.cs
 │   │   ├── HtmlTemplateGenerator.Scripts.cs
 │   │   ├── HtmlTemplateGenerator.Styles.cs
+│   │   ├── LoginSessionService.cs
 │   │   └── MarketDataCollector.Ui.Shared.csproj
 │   └── MarketDataCollector.Wpf/
 │       ├── Contracts/
@@ -1156,6 +1228,7 @@ Market-Data-Collector/
 │       │   └── INavigationService.cs
 │       ├── Models/
 │       │   ├── AppConfig.cs
+│       │   ├── DashboardModels.cs
 │       │   └── StorageDisplayModels.cs
 │       ├── Services/
 │       │   ├── AdminMaintenanceService.cs
@@ -1193,10 +1266,13 @@ Market-Data-Collector/
 │       │   ├── AppStyles.xaml
 │       │   └── IconResources.xaml
 │       ├── ViewModels/
-│       │   └── BindableBase.cs
+│       │   ├── BindableBase.cs
+│       │   └── DashboardViewModel.cs
 │       ├── Views/
 │       │   ├── ActivityLogPage.xaml
 │       │   ├── ActivityLogPage.xaml.cs
+│       │   ├── AddProviderWizardPage.xaml
+│       │   ├── AddProviderWizardPage.xaml.cs
 │       │   ├── AdminMaintenancePage.xaml
 │       │   ├── AdminMaintenancePage.xaml.cs
 │       │   ├── AdvancedAnalyticsPage.xaml
@@ -1314,6 +1390,8 @@ Market-Data-Collector/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
 │   │   │   │   ...
+│   │   │   ├── Canonicalization/
+│   │   │   │   ...
 │   │   │   ├── Commands/
 │   │   │   │   ...
 │   │   │   ├── Config/
@@ -1331,8 +1409,9 @@ Market-Data-Collector/
 │   │   ├── Domain/
 │   │   │   ├── Collectors/
 │   │   │   │   ...
-│   │   │   └── Models/
-│   │   │       ...
+│   │   │   ├── Models/
+│   │   │   │   ...
+│   │   │   └── StrongDomainTypeTests.cs
 │   │   ├── Infrastructure/
 │   │   │   ├── DataSources/
 │   │   │   │   ...
@@ -1349,6 +1428,7 @@ Market-Data-Collector/
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
 │   │   │   ├── FixtureProviderTests.cs
+│   │   │   ├── GracefulShutdownIntegrationTests.cs
 │   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── ProviderSdk/
 │   │   │   ├── CredentialValidatorTests.cs
@@ -1365,11 +1445,13 @@ Market-Data-Collector/
 │   │   │   ├── DataLineageServiceTests.cs
 │   │   │   ├── DataQualityScoringServiceTests.cs
 │   │   │   ├── DataValidatorTests.cs
+│   │   │   ├── EventBufferTests.cs
 │   │   │   ├── FilePermissionsServiceTests.cs
 │   │   │   ├── JsonlBatchWriteTests.cs
 │   │   │   ├── LifecyclePolicyEngineTests.cs
 │   │   │   ├── MemoryMappedJsonlReaderTests.cs
 │   │   │   ├── MetadataTagServiceTests.cs
+│   │   │   ├── ParquetConversionServiceTests.cs
 │   │   │   ├── PortableDataPackagerTests.cs
 │   │   │   ├── QuotaEnforcementServiceTests.cs
 │   │   │   ├── StorageCatalogServiceTests.cs
@@ -1601,7 +1683,7 @@ When in doubt, refer to the extensive documentation in the `docs/` directory, pa
 → Add test first in `tests/MarketDataCollector.Tests/`, then fix
 
 **Working with providers?**
-→ Look in `src/MarketDataCollector/Infrastructure/Providers/`
+→ Look in `src/MarketDataCollector/Infrastructure/Adapters/`
 
 **Storage changes?**
 → Check `src/MarketDataCollector/Storage/`
