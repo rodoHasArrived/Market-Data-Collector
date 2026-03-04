@@ -163,12 +163,14 @@ internal sealed class SymbolCommands : ICliCommand
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
                 continue;
 
-            // Detect CSV header row: first column named "symbol" (case-insensitive)
+            // Detect CSV header row on the first non-comment line: first column named
+            // "symbol" or "ticker" (case-insensitive) AND only applicable to the first line.
             if (isFirstLine && line.Contains(','))
             {
                 var headerColumns = line.Split(',');
                 var firstHeaderCol = headerColumns[0].Trim().Trim('"');
-                if (firstHeaderCol.Equals("symbol", StringComparison.OrdinalIgnoreCase))
+                if (firstHeaderCol.Equals("symbol", StringComparison.OrdinalIgnoreCase)
+                    || firstHeaderCol.Equals("ticker", StringComparison.OrdinalIgnoreCase))
                 {
                     hasHeader = true;
                     isFirstLine = false;

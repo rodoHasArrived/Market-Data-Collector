@@ -52,11 +52,14 @@ public static class ExportEndpoints
                 _ => (ExportFormat?)null
             };
 
+            var baseProfileId = req.ProfileId ?? "python-pandas";
+            var baseProfile = exportService.GetProfile(baseProfileId) ?? ExportProfile.PythonPandas;
+
             var exportRequest = new ExportRequest
             {
-                ProfileId = req.ProfileId ?? "python-pandas",
+                ProfileId = baseProfileId,
                 CustomProfile = formatOverride.HasValue
-                    ? new ExportProfile { Id = "custom", Format = formatOverride.Value }
+                    ? CloneWithFormat(baseProfile, formatOverride.Value)
                     : null,
                 Symbols = req.Symbols,
                 StartDate = req.StartDate ?? DateTime.UtcNow.AddDays(-7),
@@ -76,18 +79,18 @@ public static class ExportEndpoints
                 totalRecords = result.TotalRecords,
                 totalBytes = result.TotalBytes,
                 symbols = result.Symbols,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = Path.GetFileName(outputDir),
                 files = result.Files?.Select(f => new
                 {
-                    path = f.Path,
+                    relativePath = f.RelativePath,
                     symbol = f.Symbol,
                     eventType = f.EventType,
                     format = f.Format,
                     sizeBytes = f.SizeBytes,
                     recordCount = f.RecordCount
                 }),
-                dataDictionaryPath = result.DataDictionaryPath,
-                loaderScriptPath = result.LoaderScriptPath,
+                dataDictionaryFile = Path.GetFileName(result.DataDictionaryPath),
+                loaderScriptFile = Path.GetFileName(result.LoaderScriptPath),
                 warnings = result.Warnings,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
@@ -142,10 +145,26 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
+            CleanupOldExportDirectories();
+
             var outputDir = Path.Combine(ExportBaseDir, "quality-" + Guid.NewGuid().ToString("N")[..8]);
+
+            var qualityFormatOverride = req?.Format?.ToLowerInvariant() switch
+            {
+                "csv" => ExportFormat.Csv,
+                "parquet" => ExportFormat.Parquet,
+                "jsonl" => ExportFormat.Jsonl,
+                "xlsx" => ExportFormat.Xlsx,
+                _ => (ExportFormat?)null
+            };
+
+            var qualityBaseProfile = exportService.GetProfile("python-pandas") ?? ExportProfile.PythonPandas;
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
+                CustomProfile = qualityFormatOverride.HasValue
+                    ? CloneWithFormat(qualityBaseProfile, qualityFormatOverride.Value)
+                    : null,
                 Symbols = req?.Symbols,
                 StartDate = DateTime.UtcNow.AddDays(-30),
                 EndDate = DateTime.UtcNow,
@@ -161,7 +180,7 @@ public static class ExportEndpoints
             {
                 jobId = result.JobId,
                 success = result.Success,
-                format = "parquet",
+                format = req?.Format ?? "parquet",
                 qualitySummary = result.QualitySummary is not null ? new
                 {
                     overallScore = result.QualitySummary.OverallScore,
@@ -169,7 +188,7 @@ public static class ExportEndpoints
                     gapsDetected = result.QualitySummary.GapsDetected,
                     outliersDetected = result.QualitySummary.OutliersDetected
                 } : null,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = Path.GetFileName(outputDir),
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -189,7 +208,20 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
+            CleanupOldExportDirectories();
+
             var outputDir = Path.Combine(ExportBaseDir, "orderflow-" + Guid.NewGuid().ToString("N")[..8]);
+
+            var orderflowFormatOverride = req?.Format?.ToLowerInvariant() switch
+            {
+                "csv" => ExportFormat.Csv,
+                "parquet" => ExportFormat.Parquet,
+                "jsonl" => ExportFormat.Jsonl,
+                "arrow" => ExportFormat.Arrow,
+                _ => (ExportFormat?)null
+            };
+
+            var orderflowBaseProfile = exportService.GetProfile("python-pandas") ?? ExportProfile.PythonPandas;
             var exportRequest = new ExportRequest
             {
                 ProfileId = "python-pandas",
@@ -198,13 +230,11 @@ public static class ExportEndpoints
                 StartDate = DateTime.UtcNow.AddDays(-7),
                 EndDate = DateTime.UtcNow,
                 OutputDirectory = outputDir,
-                OverwriteExisting = true
+                OverwriteExisting = true,
+                CustomProfile = orderflowFormatOverride.HasValue
+                    ? CloneWithFormat(orderflowBaseProfile, orderflowFormatOverride.Value)
+                    : null
             };
-
-            if (req?.Format?.Equals("parquet", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                exportRequest.CustomProfile = new ExportProfile { Id = "orderflow", Format = ExportFormat.Parquet };
-            }
 
             var result = await exportService.ExportAsync(exportRequest, ct);
 
@@ -213,10 +243,10 @@ public static class ExportEndpoints
                 jobId = result.JobId,
                 success = result.Success,
                 symbols = result.Symbols,
-                format = req?.Format ?? "parquet",
+                format = orderflowFormatOverride?.ToString().ToLowerInvariant() ?? "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = Path.GetFileName(outputDir),
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -234,6 +264,8 @@ public static class ExportEndpoints
             {
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
+
+            CleanupOldExportDirectories();
 
             var outputDir = Path.Combine(ExportBaseDir, "integrity-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
@@ -255,7 +287,7 @@ public static class ExportEndpoints
                 format = "parquet",
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
-                outputDirectory = result.Success ? outputDir : null,
+                exportId = Path.GetFileName(outputDir),
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
@@ -274,6 +306,8 @@ public static class ExportEndpoints
             {
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
+
+            CleanupOldExportDirectories();
 
             var outputDir = Path.Combine(ExportBaseDir, "research-" + Guid.NewGuid().ToString("N")[..8]);
             var exportRequest = new ExportRequest
@@ -304,9 +338,9 @@ public static class ExportEndpoints
                 filesGenerated = result.FilesGenerated,
                 totalRecords = result.TotalRecords,
                 totalBytes = result.TotalBytes,
-                dataDictionaryPath = result.DataDictionaryPath,
-                loaderScriptPath = result.LoaderScriptPath,
-                outputDirectory = result.Success ? outputDir : null,
+                dataDictionaryFile = Path.GetFileName(result.DataDictionaryPath),
+                loaderScriptFile = Path.GetFileName(result.LoaderScriptPath),
+                exportId = Path.GetFileName(outputDir),
                 warnings = result.Warnings,
                 error = result.Error,
                 timestamp = DateTimeOffset.UtcNow
@@ -321,6 +355,29 @@ public static class ExportEndpoints
     private sealed record QualityReportExportRequest(string? Format, string[]? Symbols);
     private sealed record OrderflowExportRequest(string[]? Symbols, string? Format);
     private sealed record ResearchPackageRequest(string[]? Symbols, bool? IncludeMetadata);
+
+    /// <summary>
+    /// Creates a copy of <paramref name="source"/> with only the <see cref="ExportProfile.Format"/> changed.
+    /// All other profile settings (compression, timestamps, flags, etc.) are preserved.
+    /// </summary>
+    private static ExportProfile CloneWithFormat(ExportProfile source, ExportFormat format) => new()
+    {
+        Id = "custom-" + format.ToString().ToLowerInvariant(),
+        Name = source.Name,
+        Description = source.Description,
+        TargetTool = source.TargetTool,
+        Format = format,
+        Compression = source.Compression,
+        TimestampSettings = source.TimestampSettings,
+        IncludeFields = source.IncludeFields,
+        ExcludeFields = source.ExcludeFields,
+        IncludeLoaderScript = source.IncludeLoaderScript,
+        IncludeDataDictionary = source.IncludeDataDictionary,
+        FileNamePattern = source.FileNamePattern,
+        SplitBySymbol = source.SplitBySymbol,
+        SplitByDate = source.SplitByDate,
+        MaxRecordsPerFile = source.MaxRecordsPerFile
+    };
 
     /// <summary>
     /// Removes export directories older than <see cref="ExportMaxAge"/> to prevent unbounded disk usage.
