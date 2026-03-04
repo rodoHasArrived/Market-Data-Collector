@@ -132,6 +132,19 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
     private PointCollection _throughputSparkline = new();
     public PointCollection ThroughputSparkline { get => _throughputSparkline; private set => SetProperty(ref _throughputSparkline, value); }
 
+    // ── Sparkline area fills (closed polygon underneath the line) ──────────────
+    private PointCollection _publishedSparklineFill = new();
+    public PointCollection PublishedSparklineFill { get => _publishedSparklineFill; private set => SetProperty(ref _publishedSparklineFill, value); }
+
+    private PointCollection _droppedSparklineFill = new();
+    public PointCollection DroppedSparklineFill { get => _droppedSparklineFill; private set => SetProperty(ref _droppedSparklineFill, value); }
+
+    private PointCollection _integritySparklineFill = new();
+    public PointCollection IntegritySparklineFill { get => _integritySparklineFill; private set => SetProperty(ref _integritySparklineFill, value); }
+
+    private PointCollection _historicalSparklineFill = new();
+    public PointCollection HistoricalSparklineFill { get => _historicalSparklineFill; private set => SetProperty(ref _historicalSparklineFill, value); }
+
     // ── Throughput statistics ───────────────────────────────────────────────────
 
     private string _avgThroughputText = "--";
@@ -553,6 +566,11 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
         HistoricalSparkline = BuildSparkline(_historicalHistory, 30);
         ThroughputSparkline = BuildSparkline(_throughputHistory, 30);
 
+        PublishedSparklineFill = BuildSparklineFill(_publishedHistory, 30);
+        DroppedSparklineFill = BuildSparklineFill(_droppedHistory, 30);
+        IntegritySparklineFill = BuildSparklineFill(_integrityHistory, 30);
+        HistoricalSparklineFill = BuildSparklineFill(_historicalHistory, 30);
+
         // Update throughput statistics.
         if (_throughputHistory.Count > 0)
         {
@@ -785,6 +803,37 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
             var y = height - ((history[i] - min) / range * (height - 4)) - 2;
             points.Add(new Point(x, y));
         }
+
+        return points;
+    }
+
+    /// <summary>
+    /// Builds a closed polygon that traces the sparkline and returns to the bottom,
+    /// creating a filled area effect beneath the line.
+    /// </summary>
+    private static PointCollection BuildSparklineFill(List<double> history, double height)
+    {
+        var points = new PointCollection();
+        if (history.Count < 2) return points;
+
+        var max = history.Max();
+        var min = history.Min();
+        var range = max - min;
+        if (range < 0.001) range = 1;
+
+        var step = 200.0 / (history.Count - 1);
+
+        // Top edge (same as sparkline)
+        for (var i = 0; i < history.Count; i++)
+        {
+            var x = i * step;
+            var y = height - ((history[i] - min) / range * (height - 4)) - 2;
+            points.Add(new Point(x, y));
+        }
+
+        // Close along the bottom
+        points.Add(new Point((history.Count - 1) * step, height));
+        points.Add(new Point(0, height));
 
         return points;
     }

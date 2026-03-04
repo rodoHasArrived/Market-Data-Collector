@@ -150,6 +150,8 @@
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
                         <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding PublishedSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentGreenAlpha10Brush}" />
                             <Polyline Points="{Binding PublishedSparkline}"
                                       Stroke="{StaticResource SuccessColorBrush}"
                                       StrokeThickness="2" />
@@ -181,6 +183,8 @@
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
                         <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding DroppedSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentRedAlpha10Brush}" />
                             <Polyline Points="{Binding DroppedSparkline}"
                                       Stroke="{StaticResource ErrorColorBrush}" StrokeThickness="2" />
                         </Canvas>
@@ -211,6 +215,8 @@
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
                         <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding IntegritySparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentOrangeAlpha10Brush}" />
                             <Polyline Points="{Binding IntegritySparkline}"
                                       Stroke="{StaticResource WarningColorBrush}" StrokeThickness="2" />
                         </Canvas>
@@ -241,6 +247,8 @@
                                    Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
 
                         <Canvas Grid.Row="3" Height="30" ClipToBounds="True" Background="Transparent">
+                            <Polygon Points="{Binding HistoricalSparklineFill}"
+                                     Fill="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
                             <Polyline Points="{Binding HistoricalSparkline}"
                                       Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
                         </Canvas>

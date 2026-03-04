@@ -393,52 +393,66 @@
                                   Visibility="Collapsed">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2">
+                                    <Grid Margin="0,4" MinHeight="28">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="80" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="90" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="{Binding Symbol}"
-                                                   FontWeight="SemiBold"
+                                                   FontWeight="SemiBold" FontFamily="Consolas"
                                                    Foreground="{StaticResource ConsoleTextPrimaryBrush}"
                                                    VerticalAlignment="Center" />
                                         <!-- Gap timeline bar -->
-                                        <Grid Grid.Column="1" Margin="8,2" Height="14">
+                                        <Grid Grid.Column="1" Margin="8,4" Height="16">
                                             <Border Background="{StaticResource ConsoleBackgroundMediumBrush}"
-                                                    CornerRadius="2" />
+                                                    CornerRadius="3" />
                                             <Border Background="{Binding CoverageBrush}"
-                                                    CornerRadius="2"
+                                                    CornerRadius="3"
                                                     HorizontalAlignment="Left"
-                                                    Width="{Binding CoverageWidth}" />
+                                                    Width="{Binding CoverageWidth}">
+                                                <Border.Effect>
+                                                    <DropShadowEffect ShadowDepth="0" BlurRadius="4"
+                                                                      Color="{StaticResource ConsoleAccentGreen}" Opacity="0.4" />
+                                                </Border.Effect>
+                                            </Border>
                                         </Grid>
                                         <TextBlock Grid.Column="2" Text="{Binding CoverageText}"
-                                                   HorizontalAlignment="Right"
+                                                   HorizontalAlignment="Right" FontFamily="Consolas"
                                                    Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                                    FontSize="11"
                                                    VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="3" Text="{Binding GapDaysText}"
-                                                   HorizontalAlignment="Right"
-                                                   Foreground="{StaticResource WarningColorBrush}"
-                                                   FontSize="11"
-                                                   VerticalAlignment="Center" />
+                                        <Border Grid.Column="3" HorizontalAlignment="Right"
+                                                Background="{StaticResource ConsoleAccentOrangeAlpha10Brush}"
+                                                CornerRadius="8" Padding="8,2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding GapDaysText}"
+                                                       Foreground="{StaticResource WarningColorBrush}"
+                                                       FontSize="11" FontWeight="SemiBold" />
+                                        </Border>
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <StackPanel x:Name="GapActionPanel" Orientation="Horizontal" Margin="0,12,0,0" Visibility="Collapsed">
-                            <Button Content="Auto-Fill Gaps Only"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Click="AutoFillGaps_Click"
-                                    Margin="0,0,8,0" />
-                            <TextBlock x:Name="GapActionHintText"
-                                       Text=""
-                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                       FontSize="12"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
+                        <Border x:Name="GapActionPanel" Visibility="Collapsed"
+                                Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                CornerRadius="6" Padding="12,10" Margin="0,12,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Auto-Fill Gaps Only"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Click="AutoFillGaps_Click" />
+                                <TextBlock x:Name="GapActionHintText" Grid.Column="1"
+                                           Text=""
+                                           Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                           FontSize="12" Margin="12,0,0,0"
+                                           VerticalAlignment="Center" TextWrapping="Wrap" />
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </Border>
 
