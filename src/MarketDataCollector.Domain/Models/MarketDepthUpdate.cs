@@ -11,7 +11,7 @@ namespace MarketDataCollector.Domain.Models;
 public sealed record MarketDepthUpdate(
     DateTimeOffset Timestamp,
     string Symbol,
-    int Position,
+    ushort Position,
     DepthOperation Operation,
     OrderBookSide Side,
     decimal Price,

@@ -4,7 +4,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 /// Connection states shared between WPF desktop applications.
 /// Part of Phase 6C.2 service deduplication.
 /// </summary>
-public enum ConnectionState
+public enum ConnectionState : byte
 {
     Disconnected,
     Connecting,
@@ -90,7 +90,7 @@ public sealed class ConnectionHealthEventArgs : EventArgs
 /// <summary>
 /// Categorized connection error types for structured error handling and decision support.
 /// </summary>
-public enum ConnectionErrorCategory
+public enum ConnectionErrorCategory : byte
 {
     None,
     NetworkUnreachable,

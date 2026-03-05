@@ -111,7 +111,7 @@ public sealed class BackfillExecutionLog
 /// <summary>
 /// How a scheduled execution was triggered.
 /// </summary>
-public enum ExecutionTrigger
+public enum ExecutionTrigger : byte
 {
     /// <summary>Triggered by cron schedule.</summary>
     Scheduled,
@@ -132,7 +132,7 @@ public enum ExecutionTrigger
 /// <summary>
 /// Status of a scheduled execution.
 /// </summary>
-public enum ExecutionStatus
+public enum ExecutionStatus : byte
 {
     /// <summary>Execution is queued.</summary>
     Pending,

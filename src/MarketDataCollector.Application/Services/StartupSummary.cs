@@ -419,7 +419,7 @@ public sealed record QuickCheckIssue(
 /// <summary>
 /// Severity level for quick check issues.
 /// </summary>
-public enum IssueSeverity
+public enum IssueSeverity : byte
 {
     Info,
     Warning,

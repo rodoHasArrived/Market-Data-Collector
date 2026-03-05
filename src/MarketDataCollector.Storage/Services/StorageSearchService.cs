@@ -634,7 +634,7 @@ public sealed record FacetedSearchQuery(
 
 public sealed record DiscoveryQuery;
 
-public enum SortField { Date, Size, Symbol, QualityScore }
+public enum SortField : byte { Date, Size, Symbol, QualityScore }
 
 // Result types
 public sealed record SearchResult<T>(
@@ -709,7 +709,7 @@ public sealed record FileMetadata(
     DateTime ModifiedAt
 );
 
-public enum IndexUpdateType
+public enum IndexUpdateType : byte
 {
     FileCreated,
     FileAppended,

@@ -42,7 +42,7 @@ public sealed class SymbolFreshnessItem
 /// Severity level for integrity events.
 /// Used for badge counting without fragile brush-reference comparisons (P3 fix).
 /// </summary>
-public enum IntegrityEventSeverity
+public enum IntegrityEventSeverity : byte
 {
     Info,
     Warning,

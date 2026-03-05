@@ -428,7 +428,7 @@ public sealed class AlignmentProgressEventArgs : EventArgs
 
 #region Enums
 
-public enum TimeSeriesInterval
+public enum TimeSeriesInterval : byte
 {
     Second1,
     Second5,
@@ -443,7 +443,7 @@ public enum TimeSeriesInterval
     Daily
 }
 
-public enum AggregationType
+public enum AggregationType : byte
 {
     OHLCV,
     Last,
@@ -455,7 +455,7 @@ public enum AggregationType
     Count
 }
 
-public enum GapStrategy
+public enum GapStrategy : byte
 {
     ForwardFill,
     BackwardFill,

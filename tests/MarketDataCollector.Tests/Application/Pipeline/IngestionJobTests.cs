@@ -265,7 +265,7 @@ public sealed class IngestionJobTests
             ToDate = new DateTime(2024, 12, 31),
             Sla = new IngestionSla
             {
-                MinimumCompleteness = 0.95,
+                MinimumCompleteness = 0.95f,
                 CompletionDeadline = DateTime.UtcNow.AddHours(2)
             }
         };

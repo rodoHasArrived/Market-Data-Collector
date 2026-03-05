@@ -806,7 +806,7 @@ public readonly record struct PreflightCheckResult(
 /// <summary>
 /// Status of a pre-flight check.
 /// </summary>
-public enum PreflightCheckStatus
+public enum PreflightCheckStatus : byte
 {
     Passed,
     Warning,

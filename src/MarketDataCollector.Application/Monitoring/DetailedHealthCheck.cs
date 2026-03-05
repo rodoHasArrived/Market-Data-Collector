@@ -465,7 +465,7 @@ public sealed record DetailedHealthCheckConfig
 /// Detailed health status enum.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum DetailedHealthStatus
+public enum DetailedHealthStatus : byte
 {
     Healthy,
     Degraded,

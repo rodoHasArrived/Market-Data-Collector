@@ -461,7 +461,7 @@ public sealed class ConfigTemplate
 /// <summary>
 /// Configuration template categories.
 /// </summary>
-public enum ConfigTemplateCategory
+public enum ConfigTemplateCategory : byte
 {
     Basic,
     Advanced,

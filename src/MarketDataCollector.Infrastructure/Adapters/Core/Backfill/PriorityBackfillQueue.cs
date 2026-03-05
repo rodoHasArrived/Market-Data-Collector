@@ -8,7 +8,7 @@ namespace MarketDataCollector.Infrastructure.Adapters.Core;
 /// <summary>
 /// Priority level for backfill jobs.
 /// </summary>
-public enum BackfillPriority
+public enum BackfillPriority : byte
 {
     /// <summary>System-critical gaps (highest priority).</summary>
     Critical = 0,

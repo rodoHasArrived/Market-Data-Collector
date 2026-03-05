@@ -477,7 +477,7 @@ public sealed class BackfillRequest
 /// <summary>
 /// Status of a backfill request.
 /// </summary>
-public enum BackfillRequestStatus
+public enum BackfillRequestStatus : byte
 {
     Pending,
     InProgress,

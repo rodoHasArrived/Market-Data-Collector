@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// Maps raw provider-specific condition codes (CTA plan, SEC numeric, IB text)
 /// to a unified set of canonical conditions for cross-provider comparison.
 /// </summary>
-public enum CanonicalTradeCondition
+public enum CanonicalTradeCondition : byte
 {
     /// <summary>
     /// Regular trade (normal market conditions).

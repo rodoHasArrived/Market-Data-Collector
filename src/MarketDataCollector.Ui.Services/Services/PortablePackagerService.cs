@@ -805,7 +805,7 @@ public sealed record PackagedFile
     public string? Checksum { get; init; }
 }
 
-public enum PackageFormat
+public enum PackageFormat : byte
 {
     Zip,
     TarGz,

@@ -352,7 +352,7 @@ public sealed class CompressionProfile
 /// <summary>
 /// Supported compression codecs.
 /// </summary>
-public enum CompressionCodec
+public enum CompressionCodec : byte
 {
     /// <summary>No compression.</summary>
     None = 0,
@@ -371,7 +371,7 @@ public enum CompressionCodec
 /// <summary>
 /// Compression priority preference.
 /// </summary>
-public enum CompressionPriority
+public enum CompressionPriority : byte
 {
     /// <summary>Prioritize compression speed.</summary>
     Speed,
@@ -384,7 +384,7 @@ public enum CompressionPriority
 /// <summary>
 /// Storage tier classification.
 /// </summary>
-public enum StorageTier
+public enum StorageTier : byte
 {
     /// <summary>Hot storage - frequently accessed, fast retrieval.</summary>
     Hot,

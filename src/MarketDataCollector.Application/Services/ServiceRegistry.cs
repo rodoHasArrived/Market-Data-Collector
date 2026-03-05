@@ -8,7 +8,7 @@ namespace MarketDataCollector.Application.Services;
 /// <summary>
 /// Service categories for organization and discovery.
 /// </summary>
-public enum ServiceCategory
+public enum ServiceCategory : byte
 {
     /// <summary>Configuration and setup services.</summary>
     Setup,

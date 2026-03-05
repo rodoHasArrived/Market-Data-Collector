@@ -1057,7 +1057,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                         var update = new MarketDepthUpdate(
                             Timestamp: timestamp,
                             Symbol: symbol,
-                            Position: i,
+                            Position: (ushort)i,
                             Operation: DepthOperation.Update,
                             Side: OrderBookSide.Bid,
                             Price: price,
@@ -1077,7 +1077,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                         var update = new MarketDepthUpdate(
                             Timestamp: timestamp,
                             Symbol: symbol,
-                            Position: i,
+                            Position: (ushort)i,
                             Operation: DepthOperation.Update,
                             Side: OrderBookSide.Ask,
                             Price: price,
@@ -1307,7 +1307,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 /// <summary>
 /// Connection state for the StockSharp client (Hydra-inspired pattern).
 /// </summary>
-public enum ConnectionState
+public enum ConnectionState : byte
 {
     /// <summary>Client is disconnected.</summary>
     Disconnected,
@@ -1328,7 +1328,7 @@ public enum ConnectionState
 /// <summary>
 /// Type of subscription for recovery purposes.
 /// </summary>
-public enum SubscriptionType
+public enum SubscriptionType : byte
 {
     /// <summary>Trade tick subscription.</summary>
     Trades,

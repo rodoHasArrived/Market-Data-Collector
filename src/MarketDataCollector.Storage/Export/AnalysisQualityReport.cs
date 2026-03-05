@@ -818,7 +818,7 @@ public sealed class DataGap
 /// <summary>
 /// Type of data gap.
 /// </summary>
-public enum GapType
+public enum GapType : byte
 {
     Weekend,
     Overnight,
@@ -841,7 +841,7 @@ public sealed class QualityIssue
 /// <summary>
 /// Issue severity level.
 /// </summary>
-public enum IssueSeverity
+public enum IssueSeverity : byte
 {
     Info,
     Warning,
@@ -862,7 +862,7 @@ public sealed class AnalysisRecommendation
 /// Report output formats.
 /// </summary>
 [Flags]
-public enum ReportFormat
+public enum ReportFormat : byte
 {
     Markdown = 1,
     Json = 2,

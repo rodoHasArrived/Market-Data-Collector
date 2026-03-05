@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Kind of depth integrity issue detected.
 /// </summary>
-public enum DepthIntegrityKind
+public enum DepthIntegrityKind : byte
 {
     /// <summary>
     /// No integrity issue detected.

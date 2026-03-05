@@ -178,7 +178,7 @@ public sealed class IngestionJob
 /// States for the unified ingestion job state machine.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum IngestionJobState
+public enum IngestionJobState : byte
 {
     /// <summary>Job is being configured but not yet submitted.</summary>
     Draft,
@@ -206,7 +206,7 @@ public enum IngestionJobState
 /// Type of ingestion workload.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum IngestionWorkloadType
+public enum IngestionWorkloadType : byte
 {
     /// <summary>Real-time streaming data collection.</summary>
     Realtime,
@@ -327,7 +327,7 @@ public sealed class IngestionSla
     /// Minimum completeness ratio (0.0 to 1.0) required for the job to be considered successful.
     /// </summary>
     [JsonPropertyName("minimumCompleteness")]
-    public double MinimumCompleteness { get; set; } = 0.95;
+    public float MinimumCompleteness { get; set; } = 0.95f;
 }
 
 /// <summary>

@@ -593,7 +593,7 @@ public sealed class QuickAction
 /// <summary>
 /// Types of quick actions.
 /// </summary>
-public enum QuickActionType
+public enum QuickActionType : byte
 {
     FillGaps,
     ExtendCoverage,
@@ -633,7 +633,7 @@ public sealed class DataQualityIssue
 /// <summary>
 /// Issue severity levels.
 /// </summary>
-public enum IssueSeverity
+public enum IssueSeverity : byte
 {
     Info,
     Warning,
@@ -654,7 +654,7 @@ public sealed class InsightMessage
 /// <summary>
 /// Insight message types.
 /// </summary>
-public enum InsightType
+public enum InsightType : byte
 {
     Info,
     Success,

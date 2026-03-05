@@ -581,7 +581,7 @@ public sealed record WebhookConfig
 /// <summary>
 /// Supported webhook types.
 /// </summary>
-public enum WebhookType
+public enum WebhookType : byte
 {
     /// <summary>Generic JSON webhook.</summary>
     Generic,

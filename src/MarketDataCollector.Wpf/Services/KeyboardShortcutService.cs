@@ -448,7 +448,7 @@ public sealed class ShortcutAction
 /// <summary>
 /// Shortcut categories.
 /// </summary>
-public enum ShortcutCategory
+public enum ShortcutCategory : byte
 {
     /// <summary>
     /// General application shortcuts.

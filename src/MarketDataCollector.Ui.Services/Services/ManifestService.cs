@@ -462,7 +462,7 @@ public sealed class ManifestService
         {
             var expectedFilesPerDay = symbols * 2; // Assume trade + quote per symbol
             var expectedFiles = expectedFilesPerDay * dates;
-            metrics.CompletenessScore = Math.Min(100, (double)files.Count / expectedFiles * 100);
+            metrics.CompletenessScore = (float)Math.Min(100, (double)files.Count / expectedFiles * 100);
         }
         else
         {
@@ -473,7 +473,7 @@ public sealed class ManifestService
         if (session?.Statistics != null)
         {
             var errorPenalty = (session.Statistics.GapsDetected * 2) + session.Statistics.SequenceErrors;
-            metrics.IntegrityScore = Math.Max(0, 100 - errorPenalty);
+            metrics.IntegrityScore = (float)Math.Max(0, 100 - errorPenalty);
             metrics.GapsDetected = session.Statistics.GapsDetected;
             metrics.SequenceErrors = session.Statistics.SequenceErrors;
         }
@@ -483,7 +483,7 @@ public sealed class ManifestService
         }
 
         // Calculate overall score
-        metrics.OverallScore = (metrics.CompletenessScore * 0.6) + (metrics.IntegrityScore * 0.4);
+        metrics.OverallScore = (metrics.CompletenessScore * 0.6f) + (metrics.IntegrityScore * 0.4f);
 
         return metrics;
     }

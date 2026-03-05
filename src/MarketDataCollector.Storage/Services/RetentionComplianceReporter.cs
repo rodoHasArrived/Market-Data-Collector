@@ -217,7 +217,7 @@ public sealed record RetentionViolation(
 /// <summary>
 /// Retention status for a file.
 /// </summary>
-public enum RetentionStatus
+public enum RetentionStatus : byte
 {
     Compliant,
     ExceedsPolicy,

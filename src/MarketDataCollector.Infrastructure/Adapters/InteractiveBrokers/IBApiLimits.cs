@@ -456,7 +456,7 @@ public static class IBErrorCodeMap
 public sealed record IBErrorInfo(string Description, IBErrorSeverity Severity, string? Remediation);
 
 /// <summary>Severity level for IB API errors.</summary>
-public enum IBErrorSeverity { Info, Warning, Error, Critical }
+public enum IBErrorSeverity : byte { Info, Warning, Error, Critical }
 
 /// <summary>
 /// Represents an error from the IB API.

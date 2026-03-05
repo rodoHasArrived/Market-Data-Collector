@@ -456,7 +456,7 @@ public sealed class AlertService
 /// <summary>
 /// Alert severity levels.
 /// </summary>
-public enum AlertSeverity
+public enum AlertSeverity : byte
 {
     Info,
     Warning,
@@ -468,7 +468,7 @@ public enum AlertSeverity
 /// <summary>
 /// Business impact of an alert.
 /// </summary>
-public enum BusinessImpact
+public enum BusinessImpact : byte
 {
     None,
     Low,

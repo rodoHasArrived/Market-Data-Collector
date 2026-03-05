@@ -149,7 +149,7 @@ public sealed class ArchiveMaintenanceSchedule
 /// <summary>
 /// Type of maintenance operation.
 /// </summary>
-public enum MaintenanceTaskType
+public enum MaintenanceTaskType : byte
 {
     /// <summary>
     /// Run health checks on storage files.
@@ -205,7 +205,7 @@ public enum MaintenanceTaskType
 /// <summary>
 /// Priority level for maintenance tasks.
 /// </summary>
-public enum MaintenancePriority
+public enum MaintenancePriority : byte
 {
     /// <summary>Critical - execute immediately, skip queue.</summary>
     Critical = 0,
@@ -366,7 +366,7 @@ public sealed class MaintenanceExecution
 /// <summary>
 /// Status of a maintenance execution.
 /// </summary>
-public enum MaintenanceExecutionStatus
+public enum MaintenanceExecutionStatus : byte
 {
     /// <summary>Execution is pending (queued).</summary>
     Pending,

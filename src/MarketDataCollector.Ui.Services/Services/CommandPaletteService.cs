@@ -292,7 +292,7 @@ public sealed class PaletteCommand
 /// <summary>
 /// Category of a palette command.
 /// </summary>
-public enum PaletteCommandCategory
+public enum PaletteCommandCategory : byte
 {
     Navigation,
     Action,

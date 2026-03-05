@@ -33,7 +33,7 @@ public sealed record TemplateSubscriptionDefaults(
 /// <summary>
 /// Categories for organizing subscription templates.
 /// </summary>
-public enum TemplateCategory
+public enum TemplateCategory : byte
 {
     Sector,
 

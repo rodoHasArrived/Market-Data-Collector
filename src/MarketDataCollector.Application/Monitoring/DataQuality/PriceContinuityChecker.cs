@@ -411,7 +411,7 @@ public sealed record PriceContinuityConfig
 /// <summary>
 /// Result of a price continuity check.
 /// </summary>
-public enum PriceContinuityResult
+public enum PriceContinuityResult : byte
 {
     /// <summary>Price is within normal range.</summary>
     Ok,
@@ -429,7 +429,7 @@ public enum PriceContinuityResult
 /// <summary>
 /// Type of price discontinuity.
 /// </summary>
-public enum DiscontinuityType
+public enum DiscontinuityType : byte
 {
     GapUp,
     GapDown,

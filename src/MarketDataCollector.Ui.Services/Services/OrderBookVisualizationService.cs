@@ -485,7 +485,7 @@ public sealed class TradeRecord
 /// <summary>
 /// Trade side indicator.
 /// </summary>
-public enum TradeSide
+public enum TradeSide : byte
 {
     Unknown,
     Buy,

@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Exercise style of an option contract.
 /// </summary>
-public enum OptionStyle
+public enum OptionStyle : byte
 {
     /// <summary>
     /// American-style option — can be exercised at any time before expiration.

@@ -9,7 +9,7 @@ public static class CliModeResolver
     /// <summary>
     /// Application run modes.
     /// </summary>
-    public enum RunMode
+    public enum RunMode : byte
     {
         /// <summary>Headless mode - no UI, command-line only.</summary>
         Headless,

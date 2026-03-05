@@ -13,14 +13,14 @@ public sealed record MarketEvent(
     Contracts.Domain.Events.MarketEventPayload? Payload,
     long Sequence = 0,
     string Source = "IB",
-    int SchemaVersion = 1,
+    byte SchemaVersion = 1,
     MarketEventTier Tier = MarketEventTier.Raw,
     DateTimeOffset? ExchangeTimestamp = null,
     DateTimeOffset ReceivedAtUtc = default,
     long ReceivedAtMonotonic = 0,
     // Canonicalization fields
     string? CanonicalSymbol = null,
-    int CanonicalizationVersion = 0,
+    byte CanonicalizationVersion = 0,
     string? CanonicalVenue = null
 )
 {

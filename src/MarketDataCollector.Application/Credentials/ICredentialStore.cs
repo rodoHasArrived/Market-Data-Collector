@@ -5,7 +5,7 @@ namespace MarketDataCollector.Application.Credentials;
 /// <summary>
 /// Credential types supported by the store.
 /// </summary>
-public enum CredentialType
+public enum CredentialType : byte
 {
     /// <summary>Simple API key.</summary>
     ApiKey,
@@ -77,7 +77,7 @@ public sealed record CredentialResult(
 /// <summary>
 /// Sources where credentials can be loaded from.
 /// </summary>
-public enum CredentialSource
+public enum CredentialSource : byte
 {
     /// <summary>No credential found.</summary>
     None,

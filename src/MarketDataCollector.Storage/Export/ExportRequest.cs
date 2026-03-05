@@ -131,7 +131,7 @@ public sealed class AggregationSettings
 /// <summary>
 /// Price aggregation methods.
 /// </summary>
-public enum PriceAggregation
+public enum PriceAggregation : byte
 {
     /// <summary>Open, High, Low, Close.</summary>
     Ohlc,
@@ -148,7 +148,7 @@ public enum PriceAggregation
 /// <summary>
 /// Volume aggregation methods.
 /// </summary>
-public enum VolumeAggregation
+public enum VolumeAggregation : byte
 {
     Sum,
     Mean,
@@ -159,7 +159,7 @@ public enum VolumeAggregation
 /// <summary>
 /// Gap handling strategies.
 /// </summary>
-public enum GapHandling
+public enum GapHandling : byte
 {
     /// <summary>Leave gaps as null/NaN.</summary>
     Null,
@@ -174,7 +174,7 @@ public enum GapHandling
 /// <summary>
 /// Session filter options.
 /// </summary>
-public enum SessionFilter
+public enum SessionFilter : byte
 {
     /// <summary>Include all data.</summary>
     All,
@@ -251,7 +251,7 @@ public sealed class FeatureSettings
 /// <summary>
 /// Feature normalization types.
 /// </summary>
-public enum NormalizationType
+public enum NormalizationType : byte
 {
     /// <summary>No normalization.</summary>
     None,

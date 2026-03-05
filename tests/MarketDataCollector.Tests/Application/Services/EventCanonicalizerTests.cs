@@ -58,7 +58,7 @@ public sealed class EventCanonicalizerTests
         string source,
         string? venue = null,
         MarketEventTier tier = MarketEventTier.Raw,
-        int canonVersion = 0)
+        byte canonVersion = 0)
     {
         var trade = new Trade(
             Timestamp: DateTimeOffset.UtcNow,

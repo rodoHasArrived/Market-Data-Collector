@@ -489,7 +489,7 @@ public sealed class ConnectionEventModel
 /// <summary>
 /// Event type for connection history.
 /// </summary>
-public enum EventType
+public enum EventType : byte
 {
     Info,
     Success,

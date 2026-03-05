@@ -339,7 +339,7 @@ public sealed class ReplayStatus
     public DateTime? CurrentEventTime { get; set; }
 }
 
-public enum ReplayState
+public enum ReplayState : byte
 {
     Unknown,
     Initializing,

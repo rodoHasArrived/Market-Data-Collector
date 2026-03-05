@@ -388,7 +388,7 @@ public sealed class SamplingProgressEventArgs : EventArgs
 
 #region Enums
 
-public enum SamplingStrategyType
+public enum SamplingStrategyType : byte
 {
     Random,
     TimeBased,

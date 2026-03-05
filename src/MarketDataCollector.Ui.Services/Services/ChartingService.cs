@@ -500,7 +500,7 @@ public sealed class ChartingService
 /// <summary>
 /// Chart timeframe.
 /// </summary>
-public enum ChartTimeframe
+public enum ChartTimeframe : byte
 {
     Minute1,
     Minute5,
@@ -549,7 +549,7 @@ public sealed class Candlestick
 /// <summary>
 /// Technical indicator type.
 /// </summary>
-public enum IndicatorType
+public enum IndicatorType : byte
 {
     Overlay,    // Drawn on price chart
     Oscillator, // Separate pane with fixed range

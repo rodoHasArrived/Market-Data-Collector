@@ -397,7 +397,7 @@ public sealed class SymbolCheckpoint
 /// Overall checkpoint status.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum CheckpointStatus
+public enum CheckpointStatus : byte
 {
     InProgress,
     Completed,
@@ -410,7 +410,7 @@ public enum CheckpointStatus
 /// Per-symbol checkpoint status.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum SymbolCheckpointStatus
+public enum SymbolCheckpointStatus : byte
 {
     Pending,
     Downloading,

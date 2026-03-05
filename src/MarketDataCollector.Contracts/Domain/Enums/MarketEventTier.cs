@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Processing tier for market events.
 /// </summary>
-public enum MarketEventTier
+public enum MarketEventTier : byte
 {
     /// <summary>
     /// Raw event from data provider.

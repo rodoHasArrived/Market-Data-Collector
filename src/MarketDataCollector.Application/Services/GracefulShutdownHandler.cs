@@ -507,7 +507,7 @@ public readonly record struct ShutdownProgress(
 /// <summary>
 /// Reason for shutdown.
 /// </summary>
-public enum ShutdownReason
+public enum ShutdownReason : byte
 {
     Unknown,
     UserRequested,

@@ -443,7 +443,7 @@ public sealed class HealthAlertEventArgs : EventArgs
     public string Message { get; set; } = string.Empty;
 }
 
-public enum HealthAlertType
+public enum HealthAlertType : byte
 {
     LowOverallScore,
     HighLatency,

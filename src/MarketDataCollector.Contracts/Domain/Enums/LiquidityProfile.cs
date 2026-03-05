@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// Determines monitoring thresholds for gap detection, completeness scoring,
 /// SLA freshness, and anomaly detection.
 /// </summary>
-public enum LiquidityProfile
+public enum LiquidityProfile : byte
 {
     /// <summary>
     /// High liquidity - large cap equities, major ETFs, FX majors.

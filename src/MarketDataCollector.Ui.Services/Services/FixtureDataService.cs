@@ -27,8 +27,8 @@ public sealed class FixtureDataService
             Dropped = 12,
             Integrity = 3,
             HistoricalBars = 125000,
-            EventsPerSecond = 1250.5,
-            DropRate = 0.026,
+            EventsPerSecond = 1250.5f,
+            DropRate = 0.026f,
             Trades = 23456,
             DepthUpdates = 15678,
             Quotes = 6544
@@ -104,14 +104,14 @@ public sealed class FixtureDataService
             ["Alpaca"] = new()
             {
                 IsAvailable = true,
-                LatencyMs = 45.2,
+                LatencyMs = 45.2f,
                 ErrorMessage = null,
                 LastChecked = DateTime.UtcNow
             },
             ["Polygon"] = new()
             {
                 IsAvailable = true,
-                LatencyMs = 67.8,
+                LatencyMs = 67.8f,
                 ErrorMessage = null,
                 LastChecked = DateTime.UtcNow
             },

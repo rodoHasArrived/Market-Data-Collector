@@ -6,7 +6,7 @@ namespace MarketDataCollector.Infrastructure.Adapters.Core;
 /// <summary>
 /// Types of market data providers.
 /// </summary>
-public enum ProviderType
+public enum ProviderType : byte
 {
     /// <summary>Real-time streaming data provider.</summary>
     Streaming,

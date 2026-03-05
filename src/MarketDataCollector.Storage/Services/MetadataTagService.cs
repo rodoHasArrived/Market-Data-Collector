@@ -335,7 +335,7 @@ public sealed record DataInsight(
 /// <summary>
 /// Severity level for data insights.
 /// </summary>
-public enum InsightSeverity
+public enum InsightSeverity : byte
 {
     Info,
     Notable,

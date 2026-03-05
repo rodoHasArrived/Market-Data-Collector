@@ -5,7 +5,7 @@ namespace MarketDataCollector.Application.Scheduling;
 /// <summary>
 /// Types of operations that can be scheduled.
 /// </summary>
-public enum OperationType
+public enum OperationType : byte
 {
     /// <summary>Routine maintenance (archival, cleanup).</summary>
     Maintenance,

@@ -124,7 +124,7 @@ public sealed class CircuitBreakerStatusService
 /// <summary>
 /// Circuit breaker state enum.
 /// </summary>
-public enum CircuitBreakerState
+public enum CircuitBreakerState : byte
 {
     Closed,
     Open,

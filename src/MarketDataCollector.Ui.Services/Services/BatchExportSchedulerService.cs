@@ -666,7 +666,7 @@ public sealed record ExportJobRun
         : null;
 }
 
-public enum ExportJobStatus
+public enum ExportJobStatus : byte
 {
     Pending,
     Queued,
@@ -676,7 +676,7 @@ public enum ExportJobStatus
     Cancelled
 }
 
-public enum ExportFormat
+public enum ExportFormat : byte
 {
     Raw,
     JsonLines,
@@ -684,14 +684,14 @@ public enum ExportFormat
     Parquet
 }
 
-public enum ExportPriority
+public enum ExportPriority : byte
 {
     Low,
     Normal,
     High
 }
 
-public enum ScheduleFrequency
+public enum ScheduleFrequency : byte
 {
     Hourly,
     Daily,

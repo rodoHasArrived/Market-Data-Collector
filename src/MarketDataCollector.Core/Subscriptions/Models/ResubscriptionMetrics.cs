@@ -177,7 +177,7 @@ public static class ResubscriptionMetrics
 /// <summary>
 /// Circuit breaker states.
 /// </summary>
-public enum CircuitState
+public enum CircuitState : byte
 {
     /// <summary>Circuit is closed, allowing operations.</summary>
     Closed = 0,

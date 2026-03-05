@@ -422,7 +422,7 @@ public sealed record QualityIssue(
     string Description,
     QualityIssueSeverity Severity);
 
-public enum QualityIssueSeverity { Info, Warning, Error }
+public enum QualityIssueSeverity : byte { Info, Warning, Error }
 
 public sealed record BestOfBreedResult(
     string Symbol,

@@ -182,7 +182,7 @@ public sealed record AlpacaTradeMessage
     public decimal Price { get; init; }
 
     [JsonPropertyName("s")]
-    public int Size { get; init; }
+    public long Size { get; init; }
 
     [JsonPropertyName("t")]
     public string? Timestamp { get; init; }
@@ -215,13 +215,13 @@ public sealed record AlpacaQuoteMessage
     public decimal BidPrice { get; init; }
 
     [JsonPropertyName("bs")]
-    public int BidSize { get; init; }
+    public long BidSize { get; init; }
 
     [JsonPropertyName("ap")]
     public decimal AskPrice { get; init; }
 
     [JsonPropertyName("as")]
-    public int AskSize { get; init; }
+    public long AskSize { get; init; }
 
     [JsonPropertyName("t")]
     public string? Timestamp { get; init; }

@@ -134,7 +134,7 @@ public sealed record AggregateBar : MarketEventPayload
 /// <summary>
 /// Timeframe for aggregate bars.
 /// </summary>
-public enum AggregateTimeframe
+public enum AggregateTimeframe : byte
 {
     /// <summary>
     /// Per-second aggregate (Polygon "A" event).

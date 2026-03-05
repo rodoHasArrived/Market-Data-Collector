@@ -34,8 +34,9 @@ public sealed record OrderBookLevel
 
     /// <summary>
     /// Gets the depth level in the order book (0 = best price).
+    /// Max 65,535 levels — far exceeds any real order book depth.
     /// </summary>
-    public int Level { get; init; }
+    public ushort Level { get; init; }
 
     /// <summary>
     /// Gets the price at this level.
@@ -57,7 +58,7 @@ public sealed record OrderBookLevel
     /// </summary>
     public OrderBookLevel(
         OrderBookSide Side,
-        int Level,
+        ushort Level,
         decimal Price,
         decimal Size,
         string? MarketMaker = null)
@@ -67,9 +68,6 @@ public sealed record OrderBookLevel
 
         if (Size < 0)
             throw new ArgumentOutOfRangeException(nameof(Size), Size, "Size must be greater than or equal to 0");
-
-        if (Level < 0)
-            throw new ArgumentOutOfRangeException(nameof(Level), Level, "Level must be greater than or equal to 0");
 
         this.Side = Side;
         this.Level = Level;

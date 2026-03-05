@@ -29,7 +29,7 @@ public sealed record ConfigValidationResult(
 /// <summary>
 /// Severity level of a configuration validation finding.
 /// </summary>
-public enum ConfigValidationSeverity
+public enum ConfigValidationSeverity : byte
 {
     Info,
     Warning,

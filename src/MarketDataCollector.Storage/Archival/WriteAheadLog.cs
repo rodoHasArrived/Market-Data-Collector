@@ -845,7 +845,7 @@ public sealed class WalOptions
 /// <summary>
 /// WAL synchronization modes.
 /// </summary>
-public enum WalSyncMode
+public enum WalSyncMode : byte
 {
     /// <summary>
     /// No explicit sync - relies on OS buffering (fastest, least durable).

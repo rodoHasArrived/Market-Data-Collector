@@ -375,7 +375,7 @@ public sealed record SystemHealthWarning(
 /// <summary>
 /// Category of health warning.
 /// </summary>
-public enum HealthWarningCategory
+public enum HealthWarningCategory : byte
 {
     DiskSpace,
     Memory,
@@ -388,7 +388,7 @@ public enum HealthWarningCategory
 /// <summary>
 /// Severity of health warning.
 /// </summary>
-public enum HealthWarningSeverity
+public enum HealthWarningSeverity : byte
 {
     Info,
     Warning,
@@ -398,7 +398,7 @@ public enum HealthWarningSeverity
 /// <summary>
 /// Overall system health status.
 /// </summary>
-public enum SystemHealthStatus
+public enum SystemHealthStatus : byte
 {
     Healthy,
     Warning,

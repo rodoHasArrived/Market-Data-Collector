@@ -313,7 +313,7 @@ public sealed record BackpressureAlertConfig
 /// <summary>
 /// Backpressure severity level.
 /// </summary>
-public enum BackpressureLevel
+public enum BackpressureLevel : byte
 {
     None,
     Warning,

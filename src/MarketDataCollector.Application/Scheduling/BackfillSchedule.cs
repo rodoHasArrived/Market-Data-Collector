@@ -184,7 +184,7 @@ public sealed class BackfillSchedule
 /// <summary>
 /// Type of scheduled backfill operation.
 /// </summary>
-public enum ScheduledBackfillType
+public enum ScheduledBackfillType : byte
 {
     /// <summary>
     /// Only fill gaps in existing data.

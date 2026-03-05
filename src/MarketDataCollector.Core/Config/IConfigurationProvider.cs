@@ -20,7 +20,7 @@ public sealed record ConfigurationChangedEventArgs(
 /// <summary>
 /// Sources of configuration values.
 /// </summary>
-public enum ConfigurationSource
+public enum ConfigurationSource : byte
 {
     /// <summary>Default/hardcoded value.</summary>
     Default,

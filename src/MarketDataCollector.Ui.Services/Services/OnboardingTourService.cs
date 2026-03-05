@@ -486,7 +486,7 @@ public sealed class TourStep
 /// <summary>
 /// Tour category for organization.
 /// </summary>
-public enum TourCategory
+public enum TourCategory : byte
 {
     GettingStarted,
     DataManagement,
@@ -497,7 +497,7 @@ public enum TourCategory
 /// <summary>
 /// Tooltip placement relative to the target element.
 /// </summary>
-public enum TooltipPlacement
+public enum TooltipPlacement : byte
 {
     Top,
     Bottom,

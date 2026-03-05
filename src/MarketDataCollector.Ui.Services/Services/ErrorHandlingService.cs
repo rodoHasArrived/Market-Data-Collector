@@ -343,7 +343,7 @@ public sealed class ErrorRecord
 /// <summary>
 /// Error severity levels.
 /// </summary>
-public enum ErrorSeverity
+public enum ErrorSeverity : byte
 {
     Info,
     Warning,

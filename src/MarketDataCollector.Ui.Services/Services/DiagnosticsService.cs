@@ -483,7 +483,7 @@ public sealed class PreflightCheck
     public CheckSeverity Severity { get; set; }
 }
 
-public enum CheckSeverity
+public enum CheckSeverity : byte
 {
     Info,
     Warning,

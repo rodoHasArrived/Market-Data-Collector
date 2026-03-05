@@ -62,7 +62,7 @@ public static class VerificationJobStatus
 public sealed class ArchiveHealthStatus
 {
     [JsonPropertyName("overallHealthScore")]
-    public double OverallHealthScore { get; set; }
+    public float OverallHealthScore { get; set; }
 
     [JsonPropertyName("status")]
     public string Status { get; set; } = ArchiveHealthStatusValues.Unknown;
@@ -158,16 +158,16 @@ public sealed class StorageHealthInfo
     public long FreeSpace { get; set; }
 
     [JsonPropertyName("usedPercent")]
-    public double UsedPercent { get; set; }
+    public float UsedPercent { get; set; }
 
     [JsonPropertyName("averageWriteLatencyMs")]
-    public double? AverageWriteLatencyMs { get; set; }
+    public float? AverageWriteLatencyMs { get; set; }
 
     [JsonPropertyName("readSpeedMbps")]
-    public double? ReadSpeedMbps { get; set; }
+    public float? ReadSpeedMbps { get; set; }
 
     [JsonPropertyName("writeSpeedMbps")]
-    public double? WriteSpeedMbps { get; set; }
+    public float? WriteSpeedMbps { get; set; }
 
     [JsonPropertyName("daysUntilFull")]
     public int? DaysUntilFull { get; set; }
@@ -206,13 +206,13 @@ public sealed class VerificationJob
     public int FailedFiles { get; set; }
 
     [JsonPropertyName("progressPercent")]
-    public double ProgressPercent { get; set; }
+    public float ProgressPercent { get; set; }
 
     [JsonPropertyName("estimatedTimeRemainingSeconds")]
     public int? EstimatedTimeRemainingSeconds { get; set; }
 
     [JsonPropertyName("filesPerSecond")]
-    public double FilesPerSecond { get; set; }
+    public float FilesPerSecond { get; set; }
 
     [JsonPropertyName("errors")]
     public string[]? Errors { get; set; }

@@ -844,7 +844,7 @@ public static class ServiceCompositionRoot
                     ?? Path.Combine(AppContext.BaseDirectory, "config", "venue-mapping.json");
                 var venues = VenueMicMapper.LoadFromFile(venuesPath);
                 var canonicalizer = new EventCanonicalizer(
-                    symbolRegistry, conditions, venues, canonConfig.Version);
+                    symbolRegistry, conditions, venues, (byte)canonConfig.Version);
 
                 CanonicalizationMetrics.SetActiveVersion(canonConfig.Version);
 
@@ -959,7 +959,7 @@ public static class ServiceCompositionRoot
             var symbols = sp.GetRequiredService<Contracts.Catalog.ICanonicalSymbolRegistry>();
             var conditions = sp.GetRequiredService<ConditionCodeMapper>();
             var venues = sp.GetRequiredService<VenueMicMapper>();
-            var version = config.Canonicalization?.Version ?? 1;
+            var version = (byte)(config.Canonicalization?.Version ?? 1);
             return new EventCanonicalizer(symbols, conditions, venues, version);
         });
 

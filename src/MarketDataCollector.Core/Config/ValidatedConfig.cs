@@ -128,7 +128,7 @@ public sealed record ValidatedConfig
 /// <summary>
 /// Indicates how the configuration was sourced/created.
 /// </summary>
-public enum ConfigurationOrigin
+public enum ConfigurationOrigin : byte
 {
     /// <summary>Default configuration (no file loaded).</summary>
     Default,

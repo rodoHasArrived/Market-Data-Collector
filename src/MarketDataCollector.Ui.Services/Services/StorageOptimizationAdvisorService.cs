@@ -1406,7 +1406,7 @@ public sealed class OptimizationRecommendation
 /// <summary>
 /// Type of optimization.
 /// </summary>
-public enum OptimizationType
+public enum OptimizationType : byte
 {
     RemoveDuplicates,
     PotentialDuplicates,
@@ -1421,7 +1421,7 @@ public enum OptimizationType
 /// <summary>
 /// Priority level for recommendations.
 /// </summary>
-public enum RecommendationPriority
+public enum RecommendationPriority : byte
 {
     Low,
     Medium,

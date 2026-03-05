@@ -47,7 +47,7 @@ public sealed record DataGap(
 /// <summary>
 /// Gap severity classification.
 /// </summary>
-public enum GapSeverity
+public enum GapSeverity : byte
 {
     Minor,      // < 1 minute
     Moderate,   // 1-5 minutes
@@ -70,7 +70,7 @@ public sealed record TimelineEntry(
 /// <summary>
 /// Type of timeline entry.
 /// </summary>
-public enum TimelineEntryType
+public enum TimelineEntryType : byte
 {
     DataPresent,
     Gap,
@@ -111,7 +111,7 @@ public sealed record SequenceError(
 /// <summary>
 /// Type of sequence error.
 /// </summary>
-public enum SequenceErrorType
+public enum SequenceErrorType : byte
 {
     Gap,
     OutOfOrder,
@@ -180,7 +180,7 @@ public sealed record ProviderDiscrepancy(
 /// <summary>
 /// Discrepancy severity.
 /// </summary>
-public enum DiscrepancySeverity
+public enum DiscrepancySeverity : byte
 {
     Low,
     Medium,
@@ -242,7 +242,7 @@ public sealed record DataAnomaly(
 /// <summary>
 /// Type of anomaly detected.
 /// </summary>
-public enum AnomalyType
+public enum AnomalyType : byte
 {
     PriceSpike,
     PriceDrop,
@@ -262,7 +262,7 @@ public enum AnomalyType
 /// <summary>
 /// Anomaly severity.
 /// </summary>
-public enum AnomalySeverity
+public enum AnomalySeverity : byte
 {
     Info,
     Warning,
@@ -378,7 +378,7 @@ public sealed record WeeklyStatistics(
 /// <summary>
 /// Export format for reports.
 /// </summary>
-public enum ReportExportFormat
+public enum ReportExportFormat : byte
 {
     Json,
     Csv,
@@ -438,7 +438,7 @@ public sealed record SymbolHealthStatus(
 /// <summary>
 /// Health state enumeration.
 /// </summary>
-public enum HealthState
+public enum HealthState : byte
 {
     Healthy,
     Degraded,

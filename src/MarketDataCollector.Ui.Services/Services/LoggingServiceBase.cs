@@ -6,7 +6,7 @@ namespace MarketDataCollector.Ui.Services.Services;
 /// <summary>
 /// Represents the severity level of a log entry.
 /// </summary>
-public enum LogLevel
+public enum LogLevel : byte
 {
     Debug,
     Info,

@@ -127,7 +127,7 @@ public sealed record NYSEOptions
 /// <summary>
 /// NYSE data feed subscription tiers.
 /// </summary>
-public enum NYSEFeedTier
+public enum NYSEFeedTier : byte
 {
     /// <summary>
     /// Basic NYSE feed - trades and BBO quotes (15-min delayed for non-pro).

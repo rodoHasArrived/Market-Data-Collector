@@ -646,7 +646,7 @@ public sealed record ConsolidationOptions(
     long VolumeTolerancePct = 5
 );
 
-public enum SourceSelectionStrategy
+public enum SourceSelectionStrategy : byte
 {
     HighestQualityScore,
     MostComplete,

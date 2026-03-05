@@ -186,7 +186,7 @@ public sealed class ExportPresetFilters
 /// <summary>
 /// Date range types for export presets.
 /// </summary>
-public enum DateRangeType
+public enum DateRangeType : byte
 {
     /// <summary>Export today's data.</summary>
     Today,
@@ -209,7 +209,7 @@ public enum DateRangeType
 /// <summary>
 /// Supported export formats for presets.
 /// </summary>
-public enum ExportPresetFormat
+public enum ExportPresetFormat : byte
 {
     /// <summary>Apache Parquet columnar format.</summary>
     Parquet,
@@ -230,7 +230,7 @@ public enum ExportPresetFormat
 /// <summary>
 /// Compression types for export presets.
 /// </summary>
-public enum ExportPresetCompression
+public enum ExportPresetCompression : byte
 {
     /// <summary>No compression.</summary>
     None,

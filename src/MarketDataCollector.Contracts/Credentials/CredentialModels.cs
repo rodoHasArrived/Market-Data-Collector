@@ -5,7 +5,7 @@ namespace MarketDataCollector.Contracts.Credentials;
 /// <summary>
 /// Types of credentials supported by the system.
 /// </summary>
-public enum CredentialType
+public enum CredentialType : byte
 {
     /// <summary>
     /// Simple API key (non-expiring).
@@ -31,7 +31,7 @@ public enum CredentialType
 /// <summary>
 /// Status of the last credential test.
 /// </summary>
-public enum CredentialTestStatus
+public enum CredentialTestStatus : byte
 {
     /// <summary>
     /// Credential has not been tested.

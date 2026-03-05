@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Represents which side of the order book a level belongs to.
 /// </summary>
-public enum OrderBookSide
+public enum OrderBookSide : byte
 {
     /// <summary>
     /// Bid side (buy orders).

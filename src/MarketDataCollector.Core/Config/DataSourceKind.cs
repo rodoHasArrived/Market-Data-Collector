@@ -3,7 +3,7 @@ namespace MarketDataCollector.Application.Config;
 /// <summary>
 /// Supported market data providers.
 /// </summary>
-public enum DataSourceKind
+public enum DataSourceKind : byte
 {
     /// <summary>Interactive Brokers via native TWS API.</summary>
     IB = 0,

@@ -32,7 +32,7 @@ public sealed record SymbolMetadata(
 /// <summary>
 /// Market capitalization categories.
 /// </summary>
-public enum MarketCapCategory
+public enum MarketCapCategory : byte
 {
     Nano,
 

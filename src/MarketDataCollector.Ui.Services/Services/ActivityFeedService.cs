@@ -302,7 +302,7 @@ public sealed class ActivityFeedService
 /// <summary>
 /// Types of activity events.
 /// </summary>
-public enum ActivityType
+public enum ActivityType : byte
 {
     // Collector events
     CollectorStarted,

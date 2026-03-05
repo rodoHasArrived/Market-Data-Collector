@@ -651,7 +651,7 @@ public sealed class MaintenanceTimingConfig
 /// <summary>
 /// Types of maintenance tasks.
 /// </summary>
-public enum MaintenanceTaskType
+public enum MaintenanceTaskType : byte
 {
     Verification,
     Optimization,
@@ -664,7 +664,7 @@ public enum MaintenanceTaskType
 /// <summary>
 /// Schedule types for maintenance tasks.
 /// </summary>
-public enum ScheduleType
+public enum ScheduleType : byte
 {
     Hourly,
     Daily,
@@ -675,7 +675,7 @@ public enum ScheduleType
 /// <summary>
 /// Scope of maintenance operations.
 /// </summary>
-public enum MaintenanceScope
+public enum MaintenanceScope : byte
 {
     All,
     HotTier,

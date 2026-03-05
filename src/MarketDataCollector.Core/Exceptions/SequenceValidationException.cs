@@ -37,7 +37,7 @@ public sealed class SequenceValidationException : MarketDataCollectorException
 /// <summary>
 /// Types of sequence validation failures
 /// </summary>
-public enum SequenceValidationType
+public enum SequenceValidationType : byte
 {
     Unknown,
     Gap,

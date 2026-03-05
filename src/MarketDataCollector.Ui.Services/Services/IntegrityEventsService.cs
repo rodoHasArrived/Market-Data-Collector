@@ -369,7 +369,7 @@ public sealed class IntegrityEvent
 /// <summary>
 /// Types of integrity events.
 /// </summary>
-public enum IntegrityEventType
+public enum IntegrityEventType : byte
 {
     SequenceGap,
     OutOfOrder,
@@ -383,7 +383,7 @@ public enum IntegrityEventType
 /// <summary>
 /// Severity levels for integrity events.
 /// </summary>
-public enum IntegritySeverity
+public enum IntegritySeverity : byte
 {
     Info,
     Warning,

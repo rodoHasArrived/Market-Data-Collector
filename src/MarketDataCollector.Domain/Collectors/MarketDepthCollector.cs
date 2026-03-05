@@ -15,7 +15,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 
     private readonly ConcurrentDictionary<string, SymbolOrderBookBuffer> _books = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentQueue<DepthIntegrityEvent> _recentIntegrity = new();
-    private const int MaxDepth = 50;
+    private const ushort MaxDepth = 50;
 
     public MarketDepthCollector(IMarketEventPublisher publisher, bool requireExplicitSubscription = true)
         : base(requireExplicitSubscription)
@@ -247,7 +247,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                 switch (upd.Operation)
                 {
                     case DepthOperation.Insert:
-                        if (upd.Position < 0 || upd.Position > sideList.Count)
+                        if (upd.Position > sideList.Count)
                         {
                             _stale = true;
                             LastErrorDescription = $"Insert position {upd.Position} out of range (count={sideList.Count}).";
@@ -259,7 +259,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                         break;
 
                     case DepthOperation.Update:
-                        if (upd.Position < 0 || upd.Position >= sideList.Count)
+                        if (upd.Position >= sideList.Count)
                         {
                             _stale = true;
                             LastErrorDescription = $"Update position {upd.Position} missing (count={sideList.Count}).";
@@ -269,7 +269,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                         break;
 
                     case DepthOperation.Delete:
-                        if (upd.Position < 0 || upd.Position >= sideList.Count)
+                        if (upd.Position >= sideList.Count)
                         {
                             _stale = true;
                             LastErrorDescription = $"Delete position {upd.Position} missing (count={sideList.Count}).";
@@ -341,7 +341,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
         private static void ReindexFrom(List<OrderBookLevel> levels, OrderBookSide side, int startIndex)
         {
             for (int i = Math.Max(0, startIndex); i < levels.Count; i++)
-                levels[i] = levels[i] with { Side = side, Level = i };
+                levels[i] = levels[i] with { Side = side, Level = (ushort)i };
         }
 
         private void TrimToMaxDepth(List<OrderBookLevel> levels)

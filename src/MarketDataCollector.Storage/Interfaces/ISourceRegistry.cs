@@ -65,7 +65,7 @@ public sealed record SourceInfo(
 /// <summary>
 /// Type of data source.
 /// </summary>
-public enum SourceType
+public enum SourceType : byte
 {
     /// <summary>Live real-time data source.</summary>
     Live,

@@ -369,7 +369,7 @@ public sealed class PackageProgress
 /// <summary>
 /// Stages of packaging/import operations.
 /// </summary>
-public enum PackageStage
+public enum PackageStage : byte
 {
     /// <summary>Initializing operation.</summary>
     Initializing,

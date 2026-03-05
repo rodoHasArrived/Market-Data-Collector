@@ -239,7 +239,7 @@ public sealed class ExportProfile
 /// <summary>
 /// Supported export formats.
 /// </summary>
-public enum ExportFormat
+public enum ExportFormat : byte
 {
     /// <summary>Apache Parquet - columnar format for analytics.</summary>
     Parquet,
@@ -272,7 +272,7 @@ public sealed class CompressionSettings
 /// <summary>
 /// Supported compression types.
 /// </summary>
-public enum CompressionType
+public enum CompressionType : byte
 {
     None,
     Gzip,
@@ -300,7 +300,7 @@ public sealed class TimestampSettings
 /// <summary>
 /// Supported timestamp formats.
 /// </summary>
-public enum TimestampFormat
+public enum TimestampFormat : byte
 {
     /// <summary>ISO 8601 string format.</summary>
     Iso8601,

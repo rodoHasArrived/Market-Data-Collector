@@ -571,7 +571,7 @@ public sealed record BadTickFilterConfig
 /// <summary>
 /// Reasons why a tick was flagged as bad.
 /// </summary>
-public enum BadTickReason
+public enum BadTickReason : byte
 {
     NegativeOrZeroPrice,
     PriceBelowMinimum,

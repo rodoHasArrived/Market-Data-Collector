@@ -39,7 +39,7 @@ public sealed class BackfillProviderHealth
     /// Gets or sets the most recent latency measurement in milliseconds.
     /// </summary>
     [JsonPropertyName("latencyMs")]
-    public double? LatencyMs { get; set; }
+    public float? LatencyMs { get; set; }
 
     /// <summary>
     /// Gets or sets the last error message reported by the provider, if any.
@@ -265,7 +265,7 @@ public sealed class BackfillStatistics
     /// Gets or sets the average execution time in seconds.
     /// </summary>
     [JsonPropertyName("averageExecutionTimeSeconds")]
-    public double AverageExecutionTimeSeconds { get; set; }
+    public float AverageExecutionTimeSeconds { get; set; }
 
     /// <summary>
     /// Gets or sets the timestamp of the last successful execution.

@@ -794,7 +794,7 @@ public sealed record FallbackOptions(
 /// <summary>
 /// Fallback strategy for provider selection.
 /// </summary>
-public enum FallbackStrategy
+public enum FallbackStrategy : byte
 {
     /// <summary>Priority-based selection (use provider priority).</summary>
     Priority,

@@ -6,7 +6,7 @@ namespace MarketDataCollector.Contracts.Export;
 
 public sealed class ExportProgressEventArgs : EventArgs
 {
-    public double Progress { get; set; }
+    public float Progress { get; set; }
     public string? CurrentSymbol { get; set; }
     public int RowsProcessed { get; set; }
     public TimeSpan Elapsed { get; set; }
@@ -137,7 +137,7 @@ public sealed class QualityReportSummary
 {
     public int TotalSymbols { get; set; }
     public int TotalDays { get; set; }
-    public double OverallScore { get; set; }
+    public float OverallScore { get; set; }
     public int GapsFound { get; set; }
     public int AnomaliesFound { get; set; }
 }
@@ -172,7 +172,7 @@ public sealed class AnalysisExportResponse
     public string[]? FilesCreated { get; set; }
     public long RowsExported { get; set; }
     public long BytesWritten { get; set; }
-    public double DurationSeconds { get; set; }
+    public float DurationSeconds { get; set; }
     public string[]? Warnings { get; set; }
 }
 
@@ -198,7 +198,7 @@ public sealed class ResearchPackageResponse
 
 #region Enums
 
-public enum AnalysisExportFormat
+public enum AnalysisExportFormat : byte
 {
     CSV,
     Parquet,
@@ -209,7 +209,7 @@ public enum AnalysisExportFormat
     Feather
 }
 
-public enum DataAggregation
+public enum DataAggregation : byte
 {
     Tick,
     Second,
@@ -223,7 +223,7 @@ public enum DataAggregation
     Monthly
 }
 
-public enum CompressionType
+public enum CompressionType : byte
 {
     None,
     Gzip,

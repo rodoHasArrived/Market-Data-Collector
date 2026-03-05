@@ -115,7 +115,7 @@ public sealed record ManualPortfolioEntry(
 /// <summary>
 /// Supported broker types.
 /// </summary>
-public enum BrokerType
+public enum BrokerType : byte
 {
     Alpaca,
 

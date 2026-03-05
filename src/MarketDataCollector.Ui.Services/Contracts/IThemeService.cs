@@ -4,7 +4,7 @@ namespace MarketDataCollector.Ui.Services.Contracts;
 /// Application theme options.
 /// Shared between WPF desktop applications.
 /// </summary>
-public enum AppTheme
+public enum AppTheme : byte
 {
     Light,
     Dark,

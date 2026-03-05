@@ -56,7 +56,7 @@ public sealed record OptionTrade : MarketEventPayload
     /// <summary>
     /// Gets trade condition codes (e.g., "AutoExecution", "IntermarketSweep").
     /// </summary>
-    public IReadOnlyList<string>? Conditions { get; }
+    public string[]? Conditions { get; }
 
     /// <summary>
     /// Gets the sequence number for ordering events.
@@ -81,7 +81,7 @@ public sealed record OptionTrade : MarketEventPayload
         decimal UnderlyingPrice,
         decimal? ImpliedVolatility = null,
         string? TradeExchange = null,
-        IReadOnlyList<string>? Conditions = null,
+        string[]? Conditions = null,
         long SequenceNumber = 0,
         string Source = "IB")
     {

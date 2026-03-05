@@ -37,7 +37,7 @@ public sealed record OptionContractSpec
     /// <summary>
     /// Gets the contract multiplier (typically 100 for equity options).
     /// </summary>
-    public int Multiplier { get; }
+    public ushort Multiplier { get; }
 
     /// <summary>
     /// Gets the exchange where the option is listed (e.g., "CBOE", "SMART", "ISE").
@@ -70,7 +70,7 @@ public sealed record OptionContractSpec
         DateOnly Expiration,
         OptionRight Right,
         OptionStyle Style = OptionStyle.American,
-        int Multiplier = 100,
+        ushort Multiplier = 100,
         string Exchange = "SMART",
         string Currency = "USD",
         string? OccSymbol = null,
@@ -82,7 +82,7 @@ public sealed record OptionContractSpec
         if (Strike <= 0)
             throw new ArgumentOutOfRangeException(nameof(Strike), Strike, "Strike price must be greater than 0");
 
-        if (Multiplier <= 0)
+        if (Multiplier == 0)
             throw new ArgumentOutOfRangeException(nameof(Multiplier), Multiplier, "Multiplier must be greater than 0");
 
         if (InstrumentType is not (InstrumentType.EquityOption or InstrumentType.IndexOption))

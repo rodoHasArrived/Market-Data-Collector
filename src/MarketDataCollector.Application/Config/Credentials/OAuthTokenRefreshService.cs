@@ -374,7 +374,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// <summary>
     /// Token status enumeration for display purposes.
     /// </summary>
-    public enum TokenStatus
+    public enum TokenStatus : byte
     {
         Valid,
         ExpiringSoon,

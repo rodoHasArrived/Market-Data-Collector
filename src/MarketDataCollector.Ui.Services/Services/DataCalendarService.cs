@@ -548,7 +548,7 @@ public sealed class SymbolDayData
 /// <summary>
 /// Completeness level for heatmap coloring.
 /// </summary>
-public enum CompletenessLevel
+public enum CompletenessLevel : byte
 {
     NonTrading,  // Weekend/Holiday
     Missing,     // 0% - no data

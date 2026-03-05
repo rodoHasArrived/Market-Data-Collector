@@ -409,7 +409,7 @@ public sealed class ApiClientService : IDisposable
         try
         {
             var status = await _uiApiClient.GetStatusAsync(ct);
-            var latencyMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            var latencyMs = (float)(DateTime.UtcNow - startTime).TotalMilliseconds;
 
             return new ServiceHealthResult
             {
@@ -430,7 +430,7 @@ public sealed class ApiClientService : IDisposable
             {
                 IsReachable = false,
                 IsConnected = false,
-                LatencyMs = (DateTime.UtcNow - startTime).TotalMilliseconds,
+                LatencyMs = (float)(DateTime.UtcNow - startTime).TotalMilliseconds,
                 ErrorMessage = ex.Message
             };
         }

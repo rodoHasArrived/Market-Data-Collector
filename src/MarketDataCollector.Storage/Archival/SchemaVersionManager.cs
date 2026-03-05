@@ -587,7 +587,7 @@ public sealed class SchemaField
 /// <summary>
 /// Field type enum.
 /// </summary>
-public enum SchemaFieldType
+public enum SchemaFieldType : byte
 {
     String,
     Integer,

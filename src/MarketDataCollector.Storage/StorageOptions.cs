@@ -91,7 +91,7 @@ public sealed class StorageOptions
 /// <summary>
 /// File naming and directory structure conventions.
 /// </summary>
-public enum FileNamingConvention
+public enum FileNamingConvention : byte
 {
     /// <summary>
     /// Flat structure: {root}/{symbol}_{type}_{date}.jsonl
@@ -153,7 +153,7 @@ public enum FileNamingConvention
 /// <summary>
 /// Date-based file partitioning strategy.
 /// </summary>
-public enum DatePartition
+public enum DatePartition : byte
 {
     /// <summary>
     /// No date partitioning - all data in single file per symbol/type.
@@ -182,7 +182,7 @@ public enum DatePartition
 /// <summary>
 /// Compression codec options.
 /// </summary>
-public enum CompressionCodec
+public enum CompressionCodec : byte
 {
     /// <summary>No compression.</summary>
     None,
@@ -199,7 +199,7 @@ public enum CompressionCodec
 /// <summary>
 /// Data classification for storage policies.
 /// </summary>
-public enum DataClassification
+public enum DataClassification : byte
 {
     /// <summary>Critical data - never delete (regulatory/compliance).</summary>
     Critical,
@@ -214,7 +214,7 @@ public enum DataClassification
 /// <summary>
 /// Storage tier designation.
 /// </summary>
-public enum StorageTier
+public enum StorageTier : byte
 {
     /// <summary>Hot tier - real-time access, NVMe SSD.</summary>
     Hot,
@@ -231,7 +231,7 @@ public enum StorageTier
 /// <summary>
 /// Quota enforcement policy.
 /// </summary>
-public enum QuotaEnforcementPolicy
+public enum QuotaEnforcementPolicy : byte
 {
     /// <summary>Log warning, continue writing.</summary>
     Warn,
@@ -246,7 +246,7 @@ public enum QuotaEnforcementPolicy
 /// <summary>
 /// Archive reason for perpetual data.
 /// </summary>
-public enum ArchiveReason
+public enum ArchiveReason : byte
 {
     /// <summary>SEC Rule 17a-4, MiFID II.</summary>
     Regulatory,
@@ -263,7 +263,7 @@ public enum ArchiveReason
 /// <summary>
 /// Conflict resolution strategy for multi-source data.
 /// </summary>
-public enum ConflictStrategy
+public enum ConflictStrategy : byte
 {
     /// <summary>Keep first source's data.</summary>
     FirstWins,
@@ -282,7 +282,7 @@ public enum ConflictStrategy
 /// <summary>
 /// Partition dimension for multi-dimensional partitioning.
 /// </summary>
-public enum PartitionDimension
+public enum PartitionDimension : byte
 {
     /// <summary>Partition by date.</summary>
     Date,

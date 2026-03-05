@@ -82,7 +82,7 @@ public sealed record SymbolSlaStatus(
 /// <summary>
 /// SLA state enumeration.
 /// </summary>
-public enum SlaState
+public enum SlaState : byte
 {
     /// <summary>Data is fresh and within SLA.</summary>
     Healthy,

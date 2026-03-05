@@ -10,7 +10,7 @@ namespace MarketDataCollector.Infrastructure.Adapters.Core;
 /// <summary>
 /// Type of quality issue detected.
 /// </summary>
-public enum QualityIssueType
+public enum QualityIssueType : byte
 {
     /// <summary>High price is less than low price.</summary>
     InvalidHighLow,
@@ -55,7 +55,7 @@ public enum QualityIssueType
 /// <summary>
 /// Severity of a quality issue.
 /// </summary>
-public enum QualitySeverity
+public enum QualitySeverity : byte
 {
     /// <summary>Informational only.</summary>
     Info,

@@ -614,7 +614,7 @@ public sealed class WatchlistsChangedEventArgs : EventArgs
 /// <summary>
 /// Type of watchlist change.
 /// </summary>
-public enum WatchlistChangeType
+public enum WatchlistChangeType : byte
 {
     Created,
     Updated,

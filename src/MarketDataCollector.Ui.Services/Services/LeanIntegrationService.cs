@@ -422,7 +422,7 @@ public sealed class BacktestStatus
     public string? Error { get; set; }
 }
 
-public enum BacktestState
+public enum BacktestState : byte
 {
     Unknown,
     Initializing,

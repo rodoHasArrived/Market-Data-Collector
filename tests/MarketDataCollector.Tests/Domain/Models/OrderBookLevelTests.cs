@@ -92,22 +92,6 @@ public class OrderBookLevelTests
     }
 
     [Fact]
-    public void Constructor_WithNegativeLevel_ThrowsArgumentOutOfRangeException()
-    {
-        // Act
-        var act = () => new OrderBookLevel(
-            Side: OrderBookSide.Bid,
-            Level: -1,
-            Price: 100m,
-            Size: 50m
-        );
-
-        // Assert
-        act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithMessage("*Level must be greater than or equal to 0*");
-    }
-
-    [Fact]
     public void Constructor_WithZeroLevel_Succeeds()
     {
         // Act (level 0 is the best bid/ask)

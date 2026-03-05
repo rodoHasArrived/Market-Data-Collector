@@ -212,7 +212,7 @@ public sealed record SplitInfo(
 /// <summary>
 /// Type of dividend.
 /// </summary>
-public enum DividendType
+public enum DividendType : byte
 {
     Regular,
     Special,

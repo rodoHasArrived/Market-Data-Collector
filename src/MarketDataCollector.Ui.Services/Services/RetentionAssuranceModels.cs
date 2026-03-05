@@ -71,7 +71,7 @@ public sealed class GuardrailViolation
 /// <summary>
 /// Severity level for violations.
 /// </summary>
-public enum ViolationSeverity
+public enum ViolationSeverity : byte
 {
     Info,
     Warning,
@@ -200,7 +200,7 @@ public sealed class RetentionAuditReport
 /// <summary>
 /// Cleanup status.
 /// </summary>
-public enum CleanupStatus
+public enum CleanupStatus : byte
 {
     Pending,
     Success,

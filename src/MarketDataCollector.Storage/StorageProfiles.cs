@@ -5,7 +5,7 @@ namespace MarketDataCollector.Storage;
 /// <summary>
 /// Storage profile presets for simplifying configuration.
 /// </summary>
-public enum StorageProfile
+public enum StorageProfile : byte
 {
     Research,
     LowLatency,

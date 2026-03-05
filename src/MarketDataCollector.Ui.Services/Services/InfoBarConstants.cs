@@ -4,7 +4,7 @@ namespace MarketDataCollector.Ui.Services.Services;
 /// Platform-agnostic severity levels for info bar notifications.
 /// Shared across desktop platforms.
 /// </summary>
-public enum InfoBarSeverityLevel
+public enum InfoBarSeverityLevel : byte
 {
     Informational,
     Success,

@@ -11,7 +11,7 @@ namespace MarketDataCollector.Infrastructure.Adapters.Core;
 /// <summary>
 /// Type of data gap detected.
 /// </summary>
-public enum GapType
+public enum GapType : byte
 {
     /// <summary>No data at all for the date.</summary>
     Missing,
@@ -35,7 +35,7 @@ public enum GapType
 /// <summary>
 /// Severity of a data gap.
 /// </summary>
-public enum GapSeverity
+public enum GapSeverity : byte
 {
     /// <summary>Expected gaps (holidays, weekends).</summary>
     Info,

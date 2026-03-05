@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Connection status for data providers.
 /// </summary>
-public enum ConnectionStatus
+public enum ConnectionStatus : byte
 {
     /// <summary>
     /// Not connected.

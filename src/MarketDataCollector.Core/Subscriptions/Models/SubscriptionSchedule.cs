@@ -22,7 +22,7 @@ public sealed record SubscriptionSchedule(
 /// <summary>
 /// Action to perform when schedule triggers.
 /// </summary>
-public enum ScheduleAction
+public enum ScheduleAction : byte
 {
     Enable,
 
@@ -49,7 +49,7 @@ public sealed record ScheduleTiming(
 /// <summary>
 /// Type of schedule frequency.
 /// </summary>
-public enum ScheduleType
+public enum ScheduleType : byte
 {
     OneTime,
 

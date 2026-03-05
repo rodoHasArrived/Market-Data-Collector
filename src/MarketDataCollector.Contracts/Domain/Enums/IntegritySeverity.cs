@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Severity level for data integrity events.
 /// </summary>
-public enum IntegritySeverity
+public enum IntegritySeverity : byte
 {
     /// <summary>
     /// Informational event, no action required.

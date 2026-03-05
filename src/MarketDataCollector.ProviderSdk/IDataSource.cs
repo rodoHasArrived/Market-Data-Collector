@@ -120,7 +120,7 @@ public interface IDataSource : IAsyncDisposable
 /// <summary>
 /// Type of data provided by a data source.
 /// </summary>
-public enum DataSourceType
+public enum DataSourceType : byte
 {
     /// <summary>Real-time streaming data (trades, quotes, market depth).</summary>
     Realtime = 0,
@@ -135,7 +135,7 @@ public enum DataSourceType
 /// <summary>
 /// Category of the data source indicating its business model and reliability.
 /// </summary>
-public enum DataSourceCategory
+public enum DataSourceCategory : byte
 {
     /// <summary>Direct exchange feed (highest reliability, lowest latency).</summary>
     Exchange = 0,
@@ -156,7 +156,7 @@ public enum DataSourceCategory
 /// <summary>
 /// Asset classes supported by a data source.
 /// </summary>
-public enum AssetClass
+public enum AssetClass : byte
 {
     Equity,
     Option,
@@ -299,7 +299,7 @@ public sealed record DataSourceCapabilityInfo(
 /// <summary>
 /// Current operational status of a data source.
 /// </summary>
-public enum DataSourceStatus
+public enum DataSourceStatus : byte
 {
     /// <summary>Not initialized.</summary>
     Uninitialized,

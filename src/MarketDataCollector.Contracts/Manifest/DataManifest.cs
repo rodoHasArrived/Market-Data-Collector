@@ -254,19 +254,19 @@ public sealed class DataQualityMetrics
     /// Gets or sets the completeness score (0.0 to 1.0).
     /// </summary>
     [JsonPropertyName("completenessScore")]
-    public double CompletenessScore { get; set; }
+    public float CompletenessScore { get; set; }
 
     /// <summary>
     /// Gets or sets the data integrity score (0.0 to 1.0).
     /// </summary>
     [JsonPropertyName("integrityScore")]
-    public double IntegrityScore { get; set; }
+    public float IntegrityScore { get; set; }
 
     /// <summary>
     /// Gets or sets the overall quality score (0.0 to 1.0).
     /// </summary>
     [JsonPropertyName("overallScore")]
-    public double OverallScore { get; set; }
+    public float OverallScore { get; set; }
 
     /// <summary>
     /// Gets or sets the number of data gaps detected.

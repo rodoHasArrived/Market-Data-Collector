@@ -272,7 +272,7 @@ public sealed record ProviderCatalogEntry(
     string[] RequiredEnvVars);
 
 /// <summary>Provider tier classification.</summary>
-public enum ProviderTier
+public enum ProviderTier : byte
 {
     Free,
     FreeWithAccount,
@@ -281,7 +281,7 @@ public enum ProviderTier
 }
 
 /// <summary>Credential configuration state for a provider.</summary>
-public enum CredentialState
+public enum CredentialState : byte
 {
     NotRequired,
     Configured,

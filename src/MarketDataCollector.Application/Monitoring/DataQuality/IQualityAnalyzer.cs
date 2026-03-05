@@ -5,7 +5,7 @@ namespace MarketDataCollector.Application.Monitoring.DataQuality;
 /// <summary>
 /// Quality analysis severity levels.
 /// </summary>
-public enum QualityIssueSeverity
+public enum QualityIssueSeverity : byte
 {
     /// <summary>Informational - no action needed.</summary>
     Info,
@@ -26,7 +26,7 @@ public enum QualityIssueSeverity
 /// <summary>
 /// Categories of quality issues for filtering and routing.
 /// </summary>
-public enum QualityIssueCategory
+public enum QualityIssueCategory : byte
 {
     /// <summary>Data gaps or missing values.</summary>
     Gaps,

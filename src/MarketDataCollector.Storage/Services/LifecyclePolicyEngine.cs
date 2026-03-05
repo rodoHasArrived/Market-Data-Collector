@@ -375,7 +375,7 @@ public sealed record LifecycleAction(
     long EstimatedSizeBytes,
     StoragePolicyConfig? Policy = null);
 
-public enum LifecycleActionType
+public enum LifecycleActionType : byte
 {
     TierMigration,
     CompressionUpgrade,

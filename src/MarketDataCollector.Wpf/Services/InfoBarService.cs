@@ -9,7 +9,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// Severity levels for info bar notifications.
 /// Maps to the shared <see cref="InfoBarSeverityLevel"/> for WPF compatibility.
 /// </summary>
-public enum InfoBarSeverity
+public enum InfoBarSeverity : byte
 {
     Informational,
     Success,

@@ -263,7 +263,7 @@ public sealed class BackfillService
             _totalBarsDownloaded = result.BarsWritten;
             _currentProgress.DownloadedBars = result.BarsWritten;
             _currentProgress.CompletedSymbols = result.Symbols?.Length ?? symbols.Length;
-            _currentProgress.BarsPerSecond = BarsPerSecond;
+            _currentProgress.BarsPerSecond = (float)BarsPerSecond;
 
             // Mark all symbols as completed based on API response
             if (_currentProgress.SymbolProgress != null)
@@ -797,7 +797,7 @@ public sealed class BackfillService
                     {
                         _totalBarsDownloaded = backendStatus.BarsWritten;
                         _currentProgress.DownloadedBars = backendStatus.BarsWritten;
-                        _currentProgress.BarsPerSecond = BarsPerSecond;
+                        _currentProgress.BarsPerSecond = (float)BarsPerSecond;
                     }
 
                     if (backendStatus.Success && backendStatus.CompletedUtc.HasValue)

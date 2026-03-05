@@ -301,7 +301,7 @@ public sealed class SloDefinitionRegistry
 /// <summary>
 /// Subsystem classification for SLO grouping.
 /// </summary>
-public enum SloSubsystem
+public enum SloSubsystem : byte
 {
     Ingestion,
     DataCompleteness,
@@ -371,7 +371,7 @@ public sealed record SloComplianceResult(
 /// <summary>
 /// SLO compliance state.
 /// </summary>
-public enum SloComplianceState
+public enum SloComplianceState : byte
 {
     Healthy,
     Warning,

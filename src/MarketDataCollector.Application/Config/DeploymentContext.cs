@@ -279,7 +279,7 @@ public sealed record DeploymentContext
 /// <summary>
 /// Deployment modes supported by the application.
 /// </summary>
-public enum DeploymentMode
+public enum DeploymentMode : byte
 {
     /// <summary>
     /// Headless mode - console application without UI.

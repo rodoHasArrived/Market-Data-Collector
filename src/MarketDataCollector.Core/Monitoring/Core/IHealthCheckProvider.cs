@@ -5,7 +5,7 @@ namespace MarketDataCollector.Application.Monitoring.Core;
 /// <summary>
 /// Represents the severity of a health status.
 /// </summary>
-public enum HealthSeverity
+public enum HealthSeverity : byte
 {
     /// <summary>Component is healthy and fully operational.</summary>
     Healthy,

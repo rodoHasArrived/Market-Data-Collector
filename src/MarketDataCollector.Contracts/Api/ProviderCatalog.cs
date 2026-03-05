@@ -579,7 +579,7 @@ public static class ProviderCatalog
 /// <summary>
 /// Provider type classification for UI routing.
 /// </summary>
-public enum ProviderTypeKind
+public enum ProviderTypeKind : byte
 {
     /// <summary>Real-time streaming data provider.</summary>
     Streaming,

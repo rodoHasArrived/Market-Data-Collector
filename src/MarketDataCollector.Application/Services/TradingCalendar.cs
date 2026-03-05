@@ -572,7 +572,7 @@ public readonly record struct MarketStatus(
 /// <summary>
 /// Market trading state.
 /// </summary>
-public enum MarketState
+public enum MarketState : byte
 {
     /// <summary>Market is closed.</summary>
     Closed,

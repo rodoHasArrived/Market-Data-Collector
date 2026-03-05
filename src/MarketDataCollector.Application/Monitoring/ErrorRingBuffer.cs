@@ -247,7 +247,7 @@ public readonly record struct ErrorEntry(
 /// <summary>
 /// Error severity level.
 /// </summary>
-public enum ErrorLevel
+public enum ErrorLevel : byte
 {
     Warning = 1,
     Error = 2,

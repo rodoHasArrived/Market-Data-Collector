@@ -19,7 +19,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// <summary>
 /// Types of credential operations that can fail.
 /// </summary>
-public enum CredentialOperation
+public enum CredentialOperation : byte
 {
     PromptCredentials,
     PromptApiKey,
@@ -34,7 +34,7 @@ public enum CredentialOperation
 /// <summary>
 /// Severity levels for credential errors.
 /// </summary>
-public enum CredentialErrorSeverity
+public enum CredentialErrorSeverity : byte
 {
     Info,
     Warning,

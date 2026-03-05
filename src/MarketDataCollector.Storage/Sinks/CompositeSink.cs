@@ -8,7 +8,7 @@ namespace MarketDataCollector.Storage.Sinks;
 /// <summary>
 /// Health state of an individual storage sink within the composite.
 /// </summary>
-public enum SinkHealthState
+public enum SinkHealthState : byte
 {
     /// <summary>Sink is operating normally.</summary>
     Healthy,
@@ -36,7 +36,7 @@ public sealed record SinkHealth(
 /// <summary>
 /// Determines how the composite sink behaves when one or more child sinks fail.
 /// </summary>
-public enum FailurePolicy
+public enum FailurePolicy : byte
 {
     /// <summary>Continue writing to remaining healthy sinks when one fails (default).</summary>
     ContinueOnPartialFailure,

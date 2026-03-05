@@ -3,7 +3,7 @@ namespace MarketDataCollector.Application.Config.Credentials;
 /// <summary>
 /// Represents the current authentication status of a provider credential.
 /// </summary>
-public enum CredentialAuthStatus
+public enum CredentialAuthStatus : byte
 {
     /// <summary>
     /// Credential status has not been tested yet.

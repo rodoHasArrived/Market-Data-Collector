@@ -72,7 +72,7 @@ public sealed record DataSourceConfig(
 /// Type of data source.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<DataSourceType>))]
-public enum DataSourceType
+public enum DataSourceType : byte
 {
     /// <summary>
     /// Real-time streaming data (trades, quotes, market depth).

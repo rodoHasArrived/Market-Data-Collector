@@ -24,7 +24,7 @@ public sealed class WorkspaceTemplate
 /// <summary>
 /// Workspace category.
 /// </summary>
-public enum WorkspaceCategory
+public enum WorkspaceCategory : byte
 {
     Monitoring,
     Backfill,

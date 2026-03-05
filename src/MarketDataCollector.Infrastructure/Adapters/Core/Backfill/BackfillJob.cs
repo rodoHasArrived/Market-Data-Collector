@@ -318,7 +318,7 @@ public sealed record BackfillError(
 /// <summary>
 /// Status of a backfill job.
 /// </summary>
-public enum BackfillJobStatus
+public enum BackfillJobStatus : byte
 {
     /// <summary>Job is created but not started.</summary>
     Pending,
@@ -345,7 +345,7 @@ public enum BackfillJobStatus
 /// <summary>
 /// Status of a symbol within a backfill job.
 /// </summary>
-public enum SymbolBackfillStatus
+public enum SymbolBackfillStatus : byte
 {
     Pending,
     InProgress,
@@ -357,7 +357,7 @@ public enum SymbolBackfillStatus
 /// <summary>
 /// Data granularity for backfill requests.
 /// </summary>
-public enum DataGranularity
+public enum DataGranularity : byte
 {
     /// <summary>1-minute bars.</summary>
     Minute1,

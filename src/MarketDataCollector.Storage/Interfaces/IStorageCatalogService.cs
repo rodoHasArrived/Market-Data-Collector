@@ -370,7 +370,7 @@ public sealed class CatalogSearchCriteria
 /// <summary>
 /// Export format for catalog.
 /// </summary>
-public enum CatalogExportFormat
+public enum CatalogExportFormat : byte
 {
     /// <summary>
     /// JSON format.

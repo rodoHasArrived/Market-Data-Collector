@@ -479,7 +479,7 @@ public record MappingProviderInfo(
 /// <summary>
 /// Symbol transformation types.
 /// </summary>
-public enum SymbolTransform
+public enum SymbolTransform : byte
 {
     /// <summary>No transformation, identity.</summary>
     None,

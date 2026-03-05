@@ -739,7 +739,7 @@ public sealed record BackfillableGap
     public bool CanRepair => CanBackfill;
 }
 
-public enum CompletenessStatus
+public enum CompletenessStatus : byte
 {
     Complete,          // >= 99%
     MinorGaps,         // 95-99%
@@ -748,7 +748,7 @@ public enum CompletenessStatus
     NonTradingDay      // Weekend or holiday
 }
 
-public enum GapType
+public enum GapType : byte
 {
     Single,
     Consecutive,

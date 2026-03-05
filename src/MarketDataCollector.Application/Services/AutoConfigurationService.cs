@@ -1014,7 +1014,7 @@ public sealed class AutoConfigurationService
 /// <summary>
 /// Available configuration presets for different user roles.
 /// </summary>
-public enum ConfigPreset
+public enum ConfigPreset : byte
 {
     /// <summary>Historical analysis, daily bars, Parquet export.</summary>
     Researcher,
@@ -1049,7 +1049,7 @@ public sealed record FirstTimeConfigOptions(
 /// <summary>
 /// Use case for configuration.
 /// </summary>
-public enum UseCase
+public enum UseCase : byte
 {
     Development,
     Research,
@@ -1061,7 +1061,7 @@ public enum UseCase
 /// <summary>
 /// Preset symbol lists.
 /// </summary>
-public enum SymbolPreset
+public enum SymbolPreset : byte
 {
     Custom,
     USMajorIndices,

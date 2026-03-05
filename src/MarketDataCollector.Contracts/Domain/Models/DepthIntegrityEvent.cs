@@ -12,7 +12,7 @@ public sealed record DepthIntegrityEvent(
     string Symbol,
     [property: JsonPropertyName("integrityKind")] DepthIntegrityKind Kind,
     string Description,
-    int Position,
+    ushort Position,
     DepthOperation Operation,
     OrderBookSide Side,
     long SequenceNumber,

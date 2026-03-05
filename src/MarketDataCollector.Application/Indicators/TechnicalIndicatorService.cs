@@ -527,7 +527,7 @@ public sealed class IndicatorConfiguration
 /// <summary>
 /// Types of technical indicators supported.
 /// </summary>
-public enum IndicatorType
+public enum IndicatorType : byte
 {
     SMA,
     EMA,

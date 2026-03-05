@@ -11,7 +11,7 @@ public sealed record IntegrityEvent(
     string Symbol,
     IntegritySeverity Severity,
     string Description,
-    int? ErrorCode,
+    ushort? ErrorCode,
     long SequenceNumber,
     string? StreamId = null,
     string? Venue = null

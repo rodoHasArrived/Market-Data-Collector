@@ -5,7 +5,7 @@ namespace MarketDataCollector.Application.Monitoring.Core;
 /// <summary>
 /// Severity levels for monitoring alerts.
 /// </summary>
-public enum AlertSeverity
+public enum AlertSeverity : byte
 {
     /// <summary>Informational message, no action required.</summary>
     Info,
@@ -23,7 +23,7 @@ public enum AlertSeverity
 /// <summary>
 /// Categories for monitoring alerts.
 /// </summary>
-public enum AlertCategory
+public enum AlertCategory : byte
 {
     /// <summary>Connection-related alerts (WebSocket, API connectivity).</summary>
     Connection,

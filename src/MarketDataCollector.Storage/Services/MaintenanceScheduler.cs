@@ -607,7 +607,7 @@ public sealed record ResourceLimits(
     int MaxDiskIoMbps = 500
 );
 
-public enum MaintenanceType
+public enum MaintenanceType : byte
 {
     All,
     HealthCheck,
@@ -645,7 +645,7 @@ public sealed record ResourceRequirements(
     string[]? ExclusivePaths = null
 );
 
-public enum JobPriority
+public enum JobPriority : byte
 {
     Critical,
     High,
@@ -684,7 +684,7 @@ public sealed record ScheduleOptions(
     TimeSpan MaxWaitTime = default
 );
 
-public enum JobStatus
+public enum JobStatus : byte
 {
     Pending,
     Running,

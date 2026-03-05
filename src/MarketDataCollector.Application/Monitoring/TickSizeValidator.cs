@@ -338,7 +338,7 @@ public sealed record TickSizeValidatorConfig
 /// <summary>
 /// Type of price being validated.
 /// </summary>
-public enum TickSizePriceType
+public enum TickSizePriceType : byte
 {
     Trade,
     Bid,

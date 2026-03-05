@@ -155,7 +155,7 @@ public sealed class PackageOptions
 /// <summary>
 /// Package archive format.
 /// </summary>
-public enum PackageFormat
+public enum PackageFormat : byte
 {
     /// <summary>ZIP archive - widely compatible.</summary>
     Zip,
@@ -170,7 +170,7 @@ public enum PackageFormat
 /// <summary>
 /// Compression level for package archives.
 /// </summary>
-public enum PackageCompressionLevel
+public enum PackageCompressionLevel : byte
 {
     /// <summary>No compression - fastest, largest files.</summary>
     None,
@@ -188,7 +188,7 @@ public enum PackageCompressionLevel
 /// <summary>
 /// Data format conversion options.
 /// </summary>
-public enum PackageDataFormat
+public enum PackageDataFormat : byte
 {
     /// <summary>Keep original format (JSONL, Parquet, etc.).</summary>
     Original,
@@ -206,7 +206,7 @@ public enum PackageDataFormat
 /// <summary>
 /// Internal file layout within the package.
 /// </summary>
-public enum PackageLayout
+public enum PackageLayout : byte
 {
     /// <summary>Organize by date: data/{date}/{symbol}/{type}.jsonl</summary>
     ByDate,
@@ -224,7 +224,7 @@ public enum PackageLayout
 /// <summary>
 /// Target platforms for import script generation.
 /// </summary>
-public enum ImportScriptTarget
+public enum ImportScriptTarget : byte
 {
     /// <summary>Python with pandas.</summary>
     Python,

@@ -6,7 +6,7 @@ namespace MarketDataCollector.Ui.Services;
 /// <summary>
 /// Notification type levels.
 /// </summary>
-public enum NotificationType
+public enum NotificationType : byte
 {
     Info,
     Success,
