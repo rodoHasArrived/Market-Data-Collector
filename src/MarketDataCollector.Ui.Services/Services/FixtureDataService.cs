@@ -104,14 +104,14 @@ public sealed class FixtureDataService
             ["Alpaca"] = new()
             {
                 IsAvailable = true,
-                LatencyMs = 45.2,
+                LatencyMs = 45.2f,
                 ErrorMessage = null,
                 LastChecked = DateTime.UtcNow
             },
             ["Polygon"] = new()
             {
                 IsAvailable = true,
-                LatencyMs = 67.8,
+                LatencyMs = 67.8f,
                 ErrorMessage = null,
                 LastChecked = DateTime.UtcNow
             },
