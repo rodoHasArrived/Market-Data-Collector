@@ -314,19 +314,19 @@ public sealed class TimestampMonotonicityChecker : IDisposable
     /// </summary>
     private sealed class SymbolTimestampState
     {
-        private DateTimeOffset _lastEventTimestamp = DateTimeOffset.MinValue;
-        private DateTimeOffset _lastEventTime = DateTimeOffset.MinValue;
+        private long _lastEventTimestampTicks = DateTimeOffset.MinValue.UtcTicks;
+        private long _lastEventTimeTicks = DateTimeOffset.MinValue.UtcTicks;
         private DateTimeOffset _lastAlertTime = DateTimeOffset.MinValue;
         private DateTimeOffset _lastGapAlertTime = DateTimeOffset.MinValue;
-        private DateTimeOffset _lastViolationTime = DateTimeOffset.MinValue;
+        private long _lastViolationTimeTicks = DateTimeOffset.MinValue.UtcTicks;
         private long _totalEvents;
         private long _totalViolations;
         private long _totalGaps;
         private int _consecutiveViolations;
 
-        public DateTimeOffset LastEventTimestamp => Volatile.Read(ref _lastEventTimestamp);
-        public DateTimeOffset LastEventTime => Volatile.Read(ref _lastEventTime);
-        public DateTimeOffset LastViolationTime => Volatile.Read(ref _lastViolationTime);
+        public DateTimeOffset LastEventTimestamp => new DateTimeOffset(new DateTime(Volatile.Read(ref _lastEventTimestampTicks), DateTimeKind.Utc));
+        public DateTimeOffset LastEventTime => new DateTimeOffset(new DateTime(Volatile.Read(ref _lastEventTimeTicks), DateTimeKind.Utc));
+        public DateTimeOffset LastViolationTime => new DateTimeOffset(new DateTime(Volatile.Read(ref _lastViolationTimeTicks), DateTimeKind.Utc));
         public long TotalEvents => Interlocked.Read(ref _totalEvents);
         public long TotalViolations => Interlocked.Read(ref _totalViolations);
         public long TotalGaps => Interlocked.Read(ref _totalGaps);
@@ -335,8 +335,8 @@ public sealed class TimestampMonotonicityChecker : IDisposable
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RecordEvent(DateTimeOffset timestamp)
         {
-            Volatile.Write(ref _lastEventTimestamp, timestamp);
-            Volatile.Write(ref _lastEventTime, DateTimeOffset.UtcNow);
+            Volatile.Write(ref _lastEventTimestampTicks, timestamp.UtcTicks);
+            Volatile.Write(ref _lastEventTimeTicks, DateTimeOffset.UtcNow.UtcTicks);
             Interlocked.Increment(ref _totalEvents);
         }
 
@@ -344,7 +344,7 @@ public sealed class TimestampMonotonicityChecker : IDisposable
         {
             Interlocked.Increment(ref _totalViolations);
             Interlocked.Increment(ref _consecutiveViolations);
-            Volatile.Write(ref _lastViolationTime, DateTimeOffset.UtcNow);
+            Volatile.Write(ref _lastViolationTimeTicks, DateTimeOffset.UtcNow.UtcTicks);
         }
 
         public void IncrementGapCount()
