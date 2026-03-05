@@ -61,6 +61,12 @@ Documents are archived when:
 | **UWP_COMPREHENSIVE_AUDIT.md** | 2026-02-21 | UWP fully removed from codebase | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
 | **CONFIG_CONSOLIDATION_REPORT.md** | 2026-02-21 | Consolidation work complete, no duplicates found | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
 
+### Desktop Evaluation Summaries
+
+| Document | Date Archived | Reason | Current Reference |
+|----------|---------------|--------|-------------------|
+| **desktop-end-user-improvements-shortlist.md** | 2026-03-04 | Subset of full desktop evaluation | [Desktop End-User Improvements](../evaluations/desktop-end-user-improvements.md) |
+
 ### Design Documents
 
 | Document | Date Archived | Reason | Current Reference |

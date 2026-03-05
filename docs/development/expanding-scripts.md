@@ -300,7 +300,7 @@ Add the new job to the `report` job's `needs` list and add a result row.
 
 ### Step 4: Update documentation
 
-Update `docs/guides/documentation-automation.md` with your new script's details.
+Update `docs/development/documentation-automation.md` with your new script's details.
 
 ## Testing
 
