@@ -4,7 +4,7 @@ namespace MarketDataCollector.Application.ResultTypes;
 /// Standardized error codes for the Market Data Collector system.
 /// Error codes are grouped by category using numeric ranges for easy filtering and categorization.
 /// </summary>
-public enum ErrorCode : byte
+public enum ErrorCode : int
 {
     // ========================================
     // General Errors (1000-1099)

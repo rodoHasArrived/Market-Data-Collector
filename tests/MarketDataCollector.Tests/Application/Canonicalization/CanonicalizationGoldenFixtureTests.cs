@@ -104,7 +104,7 @@ public sealed class CanonicalizationGoldenFixtureTests
 
         if (expectedEl.TryGetProperty("canonicalizationVersion", out var expVersion))
         {
-            result.CanonicalizationVersion.Should().Be(expVersion.GetInt32(),
+            result.CanonicalizationVersion.Should().Be((byte)expVersion.GetInt32(),
                 because: $"[{fixtureFileName}] {description}: canonicalizationVersion mismatch");
         }
 

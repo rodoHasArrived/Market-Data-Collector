@@ -378,7 +378,7 @@ public sealed class TradeDataCollector
 
         private static void RemoveFromRollingWindow(RollingWindowState state, Trade trade)
         {
-            state.TradeCount = Math.Max(0, state.TradeCount - 1);
+            state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);
             state.VwapNumerator -= trade.Price * trade.Size;
             state.VwapDenominator = Math.Max(0, state.VwapDenominator - trade.Size);
             switch (trade.Aggressor)

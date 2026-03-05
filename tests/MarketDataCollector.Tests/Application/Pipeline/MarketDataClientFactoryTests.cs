@@ -77,7 +77,7 @@ public sealed class MarketDataClientFactoryTests
         var registry = CreateRegistryWithFactories();
 
         // Act - use an enum value with no registered factory; falls back to IB
-        var client = registry.CreateStreamingClient((DataSourceKind)999);
+        var client = registry.CreateStreamingClient((DataSourceKind)200);
 
         // Assert
         client.Should().BeOfType<IBMarketDataClient>();

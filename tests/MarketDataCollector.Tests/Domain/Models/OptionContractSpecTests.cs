@@ -78,12 +78,10 @@ public sealed class OptionContractSpecTests
             .Which.ParamName.Should().Be("Strike");
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void Constructor_WithInvalidMultiplier_ThrowsArgumentOutOfRangeException(int multiplier)
+    [Fact]
+    public void Constructor_WithZeroMultiplier_ThrowsArgumentOutOfRangeException()
     {
-        var act = () => CreateSpec(multiplier: multiplier);
+        var act = () => CreateSpec(multiplier: 0);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .Which.ParamName.Should().Be("Multiplier");
@@ -242,7 +240,7 @@ public sealed class OptionContractSpecTests
         decimal strike = 150m,
         OptionRight right = OptionRight.Call,
         OptionStyle style = OptionStyle.American,
-        int multiplier = 100,
+        ushort multiplier = 100,
         InstrumentType instrumentType = InstrumentType.EquityOption)
         => new(underlying, strike, new DateOnly(2026, 3, 21), right, style, multiplier, InstrumentType: instrumentType);
 }
