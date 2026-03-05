@@ -209,7 +209,7 @@ internal sealed record DeadLetterRecord(
     string Symbol,
     long Sequence,
     string Source,
-    int SchemaVersion,
+    byte SchemaVersion,
     IReadOnlyList<string> ValidationErrors,
     MarketEvent Event);
 

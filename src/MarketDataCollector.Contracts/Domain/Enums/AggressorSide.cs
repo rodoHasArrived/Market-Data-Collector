@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Indicates which side of the market initiated the trade.
 /// </summary>
-public enum AggressorSide
+public enum AggressorSide : byte
 {
     /// <summary>
     /// The aggressor side could not be determined.

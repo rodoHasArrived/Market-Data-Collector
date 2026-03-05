@@ -557,7 +557,7 @@ public class MarketDepthCollectorTests
         string symbol,
         DepthOperation operation,
         OrderBookSide side,
-        int position,
+        ushort position,
         decimal price,
         decimal size,
         long sequenceNumber = 0)

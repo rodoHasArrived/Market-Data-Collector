@@ -77,7 +77,7 @@ public sealed class SampleDataGenerator
                     var depthCount = _random.Next(2, 6);
                     for (var i = 0; i < depthCount && events.Count < options.MaxEvents; i++)
                     {
-                        var depth = GenerateDepthUpdate(symbol, currentTime, basePrice, i);
+                        var depth = GenerateDepthUpdate(symbol, currentTime, basePrice, (ushort)i);
                         events.Add(depth);
                         result.DepthUpdateCount++;
                     }
@@ -240,7 +240,7 @@ public sealed class SampleDataGenerator
         return MarketEvent.BboQuote(timestamp, symbol, quote, source: "SAMPLE");
     }
 
-    private MarketEvent GenerateDepthUpdate(string symbol, DateTimeOffset timestamp, decimal basePrice, int level)
+    private MarketEvent GenerateDepthUpdate(string symbol, DateTimeOffset timestamp, decimal basePrice, ushort level)
     {
         var side = _random.NextDouble() > 0.5 ? OrderBookSide.Bid : OrderBookSide.Ask;
         var priceOffset = level * 0.01m * (side == OrderBookSide.Bid ? -1 : 1);

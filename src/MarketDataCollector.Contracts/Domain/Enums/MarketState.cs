@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Represents the current state of the market.
 /// </summary>
-public enum MarketState
+public enum MarketState : byte
 {
     /// <summary>
     /// Market is in normal trading hours.

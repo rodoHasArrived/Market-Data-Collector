@@ -51,7 +51,7 @@ public sealed class IBCallbackRouter
         var upd = new MarketDepthUpdate(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: symbol,
-            Position: position,
+            Position: (ushort)position,
             Operation: (DepthOperation)operation,
             Side: side == 0 ? OrderBookSide.Bid : OrderBookSide.Ask,
             Price: (decimal)price,
@@ -72,7 +72,7 @@ public sealed class IBCallbackRouter
         var upd = new MarketDepthUpdate(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: symbol,
-            Position: position,
+            Position: (ushort)position,
             Operation: (DepthOperation)operation,
             Side: side == 0 ? OrderBookSide.Bid : OrderBookSide.Ask,
             Price: (decimal)price,

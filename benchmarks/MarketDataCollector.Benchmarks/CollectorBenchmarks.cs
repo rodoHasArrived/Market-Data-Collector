@@ -125,7 +125,7 @@ public class DepthCollectorBenchmarks
             _insertUpdates[i] = new MarketDepthUpdate(
                 Timestamp: DateTimeOffset.UtcNow.AddMilliseconds(i),
                 Symbol: "SPY",
-                Position: pos > 0 ? random.Next(0, Math.Min(pos, 49)) : 0,
+                Position: (ushort)(pos > 0 ? random.Next(0, Math.Min(pos, 49)) : 0),
                 Operation: DepthOperation.Insert,
                 Side: side,
                 Price: side == OrderBookSide.Bid ? 450m - pos * 0.01m : 450.01m + pos * 0.01m,
@@ -160,7 +160,7 @@ public class DepthCollectorBenchmarks
             _mixedUpdates[i] = new MarketDepthUpdate(
                 Timestamp: DateTimeOffset.UtcNow.AddMilliseconds(i),
                 Symbol: "SPY",
-                Position: pos,
+                Position: (ushort)pos,
                 Operation: op,
                 Side: side,
                 Price: side == OrderBookSide.Bid ? 450m - pos * 0.01m : 450.01m + pos * 0.01m,

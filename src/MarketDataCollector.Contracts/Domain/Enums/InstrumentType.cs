@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Classification of financial instruments supported by the system.
 /// </summary>
-public enum InstrumentType
+public enum InstrumentType : byte
 {
     /// <summary>
     /// Equity security (common stock, ETF, ADR).

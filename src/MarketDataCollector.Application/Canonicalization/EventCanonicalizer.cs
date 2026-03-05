@@ -20,13 +20,13 @@ public sealed class EventCanonicalizer : IEventCanonicalizer
     private readonly ICanonicalSymbolRegistry _symbols;
     private readonly ConditionCodeMapper _conditions;
     private readonly VenueMicMapper _venues;
-    private readonly int _version;
+    private readonly byte _version;
 
     public EventCanonicalizer(
         ICanonicalSymbolRegistry symbols,
         ConditionCodeMapper conditions,
         VenueMicMapper venues,
-        int version = 1)
+        byte version = 1)
     {
         _symbols = symbols ?? throw new ArgumentNullException(nameof(symbols));
         _conditions = conditions ?? throw new ArgumentNullException(nameof(conditions));

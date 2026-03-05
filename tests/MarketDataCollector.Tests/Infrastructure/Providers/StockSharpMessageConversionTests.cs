@@ -172,7 +172,7 @@ public sealed class StockSharpMessageConversionTests
         var updates = Enumerable.Range(0, 5).Select(i => new MarketDepthUpdate(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SPY",
-            Position: i,
+            Position: (ushort)i,
             Operation: DepthOperation.Update,
             Side: OrderBookSide.Bid,
             Price: 450.00m - (i * 0.01m),

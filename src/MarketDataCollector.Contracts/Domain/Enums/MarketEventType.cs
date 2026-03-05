@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Type of market event.
 /// </summary>
-public enum MarketEventType
+public enum MarketEventType : byte
 {
     /// <summary>
     /// Unknown event type.

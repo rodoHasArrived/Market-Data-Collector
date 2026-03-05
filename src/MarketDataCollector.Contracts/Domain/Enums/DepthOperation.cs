@@ -3,7 +3,7 @@ namespace MarketDataCollector.Contracts.Domain.Enums;
 /// <summary>
 /// Type of operation for a depth update.
 /// </summary>
-public enum DepthOperation
+public enum DepthOperation : byte
 {
     /// <summary>
     /// Insert a new level.

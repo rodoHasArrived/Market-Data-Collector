@@ -270,13 +270,13 @@ public sealed class StockSharpSubscriptionTests : IAsyncLifetime
         // StockSharp sends complete book snapshots
         var ts = DateTimeOffset.UtcNow;
         var bids = Enumerable.Range(0, 10).Select(i => new MarketDepthUpdate(
-            Timestamp: ts, Symbol: "SPY", Position: i,
+            Timestamp: ts, Symbol: "SPY", Position: (ushort)i,
             Operation: DepthOperation.Update, Side: OrderBookSide.Bid,
             Price: 450.00m - (i * 0.01m), Size: 100m * (i + 1),
             StreamId: "STOCKSHARP", Venue: "ARCA")).ToList();
 
         var asks = Enumerable.Range(0, 10).Select(i => new MarketDepthUpdate(
-            Timestamp: ts, Symbol: "SPY", Position: i,
+            Timestamp: ts, Symbol: "SPY", Position: (ushort)i,
             Operation: DepthOperation.Update, Side: OrderBookSide.Ask,
             Price: 450.01m + (i * 0.01m), Size: 80m * (i + 1),
             StreamId: "STOCKSHARP", Venue: "ARCA")).ToList();

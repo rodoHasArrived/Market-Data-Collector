@@ -65,7 +65,7 @@ public static class MessageConverter
         {
             if (msg.Bids != null)
             {
-                var i = 0;
+                ushort i = 0;
                 foreach (var q in msg.Bids)
                 {
                     bids.Add(new OrderBookLevel(
@@ -78,7 +78,7 @@ public static class MessageConverter
 
             if (msg.Asks != null)
             {
-                var i = 0;
+                ushort i = 0;
                 foreach (var q in msg.Asks)
                 {
                     asks.Add(new OrderBookLevel(

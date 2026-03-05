@@ -1057,7 +1057,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                         var update = new MarketDepthUpdate(
                             Timestamp: timestamp,
                             Symbol: symbol,
-                            Position: i,
+                            Position: (ushort)i,
                             Operation: DepthOperation.Update,
                             Side: OrderBookSide.Bid,
                             Price: price,
@@ -1077,7 +1077,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                         var update = new MarketDepthUpdate(
                             Timestamp: timestamp,
                             Symbol: symbol,
-                            Position: i,
+                            Position: (ushort)i,
                             Operation: DepthOperation.Update,
                             Side: OrderBookSide.Ask,
                             Price: price,
