@@ -2,7 +2,7 @@ name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-05
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951441
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22698268736
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,13 +19,15 @@ messages:
 
       ## Findings from Workflow Run
       ### Code Quality
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90...`
-      - `2026-03-05T00:21:27.0316045Z 1. **Warning CS1998** (AutoResubscribePolicy.cs, line 90) - This warning indicates an 'async' method that lacks 'await' o...`
-      - `2026-03-05T00:21:27.1151358Z [36;1m1. **Warning CS1998** (AutoResubscribePolicy.cs, line 90) - This warning indicates an 'async' method that lacks 'a...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(147,33): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(146,33): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(145,14): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(144,13): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(143,19): warning CS1573:...`
 
 
       ## Error Codes
-      - `CS1998`
+      - `CS1573`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -38,7 +40,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951441
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22698268736
 
       Additional context:
       {{additional_context}}
