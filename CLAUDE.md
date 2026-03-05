@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 664 source files
+**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 954 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,19 +22,19 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 664 |
-| C# Files | 652 |
-| F# Files | 12 |
-| Test Files | 219 |
-| Test Methods | ~3,444 |
-| Documentation Files | 135 |
+| Total Source Files | 954 |
+| C# Files | 938 |
+| F# Files | 16 |
+| Test Files | 230 |
+| Test Methods | ~3,739 |
+| Documentation Files | 165 |
 | Main Projects | 13 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
-| API Route Constants | 283 |
-| Endpoint Files | 35 |
-| CI/CD Workflows | 22 |
-| Makefile Targets | 78 |
+| API Route Constants | 300 |
+| Endpoint Files | 38 |
+| CI/CD Workflows | 25 |
+| Makefile Targets | 90 |
 
 ---
 
@@ -1700,7 +1700,7 @@ public interface IHistoricalDataProvider
 
 The application exposes a REST API when running with `--ui` or `--mode web`.
 
-**Implementation Note:** The codebase declares 264 route constants in `UiApiRoutes.cs`, with 254 endpoints having full handler implementations (96% coverage). Core endpoints (status, health, config, backfill) are fully functional. A small number of advanced endpoints may return stub responses or 501 Not Implemented.
+**Implementation Note:** The codebase declares 300 route constants in `UiApiRoutes.cs` across 38 endpoint files. Core endpoints (status, health, config, backfill) are fully functional. A small number of advanced endpoints may return stub responses or 501 Not Implemented.
 
 ### Core Endpoints
 | Endpoint | Method | Purpose |
@@ -1926,51 +1926,98 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 | `tests/MarketDataCollector.Tests/Infrastructure/Providers/` | Provider/adapter tests | 12 |
 | `tests/MarketDataCollector.Tests/Infrastructure/Resilience/` | Resilience tests | 2 |
 | `tests/MarketDataCollector.Tests/Infrastructure/Shared/` | Shared infra tests | 2 |
-| `tests/MarketDataCollector.Tests/Integration/` | End-to-end & endpoint tests | 23 |
+| `tests/MarketDataCollector.Tests/Integration/` | End-to-end & endpoint tests | 27 |
 | `tests/MarketDataCollector.Tests/Serialization/` | JSON serialization tests | 1 |
 | `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 19 |
 | `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
 | `tests/MarketDataCollector.Tests/ProviderSdk/` | Provider SDK contract tests | 4 |
 | `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 4 |
-| `tests/MarketDataCollector.Wpf.Tests/Services/` | WPF desktop service tests | 8 |
-| `tests/MarketDataCollector.Ui.Tests/Services/` | Desktop UI service tests | 18 |
+| `tests/MarketDataCollector.Wpf.Tests/Services/` | WPF desktop service tests | 19 |
+| `tests/MarketDataCollector.Ui.Tests/Services/` | Desktop UI service tests | 50 |
 | `tests/MarketDataCollector.Ui.Tests/Collections/` | UI collection tests | 2 |
 
-**WPF Desktop Service Tests (142 tests, Windows only):**
-- `NavigationServiceTests` - Page navigation, registration, history
-- `ConfigServiceTests` - Configuration management, validation
-- `StatusServiceTests` - Status tracking, events, HTTP client mocking
-- `ConnectionServiceTests` - Connection management, monitoring, auto-reconnect
+**WPF Desktop Service Tests (324 tests, Windows only):**
+- `AdminMaintenanceServiceTests` - Admin maintenance operations
 - `BackgroundTaskSchedulerServiceTests` - Background task scheduling
+- `ConfigServiceTests` - Configuration management, validation
+- `ConnectionServiceTests` - Connection management, monitoring, auto-reconnect
+- `ExportPresetServiceTests` - Export preset management
+- `FirstRunServiceTests` - First-run experience
 - `InfoBarServiceTests` - Info bar display and management
+- `KeyboardShortcutServiceTests` - Keyboard shortcut handling
 - `MessagingServiceTests` - Messaging infrastructure
-- `WpfDataQualityServiceTests` - Data quality monitoring
+- `NavigationServiceTests` - Page navigation, registration, history
+- `NotificationServiceTests` - Notification management
+- `OfflineTrackingPersistenceServiceTests` - Offline tracking persistence
+- `PendingOperationsQueueServiceTests` - Pending operations queue
+- `RetentionAssuranceServiceTests` - Retention assurance checks
+- `StatusServiceTests` - Status tracking, events, HTTP client mocking
+- `StorageServiceTests` - Storage service operations
+- `TooltipServiceTests` - Tooltip service behavior
+- `WatchlistServiceTests` - Watchlist management
+- `WorkspaceServiceTests` - Workspace management
 
-**Desktop UI Service Tests (293 tests, Windows only):**
+**Desktop UI Service Tests (927 tests, Windows only):**
+- `ActivityFeedServiceTests` - Activity feed tracking
+- `AlertServiceTests` - Alert management
+- `AnalysisExportServiceBaseTests` - Analysis export base behavior
 - `ApiClientServiceTests` - API client configuration and HTTP interactions
-- `BackfillServiceTests` - Backfill coordination and scheduling
+- `ArchiveBrowserServiceTests` - Archive browsing
+- `BackendServiceManagerBaseTests` - Backend service manager base
+- `BackfillApiServiceTests` - Backfill API interactions
+- `BackfillCheckpointServiceTests` - Backfill checkpoint tracking
 - `BackfillProviderConfigServiceTests` - Backfill provider configuration
+- `BackfillServiceTests` - Backfill coordination and scheduling
 - `ChartingServiceTests` - Charting data preparation
+- `CollectionSessionServiceTests` - Collection session management
+- `CommandPaletteServiceTests` - Command palette behavior
+- `ConfigServiceBaseTests` - Configuration service base behavior
+- `ConfigServiceTests` - Configuration management
 - `ConnectionServiceBaseTests` - Base connection service behavior
+- `CredentialServiceTests` - Credential management
+- `DataCalendarServiceTests` - Data calendar operations
+- `DataCompletenessServiceTests` - Data completeness checking
+- `DataQualityServiceBaseTests` - Data quality base service
+- `DataSamplingServiceTests` - Data sampling operations
 - `DiagnosticsServiceTests` - Diagnostics collection
 - `ErrorHandlingServiceTests` - Error handling and formatting
+- `EventReplayServiceTests` - Event replay operations
 - `FixtureDataServiceTests` - Mock data generation for offline development
 - `FormValidationServiceTests` - Form validation rules and helpers
+- `IntegrityEventsServiceTests` - Integrity event tracking
 - `LeanIntegrationServiceTests` - QuantConnect Lean integration
+- `LiveDataServiceTests` - Live data operations
+- `LoggingServiceBaseTests` - Logging service base behavior
+- `ManifestServiceTests` - Data manifest management
+- `NotificationServiceBaseTests` - Notification base behavior
+- `NotificationServiceTests` - Notification management
 - `OrderBookVisualizationServiceTests` - Order book rendering
 - `PortfolioImportServiceTests` - Portfolio import parsing
+- `ProviderHealthServiceTests` - Provider health monitoring
+- `ProviderManagementServiceTests` - Provider management operations
+- `ScheduledMaintenanceServiceTests` - Scheduled maintenance
+- `ScheduleManagerServiceTests` - Schedule management
 - `SchemaServiceTests` - Schema validation
+- `SearchServiceTests` - Search functionality
+- `SmartRecommendationsServiceTests` - Smart recommendations
+- `StatusServiceBaseTests` - Status service base behavior
 - `StorageAnalyticsServiceTests` - Storage analytics
+- `SymbolGroupServiceTests` - Symbol group management
+- `SymbolManagementServiceTests` - Symbol management operations
+- `SymbolMappingServiceTests` - Symbol mapping
 - `SystemHealthServiceTests` - System health monitoring
 - `TimeSeriesAlignmentServiceTests` - Time series alignment
 - `WatchlistServiceTests` - Watchlist management
-- `AlertServiceTests` - Alert management
 - `BoundedObservableCollectionTests` - Bounded collection behavior
 - `CircularBufferTests` - Circular buffer operations
 
-**Integration Endpoint Tests (18 files):**
+**Integration Endpoint Tests (21 files):**
+- `AuthEndpointTests` - Authentication API endpoints
 - `BackfillEndpointTests` - Backfill API endpoints
 - `ConfigEndpointTests` - Configuration API endpoints
+- `EndpointIntegrationTestBase` - Shared endpoint test base class
+- `EndpointTestCollection` - Test collection definitions
+- `EndpointTestFixture` - Shared test fixture setup
 - `FailoverEndpointTests` - Failover API endpoints
 - `HealthEndpointTests` - Health check endpoints
 - `HistoricalEndpointTests` - Historical data endpoints
@@ -1978,6 +2025,7 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 - `LiveDataEndpointTests` - Live data streaming endpoints
 - `MaintenanceEndpointTests` - Maintenance API endpoints
 - `NegativePathEndpointTests` - Error handling and edge cases
+- `OptionsEndpointTests` - Options chain API endpoints
 - `ProviderEndpointTests` - Provider management endpoints
 - `QualityDropsEndpointTests` - Quality monitoring endpoints
 - `ResponseSchemaSnapshotTests` - Response schema validation
@@ -2199,18 +2247,21 @@ See `docs/operations/portable-data-packager.md` for details.
 
 ## CI/CD Pipelines
 
-The project uses GitHub Actions with 22 workflows in `.github/workflows/`:
+The project uses GitHub Actions with 25 workflows in `.github/workflows/`:
 
 | Workflow | Purpose |
 |----------|---------|
 | `benchmark.yml` | Performance benchmarks |
+| `bottleneck-detection.yml` | Performance bottleneck detection |
 | `build-observability.yml` | Build metrics collection |
+| `close-duplicate-issues.yml` | Automatic duplicate issue closure |
 | `code-quality.yml` | Code quality checks (formatting, analyzers) |
 | `copilot-setup-steps.yml` | Copilot environment setup |
 | `desktop-builds.yml` | Desktop app builds (WPF) |
 | `docker.yml` | Docker image building and publishing |
 | `documentation.yml` | Documentation generation, AI instruction sync, TODO scanning |
 | `dotnet-desktop.yml` | Desktop application builds |
+| `export-project-artifact.yml` | Project artifact export |
 | `labeling.yml` | PR auto-labeling |
 | `nightly.yml` | Nightly builds |
 | `pr-checks.yml` | PR validation checks |
@@ -2471,4 +2522,4 @@ See `docs/HELP.md#troubleshooting` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-02-22 (statistics audited)*
+*Last Updated: 2026-03-05 (statistics audited)*
