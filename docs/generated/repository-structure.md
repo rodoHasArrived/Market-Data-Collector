@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-05 07:46:23 UTC
+> Auto-generated on 2026-03-05 09:19:31 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -9,6 +9,19 @@ This document provides an overview of the Market Data Collector repository struc
 ```
 Market-Data-Collector/
 ├── .claude/
+│   ├── skills/
+│   │   └── mdc-code-review/
+│   │       ├── agents/
+│   │       │   ...
+│   │       ├── eval-viewer/
+│   │       │   ...
+│   │       ├── evals/
+│   │       │   ...
+│   │       ├── references/
+│   │       │   ...
+│   │       ├── scripts/  # Automation scripts
+│   │       │   ...
+│   │       └── SKILL.md
 │   └── settings.local.json
 ├── .devcontainer/
 │   └── devcontainer.json

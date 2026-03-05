@@ -37,6 +37,19 @@ MarketDataCollector/docs/
 ```
 Market-Data-Collector/
 ├── .claude/
+│   ├── skills/
+│   │   └── mdc-code-review/
+│   │       ├── agents/
+│   │       │   ...
+│   │       ├── eval-viewer/
+│   │       │   ...
+│   │       ├── evals/
+│   │       │   ...
+│   │       ├── references/
+│   │       │   ...
+│   │       ├── scripts/  # Automation scripts
+│   │       │   ...
+│   │       └── SKILL.md
 │   └── settings.local.json
 ├── .devcontainer/
 │   └── devcontainer.json
