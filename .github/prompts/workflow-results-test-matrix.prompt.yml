@@ -1,8 +1,8 @@
 name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22692908360
+# Generated: 2026-03-05
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951417
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,31 +19,20 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-04T22:46:12.9558289Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
-      - `2026-03-04T22:46:12.9563634Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests....`
-      - `2026-03-04T22:46:12.9568234Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTe...`
-      - `2026-03-04T22:46:12.9571887Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
-      - `2026-03-04T22:46:12.9575563Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTes...`
+      - `2026-03-05T00:20:04.2558802Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
+      - `2026-03-05T00:20:04.2574012Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
+      - `2026-03-05T00:20:04.2582342Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
+      - `2026-03-05T00:20:04.2589777Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
+      - `2026-03-05T00:20:04.2597632Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
 
       ### Code Quality
-      - `2026-03-04T22:46:12.8734309Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T22:46:12.8738147Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T22:46:12.8741641Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T22:46:12.8745099Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-04T22:46:12.8749189Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-05T00:20:04.2615818Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
+      - `2026-03-05T00:20:06.8594896Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
 
 
       ## Error Codes
-      - `CA2022`
-      - `CS0115`
-      - `CS0219`
-      - `CS0506`
-      - `CS0509`
-      - `CS1573`
-      - `CS1591`
+      - `CS0452`
       - `CS1998`
-      - `CS4014`
-      - `CS8602`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -56,7 +45,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22692908360
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951417
 
       Additional context:
       {{additional_context}}

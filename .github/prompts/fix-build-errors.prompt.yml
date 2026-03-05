@@ -1,8 +1,8 @@
 name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22692908360
+# Generated: 2026-03-05
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951417
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,26 +23,20 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `CS0115`
-      - `CS0219`
-      - `CS0506`
-      - `CS0509`
-      - `CS1573`
-      - `CS1591`
+      - `CS0452`
       - `CS1998`
-      - `CS4014`
-      - `CS8602`
 
       ## Failure Patterns
-      - `2026-03-04T22:46:12.9558289Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests.cs(330,51): error CS0506: 'ConfigServiceTests.Test...`
-      - `2026-03-04T22:46:12.9563634Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ConfigServiceTests.cs(338,36): error CS0506: 'ConfigServiceTests.Test...`
-      - `2026-03-04T22:46:12.9568234Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\CredentialServiceTests.cs(223,50): error CS0509: 'CredentialServiceTe...`
-      - `2026-03-04T22:46:12.9571887Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTests.cs(326,44): error CS0509: 'WatchlistServiceTest...`
-      - `2026-03-04T22:46:12.9575563Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\WatchlistServiceTests.cs(328,45): error CS0115: 'WatchlistServiceTest...`
-      - `2026-03-04T22:46:12.9579968Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(98,42): error CS0509: 'PortfolioImport...`
-      - `2026-03-04T22:46:12.9583909Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(111,45): error CS0509: 'PortfolioImpor...`
-      - `2026-03-04T22:46:12.9588602Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(103,36): error CS0115: 'PortfolioImpor...`
-      - `2026-03-04T22:46:12.9593272Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\PortfolioImportServiceTests.cs(113,36): error CS0115: 'PortfolioImpor...`
+      - `2026-03-05T00:20:04.2558802Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(327,62): error CS0452...`
+      - `2026-03-05T00:20:04.2574012Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(328,57): error CS0452...`
+      - `2026-03-05T00:20:04.2582342Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(329,61): error CS0452...`
+      - `2026-03-05T00:20:04.2589777Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(338,22): error CS0452...`
+      - `2026-03-05T00:20:04.2597632Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(339,22): error CS0452...`
+      - `2026-03-05T00:20:04.2605314Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(347,22): error CS0452...`
+      - `2026-03-05T00:20:06.8612681Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(327,62): error CS0452...`
+      - `2026-03-05T00:20:06.8632225Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(328,57): error CS0452...`
+      - `2026-03-05T00:20:06.8640906Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(329,61): error CS0452...`
+      - `2026-03-05T00:20:06.8649531Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(338,22): error CS0452...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
