@@ -9,7 +9,7 @@ namespace MarketDataCollector.Ui.Services;
 /// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
-public sealed class CredentialService
+public class CredentialService
 {
     private static readonly Lazy<CredentialService> _instance = new(() => new CredentialService());
 
@@ -34,7 +34,7 @@ public sealed class CredentialService
     public CredentialMetadataInfo? GetMetadata(string resource)
         => null;
 
-    private void OnCredentialExpiring(CredentialExpirationEventArgs e)
+    protected void OnCredentialExpiring(CredentialExpirationEventArgs e)
         => CredentialExpiring?.Invoke(this, e);
 }
 
