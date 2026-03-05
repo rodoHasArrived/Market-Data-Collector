@@ -27,6 +27,38 @@ public sealed class ConfigurationWizard
         Converters = { new JsonStringEnumConverter() }
     };
 
+    /// <summary>
+    /// Provider signup URLs for credential guidance.
+    /// </summary>
+    private static readonly Dictionary<string, (string SignupUrl, string DocsUrl, string FreeTier)> ProviderSignupInfo = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Alpaca"] = (
+            "https://app.alpaca.markets/signup",
+            "https://docs.alpaca.markets/docs/getting-started",
+            "Free: IEX feed (real-time, ~10% of trades), unlimited paper trading"
+        ),
+        ["Polygon"] = (
+            "https://polygon.io/dashboard/signup",
+            "https://polygon.io/docs/stocks/getting-started",
+            "Free: 5 API calls/min, end-of-day data"
+        ),
+        ["Tiingo"] = (
+            "https://www.tiingo.com/account/api/token",
+            "https://www.tiingo.com/documentation/general/overview",
+            "Free: 500 requests/hour, daily historical data"
+        ),
+        ["Finnhub"] = (
+            "https://finnhub.io/register",
+            "https://finnhub.io/docs/api",
+            "Free: 60 API calls/min, US stock data"
+        ),
+        ["AlphaVantage"] = (
+            "https://www.alphavantage.co/support/#api-key",
+            "https://www.alphavantage.co/documentation/",
+            "Free: 25 requests/day, daily historical data"
+        ),
+    };
+
     public ConfigurationWizard(TextWriter? output = null, TextReader? input = null)
     {
         _autoConfig = new AutoConfigurationService();
@@ -46,25 +78,31 @@ public sealed class ConfigurationWizard
             // Step 1: Detect available providers
             var detectedProviders = await DetectProvidersStepAsync(ct);
 
-            // Step 2: Select use case
+            // Step 2: Credential guidance - help users get API keys
+            await CredentialGuidanceStepAsync(detectedProviders, ct);
+
+            // Step 3: Select use case
             var useCase = await SelectUseCaseStepAsync(ct);
 
-            // Step 3: Configure data source
+            // Step 4: Configure data source
             var dataSource = await ConfigureDataSourceStepAsync(detectedProviders, useCase, ct);
 
-            // Step 4: Configure symbols
+            // Step 5: Validate credentials for selected provider
+            await ValidateCredentialsStepAsync(dataSource, ct);
+
+            // Step 6: Configure symbols
             var symbols = await ConfigureSymbolsStepAsync(useCase, ct);
 
-            // Step 5: Configure storage
+            // Step 7: Configure storage
             var storage = await ConfigureStorageStepAsync(useCase, ct);
 
-            // Step 6: Configure backfill
+            // Step 8: Configure backfill
             var backfill = await ConfigureBackfillStepAsync(detectedProviders, useCase, ct);
 
             // Build final configuration
             var config = BuildConfiguration(dataSource, symbols, storage, backfill);
 
-            // Step 7: Review and confirm
+            // Step 9: Review and confirm
             var confirmed = await ReviewConfigurationStepAsync(config, ct);
 
             if (!confirmed)
@@ -73,15 +111,10 @@ public sealed class ConfigurationWizard
                 return new WizardResult(Success: false, Config: null, ConfigPath: null);
             }
 
-            // Step 8: Save configuration
+            // Step 10: Save configuration
             var savedPath = await SaveConfigurationStepAsync(config, ct);
 
-            PrintSuccess("\nConfiguration complete! You can now run the collector.");
-            PrintLine($"Configuration saved to: {savedPath}");
-            PrintLine("\nNext steps:");
-            PrintLine("  1. Review and customize config/appsettings.json if needed");
-            PrintLine("  2. Run: dotnet run --project src/MarketDataCollector");
-            PrintLine("  3. Or with UI: dotnet run --project src/MarketDataCollector -- --ui");
+            PrintNextSteps(savedPath, dataSource.DataSource);
 
             return new WizardResult(Success: true, Config: config, ConfigPath: savedPath);
         }
@@ -145,6 +178,12 @@ public sealed class ConfigurationWizard
             }
         }
 
+        PrintLine("\nNext steps:");
+        PrintLine("  1. Validate:  dotnet run -- --dry-run");
+        PrintLine("  2. Start:     dotnet run -- --mode web");
+        PrintLine("  3. Dashboard: http://localhost:8080");
+        PrintLine();
+
         return new WizardResult(Success: true, Config: result.Config, ConfigPath: configPath);
     }
 
@@ -194,7 +233,7 @@ public sealed class ConfigurationWizard
 
     private async Task<UseCase> SelectUseCaseStepAsync(CancellationToken ct)
     {
-        PrintStep(2, "Select Your Use Case");
+        PrintStep(3, "Select Your Use Case");
 
         PrintLine("\nHow will you use Market Data Collector?\n");
         PrintLine("  1. Development/Testing - Local development with sample data");
@@ -221,7 +260,7 @@ public sealed class ConfigurationWizard
         UseCase useCase,
         CancellationToken ct)
     {
-        PrintStep(3, "Configure Data Source");
+        PrintStep(4, "Configure Data Source");
 
         var selection = new DataSourceSelection();
 
@@ -387,7 +426,7 @@ public sealed class ConfigurationWizard
 
     private async Task<SymbolConfig[]> ConfigureSymbolsStepAsync(UseCase useCase, CancellationToken ct)
     {
-        PrintStep(4, "Configure Symbols");
+        PrintStep(6, "Configure Symbols");
 
         PrintLine("\nSelect symbol preset or enter custom symbols:\n");
         PrintLine("  1. US Major Indices (SPY, QQQ, DIA, IWM)");
@@ -461,7 +500,7 @@ public sealed class ConfigurationWizard
 
     private async Task<StorageConfig> ConfigureStorageStepAsync(UseCase useCase, CancellationToken ct)
     {
-        PrintStep(5, "Configure Storage");
+        PrintStep(7, "Configure Storage");
 
         PrintLine("\n  Storage profiles provide pre-configured settings for common use cases.\n");
 
@@ -594,7 +633,7 @@ public sealed class ConfigurationWizard
         UseCase useCase,
         CancellationToken ct)
     {
-        PrintStep(6, "Configure Historical Data (Backfill)");
+        PrintStep(8, "Configure Historical Data (Backfill)");
 
         if (useCase == UseCase.RealTimeTrading)
         {
@@ -663,7 +702,7 @@ public sealed class ConfigurationWizard
 
     private async Task<bool> ReviewConfigurationStepAsync(AppConfig config, CancellationToken ct)
     {
-        PrintStep(7, "Review Configuration");
+        PrintStep(9, "Review Configuration");
 
         var json = JsonSerializer.Serialize(config, JsonOptions);
 
@@ -677,7 +716,7 @@ public sealed class ConfigurationWizard
 
     private async Task<string> SaveConfigurationStepAsync(AppConfig config, CancellationToken ct)
     {
-        PrintStep(8, "Save Configuration");
+        PrintStep(10, "Save Configuration");
 
         var configDir = "config";
         if (!Directory.Exists(configDir))
@@ -769,6 +808,299 @@ public sealed class ConfigurationWizard
                 new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: false)
             }
         };
+    }
+
+    private async Task CredentialGuidanceStepAsync(
+        IReadOnlyList<AutoConfigurationService.DetectedProvider> providers,
+        CancellationToken ct)
+    {
+        var configuredCount = providers.Count(p => p.HasCredentials);
+
+        // Skip if user already has credentials configured
+        if (configuredCount > 0)
+        {
+            return;
+        }
+
+        PrintStep(2, "Credential Setup Guide");
+
+        PrintLine("\n  No API credentials detected. Here's how to get started:");
+        PrintLine("  Most providers offer free tiers that are perfect for getting started.\n");
+
+        PrintLine("  Popular providers with free tiers:");
+
+        foreach (var (name, info) in ProviderSignupInfo.Take(3))
+        {
+            PrintLine($"\n    {name}:");
+            PrintLine($"      {info.FreeTier}");
+            PrintLine($"      Sign up:  {info.SignupUrl}");
+        }
+
+        PrintLine("\n  Once you have an API key, set it as an environment variable:");
+        PrintLine("  (Copy and paste the relevant lines below)\n");
+        PrintLine("    # Alpaca (recommended for real-time data)");
+        PrintLine("    export ALPACA_KEY_ID=your-key-id");
+        PrintLine("    export ALPACA_SECRET_KEY=your-secret-key\n");
+        PrintLine("    # Polygon");
+        PrintLine("    export POLYGON_API_KEY=your-api-key\n");
+        PrintLine("    # Tiingo (historical data)");
+        PrintLine("    export TIINGO_API_TOKEN=your-token\n");
+
+        PrintLine("  Tip: Add these to your ~/.bashrc or ~/.zshrc to persist them.");
+
+        var continueSetup = await PromptYesNoAsync(
+            "\n  Continue setup without credentials? (You can add them later)",
+            defaultValue: true, ct: ct);
+
+        if (!continueSetup)
+        {
+            PrintLine("\n  Set your environment variables and re-run: MarketDataCollector --wizard");
+            throw new OperationCanceledException();
+        }
+    }
+
+    private async Task ValidateCredentialsStepAsync(DataSourceSelection dataSource, CancellationToken ct)
+    {
+        PrintStep(5, "Validate Credentials");
+
+        var hasCredentials = dataSource.DataSource switch
+        {
+            DataSourceKind.Alpaca => !string.IsNullOrWhiteSpace(dataSource.Alpaca?.KeyId) &&
+                                     !string.IsNullOrWhiteSpace(dataSource.Alpaca?.SecretKey),
+            DataSourceKind.Polygon => !string.IsNullOrWhiteSpace(dataSource.Polygon?.ApiKey),
+            DataSourceKind.IB => true, // IB uses local connection, no API key
+            _ => true
+        };
+
+        if (!hasCredentials)
+        {
+            PrintWarning("  No credentials configured for the selected provider.");
+            PrintLine("  You can still save the configuration and add credentials later.");
+            PrintLine("  The collector will not be able to connect until credentials are set.\n");
+
+            ShowCredentialHelp(dataSource.DataSource.ToString());
+            return;
+        }
+
+        // Skip validation for IB (requires TWS running) and StockSharp
+        if (dataSource.DataSource == DataSourceKind.IB ||
+            dataSource.DataSource == DataSourceKind.StockSharp)
+        {
+            PrintLine($"  {dataSource.DataSource} uses a local connection - skipping API validation.");
+            return;
+        }
+
+        PrintLine("  Validating credentials with provider API...\n");
+
+        try
+        {
+            await using var validator = new CredentialValidationService();
+
+            CredentialValidationService.ValidationResult? result = dataSource.DataSource switch
+            {
+                DataSourceKind.Alpaca when dataSource.Alpaca != null =>
+                    await validator.ValidateAlpacaAsync(dataSource.Alpaca, ct),
+                DataSourceKind.Polygon when dataSource.Polygon != null =>
+                    await validator.ValidatePolygonAsync(dataSource.Polygon, ct),
+                _ => null
+            };
+
+            if (result == null)
+            {
+                PrintLine("  Skipped - no validation available for this provider.");
+                return;
+            }
+
+            if (result.IsValid)
+            {
+                PrintSuccess($"  [OK] {result.Provider}: {result.Message} ({result.ResponseTime.TotalMilliseconds:F0}ms)");
+                if (!string.IsNullOrEmpty(result.AccountInfo))
+                {
+                    PrintLine($"       {result.AccountInfo}");
+                }
+            }
+            else
+            {
+                PrintWarning($"  [FAIL] {result.Provider}: {result.Message}");
+                PrintLine("\n  Your credentials appear to be invalid.");
+
+                var retry = await PromptYesNoAsync("  Would you like to re-enter credentials", defaultValue: false, ct: ct);
+                if (retry)
+                {
+                    // Re-configure the provider
+                    switch (dataSource.DataSource)
+                    {
+                        case DataSourceKind.Alpaca:
+                            dataSource.Alpaca = await ConfigureAlpacaOptionsAsync(ct);
+                            break;
+                        case DataSourceKind.Polygon:
+                            dataSource.Polygon = await ConfigurePolygonOptionsAsync(ct);
+                            break;
+                    }
+
+                    // Retry validation
+                    await ValidateCredentialsStepAsync(dataSource, ct);
+                    return;
+                }
+
+                PrintLine("\n  Continuing with current credentials. You can fix them later in config/appsettings.json.");
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            PrintWarning($"  Could not validate credentials: {ex.Message}");
+            PrintLine("  This may be a network issue. Continuing with setup...");
+        }
+    }
+
+    private void ShowCredentialHelp(string providerName)
+    {
+        if (ProviderSignupInfo.TryGetValue(providerName, out var info))
+        {
+            PrintLine($"  To get {providerName} credentials:");
+            PrintLine($"    1. Sign up at: {info.SignupUrl}");
+            PrintLine($"    2. Set environment variables before running the collector");
+            PrintLine($"    3. Docs: {info.DocsUrl}");
+        }
+    }
+
+    private void PrintNextSteps(string savedPath, DataSourceKind dataSource)
+    {
+        PrintLine();
+        PrintSuccess("=".PadRight(60, '='));
+        PrintSuccess("  Configuration Complete!");
+        PrintSuccess("=".PadRight(60, '='));
+        PrintLine();
+        PrintLine($"  Configuration saved to: {savedPath}");
+        PrintLine();
+        PrintLine("  Next steps:");
+        PrintLine("  -".PadRight(40, '-'));
+        PrintLine();
+        PrintLine("  1. Validate your setup (recommended):");
+        PrintLine("     dotnet run --project src/MarketDataCollector -- --dry-run");
+        PrintLine();
+        PrintLine("  2. Start collecting data with the web dashboard:");
+        PrintLine("     dotnet run --project src/MarketDataCollector -- --mode web");
+        PrintLine("     Then open http://localhost:8080 in your browser");
+        PrintLine();
+        PrintLine("  3. Or use quickstart (auto-validates and starts):");
+        PrintLine("     dotnet run --project src/MarketDataCollector -- --quickstart");
+        PrintLine();
+        PrintLine("  4. Backfill historical data:");
+        PrintLine("     dotnet run --project src/MarketDataCollector -- --backfill \\");
+        PrintLine("       --backfill-symbols SPY,AAPL --backfill-from 2024-01-01");
+        PrintLine();
+
+        // Show credential reminder if needed
+        var providerName = dataSource.ToString();
+        if (ProviderSignupInfo.ContainsKey(providerName))
+        {
+            var envVarPrefix = providerName.ToUpperInvariant();
+            PrintLine("  Credentials (for production, use environment variables):");
+            PrintLine($"    See: docs/providers/{providerName.ToLowerInvariant()}-setup.md");
+        }
+
+        PrintLine();
+        PrintLine("  Full documentation: docs/HELP.md");
+        PrintLine("  Provider setup:     docs/providers/");
+        PrintLine("  Troubleshooting:    dotnet run -- --quick-check");
+        PrintLine();
+    }
+
+    /// <summary>
+    /// Runs a quickstart flow: auto-configures, validates, and returns a config ready to launch.
+    /// </summary>
+    public async Task<WizardResult> RunQuickstartAsync(CancellationToken ct = default)
+    {
+        PrintLine("=".PadRight(60, '='));
+        PrintLine("  Market Data Collector - Quickstart");
+        PrintLine("=".PadRight(60, '='));
+        PrintLine();
+
+        // Step 1: Auto-detect providers from environment
+        PrintLine("[1/4] Detecting providers from environment...");
+        var autoResult = _autoConfig.AutoConfigure();
+
+        var configuredProviders = autoResult.DetectedProviders.Where(p => p.HasCredentials).ToList();
+        var freeProviders = autoResult.DetectedProviders.Where(p => p.Name is "Yahoo" or "Stooq").ToList();
+
+        PrintLine($"  Found {configuredProviders.Count} configured provider(s)");
+        foreach (var p in configuredProviders)
+        {
+            PrintLine($"    [OK] {p.DisplayName}");
+        }
+
+        if (configuredProviders.Count == 0)
+        {
+            PrintLine("  No API credentials found - using free providers (Yahoo, Stooq) for backfill.");
+            PrintLine("  Tip: Set ALPACA_KEY_ID + ALPACA_SECRET_KEY for real-time streaming.\n");
+        }
+
+        // Step 2: Generate config
+        PrintLine("\n[2/4] Generating configuration...");
+        var config = autoResult.Config;
+        PrintLine($"  Data source: {config.DataSource}");
+        PrintLine($"  Symbols: {string.Join(", ", (config.Symbols ?? []).Select(s => s.Symbol))}");
+        PrintLine($"  Storage: {config.Storage?.Profile ?? "default"}");
+
+        // Step 3: Validate credentials if any
+        if (configuredProviders.Count > 0)
+        {
+            PrintLine("\n[3/4] Validating credentials...");
+            try
+            {
+                await using var validator = new CredentialValidationService();
+                var validationSummary = await validator.ValidateAllAsync(config, ct);
+
+                foreach (var result in validationSummary.Results)
+                {
+                    var status = result.IsValid ? "[OK]" : "[FAIL]";
+                    PrintLine($"  {status} {result.Provider}: {result.Message} ({result.ResponseTime.TotalMilliseconds:F0}ms)");
+                }
+
+                if (!validationSummary.AllValid)
+                {
+                    PrintWarning("\n  Some credentials failed validation. Check the warnings above.");
+                    PrintLine("  The collector may not be able to connect to all providers.\n");
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                PrintWarning($"  Credential validation failed: {ex.Message}");
+                PrintLine("  Continuing anyway - this may be a network issue.");
+            }
+        }
+        else
+        {
+            PrintLine("\n[3/4] Skipping credential validation (no API keys configured).");
+        }
+
+        // Step 4: Save config
+        PrintLine("\n[4/4] Saving configuration...");
+        var configPath = Path.Combine("config", "appsettings.json");
+        var configDir = Path.GetDirectoryName(configPath);
+        if (!string.IsNullOrEmpty(configDir) && !Directory.Exists(configDir))
+        {
+            Directory.CreateDirectory(configDir);
+        }
+
+        // Back up existing config
+        if (File.Exists(configPath))
+        {
+            var backupPath = configPath + $".backup-{DateTime.Now:yyyyMMdd-HHmmss}";
+            File.Copy(configPath, backupPath, overwrite: true);
+            PrintLine($"  Backed up existing config to: {backupPath}");
+        }
+
+        SaveConfiguration(config, configPath);
+        PrintSuccess($"  Configuration saved to: {configPath}");
+
+        PrintLine();
+        PrintSuccess("  Quickstart complete! Starting with --mode web will launch the dashboard.");
+        PrintLine("  Open http://localhost:8080 in your browser after starting.");
+        PrintLine();
+
+        return new WizardResult(Success: true, Config: config, ConfigPath: configPath);
     }
 
     #region Console Helpers

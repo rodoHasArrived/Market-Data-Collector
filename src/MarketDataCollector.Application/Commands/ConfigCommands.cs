@@ -24,6 +24,7 @@ internal sealed class ConfigCommands : ICliCommand
     {
         return CliArguments.HasFlag(args, "--wizard") ||
             CliArguments.HasFlag(args, "--auto-config") ||
+            CliArguments.HasFlag(args, "--quickstart") ||
             CliArguments.HasFlag(args, "--detect-providers") ||
             CliArguments.HasFlag(args, "--generate-config") ||
             CliArguments.HasFlag(args, "--preset") ||
@@ -43,6 +44,13 @@ internal sealed class ConfigCommands : ICliCommand
         {
             _log.Information("Running auto-configuration...");
             var result = _configService.RunAutoConfig();
+            return CliResult.FromBool(result.Success, ErrorCode.ConfigurationInvalid);
+        }
+
+        if (CliArguments.HasFlag(args, "--quickstart"))
+        {
+            _log.Information("Running quickstart setup...");
+            var result = await _configService.RunQuickstartAsync(ct);
             return CliResult.FromBool(result.Success, ErrorCode.ConfigurationInvalid);
         }
 
