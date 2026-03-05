@@ -13,7 +13,7 @@ public sealed record OrderFlowStatistics(
     long UnknownVolume,
     decimal VWAP,
     decimal Imbalance,
-    int TradeCount,
+    ushort TradeCount,
     long SequenceNumber,
     string? StreamId = null,
     string? Venue = null

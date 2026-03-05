@@ -303,7 +303,7 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
                             BidExchange: quote.BidExchange ?? "",
                             BidPrice: quote.BidPrice,
                             BidSize: quote.BidSize,
-                            Conditions: quote.Conditions,
+                            Conditions: quote.Conditions?.ToArray(),
                             Tape: quote.Tape,
                             Source: Name,
                             SequenceNumber: sequenceNumber++
@@ -419,7 +419,7 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
                             Price: trade.Price,
                             Size: trade.Size,
                             TradeId: trade.TradeId ?? sequenceNumber.ToString(),
-                            Conditions: trade.Conditions,
+                            Conditions: trade.Conditions?.ToArray(),
                             Tape: trade.Tape,
                             Source: Name,
                             SequenceNumber: sequenceNumber++

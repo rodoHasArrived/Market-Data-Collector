@@ -83,7 +83,7 @@ public sealed class CollectionSession
     /// Gets or sets the data quality score (0.0 to 1.0).
     /// </summary>
     [JsonPropertyName("qualityScore")]
-    public double QualityScore { get; set; }
+    public float QualityScore { get; set; }
 
     /// <summary>
     /// Gets or sets the path to the session manifest file.
@@ -210,13 +210,13 @@ public sealed class CollectionSessionStatistics
     /// Gets or sets the average events processed per second.
     /// </summary>
     [JsonPropertyName("eventsPerSecond")]
-    public double EventsPerSecond { get; set; }
+    public float EventsPerSecond { get; set; }
 
     /// <summary>
     /// Gets or sets the compression ratio achieved.
     /// </summary>
     [JsonPropertyName("compressionRatio")]
-    public double CompressionRatio { get; set; }
+    public float CompressionRatio { get; set; }
 }
 
 /// <summary>

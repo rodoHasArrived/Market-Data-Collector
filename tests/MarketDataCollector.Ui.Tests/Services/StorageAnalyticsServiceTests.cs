@@ -86,7 +86,7 @@ public sealed class StorageAnalyticsServiceTests
                     Symbol = "SPY",
                     SizeBytes = 2_000_000_000L,
                     FileCount = 500,
-                    PercentOfTotal = 18.6,
+                    PercentOfTotal = 18.6f,
                     OldestData = DateTime.UtcNow.AddDays(-30),
                     NewestData = DateTime.UtcNow
                 }
@@ -121,7 +121,7 @@ public sealed class StorageAnalyticsServiceTests
             FileCount = 120,
             OldestData = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             NewestData = new DateTime(2026, 2, 20, 0, 0, 0, DateTimeKind.Utc),
-            PercentOfTotal = 12.5
+            PercentOfTotal = 12.5f
         };
 
         info.Symbol.Should().Be("AAPL");

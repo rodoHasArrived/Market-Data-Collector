@@ -91,7 +91,7 @@ public sealed class ServiceHealthResult
     /// Round-trip latency in milliseconds.
     /// </summary>
     [JsonPropertyName("latencyMs")]
-    public double LatencyMs { get; init; }
+    public float LatencyMs { get; init; }
 
     /// <summary>
     /// HTTP status code received (if any).
@@ -108,7 +108,7 @@ public sealed class ServiceHealthResult
     /// <summary>
     /// Creates a healthy result.
     /// </summary>
-    public static ServiceHealthResult Healthy(bool isConnected, double latencyMs) => new()
+    public static ServiceHealthResult Healthy(bool isConnected, float latencyMs) => new()
     {
         IsReachable = true,
         IsConnected = isConnected,
@@ -119,7 +119,7 @@ public sealed class ServiceHealthResult
     /// <summary>
     /// Creates an unhealthy result with an error.
     /// </summary>
-    public static ServiceHealthResult Unhealthy(string errorMessage, double latencyMs = 0) => new()
+    public static ServiceHealthResult Unhealthy(string errorMessage, float latencyMs = 0) => new()
     {
         IsReachable = false,
         IsConnected = false,

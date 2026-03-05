@@ -41,10 +41,10 @@ public sealed class MetricsData
     public long HistoricalBars { get; set; }
 
     [JsonPropertyName("eventsPerSecond")]
-    public double EventsPerSecond { get; set; }
+    public float EventsPerSecond { get; set; }
 
     [JsonPropertyName("dropRate")]
-    public double DropRate { get; set; }
+    public float DropRate { get; set; }
 
     [JsonPropertyName("trades")]
     public long Trades { get; set; }
@@ -78,7 +78,7 @@ public sealed class MetricsData
     /// Age of these metrics in seconds since last update.
     /// </summary>
     [JsonPropertyName("ageSeconds")]
-    public double AgeSeconds { get; set; }
+    public float AgeSeconds { get; set; }
 }
 
 /// <summary>
@@ -105,10 +105,10 @@ public sealed class PipelineData
     public int QueueCapacity { get; set; }
 
     [JsonPropertyName("queueUtilization")]
-    public double QueueUtilization { get; set; }
+    public float QueueUtilization { get; set; }
 
     [JsonPropertyName("averageProcessingTimeUs")]
-    public double AverageProcessingTimeUs { get; set; }
+    public float AverageProcessingTimeUs { get; set; }
 }
 
 /// <summary>
@@ -316,7 +316,7 @@ public sealed class MetricsFreshness
     /// Age of the data in seconds since last update.
     /// </summary>
     [JsonPropertyName("ageSeconds")]
-    public double AgeSeconds { get; set; }
+    public float AgeSeconds { get; set; }
 
     /// <summary>
     /// The configured freshness threshold in seconds.
@@ -400,7 +400,7 @@ public sealed class StorageSymbolBreakdown
     public int FileCount { get; set; }
 
     [JsonPropertyName("percentOfTotal")]
-    public double PercentOfTotal { get; set; }
+    public float PercentOfTotal { get; set; }
 
     [JsonPropertyName("oldestData")]
     public DateTimeOffset? OldestData { get; set; }

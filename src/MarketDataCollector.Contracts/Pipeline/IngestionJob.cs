@@ -327,7 +327,7 @@ public sealed class IngestionSla
     /// Minimum completeness ratio (0.0 to 1.0) required for the job to be considered successful.
     /// </summary>
     [JsonPropertyName("minimumCompleteness")]
-    public double MinimumCompleteness { get; set; } = 0.95;
+    public float MinimumCompleteness { get; set; } = 0.95f;
 }
 
 /// <summary>

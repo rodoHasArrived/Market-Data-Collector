@@ -23,7 +23,7 @@ public sealed record BackpressureStatusDto
     /// Gets the queue utilization percentage (0.0 to 1.0).
     /// </summary>
     [JsonPropertyName("queueUtilization")]
-    public double QueueUtilization { get; init; }
+    public float QueueUtilization { get; init; }
 
     /// <summary>
     /// Gets the total number of dropped events due to backpressure.
@@ -35,13 +35,13 @@ public sealed record BackpressureStatusDto
     /// Gets the rate of dropped events per second.
     /// </summary>
     [JsonPropertyName("dropRate")]
-    public double DropRate { get; init; }
+    public float DropRate { get; init; }
 
     /// <summary>
     /// Gets the duration in seconds that backpressure has been active.
     /// </summary>
     [JsonPropertyName("durationSeconds")]
-    public double DurationSeconds { get; init; }
+    public float DurationSeconds { get; init; }
 
     /// <summary>
     /// Gets an optional human-readable message about the backpressure condition.
@@ -71,37 +71,37 @@ public sealed record ProviderLatencyStatsDto
     /// Gets the average latency in milliseconds.
     /// </summary>
     [JsonPropertyName("averageMs")]
-    public double AverageMs { get; init; }
+    public float AverageMs { get; init; }
 
     /// <summary>
     /// Gets the minimum latency in milliseconds.
     /// </summary>
     [JsonPropertyName("minMs")]
-    public double MinMs { get; init; }
+    public float MinMs { get; init; }
 
     /// <summary>
     /// Gets the maximum latency in milliseconds.
     /// </summary>
     [JsonPropertyName("maxMs")]
-    public double MaxMs { get; init; }
+    public float MaxMs { get; init; }
 
     /// <summary>
     /// Gets the 50th percentile (median) latency in milliseconds.
     /// </summary>
     [JsonPropertyName("p50Ms")]
-    public double P50Ms { get; init; }
+    public float P50Ms { get; init; }
 
     /// <summary>
     /// Gets the 95th percentile latency in milliseconds.
     /// </summary>
     [JsonPropertyName("p95Ms")]
-    public double P95Ms { get; init; }
+    public float P95Ms { get; init; }
 
     /// <summary>
     /// Gets the 99th percentile latency in milliseconds.
     /// </summary>
     [JsonPropertyName("p99Ms")]
-    public double P99Ms { get; init; }
+    public float P99Ms { get; init; }
 
     /// <summary>
     /// Gets the number of latency samples collected.
@@ -128,10 +128,10 @@ public sealed record ProviderLatencySummaryDto
     public IReadOnlyList<ProviderLatencyStatsDto> Providers { get; init; } = Array.Empty<ProviderLatencyStatsDto>();
 
     [JsonPropertyName("globalAverageMs")]
-    public double GlobalAverageMs { get; init; }
+    public float GlobalAverageMs { get; init; }
 
     [JsonPropertyName("globalP99Ms")]
-    public double GlobalP99Ms { get; init; }
+    public float GlobalP99Ms { get; init; }
 }
 
 /// <summary>
@@ -158,10 +158,10 @@ public sealed record ConnectionHealthDto
     public int MissedHeartbeats { get; init; }
 
     [JsonPropertyName("uptimeSeconds")]
-    public double UptimeSeconds { get; init; }
+    public float UptimeSeconds { get; init; }
 
     [JsonPropertyName("averageLatencyMs")]
-    public double AverageLatencyMs { get; init; }
+    public float AverageLatencyMs { get; init; }
 }
 
 /// <summary>
@@ -182,13 +182,13 @@ public sealed record ConnectionHealthSnapshotDto
     public int UnhealthyConnections { get; init; }
 
     [JsonPropertyName("globalAverageLatencyMs")]
-    public double GlobalAverageLatencyMs { get; init; }
+    public float GlobalAverageLatencyMs { get; init; }
 
     [JsonPropertyName("globalMinLatencyMs")]
-    public double GlobalMinLatencyMs { get; init; }
+    public float GlobalMinLatencyMs { get; init; }
 
     [JsonPropertyName("globalMaxLatencyMs")]
-    public double GlobalMaxLatencyMs { get; init; }
+    public float GlobalMaxLatencyMs { get; init; }
 
     [JsonPropertyName("connections")]
     public IReadOnlyList<ConnectionHealthDto> Connections { get; init; } = Array.Empty<ConnectionHealthDto>();

@@ -264,7 +264,7 @@ public sealed class ArchiveHealthService
         }
 
         status.Recommendations = recommendations.ToArray();
-        status.OverallHealthScore = CalculateOverallHealthScore(status);
+        status.OverallHealthScore = (float)CalculateOverallHealthScore(status);
         status.Status = status.OverallHealthScore switch
         {
             >= 90 => "Healthy",
@@ -290,7 +290,7 @@ public sealed class ArchiveHealthService
             var driveInfo = new DriveInfo(root);
             info.TotalCapacity = driveInfo.TotalSize;
             info.FreeSpace = driveInfo.AvailableFreeSpace;
-            info.UsedPercent = (1.0 - (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize) * 100;
+            info.UsedPercent = (float)((1.0 - (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize) * 100);
             info.DriveType = driveInfo.DriveType.ToString();
             info.HealthStatus = driveInfo.DriveType switch
             {
@@ -358,8 +358,8 @@ public sealed class ArchiveHealthService
             }
 
             var elapsed = DateTime.UtcNow - startTime;
-            job.ProgressPercent = (double)(i + 1) / files.Count * 100;
-            job.FilesPerSecond = (i + 1) / elapsed.TotalSeconds;
+            job.ProgressPercent = (float)((double)(i + 1) / files.Count * 100);
+            job.FilesPerSecond = (float)((i + 1) / elapsed.TotalSeconds);
 
             if (i + 1 < files.Count && job.FilesPerSecond > 0)
             {

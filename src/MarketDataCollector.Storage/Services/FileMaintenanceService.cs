@@ -87,7 +87,7 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
         if (compressedFiles.Count > 0)
         {
             // Estimate compression ratio (actual would require decompressing)
-            statistics.CompressionRatio = 5.0; // Default estimate
+            statistics.CompressionRatio = 5.0f; // Default estimate
         }
 
         // Fragmentation: small files percentage

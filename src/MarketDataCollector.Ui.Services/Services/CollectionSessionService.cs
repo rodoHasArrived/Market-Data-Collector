@@ -213,7 +213,7 @@ public sealed class CollectionSessionService
         // Calculate quality score based on statistics
         if (session.Statistics != null)
         {
-            session.QualityScore = CalculateQualityScore(session.Statistics);
+            session.QualityScore = (float)CalculateQualityScore(session.Statistics);
         }
 
         if (config.ActiveSessionId == sessionId)
@@ -323,7 +323,7 @@ public sealed class CollectionSessionService
             var duration = DateTime.UtcNow - session.StartedAt.Value;
             if (duration.TotalSeconds > 0)
             {
-                session.Statistics.EventsPerSecond = session.Statistics.TotalEvents / duration.TotalSeconds;
+                session.Statistics.EventsPerSecond = (float)(session.Statistics.TotalEvents / duration.TotalSeconds);
             }
         }
 

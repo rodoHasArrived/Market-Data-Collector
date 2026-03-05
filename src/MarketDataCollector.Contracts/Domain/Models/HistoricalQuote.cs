@@ -51,7 +51,7 @@ public sealed record HistoricalQuote : MarketEventPayload
     /// <summary>
     /// Gets the quote condition codes.
     /// </summary>
-    public IReadOnlyList<string>? Conditions { get; }
+    public string[]? Conditions { get; }
 
     /// <summary>
     /// Gets the tape identifier (A, B, or C).
@@ -92,7 +92,7 @@ public sealed record HistoricalQuote : MarketEventPayload
         string BidExchange,
         decimal BidPrice,
         long BidSize,
-        IReadOnlyList<string>? Conditions = null,
+        string[]? Conditions = null,
         string? Tape = null,
         string Source = "alpaca",
         long SequenceNumber = 0)

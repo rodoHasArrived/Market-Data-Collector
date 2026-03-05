@@ -27,8 +27,8 @@ public sealed class FixtureDataService
             Dropped = 12,
             Integrity = 3,
             HistoricalBars = 125000,
-            EventsPerSecond = 1250.5,
-            DropRate = 0.026,
+            EventsPerSecond = 1250.5f,
+            DropRate = 0.026f,
             Trades = 23456,
             DepthUpdates = 15678,
             Quotes = 6544

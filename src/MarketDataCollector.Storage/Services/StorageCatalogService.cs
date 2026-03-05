@@ -1004,7 +1004,7 @@ public sealed class StorageCatalogService : IStorageCatalogService
 
         if (stats.TotalBytesCompressed > 0)
         {
-            stats.CompressionRatio = (double)stats.TotalBytesRaw / stats.TotalBytesCompressed;
+            stats.CompressionRatio = (float)((double)stats.TotalBytesRaw / stats.TotalBytesCompressed);
         }
 
         // Build symbol entries

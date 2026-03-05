@@ -150,7 +150,7 @@ public sealed class CatalogStatistics
     /// Compression ratio (raw / compressed).
     /// </summary>
     [JsonPropertyName("compressionRatio")]
-    public double CompressionRatio { get; set; }
+    public float CompressionRatio { get; set; }
 
     /// <summary>
     /// Number of unique symbols.

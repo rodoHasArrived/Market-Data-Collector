@@ -177,7 +177,7 @@ public sealed class BackfillProgress
     /// Current throughput in bars per second.
     /// </summary>
     [JsonPropertyName("barsPerSecond")]
-    public double BarsPerSecond { get; set; }
+    public float BarsPerSecond { get; set; }
 
     /// <summary>
     /// Estimated seconds remaining based on current throughput.

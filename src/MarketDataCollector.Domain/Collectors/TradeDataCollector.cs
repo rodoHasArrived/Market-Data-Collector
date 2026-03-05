@@ -404,7 +404,7 @@ public sealed class TradeDataCollector
             public long UnknownVolume;
             public decimal VwapNumerator;
             public long VwapDenominator;
-            public int TradeCount;
+            public ushort TradeCount;
         }
     }
 

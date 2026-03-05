@@ -153,7 +153,7 @@ public sealed class StorageAnalyticsService
                 {
                     foreach (var stats in symbolStats.Values)
                     {
-                        stats.PercentOfTotal = (double)stats.SizeBytes / analytics.TotalSizeBytes * 100;
+                        stats.PercentOfTotal = (float)((double)stats.SizeBytes / analytics.TotalSizeBytes * 100);
                     }
                 }
 

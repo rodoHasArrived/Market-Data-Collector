@@ -258,8 +258,8 @@ public sealed class StatusEndpointHandlers
                 Dropped = metrics.Dropped,
                 Integrity = metrics.Integrity,
                 HistoricalBars = metrics.HistoricalBars,
-                EventsPerSecond = metrics.EventsPerSecond,
-                DropRate = metrics.DropRate,
+                EventsPerSecond = (float)metrics.EventsPerSecond,
+                DropRate = (float)metrics.DropRate,
                 Trades = metrics.Trades,
                 DepthUpdates = metrics.DepthUpdates,
                 Quotes = metrics.Quotes
@@ -272,8 +272,8 @@ public sealed class StatusEndpointHandlers
                 CurrentQueueSize = pipeline.CurrentQueueSize,
                 PeakQueueSize = pipeline.PeakQueueSize,
                 QueueCapacity = pipeline.QueueCapacity,
-                QueueUtilization = pipeline.QueueUtilization,
-                AverageProcessingTimeUs = pipeline.AverageProcessingTimeUs
+                QueueUtilization = (float)pipeline.QueueUtilization,
+                AverageProcessingTimeUs = (float)pipeline.AverageProcessingTimeUs
             }
         };
     }
@@ -405,10 +405,10 @@ public sealed class StatusEndpointHandlers
             {
                 IsActive = status.IsActive,
                 Level = status.Level.ToString().ToLowerInvariant(),
-                QueueUtilization = Math.Round(status.QueueUtilization, 2),
+                QueueUtilization = (float)Math.Round(status.QueueUtilization, 2),
                 DroppedEvents = status.DroppedEvents,
-                DropRate = Math.Round(status.DropRate, 2),
-                DurationSeconds = status.Duration.TotalSeconds,
+                DropRate = (float)Math.Round(status.DropRate, 2),
+                DurationSeconds = (float)status.Duration.TotalSeconds,
                 Message = status.Message,
                 QueueDepthWarning = pipeline.HighWaterMarkWarned
             };
@@ -427,9 +427,9 @@ public sealed class StatusEndpointHandlers
         {
             IsActive = isActive,
             Level = level,
-            QueueUtilization = Math.Round(pipeline.QueueUtilization, 2),
+            QueueUtilization = (float)Math.Round(pipeline.QueueUtilization, 2),
             DroppedEvents = pipeline.DroppedCount,
-            DropRate = Math.Round(dropRate, 2),
+            DropRate = (float)Math.Round(dropRate, 2),
             Message = $"Queue: {pipeline.QueueUtilization:F1}%, Drop rate: {dropRate:F2}%",
             QueueDepthWarning = pipeline.HighWaterMarkWarned
         };
@@ -456,17 +456,17 @@ public sealed class StatusEndpointHandlers
             Providers = summary.Providers.Select(p => new ProviderLatencyStatsDto
             {
                 Provider = p.Provider,
-                AverageMs = Math.Round(p.MeanMs, 2),
-                MinMs = Math.Round(p.MinMs, 2),
-                MaxMs = Math.Round(p.MaxMs, 2),
-                P50Ms = Math.Round(p.P50Ms, 2),
-                P95Ms = Math.Round(p.P95Ms, 2),
-                P99Ms = Math.Round(p.P99Ms, 2),
+                AverageMs = (float)Math.Round(p.MeanMs, 2),
+                MinMs = (float)Math.Round(p.MinMs, 2),
+                MaxMs = (float)Math.Round(p.MaxMs, 2),
+                P50Ms = (float)Math.Round(p.P50Ms, 2),
+                P95Ms = (float)Math.Round(p.P95Ms, 2),
+                P99Ms = (float)Math.Round(p.P99Ms, 2),
                 SampleCount = p.SampleCount,
                 IsHealthy = p.P99Ms < 1000.0 // Consider healthy if p99 latency is under 1 second
             }).ToList(),
-            GlobalAverageMs = Math.Round(globalAvgMs, 2),
-            GlobalP99Ms = Math.Round(summary.GlobalP99Ms, 2)
+            GlobalAverageMs = (float)Math.Round(globalAvgMs, 2),
+            GlobalP99Ms = (float)Math.Round(summary.GlobalP99Ms, 2)
         }, null);
     }
 
@@ -487,9 +487,9 @@ public sealed class StatusEndpointHandlers
             TotalConnections = snapshot.TotalConnections,
             HealthyConnections = snapshot.HealthyConnections,
             UnhealthyConnections = snapshot.UnhealthyConnections,
-            GlobalAverageLatencyMs = Math.Round(snapshot.GlobalAverageLatencyMs, 2),
-            GlobalMinLatencyMs = Math.Round(snapshot.GlobalMinLatencyMs, 2),
-            GlobalMaxLatencyMs = Math.Round(snapshot.GlobalMaxLatencyMs, 2),
+            GlobalAverageLatencyMs = (float)Math.Round(snapshot.GlobalAverageLatencyMs, 2),
+            GlobalMinLatencyMs = (float)Math.Round(snapshot.GlobalMinLatencyMs, 2),
+            GlobalMaxLatencyMs = (float)Math.Round(snapshot.GlobalMaxLatencyMs, 2),
             Connections = snapshot.Connections.Select(c => new ConnectionHealthDto
             {
                 ConnectionId = c.ConnectionId,
@@ -498,8 +498,8 @@ public sealed class StatusEndpointHandlers
                 IsHealthy = c.IsHealthy,
                 LastHeartbeatTime = c.LastHeartbeatTime,
                 MissedHeartbeats = c.MissedHeartbeats,
-                UptimeSeconds = c.UptimeDuration.TotalSeconds,
-                AverageLatencyMs = Math.Round(c.AverageLatencyMs, 2)
+                UptimeSeconds = (float)c.UptimeDuration.TotalSeconds,
+                AverageLatencyMs = (float)Math.Round(c.AverageLatencyMs, 2)
             }).ToList()
         }, null);
     }
