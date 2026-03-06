@@ -255,6 +255,39 @@ public class TradeDataCollectorTests
         _publishedEvents[1].Type.Should().Be(MarketEventType.OrderFlow);
     }
 
+    [Fact]
+    public void OnTrade_RollingWindowEviction_TradeCountDoesNotUnderflow()
+    {
+        // Arrange - first trade is timestamped 2 seconds before the second trade,
+        // placing it outside the 1-second rolling window so it gets evicted when the
+        // second trade arrives. Fixed timestamps ensure the test is deterministic.
+        var baseTime = new DateTimeOffset(2024, 1, 15, 12, 0, 0, TimeSpan.Zero);
+        var oldTimestamp = baseTime;
+        var newTimestamp = baseTime.AddSeconds(2);
+
+        var oldUpdate = CreateTradeAtTime("SPY", oldTimestamp, size: 50, aggressor: AggressorSide.Buy, seqNum: 1);
+
+        // Second trade is 2 seconds later — its arrival triggers eviction of the old trade from the 1s window
+        var newUpdate = CreateTradeAtTime("SPY", newTimestamp, size: 75, aggressor: AggressorSide.Sell, seqNum: 2);
+
+        // Act
+        _collector.OnTrade(oldUpdate);
+        _publisher.Clear();
+        _collector.OnTrade(newUpdate);
+
+        // Assert — exactly Trade + OrderFlow published for the second trade (no integrity events)
+        _publishedEvents.Should().HaveCount(2);
+        _publishedEvents[0].Type.Should().Be(MarketEventType.Trade);
+        _publishedEvents[1].Type.Should().Be(MarketEventType.OrderFlow);
+
+        // The OrderFlow stats for the active 10-second window should include both trades
+        // (neither is old enough to leave the 10s window), so total volume = 50 + 75 = 125.
+        var stats = _publishedEvents[1].Payload as OrderFlowStatistics;
+        stats.Should().NotBeNull();
+        stats!.BuyVolume.Should().Be(50);
+        stats.SellVolume.Should().Be(75);
+    }
+
     private static MarketTradeUpdate CreateTrade(
         string symbol,
         decimal price = 100m,
@@ -264,6 +297,26 @@ public class TradeDataCollectorTests
     {
         return new MarketTradeUpdate(
             Timestamp: DateTimeOffset.UtcNow,
+            Symbol: symbol,
+            Price: price,
+            Size: size,
+            Aggressor: aggressor,
+            SequenceNumber: seqNum,
+            StreamId: "TEST",
+            Venue: "TEST"
+        );
+    }
+
+    private static MarketTradeUpdate CreateTradeAtTime(
+        string symbol,
+        DateTimeOffset timestamp,
+        decimal price = 100m,
+        long size = 100,
+        AggressorSide aggressor = AggressorSide.Buy,
+        long seqNum = 1)
+    {
+        return new MarketTradeUpdate(
+            Timestamp: timestamp,
             Symbol: symbol,
             Price: price,
             Size: size,
