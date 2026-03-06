@@ -332,9 +332,9 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true 2>&1 | grep -E "error CS0266|Error\(s\)"`
   - `dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true --filter "Domain"`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710880501/job/65985108899#step:6:1
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22709535738/job/65984383245#step:6:1
 - **Status**: fixed
-- **Fixed in**: `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` line 381 — added `(ushort)` cast: `state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);`
+- **Fixed in**: `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` line 381 — added `(ushort)` cast: `state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);`. Also `src/MarketDataCollector.Application/Results/ErrorCode.cs` — changed backing from `byte` to `int` since error codes use values up to 8005, which exceeds `byte.MaxValue` (255).
 
 ### AI-20260220-regex-hyphen-character-class
 - **ID**: AI-20260220-regex-hyphen-character-class

@@ -5,10 +5,18 @@ using Xunit;
 namespace MarketDataCollector.Tests;
 
 /// <summary>
+/// Serializes all Prometheus metrics test classes that mutate the shared static
+/// <see cref="Metrics"/> counters, preventing race conditions when tests run in parallel.
+/// </summary>
+[CollectionDefinition("PrometheusMetrics")]
+public sealed class PrometheusMetricsCollection { }
+
+/// <summary>
 /// Tests for Prometheus metrics integration.
 /// Validates metric export and update functionality.
 /// Based on testing patterns from prometheus-net examples.
 /// </summary>
+[Collection("PrometheusMetrics")]
 public class PrometheusMetricsTests
 {
     [Fact]
@@ -92,6 +100,7 @@ public class PrometheusMetricsTests
 /// <summary>
 /// Tests for PrometheusMetricsUpdater background service.
 /// </summary>
+[Collection("PrometheusMetrics")]
 public class PrometheusMetricsUpdaterTests
 {
     [Fact]
