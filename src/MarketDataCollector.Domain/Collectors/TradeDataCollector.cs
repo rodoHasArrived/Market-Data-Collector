@@ -202,8 +202,19 @@ public sealed class TradeDataCollector
     public IReadOnlyList<string> GetTrackedSymbols()
         => _stateBySymbol.Keys.ToList();
 
-    private readonly record struct TradeStreamKey(string Symbol, string? StreamId, string? Venue);
+    private readonly record struct TradeStreamKey
+    {
+        public string Symbol { get; }
+        public string? StreamId { get; }
+        public string? Venue { get; }
 
+        public TradeStreamKey(string symbol, string? streamId, string? venue)
+        {
+            Symbol = symbol.ToUpperInvariant();
+            StreamId = streamId;
+            Venue = venue;
+        }
+    }
     private sealed class SymbolTradeState
     {
         private readonly object _sync = new();
