@@ -1,8 +1,8 @@
 name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-05
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22707196907
+# Generated: 2026-03-06
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22751508693
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,7 +18,17 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      No specific patterns detected.
+      ### Code Quality
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(153,32): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(150,19): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(149,24): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(148,24): warning CS1573:...`
+
+
+      ## Error Codes
+      - `CS1573`
+      - `CS1998`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -31,7 +41,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22707196907
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22751508693
 
       Additional context:
       {{additional_context}}

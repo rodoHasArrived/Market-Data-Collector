@@ -1,8 +1,8 @@
 name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
-# Auto-generated prompt from workflow results - test-matrix
+# Auto-generated prompt from workflow results - code-quality
 # Generated: 2026-03-06
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22750667351
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22751508693
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -17,16 +17,16 @@ messages:
       - Classes sealed unless designed for inheritance
 
       ## Failure Patterns
-      - `2026-03-06T05:36:27.7878100Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90,29): warnin...`
-      - `2026-03-06T05:36:27.7892976Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(116,32): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7899340Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(141,22): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7905503Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(142,29): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7911910Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(143,19): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7917811Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(144,13): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7924062Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(145,14): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7930184Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(146,33): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7936212Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(147,33): warning CS1573: Parameter '...`
-      - `2026-03-06T05:36:27.7942566Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(148,24): warning CS1573: Parameter '...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90,29): warning CS1998: This async method lacks 'awa...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(153,32): warning CS1573: Parameter 'dedupLedger' has no matching param tag...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(150,19): warning CS1573: Parameter 'finalFlushTimeout' has no matching par...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(149,24): warning CS1573: Parameter 'metrics' has no matching param tag in ...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(148,24): warning CS1573: Parameter 'wal' has no matching param tag in the ...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(147,33): warning CS1573: Parameter 'auditTrail' has no matching param tag ...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(146,33): warning CS1573: Parameter 'logger' has no matching param tag in t...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(145,14): warning CS1573: Parameter 'enablePeriodicFlush' has no matching p...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(144,13): warning CS1573: Parameter 'batchSize' has no matching param tag i...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(143,19): warning CS1573: Parameter 'flushInterval' has no matching param t...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
@@ -38,7 +38,7 @@ messages:
 
   - role: user
     content: |
-      The CI workflow `test-matrix` has reported failures that need attention.
+      The CI workflow `code-quality` has reported failures that need attention.
 
       Error details:
       ```
