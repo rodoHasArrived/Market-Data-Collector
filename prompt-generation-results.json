@@ -1,26 +1,83 @@
 {
-  "generated_at": "2026-03-05T07:32:57.566607+00:00",
-  "workflow": "code-quality.yml",
-  "run_id": 22707196907,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22707196907",
+  "generated_at": "2026-03-05T09:24:34.000259+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 22710968870,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710968870",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Code Quality Checks"
+    "Test (Linux)",
+    "Test (Windows)",
+    "Test (macOS)"
   ],
-  "findings_by_category": {},
-  "total_error_codes": 0,
-  "total_failed_tests": 0,
+  "findings_by_category": {
+    "test": 9,
+    "code-quality": 10
+  },
+  "total_error_codes": 7,
+  "total_failed_tests": 8,
   "existing_prompts": 16,
   "generated_prompts": [
     {
-      "file": "workflow-results-code-quality.prompt.yml",
+      "file": "fix-test-failures.prompt.yml",
+      "category": "test",
+      "action": "update",
+      "findings_count": 9,
+      "error_codes": [
+        "CA2022",
+        "CS0219",
+        "CS1573",
+        "CS1591",
+        "CS1998",
+        "CS4014",
+        "CS8602"
+      ],
+      "failed_tests": [
+        "2026-03-05T09:22:17.6879977Z [xUnit.net 00:00:06.52]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]",
+        "2026-03-05T09:22:17.6949284Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [78 ms]",
+        "2026-03-05T09:23:47.2404166Z [xUnit.net 00:00:08.42]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]",
+        "2026-03-05T09:23:47.3017005Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [5 ms]",
+        "2026-03-05T09:22:21.5978700Z [xUnit.net 00:00:07.35]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]",
+        "2026-03-05T09:22:21.6285410Z    Expected result.IsValid to be True, but found False.",
+        "MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid",
+        "MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly"
+      ]
+    },
+    {
+      "file": "fix-code-quality.prompt.yml",
+      "category": "code-quality",
+      "action": "update",
+      "findings_count": 10,
+      "error_codes": [
+        "CA2022"
+      ],
+      "failed_tests": []
+    },
+    {
+      "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 0,
-      "error_codes": [],
-      "failed_tests": []
+      "findings_count": 19,
+      "error_codes": [
+        "CA2022",
+        "CS0219",
+        "CS1573",
+        "CS1591",
+        "CS1998",
+        "CS4014",
+        "CS8602"
+      ],
+      "failed_tests": [
+        "2026-03-05T09:22:17.6879977Z [xUnit.net 00:00:06.52]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]",
+        "2026-03-05T09:22:17.6949284Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [78 ms]",
+        "2026-03-05T09:23:47.2404166Z [xUnit.net 00:00:08.42]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]",
+        "2026-03-05T09:23:47.3017005Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [5 ms]",
+        "2026-03-05T09:22:21.5978700Z [xUnit.net 00:00:07.35]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]",
+        "2026-03-05T09:22:21.6285410Z    Expected result.IsValid to be True, but found False.",
+        "MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid",
+        "MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly"
+      ]
     }
   ],
-  "total_generated": 1
+  "total_generated": 3
 }

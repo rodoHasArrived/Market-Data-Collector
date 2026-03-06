@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-05
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951417
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710968870
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,21 +18,39 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      ### Build
-      - `2026-03-05T00:20:04.2558802Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
-      - `2026-03-05T00:20:04.2574012Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
-      - `2026-03-05T00:20:04.2582342Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
-      - `2026-03-05T00:20:04.2589777Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
-      - `2026-03-05T00:20:04.2597632Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/Tim...`
+      ### Test
+      - `2026-03-05T09:22:26.5317544Z Failed!  - Failed:     2, Passed:  2532, Skipped:     2, Total:  2536, Duration: 11 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-05T09:24:04.1748712Z Failed!  - Failed:     2, Passed:  2532, Skipped:     2, Total:  2536, Duration: 24 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-05T09:22:36.1202820Z Failed!  - Failed:     2, Passed:  2532, Skipped:     2, Total:  2536, Duration: 20 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-05T09:22:17.6846925Z [xUnit.net 00:00:06.51]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_Return...`
+      - `2026-03-05T09:22:17.6935911Z [xUnit.net 00:00:06.52]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEv...`
 
       ### Code Quality
-      - `2026-03-05T00:20:04.2615818Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
-      - `2026-03-05T00:20:06.8594896Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
+      - `2026-03-05T09:21:46.3662335Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
+      - `2026-03-05T09:21:46.3676337Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-05T09:21:46.3683585Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-05T09:21:46.3690451Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-05T09:21:46.3697366Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
 
+
+      ## Failed Tests
+      - `2026-03-05T09:22:17.6879977Z [xUnit.net 00:00:06.52]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]`
+      - `2026-03-05T09:22:17.6949284Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [78 ms]`
+      - `2026-03-05T09:23:47.2404166Z [xUnit.net 00:00:08.42]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]`
+      - `2026-03-05T09:23:47.3017005Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [5 ms]`
+      - `2026-03-05T09:22:21.5978700Z [xUnit.net 00:00:07.35]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]`
+      - `2026-03-05T09:22:21.6285410Z    Expected result.IsValid to be True, but found False.`
+      - `MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid`
+      - `MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly`
 
       ## Error Codes
-      - `CS0452`
+      - `CA2022`
+      - `CS0219`
+      - `CS1573`
+      - `CS1591`
       - `CS1998`
+      - `CS4014`
+      - `CS8602`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -45,7 +63,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951417
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710968870
 
       Additional context:
       {{additional_context}}

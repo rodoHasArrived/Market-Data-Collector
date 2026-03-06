@@ -1,8 +1,8 @@
 name: Fix Test Failures Identified By Ci
 description: Fix test failures identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-04
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22690966586
+# Generated: 2026-03-05
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710968870
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,10 +23,7 @@ messages:
 
       ## Error Codes Found
       - `CA2022`
-      - `CS0115`
       - `CS0219`
-      - `CS0506`
-      - `CS0509`
       - `CS1573`
       - `CS1591`
       - `CS1998`
@@ -34,12 +31,25 @@ messages:
       - `CS8602`
 
       ## Failure Patterns
-      - `2026-03-04T21:50:53.1353483Z Failed!  - Failed:     1, Passed:  2535, Skipped:     2, Total:  2538, Duration: 11 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-04T21:50:45.4519436Z [xUnit.net 00:00:07.69]     MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent [FAIL]`
+      - `2026-03-05T09:22:26.5317544Z Failed!  - Failed:     2, Passed:  2532, Skipped:     2, Total:  2536, Duration: 11 s - MarketDataCollector.Tests.dll (net9.0)`
+      - `2026-03-05T09:24:04.1748712Z Failed!  - Failed:     2, Passed:  2532, Skipped:     2, Total:  2536, Duration: 24 s - MarketDataCollector.Tests.dll (net9.0)`
+      - `2026-03-05T09:22:36.1202820Z Failed!  - Failed:     2, Passed:  2532, Skipped:     2, Total:  2536, Duration: 20 s - MarketDataCollector.Tests.dll (net9.0)`
+      - `2026-03-05T09:22:17.6846925Z [xUnit.net 00:00:06.51]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [FAIL]`
+      - `2026-03-05T09:22:17.6935911Z [xUnit.net 00:00:06.52]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [FAIL]`
+      - `2026-03-05T09:23:47.2371169Z [xUnit.net 00:00:08.42]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [FAIL]`
+      - `2026-03-05T09:23:47.2978706Z [xUnit.net 00:00:08.48]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [FAIL]`
+      - `2026-03-05T09:22:21.5926550Z [xUnit.net 00:00:07.35]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [FAIL]`
+      - `2026-03-05T09:22:21.6282710Z [xUnit.net 00:00:07.38]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [FAIL]`
 
       ## Failed Tests
-      - `2026-03-04T21:50:45.4556130Z   Failed MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent [118 ms]`
-      - `MarketDataCollector.Tests.Pipeline.BackpressureSignalTests.PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent`
+      - `2026-03-05T09:22:17.6879977Z [xUnit.net 00:00:06.52]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]`
+      - `2026-03-05T09:22:17.6949284Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid [78 ms]`
+      - `2026-03-05T09:23:47.2404166Z [xUnit.net 00:00:08.42]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]`
+      - `2026-03-05T09:23:47.3017005Z   Failed MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly [5 ms]`
+      - `2026-03-05T09:22:21.5978700Z [xUnit.net 00:00:07.35]     MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_SupportsCancellation [SKIP]`
+      - `2026-03-05T09:22:21.6285410Z    Expected result.IsValid to be True, but found False.`
+      - `MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithValidEvents_ReturnsValid`
+      - `MarketDataCollector.Tests.Storage.DataValidatorTests.ValidateFileAsync_WithActualSerializedEvents_ValidatesCorrectly`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
