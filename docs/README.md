@@ -90,6 +90,7 @@ Understanding system design.
 - [QuantConnect Lean Integration](integrations/lean-integration.md) - Backtesting
 - [F# Integration](integrations/fsharp-integration.md) - F# domain logic
 - [Technology Evaluations](evaluations/) - Provider and architecture evaluations
+- [High-Impact Improvements Brainstorm](evaluations/high-impact-improvements-brainstorm.md) - Effort-agnostic strategic ideas
 - [Code Audits](audits/) - Code quality audits
 
 ---
