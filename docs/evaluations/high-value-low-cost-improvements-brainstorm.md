@@ -863,6 +863,192 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 
 ---
 
+## Category 12: Strategic Platform Ideas
+
+These ideas are drawn from the companion [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md), which documents effort-agnostic, platform-level capabilities. They are listed here for cross-reference and long-term roadmap consideration. Unlike the items above, these are not constrained to low-cost execution — they represent the highest-leverage bets for transforming this project into a **market data intelligence operating system**.
+
+---
+
+### 12.1 Autonomous Data Trust Fabric
+
+**What it is:** A system-wide trust layer that continuously scores every symbol/feed/time-range for completeness, freshness, sequencing, and cross-provider agreement, then launches automatic remediation workflows.
+
+**Why it matters:** Converts data quality from passive observability into active reliability. Creates a "never silently wrong" user promise and enables enterprise-grade SLAs for archive correctness.
+
+**Potential capabilities:**
+- Per-partition trust score persisted alongside data.
+- Automatic gap repair queue with confidence grading.
+- Quarantine zones for suspicious partitions.
+- Human-readable root-cause analysis summaries.
+
+**Value:** Very High -- shifts from monitoring to self-healing.
+**Cost:** High (multi-week effort, builds on existing quality services).
+**Files:** `src/MarketDataCollector.Application/Monitoring/DataQuality/`, `src/MarketDataCollector.Storage/Services/`
+
+---
+
+### 12.2 Deterministic Market Time-Machine
+
+**What it is:** A deterministic replay system that reconstructs exact historical market state (order book, trades, quote stream, integrity events) and replays it at configurable speed with controllable clock semantics.
+
+**Why it matters:** Massive value for strategy debugging, research reproducibility, and incident forensics. Creates a unique differentiator versus simple archival tools.
+
+**Potential capabilities:**
+- "Replay this symbol set from 2024-08-14 09:30 to 10:00 at 20x" interface.
+- Snapshot + delta model for fast seek.
+- Deterministic event IDs and reproducible run manifests.
+- Side-by-side "live vs replay parity" validation mode.
+
+**Value:** Very High -- unique differentiator for research and debugging.
+**Cost:** High (replay engine requires snapshot infrastructure and clock abstraction).
+**Files:** `src/MarketDataCollector.Storage/Replay/`, `src/MarketDataCollector.Application/`
+
+---
+
+### 12.3 Unified Data Plane: Streaming + Lakehouse Query
+
+**What it is:** A dual-plane architecture where incoming market events feed both low-latency streams and analytics-optimized table formats (Parquet/Iceberg-like abstractions) with schema/version governance.
+
+**Why it matters:** Eliminates the split between collection and analytics systems. Makes the repository a first-class data platform for quant research teams.
+
+**Potential capabilities:**
+- SQL endpoint for ad hoc and scheduled research queries.
+- Materialized derived datasets (OHLCV, microstructure factors, imbalance).
+- Automatic compact/optimize jobs by symbol and date.
+- Metadata catalog with schema lineage, provider provenance, and data freshness.
+
+**Value:** Very High -- transforms collection into a research platform.
+**Cost:** High (requires query engine integration and lakehouse abstractions).
+**Files:** `src/MarketDataCollector.Storage/`, `src/MarketDataCollector.Application/Http/Endpoints/`
+
+---
+
+### 12.4 Dynamic Provider Routing and Cost Intelligence
+
+**What it is:** A policy engine that routes each symbol/data-type request to the provider expected to maximize utility given latency, quality history, coverage, legal constraints, and cost budget.
+
+**Why it matters:** Turns multi-provider support into strategic alpha. Optimizes both quality and spend continuously. Creates a "best execution for data" story.
+
+**Potential capabilities:**
+- Per-symbol routing policies with fallback ladders.
+- Real-time quality/cost scoreboard.
+- Budget-aware throttling and source substitution.
+- "What-if" simulator for monthly provider spend.
+
+**Value:** High -- multiplies value of existing multi-provider infrastructure.
+**Cost:** Medium-High (builds on existing `FailoverAwareMarketDataClient` and provider health monitoring).
+**Files:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/`, `src/MarketDataCollector.Application/Monitoring/`
+
+---
+
+### 12.5 Feature Store for Quant Signals
+
+**What it is:** A native feature computation and serving layer that transforms raw ticks/order-book events into reusable, versioned ML and signal features.
+
+**Why it matters:** Bridges the largest gap between data collection and model development. Increases lock-in via reusable, versioned research artifacts.
+
+**Potential capabilities:**
+- Declarative feature definitions (windowed stats, imbalance, volatility bursts).
+- Offline/backtest feature generation plus online feature serving.
+- Feature lineage tied to raw data trust scores.
+- Drift detection and feature health dashboard.
+
+**Value:** Very High -- directly enables ML/quant research workflows.
+**Cost:** High (new subsystem, builds on `TechnicalIndicatorService` and export pipeline).
+**Files:** `src/MarketDataCollector.Application/Indicators/`, `src/MarketDataCollector.Storage/Export/`
+
+---
+
+### 12.6 Strategy Lifecycle Hub (Research → Backtest → Live)
+
+**What it is:** A standardized lifecycle that packages data snapshots, features, configs, and execution assumptions into reproducible strategy "capsules."
+
+**Why it matters:** Compresses iteration loops for quants. Enables auditable experiments and production promotions. Builds on existing Lean integration momentum.
+
+**Potential capabilities:**
+- One-click export to Lean-compatible bundles with manifest guarantees.
+- Experiment registry (parameters, data slice, metrics, commit hash).
+- Promotion gates based on out-of-sample and stress criteria.
+- Post-trade attribution tied back to source market data.
+
+**Value:** High -- closes the research-to-production loop.
+**Cost:** Medium-High (extends existing Lean integration and portable packager).
+**Files:** `src/MarketDataCollector/Integrations/Lean/`, `src/MarketDataCollector.Storage/Packaging/`
+
+---
+
+### 12.7 Expert Co-Pilot for Operations and Research
+
+**What it is:** A domain assistant trained on repository schemas, provider semantics, operational runbooks, and historical incidents to help users diagnose issues and compose workflows.
+
+**Why it matters:** Lowers skill barrier for newcomers. Speeds expert workflows through natural-language control. Captures tribal knowledge and reduces operational dependence on specific individuals.
+
+**Potential capabilities:**
+- "Why is SPY missing from yesterday 13:00–14:00?" guided diagnosis.
+- Auto-generated backfill and repair plans with dry-run previews.
+- Natural language to query/feature recipe generation.
+- Contextual warnings before risky config changes.
+
+**Value:** High -- multiplies team effectiveness and reduces support burden.
+**Cost:** High (requires LLM integration and domain-specific context building).
+**Files:** `src/MarketDataCollector.Application/Services/`, `docs/ai/`
+
+---
+
+### 12.8 Enterprise Reliability Envelope
+
+**What it is:** A platform mode focused on strict durability and compliance: exactly-once semantics where feasible, immutable audit trails, cryptographic provenance, policy controls, and formalized SLOs.
+
+**Why it matters:** Opens institutional and regulated-user adoption. Converts technical quality into procurement-friendly trust.
+
+**Potential capabilities:**
+- Signed manifests and tamper-evident archive segments.
+- Retention/legal-hold policy engine.
+- SLO dashboards (freshness, completeness, recovery MTTR).
+- Multi-region replication abstraction.
+
+**Value:** High -- prerequisite for institutional/enterprise adoption.
+**Cost:** High (requires cryptographic infrastructure and policy engine).
+**Files:** `src/MarketDataCollector.Storage/Archival/`, `src/MarketDataCollector.Application/Monitoring/`
+
+---
+
+### 12.9 Ecosystem and Extensibility Platform
+
+**What it is:** A plugin marketplace model for providers, transformers, validators, and exports — with stable SDK contracts and compatibility testing.
+
+**Why it matters:** Multiplies development velocity through community contributions. De-risks roadmap by externalizing long-tail integrations.
+
+**Potential capabilities:**
+- Versioned provider plugin SDK with conformance suite.
+- Public plugin registry and trust scoring.
+- Sandboxed execution for third-party extensions.
+- Capability discovery in UI with install/update flows.
+
+**Value:** High -- exponential leverage via community ecosystem.
+**Cost:** High (requires SDK versioning, conformance testing, and discovery infrastructure).
+**Files:** `src/MarketDataCollector.ProviderSdk/`, `src/MarketDataCollector.Infrastructure/`
+
+---
+
+### 12.10 Portfolio-Level Intelligence UX
+
+**What it is:** A user experience that elevates from feed/pipe monitoring to portfolio research decisions: data readiness heatmaps, expected signal quality, and impact previews.
+
+**Why it matters:** Converts technical telemetry into decision intelligence. Makes value visible to both engineers and traders.
+
+**Potential capabilities:**
+- "Research readiness score" by symbol universe.
+- Data availability calendar aligned to strategy sessions.
+- Impact analysis for missing intervals on model confidence.
+- Interactive scenario workbench (switch providers, compare expected quality).
+
+**Value:** High -- bridges the gap between engineers and traders as users.
+**Cost:** Medium-High (primarily UX work on top of existing quality and calendar services).
+**Files:** `src/MarketDataCollector.Wpf/Views/`, `src/MarketDataCollector.Ui.Shared/Endpoints/`, `src/MarketDataCollector.Application/Services/TradingCalendar.cs`
+
+---
+
 ## Priority Matrix
 
 | ID | Improvement | Value | Cost | Priority |
@@ -914,6 +1100,16 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 | 9.12 | Command palette hotkey wiring | Medium | 2-3h | **P3** |
 | 6.3 | `Lazy<T>` consolidation | Low-Med | 4-8h | **P3** |
 | 8.3 | Config double-read elimination | Low | 2-3h | **P4** |
+| 12.1 | Autonomous Data Trust Fabric | Very High | Weeks | **P-Strategic** |
+| 12.2 | Deterministic Market Time-Machine | Very High | Weeks | **P-Strategic** |
+| 12.3 | Unified Data Plane / Lakehouse Query | Very High | Weeks | **P-Strategic** |
+| 12.4 | Dynamic Provider Routing & Cost Intel | High | Weeks | **P-Strategic** |
+| 12.5 | Feature Store for Quant Signals | Very High | Weeks | **P-Strategic** |
+| 12.6 | Strategy Lifecycle Hub | High | Weeks | **P-Strategic** |
+| 12.7 | Expert Co-Pilot for Ops & Research | High | Weeks | **P-Strategic** |
+| 12.8 | Enterprise Reliability Envelope | High | Weeks | **P-Strategic** |
+| 12.9 | Ecosystem & Extensibility Platform | High | Weeks | **P-Strategic** |
+| 12.10 | Portfolio-Level Intelligence UX | High | Weeks | **P-Strategic** |
 
 ---
 
@@ -928,4 +1124,5 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 - **Category 9 items are disproportionately cheap** because the backend services already exist and are tested -- the work is wiring, not building
 - **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Item 10.4 (wire export API) is critical -- the endpoints exist but return fake data
 - **Category 11 items** build user trust through transparency -- lineage, calendar awareness, and quality metadata make the system credible for research use
-- **Total: 48 improvements** across 11 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks)
+- **Category 12 items** are long-horizon platform bets from the companion [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md). They are effort-agnostic and represent strategic directions rather than near-term tasks. See that document for prioritization framework and rationale.
+- **Total: 58 improvements** across 12 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately.
