@@ -146,10 +146,14 @@ public sealed class DataValidator
                     lastTimestampBySymbol[symbol] = timestamp;
 
                     // Validate event type (can be either string or number)
+                    // MarketEventType has byte as its underlying type; Enum.IsDefined requires the
+                    // value type to match the underlying type, so we must cast to byte first.
                     MarketEventType eventType;
                     if (typeEl.ValueKind == JsonValueKind.Number)
                     {
-                        if (!typeEl.TryGetInt32(out var typeInt) || !Enum.IsDefined(typeof(MarketEventType), typeInt))
+                        if (!typeEl.TryGetInt32(out var typeInt) ||
+                            typeInt < 0 || typeInt > byte.MaxValue ||
+                            !Enum.IsDefined(typeof(MarketEventType), (byte)typeInt))
                         {
                             invalidEvents++;
                             errors.Add($"Line {totalLines}: Unknown event type: {typeInt}");
