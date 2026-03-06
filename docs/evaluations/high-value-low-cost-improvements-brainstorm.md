@@ -210,6 +210,29 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
+### 3.5 Interactive provider diagnostics mode
+
+**Problem:** When a provider fails to connect, users see a generic error message. Diagnosing root cause (wrong credentials, firewall, rate limit, API change) requires reading logs and cross-referencing provider documentation. This is especially painful for Interactive Brokers, which requires TWS/Gateway to be running.
+
+**Improvement:** Add a `--diagnose-provider <name>` CLI flag that runs a structured sequence of health checks for the named provider and emits a step-by-step report:
+
+```
+Diagnosing Alpaca...
+  [✓] Credentials present (ALPACA__KEYID, ALPACA__SECRETKEY)
+  [✓] Endpoint reachable (data.alpaca.markets:443) — 47ms
+  [✓] Auth token exchange — 200 OK
+  [✓] Sample subscription (SPY) — first event in 230ms
+  [✓] Disconnect clean
+
+Result: All checks passed. Provider is healthy.
+```
+
+**Value:** High -- reduces provider setup and debugging time from hours to minutes.
+**Cost:** ~4-6 hours. `DiagnosticsService`, `ConnectivityTestService`, and `CredentialValidationService` all exist; this composes them into a single report.
+**Files:** `src/MarketDataCollector.Application/Commands/DiagnosticsCommands.cs`, `src/MarketDataCollector.Application/Services/DiagnosticBundleService.cs`
+
+---
+
 ## Category 4: Data Integrity & Quality
 
 ### 4.1 Automatic gap backfill on reconnection
@@ -302,6 +325,18 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
+### 5.5 API response contract snapshot tests
+
+**Problem:** The 35+ API endpoints have integration tests but no snapshot/contract tests that catch **unintentional breaking changes** to response shapes. A refactor that renames a JSON property or changes a status code silently breaks API consumers.
+
+**Improvement:** Add snapshot tests that record the full JSON response body for each endpoint at a known state, then fail if the shape changes unexpectedly. Use the existing `ResponseSchemaSnapshotTests` infrastructure already in `tests/MarketDataCollector.Tests/Integration/EndpointTests/ResponseSchemaSnapshotTests.cs` — if not fully populated, ensure every endpoint has at least one baseline snapshot.
+
+**Value:** High -- prevents silent API breakages that affect web dashboard, WPF desktop client, and any external consumers.
+**Cost:** ~4-6 hours. Infrastructure already exists; need to cover the remaining endpoints.
+**Files:** `tests/MarketDataCollector.Tests/Integration/EndpointTests/ResponseSchemaSnapshotTests.cs`
+
+---
+
 ## Category 6: Code Quality Quick Wins
 
 ### 6.1 Replace bare catch blocks with typed exceptions
@@ -359,6 +394,18 @@ This enables deterministic time-based tests without `Thread.Sleep` or flaky timi
 **Value:** Medium -- consistent API error responses; less boilerplate.
 **Cost:** ~6-8 hours for full migration; can be done incrementally.
 **Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/*.cs`
+
+---
+
+### 6.5 Adopt `Result<T, E>` return type for service methods
+
+**Problem:** Service methods currently throw exceptions on expected failure conditions (e.g., symbol not found, provider unavailable), forcing callers to wrap everything in try/catch. The `Result<T, TError>` type already exists in `src/MarketDataCollector.Application/Results/Result.cs` but is used inconsistently — mostly at the CLI boundary rather than in service internals.
+
+**Improvement:** Progressively adopt `Result<T, OperationError>` as the return type for service methods in high-traffic paths like `BackfillCoordinator`, `SymbolManagementService`, and export operations. This makes error paths explicit, eliminates hidden throw sites, and allows callers to pattern-match on failure categories rather than catching `Exception`.
+
+**Value:** Medium-High -- makes service contracts explicit and simplifies endpoint error handling.
+**Cost:** ~6-8 hours incrementally. Existing `Result.cs` and `OperationError.cs` types require no changes.
+**Files:** `src/MarketDataCollector.Application/Results/Result.cs`, `src/MarketDataCollector.Application/Http/BackfillCoordinator.cs`, `src/MarketDataCollector.Storage/Export/AnalysisExportService.cs`
 
 ---
 
@@ -856,6 +903,34 @@ This turns the export from a raw data dump into an analysis-ready dataset.
 
 ---
 
+### 10.7 Time-zone aware queries and exports
+
+**Problem:** All stored timestamps are UTC but users frequently think in exchange-local time (US/Eastern for equities). Queries like `--from 2026-01-03 09:30` are ambiguous — are they UTC or ET? The system defaults to UTC silently, producing off-by-hours results for non-UTC users.
+
+**Improvement:**
+1. Add a `--tz` flag to CLI queries and an optional `timezone` field in the export request JSON.
+2. Accept IANA time zone identifiers (e.g., `"America/New_York"`).
+3. Convert user-provided local times to UTC during query parsing; display results in the user's local time when printing to console.
+4. Default to exchange-local time for equity queries when the time zone is not specified.
+
+**Value:** Medium-High -- eliminates a common off-by-one-session bug for non-UTC users.
+**Cost:** ~3-4 hours. `TimeZoneInfo` is built-in; add a small conversion step in `HistoricalDataQueryService`.
+**Files:** `src/MarketDataCollector.Application/Services/HistoricalDataQueryService.cs`, `src/MarketDataCollector.Application/Commands/QueryCommand.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/ExportEndpoints.cs`
+
+---
+
+### 10.8 Retention policy dry-run preview
+
+**Problem:** `LifecyclePolicyEngine` can delete or compress files based on age and tier rules. Running it without knowing what will be affected is risky. There's no preview or dry-run mode — users must trust that the policy is configured correctly before irreversible deletions occur.
+
+**Improvement:** Add a `--dry-run` flag to the maintenance CLI trigger and a `preview: true` field in `POST /api/maintenance/execute`. In dry-run mode, return a structured list of files that **would** be deleted/moved with their age, size, and matching rule. No files are modified.
+
+**Value:** High -- gives operators confidence before irreversible maintenance operations.
+**Cost:** ~3-4 hours. `LifecyclePolicyEngine` already evaluates file eligibility; add a "report only" path that skips the actual file operation.
+**Files:** `src/MarketDataCollector.Storage/Services/LifecyclePolicyEngine.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/MaintenanceScheduleEndpoints.cs`
+
+---
+
 ## Category 11: Trust & Transparency
 
 ### 11.1 Data lineage in exports
@@ -1190,7 +1265,111 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 
 ---
 
+### 12.16 Adaptive Data Sampling and Intelligent Compression
+
+**What it is:** A dynamic sampling engine that adjusts event storage granularity based on real-time market conditions — preserving full tick resolution during high-volatility or high-volume windows while downsampling quiet periods to reduce storage footprint without sacrificing analytical value.
+
+**Why it matters:** Tick data volumes can spike 10–50× during market events. Storing everything at full granularity is expensive; discarding events loses information. Adaptive sampling is the optimal middle path used by institutional data vendors.
+
+**Potential capabilities:**
+- Volatility-gated sampling: preserve all ticks when realized volatility exceeds a threshold.
+- Volume-gated sampling: full resolution during high VWAP deviation windows.
+- Configurable compression ratios per symbol tier (index, ETF, small-cap).
+- Lossless reconstruction metadata so compressed periods can be re-expanded if needed.
+
+**Value:** Very High -- dramatically reduces storage costs at scale while preserving signal quality.
+**Cost:** High (requires volatility estimation pipeline and conditional sink routing).
+**Files:** `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`, `src/MarketDataCollector.Storage/Sinks/`, `src/MarketDataCollector.Application/Monitoring/`
+
+---
+
+### 12.17 Cross-Asset Regime Detection and Labeling
+
+**What it is:** A market state classification layer that automatically labels collected data with regime tags (trending, mean-reverting, high-volatility, low-liquidity, crisis) derived from microstructure features computed in real time.
+
+**Why it matters:** Quantitative strategies behave differently across market regimes. Annotating stored data with regime labels at collection time removes a significant preprocessing burden for researchers and enables regime-conditional backtesting.
+
+**Potential capabilities:**
+- Hidden Markov Model or clustering-based regime classifier trained on microstructure features.
+- Real-time regime state emitted as a metadata event alongside trade/quote streams.
+- Historical re-labeling of archived data when model is updated.
+- Regime transition alerts for live monitoring dashboards.
+
+**Value:** Very High -- unique differentiator that converts raw data into research-ready labeled datasets.
+**Cost:** Very High (requires ML model training and inference pipeline; builds on F# calculation layer).
+**Files:** `src/MarketDataCollector.FSharp/Calculations/`, `src/MarketDataCollector.Application/Monitoring/DataQuality/`
+
+---
+
+### 12.18 Multi-Tenant SaaS Architecture
+
+**What it is:** A transformation of the single-tenant application into a multi-tenant managed platform where multiple organizations or users have isolated namespaces for collection, storage, and API access — without running separate processes.
+
+**Why it matters:** Unlocks hosting the platform as a managed service. Multiple research teams can share infrastructure while having independent symbol universes, quality policies, data retention, and API credentials.
+
+**Potential capabilities:**
+- Namespace-scoped storage paths and API endpoints.
+- Per-tenant rate limiting, quota enforcement, and billing hooks.
+- Tenant-scoped API keys and credential stores.
+- Admin control plane for tenant management.
+
+**Value:** Very High -- enables a managed service business model and institutional adoption.
+**Cost:** Very High (fundamental multi-tenancy requires storage isolation, auth, and routing changes throughout).
+**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/ApiKeyMiddleware.cs`, `src/MarketDataCollector.Application/Composition/`, `src/MarketDataCollector.Storage/`
+
+---
+
+### 12.19 Compliance and Regulatory Audit Layer
+
+**What it is:** A structured audit trail and data lineage system providing tamper-evident records of all data collection, transformation, and export events — designed to satisfy MiFID II data retention, FINRA recordkeeping, and SEC best execution documentation requirements.
+
+**Why it matters:** Institutional and professional trading firms face regulatory requirements around data provenance and retention. A compliant audit layer makes the platform viable for regulated environments.
+
+**Potential capabilities:**
+- Append-only, cryptographically-signed audit log for all collection sessions.
+- Lineage tracking from raw tick to transformed export.
+- Automated retention enforcement with configurable legal hold overrides.
+- Export of audit evidence in regulatory standard formats (CFTC, MiFID II records).
+
+**Value:** High -- opens the institutional and regulated-firm market segment.
+**Cost:** High (requires append-only log infrastructure and cryptographic signing).
+**Files:** `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs`, `src/MarketDataCollector.Application/Monitoring/`, `src/MarketDataCollector.Storage/Services/DataLineageService.cs`
+
+---
+
+### 12.20 AI-Assisted Event Annotation and Enrichment
+
+**What it is:** A system that enriches stored market events with contextual annotations — linking data anomalies, gaps, and volatility spikes to macro events (earnings announcements, Fed meetings, geopolitical events) sourced from public calendars, news feeds, or user-provided annotations.
+
+**Why it matters:** Raw market data becomes exponentially more useful when annotated with causal context. Researchers spend significant time manually matching data artifacts to external events. Automated enrichment creates a labeled, contextual dataset that accelerates hypothesis formation.
+
+**Potential capabilities:**
+- Economic calendar integration (earnings dates, FOMC meetings, index rebalances).
+- Automatic correlation of data gaps and volatility spikes with calendar events.
+- User annotation interface: tag any event or time window with free-form notes.
+- AI-assisted annotation suggestions: "this gap coincides with a scheduled maintenance window for Alpaca".
+
+**Value:** High -- converts data collection into a contextual research corpus.
+**Cost:** High (requires calendar integrations, annotation storage, and ML-based correlation).
+**Files:** `src/MarketDataCollector.Application/Services/TradingCalendar.cs`, `src/MarketDataCollector.Storage/Services/MetadataTagService.cs`
+
+---
+
 ## Priority Matrix
+
+**Priority Definitions:**
+
+| Priority | Meaning |
+|----------|---------|
+| **P1** | High value, low cost — implement first; ~2-20h each |
+| **P2** | High-medium value, moderate cost — next tier after P1; ~3-12h each |
+| **P3** | Medium value or moderate cost — do opportunistically |
+| **P4** | Low value or high cost relative to gain — defer |
+| **P-Strategic** | Long-horizon platform bets; effort-agnostic; tracked separately as multi-week investments |
+
+**Value Scale:** `Low` < `Low-Med` < `Medium` < `Med-High` < `High` < `Very High`
+- *Very High* items have transformational or platform-level impact (typically Category 12)
+
 
 | ID | Improvement | Value | Cost | Priority |
 |----|------------|-------|------|----------|
@@ -1254,12 +1433,22 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 | 9.13 | Symbol-level pause and resume | Med-High | 4-5h | **P2** |
 | 9.14 | Live data snapshot download | Medium | 2-3h | **P2** |
 | 11.3 | Provider gap accountability report | Med-High | 4-5h | **P2** |
+| 3.5 | Interactive provider diagnostics mode | High | 4-6h | **P1** |
+| 5.5 | API response contract snapshot tests | High | 4-6h | **P2** |
+| 6.5 | `Result<T,E>` return type adoption | Med-High | 6-8h | **P2** |
+| 10.7 | Time-zone aware queries and exports | Med-High | 3-4h | **P2** |
+| 10.8 | Retention policy dry-run preview | High | 3-4h | **P1** |
 | 8.4 | Pipeline back-pressure tuning via config | Medium | 2-3h | **P3** |
-| 12.11 | Multi-Asset Class Unification | Very High | Weeks | **P-Strategic** |
-| 12.12 | Distributed Collection Fabric | Very High | Weeks | **P-Strategic** |
-| 12.13 | Real-Time Complex Event Processing | High | Weeks | **P-Strategic** |
-| 12.14 | Market Microstructure Analytics Engine | Very High | Weeks | **P-Strategic** |
-| 12.15 | Data Marketplace and Sharing Layer | High | Weeks | **P-Strategic** |
+| 12.11 | Multi-Asset Class Unification | Very High | 6-12w | **P-Strategic** |
+| 12.12 | Distributed Collection Fabric | Very High | 8-16w | **P-Strategic** |
+| 12.13 | Real-Time Complex Event Processing | High | 4-8w | **P-Strategic** |
+| 12.14 | Market Microstructure Analytics Engine | Very High | 6-12w | **P-Strategic** |
+| 12.15 | Data Marketplace and Sharing Layer | High | 4-8w | **P-Strategic** |
+| 12.16 | Adaptive Data Sampling & Compression | Very High | 6-12w | **P-Strategic** |
+| 12.17 | Cross-Asset Regime Detection | Very High | 8-16w | **P-Strategic** |
+| 12.18 | Multi-Tenant SaaS Architecture | Very High | 12-24w | **P-Strategic** |
+| 12.19 | Compliance & Regulatory Audit Layer | High | 8-16w | **P-Strategic** |
+| 12.20 | AI-Assisted Event Annotation | High | 6-12w | **P-Strategic** |
 
 ---
 
@@ -1275,4 +1464,4 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 - **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Item 10.4 (wire export API) is critical -- the endpoints exist but return fake data
 - **Category 11 items** build user trust through transparency -- lineage, calendar awareness, and quality metadata make the system credible for research use
 - **Category 12 items** are long-horizon platform bets from the companion [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md). They are effort-agnostic and represent strategic directions rather than near-term tasks. See that document for prioritization framework and rationale.
-- **Total: 67 improvements** across 12 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately.
+- **Total: 76 improvements** across 12 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately.
