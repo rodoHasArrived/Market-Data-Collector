@@ -436,6 +436,18 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 ---
 
+### 8.4 Event pipeline back-pressure tuning via config
+
+**Problem:** `EventPipelinePolicy` defines bounded channel capacities as compile-time constants (`PipelinePolicyConstants`). In memory-constrained environments, the defaults may cause excessive drop rates; on high-memory machines, users sacrifice throughput unnecessarily.
+
+**Improvement:** Expose channel capacity overrides in `appsettings.json` under a `Pipeline.ChannelCapacity` section. Map them onto `BoundedChannelOptions` at composition time. Keep the compile-time constants as documented defaults.
+
+**Value:** Medium -- lets operators tune for their hardware without recompilation.
+**Cost:** ~2-3 hours. Add config binding in `ServiceCompositionRoot`, document in `appsettings.sample.json`.
+**Files:** `src/MarketDataCollector.Contracts/Pipeline/PipelinePolicyConstants.cs`, `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`, `config/appsettings.sample.json`
+
+---
+
 ## Category 9: End-User Experience — Data Collection Workflow
 
 > **Key insight:** Many of the services below are already fully built and tested in the backend (`BackfillCheckpointService`, `WorkspaceService`, `CommandPaletteService`, `AlertService`, `FriendlyErrorFormatter`, `OnboardingTourService`). The work is **wiring**, not building from scratch.
@@ -675,6 +687,33 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 ---
 
+### 9.13 Symbol-level collection pause and resume
+
+**Problem:** There is currently no way to temporarily pause collection for a specific symbol without removing it from configuration. Users managing large watchlists may want to stop collecting noisy or low-priority symbols during market hours without permanently removing them.
+
+**Improvement:** Add a per-symbol `Paused` state to the subscription orchestrator. Expose it via:
+1. `POST /api/symbols/{symbol}/pause` and `POST /api/symbols/{symbol}/resume` endpoints.
+2. A "Pause" toggle in the Symbols page of the WPF desktop app.
+3. Persist pause state in the config so it survives restarts.
+
+**Value:** Medium-High -- practical operational control for large watchlists.
+**Cost:** ~4-5 hours. `SubscriptionOrchestrator` already unsubscribes/resubscribes; this adds a state flag and two endpoints.
+**Files:** `src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/SubscriptionEndpoints.cs`, `src/MarketDataCollector.Wpf/Views/SymbolsPage.xaml.cs`
+
+---
+
+### 9.14 Live data snapshot download button
+
+**Problem:** The web dashboard shows live quotes and trades but offers no direct way to download the current in-memory snapshot as a CSV or JSON file. Users who want a quick sample must either use the full export flow or connect to the API directly.
+
+**Improvement:** Add a "Download Snapshot" button on the Live Data page that calls `GET /api/live/snapshot?format=csv` and triggers a browser file download. The snapshot would include the most recent trade and quote for each subscribed symbol.
+
+**Value:** Medium -- bridges the gap between real-time monitoring and ad hoc data retrieval.
+**Cost:** ~2-3 hours. Live data models exist; add one endpoint and a button in the dashboard template.
+**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/LiveDataEndpoints.cs`, `src/MarketDataCollector/wwwroot/templates/`
+
+---
+
 ## Category 10: Data Consumption & Analysis Workflow
 
 ### 10.1 Quick-query CLI for stored data
@@ -860,6 +899,18 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 **Value:** Medium-High -- eliminates false alarms that erode user trust.
 **Cost:** ~3-4 hours. `TradingCalendar` is fully implemented; expose it.
 **Files:** `src/MarketDataCollector.Application/Services/TradingCalendar.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/`
+
+---
+
+### 11.3 Provider data gap accountability report
+
+**Problem:** When gaps occur in collected data, it is not always clear whether the cause was a provider outage, a local network issue, a process restart, or a code bug. Without a structured accountability record, diagnosing gaps days later is tedious.
+
+**Improvement:** Introduce a lightweight gap accountability log: whenever a gap is detected by `GapAnalyzer`, record the gap with a probable cause tag (provider-offline, local-restart, rate-limit, unknown). Tags are assigned based on concurrent events logged in `ErrorRingBuffer`, `ConnectionHealthMonitor`, and `DroppedEventAuditTrail`. Expose via `GET /api/quality/gaps/accountability`.
+
+**Value:** Medium-High -- transforms gap investigation from forensics into structured reporting.
+**Cost:** ~4-5 hours. Cross-correlate existing data sources; add one endpoint.
+**Files:** `src/MarketDataCollector.Application/Monitoring/DataQuality/GapAnalyzer.cs`, `src/MarketDataCollector.Application/Monitoring/ErrorRingBuffer.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/StorageQualityEndpoints.cs`
 
 ---
 
@@ -1049,6 +1100,96 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 
 ---
 
+### 12.11 Multi-Asset Class Unification
+
+**What it is:** A unified ingest and storage model that treats equities, options, futures, foreign exchange, and cryptocurrency as first-class asset classes — sharing the same pipeline, quality monitoring, and query surfaces.
+
+**Why it matters:** Most quant strategies span asset classes. Forcing users to run separate collection systems for each class is a major adoption barrier. A unified model multiplies the value of every platform capability.
+
+**Potential capabilities:**
+- Common `AssetClass` dimension on all stored events and quality scores.
+- Options chain streaming alongside underlying equity data.
+- Cross-asset correlation and spread monitoring.
+- Asset-class-aware backfill scheduling (crypto runs 24/7; futures have roll dates).
+
+**Value:** Very High -- dramatically expands addressable use cases.
+**Cost:** High (requires provider contract extensions and storage schema changes).
+**Files:** `src/MarketDataCollector.Contracts/Domain/`, `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs`, `src/MarketDataCollector.Storage/`
+
+---
+
+### 12.12 Distributed Collection Fabric
+
+**What it is:** A multi-node collection architecture where multiple instances of the collector coordinate to cover disjoint symbol sets, providers, or data centers, with centralized aggregation and deduplication.
+
+**Why it matters:** Single-node collection is a scalability ceiling. Large symbol universes (thousands of symbols) and multi-region requirements cannot be served by one process. A distributed model unlocks institutional-scale use cases.
+
+**Potential capabilities:**
+- Coordinator node assigns symbol partitions to collector nodes.
+- Automatic rebalancing when nodes join or leave.
+- Cross-node deduplication using the existing `PersistentDedupLedger`.
+- Centralized gap detection across the full distributed symbol set.
+
+**Value:** Very High -- removes the scalability ceiling for large symbol universes.
+**Cost:** Very High (fundamental architectural extension; requires distributed coordination layer).
+**Files:** `src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs`, `src/MarketDataCollector.Application/Pipeline/`
+
+---
+
+### 12.13 Real-Time Complex Event Processing (CEP)
+
+**What it is:** An embedded CEP engine that evaluates declarative pattern rules against the live event stream and fires alerts, signals, or automated actions when patterns are matched.
+
+**Why it matters:** Raw market data becomes valuable when it drives action. CEP on live streams enables use cases like momentum triggers, order book imbalance alerts, and anomaly-based circuit breakers — without external tooling.
+
+**Potential capabilities:**
+- Declarative pattern DSL: `"when SPY bid > ask + 0.10 for 3 consecutive ticks, alert"`
+- Time-windowed pattern matching (e.g., VWAP deviation over rolling 5 min).
+- Output to webhook, Slack, log, or a new `CepEventSink`.
+- Visual pattern builder in the web dashboard.
+
+**Value:** High -- transforms collection into a real-time decision layer.
+**Cost:** High (requires pattern evaluation engine; integrate with existing pipeline).
+**Files:** `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`, `src/MarketDataCollector.Application/Monitoring/`
+
+---
+
+### 12.14 Market Microstructure Analytics Engine
+
+**What it is:** A dedicated analytics subsystem that computes deep microstructure metrics — order flow toxicity (VPIN), adverse selection proxies, realized volatility decomposition, and hidden liquidity estimation — from raw tick and order-book data.
+
+**Why it matters:** These metrics are the core inputs to alpha research and execution quality analysis. Building them natively removes the need for post-processing pipelines and increases research velocity.
+
+**Potential capabilities:**
+- VPIN (Volume-synchronized Probability of Informed Trading) per symbol.
+- Amihud illiquidity ratio and Kyle's lambda estimation.
+- Trade direction inference (Lee-Ready, tick test, bulk classification).
+- Realized variance and integrated variance estimators from tick data.
+
+**Value:** Very High -- native support for academic-grade microstructure research.
+**Cost:** High (requires financial econometrics implementation; builds on F# calculation layer).
+**Files:** `src/MarketDataCollector.FSharp/Calculations/`, `src/MarketDataCollector.Application/Indicators/`
+
+---
+
+### 12.15 Data Marketplace and Sharing Layer
+
+**What it is:** A governed layer that enables users to share, publish, or monetize curated data packages — with access controls, licensing metadata, and optional integration with a public or private registry.
+
+**Why it matters:** Community-shared data (high-quality historical samples, curated corporate event datasets, alternative data overlays) dramatically expands the value of the platform. A sharing layer creates network effects.
+
+**Potential capabilities:**
+- Signed, versioned data packages with license and provenance metadata.
+- Private sharing via token-authenticated download links.
+- Optional public registry for open datasets (index OHLCV, ETF flows).
+- Differential packaging: share only new data since last published version.
+
+**Value:** High -- creates compounding community value and differentiation.
+**Cost:** High (requires access control infrastructure and registry integration).
+**Files:** `src/MarketDataCollector.Storage/Packaging/`, `src/MarketDataCollector.Ui.Shared/Endpoints/`
+
+---
+
 ## Priority Matrix
 
 | ID | Improvement | Value | Cost | Priority |
@@ -1110,6 +1251,15 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 | 12.8 | Enterprise Reliability Envelope | High | Weeks | **P-Strategic** |
 | 12.9 | Ecosystem & Extensibility Platform | High | Weeks | **P-Strategic** |
 | 12.10 | Portfolio-Level Intelligence UX | High | Weeks | **P-Strategic** |
+| 9.13 | Symbol-level pause and resume | Med-High | 4-5h | **P2** |
+| 9.14 | Live data snapshot download | Medium | 2-3h | **P2** |
+| 11.3 | Provider gap accountability report | Med-High | 4-5h | **P2** |
+| 8.4 | Pipeline back-pressure tuning via config | Medium | 2-3h | **P3** |
+| 12.11 | Multi-Asset Class Unification | Very High | Weeks | **P-Strategic** |
+| 12.12 | Distributed Collection Fabric | Very High | Weeks | **P-Strategic** |
+| 12.13 | Real-Time Complex Event Processing | High | Weeks | **P-Strategic** |
+| 12.14 | Market Microstructure Analytics Engine | Very High | Weeks | **P-Strategic** |
+| 12.15 | Data Marketplace and Sharing Layer | High | Weeks | **P-Strategic** |
 
 ---
 
@@ -1125,4 +1275,4 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 - **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Item 10.4 (wire export API) is critical -- the endpoints exist but return fake data
 - **Category 11 items** build user trust through transparency -- lineage, calendar awareness, and quality metadata make the system credible for research use
 - **Category 12 items** are long-horizon platform bets from the companion [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md). They are effort-agnostic and represent strategic directions rather than near-term tasks. See that document for prioritization framework and rationale.
-- **Total: 58 improvements** across 12 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately.
+- **Total: 67 improvements** across 12 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately.
