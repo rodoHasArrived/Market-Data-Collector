@@ -1,20 +1,35 @@
 {
-  "generated_at": "2026-03-06T06:12:28.832327+00:00",
-  "workflow": "code-quality.yml",
-  "run_id": 22751508693,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22751508693",
+  "generated_at": "2026-03-06T06:32:57.941653+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 22752038367,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22752038367",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Code Quality Checks"
+    "Test (macOS)"
   ],
   "findings_by_category": {
+    "test": 2,
     "code-quality": 10
   },
   "total_error_codes": 2,
-  "total_failed_tests": 0,
+  "total_failed_tests": 2,
   "existing_prompts": 16,
   "generated_prompts": [
+    {
+      "file": "fix-test-failures.prompt.yml",
+      "category": "test",
+      "action": "update",
+      "findings_count": 2,
+      "error_codes": [
+        "CS1573",
+        "CS1998"
+      ],
+      "failed_tests": [
+        "2026-03-06T06:31:01.3034460Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [640 ms]",
+        "MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically"
+      ]
+    },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
@@ -24,16 +39,19 @@
       "failed_tests": []
     },
     {
-      "file": "workflow-results-code-quality.prompt.yml",
+      "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 10,
+      "findings_count": 12,
       "error_codes": [
         "CS1573",
         "CS1998"
       ],
-      "failed_tests": []
+      "failed_tests": [
+        "2026-03-06T06:31:01.3034460Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [640 ms]",
+        "MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically"
+      ]
     }
   ],
-  "total_generated": 2
+  "total_generated": 3
 }

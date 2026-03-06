@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-06
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22750667351
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22752038367
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,20 +19,20 @@ messages:
 
       ## Findings from Workflow Run
       ### Test
-      - `2026-03-06T05:37:07.0127600Z Failed!  - Failed:     1, Passed:  2533, Skipped:     2, Total:  2536, Duration: 11 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-06T05:36:56.1449758Z [xUnit.net 00:00:04.48]     MarketDataCollector.Tests.PrometheusMetricsUpdaterTests.UpdateLoop_ShouldUpdateMetricsPeriodi...`
+      - `2026-03-06T06:31:14.1423210Z Failed!  - Failed:     1, Passed:  2534, Skipped:     2, Total:  2537, Duration: 15 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-06T06:31:01.2924130Z [xUnit.net 00:00:03.76]     MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutoma...`
 
       ### Code Quality
-      - `2026-03-06T05:36:27.7878100Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
-      - `2026-03-06T05:36:27.7892976Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-06T05:36:27.7899340Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-06T05:36:27.7905503Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-06T05:36:27.7911910Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-06T06:30:42.5684100Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptio...`
+      - `2026-03-06T06:30:42.5699440Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
+      - `2026-03-06T06:30:42.5706040Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
+      - `2026-03-06T06:30:42.5712650Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
+      - `2026-03-06T06:30:42.5718830Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
 
 
       ## Failed Tests
-      - `2026-03-06T05:36:56.1511762Z   Failed MarketDataCollector.Tests.PrometheusMetricsUpdaterTests.UpdateLoop_ShouldUpdateMetricsPeriodically [180 ms]`
-      - `MarketDataCollector.Tests.PrometheusMetricsUpdaterTests.UpdateLoop_ShouldUpdateMetricsPeriodically`
+      - `2026-03-06T06:31:01.3034460Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [640 ms]`
+      - `MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically`
 
       ## Error Codes
       - `CS1573`
@@ -49,7 +49,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22750667351
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22752038367
 
       Additional context:
       {{additional_context}}

@@ -2,7 +2,7 @@ name: Fix Test Failures Identified By Ci
 description: Fix test failures identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-06
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22750667351
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22752038367
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -26,12 +26,12 @@ messages:
       - `CS1998`
 
       ## Failure Patterns
-      - `2026-03-06T05:37:07.0127600Z Failed!  - Failed:     1, Passed:  2533, Skipped:     2, Total:  2536, Duration: 11 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-06T05:36:56.1449758Z [xUnit.net 00:00:04.48]     MarketDataCollector.Tests.PrometheusMetricsUpdaterTests.UpdateLoop_ShouldUpdateMetricsPeriodically [FAIL]`
+      - `2026-03-06T06:31:14.1423210Z Failed!  - Failed:     1, Passed:  2534, Skipped:     2, Total:  2537, Duration: 15 s - MarketDataCollector.Tests.dll (net9.0)`
+      - `2026-03-06T06:31:01.2924130Z [xUnit.net 00:00:03.76]     MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [FAIL]`
 
       ## Failed Tests
-      - `2026-03-06T05:36:56.1511762Z   Failed MarketDataCollector.Tests.PrometheusMetricsUpdaterTests.UpdateLoop_ShouldUpdateMetricsPeriodically [180 ms]`
-      - `MarketDataCollector.Tests.PrometheusMetricsUpdaterTests.UpdateLoop_ShouldUpdateMetricsPeriodically`
+      - `2026-03-06T06:31:01.3034460Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [640 ms]`
+      - `MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
