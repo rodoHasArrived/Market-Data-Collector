@@ -1355,6 +1355,160 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 
 ---
 
+## Category 13: Visionary & Moonshot Ideas
+
+> These items are purely value-oriented. No implementation constraints, timelines, or cost estimates apply. They represent the highest-ambition directions the platform could pursue, unconstrained by current architecture or team size.
+
+### 13.1 Natural Language Market Data Query Interface
+
+**What it is:** Ask questions about collected data in plain English. "How did SPY trade in the 30 minutes after the last five Fed rate decisions?" or "Show me every day AAPL volume was 3× its 20-day average and sort by next-day return." The system translates these into structured queries against stored data and returns formatted results.
+
+**Why it matters:** The query-to-insight loop is the highest-friction part of owning market data. A natural language interface removes the code barrier entirely and turns a data collection tool into an interactive research partner accessible to non-programmers.
+
+**Value:** Very High
+
+---
+
+### 13.2 Synthetic Market Data Generation via Generative Models
+
+**What it is:** Use generative AI (diffusion models, GANs, or autoregressive models) trained on collected microstructure data to produce statistically faithful synthetic market data — preserving stylized facts like volatility clustering, fat tails, and intraday periodicity — without exposing real trades.
+
+**Why it matters:** Synthetic data eliminates look-ahead bias in strategy research, enables unlimited out-of-sample testing, and allows safe sharing of realistic datasets without confidentiality concerns. It is the foundational capability for responsible quantitative research at scale.
+
+**Value:** Very High
+
+---
+
+### 13.3 Cross-Market Systemic Contagion Detector
+
+**What it is:** A real-time monitor that identifies when a liquidity or volatility shock originating in one market (e.g., a single-stock halt, a futures circuit breaker) begins propagating to correlated instruments — before contagion is visible in prices. Uses Granger causality and order flow imbalance propagation patterns.
+
+**Why it matters:** Systemic risk events are detectable at the microstructure level seconds to minutes before they manifest in headlines or price moves. A contagion detector provides institutional-grade early warning that is currently only available to top-tier market participants.
+
+**Value:** Very High
+
+---
+
+### 13.4 Federated Signal Discovery Across Institutions
+
+**What it is:** Multiple firms train a shared signal discovery model on their local, private order flow data using federated learning — no raw data leaves any institution. The federated model captures cross-institutional patterns (e.g., correlated order flow from multiple buy-side firms) that no single firm could observe alone.
+
+**Why it matters:** The most valuable signals in markets emerge from cross-participant behavior that is invisible to any single data owner. Federated learning is the only privacy-preserving mechanism to discover these signals. No current market data platform offers this.
+
+**Value:** Very High
+
+---
+
+### 13.5 Homomorphic Encrypted Collaborative Analytics
+
+**What it is:** Allow competing institutions to compute joint statistical properties of their private order flow — correlation matrices, volatility surfaces, liquidity metrics — without either party decrypting or revealing their raw data to the other. Uses homomorphic encryption or secure multi-party computation.
+
+**Why it matters:** Risk management, market impact modeling, and pre-trade analytics all improve with larger data populations. HE/SMPC removes the confidentiality barrier that prevents institutions from collaborating on shared analytics.
+
+**Value:** Very High
+
+---
+
+### 13.6 Market Microstructure Digital Twin
+
+**What it is:** A fully simulated, live replica of a market's order book driven by real-time collected data. Enables counterfactual analysis: "What would the SPY order book look like if this 50,000-share block had not printed at 10:32?" Supports synthetic participant modeling and market impact pre-estimation.
+
+**Why it matters:** Digital twins of physical systems have transformed manufacturing, aerospace, and urban planning. A microstructure digital twin would transform pre-trade analytics and risk management, allowing traders to run experiments on a faithful simulation before committing capital.
+
+**Value:** Very High
+
+---
+
+### 13.7 Predictive Trading Halt and Circuit Breaker Intelligence
+
+**What it is:** A real-time ML model that predicts imminent trading halts, limit-up/limit-down triggers, and exchange circuit breakers based on live order flow imbalance, quote stuffing patterns, and cross-venue price divergence. Issues structured alerts minutes or seconds before the official halt.
+
+**Why it matters:** Trading halts create severe adverse selection risk for market makers and momentum traders. Early warning capability — even seconds ahead — has enormous risk-adjusted value. The required microstructure signals are already being collected.
+
+**Value:** Very High
+
+---
+
+### 13.8 Temporal Knowledge Graph for Market Events
+
+**What it is:** A queryable graph database where nodes are market events (earnings, dividends, index rebalances, macro announcements, corporate actions) and edges represent causal, correlative, or temporal relationships discovered automatically from historical collected data. Supports causal reasoning queries: "What events preceded this volatility cluster?"
+
+**Why it matters:** Markets are driven by events, but the relationships between events and price/liquidity outcomes are encoded only implicitly in historical data. A knowledge graph externalizes these relationships as first-class queryable objects, transforming raw data into institutional memory.
+
+**Value:** Very High
+
+---
+
+### 13.9 Autonomous Alpha Decay Monitoring
+
+**What it is:** A system that continuously monitors deployed quantitative strategies' statistical edge in live market data and automatically detects when a strategy's alpha is decaying — its returns are diverging from backtest parameters, its information coefficient is trending toward zero, or its regime assumptions are no longer valid.
+
+**Why it matters:** Most strategy failures are not sudden — they decay over months or quarters. Catching decay early (before significant drawdown) is one of the highest-value operational improvements available to systematic funds. The required infrastructure (live data + backtest reference distribution) already exists in this platform.
+
+**Value:** Very High
+
+---
+
+### 13.10 Real-Time Sentiment and Order Flow Fusion
+
+**What it is:** Continuous fusion of natural language sentiment scores derived from news, regulatory filings, and social media with live microstructure signals (order flow imbalance, quote depth asymmetry, trade direction). The fused signal is more predictive than either input alone and is emitted as a real-time event stream.
+
+**Why it matters:** Sentiment and microstructure are complementary signals operating at different time scales. Their fusion captures information that neither alone contains — a positive earnings surprise hitting an already-imbalanced order book behaves very differently from the same surprise into a balanced book.
+
+**Value:** Very High
+
+---
+
+### 13.11 Self-Calibrating Microstructure Models
+
+**What it is:** Automated daily re-calibration of industry-standard market microstructure models — Kyle's lambda, Amihud illiquidity ratio, Glosten-Milgrom spread decomposition, Roll's implicit spread estimate — using the previous session's collected data. All model parameters are current and model outputs are available as a queryable API.
+
+**Why it matters:** Published microstructure parameters go stale within weeks of publication as markets evolve. Self-calibrating models ensure that any analytics built on top are always fit to current market conditions rather than a historical snapshot.
+
+**Value:** High
+
+---
+
+### 13.12 Privacy-Preserving Institutional Order Flow Intelligence
+
+**What it is:** Statistical fingerprinting of order flow to identify the behavioral signatures of large institutional participants (without identifying specific firms) — enabling pre-trade analytics that answers "is there an informed buyer active in this security right now?" without violating privacy or market surveillance rules.
+
+**Why it matters:** Detecting informed order flow is the Holy Grail of market impact modeling. Behavioral signature detection from microstructure patterns is a legitimate, privacy-preserving alternative to broker flow data that is currently only available to exchanges and a small number of specialist firms.
+
+**Value:** Very High
+
+---
+
+### 13.13 Zero-Knowledge Data Provenance Certificates
+
+**What it is:** Cryptographic certificates attached to every exported dataset that prove — without revealing the data itself — that it was collected from a specific provider, during a specific time window, without tampering, and meets specified quality criteria (e.g., completeness > 99%, gap duration < 5 minutes).
+
+**Why it matters:** Institutional data governance requires provenance guarantees. Currently, all such guarantees are based on trust in the vendor. Zero-knowledge proofs enable cryptographically verifiable data quality certificates that any party can independently verify without access to the underlying data.
+
+**Value:** High
+
+---
+
+### 13.14 Continuous Backtesting Fabric
+
+**What it is:** A live backtesting layer that continuously re-runs a registered library of strategy specifications against the newest collected data — automatically detecting when a strategy's performance on fresh out-of-sample data diverges from its historical distribution, triggering a research alert.
+
+**Why it matters:** Walk-forward validation is the gold standard for strategy robustness, but it is expensive and infrequently performed. A continuous backtesting fabric makes it automatic and invisible — every minute of new data is a new out-of-sample test for every registered strategy.
+
+**Value:** Very High
+
+---
+
+### 13.15 Global Alpha Decay Observatory
+
+**What it is:** A community-driven public dashboard (with optional private contribution) that tracks how quickly various signal categories (momentum, mean-reversion, microstructure, sentiment) decay across different regimes, asset classes, and geographies — built from anonymized, aggregated research contributions from multiple users of the platform.
+
+**Why it matters:** Alpha decay is poorly understood outside the largest institutions because the data required to study it is fragmented and proprietary. A shared observatory would be one of the most valuable public goods in quantitative finance — and it would be a powerful network effect engine for platform adoption.
+
+**Value:** Very High
+
+---
+
 ## Priority Matrix
 
 **Priority Definitions:**
@@ -1366,6 +1520,7 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 | **P3** | Medium value or moderate cost — do opportunistically |
 | **P4** | Low value or high cost relative to gain — defer |
 | **P-Strategic** | Long-horizon platform bets; effort-agnostic; tracked separately as multi-week investments |
+| **P-Moonshot** | Visionary, unconstrained ideas — no implementation timeline or cost estimate; pure value brainstorm |
 
 **Value Scale:** `Low` < `Low-Med` < `Medium` < `Med-High` < `High` < `Very High`
 - *Very High* items have transformational or platform-level impact (typically Category 12)
@@ -1449,6 +1604,21 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 | 12.18 | Multi-Tenant SaaS Architecture | Very High | 12-24w | **P-Strategic** |
 | 12.19 | Compliance & Regulatory Audit Layer | High | 8-16w | **P-Strategic** |
 | 12.20 | AI-Assisted Event Annotation | High | 6-12w | **P-Strategic** |
+| 13.1 | Natural Language Market Data Query | Very High | — | **P-Moonshot** |
+| 13.2 | Synthetic Market Data Generation | Very High | — | **P-Moonshot** |
+| 13.3 | Cross-Market Contagion Detector | Very High | — | **P-Moonshot** |
+| 13.4 | Federated Signal Discovery | Very High | — | **P-Moonshot** |
+| 13.5 | Homomorphic Encrypted Analytics | Very High | — | **P-Moonshot** |
+| 13.6 | Market Microstructure Digital Twin | Very High | — | **P-Moonshot** |
+| 13.7 | Predictive Halt & Circuit Breaker Intel | Very High | — | **P-Moonshot** |
+| 13.8 | Temporal Knowledge Graph | Very High | — | **P-Moonshot** |
+| 13.9 | Autonomous Alpha Decay Monitoring | Very High | — | **P-Moonshot** |
+| 13.10 | Real-Time Sentiment + Order Flow Fusion | Very High | — | **P-Moonshot** |
+| 13.11 | Self-Calibrating Microstructure Models | High | — | **P-Moonshot** |
+| 13.12 | Institutional Order Flow Intelligence | Very High | — | **P-Moonshot** |
+| 13.13 | Zero-Knowledge Provenance Certificates | High | — | **P-Moonshot** |
+| 13.14 | Continuous Backtesting Fabric | Very High | — | **P-Moonshot** |
+| 13.15 | Global Alpha Decay Observatory | Very High | — | **P-Moonshot** |
 
 ---
 
@@ -1464,4 +1634,5 @@ These ideas are drawn from the companion [High-Impact Improvements Brainstorm](h
 - **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Item 10.4 (wire export API) is critical -- the endpoints exist but return fake data
 - **Category 11 items** build user trust through transparency -- lineage, calendar awareness, and quality metadata make the system credible for research use
 - **Category 12 items** are long-horizon platform bets from the companion [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md). They are effort-agnostic and represent strategic directions rather than near-term tasks. See that document for prioritization framework and rationale.
-- **Total: 76 improvements** across 12 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately.
+- **Category 13 items** are unconstrained moonshot ideas — no implementation timeline, cost estimate, or architecture constraint applies. They represent the highest-ambition directions the platform could pursue and are tracked as pure value propositions.
+- **Total: 91 improvements** across 13 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks). Category 12 items require multi-week investment and are tracked separately. Category 13 items are aspirational with no timeline.
