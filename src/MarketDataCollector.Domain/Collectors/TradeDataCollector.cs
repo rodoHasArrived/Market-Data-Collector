@@ -148,14 +148,7 @@ public sealed class TradeDataCollector
             }
             else
             {
-                var staleQuoteIntegrity = IntegrityEvent.CanonicalizationHardFail(
-                    update.Timestamp,
-                    symbol,
-                    $"Aggressor inference skipped due to stale quote ({(update.Timestamp - bbo.Timestamp).TotalMilliseconds:0}ms old).",
-                    update.SequenceNumber,
-                    update.StreamId,
-                    update.Venue);
-                _publisher.TryPublish(MarketEvent.Integrity(update.Timestamp, symbol, staleQuoteIntegrity));
+                // Quote is stale; skip aggressor inference and leave AggressorSide.Unknown without raising a hard canonicalization failure.
             }
         }
 
