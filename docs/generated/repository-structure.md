@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-05 09:19:31 UTC
+> Auto-generated on 2026-03-06 05:33:44 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -354,6 +354,7 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── evaluations/
 │   │   ├── 2026-03-brainstorm-next-frontier.md
+│   │   ├── assembly-performance-opportunities.md
 │   │   ├── data-quality-monitoring-evaluation.md
 │   │   ├── desktop-end-user-improvements.md
 │   │   ├── high-impact-improvement-brainstorm-2026-03.md
