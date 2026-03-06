@@ -319,6 +319,23 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Status**: fixed
 - **Fixed in**: `BackfillEndpoints.cs` and `BackfillCoordinator.cs` — removed `using MarketDataCollector.Application.Backfill;` namespace directive, kept explicit `using` aliases for `BackfillRequest` and `BackfillResult`, and fully qualified `HistoricalBackfillService`
 
+### AI-20260305-cs0266-narrowing-type-cast
+- **ID**: AI-20260305-cs0266-narrowing-type-cast
+- **Area**: build/types
+- **Symptoms**: Build fails with `error CS0266: Cannot implicitly convert type 'int' to 'ushort'. An explicit conversion exists (are you missing a cast?)`. This occurred in `TradeDataCollector.cs` inside `RemoveFromRollingWindow` when assigning `Math.Max(0, state.TradeCount - 1)` to a `ushort` field.
+- **Root cause**: C# arithmetic on `ushort` operands promotes both operands to `int` before performing the operation. `Math.Max(int, int)` also returns `int`. The result cannot be implicitly narrowed back to `ushort` even when the value is guaranteed to fit. An explicit `(ushort)` cast is required. This is the same narrowing rule that applies to `byte`, `sbyte`, and `short` fields.
+- **Prevention checklist**:
+  - [ ] When decrementing (or performing arithmetic on) fields typed `ushort`, `short`, `byte`, or `sbyte`, always add an explicit narrowing cast: `(ushort)(value - 1)` or `(ushort)Math.Max(0, value - 1)`
+  - [ ] When an enum backing type of `byte` is used and values exceed `byte.MaxValue` (255), change the backing type to `int` instead of keeping `byte`
+  - [ ] After changing field types to a narrower type, build immediately: `dotnet build src/MarketDataCollector.Domain -c Release /p:EnableWindowsTargeting=true`
+  - [ ] Search for arithmetic expressions on narrow integer fields before committing: `grep -rn "ushort\|: byte" src/ --include="*.cs"`
+- **Verification commands**:
+  - `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true 2>&1 | grep -E "error CS0266|Error\(s\)"`
+  - `dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true --filter "Domain"`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22709535738/job/65984383245#step:6:1
+- **Status**: fixed
+- **Fixed in**: `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` line 381 — added `(ushort)` cast: `state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);`. Also `src/MarketDataCollector.Application/Results/ErrorCode.cs` — changed backing from `byte` to `int` since error codes use values up to 8005, which exceeds `byte.MaxValue` (255).
+
 ### AI-20260220-regex-hyphen-character-class
 - **ID**: AI-20260220-regex-hyphen-character-class
 - **Area**: build/ci/github-actions
