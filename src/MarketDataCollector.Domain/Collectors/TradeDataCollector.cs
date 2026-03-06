@@ -100,7 +100,8 @@ public sealed class TradeDataCollector
         }
 
         var streamKey = new TradeStreamKey(symbol, update.StreamId, update.Venue);
-        if (_lastSequenceByStream.TryGetValue(streamKey, out var last))
+        // Skip continuity checks when seq == 0, as some adapters use 0 to mean "unsequenced".
+        if (seq > 0 && _lastSequenceByStream.TryGetValue(streamKey, out var last))
         {
             if (seq <= last)
             {
