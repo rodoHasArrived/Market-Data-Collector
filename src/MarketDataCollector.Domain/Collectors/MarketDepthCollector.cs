@@ -273,7 +273,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                         {
                             _stale = true;
                             LastErrorDescription = $"Insert position {upd.Position} out of range (count={sideList.Count}).";
-                            return DepthIntegrityKind.Gap;
+                            return DepthIntegrityKind.InvalidPosition;
                         }
                         sideList.Insert(upd.Position, new OrderBookLevel(upd.Side, upd.Position, upd.Price, upd.Size, upd.MarketMaker));
                         ReindexRange(sideList, upd.Side, upd.Position);
