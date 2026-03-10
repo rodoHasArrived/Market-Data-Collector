@@ -264,7 +264,13 @@ public abstract class NotificationServiceBase
 
     public void ClearHistory()
     {
-        lock (HistoryLock) { _history.Clear(); }
+        lock (HistoryLock)
+        {
+            _history.Clear();
+            _recentNotifications.Clear();
+            _groupedCounts.Clear();
+            _notificationsThisMinute = 0;
+        }
     }
 
     public void MarkAsRead(int index)

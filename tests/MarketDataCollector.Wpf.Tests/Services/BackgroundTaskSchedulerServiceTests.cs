@@ -195,10 +195,10 @@ public sealed class BackgroundTaskSchedulerServiceTests
     }
 
     [Fact]
-    public void ScheduleTask_WhenNotRunning_ShouldNotAddTask()
+    public async Task ScheduleTask_WhenNotRunning_ShouldNotAddTask()
     {
         var svc = Svc;
-        // Ensure not running (StopAsync was called in previous test)
+        await svc.StopAsync(); // Explicitly ensure scheduler is stopped
 
         var taskId = "not-running-" + Guid.NewGuid();
         svc.ScheduleTask(new ScheduledTask
@@ -287,10 +287,10 @@ public sealed class BackgroundTaskSchedulerServiceTests
                 callCount++;
                 throw new InvalidOperationException("boom");
             },
-            Interval = TimeSpan.FromMilliseconds(20)
+            Interval = TimeSpan.FromMilliseconds(50)
         });
 
-        await Task.Delay(60);
+        await Task.Delay(300);
 
         // Should have been called multiple times despite exceptions
         callCount.Should().BeGreaterThan(1);

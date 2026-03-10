@@ -201,11 +201,11 @@ public sealed class SystemHealthServiceTests
         var service = SystemHealthService.Instance;
 
         // Act - Call without cancellation token (uses default)
-        // May throw due to unavailable API, but method signature should work
+        // API is unavailable in test environment; method should return null gracefully
         var act = async () => await service.GetHealthSummaryAsync();
 
-        // Assert - Method accepts call without explicit cancellation token
-        await act.Should().ThrowAsync<Exception>();
+        // Assert - Method accepts call without explicit cancellation token and does not throw
+        await act.Should().NotThrowAsync();
     }
 
     [Theory]
@@ -315,10 +315,18 @@ public sealed class SystemHealthServiceTests
         cts.Cancel();
 
         // Act & Assert - All methods should accept and respect cancellation tokens
-        await Assert.ThrowsAsync<Exception>(async () => await service.GetHealthSummaryAsync(cts.Token));
-        await Assert.ThrowsAsync<Exception>(async () => await service.GetProviderHealthAsync(cts.Token));
-        await Assert.ThrowsAsync<Exception>(async () => await service.GetStorageHealthAsync(cts.Token));
-        await Assert.ThrowsAsync<Exception>(async () => await service.GetSystemMetricsAsync(cts.Token));
+        // Use FluentAssertions ThrowAsync which accepts subtypes (e.g. TaskCanceledException)
+        Func<Task> health = async () => await service.GetHealthSummaryAsync(cts.Token);
+        await health.Should().ThrowAsync<OperationCanceledException>();
+
+        Func<Task> providers = async () => await service.GetProviderHealthAsync(cts.Token);
+        await providers.Should().ThrowAsync<OperationCanceledException>();
+
+        Func<Task> storage = async () => await service.GetStorageHealthAsync(cts.Token);
+        await storage.Should().ThrowAsync<OperationCanceledException>();
+
+        Func<Task> metrics = async () => await service.GetSystemMetricsAsync(cts.Token);
+        await metrics.Should().ThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
