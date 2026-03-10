@@ -117,8 +117,9 @@ internal sealed class SymbolCommands : ICliCommand
             UpdateExisting: CliArguments.HasFlag(args, "--update")
         );
 
-        // Parse the file - supports CSV, TXT, and one-symbol-per-line formats
-        var symbols = ParseSymbolFile(filePath);
+        // Read the file and parse - supports JSON array, CSV, TXT, and one-symbol-per-line formats
+        var content = File.ReadAllText(filePath);
+        var symbols = ParseSymbolFile(content, filePath);
 
         if (symbols.Length == 0)
         {
@@ -147,81 +148,6 @@ internal sealed class SymbolCommands : ICliCommand
             filePath, symbols.Length, result.Success);
 
         return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
-    }
-
-    /// <summary>
-    /// Parses a symbol file in various formats: one-per-line, comma-separated, or CSV with headers.
-    /// Skips comments (lines starting with #) and empty lines.
-    /// For CSV files with a header row, extracts the first column as the symbol.
-    /// </summary>
-    internal static string[] ParseSymbolFile(string filePath)
-    {
-        var lines = File.ReadAllLines(filePath);
-        var symbols = new List<string>();
-        var isFirstLine = true;
-        var hasHeader = false;
-
-        foreach (var rawLine in lines)
-        {
-            var line = rawLine.Trim();
-
-            // Skip empty lines and comments
-            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
-                continue;
-
-            // Detect CSV header row: first column named "symbol" (case-insensitive)
-            if (isFirstLine && line.Contains(','))
-            {
-                var headerColumns = line.Split(',');
-                var firstHeaderCol = headerColumns[0].Trim().Trim('"');
-                if (firstHeaderCol.Equals("symbol", StringComparison.OrdinalIgnoreCase))
-                {
-                    hasHeader = true;
-                    isFirstLine = false;
-                    continue;
-                }
-            }
-            isFirstLine = false;
-
-            if (line.Contains(','))
-            {
-                // CSV or comma-separated: extract first column (symbol) from each
-                if (hasHeader)
-                {
-                    // CSV data row: take the first column
-                    var firstCol = line.Split(',')[0].Trim().Trim('"');
-                    if (IsValidSymbol(firstCol))
-                        symbols.Add(firstCol.ToUpperInvariant());
-                }
-                else
-                {
-                    // Comma-separated list on one line
-                    foreach (var part in line.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                    {
-                        var sym = part.Trim('"');
-                        if (IsValidSymbol(sym))
-                            symbols.Add(sym.ToUpperInvariant());
-                    }
-                }
-            }
-            else
-            {
-                // One symbol per line
-                var sym = line.Trim('"');
-                if (IsValidSymbol(sym))
-                    symbols.Add(sym.ToUpperInvariant());
-            }
-        }
-
-        return symbols.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-    }
-
-    private static bool IsValidSymbol(string symbol)
-    {
-        if (string.IsNullOrWhiteSpace(symbol)) return false;
-        if (symbol.Length > 20) return false;
-        // Allow alphanumeric, dots, slashes (for crypto like BTC/USD), and hyphens
-        return symbol.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '/' || c == '-');
     }
 
     private async Task<CliResult> RunRemoveAsync(string[] args, CancellationToken ct)
