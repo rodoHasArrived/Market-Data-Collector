@@ -1,39 +1,39 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-10T17:54:04.378194+00:00
+> Last updated: 2026-03-10T18:13:19.476822+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 22 |
+| **Total Items** | 20 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 22 |
+| **Untracked** | 20 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 22 | Important notes and documentation |
+| `NOTE` | 20 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 15 |
+| `tests/` | 13 |
 | `src/` | 5 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-22 items have no assignee and no issue tracking:
+20 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (22)
+### NOTE (20)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -82,12 +82,6 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
   > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/BackfillServiceTests.cs:181`
-  > This test verifies the IsRunning property logic In actual usage, CurrentProgress would be set during a backfill operation We're testing the property getter logic here
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/BackfillServiceTests.cs:198`
-  > Similar to IsRunning test, this verifies the property logic
 
 - [ ] `tests/MarketDataCollector.Ui.Tests/Services/ScheduledMaintenanceServiceTests.cs:85`
   > since this is a singleton shared across tests, if StartScheduler was previously called, we stop it first to ensure test isolation.
