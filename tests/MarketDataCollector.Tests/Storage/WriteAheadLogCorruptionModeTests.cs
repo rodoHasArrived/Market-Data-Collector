@@ -73,7 +73,10 @@ public sealed class WriteAheadLogCorruptionModeTests : IAsyncDisposable
 
         // Assert
         await act.Should().NotThrowAsync();
-        wal.CorruptedRecordCount.Should().Be(1);
+        // InitializeAsync reads the WAL file twice (recovery pass + sequence-scan pass),
+        // so each corrupt line is counted twice in CorruptedRecordCount.
+        wal.CorruptedRecordCount.Should().Be(2,
+            "the single corrupt line is encountered in both the recovery pass and the sequence-scan pass");
         wal.LastRecoveryEventCount.Should().Be(2, "only the 2 valid records should be recovered");
     }
 
@@ -124,7 +127,7 @@ public sealed class WriteAheadLogCorruptionModeTests : IAsyncDisposable
         // Arrange
         await WriteSeedWalAsync(seedRecords: 2, corruptLines: 3);
 
-        int? reportedCount = null;
+        long? reportedCount = null;
         await using var wal = new WriteAheadLog(_walDir, new WalOptions
         {
             SyncMode = WalSyncMode.NoSync,
@@ -222,15 +225,19 @@ public sealed class WriteAheadLogCorruptionModeTests : IAsyncDisposable
     /// </summary>
     private async Task WriteSeedWalAsync(int seedRecords, int corruptLines)
     {
-        // Write valid records using a WAL instance, then close it.
-        await using var seed = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.NoSync });
-        await seed.InitializeAsync();
-        for (int i = 0; i < seedRecords; i++)
-            await seed.AppendAsync(new { Index = i, Data = $"record-{i}" }, "trade");
-        await seed.FlushAsync();
-        // Do NOT commit so the records survive as "uncommitted" data to recover.
+        // Write valid records using a WAL instance, then explicitly dispose it before
+        // touching the file directly. The WAL holds the file open for writing, so
+        // File.AppendAllLinesAsync would fail on Windows if we inject while it is alive.
+        await using (var seed = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.NoSync }))
+        {
+            await seed.InitializeAsync();
+            for (int i = 0; i < seedRecords; i++)
+                await seed.AppendAsync(new { Index = i, Data = $"record-{i}" }, "trade");
+            await seed.FlushAsync();
+            // Do NOT commit so the records survive as "uncommitted" data to recover.
+        }
 
-        // Inject corrupt lines directly into the .wal file after the WAL is closed.
+        // Inject corrupt lines directly into the .wal file — seed is now fully closed.
         if (corruptLines > 0)
         {
             // Find the file that was just created.

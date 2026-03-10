@@ -264,6 +264,7 @@ public sealed class AlpacaMessageParsingTests
     private static string BuildTradeJson(string symbol, decimal price, long size, string? timestamp)
     {
         var ts = timestamp is null ? "" : $@",""t"":""{timestamp}""";
-        return $@"{{""T"":""t"",""S"":""{symbol}"",""p"":{price},""s"":{size},""i"":42{ts}}}";
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture,
+            $@"{{""T"":""t"",""S"":""{symbol}"",""p"":{price},""s"":{size},""i"":42{ts}}}");
     }
 }

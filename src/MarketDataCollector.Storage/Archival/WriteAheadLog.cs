@@ -71,7 +71,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     /// The argument is the number of corrupted records found in the current recovery pass.
     /// Subscribe to this event to forward alerts to your monitoring infrastructure.
     /// </summary>
-    public event Action<int>? CorruptionDetected;
+    public event Action<long>? CorruptionDetected;
 
     /// <summary>
     /// Initialize the WAL, recovering any uncommitted transactions.
@@ -444,7 +444,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
             validRecords++;
         }
 
-        var corruptedInFile = (int)(Interlocked.Read(ref _corruptedRecordCount) - corruptedBefore);
+        var corruptedInFile = Interlocked.Read(ref _corruptedRecordCount) - corruptedBefore;
 
         if (corruptedInFile > 0)
         {
