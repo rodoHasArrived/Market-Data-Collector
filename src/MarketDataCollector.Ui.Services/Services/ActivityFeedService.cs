@@ -58,7 +58,8 @@ public sealed class ActivityFeedService
     /// </summary>
     public void AddActivity(ActivityItem activity)
     {
-        activity.Id ??= Guid.NewGuid().ToString();
+        if (string.IsNullOrEmpty(activity.Id))
+            activity.Id = Guid.NewGuid().ToString();
         if (activity.Timestamp == default)
         {
             activity.Timestamp = DateTime.UtcNow;

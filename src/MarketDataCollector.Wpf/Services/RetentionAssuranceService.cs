@@ -672,7 +672,12 @@ public sealed class RetentionAssuranceService
     /// </summary>
     public Task<string> ExportAuditReportAsync(RetentionAuditReport report, string format = "json")
     {
-        var json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+        var json = JsonSerializer.Serialize(report, options);
         return Task.FromResult(json);
     }
 

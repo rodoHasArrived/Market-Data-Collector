@@ -48,6 +48,7 @@ public sealed class DataCompletenessService
 
         // Analyze each symbol
         var symbolReports = new List<SymbolCompleteness>();
+        ct.ThrowIfCancellationRequested();
         foreach (var symbol in availableSymbols)
         {
             ct.ThrowIfCancellationRequested();

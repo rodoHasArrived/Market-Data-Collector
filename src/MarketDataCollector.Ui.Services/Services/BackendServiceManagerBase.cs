@@ -62,9 +62,9 @@ public abstract class BackendServiceManagerBase
         WriteIndented = true
     };
 
-    protected BackendServiceManagerBase()
+    protected BackendServiceManagerBase(string? appDataDirectory = null)
     {
-        var appDataRoot = GetAppDataDirectory();
+        var appDataRoot = appDataDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         _stateDirectory = Path.Combine(appDataRoot, "MarketDataCollector", "service");
         _installationFilePath = Path.Combine(_stateDirectory, "backend-installation.json");
         _runtimeFilePath = Path.Combine(_stateDirectory, "backend-runtime.json");

@@ -20,14 +20,17 @@ public abstract class SchemaServiceBase : ISchemaService
     {
         var schemas = GetSchemaDefinitions();
 
-        if (schemas.TryGetValue(eventType, out var schema))
-        {
-            return JsonSerializer.Serialize(
-                new { schema = eventType, @namespace = "MarketDataCollector.Domain.Events", definition = schema },
-                new JsonSerializerOptions { WriteIndented = true });
-        }
+        // Find the canonical key (respecting OrdinalIgnoreCase comparison)
+        if (!schemas.TryGetValue(eventType, out var schema))
+            return null;
 
-        return null;
+        // Use the canonical casing from the dictionary key, not the raw caller input.
+        // Single() is safe here because TryGetValue already confirmed exactly one match.
+        var canonicalKey = schemas.Keys.Single(k => string.Equals(k, eventType, StringComparison.OrdinalIgnoreCase));
+
+        return JsonSerializer.Serialize(
+            new { schema = canonicalKey, @namespace = "MarketDataCollector.Domain.Events", definition = schema },
+            new JsonSerializerOptions { WriteIndented = true });
     }
 
     /// <summary>

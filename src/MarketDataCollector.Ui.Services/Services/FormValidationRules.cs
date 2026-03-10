@@ -106,8 +106,8 @@ public static class FormValidationRules
         if (string.IsNullOrWhiteSpace(dateStr))
             return ValidationResult.Error("Date is required.");
 
-        // Try to parse as DateOnly (ISO format: YYYY-MM-DD)
-        if (!DateOnly.TryParse(dateStr, out _))
+        // Try to parse as DateOnly in strict ISO format: YYYY-MM-DD only
+        if (!DateOnly.TryParseExact(dateStr, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _))
             return ValidationResult.Error("Invalid date format. Use YYYY-MM-DD format.");
 
         return ValidationResult.Success();

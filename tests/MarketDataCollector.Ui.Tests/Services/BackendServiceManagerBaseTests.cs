@@ -24,7 +24,7 @@ internal sealed class TestBackendServiceManager : BackendServiceManagerBase
     public string? ResolvePathReturn { get; set; }
     public bool StartProcessShouldFail { get; set; }
 
-    public TestBackendServiceManager(string appDataDir) : base()
+    public TestBackendServiceManager(string appDataDir) : base(appDataDir)
     {
         _appDataDir = appDataDir;
     }

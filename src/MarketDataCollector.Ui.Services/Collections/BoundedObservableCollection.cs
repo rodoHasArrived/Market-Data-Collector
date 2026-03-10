@@ -133,14 +133,16 @@ public sealed class BoundedObservableCollection<T> : INotifyCollectionChanged, I
 
     /// <summary>
     /// Adds an item to the end of the collection.
+    /// If the collection is at capacity, the oldest item (at index 0) is automatically removed.
     /// </summary>
     public void Add(T item)
     {
         if (_items.Count >= _maxCapacity)
         {
-            // When at capacity, we can't add more items
-            // For most-recent-first collections, use Prepend instead
-            return;
+            var removedItem = _items[0];
+            _items.RemoveAt(0);
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
+                NotifyCollectionChangedAction.Remove, removedItem, 0));
         }
 
         _items.Add(item);

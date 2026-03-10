@@ -37,8 +37,13 @@ public class ConfigService : IConfigService
     public virtual async Task<AppConfig?> LoadConfigAsync(CancellationToken ct = default)
     {
         if (!File.Exists(ConfigPath)) return null;
-        var json = await File.ReadAllTextAsync(ConfigPath, ct);
-        return JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions);
+        try
+        {
+            var json = await File.ReadAllTextAsync(ConfigPath, ct);
+            return JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions);
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
     }
 
     public virtual async Task SaveConfigAsync(AppConfig config, CancellationToken ct = default)
