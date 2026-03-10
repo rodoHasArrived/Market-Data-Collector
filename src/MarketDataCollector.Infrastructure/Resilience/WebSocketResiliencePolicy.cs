@@ -330,6 +330,17 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
         _lastPongReceived = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>
+    /// Raises the <see cref="ConnectionLost"/> event.
+    /// Exposed as <c>internal</c> so that unit tests (via <c>InternalsVisibleTo</c>) can
+    /// verify the event subscription and handler behaviour without depending on real
+    /// WebSocket communication.
+    /// </summary>
+    internal async Task RaiseConnectionLostAsync()
+    {
+        await (ConnectionLost?.Invoke() ?? Task.CompletedTask);
+    }
+
     public async ValueTask DisposeAsync()
     {
         _cts.Cancel();

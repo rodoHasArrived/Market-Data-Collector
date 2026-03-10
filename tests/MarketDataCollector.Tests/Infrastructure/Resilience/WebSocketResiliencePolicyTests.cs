@@ -186,20 +186,22 @@ public class WebSocketHeartbeatTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task ConnectionLost_EventShouldBeSubscribable()
+    public async Task ConnectionLost_EventShouldFireWhenRaised()
     {
         // Arrange
         await using var heartbeat = new WebSocketHeartbeat(_ws!);
+        var eventFired = false;
 
-        // Act - Subscribe to the event
         heartbeat.ConnectionLost += async () =>
         {
+            eventFired = true;
             await Task.CompletedTask;
         };
 
-        // Assert - Event subscription should not throw
-        // NOTE: We can't directly invoke the event from outside the class
-        // The test validates that the subscription mechanism works
-        heartbeat.Should().NotBeNull();
+        // Act - raise the event via the internal helper exposed for testing
+        await heartbeat.RaiseConnectionLostAsync();
+
+        // Assert
+        eventFired.Should().BeTrue();
     }
 }
