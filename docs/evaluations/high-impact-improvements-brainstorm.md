@@ -1,4 +1,4 @@
-# High-Impact Improvements Brainstorm (Effort-Ignored)
+# High-Impact Improvements Brainstorm (Effort-Agnostic)
 
 **Date:** 2026-03-02  
 **Audience:** Maintainers, architects, and product direction stakeholders  
