@@ -178,15 +178,15 @@ public sealed class BackfillServiceTests
     [InlineData("Paused", false)]
     public void IsRunning_WithDifferentStatuses_ReturnsCorrectValue(string status, bool expectedRunning)
     {
-        // NOTE: This test verifies the IsRunning property logic
-        // In actual usage, CurrentProgress would be set during a backfill operation
-        // We're testing the property getter logic here
-        var service = BackfillService.Instance;
-        
+        // Arrange
+        var service = new BackfillService(useInstance: false);
+        SetCurrentProgress(service, new MarketDataCollector.Contracts.Backfill.BackfillProgress { Status = status });
+
+        // Act
+        var result = service.IsRunning;
+
         // Assert
-        // IsRunning checks CurrentProgress?.Status == "Running"
-        // Since CurrentProgress is null initially, IsRunning should be false
-        service.IsRunning.Should().BeFalse();
+        result.Should().Be(expectedRunning);
     }
 
     [Theory]
@@ -195,11 +195,23 @@ public sealed class BackfillServiceTests
     [InlineData("Completed", false)]
     public void IsPaused_WithDifferentStatuses_ReturnsCorrectValue(string status, bool expectedPaused)
     {
-        // NOTE: Similar to IsRunning test, this verifies the property logic
-        var service = BackfillService.Instance;
-        
+        // Arrange
+        var service = new BackfillService(useInstance: false);
+        SetCurrentProgress(service, new MarketDataCollector.Contracts.Backfill.BackfillProgress { Status = status });
+
+        // Act
+        var result = service.IsPaused;
+
         // Assert
-        service.IsPaused.Should().BeFalse();
+        result.Should().Be(expectedPaused);
+    }
+
+    private static void SetCurrentProgress(BackfillService service, MarketDataCollector.Contracts.Backfill.BackfillProgress? progress)
+    {
+        var field = typeof(BackfillService)
+            .GetField("_currentProgress", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?? throw new InvalidOperationException("Field '_currentProgress' not found on BackfillService.");
+        field.SetValue(service, progress);
     }
 
     [Fact]
