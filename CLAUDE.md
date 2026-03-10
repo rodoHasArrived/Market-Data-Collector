@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 954 source files
+**Version:** 1.0.0 | **Status:** Development / Pilot Ready | **Files:** 704 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,12 +22,12 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 954 |
-| C# Files | 938 |
-| F# Files | 16 |
-| Test Files | 230 |
+| Total Source Files | 704 |
+| C# Files | 692 |
+| F# Files | 12 |
+| Test Files | 241 |
 | Test Methods | ~3,739 |
-| Documentation Files | 165 |
+| Documentation Files | 148 |
 | Main Projects | 13 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
@@ -1671,7 +1671,7 @@ When contributing to this project, **always follow these rules**:
 ## Key Interfaces
 
 ### IMarketDataClient (Streaming)
-Location: `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs`
+Location: `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs`
 
 ```csharp
 [ImplementsAdr("ADR-001", "Core streaming data provider contract")]
@@ -1930,22 +1930,23 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 | Directory | Purpose | Files |
 |-----------|---------|-------|
 | `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 8 |
+| `tests/MarketDataCollector.Tests/Application/Canonicalization/` | Canonicalization tests | 1 |
 | `tests/MarketDataCollector.Tests/Application/Commands/` | Command tests | 8 |
 | `tests/MarketDataCollector.Tests/Application/Config/` | Configuration tests | 3 |
 | `tests/MarketDataCollector.Tests/Application/Credentials/` | Credential provider tests | 3 |
 | `tests/MarketDataCollector.Tests/Application/Indicators/` | Technical indicator tests | 1 |
-| `tests/MarketDataCollector.Tests/Application/Monitoring/` | Monitoring/quality tests | 13 |
-| `tests/MarketDataCollector.Tests/Application/Pipeline/` | Event pipeline tests | 7 |
-| `tests/MarketDataCollector.Tests/Application/Services/` | Application service tests | 12 |
-| `tests/MarketDataCollector.Tests/Domain/Collectors/` | Domain collector tests | 4 |
-| `tests/MarketDataCollector.Tests/Domain/Models/` | Domain model tests | 12 |
+| `tests/MarketDataCollector.Tests/Application/Monitoring/` | Monitoring/quality tests | 12 |
+| `tests/MarketDataCollector.Tests/Application/Pipeline/` | Event pipeline tests | 11 |
+| `tests/MarketDataCollector.Tests/Application/Services/` | Application service tests | 14 |
+| `tests/MarketDataCollector.Tests/Domain/Collectors/` | Domain collector tests | 5 |
+| `tests/MarketDataCollector.Tests/Domain/Models/` | Domain model tests | 13 |
 | `tests/MarketDataCollector.Tests/Infrastructure/DataSources/` | Data source tests | 1 |
-| `tests/MarketDataCollector.Tests/Infrastructure/Providers/` | Provider/adapter tests | 12 |
+| `tests/MarketDataCollector.Tests/Infrastructure/Providers/` | Provider/adapter tests | 16 |
 | `tests/MarketDataCollector.Tests/Infrastructure/Resilience/` | Resilience tests | 2 |
 | `tests/MarketDataCollector.Tests/Infrastructure/Shared/` | Shared infra tests | 2 |
 | `tests/MarketDataCollector.Tests/Integration/` | End-to-end & endpoint tests | 27 |
 | `tests/MarketDataCollector.Tests/Serialization/` | JSON serialization tests | 1 |
-| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 19 |
+| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 21 |
 | `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
 | `tests/MarketDataCollector.Tests/ProviderSdk/` | Provider SDK contract tests | 4 |
 | `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 4 |
@@ -2061,16 +2062,15 @@ Located in `benchmarks/MarketDataCollector.Benchmarks/` using BenchmarkDotNet.
 ### Environment Variables
 API credentials should be set via environment variables:
 ```bash
-export ALPACA__KEYID=your-key-id
-export ALPACA__SECRETKEY=your-secret-key
-export NYSE__APIKEY=your-api-key
-export POLYGON__APIKEY=your-api-key
-export TIINGO__TOKEN=your-token
-export FINNHUB__TOKEN=your-token
-export ALPHAVANTAGE__APIKEY=your-api-key
+export ALPACA_KEY_ID=your-key-id
+export ALPACA_SECRET_KEY=your-secret-key
+export NYSE_API_KEY=your-api-key
+export POLYGON_API_KEY=your-api-key
+export TIINGO_API_TOKEN=your-token
+export FINNHUB_API_KEY=your-api-key
+export ALPHA_VANTAGE_API_KEY=your-api-key
+export NASDAQ_API_KEY=your-api-key
 ```
-
-Note: Use double underscore (`__`) for nested configuration (maps to `Alpaca:KeyId`).
 
 ### appsettings.json
 Configuration file should be copied from template:
@@ -2539,4 +2539,4 @@ See `docs/HELP.md#troubleshooting` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-03-05 (statistics audited)*
+*Last Updated: 2026-03-10 (statistics audited)*
