@@ -46,6 +46,15 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     // Centralized subscription management with provider-specific ID range
     private readonly Infrastructure.Shared.SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.AlpacaStart);
 
+    // Content-based trade deduplication: sliding window keyed on (symbol, price, size, timestamp).
+    // Alpaca's WebSocket is known to re-deliver identical trade messages during reconnections and
+    // under high load. Using a bounded HashSet avoids double-counting duplicates without the
+    // overhead of the sequence-based PersistentDedupLedger (which won't catch trades that arrive
+    // with the same content but different assigned sequence numbers).
+    private readonly HashSet<(string symbol, decimal price, long size, DateTimeOffset ts)> _recentTrades = new();
+    private readonly Queue<(string symbol, decimal price, long size, DateTimeOffset ts)> _recentTradeOrder = new();
+    private const int MaxDedupWindowSize = 2048;
+
     // Cached serializer options to avoid allocations in hot path
     private static readonly JsonSerializerOptions s_serializerOptions = new()
     {
@@ -312,14 +321,37 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             if (string.IsNullOrWhiteSpace(sym)) return;
 
             var price = el.TryGetProperty("p", out var pProp) ? pProp.GetDecimal() : 0m;
-            var size = el.TryGetProperty("s", out var szProp) ? szProp.GetInt32() : 0;
+            // Use GetInt64 to avoid truncation on large block trades (> int.MaxValue shares).
+            var size = el.TryGetProperty("s", out var szProp) ? szProp.GetInt64() : 0L;
             var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
             var venue = el.TryGetProperty("x", out var xProp) ? xProp.GetString() : null;
             var tradeId = el.TryGetProperty("i", out var iProp) ? iProp.GetInt64() : 0;
 
-            DateTimeOffset dto;
-            if (!DateTimeOffset.TryParse(ts, out dto))
-                dto = DateTimeOffset.UtcNow;
+            // Reject events with unparseable timestamps rather than recording the wrong time.
+            // Substituting UtcNow silently corrupts time-series integrity.
+            if (!DateTimeOffset.TryParse(ts, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dto))
+            {
+                _log.Warning("Alpaca trade message for {Symbol} has unparseable timestamp {Timestamp}, skipping", sym, ts);
+                return;
+            }
+
+            // Content-based deduplication: Alpaca's WebSocket is known to re-deliver identical
+            // trade messages during reconnections. Deduplicate on (symbol, price, size, exchange
+            // timestamp) using a bounded sliding window so we don't double-count phantom trades.
+            var dedupKey = (sym!, price, size, dto);
+            lock (_recentTrades)
+            {
+                if (!_recentTrades.Add(dedupKey))
+                {
+                    _log.Debug("Alpaca duplicate trade suppressed: {Symbol} @ {Price} x {Size} at {Timestamp}",
+                        sym, price, size, dto);
+                    return;
+                }
+                _recentTradeOrder.Enqueue(dedupKey);
+                // Evict oldest entries when the window is full to bound memory usage.
+                while (_recentTradeOrder.Count > MaxDedupWindowSize)
+                    _recentTrades.Remove(_recentTradeOrder.Dequeue());
+            }
 
             var update = new MarketTradeUpdate(
                 Timestamp: dto,
@@ -348,9 +380,12 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             var askSize = el.TryGetProperty("as", out var asProp) ? asProp.GetInt64() : 0L;
             var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
 
-            DateTimeOffset dto;
-            if (!DateTimeOffset.TryParse(ts, out dto))
-                dto = DateTimeOffset.UtcNow;
+            // Reject events with unparseable timestamps rather than recording the wrong time.
+            if (!DateTimeOffset.TryParse(ts, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dto))
+            {
+                _log.Warning("Alpaca quote message for {Symbol} has unparseable timestamp {Timestamp}, skipping", sym, ts);
+                return;
+            }
 
             var quoteUpdate = new MarketQuoteUpdate(
                 Timestamp: dto,

@@ -66,6 +66,14 @@ public sealed class WriteAheadLog : IAsyncDisposable
     public long SkippedRecordCount => Interlocked.Read(ref _skippedRecordCount);
 
     /// <summary>
+    /// Raised when a corrupted WAL record is detected during recovery, provided
+    /// <see cref="WalOptions.CorruptionMode"/> is <see cref="WalCorruptionMode.Alert"/>.
+    /// The argument is the number of corrupted records found in the current recovery pass.
+    /// Subscribe to this event to forward alerts to your monitoring infrastructure.
+    /// </summary>
+    public event Action<long>? CorruptionDetected;
+
+    /// <summary>
     /// Initialize the WAL, recovering any uncommitted transactions.
     /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default)
@@ -443,6 +451,30 @@ public sealed class WriteAheadLog : IAsyncDisposable
             _log.Warning(
                 "WAL recovery found {CorruptedCount} corrupted records in {File}",
                 corruptedInFile, walFile);
+
+            // Honour the configured corruption response mode.
+            switch (_options.CorruptionMode)
+            {
+                case WalCorruptionMode.Alert:
+                    // Fire the event so monitoring infrastructure can alert operators.
+                    // We continue recovery — the valid records are still usable.
+                    try { CorruptionDetected?.Invoke(corruptedInFile); }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex, "Exception in CorruptionDetected event handler; ignoring to continue recovery");
+                    }
+                    break;
+
+                case WalCorruptionMode.Halt:
+                    throw new InvalidDataException(
+                        $"WAL recovery halted: {corruptedInFile} corrupted record(s) found in '{walFile}'. " +
+                        "Inspect the file and either repair it or change WalOptions.CorruptionMode to Skip to bypass.");
+
+                case WalCorruptionMode.Skip:
+                default:
+                    // Legacy behaviour: log the warning above and continue silently.
+                    break;
+            }
         }
 
         _log.Information(
@@ -840,6 +872,14 @@ public sealed class WalOptions
     /// Default is 50MB.
     /// </summary>
     public long UncommittedSizeWarningThreshold { get; set; } = 50 * 1024 * 1024;
+
+    /// <summary>
+    /// Controls how the WAL behaves when corrupted records are detected during recovery.
+    /// Defaults to <see cref="WalCorruptionMode.Skip"/> to preserve backwards compatibility.
+    /// Set to <see cref="WalCorruptionMode.Alert"/> in production so monitoring systems are
+    /// notified, or <see cref="WalCorruptionMode.Halt"/> to require manual operator review.
+    /// </summary>
+    public WalCorruptionMode CorruptionMode { get; set; } = WalCorruptionMode.Skip;
 }
 
 /// <summary>
@@ -861,6 +901,30 @@ public enum WalSyncMode : byte
     /// Sync after every write (slowest, most durable).
     /// </summary>
     EveryWrite
+}
+
+/// <summary>
+/// Controls how the WAL responds when corrupted records are detected during recovery.
+/// </summary>
+public enum WalCorruptionMode
+{
+    /// <summary>
+    /// Silently skip corrupt records and continue recovery (legacy behaviour).
+    /// </summary>
+    Skip,
+
+    /// <summary>
+    /// Skip corrupt records but fire the <see cref="WriteAheadLog.CorruptionDetected"/> event
+    /// so monitoring systems can alert operators. Recommended for production deployments.
+    /// </summary>
+    Alert,
+
+    /// <summary>
+    /// Throw an <see cref="InvalidDataException"/> when any corrupt record is found.
+    /// Use this when data integrity is non-negotiable and manual operator review
+    /// is required before the application can start.
+    /// </summary>
+    Halt
 }
 
 /// <summary>
