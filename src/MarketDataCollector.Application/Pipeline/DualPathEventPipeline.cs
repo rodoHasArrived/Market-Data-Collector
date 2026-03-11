@@ -347,7 +347,13 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
                 {
                     ref readonly var raw = ref _tradeBatch[i];
                     var evt = ReconstituteTrade(in raw);
-                    _slowPath.TryPublish(in evt);
+
+                    // Ensure we do not silently drop hot-path events under backpressure.
+                    while (!_slowPath.TryPublish(in evt))
+                    {
+                        // Back off briefly to avoid busy-waiting when the slow path is saturated.
+                        await Task.Delay(1, _cts.Token).ConfigureAwait(false);
+                    }
                 }
 
                 Interlocked.Add(ref _hotTradeConsumed, drained);
