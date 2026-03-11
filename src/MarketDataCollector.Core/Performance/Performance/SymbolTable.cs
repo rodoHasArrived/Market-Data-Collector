@@ -33,7 +33,10 @@ public sealed class SymbolTable
     public int GetOrAdd(string symbol)
     {
         if (_symbolToId.TryGetValue(symbol, out var id))
+        {
+            _idToSymbol.TryAdd(id, symbol);
             return id;
+        }
 
         return AddSlow(symbol);
     }
