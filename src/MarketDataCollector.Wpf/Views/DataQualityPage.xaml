@@ -6,7 +6,12 @@
       mc:Ignorable="d"
       d:DesignHeight="800" d:DesignWidth="1200"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
-      Loaded="OnPageLoaded">
+      Loaded="OnPageLoaded"
+      Unloaded="OnPageUnloaded">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1400">
@@ -24,7 +29,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock x:Name="LastUpdateText" Text="Last updated: --"
+                    <TextBlock Text="{Binding LastUpdateText}"
                                Foreground="{StaticResource ConsoleTextMutedBrush}"
                                VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12"/>
                     <Button Content="Refresh" Click="Refresh_Click"
@@ -58,18 +63,18 @@
                         <TextBlock Text="Overall Quality" Style="{StaticResource CardHeaderStyle}" />
                         <Grid Width="110" Height="110" Margin="0,12,0,8">
                             <Ellipse Stroke="{StaticResource ConsoleBorderBrush}" StrokeThickness="8" />
-                            <Ellipse x:Name="ScoreRing" Stroke="{StaticResource SuccessColorBrush}"
-                                     StrokeThickness="8" StrokeDashArray="100 100" StrokeDashOffset="25" />
+                            <Ellipse Stroke="{Binding ScoreRingStroke}"
+                                     StrokeThickness="8" StrokeDashArray="{Binding ScoreRingDashArray}" StrokeDashOffset="25" />
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock x:Name="OverallScoreText" Text="--" FontSize="28" FontWeight="Bold"
-                                           Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center" />
-                                <TextBlock x:Name="OverallGradeText" Text="--" FontSize="16" FontWeight="SemiBold"
+                                <TextBlock Text="{Binding OverallScoreText}" FontSize="28" FontWeight="Bold"
+                                           Foreground="{Binding OverallScoreForeground}" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding OverallGradeText}" FontSize="16" FontWeight="SemiBold"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Grid>
-                        <Border x:Name="StatusBadge" Background="{StaticResource SuccessColorBrush}"
+                        <Border Background="{Binding StatusBadgeBackground}"
                                 CornerRadius="12" Padding="12,4" HorizontalAlignment="Center">
-                            <TextBlock x:Name="StatusText" Text="--" FontSize="12" Foreground="White" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="White" FontWeight="SemiBold" />
                         </Border>
                     </StackPanel>
                 </Border>
@@ -81,17 +86,17 @@
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <Ellipse Width="10" Height="10" Fill="{StaticResource SuccessColorBrush}" VerticalAlignment="Center" />
                                 <TextBlock Text="Healthy" Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="8,0,0,0" />
-                                <TextBlock x:Name="HealthyFilesText" Text="--" FontWeight="Bold" Margin="8,0,0,0" />
+                                <TextBlock Text="{Binding HealthyFilesText}" FontWeight="Bold" Margin="8,0,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <Ellipse Width="10" Height="10" Fill="{StaticResource WarningColorBrush}" VerticalAlignment="Center" />
                                 <TextBlock Text="Warning" Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="8,0,0,0" />
-                                <TextBlock x:Name="WarningFilesText" Text="--" FontWeight="Bold" Margin="8,0,0,0" />
+                                <TextBlock Text="{Binding WarningFilesText}" FontWeight="Bold" Margin="8,0,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="10" Height="10" Fill="{StaticResource ErrorColorBrush}" VerticalAlignment="Center" />
                                 <TextBlock Text="Critical" Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="8,0,0,0" />
-                                <TextBlock x:Name="CriticalFilesText" Text="--" FontWeight="Bold" Margin="8,0,0,0" />
+                                <TextBlock Text="{Binding CriticalFilesText}" FontWeight="Bold" Margin="8,0,0,0" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -101,9 +106,9 @@
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                             <TextBlock Text="Active Alerts" Style="{StaticResource CardHeaderStyle}" />
-                            <Border x:Name="AlertCountBadge" Background="{StaticResource ErrorColorBrush}"
-                                    CornerRadius="10" Padding="8,2" Margin="8,0,0,0" Visibility="Collapsed">
-                                <TextBlock x:Name="AlertCountText" Text="0" FontSize="11" Foreground="White" FontWeight="SemiBold" />
+                            <Border Background="{StaticResource ErrorColorBrush}"
+                                    CornerRadius="10" Padding="8,2" Margin="8,0,0,0" Visibility="{Binding IsAlertCountBadgeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding AlertCountText}" FontSize="11" Foreground="White" FontWeight="SemiBold" />
                             </Border>
                         </StackPanel>
                         <StackPanel>
@@ -113,7 +118,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Unacknowledged" Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
-                                <TextBlock x:Name="UnacknowledgedText" Grid.Column="1" Text="--" FontWeight="Bold"
+                                <TextBlock Grid.Column="1" Text="{Binding UnacknowledgedText}" FontWeight="Bold"
                                            Foreground="{StaticResource ErrorColorBrush}" />
                             </Grid>
                             <Grid>
@@ -122,7 +127,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Total Active" Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
-                                <TextBlock x:Name="TotalActiveAlertsText" Grid.Column="1" Text="--" FontWeight="Bold" />
+                                <TextBlock Grid.Column="1" Text="{Binding TotalActiveAlertsText}" FontWeight="Bold" />
                             </Grid>
                         </StackPanel>
                     </StackPanel>
@@ -132,14 +137,14 @@
                     <StackPanel>
                         <TextBlock Text="Last Analysis" Style="{StaticResource CardHeaderStyle}" />
                         <StackPanel Margin="0,12,0,0">
-                            <TextBlock x:Name="LastCheckTimeText" Text="--" FontWeight="Bold" FontSize="16" />
+                            <TextBlock Text="{Binding LastCheckTimeText}" FontWeight="Bold" FontSize="16" />
                             <TextBlock Text="Last quality check completed" Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
                         </StackPanel>
                         <StackPanel Margin="0,12,0,0">
                             <TextBlock Text="Next scheduled check:" Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                            <TextBlock x:Name="NextCheckText" Text="--" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding NextCheckText}" FontWeight="SemiBold" />
                         </StackPanel>
-                        <ProgressBar x:Name="CheckProgress" Height="6" Margin="0,12,0,0" Value="0" Maximum="100" />
+                        <ProgressBar Height="6" Margin="0,12,0,0" Value="{Binding CheckProgress}" Maximum="100" />
                     </StackPanel>
                 </Border>
             </Grid>
@@ -158,7 +163,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="CompletenessText" Text="--" FontSize="32" FontWeight="Bold"
+                        <TextBlock Text="{Binding CompletenessText}" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Completeness Score" HorizontalAlignment="Center"
@@ -168,8 +173,8 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="GapsCountText" Text="--" FontSize="32" FontWeight="Bold"
-                                   Foreground="{StaticResource WarningColorBrush}"
+                        <TextBlock Text="{Binding GapsCountText}" FontSize="32" FontWeight="Bold"
+                                   Foreground="{Binding GapsCountForeground}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Data Gaps" HorizontalAlignment="Center"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" />
@@ -178,8 +183,8 @@
 
                 <Border Grid.Column="4" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="ErrorsCountText" Text="--" FontSize="32" FontWeight="Bold"
-                                   Foreground="{StaticResource SuccessColorBrush}"
+                        <TextBlock Text="{Binding ErrorsCountText}" FontSize="32" FontWeight="Bold"
+                                   Foreground="{Binding ErrorsCountForeground}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Sequence Errors" HorizontalAlignment="Center"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" />
@@ -188,7 +193,7 @@
 
                 <Border Grid.Column="6" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="LatencyText" Text="--" FontSize="32" FontWeight="Bold"
+                        <TextBlock Text="{Binding LatencyText}" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Avg Latency" HorizontalAlignment="Center"
@@ -210,13 +215,13 @@
                             <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource SymbolThemeFontFamily}"
                                        Foreground="{StaticResource InfoColorBrush}" Margin="0,0,8,0" />
                             <TextBlock Text="Quality Trend" Style="{StaticResource CardHeaderStyle}" />
-                            <Border x:Name="TrendBadge" Background="{StaticResource ConsoleAccentGreenAlpha10Brush}"
+                            <Border Background="{StaticResource ConsoleAccentGreenAlpha10Brush}"
                                     CornerRadius="4" Padding="8,4" Margin="12,0,0,0">
                                 <StackPanel Orientation="Horizontal" Margin="0">
-                                    <TextBlock x:Name="TrendIcon" Text="&#xE70E;" FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                               FontSize="12" Foreground="{StaticResource SuccessColorBrush}" Margin="0,0,4,0" />
-                                    <TextBlock x:Name="TrendText" Text="--" FontSize="12"
-                                               Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding TrendIconGlyph}" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                               FontSize="12" Foreground="{Binding TrendBrush}" Margin="0,0,4,0" />
+                                    <TextBlock Text="{Binding TrendText}" FontSize="12"
+                                               Foreground="{Binding TrendBrush}" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -247,12 +252,25 @@
                             </StackPanel>
 
                             <Canvas x:Name="TrendChart" Grid.Row="0" Margin="50,0,0,0">
-                                <Polygon x:Name="TrendChartFill" Fill="{StaticResource InfoColorBrush}" Opacity="0.2" />
-                                <Polyline x:Name="TrendChartLine" Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
+                                <Polygon Points="{Binding TrendChartFillPoints}" Fill="{StaticResource InfoColorBrush}" Opacity="0.2" />
+                                <Polyline Points="{Binding TrendChartLinePoints}" Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
                             </Canvas>
 
-                            <StackPanel x:Name="XAxisLabels" Grid.Row="1" Orientation="Horizontal" Margin="50,8,0,0"
-                                        HorizontalAlignment="Stretch" />
+                            <ItemsControl Grid.Row="1" ItemsSource="{Binding TrendXAxisLabels}"
+                                          Margin="50,8,0,0" HorizontalAlignment="Stretch">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontSize="10"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   Margin="0,0,8,0" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </Grid>
                     </Border>
 
@@ -266,20 +284,20 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Average Score" Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                            <TextBlock x:Name="AvgScoreText" Text="--" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding AvgScoreText}" FontWeight="SemiBold"
                                        Foreground="{StaticResource SuccessColorBrush}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="Min Score" Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                            <TextBlock x:Name="MinScoreText" Text="--" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding MinScoreText}" FontWeight="SemiBold" />
                         </StackPanel>
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Max Score" Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                            <TextBlock x:Name="MaxScoreText" Text="--" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding MaxScoreText}" FontWeight="SemiBold" />
                         </StackPanel>
                         <StackPanel Grid.Column="3">
                             <TextBlock Text="Std Deviation" Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                            <TextBlock x:Name="StdDevText" Text="--" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding StdDevText}" FontWeight="SemiBold" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
@@ -315,7 +333,7 @@
                                      ToolTip="Filter symbols" />
                         </Grid>
 
-                        <ListView x:Name="SymbolQualityList" MaxHeight="350" SelectionMode="Single"
+                        <ListView ItemsSource="{Binding FilteredSymbols}" MaxHeight="350" SelectionMode="Single"
                                   SelectionChanged="SymbolQuality_SelectionChanged">
                             <ListView.View>
                                 <GridView>
@@ -341,9 +359,9 @@
                             </ListView.View>
                         </ListView>
 
-                        <TextBlock x:Name="NoSymbolsText" Text="No symbols are currently being monitored."
+                        <TextBlock Text="No symbols are currently being monitored."
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                   Visibility="Collapsed" Margin="0,8,0,0"/>
+                                   Visibility="{Binding IsNoSymbolsVisible, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
 
@@ -373,7 +391,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <ListView x:Name="AlertsList" MaxHeight="400">
+                        <ListView ItemsSource="{Binding Alerts}" MaxHeight="400">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="8,12">
@@ -414,9 +432,9 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <TextBlock x:Name="NoAlertsText" Text="No alerts to display"
+                        <TextBlock Text="No alerts to display"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                   FontStyle="Italic" HorizontalAlignment="Center" Visibility="Collapsed" />
+                                   FontStyle="Italic" HorizontalAlignment="Center" Visibility="{Binding IsNoAlertsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         <Button Content="Acknowledge All" Click="AcknowledgeAll_Click"
                                 HorizontalAlignment="Stretch" Margin="0,12,0,0"
@@ -428,7 +446,7 @@
             </Grid>
 
             <!-- Symbol Drilldown Panel -->
-            <Border x:Name="SymbolDrilldownPanel" Style="{StaticResource CardStyle}" Margin="0,0,0,24" Visibility="Collapsed">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24" Visibility="{Binding IsDrilldownVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel>
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
@@ -441,7 +459,7 @@
                             <TextBlock Text="&#xE946;" FontFamily="{StaticResource SymbolThemeFontFamily}"
                                        FontSize="18" Foreground="{StaticResource InfoColorBrush}"
                                        VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock x:Name="DrilldownSymbolHeader" Text="Symbol Details"
+                            <TextBlock Text="{Binding DrilldownSymbolHeader}"
                                        Style="{StaticResource CardHeaderStyle}" />
                         </StackPanel>
 
@@ -468,8 +486,8 @@
                                 CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentGreenAlpha10Brush}"
                                 BorderThickness="0,0,0,2">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="DrilldownScoreText" Text="--" FontSize="26" FontWeight="Bold"
-                                           Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"
+                                <TextBlock Text="{Binding DrilldownScoreText}" FontSize="26" FontWeight="Bold"
+                                           Foreground="{Binding DrilldownScoreForeground}" HorizontalAlignment="Center"
                                            FontFamily="Consolas" />
                                 <TextBlock Text="QUALITY SCORE" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                            FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" />
@@ -480,7 +498,7 @@
                                 CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentBlueAlpha10Brush}"
                                 BorderThickness="0,0,0,2">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="DrilldownCompletenessText" Text="--" FontSize="26" FontWeight="Bold"
+                                <TextBlock Text="{Binding DrilldownCompletenessText}" FontSize="26" FontWeight="Bold"
                                            Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"
                                            FontFamily="Consolas" />
                                 <TextBlock Text="COMPLETENESS" Foreground="{StaticResource ConsoleTextMutedBrush}"
@@ -492,7 +510,7 @@
                                 CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentOrangeAlpha10Brush}"
                                 BorderThickness="0,0,0,2">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="DrilldownGapsText" Text="--" FontSize="26" FontWeight="Bold"
+                                <TextBlock Text="{Binding DrilldownGapsText}" FontSize="26" FontWeight="Bold"
                                            Foreground="{StaticResource WarningColorBrush}" HorizontalAlignment="Center"
                                            FontFamily="Consolas" />
                                 <TextBlock Text="GAPS" Foreground="{StaticResource ConsoleTextMutedBrush}"
@@ -504,7 +522,7 @@
                                 CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentRedAlpha10Brush}"
                                 BorderThickness="0,0,0,2">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="DrilldownErrorsText" Text="--" FontSize="26" FontWeight="Bold"
+                                <TextBlock Text="{Binding DrilldownErrorsText}" FontSize="26" FontWeight="Bold"
                                            Foreground="{StaticResource ErrorColorBrush}" HorizontalAlignment="Center"
                                            FontFamily="Consolas" />
                                 <TextBlock Text="ERRORS" Foreground="{StaticResource ConsoleTextMutedBrush}"
@@ -516,7 +534,7 @@
                                 CornerRadius="6" Padding="14" BorderBrush="{StaticResource ConsoleAccentBlueAlpha10Brush}"
                                 BorderThickness="0,0,0,2">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="DrilldownLatencyText" Text="--" FontSize="26" FontWeight="Bold"
+                                <TextBlock Text="{Binding DrilldownLatencyText}" FontSize="26" FontWeight="Bold"
                                            Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"
                                            FontFamily="Consolas" />
                                 <TextBlock Text="AVG LATENCY" Foreground="{StaticResource ConsoleTextMutedBrush}"
@@ -533,58 +551,26 @@
                         <TextBlock Text="7-Day Quality Heatmap" Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </StackPanel>
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock x:Name="HeatmapDay0Label" Grid.Row="0" Grid.Column="0" Text="Mon"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-                        <TextBlock x:Name="HeatmapDay1Label" Grid.Row="0" Grid.Column="1" Text="Tue"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-                        <TextBlock x:Name="HeatmapDay2Label" Grid.Row="0" Grid.Column="2" Text="Wed"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-                        <TextBlock x:Name="HeatmapDay3Label" Grid.Row="0" Grid.Column="3" Text="Thu"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-                        <TextBlock x:Name="HeatmapDay4Label" Grid.Row="0" Grid.Column="4" Text="Fri"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-                        <TextBlock x:Name="HeatmapDay5Label" Grid.Row="0" Grid.Column="5" Text="Sat"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-                        <TextBlock x:Name="HeatmapDay6Label" Grid.Row="0" Grid.Column="6" Text="Sun"
-                                   Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="10" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Margin="0,0,0,6" />
-
-                        <Border x:Name="HeatmapCell0" Grid.Row="1" Grid.Column="0" Height="36"
-                                CornerRadius="6" Margin="3" />
-                        <Border x:Name="HeatmapCell1" Grid.Row="1" Grid.Column="1" Height="36"
-                                CornerRadius="6" Margin="3" />
-                        <Border x:Name="HeatmapCell2" Grid.Row="1" Grid.Column="2" Height="36"
-                                CornerRadius="6" Margin="3" />
-                        <Border x:Name="HeatmapCell3" Grid.Row="1" Grid.Column="3" Height="36"
-                                CornerRadius="6" Margin="3" />
-                        <Border x:Name="HeatmapCell4" Grid.Row="1" Grid.Column="4" Height="36"
-                                CornerRadius="6" Margin="3" />
-                        <Border x:Name="HeatmapCell5" Grid.Row="1" Grid.Column="5" Height="36"
-                                CornerRadius="6" Margin="3" />
-                        <Border x:Name="HeatmapCell6" Grid.Row="1" Grid.Column="6" Height="36"
-                                CornerRadius="6" Margin="3" />
-                    </Grid>
+                    <ItemsControl ItemsSource="{Binding HeatmapCells}" Margin="0,0,0,20">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="2" Columns="7" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DayLabel}"
+                                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" Margin="0,0,0,6" />
+                                    <Border Background="{Binding Background}" Height="36"
+                                            CornerRadius="6" Margin="3"
+                                            ToolTip="{Binding Tooltip}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <!-- Recent Issues for this Symbol -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -594,7 +580,7 @@
                         <TextBlock Text="Recent Issues" Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                    FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </StackPanel>
-                    <ListView x:Name="DrilldownIssuesList" MaxHeight="160"
+                    <ListView ItemsSource="{Binding DrilldownIssues}" MaxHeight="160"
                               Background="Transparent" BorderThickness="0">
                         <ListView.ItemTemplate>
                             <DataTemplate>
@@ -618,7 +604,7 @@
                     </ListView>
                     <TextBlock x:Name="NoDrilldownIssuesText" Text="No recent issues for this symbol."
                                Foreground="{StaticResource SuccessColorBrush}" FontSize="12"
-                               Visibility="Collapsed" Margin="0,4,0,0" />
+                               Visibility="{Binding IsNoDrilldownIssuesVisible, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" />
                 </StackPanel>
             </Border>
 
@@ -635,7 +621,7 @@
                                 Style="{StaticResource GhostButtonStyle}" FontSize="12"/>
                     </Grid>
 
-                    <ItemsControl x:Name="GapsControl">
+                    <ItemsControl ItemsSource="{Binding Gaps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource ConsoleBorderBrush}"
@@ -676,7 +662,7 @@
                     </ItemsControl>
 
                     <TextBlock x:Name="NoGapsText" Text="No data gaps detected."
-                               Foreground="{StaticResource SuccessColorBrush}" Visibility="Collapsed"/>
+                               Foreground="{StaticResource SuccessColorBrush}" Visibility="{Binding IsNoGapsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
             </Border>
 
@@ -692,9 +678,9 @@
                             <TextBlock Text="&#xE783;" FontFamily="{StaticResource SymbolThemeFontFamily}"
                                        Foreground="{StaticResource ErrorColorBrush}" Margin="0,0,8,0" />
                             <TextBlock Text="Anomaly Detection" Style="{StaticResource CardHeaderStyle}" />
-                            <Border x:Name="AnomalyCountBadge" Background="{StaticResource ErrorColorBrush}"
-                                    CornerRadius="10" Padding="8,2" Margin="8,0,0,0" Visibility="Collapsed">
-                                <TextBlock x:Name="AnomalyCountText" Text="0" FontSize="11" Foreground="White" FontWeight="SemiBold" />
+                            <Border Background="{StaticResource ErrorColorBrush}"
+                                    CornerRadius="10" Padding="8,2" Margin="8,0,0,0" Visibility="{Binding IsAnomalyCountBadgeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="{Binding AnomalyCountText}" FontSize="11" Foreground="White" FontWeight="SemiBold" />
                             </Border>
                         </StackPanel>
                         <ComboBox x:Name="AnomalyTypeCombo" Grid.Column="1" SelectedIndex="0" MinWidth="160"
@@ -722,7 +708,7 @@
                         <Border Grid.Column="0" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="CrossedMarketCount" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding CrossedMarketCount}" FontSize="20" FontWeight="Bold"
                                            HorizontalAlignment="Center" />
                                 <TextBlock Text="Crossed" Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
@@ -730,7 +716,7 @@
                         <Border Grid.Column="1" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="StaleDataCount" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding StaleDataCount}" FontSize="20" FontWeight="Bold"
                                            HorizontalAlignment="Center" />
                                 <TextBlock Text="Stale" Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
@@ -738,7 +724,7 @@
                         <Border Grid.Column="2" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="InvalidPriceCount" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding InvalidPriceCount}" FontSize="20" FontWeight="Bold"
                                            HorizontalAlignment="Center" />
                                 <TextBlock Text="Invalid Price" Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
@@ -746,7 +732,7 @@
                         <Border Grid.Column="3" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="InvalidVolumeCount" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding InvalidVolumeCount}" FontSize="20" FontWeight="Bold"
                                            HorizontalAlignment="Center" />
                                 <TextBlock Text="Invalid Volume" Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
@@ -754,14 +740,14 @@
                         <Border Grid.Column="4" Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="4" Padding="12">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock x:Name="MissingDataCount" Text="0" FontSize="20" FontWeight="Bold"
+                                <TextBlock Text="{Binding MissingDataCount}" FontSize="20" FontWeight="Bold"
                                            HorizontalAlignment="Center" />
                                 <TextBlock Text="Missing Data" Foreground="{StaticResource ConsoleTextMutedBrush}" />
                             </StackPanel>
                         </Border>
                     </Grid>
 
-                    <ListView x:Name="AnomaliesList" MaxHeight="250">
+                    <ListView ItemsSource="{Binding Anomalies}" MaxHeight="250">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="8,10">
@@ -792,8 +778,8 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <TextBlock x:Name="NoAnomaliesText" Text="No anomalies detected in the selected time range."
-                               Foreground="{StaticResource SuccessColorBrush}" Visibility="Visible"/>
+                    <TextBlock Text="No anomalies detected in the selected time range."
+                               Foreground="{StaticResource SuccessColorBrush}" Visibility="{Binding IsNoAnomaliesVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
             </Border>
 
@@ -814,35 +800,35 @@
                         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                             <TextBlock Text="P50" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="P50Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding P50Text}" FontSize="18" FontWeight="SemiBold"
                                        Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
                             <TextBlock Text="P75" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="P75Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding P75Text}" FontSize="18" FontWeight="SemiBold"
                                        Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                             <TextBlock Text="P90" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="P90Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding P90Text}" FontSize="18" FontWeight="SemiBold"
                                        Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="3" HorizontalAlignment="Center">
                             <TextBlock Text="P95" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="P95Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding P95Text}" FontSize="18" FontWeight="SemiBold"
                                        Foreground="{StaticResource WarningColorBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="4" HorizontalAlignment="Center">
                             <TextBlock Text="P99" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="P99Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding P99Text}" FontSize="18" FontWeight="SemiBold"
                                        Foreground="{StaticResource ErrorColorBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
