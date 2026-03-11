@@ -1,9 +1,9 @@
 # Market Data Collector - Project Roadmap
 
-**Version:** 1.6.2
-**Last Updated:** 2026-02-26
+**Version:** 1.0.0
+**Last Updated:** 2026-03-11
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
-**Repository Snapshot:** `src/` files: **664** | `tests/` files: **219** | HTTP route constants: **283** | Remaining stub routes: **0** | Test methods: **~3,444**
+**Repository Snapshot:** `src/` files: **743** | `tests/` files: **254** | HTTP route constants: **300** | Remaining stub routes: **0** | Test methods: **~3,858**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
@@ -157,7 +157,7 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ### Objective 1: Test Confidence ✅ Achieved
 
-- ✅ Expanded integration and provider tests — 12 provider test files, 219 test files total, ~3,444 test methods.
+- ✅ Expanded integration and provider tests — 254 test files total, ~3,858 test methods.
 - ✅ Risk-based coverage with negative-path and schema validation tests.
 - ✅ Integration test harness with `FixtureMarketDataClient` and `InMemoryStorageSink`.
 
@@ -172,7 +172,7 @@ This section supersedes the prior effort model and aligns with the current activ
 
 - ✅ Quality metrics API fully exposed (`/api/quality/drops`, per-symbol drill-down).
 - ✅ Typed OpenAPI annotations across all endpoint families (58+ endpoints).
-- ✅ 283 route constants with 0 stubs remaining.
+- ✅ 300 route constants with 0 stubs remaining.
 
 ### Objective 4: Operational Hardening 🔄 Mostly Achieved
 
@@ -203,18 +203,18 @@ This section supersedes the prior effort model and aligns with the current activ
 | Core improvement items completed | 33 / 35 | 35 / 35 |
 | Core improvement items still open | 1 / 35 (C3) | 0 / 35 |
 | New theme items (H/I) completed | 6 / 8 | 7+ / 8 |
-| Source files | 664 | — |
-| Test files | 219 | 250+ |
-| Test methods | ~3,444 | 4,000+ |
-| Route constants | 283 | 283 |
+| Source files | 743 | — |
+| Test files | 254 | 280+ |
+| Test methods | ~3,858 | 4,500+ |
+| Route constants | 300 | 300 |
 | Architecture debt (Theme C completed) | 6 / 7 | 7 / 7 |
 | Provider test coverage | All 5 streaming providers + failover + backfill | Comprehensive |
 | OpenTelemetry instrumentation | Pipeline metrics + activity spans | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
 | Canonicalization design | Complete | Implementation complete |
-| Canonicalization implementation (J2–J8) | 6 / 7 | 7 / 7 |
+| Canonicalization implementation (J2–J8) | 7 / 8 | 8 / 8 |
 | Cross-provider canonical identity match | N/A | >= 99.5% |
-| WPF pages with live data | ~42 / 49 | 49 / 49 |
+| WPF pages with live data | ~48 / 51 | 51 / 51 |
 
 ---
 
@@ -307,4 +307,4 @@ These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md
 
 ---
 
-*Last Updated: 2026-02-26*
+*Last Updated: 2026-03-11*

@@ -1,13 +1,13 @@
 # Market Data Collector - Consolidated Evaluations & Audits
 
-**Version:** 1.6.1
-**Last Updated:** 2026-02-21
+**Version:** 1.0.0
+**Last Updated:** 2026-03-11
 **Status:** Consolidated reference document
 
 This document consolidates all architecture evaluations, code audits, desktop assessments, and operational reviews into a single navigable reference. It replaces the need to read 15+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
 
 **Canonical tracking documents (not merged here):**
-- [`ROADMAP.md`](ROADMAP.md) — phased execution timeline (Phases 0-10)
+- [`ROADMAP.md`](ROADMAP.md) — phased execution timeline (Phases 0-15)
 - [`IMPROVEMENTS.md`](IMPROVEMENTS.md) — item-level improvement tracking (35 items, 7 themes)
 - [`production-status.md`](production-status.md) — provider readiness and production checklist
 
@@ -50,7 +50,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 | Historical Providers | Well-designed | Alpaca + Polygon primary; Stooq + Yahoo free fallback; validate Polygon rate limits | [Evaluation](#historical-data-providers) |
 | Ingestion Orchestration | Uneven maturity | Strong building blocks; needs unified job model for realtime + backfill workloads | [Evaluation](#ingestion-orchestration) |
 | Operational Readiness | Pilot Ready | Good monitoring baseline; needs standardized SLOs and runbook-linked alerts | [Evaluation](#operational-readiness) |
-| Desktop UX | Partial parity | 49 pages, 104 services; key features implemented; remaining gaps in live backend integration | [Assessment](#desktop-ux-assessment) |
+| Desktop UX | Partial parity | 51 pages, 104 services; key features implemented; remaining gaps in live backend integration | [Assessment](#desktop-ux-assessment) |
 | Code Quality | Excellent | Debug code is intentional; no cleanup required; repository hygiene complete | [Audit](#debug-code-analysis-h3) |
 | Repository Cleanup | 95% Complete | Phases 1-6 done; residual: generated docs refresh, HtmlTemplateGenerator CSS/JS extraction | [Audit](#cleanup-action-plan-status) |
 | Simplification Backlog | ~2,800-3,400 LOC removable | 12 categories identified; highest priority: bare catches, dead code, Task.Run misuse | [Audit](#further-simplification-opportunities) |
@@ -244,7 +244,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 > Source: `docs/evaluations/desktop-end-user-improvements.md`
 > Date: 2026-02-21 | Status: Partial Implementation In Progress
 
-**Scope:** 49 XAML pages, 104 services (72 shared + 32 WPF-specific), 1,266 tests
+**Scope:** 51 XAML pages, 104 services (72 shared + 32 WPF-specific), 1,251 tests
 
 **Implemented Features:**
 
@@ -507,4 +507,4 @@ All source documents that feed into this consolidation:
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-03-11*

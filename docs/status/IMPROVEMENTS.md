@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
-**Version:** 1.6.2
-**Last Updated:** 2026-02-25
+**Version:** 1.0.0
+**Last Updated:** 2026-03-11
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -1229,9 +1229,9 @@ No clear contract for what each validates or when it runs.
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
 | Completed Improvements | 33/35 | 35/35 | All |
-| Test Files | 219 | 250+ | Phase 1-3 |
-| Test Methods | ~3,444 | 4,000+ | Phase 1-3 |
-| Route Constants | 283 | 283 | Phase 3 |
+| Test Files | 254 | 280+ | Phase 1-3 |
+| Test Methods | ~3,858 | 4,500+ | Phase 1-3 |
+| Route Constants | 300 | 300 | Phase 3 |
 | Provider Test Files | 12 | 15+ | Phase 3 |
 
 ### Risk Mitigation
@@ -1348,7 +1348,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-11
 **Maintainer:** Project Team
-**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (7/8)
+**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (7/8); 3 partial (G2, I3, J8), 2 open (C3, H2)
 **Next Review:** Weekly engineering sync (or immediately after any status change)

@@ -1,18 +1,18 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-02-22
-**Current Version:** 1.6.2
+**Last Updated:** 2026-03-11
+**Current Version:** 1.0.0
 
 This changelog summarizes the current repository snapshot. Historical release notes are not curated in this repo; use git history for detailed diffs.
 
 ---
 
-## Current Snapshot (2026-02-22)
+## Current Snapshot (2026-03-11)
 
 ### Project Scale
-- 664 source files (652 C#, 12 F#), 219 test files (215 C#, 4 F#), 135 documentation files
+- 743 source files (729 C#, 14 F#), 254 test files (248 C#, 6 F#), 148 documentation files
 - 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
-- 22 CI/CD workflows, 78 Makefile targets, 283 API route constants
+- 25 CI/CD workflows, 106 Makefile targets, 300 API route constants
 
 ### Core Runtime
 - CLI modes for real-time collection, backfill, replay, packaging, and validation
@@ -40,7 +40,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 
 ### UI & Integrations
 - Web dashboard for status/metrics and API-backed backfill actions
-- WPF desktop application (recommended for Windows; workspace/navigation is implemented but some pages remain placeholder-only)
+- WPF desktop application with 51 pages (Windows only; most pages wired to live services; a few show placeholder data)
 - UWP desktop application removed (WPF is the sole desktop client)
 - Shared UI services project (`MarketDataCollector.Ui.Services`)
 - QuantConnect Lean integration types and data provider
@@ -53,13 +53,20 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Dropped event audit trail with HTTP API exposure
 - Provider degradation scoring for intelligent failover
 
+### Data Canonicalization
+- Cross-provider canonical field model (`CanonicalSymbol`, `CanonicalVenue`, `CanonicalizationVersion`) on `MarketEvent`
+- `EventCanonicalizer`, `ConditionCodeMapper` (44 codes across 3 providers), `VenueMicMapper` (63 venues → ISO 10383 MIC)
+- `CanonicalizingPublisher` decorator with DI wiring and lock-free metrics
+- Canonicalization API endpoints (`/api/canonicalization/status`, `/parity`, `/config`)
+- Golden fixture test suite (8 curated fixtures + `CanonicalizationGoldenFixtureTests`); drift-canary CI pending (J8)
+
 ### Testing & Quality
-- 219 test files across 4 test projects with ~3,444 test methods
-- Core tests: 444 methods (backfill, storage, pipeline, monitoring, providers)
+- 254 test files across 4 test projects with ~3,858 test methods
+- Core tests: ~2,508 methods (backfill, storage, pipeline, monitoring, providers, domain, integration)
 - F# tests: 99 methods (domain validation, calculations, transforms)
 - WPF desktop service tests: 324 methods (navigation, config, status, connection)
 - Desktop UI service tests: 927 methods (API client, backfill, fixtures, forms, health, watchlist)
-- 12 provider test files covering all streaming providers + failover + backfill
+- Provider test files covering all streaming providers + failover + backfill
 - Negative-path and schema validation endpoint integration tests
 - Integration test harness with fixture providers for full-pipeline testing
 
@@ -69,21 +76,40 @@ This changelog summarizes the current repository snapshot. Historical release no
 - API authentication (API key) and rate limiting middleware
 - Category-accurate process exit codes for CI/CD integration
 
-### Improvement Tracking (as of 2026-02-22)
+### Improvement Tracking (as of 2026-03-11)
 - 33/35 core improvement items completed (94.3%)
-- C1/C2 architecture items (unified provider registry, single DI composition path) verified complete
-- F3 (first-run onboarding), E3 (GC pressure optimization), B3/B4 (provider/service tests) verified complete
-- H3 (event replay) and I2 (CLI progress reporting) verified complete
-- Remaining: C3 (WebSocket base class), G2 (trace propagation partial)
+- Themes H (Scalability) and I (Developer Experience): 6 of 8 items complete; I3 partial, H2 open
+- Theme J (Data Canonicalization): 7 of 8 items complete; J8 (golden fixture drift-canary CI) partial
+- Remaining open items: C3 (WebSocket base class), H2 (multi-instance coordination)
+- Remaining partial items: G2 (trace propagation), I3 (config JSON schema), J8 (drift-canary CI)
 
-### Recent Changes (since 2026-02-17)
-- Desktop improvements executive summary updated (PR #1372)
-- README.md modernized to reflect current state (PR #1371)
-- GitHub Actions fixes and missing using statements resolved (PR #1369)
-- Code simplification across codebase (PR #1367)
-- Code quality CI fixes and test failures resolved (PR #1365)
-- AI Claude documentation updates (PR #1364)
-- Documentation automation consolidation
+### Recent Changes (since 2026-02-22)
+- Documentation consolidated and automation updated
+- Data canonicalization pipeline (J2–J7) fully implemented
+- Event replay infrastructure added (`JsonlReplayer`, `MemoryMappedJsonlReader`, `EventReplayService`)
+- CLI progress reporting (`ProgressDisplayService`) with ETA, throughput, and spinner support
+- Additional test coverage across application, domain, infrastructure, storage, and integration areas
+- Makefile expanded to 106 targets (was 78)
+- API route surface expanded to 300 constants (was 283)
+- WPF views expanded to 51 pages (was ~49)
+
+---
+
+## Previous Snapshot (2026-02-22)
+
+### Project Scale
+- 664 source files (652 C#, 12 F#), 219 test files (215 C#, 4 F#), 135 documentation files
+- 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
+- 22 CI/CD workflows, 78 Makefile targets, 283 API route constants
+
+---
+
+## Previous Snapshot (2026-02-22)
+
+### Project Scale
+- 664 source files (652 C#, 12 F#), 219 test files (215 C#, 4 F#), 135 documentation files
+- 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
+- 22 CI/CD workflows, 78 Makefile targets, 283 API route constants
 
 ---
 

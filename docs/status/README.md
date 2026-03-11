@@ -18,10 +18,10 @@ This folder contains project status, roadmap, and changelog documentation for th
 ## Quick Links
 
 ### Current Status
-- **Version:** 1.6.2
+- **Version:** 1.0.0
 - **Status:** Development / Pilot Ready
-- **Improvements:** 33/35 completed, 1 partial (G2), 1 open (C3)
-- **Last Updated:** 2026-02-26
+- **Improvements:** 33/35 core completed, 3 partial (G2, I3, J8), 2 open (C3, H2)
+- **Last Updated:** 2026-03-11
 
 ### Key Metrics
 - See [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) for a per-feature breakdown of what is complete, partial, or pending.

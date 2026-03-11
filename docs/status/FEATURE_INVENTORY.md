@@ -1,7 +1,7 @@
 # Market Data Collector — Feature Inventory
 
-**Version:** 1.6.2
-**Date:** 2026-02-26
+**Version:** 1.0.0
+**Date:** 2026-03-11
 **Purpose:** Comprehensive inventory of every functional area, its current implementation status, and the remaining work required to reach full implementation.
 
 Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`IMPROVEMENTS.md`](IMPROVEMENTS.md) (per-item tracking).
@@ -194,7 +194,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | OpenAPI / Swagger | `/swagger` | ✅ |
 | API authentication | `X-Api-Key` header only (no query-string auth) | ✅ |
 | Rate limiting | 120 req/min per key, sliding window | ✅ |
-| **Total route constants** | **283** | **0 stubs remaining** |
+| **Total route constants** | **300** | **0 stubs remaining** |
 
 ### OpenAPI annotations
 
@@ -376,11 +376,11 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 | Test Project | Test Files | Methods | Focus |
 |---|---|---|---|
-| `MarketDataCollector.Tests` | ~110 | ~444 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain |
-| `MarketDataCollector.FSharp.Tests` | 4 | ~99 | F# domain validation, calculations, transforms |
-| `MarketDataCollector.Wpf.Tests` | ~20 | ~324 | WPF desktop services (navigation, config, status, connection) |
-| `MarketDataCollector.Ui.Tests` | ~70 | ~927 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
-| **Total** | **219** | **~3,444** | |
+| `MarketDataCollector.Tests` | 170 | ~2,508 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain |
+| `MarketDataCollector.FSharp.Tests` | 6 | ~99 | F# domain validation, calculations, transforms |
+| `MarketDataCollector.Wpf.Tests` | 23 | ~324 | WPF desktop services (navigation, config, status, connection) |
+| `MarketDataCollector.Ui.Tests` | 55 | ~927 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
+| **Total** | **254** | **~3,858** | |
 
 ### Key test infrastructure
 
@@ -447,4 +447,4 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 ---
 
-*Last Updated: 2026-02-26*
+*Last Updated: 2026-03-11*
