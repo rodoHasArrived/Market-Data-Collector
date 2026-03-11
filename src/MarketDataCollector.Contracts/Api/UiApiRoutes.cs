@@ -85,6 +85,12 @@ public static class UiApiRoutes
     public const string ProviderFailoverThresholds = "/api/providers/failover-thresholds";
     public const string ProviderHealth = "/api/providers/health";
 
+    /// <summary>
+    /// Unified traffic-light health dashboard across all providers.
+    /// Returns green/yellow/red overall status with per-provider detail.
+    /// </summary>
+    public const string ProvidersDashboard = "/api/providers/dashboard";
+
     // Interactive Brokers specific endpoints
     public const string IBStatus = "/api/providers/ib/status";
     public const string IBErrorCodes = "/api/providers/ib/error-codes";

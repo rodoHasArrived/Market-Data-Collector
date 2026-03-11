@@ -371,7 +371,17 @@ public partial class Program
 
         try
         {
-            await dataClient.ConnectAsync();
+            using var connectTimeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await dataClient.ConnectAsync(connectTimeoutCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            log.Error(
+                "Connection to {DataSource} timed out after 30 seconds. " +
+                "Check network connectivity, firewall rules, and provider credentials. " +
+                "Use --dry-run to validate configuration without connecting.",
+                cfg.DataSource);
+            return ErrorCode.ConnectionTimeout.ToExitCode();
         }
         catch (Exception ex)
         {

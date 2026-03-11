@@ -621,5 +621,23 @@ Test coverage:
 
 ---
 
+## Implementation Follow-Up (2026-03-11)
+
+| Item | Status | Implementation |
+|------|--------|----------------|
+| 2.6 — Provider connection timeout | ✅ Done | `Program.cs`: `dataClient.ConnectAsync()` is now wrapped in a 30-second `CancellationTokenSource` timeout. On timeout an `OperationCanceledException` is caught separately and surfaced as a clear `ErrorCode.ConnectionTimeout` exit code with an actionable log message. |
+| 2.3 — Periodic sink flush timeout | ✅ Done | `EventPipeline`: new `sinkFlushTimeout` constructor parameter (default 60 s). Each periodic flush call is wrapped in a `CancellationTokenSource.CreateLinkedTokenSource` that adds the per-flush deadline on top of the pipeline shutdown token. A hung sink now times out and logs a `Warning` instead of stalling the pipeline indefinitely. Pipeline-shutdown cancellation is still distinguished from flush-timeout cancellation via a `when` guard. |
+| 3.6 — Backpressure feedback loop | ✅ Done | `EventPipeline.TryPublishWithResult()` added returning a new `PublishResult` enum (`Accepted` / `AcceptedUnderPressure` / `Dropped`). `TryPublish()` is unchanged for backward compatibility. `PublishResult` is defined in `MarketDataCollector.Domain.Events` so all provider adapters can reference it without circular dependencies. |
+| 4.4 — Provider health dashboard | ✅ Done | New `GET /api/providers/dashboard` endpoint (`UiApiRoutes.ProvidersDashboard`) added to `ProviderExtendedEndpoints`. Returns an `overallTrafficLight` (`green`/`yellow`/`red`), human-readable `summary`, and per-provider detail including latency from stored metrics. |
+| 5.1 — Fix timing-dependent skipped tests | ✅ Done | `QueueUtilization_ReflectsQueueFill`: rewritten using `BlockingStorageSink` + `batchSize: 1` so 49 events remain in the channel while the consumer is blocked on the first. `ValidateFileAsync_SupportsCancellation`: fixed by adding `ct.ThrowIfCancellationRequested()` at the top of `ValidateFileAsync` to honour pre-cancelled tokens before the file is opened. Both tests pass deterministically. |
+
+Test coverage added:
+- `EventPipelineTests.TryPublishWithResult_WhenAccepted_ReturnsAccepted` — verifies `Accepted` result on normal publish.
+- `EventPipelineTests.TryPublishWithResult_WhenQueueFull_ReturnsDropped` — verifies `Dropped` result when pipeline is at capacity (DropWrite mode).
+- `EventPipelineTests.QueueUtilization_ReflectsQueueFill` — previously skipped, now enabled and passes deterministically.
+- `DataValidatorTests.ValidateFileAsync_SupportsCancellation` — previously skipped, now enabled and passes deterministically.
+
+---
+
 *Generated 2026-03-02 from deep codebase analysis across pipeline, WAL,
 providers, monitoring, configuration, tests, and domain model.*

@@ -52,6 +52,10 @@ public sealed class DataValidator
     /// </summary>
     public async Task<ValidationResult> ValidateFileAsync(string filePath, CancellationToken ct = default)
     {
+        // Honour cancellation immediately — even for small files that would
+        // otherwise read synchronously from the internal StreamReader buffer.
+        ct.ThrowIfCancellationRequested();
+
         var errors = new List<string>();
         var gaps = new List<GapInfo>();
         var totalLines = 0;

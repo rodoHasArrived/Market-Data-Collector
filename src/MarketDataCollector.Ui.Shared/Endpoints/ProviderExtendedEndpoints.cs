@@ -231,6 +231,81 @@ public static class ProviderExtendedEndpoints
         .WithName("GetProviderHealthStatus")
         .WithDescription("Returns health status for all registered providers.")
         .Produces(200);
+
+        // Provider health dashboard — unified traffic-light summary
+        group.MapGet(UiApiRoutes.ProvidersDashboard, ([FromServices] ProviderRegistry? registry, [FromServices] ConfigStore store) =>
+        {
+            var allProviders = registry?.GetAllProviders() ?? Array.Empty<ProviderInfo>();
+            var metricsStatus = store.TryLoadProviderMetrics();
+
+            var providerSummaries = allProviders.Select(p =>
+            {
+                // Determine per-provider traffic-light colour
+                var trafficLight = p.IsEnabled ? "green" : "red";
+
+                // Cross-reference latency metrics when available
+                string? latencyMs = null;
+                if (metricsStatus?.Providers is { } metricsList)
+                {
+                    var m = metricsList.FirstOrDefault(x =>
+                        string.Equals(x.ProviderId, p.Name, StringComparison.OrdinalIgnoreCase));
+                    if (m is not null)
+                    {
+                        latencyMs = m.AverageLatencyMs.ToString("F1");
+
+                        // Elevate to yellow when a healthy provider is showing elevated latency
+                        if (p.IsEnabled && m.AverageLatencyMs > 500)
+                            trafficLight = "yellow";
+                    }
+                }
+
+                return new
+                {
+                    name = p.Name,
+                    displayName = p.DisplayName,
+                    type = p.ProviderType.ToString(),
+                    isEnabled = p.IsEnabled,
+                    trafficLight,
+                    latencyMs
+                };
+            }).ToArray();
+
+            // Derive overall traffic light:
+            //   green  = all enabled providers healthy
+            //   yellow = at least one provider is yellow (degraded / high latency)
+            //   red    = no enabled providers, or active failover detected
+            var enabledCount = allProviders.Count(p => p.IsEnabled);
+            var yellowCount = providerSummaries.Count(p => p.trafficLight == "yellow");
+            var redCount = providerSummaries.Count(p => p.trafficLight == "red" && allProviders
+                .FirstOrDefault(a => a.Name == p.name)?.IsEnabled == true);
+
+            var overallTrafficLight = enabledCount == 0 || redCount > 0
+                ? "red"
+                : yellowCount > 0 ? "yellow" : "green";
+
+            var summary = overallTrafficLight switch
+            {
+                "green" => "All providers healthy — data collection operating normally.",
+                "yellow" => "Some providers degraded or showing elevated latency — failover may be active.",
+                "red" => "Primary providers down — data collection at risk. Check provider credentials and connectivity.",
+                _ => "Unknown"
+            };
+
+            return Results.Json(new
+            {
+                overallTrafficLight,
+                summary,
+                enabledProviders = enabledCount,
+                totalProviders = allProviders.Count(),
+                providers = providerSummaries,
+                timestamp = DateTimeOffset.UtcNow
+            }, jsonOptions);
+        })
+        .WithName("GetProvidersDashboard")
+        .WithDescription(
+            "Returns a unified traffic-light health dashboard: green (all healthy), " +
+            "yellow (some degraded/failover active), red (primary providers down).")
+        .Produces(200);
     }
 
     private sealed record FailoverTriggerRequest(string? TargetProvider);

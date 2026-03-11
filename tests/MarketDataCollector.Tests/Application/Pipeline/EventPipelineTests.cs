@@ -180,21 +180,30 @@ public class EventPipelineTests : IAsyncLifetime
         avgTime.Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = "QueueUtilization measures the channel count which is 0 once the consumer dequeues; reliable measurement requires intrusive pipeline changes")]
+    [Fact]
     public async Task QueueUtilization_ReflectsQueueFill()
     {
-        // Arrange - Create pipeline with small capacity
-        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
-        await using var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
+        // Arrange - batchSize=1 so the consumer processes one event at a time.
+        // The BlockingStorageSink holds the consumer on the first event while
+        // the remaining 49 events stay in the channel, making utilization > 0.
+        var releaseTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var sink = new BlockingStorageSink(releaseTcs.Task);
+        await using var pipeline = new EventPipeline(sink, capacity: 100, batchSize: 1, enablePeriodicFlush: false);
 
-        // Act - Fill the queue
+        // Act - Publish 50 events
         for (int i = 0; i < 50; i++)
         {
             pipeline.TryPublish(CreateTradeEvent("SPY"));
         }
 
-        // Assert
+        // Wait until the consumer has started processing the first event and is blocked
+        await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(5));
+
+        // Assert - remaining 49 events are still in the channel
         pipeline.QueueUtilization.Should().BeGreaterThan(0);
+
+        // Release the sink so the pipeline can drain and dispose cleanly
+        releaseTcs.SetResult(true);
     }
 
     [Fact]
@@ -555,6 +564,43 @@ public class EventPipelineTests : IAsyncLifetime
         // Assert - Pipeline should still be alive and processing
         // At least some events should have been processed before the throw
         sink.ReceivedEvents.Count.Should().BeGreaterThanOrEqualTo(5);
+    }
+
+    #endregion
+
+    #region PublishResult Tests
+
+    [Fact]
+    public void TryPublishWithResult_WhenAccepted_ReturnsAccepted()
+    {
+        // Arrange
+        var evt = CreateTradeEvent("SPY");
+
+        // Act
+        var result = _pipeline.TryPublishWithResult(in evt);
+
+        // Assert
+        result.Should().Be(PublishResult.Accepted);
+    }
+
+    [Fact]
+    public void TryPublishWithResult_WhenQueueFull_ReturnsDropped()
+    {
+        // Arrange — tiny pipeline in DropWrite mode so it fills immediately
+        using var sink = new MockStorageSink();
+        var pipeline = new EventPipeline(sink, capacity: 2,
+            fullMode: BoundedChannelFullMode.DropWrite,
+            enablePeriodicFlush: false);
+
+        // Fill the channel
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+
+        // Act — one more publish with no room
+        var result = pipeline.TryPublishWithResult(CreateTradeEvent("SPY"));
+
+        // Assert
+        result.Should().Be(PublishResult.Dropped);
     }
 
     #endregion

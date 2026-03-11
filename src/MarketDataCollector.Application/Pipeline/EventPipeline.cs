@@ -67,6 +67,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly TimeSpan _flushInterval;
     private readonly int _batchSize;
     private readonly bool _enablePeriodicFlush;
+    private readonly TimeSpan _sinkFlushTimeout;
 
     // Pre-computed integer thresholds to avoid floating-point division on every TryPublish
     private readonly int _highWaterMark80;
@@ -77,6 +78,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// Prevents the consumer task from hanging indefinitely if the sink is unresponsive.
     /// </summary>
     private static readonly TimeSpan DefaultFinalFlushTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Default per-call sink flush timeout for periodic flushes.
+    /// Prevents a hung sink from stalling the pipeline indefinitely.
+    /// </summary>
+    private static readonly TimeSpan DefaultSinkFlushTimeout = TimeSpan.FromSeconds(60);
 
     private readonly TimeSpan _finalFlushTimeout;
     private readonly TimeSpan _disposeTaskTimeout;
@@ -97,6 +104,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// to replay any uncommitted records from a prior crash.</param>
     /// <param name="metrics">Optional event metrics for tracking pipeline throughput.</param>
     /// <param name="finalFlushTimeout">Optional timeout for the final flush during shutdown. Defaults to 30 seconds.</param>
+    /// <param name="sinkFlushTimeout">Optional per-call timeout for periodic sink flushes. Prevents a hung sink from stalling the pipeline indefinitely. Defaults to 60 seconds.</param>
     /// <param name="validator">Optional event validator for pre-persistence validation.</param>
     /// <param name="deadLetterSink">Optional dead-letter sink for rejected events.</param>
     public EventPipeline(
@@ -111,6 +119,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         WriteAheadLog? wal = null,
         IEventMetrics? metrics = null,
         TimeSpan? finalFlushTimeout = null,
+        TimeSpan? sinkFlushTimeout = null,
         IEventValidator? validator = null,
         DeadLetterSink? deadLetterSink = null,
         PersistentDedupLedger? dedupLedger = null)
@@ -125,6 +134,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             wal,
             metrics,
             finalFlushTimeout,
+            sinkFlushTimeout,
             validator,
             deadLetterSink,
             dedupLedger)
@@ -137,6 +147,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// <param name="validator">Optional event validator. When provided, events that fail validation
     /// are routed to the <paramref name="deadLetterSink"/> and excluded from primary storage.</param>
     /// <param name="deadLetterSink">Optional dead-letter sink for events rejected by the validator.</param>
+    /// <param name="sinkFlushTimeout">Optional per-call timeout for periodic sink flushes. Defaults to 60 seconds.</param>
     public EventPipeline(
         IStorageSink sink,
         EventPipelinePolicy policy,
@@ -148,6 +159,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         WriteAheadLog? wal = null,
         IEventMetrics? metrics = null,
         TimeSpan? finalFlushTimeout = null,
+        TimeSpan? sinkFlushTimeout = null,
         IEventValidator? validator = null,
         DeadLetterSink? deadLetterSink = null,
         PersistentDedupLedger? dedupLedger = null)
@@ -161,6 +173,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         _deadLetterSink = deadLetterSink;
         _dedupLedger = dedupLedger;
         _finalFlushTimeout = finalFlushTimeout ?? DefaultFinalFlushTimeout;
+        _sinkFlushTimeout = sinkFlushTimeout ?? DefaultSinkFlushTimeout;
         _disposeTaskTimeout = _finalFlushTimeout + TimeSpan.FromSeconds(5);
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
@@ -399,6 +412,24 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         }
 
         return written;
+    }
+
+    /// <summary>
+    /// Attempts to publish an event and returns a <see cref="PublishResult"/> that describes
+    /// the outcome in detail — accepted, accepted under pressure, or dropped.
+    /// </summary>
+    /// <remarks>
+    /// Use this method when the caller needs to react to backpressure (e.g. pause a subscription,
+    /// log a drop, or adjust polling rate). For fire-and-forget callers the original
+    /// <see cref="TryPublish"/> remains the recommended hot-path method.
+    /// </remarks>
+    public PublishResult TryPublishWithResult(in MarketEvent evt)
+    {
+        var accepted = TryPublish(in evt);
+        if (!accepted)
+            return PublishResult.Dropped;
+
+        return _highWaterMarkWarned ? PublishResult.AcceptedUnderPressure : PublishResult.Accepted;
     }
 
     /// <summary>Records a dropped event — shared by DropWrite pre-check and Wait-mode TryWrite failure.</summary>
@@ -661,7 +692,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
                 try
                 {
-                    await _sink.FlushAsync(_cts.Token).ConfigureAwait(false);
+                    // Use a per-flush timeout combined with the pipeline cancellation token
+                    // to prevent a hung sink from stalling the pipeline indefinitely.
+                    using var flushTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+                    flushTimeoutCts.CancelAfter(_sinkFlushTimeout);
+
+                    await _sink.FlushAsync(flushTimeoutCts.Token).ConfigureAwait(false);
                     Interlocked.Exchange(ref _lastFlushTimestamp, Stopwatch.GetTimestamp());
 
                     // Periodically truncate committed WAL files to reclaim disk space
@@ -670,9 +706,18 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
                         await _wal.TruncateAsync(_lastCommittedWalSequence, _cts.Token).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (_cts.Token.IsCancellationRequested)
                 {
                     break;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Sink flush timed out — log and continue so the pipeline stays alive.
+                    _logger.LogWarning(
+                        "Periodic flush timed out after {TimeoutSeconds}s. " +
+                        "Sink may be slow or unresponsive. Queue size: {QueueSize}, consumed: {ConsumedCount}. " +
+                        "Check storage health.",
+                        _sinkFlushTimeout.TotalSeconds, CurrentQueueSize, _consumedCount);
                 }
                 catch (Exception ex)
                 {
