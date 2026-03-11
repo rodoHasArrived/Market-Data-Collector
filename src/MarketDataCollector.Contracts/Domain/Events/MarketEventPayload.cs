@@ -4,13 +4,15 @@ using MarketDataCollector.Contracts.Domain.Models;
 namespace MarketDataCollector.Contracts.Domain.Events;
 
 /// <summary>
-/// Polymorphic payload base for MarketEvent.Payload.
-/// Supports JSON serialization with type discriminator.
+/// Discriminated-union base for all market event payloads.
+/// Every <see cref="MarketEvent"/> carries a non-null payload; heartbeat events use
+/// <see cref="HeartbeatPayload"/> to eliminate the null-payload special case.
 /// </summary>
 /// <remarks>
-/// Keep derived type list in sync with Domain/Events/MarketEventPayload.cs.
+/// Keep the <c>[JsonDerivedType]</c> list in sync with <c>Domain/Events/MarketEventPayload.cs</c>.
 /// </remarks>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
+[JsonDerivedType(typeof(HeartbeatPayload), "heartbeat")]
 [JsonDerivedType(typeof(Trade), "trade")]
 [JsonDerivedType(typeof(LOBSnapshot), "l2")]
 [JsonDerivedType(typeof(OrderFlowStatistics), "orderflow")]
@@ -28,4 +30,11 @@ namespace MarketDataCollector.Contracts.Domain.Events;
 [JsonDerivedType(typeof(GreeksSnapshot), "greeks")]
 [JsonDerivedType(typeof(OptionChainSnapshot), "option_chain")]
 [JsonDerivedType(typeof(OpenInterestUpdate), "open_interest")]
-public abstract record MarketEventPayload : IMarketEventPayload;
+public abstract record MarketEventPayload : IMarketEventPayload
+{
+    /// <summary>
+    /// Payload for heartbeat events. Carries no market data; exists to eliminate the
+    /// null-payload special case and enable exhaustive pattern matching over all event types.
+    /// </summary>
+    public sealed record HeartbeatPayload() : MarketEventPayload;
+}

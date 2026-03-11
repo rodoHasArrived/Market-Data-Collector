@@ -4,6 +4,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using Xunit;
+using ContractPayload = MarketDataCollector.Contracts.Domain.Events.MarketEventPayload;
 
 namespace MarketDataCollector.Tests.Monitoring;
 
@@ -61,7 +62,7 @@ public sealed class SchemaValidationServiceTests : IAsyncDisposable
             default, // Invalid timestamp
             "AAPL",
             MarketEventType.Heartbeat,
-            null);
+            new ContractPayload.HeartbeatPayload());
 
         // Act
         var act = () => _service.Validate(evt);
@@ -79,7 +80,7 @@ public sealed class SchemaValidationServiceTests : IAsyncDisposable
             DateTimeOffset.UtcNow,
             "", // Invalid symbol
             MarketEventType.Heartbeat,
-            null);
+            new ContractPayload.HeartbeatPayload());
 
         // Act
         var act = () => _service.Validate(evt);
@@ -97,7 +98,7 @@ public sealed class SchemaValidationServiceTests : IAsyncDisposable
             DateTimeOffset.UtcNow,
             "AAPL",
             MarketEventType.Unknown, // Invalid type
-            null);
+            new ContractPayload.HeartbeatPayload());
 
         // Act
         var act = () => _service.Validate(evt);
@@ -129,7 +130,7 @@ public sealed class SchemaValidationServiceTests : IAsyncDisposable
             default,
             "AAPL",
             MarketEventType.Heartbeat,
-            null);
+            new ContractPayload.HeartbeatPayload());
 
         // Act
         var result = _service.ValidateSafe(evt);

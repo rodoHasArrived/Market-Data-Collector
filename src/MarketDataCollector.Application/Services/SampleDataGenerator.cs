@@ -258,15 +258,14 @@ public sealed class SampleDataGenerator
             MarketMaker: MarketMakers[_random.Next(MarketMakers.Length)]
         );
 
-        // Create a MarketEvent for depth update - use L2Snapshot type since Depth is for order book updates
-        return new MarketEvent(
-            Timestamp: timestamp,
-            Symbol: symbol,
-            Type: MarketEventType.Depth,
-            Payload: null,  // MarketDepthUpdate is not a MarketEventPayload
-            Sequence: 0,
-            Source: "SAMPLE"
-        );
+        // Build a minimal LOBSnapshot so the event carries a non-null payload.
+        // MarketDepthUpdate (an incremental message) is not a MarketEventPayload, so we
+        // materialise a one-level snapshot from the update for sample-data purposes only.
+        var bookLevel = new OrderBookLevel(side, level, price, size);
+        var bids = side == OrderBookSide.Bid ? (IReadOnlyList<OrderBookLevel>)[bookLevel] : [];
+        var asks = side == OrderBookSide.Ask ? (IReadOnlyList<OrderBookLevel>)[bookLevel] : [];
+        var snapshot = new LOBSnapshot(timestamp, symbol, bids, asks, SequenceNumber: 0);
+        return MarketEvent.L2Snapshot(timestamp, symbol, snapshot, seq: 0, source: "SAMPLE");
     }
 
     private MarketEvent GenerateBar(string symbol, DateTimeOffset timestamp, ref decimal basePrice)

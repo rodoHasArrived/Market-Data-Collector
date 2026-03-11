@@ -10,7 +10,7 @@ public sealed record MarketEvent(
     DateTimeOffset Timestamp,
     string Symbol,
     MarketEventType Type,
-    MarketEventPayload? Payload,
+    MarketEventPayload Payload,
     long Sequence = 0,
     string Source = "IB",
     byte SchemaVersion = 1,
@@ -72,7 +72,7 @@ public sealed record MarketEvent(
     /// Creates a heartbeat market event.
     /// </summary>
     public static MarketEvent CreateHeartbeat(DateTimeOffset ts, string source = "IB")
-        => new(ts, "SYSTEM", MarketEventType.Heartbeat, Payload: null, Sequence: 0, Source: source);
+        => new(ts, "SYSTEM", MarketEventType.Heartbeat, new MarketEventPayload.HeartbeatPayload(), Sequence: 0, Source: source);
 
     /// <summary>
     /// Creates a historical bar market event.

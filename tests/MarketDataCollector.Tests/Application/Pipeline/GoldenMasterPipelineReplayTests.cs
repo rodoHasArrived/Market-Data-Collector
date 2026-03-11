@@ -103,11 +103,11 @@ public sealed class GoldenMasterPipelineReplayTests : IAsyncLifetime
     }
 
     // ------------------------------------------------------------------ //
-    //  Baseline scenario 3: heartbeat carries null payload                //
+    //  Baseline scenario 3: heartbeat carries a HeartbeatPayload          //
     // ------------------------------------------------------------------ //
 
     [Fact]
-    public async Task Replay_Heartbeat_PayloadIsNull()
+    public async Task Replay_Heartbeat_PayloadIsHeartbeatPayload()
     {
         // Arrange
         var ts = new DateTimeOffset(2025, 1, 15, 10, 0, 0, TimeSpan.Zero);
@@ -121,7 +121,8 @@ public sealed class GoldenMasterPipelineReplayTests : IAsyncLifetime
         var captured = _sink.Events[0];
         captured.Type.Should().Be(MarketEventType.Heartbeat);
         captured.Symbol.Should().Be("SYSTEM");
-        captured.Payload.Should().BeNull("heartbeat events carry no payload by design");
+        captured.Payload.Should().BeOfType<Contracts.Domain.Events.MarketEventPayload.HeartbeatPayload>(
+            "heartbeat events carry a HeartbeatPayload, not null");
     }
 
     // ------------------------------------------------------------------ //

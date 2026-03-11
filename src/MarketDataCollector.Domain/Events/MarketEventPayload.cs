@@ -5,11 +5,12 @@ using MarketDataCollector.Domain.Models;
 namespace MarketDataCollector.Domain.Events;
 
 /// <summary>
-/// Polymorphic payload base for MarketEvent.Payload.
-/// Models are consolidated in Contracts project as single source of truth.
-/// Keep derived type list in sync with Contracts/Domain/Events/MarketEventPayload.cs.
+/// Discriminated-union base for domain-layer market event payloads.
+/// Models are consolidated in the Contracts project as single source of truth.
+/// Keep the <c>[JsonDerivedType]</c> list in sync with <c>Contracts/Domain/Events/MarketEventPayload.cs</c>.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
+[JsonDerivedType(typeof(Contracts.Domain.Events.MarketEventPayload.HeartbeatPayload), "heartbeat")]
 [JsonDerivedType(typeof(Trade), "trade")]
 [JsonDerivedType(typeof(LOBSnapshot), "l2")]
 [JsonDerivedType(typeof(OrderFlowStatistics), "orderflow")]

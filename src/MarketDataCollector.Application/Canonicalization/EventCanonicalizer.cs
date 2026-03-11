@@ -62,7 +62,7 @@ public sealed class EventCanonicalizer : IEventCanonicalizer
     /// <summary>
     /// Extracts the venue string from a market event payload, if present.
     /// </summary>
-    private static string? ExtractVenue(ContractPayload? payload) => payload switch
+    private static string? ExtractVenue(ContractPayload payload) => payload switch
     {
         Trade trade => trade.Venue,
         BboQuotePayload bbo => bbo.Venue,

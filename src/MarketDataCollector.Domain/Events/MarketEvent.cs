@@ -10,7 +10,7 @@ public sealed record MarketEvent(
     DateTimeOffset Timestamp,
     string Symbol,
     MarketEventType Type,
-    Contracts.Domain.Events.MarketEventPayload? Payload,
+    Contracts.Domain.Events.MarketEventPayload Payload,
     long Sequence = 0,
     string Source = "IB",
     byte SchemaVersion = 1,
@@ -61,7 +61,7 @@ public sealed record MarketEvent(
         return new(ts, symbol, MarketEventType.Integrity, payload, seq, source);
     }
     public static MarketEvent Heartbeat(DateTimeOffset ts, string source = "IB")
-        => new(ts, "SYSTEM", MarketEventType.Heartbeat, Payload: null, Sequence: 0, Source: source);
+        => new(ts, "SYSTEM", MarketEventType.Heartbeat, new Contracts.Domain.Events.MarketEventPayload.HeartbeatPayload(), Sequence: 0, Source: source);
 
     public static MarketEvent HistoricalBar(DateTimeOffset ts, string symbol, HistoricalBar bar, long seq = 0, string source = "stooq")
         => new(ts, symbol, MarketEventType.HistoricalBar, bar, seq == 0 ? bar.SequenceNumber : seq, source);

@@ -31,8 +31,7 @@ public static class EventSchemaValidator
         if (evt.SchemaVersion != CurrentSchemaVersion)
             throw new InvalidOperationException($"Unsupported schema version {evt.SchemaVersion}. Expected {CurrentSchemaVersion}.");
 
-        // Ensure payload aligns with event type for the most common cases.
-        if (evt.Payload is null && evt.Type != MarketEventType.Heartbeat)
-            throw new InvalidOperationException($"Event payload required for type {evt.Type}.");
+        // Payload is non-nullable; every event type carries a real payload.
+        // Heartbeat events carry MarketEventPayload.HeartbeatPayload instead of null.
     }
 }

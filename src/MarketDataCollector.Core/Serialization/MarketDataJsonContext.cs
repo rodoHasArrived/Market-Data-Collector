@@ -6,6 +6,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using ContractEvents = MarketDataCollector.Contracts.Domain.Events;
 
 namespace MarketDataCollector.Application.Serialization;
 
@@ -30,6 +31,7 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(MarketEvent))]
 [JsonSerializable(typeof(MarketEvent[]))]
 [JsonSerializable(typeof(List<MarketEvent>))]
+[JsonSerializable(typeof(ContractEvents.MarketEventPayload.HeartbeatPayload))]
 [JsonSerializable(typeof(Trade))]
 [JsonSerializable(typeof(BboQuotePayload))]
 [JsonSerializable(typeof(L2SnapshotPayload))]

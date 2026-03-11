@@ -2,6 +2,7 @@ using FluentAssertions;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Events;
 using Xunit;
+using ContractPayload = MarketDataCollector.Contracts.Domain.Events.MarketEventPayload;
 
 namespace MarketDataCollector.Tests.Domain.Models;
 
@@ -11,6 +12,8 @@ namespace MarketDataCollector.Tests.Domain.Models;
 /// </summary>
 public sealed class EffectiveSymbolTests
 {
+    private static ContractPayload DummyPayload => new ContractPayload.HeartbeatPayload();
+
     [Fact]
     public void EffectiveSymbol_ReturnsCanonicalSymbol_WhenSet()
     {
@@ -18,7 +21,7 @@ public sealed class EffectiveSymbolTests
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "AAPL.US",
             Type: MarketEventType.Trade,
-            Payload: null,
+            Payload: DummyPayload,
             CanonicalSymbol: "AAPL");
 
         evt.EffectiveSymbol.Should().Be("AAPL");
@@ -31,7 +34,7 @@ public sealed class EffectiveSymbolTests
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "AAPL.US",
             Type: MarketEventType.Trade,
-            Payload: null,
+            Payload: DummyPayload,
             CanonicalSymbol: null);
 
         evt.EffectiveSymbol.Should().Be("AAPL.US");
@@ -44,7 +47,7 @@ public sealed class EffectiveSymbolTests
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SPY",
             Type: MarketEventType.Trade,
-            Payload: null);
+            Payload: DummyPayload);
 
         evt.EffectiveSymbol.Should().Be("SPY");
     }
@@ -56,7 +59,7 @@ public sealed class EffectiveSymbolTests
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "AAPL.US",
             Type: MarketEventType.Trade,
-            Payload: null);
+            Payload: DummyPayload);
 
         var enriched = raw with { CanonicalSymbol = "AAPL", CanonicalizationVersion = 1 };
 
@@ -71,7 +74,7 @@ public sealed class EffectiveSymbolTests
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "MSFT.US",
             Type: MarketEventType.Trade,
-            Payload: null,
+            Payload: DummyPayload,
             CanonicalSymbol: "MSFT");
 
         evt.EffectiveSymbol.Should().Be("MSFT");
@@ -84,7 +87,7 @@ public sealed class EffectiveSymbolTests
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "MSFT.US",
             Type: MarketEventType.Trade,
-            Payload: null);
+            Payload: DummyPayload);
 
         evt.EffectiveSymbol.Should().Be("MSFT.US");
     }
