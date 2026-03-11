@@ -1,7 +1,7 @@
 # Market Data Collector - Consolidated Evaluations & Audits
 
-**Version:** 1.6.1
-**Last Updated:** 2026-02-21
+**Version:** 1.6.2
+**Last Updated:** 2026-03-10
 **Status:** Consolidated reference document
 
 This document consolidates all architecture evaluations, code audits, desktop assessments, and operational reviews into a single navigable reference. It replaces the need to read 15+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
@@ -27,6 +27,13 @@ This document consolidates all architecture evaluations, code audits, desktop as
   - [Desktop UX Assessment](#desktop-ux-assessment)
   - [Desktop Provider Configurability](#desktop-provider-configurability)
   - [Desktop Improvement Shortlist](#desktop-improvement-shortlist)
+- [Improvement Brainstorms](#improvement-brainstorms)
+  - [High-Impact Improvements — March 2026](#high-impact-improvements--march-2026)
+  - [High-Impact Repository Improvements](#high-impact-repository-improvements)
+  - [High-Value Low-Cost Improvements](#high-value-low-cost-improvements)
+  - [Next Frontier Brainstorm](#next-frontier-brainstorm)
+  - [Nautilus-Inspired Restructuring](#nautilus-inspired-restructuring)
+  - [Assembly-Level Performance Opportunities](#assembly-level-performance-opportunities)
 - [Code Audits](#code-audits)
   - [Repository Hygiene (H1-H3)](#repository-hygiene-h1-h3)
   - [Debug Code Analysis (H3)](#debug-code-analysis-h3)
@@ -51,6 +58,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 | Ingestion Orchestration | Uneven maturity | Strong building blocks; needs unified job model for realtime + backfill workloads | [Evaluation](#ingestion-orchestration) |
 | Operational Readiness | Pilot Ready | Good monitoring baseline; needs standardized SLOs and runbook-linked alerts | [Evaluation](#operational-readiness) |
 | Desktop UX | Partial parity | 49 pages, 104 services; key features implemented; remaining gaps in live backend integration | [Assessment](#desktop-ux-assessment) |
+| Implementation Risk (Mar 2026) | 6.5/10 — Operationally Risky | Critical defects identified: pipeline flush, WAL corruption, Alpaca parsing; 3 fixed ✅ | [Brainstorm](#high-impact-improvements--march-2026) |
 | Code Quality | Excellent | Debug code is intentional; no cleanup required; repository hygiene complete | [Audit](#debug-code-analysis-h3) |
 | Repository Cleanup | 95% Complete | Phases 1-6 done; residual: generated docs refresh, HtmlTemplateGenerator CSS/JS extraction | [Audit](#cleanup-action-plan-status) |
 | Simplification Backlog | ~2,800-3,400 LOC removable | 12 categories identified; highest priority: bare catches, dead code, Task.Run misuse | [Audit](#further-simplification-opportunities) |
@@ -286,7 +294,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ### Desktop Improvement Shortlist
 
-> Source: `docs/evaluations/desktop-end-user-improvements-shortlist.md`
+> Source: `docs/archived/desktop-end-user-improvements-shortlist.md` (archived 2026-03-04 — superseded by full evaluation above)
 
 **Target Personas:** Active Trader, Quant Researcher, Data Engineer, Portfolio Analyst, New User
 
@@ -305,6 +313,140 @@ This document consolidates all architecture evaluations, code audits, desktop as
 - Alert intelligence (suppress duplicates, recommend actions)
 - Data quality explainability (root-cause hints)
 - Export workflow hardening (format validation, progress)
+
+---
+
+## Improvement Brainstorms
+
+### High-Impact Improvements — March 2026
+
+> Source: `docs/evaluations/high-impact-improvement-brainstorm-2026-03.md`
+> Date: 2026-03-01 | Status: Active — Defects and Improvements Identified
+
+**Overall Rating:** 6.5/10 — Architecturally Sound, Operationally Risky
+
+This evaluation identifies critical implementation-level defects hiding behind the otherwise sound architecture. Issues include race conditions in the event pipeline flush, WAL durability gaps, silent data corruption in provider parsing, memory leaks in monitoring, and an under-utilized F# integration.
+
+**Top Findings by Category:**
+
+| Category | Key Defect | Priority |
+|----------|-----------|----------|
+| Data Integrity | EventPipeline flush semantics broken (items in flight on shutdown) | P0 |
+| Data Integrity | Alpaca parses trade size as `int` — silent truncation for block trades | P0 (Fixed ✅) |
+| Data Integrity | Alpaca reconnect re-delivers duplicate trades without dedup | P0 (Fixed ✅) |
+| WAL Durability | Corruption detection logs warning and continues — no operator alert | P1 (Fixed ✅) |
+| Monitoring | Data completeness score resets on restart — not persisted | P1 |
+| F# Integration | Validators bypassed by direct `MarketEvent` construction | P2 |
+
+**Implementation Follow-Up (2026-03-10):**
+| Item | Status | Notes |
+|------|--------|-------|
+| 1.3 — Alpaca price precision & timestamp integrity | ✅ Done | `GetInt64()` for trade sizes; timestamp parse failures reject message |
+| 1.4 — Trade message deduplication | ✅ Done | Bounded sliding-window dedup on `(symbol, price, size, timestamp)` |
+| 4.3 — WAL corruption alerting | ✅ Done | `WalCorruptionMode` enum: Skip / Alert / Halt; defaults to Skip |
+
+---
+
+### High-Impact Repository Improvements
+
+> Source: `docs/evaluations/high-impact-improvements-brainstorm.md`
+> Date: 2026-03-02 | Status: Active — Improvements Identified
+
+Deep codebase analysis identifying architectural and code generalisation improvements ranked purely by impact.
+
+**Top Improvement Proposals:**
+
+| # | Proposal | Impact |
+|---|----------|--------|
+| 1 | Replace stringly-typed identifiers (`string Symbol`, `string Source`) with value-object wrappers (`Symbol`, `ProviderId`, `Venue`) | Eliminates class of silent runtime bugs |
+| 2 | Make `EventPipeline` composable via middleware architecture (validate → canonicalize → deduplicate → persist) | Eliminates monolithic 677-line class; enables isolated concerns |
+| 3 | Replace ad-hoc provider reconnection with declarative resilience policies via Polly | Unifies 3+ WebSocket reconnection strategies |
+| 4 | Add data contract tests between providers and domain models | Catches provider API drift before data corruption |
+| 5 | Extract `MarketEventPublisher` → typed publisher per event type | Removes `object` casts; enables compile-time routing |
+
+---
+
+### High-Value Low-Cost Improvements
+
+> Source: `docs/evaluations/high-value-low-cost-improvements-brainstorm.md`
+> Date: 2026-02-23 | Status: Active — Improvements Identified
+
+High-ROI, low-effort improvements (hours, not weeks) identified after 94.3% of core improvements were completed.
+
+**Top Proposals by Category:**
+
+| Category | Item | Estimated Cost |
+|----------|------|---------------|
+| Startup Hardening | Startup credential validation with actionable error table | 4–8 h |
+| Startup Hardening | Deprecation warning for legacy `DataSource` string config | 2 h |
+| Error Recovery | Automatic schema upcasting on startup instead of error | 4–6 h |
+| DX | `dotnet run -- --doctor` health-check command | 4 h |
+| Observability | Per-symbol event rate counter in status endpoint | 2 h |
+| Reliability | WAL size monitoring and rotation | 3–4 h |
+| Testing | Snapshot-based golden-file regression tests for API responses | 4–6 h |
+
+---
+
+### Next Frontier Brainstorm
+
+> Source: `docs/evaluations/2026-03-brainstorm-next-frontier.md`
+> Date: 2026-03-03 | Status: Proposal
+
+New capabilities and systemic improvements for a platform that is already 94%+ complete at the core level. Focus is on expanding value rather than polishing existing features.
+
+**Proposed Areas:**
+
+| Area | Proposal | Impact | Effort |
+|------|----------|--------|--------|
+| Data Intelligence | Cross-symbol correlation engine + lead-lag analysis | High | M |
+| Data Intelligence | Options flow analytics (put/call ratio, unusual activity) | High | M |
+| Platform | Multi-instance coordination via shared lock file / Redis | High | M |
+| Platform | Native binary serialization (MessagePack/FlatBuffers) for hot path | Medium | S |
+| Integration | gRPC streaming API for downstream consumers | High | L |
+| Integration | Python SDK / Jupyter integration layer | High | M |
+| DX | Zero-config mode via auto-discovery of credentials | Medium | S |
+
+---
+
+### Nautilus-Inspired Restructuring
+
+> Source: `docs/evaluations/nautilus-inspired-restructuring-proposal.md`
+> Date: 2026-03-01 | Status: Proposal
+
+Structural improvements inspired by organizational patterns in [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader). All proposed changes are backward-compatible.
+
+**7 Structural Improvements:**
+
+| # | Improvement | Benefit |
+|---|-------------|---------|
+| 1.1 | Unified per-provider directories (config + client + parser co-located) | Reduces cross-directory navigation |
+| 1.2 | Provider template scaffold (`dotnet new`) | Consistent provider structure; enforced conventions |
+| 1.3 | Co-located provider configuration (options class next to client) | Eliminates searching `Core/Config/` for provider settings |
+| 1.4 | Explicit parsing layer per provider (`AlpacaMessageParser.cs`) | Separates transport concern from domain mapping |
+| 1.5 | Per-provider factory classes | Removes DI container from provider test setup |
+| 1.6 | Consolidated domain enums in `Domain/Enums/` | Single source of truth for `Side`, `OrderType`, etc. |
+| 1.7 | Persistence read/write/transform separation | Cleaner boundaries in `Storage/` layer |
+
+---
+
+### Assembly-Level Performance Opportunities
+
+> Source: `docs/evaluations/assembly-performance-opportunities.md`
+> Date: 2026-03-01 | Status: Proposal
+
+Identifies where .NET hardware intrinsics / SIMD instructions could materially improve performance. Most valuable for byte-level parsing hot paths and vectorizable numeric kernels.
+
+**Highest-Potential Candidates:**
+
+| Component | Technique | Estimated Gain |
+|-----------|-----------|----------------|
+| JSONL line scanner | `Vector128<byte>` newline search | 3–5× vs `Array.IndexOf` |
+| SHA-256 WAL checksum | `System.Security.Cryptography.SHA256.HashData(Span<byte>)` | Already near-optimal |
+| Decimal → double price conversion | Batch `Vector256<double>` conversion | 2–4× for bulk analytics |
+| Bid-ask spread calculation | `Vector128<double>` SIMD subtraction | 2–3× for spread monitor |
+| CRC32 dedup hash | `System.Runtime.Intrinsics.X86.Sse42.Crc32` | 4–8× vs custom hash |
+
+**Note:** Most value comes from the JSONL line scanner. Other gains are marginal relative to I/O costs.
 
 ---
 
@@ -474,6 +616,7 @@ These evaluations are superseded or no longer applicable:
 | `IMPROVEMENTS_2026-02.md` | `docs/archived/` | Consolidated into `IMPROVEMENTS.md` |
 | `STRUCTURAL_IMPROVEMENTS_2026-02.md` | `docs/archived/` | Consolidated into `IMPROVEMENTS.md` |
 | `REDESIGN_IMPROVEMENTS.md` | `docs/archived/` | Content merged into current docs |
+| `desktop-end-user-improvements-shortlist.md` | `docs/archived/` | Superseded by full desktop UX evaluation; archived 2026-03-04 |
 
 See [`docs/archived/INDEX.md`](../archived/INDEX.md) for the full archive index.
 
@@ -492,13 +635,19 @@ All source documents that feed into this consolidation:
 | Ingestion Orchestration Evaluation | `docs/evaluations/ingestion-orchestration-evaluation.md` | Evaluation | Current |
 | Operational Readiness Evaluation | `docs/evaluations/operational-readiness-evaluation.md` | Evaluation | Current |
 | Desktop End-User Improvements | `docs/evaluations/desktop-end-user-improvements.md` | Assessment | Current |
-| Desktop Improvement Shortlist | `docs/evaluations/desktop-end-user-improvements-shortlist.md` | Assessment | Current |
+| Desktop Improvement Shortlist | `docs/archived/desktop-end-user-improvements-shortlist.md` | Assessment | Archived |
 | Desktop Provider Configurability | `docs/evaluations/windows-desktop-provider-configurability-assessment.md` | Assessment | Current |
+| High-Impact Improvements (Mar 2026) | `docs/evaluations/high-impact-improvement-brainstorm-2026-03.md` | Brainstorm | Active |
+| High-Impact Repository Improvements | `docs/evaluations/high-impact-improvements-brainstorm.md` | Brainstorm | Active |
+| High-Value Low-Cost Improvements | `docs/evaluations/high-value-low-cost-improvements-brainstorm.md` | Brainstorm | Active |
+| Next Frontier Brainstorm | `docs/evaluations/2026-03-brainstorm-next-frontier.md` | Brainstorm | Proposal |
+| Nautilus-Inspired Restructuring | `docs/evaluations/nautilus-inspired-restructuring-proposal.md` | Brainstorm | Proposal |
+| Assembly-Level Performance Opportunities | `docs/evaluations/assembly-performance-opportunities.md` | Brainstorm | Proposal |
 | Cleanup Summary | `docs/audits/CLEANUP_SUMMARY.md` | Audit | Complete |
 | Cleanup Opportunities | `docs/audits/CLEANUP_OPPORTUNITIES.md` | Audit | Complete |
 | Debug Code Analysis | `docs/audits/H3_DEBUG_CODE_ANALYSIS.md` | Audit | Complete |
 | Further Simplification | `docs/audits/FURTHER_SIMPLIFICATION_OPPORTUNITIES.md` | Audit | Documented |
-| UWP Comprehensive Audit | `docs/audits/UWP_COMPREHENSIVE_AUDIT.md` | Audit | Archived |
+| UWP Comprehensive Audit | `docs/archived/UWP_COMPREHENSIVE_AUDIT.md` | Audit | Archived |
 | Repository Cleanup Plan | `docs/development/repository-cleanup-action-plan.md` | Plan | Complete |
 | Config Consolidation Report | `CONFIG_CONSOLIDATION_REPORT.md` | Report | Complete |
 | Desktop Improvements Exec Summary | `docs/development/desktop-improvements-executive-summary.md` | Summary | Current |
@@ -507,4 +656,4 @@ All source documents that feed into this consolidation:
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-03-10*
