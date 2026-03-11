@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-11 12:40:47 UTC
+> Auto-generated on 2026-03-11 12:50:57 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -655,8 +655,11 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Models/
 │   │   │   │   ...
+│   │   │   ├── CanonicalSymbol.cs
 │   │   │   ├── MarketDataModels.cs
 │   │   │   ├── ProviderId.cs
+│   │   │   ├── StreamId.cs
+│   │   │   ├── SubscriptionId.cs
 │   │   │   ├── SymbolId.cs
 │   │   │   └── VenueCode.cs
 │   │   ├── Export/
@@ -912,7 +915,9 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.Storage.csproj
 │   │   ├── StorageOptions.cs
-│   │   └── StorageProfiles.cs
+│   │   ├── StorageProfiles.cs
+│   │   ├── StorageSinkAttribute.cs
+│   │   └── StorageSinkRegistry.cs
 │   ├── MarketDataCollector.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/
@@ -1312,6 +1317,7 @@ Market-Data-Collector/
 │   │   │   ├── StorageCatalogServiceTests.cs
 │   │   │   ├── StorageChecksumServiceTests.cs
 │   │   │   ├── StorageOptionsDefaultsTests.cs
+│   │   │   ├── StorageSinkRegistryTests.cs
 │   │   │   ├── SymbolRegistryServiceTests.cs
 │   │   │   ├── WriteAheadLogCorruptionModeTests.cs
 │   │   │   └── WriteAheadLogTests.cs
