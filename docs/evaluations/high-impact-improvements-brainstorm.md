@@ -723,7 +723,7 @@ These questions do not yet have agreed answers and should be resolved before det
    - _Solution A (SHA-256):_ Industry standard, widely understood, accepted for regulatory purposes. ~300 MB/s throughput on modern hardware.
    - _Solution B (BLAKE3):_ 3–5× faster than SHA-256, cryptographically secure, designed for streaming. Less established in financial data contexts.
    - _Solution C (xxHash for dedup only):_ Use xxHash128 for real-time dedup (speed-critical) and SHA-256 for the immutable ledger fingerprint (security-critical). Store both.
-   - **Recommendation:** Solution C. Use xxHash128 in `CanonicalizingPublisher` for the hot-path dedup check in `PersistentDedupLedger`; use SHA-256 for the ledger integrity field. This matches the existing speed-vs-security tradeoffs in the codebase.
+   - **Recommendation:** Solution C. Update `PersistentDedupLedger.HashIdentity` (and its keying) to use xxHash128 for the hot-path dedup check, while continuing to compute and store SHA-256 as the immutable ledger integrity field. This keeps dedup responsibilities within `PersistentDedupLedger` while making the speed-vs-security tradeoff explicit.
 
 5. **How should an event's identity survive re-canonicalization when normalization rules are updated (e.g., `ConditionCodeMapper` version bump)?**
    - _Solution A (stable raw ID):_ The raw event UUID never changes. Re-canonicalization creates a new canonical record pointing to the original via `OriginalEventId`. The `RulesetVersion` field distinguishes the two views.
