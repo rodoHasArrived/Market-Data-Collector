@@ -742,7 +742,9 @@ Market-Data-Collector/
 │   │   ├── Pipeline/
 │   │   │   ├── DeadLetterSink.cs
 │   │   │   ├── DroppedEventAuditTrail.cs
+│   │   │   ├── DualPathEventPipeline.cs
 │   │   │   ├── EventPipeline.cs
+│   │   │   ├── HotPathBatchSerializer.cs
 │   │   │   ├── IEventValidator.cs
 │   │   │   ├── IngestionJobService.cs
 │   │   │   ├── PersistentDedupLedger.cs

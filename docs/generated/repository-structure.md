@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-11 13:03:41 UTC
+> Auto-generated on 2026-03-11 13:12:36 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -565,7 +565,9 @@ Market-Data-Collector/
 │   │   ├── Pipeline/
 │   │   │   ├── DeadLetterSink.cs
 │   │   │   ├── DroppedEventAuditTrail.cs
+│   │   │   ├── DualPathEventPipeline.cs
 │   │   │   ├── EventPipeline.cs
+│   │   │   ├── HotPathBatchSerializer.cs
 │   │   │   ├── IEventValidator.cs
 │   │   │   ├── IngestionJobService.cs
 │   │   │   ├── PersistentDedupLedger.cs
