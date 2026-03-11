@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Development / Pilot Ready
+**Status**: Development / Pilot Ready (v1.7.x docs baseline)
 
 ---
 
@@ -184,7 +184,16 @@ make build-wpf
 
 ## Technical Overview
 
-Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across 635 source files. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 source files** (692 C# + 12 F# in `src/`). It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+
+### Implementation Status Snapshot
+
+- ✅ Core event pipeline, storage, backfill, and HTTP monitoring endpoints are implemented.
+- ✅ WPF desktop app is actively developed and available for Windows users.
+- ⚠️ Some providers and integrations require credentials and/or build-time flags (for example, Interactive Brokers).
+- ⚠️ A subset of provider paths (notably Polygon streaming and portions of StockSharp integration) remain partial and continue to evolve.
+
+For detailed, continuously maintained status tracking, see [docs/status/production-status.md](docs/status/production-status.md), [docs/status/FEATURE_INVENTORY.md](docs/status/FEATURE_INVENTORY.md), and [docs/status/ROADMAP.md](docs/status/ROADMAP.md).
 
 ## Key Features
 
@@ -412,7 +421,7 @@ export ALPACA__SECRETKEY=your-secret-key
 
 ## CI/CD and Automation
 
-The repository includes 22 GitHub Actions workflows for automated testing, security, and deployment:
+The repository currently includes **25 GitHub Actions workflows** for automated testing, security, documentation, and deployment:
 
 - **Build & Release** - Automated builds, cross-platform releases, and reusable build workflow
 - **Security** - CodeQL analysis, dependency auditing, and vulnerability scanning
@@ -493,12 +502,12 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
-**635 source files** | **623 C#** | **12 F#** | **163 test files** | **130 documentation files**
+**704 source files** | **692 C#** | **12 F#** | **243 test files** | **214 documentation files**
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows (22), AI prompts, Dependabot
-├── docs/                 # Documentation (130 files), ADRs, AI assistant guides
+├── .github/              # CI/CD workflows (25), AI prompts, Dependabot
+├── docs/                 # Documentation (214 files), ADRs, AI assistant guides
 ├── build/                # Build tooling (Python, Node.js, .NET generators, scripts)
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
@@ -516,14 +525,14 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Ui.Shared/   # Shared UI endpoint handlers
 │   ├── MarketDataCollector.Ui.Services/ # Shared UI service abstractions
 │   └── MarketDataCollector.Wpf/         # WPF desktop app (Windows)
-├── tests/                # C# and F# test projects (163 files)
+├── tests/                # C# and F# test projects (243 files)
 │   ├── MarketDataCollector.Tests/       # Core unit and integration tests
 │   ├── MarketDataCollector.FSharp.Tests/ # F# domain tests
 │   ├── MarketDataCollector.Wpf.Tests/   # WPF service tests (Windows)
 │   └── MarketDataCollector.Ui.Tests/    # Desktop UI service tests
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile              # Build automation (72 targets)
+├── Makefile              # Build automation (91 targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 
