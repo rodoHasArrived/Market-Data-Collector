@@ -1,7 +1,7 @@
 # Market Data Collector — Feature Inventory
 
 **Version:** 1.6.2
-**Date:** 2026-02-26
+**Date:** 2026-03-11
 **Purpose:** Comprehensive inventory of every functional area, its current implementation status, and the remaining work required to reach full implementation.
 
 Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`IMPROVEMENTS.md`](IMPROVEMENTS.md) (per-item tracking).
@@ -34,6 +34,8 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Category-accurate exit codes | ✅ | `ErrorCode.FromException()` maps to codes 3–7 for CI/CD differentiation |
 | Dry-run mode (`--dry-run`) | ✅ | Full validation without starting collection; `--dry-run --offline` skips connectivity |
 | Configuration hot-reload (`--watch-config`) | ✅ | `ConfigWatcher` triggers live config update |
+| Persistent deduplication ledger | ✅ | `PersistentDedupLedger`; disk-backed dedup tracking that survives restarts |
+| Ingestion job management | ✅ | `IngestionJobService`; per-symbol ingestion job lifecycle, status, and scheduling |
 
 ---
 
@@ -47,6 +49,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | **NYSE** | 🔑 | Requires NYSE Connect credentials; provider implementation complete |
 | **StockSharp** | 🔑 | Requires StockSharp connector-specific credentials + connector type config. `NotSupportedException` on some tick subscription paths when connector type unset |
 | **Failover-Aware Client** | ✅ | `FailoverAwareMarketDataClient` with `ProviderDegradationScorer`, per-provider health |
+| **Streaming Failover Service** | ✅ | `StreamingFailoverService` + `StreamingFailoverRegistry`; runtime failover orchestration with configurable rules and health evaluation |
 | **IB Simulation Client** | ✅ | `IBSimulationClient` for testing without live connection |
 | **NoOp Client** | ✅ | `NoOpMarketDataClient` for dry-run / test harness scenarios |
 
@@ -78,6 +81,8 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | **Backfill Rate Limiting** | ✅ | `ProviderRateLimitTracker` per provider; exponential backoff with `Retry-After` parsing |
 | **Backfill Scheduling** | ✅ | Cron-based `ScheduledBackfillService`; `BackfillScheduleManager` with CRUD API |
 | **Backfill Progress Reporting** | ✅ | `BackfillProgressTracker`, per-symbol %, exposed at `/api/backfill/progress` |
+| **Priority Backfill Queue** | ✅ | `PriorityBackfillQueue`, `BackfillJobManager`, `BackfillJob`; priority-ordered job execution |
+| **Gap Analysis (Infrastructure)** | ✅ | `DataGapAnalyzer`, `DataGapRepair`, `DataQualityMonitor`; storage scan, gap detection, automated repair |
 
 ---
 
@@ -163,6 +168,8 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Timestamp monotonicity checking | ✅ | `TimestampMonotonicityChecker` |
 | Backpressure alerts | ✅ | `BackpressureAlertService`; `/api/backpressure` endpoint |
 | Provider degradation scoring | ✅ | `ProviderDegradationScorer`; composite health from latency, errors, reconnects |
+| Liquidity profile | ✅ | `LiquidityProfileProvider`; symbol-level liquidity classification for gap severity calibration |
+| SLO definition registry | ✅ | `SloDefinitionRegistry`; runtime SLO definitions, compliance scoring, alert threshold mapping |
 
 ---
 
@@ -194,7 +201,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | OpenAPI / Swagger | `/swagger` | ✅ |
 | API authentication | `X-Api-Key` header only (no query-string auth) | ✅ |
 | Rate limiting | 120 req/min per key, sliding window | ✅ |
-| **Total route constants** | **283** | **0 stubs remaining** |
+| **Total route constants** | **300** | **0 stubs remaining** |
 
 ### OpenAPI annotations
 
@@ -282,17 +289,18 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 | Page | Issue | Remaining Work |
 |------|-------|----------------|
-| StoragePage | Shows hardcoded "2.4 GB", "1,234,567 records", "45 symbols" | Connect to `StorageServiceBase` for real storage metrics |
-| WelcomePage | Connection status, symbol count, storage path are placeholders | Wire to `StatusService` / `ConnectionService` / `ConfigService` |
-| TradingHoursPage | Static XAML content | Verify `TradingCalendar` integration (market hours, holidays) |
-| AdminMaintenancePage | *(partially connected via `AdminMaintenanceService`)* | Verify all sections load live data |
-| WatchlistPage | *(WatchlistService present)* | Verify API connectivity |
-| IndexSubscriptionPage | *(uses IndexSubscriptionService)* | Verify subscription wiring |
+| — | All known placeholder pages have been wired to live services (see completed list above) | — |
 
 ### Known WPF limitations
 
-- Pages display static placeholder values until fully wired to live backend services (see table above).
 - `DiagnosticsPage` reads from local process/environment; not connected to remote backend API.
+
+### WPF MVVM progress
+
+| Area | Status | Notes |
+|------|--------|-------|
+| `DashboardViewModel` | ✅ | Extracted from `DashboardPage` code-behind; `BindableBase`, bindable properties, timer management |
+| Remaining pages | 🔄 | Other pages still use code-behind for business logic; ViewModel extraction ongoing per ADR-017 |
 
 ---
 
@@ -335,6 +343,9 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Docker image | ✅ | `deploy/docker/Dockerfile` + `docker-compose.yml` |
 | Daily summary webhook | ✅ | `DailySummaryWebhook`; configurable endpoint |
 | Connection status webhook | ✅ | `ConnectionStatusWebhook`; provider events |
+| Alert dispatcher | ✅ | `AlertDispatcher`; centralized alert publishing and subscription management |
+| Alert runbook registry | ✅ | `AlertRunbookRegistry`; runbook references per alert rule |
+| Health check aggregator | ✅ | `HealthCheckAggregator`; parallel health check execution with per-provider timeout |
 
 ### Remaining observability work
 
@@ -376,11 +387,11 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 | Test Project | Test Files | Methods | Focus |
 |---|---|---|---|
-| `MarketDataCollector.Tests` | ~110 | ~444 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain |
+| `MarketDataCollector.Tests` | 161 | ~2,507 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain, integration endpoints |
 | `MarketDataCollector.FSharp.Tests` | 4 | ~99 | F# domain validation, calculations, transforms |
-| `MarketDataCollector.Wpf.Tests` | ~20 | ~324 | WPF desktop services (navigation, config, status, connection) |
-| `MarketDataCollector.Ui.Tests` | ~70 | ~927 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
-| **Total** | **219** | **~3,444** | |
+| `MarketDataCollector.Wpf.Tests` | 19 | ~324 | WPF desktop services (navigation, config, status, connection) |
+| `MarketDataCollector.Ui.Tests` | 52 | ~927 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
+| **Total** | **236** | **~3,857** | |
 
 ### Key test infrastructure
 
@@ -391,8 +402,17 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Response schema validation tests (15+) | ✅ |
 | `FixtureMarketDataClient` integration harness | ✅ |
 | `InMemoryStorageSink` for pipeline integration | ✅ |
-| Provider-specific test files (12 files, all providers) | ✅ |
+| Provider-specific test files (17 files, all providers + streaming failover) | ✅ |
 | Canonicalization golden fixtures (8 curated files) | ✅ |
+| Priority backfill queue tests (`PriorityBackfillQueueTests`) | ✅ |
+| Rate limiter tests (`RateLimiterTests`) | ✅ |
+| Streaming failover service tests (`StreamingFailoverServiceTests`) | ✅ |
+| Liquidity profile tests (`LiquidityProfileTests`) | ✅ |
+| SLO definition registry tests (`SloDefinitionRegistryTests`) | ✅ |
+| Golden-master pipeline replay tests (`GoldenMasterPipelineReplayTests`) | ✅ |
+| WAL + event pipeline tests (`WalEventPipelineTests`) | ✅ |
+| Ingestion job tests (`IngestionJobTests`, `IngestionJobServiceTests`) | ✅ |
+| Data quality unit tests (AnomalyDetector, CompletenessScoreCalculator, GapAnalyzer, SequenceErrorTracker) | ✅ |
 | Drift-canary CI job | 📝 |
 
 ---
@@ -415,8 +435,6 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 |----|------|--------|-------------|
 | C3 | WebSocket Base | High | Refactor Polygon, NYSE, StockSharp to use `WebSocketProviderBase`; eliminates ~800 LOC duplication |
 | — | Polygon validation | Medium | End-to-end test of WebSocket parsing against recorded production message samples |
-| — | WPF StoragePage | Low | Replace static placeholder values with live storage metrics from `StorageServiceBase` |
-| — | WPF WelcomePage | Low | Wire connection status, symbol count, storage path to real service data |
 
 ### Medium priority (observability & developer experience)
 
@@ -431,6 +449,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | ID | Area | Effort | Description |
 |----|------|--------|-------------|
 | H2 | Multi-instance coordination | High | Distributed locking for symbol subscriptions across multiple collector instances |
+| — | WPF ViewModel extraction | Medium | Extract remaining page code-behind logic into `BindableBase` ViewModels (ADR-017) |
 | — | DailySummaryWebhook state | Low | Persist `_dailyHistory` to disk using `MetadataTagService` save pattern |
 | — | StockSharp documentation | Low | Document connector types and configuration examples |
 | — | IB build instructions | Low | Scripted IBAPI download, reference, and build process |
@@ -447,4 +466,4 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 ---
 
-*Last Updated: 2026-02-26*
+*Last Updated: 2026-03-11*
