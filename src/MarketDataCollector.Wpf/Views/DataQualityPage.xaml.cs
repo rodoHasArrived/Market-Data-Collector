@@ -242,7 +242,7 @@ public partial class DataQualityPage : Page
         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
         row.Children.Add(new TextBlock { Text = $"{label}: ", FontWeight = FontWeights.SemiBold, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(139, 148, 158)), Width = 80 });
         row.Children.Add(new TextBlock { Text = value, FontSize = 12, Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 });
-        panel.Add(row);
+        panel.Children.Add(row);
     }
 
     private static string? PromptForQualityCheckPath()
