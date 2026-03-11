@@ -24,9 +24,12 @@ public enum PublishResult
     AcceptedUnderPressure = 1,
 
     /// <summary>
-    /// The event was dropped because the pipeline queue is full and backpressure policy
-    /// discarded it (DropWrite or DropOldest/DropNewest modes).
-    /// The publisher has received a <see langword="false"/> from the underlying channel.
+    /// The event was not accepted because the pipeline queue was full and the active
+    /// backpressure policy rejected the write (for example, DropWrite pre-checks or a
+    /// failed <c>TryWrite</c> on the underlying channel).
+    /// This result corresponds to <see cref="IMarketEventPublisher.TryPublish"/> returning
+    /// <see langword="false"/> and does not include silent evictions that may occur in
+    /// DropOldest/DropNewest modes.
     /// </summary>
     Dropped = 2,
 }
