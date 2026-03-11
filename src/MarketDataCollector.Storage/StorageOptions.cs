@@ -80,7 +80,23 @@ public sealed class StorageOptions
     /// Whether to enable Parquet storage as an additional sink alongside JSONL.
     /// When enabled, events are written to both JSONL and Parquet via CompositeSink.
     /// </summary>
+    /// <remarks>
+    /// Superseded by <see cref="ActiveSinks"/> when that list is non-empty.
+    /// Retained for backward compatibility.
+    /// </remarks>
     public bool EnableParquetSink { get; init; } = false;
+
+    /// <summary>
+    /// Explicit list of storage sink plugin IDs to activate at startup.
+    /// When non-empty, overrides <see cref="EnableParquetSink"/> and drives
+    /// dynamic composition via <c>StorageSinkRegistry</c>.
+    /// </summary>
+    /// <remarks>
+    /// Each entry must match the <c>Id</c> declared on a discovered
+    /// <see cref="StorageSinkAttribute"/>-decorated class.
+    /// Example: <c>["jsonl", "parquet"]</c>
+    /// </remarks>
+    public IReadOnlyList<string>? ActiveSinks { get; init; }
 
     /// <summary>
     /// Partition strategy for multi-dimensional partitioning.

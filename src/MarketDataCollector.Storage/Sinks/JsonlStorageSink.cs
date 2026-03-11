@@ -83,6 +83,9 @@ public sealed class JsonlBatchOptions
 /// Buffered JSONL writer with per-path writers and configurable batch writes.
 /// Supports both immediate and batched write modes for optimal performance.
 /// </summary>
+[StorageSink("jsonl", "JSONL Storage",
+    Description = "Writes market events to newline-delimited JSON files (.jsonl / .jsonl.gz).",
+    EnabledByDefault = true)]
 public sealed class JsonlStorageSink : IStorageSink
 {
     private readonly StorageOptions _options;

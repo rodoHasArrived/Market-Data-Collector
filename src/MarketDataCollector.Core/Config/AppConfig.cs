@@ -101,8 +101,15 @@ public sealed record StorageConfig(
     // <summary>
     // Whether to enable Parquet storage as an additional sink alongside JSONL.
     // When enabled, events are written to both JSONL and Parquet via CompositeSink.
+    // Superseded by Sinks when that list is non-empty.
     // </summary>
-    bool EnableParquetSink = false
+    bool EnableParquetSink = false,
+
+    // <summary>
+    // Explicit list of storage sink plugin IDs to activate (e.g., ["jsonl", "parquet"]).
+    // When non-empty, overrides EnableParquetSink and drives dynamic sink composition.
+    // </summary>
+    List<string>? Sinks = null
 );
 
 /// <summary>

@@ -21,6 +21,8 @@ namespace MarketDataCollector.Storage.Sinks;
 /// Based on: https://github.com/aloneguid/parquet-dotnet (MIT)
 /// Reference: docs/open-source-references.md #20
 /// </summary>
+[StorageSink("parquet", "Apache Parquet Storage",
+    Description = "Writes market events to columnar Parquet files for high-performance analytics.")]
 public sealed class ParquetStorageSink : IStorageSink
 {
     private readonly ILogger _log = LoggingSetup.ForContext<ParquetStorageSink>();

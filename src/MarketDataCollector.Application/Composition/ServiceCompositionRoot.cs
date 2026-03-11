@@ -664,6 +664,51 @@ public static class ServiceCompositionRoot
     }
 
     /// <summary>
+    /// Resolves each sink ID from the <paramref name="activeIds"/> list using the
+    /// <paramref name="registry"/> and the DI service provider.
+    /// </summary>
+    /// <remarks>
+    /// For each configured ID:
+    /// <list type="number">
+    ///   <item>Looks up the implementation type from the <see cref="StorageSinkRegistry"/>.</item>
+    ///   <item>Resolves an existing DI registration for that type (preferred, so that
+    ///         factory-configured singletons like <see cref="JsonlStorageSink"/> are reused).</item>
+    ///   <item>Falls back to <see cref="ActivatorUtilities.CreateInstance"/> for plugin sinks
+    ///         not explicitly registered in the container.</item>
+    /// </list>
+    /// Unknown IDs produce a warning and are skipped.
+    /// </remarks>
+    private static IReadOnlyList<IStorageSink> BuildSinksFromRegistry(
+        IReadOnlyList<string> activeIds,
+        StorageSinkRegistry registry,
+        IServiceProvider sp)
+    {
+        var sinks = new List<IStorageSink>(activeIds.Count);
+        foreach (var id in activeIds)
+        {
+            if (!registry.TryGetSink(id, out var metadata) || metadata is null)
+            {
+                Serilog.Log.Warning(
+                    "StorageSink plugin '{SinkId}' is listed in Storage.Sinks but was not found " +
+                    "in the StorageSinkRegistry — ensure the assembly containing the " +
+                    "[StorageSink(\"{SinkId}\")] class is scanned at startup. Skipping.",
+                    id, id);
+                continue;
+            }
+
+            // Prefer DI resolution so that factory-registered singletons are reused;
+            // fall back to ActivatorUtilities for plugin sinks whose assembly is loaded
+            // but not explicitly registered in the container.
+            var instance = sp.GetService(metadata.ImplementationType) as IStorageSink
+                ?? (IStorageSink)ActivatorUtilities.CreateInstance(sp, metadata.ImplementationType);
+
+            sinks.Add(instance);
+        }
+
+        return sinks;
+    }
+
+    /// <summary>
     /// Creates and registers backfill providers with the registry using credential resolution.
     /// </summary>
     private static void RegisterBackfillProviders(
@@ -756,17 +801,35 @@ public static class ServiceCompositionRoot
             return new ParquetStorageSink(storageOptions);
         });
 
-        // IStorageSink - resolved as CompositeSink when Parquet is enabled,
-        // otherwise falls back to JsonlStorageSink alone.
+        // StorageSinkRegistry - discovers storage sink plugins decorated with [StorageSink]
+        // from the Storage assembly, enabling configuration-driven dynamic composition.
+        services.AddSingleton<StorageSinkRegistry>(sp =>
+        {
+            var registry = new StorageSinkRegistry();
+            registry.DiscoverFromAssemblies(typeof(JsonlStorageSink).Assembly);
+            return registry;
+        });
+
+        // IStorageSink - dynamically composed from the configured ActiveSinks list when set;
+        // falls back to the legacy EnableParquetSink flag for backward compatibility.
         services.AddSingleton<IStorageSink>(sp =>
         {
             var storageOptions = sp.GetRequiredService<StorageOptions>();
-            var jsonlSink = sp.GetRequiredService<JsonlStorageSink>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CompositeSink>>();
 
+            // New plugin-based path: build composite from the configured sink list.
+            if (storageOptions.ActiveSinks is { Count: > 0 })
+            {
+                var registry = sp.GetRequiredService<StorageSinkRegistry>();
+                var sinks = BuildSinksFromRegistry(storageOptions.ActiveSinks, registry, sp);
+                return sinks.Count == 1 ? sinks[0] : new CompositeSink(sinks, logger);
+            }
+
+            // Legacy path: EnableParquetSink flag (retained for backward compatibility).
+            var jsonlSink = sp.GetRequiredService<JsonlStorageSink>();
             if (storageOptions.EnableParquetSink)
             {
                 var parquetSink = sp.GetRequiredService<ParquetStorageSink>();
-                var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CompositeSink>>();
                 return new CompositeSink(new IStorageSink[] { jsonlSink, parquetSink }, logger);
             }
 

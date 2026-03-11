@@ -202,6 +202,13 @@ public sealed class StorageConfigDto
 
     [JsonPropertyName("maxTotalMegabytes")]
     public long? MaxTotalMegabytes { get; set; }
+
+    /// <summary>
+    /// Explicit list of storage sink plugin IDs to activate (e.g., ["jsonl", "parquet"]).
+    /// When non-empty, overrides <c>EnableParquetSink</c> and drives dynamic sink composition.
+    /// </summary>
+    [JsonPropertyName("sinks")]
+    public List<string>? Sinks { get; set; }
 }
 
 /// <summary>
