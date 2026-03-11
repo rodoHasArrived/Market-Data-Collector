@@ -942,6 +942,8 @@ Market-Data-Collector/
 │   │   └── MarketDataCollector.FSharp.fsproj
 │   ├── MarketDataCollector.Infrastructure/
 │   │   ├── Adapters/
+│   │   │   ├── _Template/
+│   │   │   │   ...
 │   │   │   ├── Alpaca/
 │   │   │   │   ...
 │   │   │   ├── AlphaVantage/
@@ -1433,6 +1435,8 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   └── Services/
 │   │   │       ...
+│   │   ├── Architecture/
+│   │   │   └── LayerBoundaryTests.cs
 │   │   ├── Domain/
 │   │   │   ├── Collectors/
 │   │   │   │   ...
