@@ -15,9 +15,7 @@ internal static class PolygonEndpoints
     /// Returns the appropriate live or delayed WebSocket URI for the given feed.
     /// </summary>
     public static Uri WssUri(string feed, bool useDelayed) =>
-        new(useDelayed
-            ? $"wss://delayed.polygon.io/{feed}"
-            : $"wss://socket.polygon.io/{feed}");
+        new((useDelayed ? DelayedWssBase : LiveWssBase).Replace("{feed}", feed));
 }
 
 /// <summary>
