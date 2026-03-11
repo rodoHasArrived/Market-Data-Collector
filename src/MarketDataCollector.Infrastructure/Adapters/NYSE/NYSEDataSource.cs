@@ -211,7 +211,6 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         await DisconnectAsync().ConfigureAwait(false);
 
-        _wsManager.ConnectionLost -= OnWsConnectionLostAsync;
         await _wsManager.DisposeAsync().ConfigureAwait(false);
 
         _trades.OnCompleted();
