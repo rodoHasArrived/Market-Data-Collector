@@ -432,7 +432,7 @@ This section maps each major proposal to what already exists in the codebase and
 | Immutable append-only storage | `WriteAheadLog` provides durability; `JsonlStorageSink` + `ParquetStorageSink` write events. Sinks are not treated as an immutable ledger. | Need cryptographic hashing per event and a sealed ledger API that forbids mutation. |
 | Canonical payload hash | Not computed at ingestion. | Add hash computation in `EventCanonicalizer` / `CanonicalizingPublisher`. |
 | Provider raw-frame hash | Not stored. | Capture and persist the hash of the provider's raw payload alongside the canonical event so the transformation can be audited. |
-| Normalization ruleset versioning | `ConditionCodeMapper` and `VenueMicMapper` have no version identifier exposed downstream. | Tag each event with the rule version IDs used during canonicalization; bump version on any mapper change. |
+| Normalization ruleset versioning | `ConditionCodeMapper` and `VenueMicMapper` expose a `Version` loaded from their JSON mapping files, but this is not propagated into `MarketEvent` or other downstream outputs. | Propagate the active mapper versions into `MarketEvent` (for example via a `RulesetVersion` field) during canonicalization, and bump versions on any mapper change. |
 | Deterministic replay | `JsonlReplayer` replays files but does not guarantee ordering across providers or bit-for-bit reproducibility. | Add a replay contract enforcing sequence ordering and deterministic late-event handling. |
 | Diff tooling | No mechanism to compare two replay runs for the same window. | Add a ledger diff command to `DiagnosticsCommands` that emits per-event discrepancies between runs. |
 
