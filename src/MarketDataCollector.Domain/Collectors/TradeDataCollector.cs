@@ -124,7 +124,8 @@ public sealed class TradeDataCollector
             return;
         }
 
-        var streamKey = BuildStreamKey(new SymbolId(symbol), update.StreamId, update.Venue);
+        var symbolId = new SymbolId(symbol);
+        var streamKey = BuildStreamKey(symbolId, update.StreamId, update.Venue);
         var state = _stateBySymbol.GetOrAdd(streamKey, _ => new SymbolTradeState(_rollingWindows));
 
         // -------- Integrity / continuity --------
