@@ -67,4 +67,10 @@
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
     <ProjectReference Include="..\MarketDataCollector.ProviderSdk\MarketDataCollector.ProviderSdk.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Provider implementation templates – reference files only, not compiled into the assembly.
+         Copy a file from Adapters/_Template/ to your new provider directory and rename it. -->
+    <Compile Remove="Adapters/_Template/**/*.cs" />
+  </ItemGroup>
 </Project>
