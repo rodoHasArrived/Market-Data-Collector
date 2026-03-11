@@ -213,6 +213,9 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         if (_webSocket == null)
             throw new InvalidOperationException("WebSocket not connected. Call ConnectAsync first.");
 
+        // Enforce documented invariant: must only be used before StartReceiveLoop.
+        if (_receiveTask != null || _receiveLoopCts != null)
+            throw new InvalidOperationException("ReadOneMessageAsync can only be called before StartReceiveLoop is started.");
         var buffer = new byte[4096];
         var sb = new StringBuilder();
 
