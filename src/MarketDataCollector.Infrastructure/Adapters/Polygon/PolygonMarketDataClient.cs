@@ -72,6 +72,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
             config: WebSocketConnectionConfig.Default,
             subscriptionStartId: ProviderSubscriptionRanges.PolygonStart)
     {
+        _ = reconnectionMetrics; // kept for backward-compatible constructor signature
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
