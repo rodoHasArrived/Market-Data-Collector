@@ -762,7 +762,8 @@ Market-Data-Collector/
 │   │   │   ├── IBackpressureSignal.cs
 │   │   │   ├── IMarketEventPublisher.cs
 │   │   │   ├── MarketEvent.cs
-│   │   │   └── MarketEventPayload.cs
+│   │   │   ├── MarketEventPayload.cs
+│   │   │   └── PublishResult.cs
 │   │   ├── Models/
 │   │   │   ├── AggregateBar.cs
 │   │   │   ├── MarketDepthUpdate.cs
