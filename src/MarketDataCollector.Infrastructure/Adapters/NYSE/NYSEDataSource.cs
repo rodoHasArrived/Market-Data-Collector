@@ -150,7 +150,6 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             providerName: "NYSE",
             config: WebSocketConnectionConfig.Resilient,
             logger: logger ?? LoggingSetup.ForContext<NYSEDataSource>());
-        _wsManager.ConnectionLost += OnWsConnectionLostAsync;
 
         _httpClient = new HttpClient
         {
