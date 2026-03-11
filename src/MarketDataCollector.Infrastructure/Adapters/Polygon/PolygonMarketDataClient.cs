@@ -341,6 +341,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
                 "Set Polygon:ApiKey in configuration or POLYGON__APIKEY environment variable for live data.");
             _isStubConnected = true;
             _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
+            _isStubConnected = false;
             return;
         }
 
