@@ -1,5 +1,11 @@
 # Assembly-Level Performance Opportunities
 
+**Date:** 2026-03-01
+**Status:** Proposal
+**Author:** Architecture Review
+
+---
+
 This document identifies where hand-written assembly (or .NET hardware intrinsics, which compile to SIMD instructions) could materially improve performance in Market Data Collector.
 
 ## Executive Summary

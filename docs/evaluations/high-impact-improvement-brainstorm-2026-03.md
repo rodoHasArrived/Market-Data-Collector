@@ -1,5 +1,9 @@
 # High-Impact Improvement Brainstorm — March 2026
 
+**Date:** 2026-03-01
+**Status:** Active — Defects and Improvements Identified
+**Author:** Architecture Review
+
 > **Scope**: Ideas that meaningfully improve the quality of the codebase and the
 > correctness/reliability of the running program. Implementation effort is
 > explicitly **not** a filter — only impact matters.
@@ -598,6 +602,22 @@ exhaustive and the compiler catches missing cases.
 | 5.3 | Provider resilience tests | Testing | Medium | High |
 | 6.1 | Eliminate singletons | Maintainability | Low | Medium |
 | 7.1 | Typed symbol keys | Type Safety | Medium | Medium |
+
+---
+
+## Implementation Follow-Up (2026-03-10)
+
+The following items from this brainstorm have been implemented:
+
+| Item | Status | Implementation |
+|------|--------|----------------|
+| 1.3 — Alpaca price precision & timestamp integrity | ✅ Done | `AlpacaMarketDataClient`: trade sizes now parsed with `GetInt64()` to avoid truncation on block trades exceeding `int.MaxValue`. Both trade and quote messages now reject unparseable timestamps with a `Warning` log instead of silently substituting `UtcNow`, preserving time-series integrity. |
+| 1.4 — Trade message deduplication | ✅ Done | `AlpacaMarketDataClient`: content-based deduplication added via a bounded sliding window (`HashSet` + `Queue`) of `(symbol, price, size, timestamp)` tuples (capacity 2,048). Duplicate re-deliveries from Alpaca's WebSocket are suppressed at the `Debug` log level. |
+| 4.3 — WAL corruption alerting | ✅ Done | `WriteAheadLog`: new `WalCorruptionMode` enum (`Skip` / `Alert` / `Halt`) added. `WalOptions.CorruptionMode` defaults to `Skip` (backwards-compatible). In `Alert` mode the new `CorruptionDetected` event fires with the corrupted record count so monitoring infrastructure can alert operators. In `Halt` mode an `InvalidDataException` is thrown to force operator review before the application can start. |
+
+Test coverage:
+- `AlpacaMessageParsingTests` — 12 tests covering size precision, timestamp rejection, deduplication, and window eviction.
+- `WriteAheadLogCorruptionModeTests` — 9 tests covering all three modes and the `WalOptions` default.
 
 ---
 

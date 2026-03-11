@@ -24,11 +24,12 @@ This directory contains in-depth evaluations of architecture components, provide
 
 | Document | Description |
 |----------|-------------|
-| [High-Impact Improvements (Mar 2026)](high-impact-improvement-brainstorm-2026-03.md) | Latest improvement brainstorm focused on impact |
+| [High-Impact Improvements (Mar 2026)](high-impact-improvement-brainstorm-2026-03.md) | Critical defects and high-impact improvements identified in the codebase |
 | [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md) | Code quality and architecture improvements |
 | [High-Value Low-Cost Improvements](high-value-low-cost-improvements-brainstorm.md) | Quick-win improvements |
 | [Next Frontier Brainstorm](2026-03-brainstorm-next-frontier.md) | New capabilities and systemic improvements |
 | [Nautilus-Inspired Restructuring](nautilus-inspired-restructuring-proposal.md) | Structural improvements inspired by nautilus_trader |
+| [Assembly-Level Performance Opportunities](assembly-performance-opportunities.md) | SIMD/.NET hardware intrinsics optimization candidates |
 
 ## Related
 

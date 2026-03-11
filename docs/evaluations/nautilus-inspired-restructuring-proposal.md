@@ -2,6 +2,7 @@
 
 **Date:** 2026-03-01
 **Status:** Proposal
+**Author:** Architecture Review
 **Inspired By:** [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader)
 
 ---

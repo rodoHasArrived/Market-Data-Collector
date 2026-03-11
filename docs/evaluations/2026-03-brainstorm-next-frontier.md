@@ -1,6 +1,8 @@
 # Brainstorm: Next Frontier Improvements
 
 **Date:** 2026-03-03
+**Status:** Proposal
+**Author:** Architecture Review
 **Context:** Core platform is 94%+ complete. This brainstorm focuses on *new capabilities and systemic improvements* not yet covered by existing evaluations. The goal is to identify work that would meaningfully expand the project's value rather than polish existing features.
 
 **Scoring:**
