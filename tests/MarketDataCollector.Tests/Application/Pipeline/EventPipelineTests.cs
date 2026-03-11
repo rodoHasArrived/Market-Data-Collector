@@ -584,11 +584,15 @@ public class EventPipelineTests : IAsyncLifetime
     }
 
     [Fact]
-    public void TryPublishWithResult_WhenQueueFull_ReturnsDropped()
+    public async Task TryPublishWithResult_WhenQueueFull_ReturnsDropped()
     {
-        // Arrange — tiny pipeline in DropWrite mode so it fills immediately
-        using var sink = new MockStorageSink();
-        var pipeline = new EventPipeline(sink, capacity: 2,
+        // Arrange — tiny pipeline in DropWrite mode so it fills immediately,
+        // and a blocking sink + batchSize: 1 so the queue stays at capacity.
+        using var sink = new BlockingStorageSink();
+        await using var pipeline = new EventPipeline(
+            sink,
+            capacity: 2,
+            batchSize: 1,
             fullMode: BoundedChannelFullMode.DropWrite,
             enablePeriodicFlush: false);
 
