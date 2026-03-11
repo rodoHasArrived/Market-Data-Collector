@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Contracts.Domain;
 
 namespace MarketDataCollector.Domain.Collectors;
 
@@ -8,7 +9,7 @@ namespace MarketDataCollector.Domain.Collectors;
 /// </summary>
 public abstract class SymbolSubscriptionTracker
 {
-    private readonly ConcurrentDictionary<string, bool> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<SymbolId, bool> _subscriptions = new();
     private readonly bool _requireExplicitSubscription;
 
     protected SymbolSubscriptionTracker(bool requireExplicitSubscription = true)
@@ -27,7 +28,7 @@ public abstract class SymbolSubscriptionTracker
     public void RegisterSubscription(string symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol)) throw new ArgumentException("Symbol required.", nameof(symbol));
-        _subscriptions[symbol.Trim()] = true;
+        _subscriptions[new SymbolId(symbol.Trim())] = true;
     }
 
     /// <summary>
@@ -36,14 +37,14 @@ public abstract class SymbolSubscriptionTracker
     public void UnregisterSubscription(string symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return;
-        _subscriptions.TryRemove(symbol.Trim(), out _);
+        _subscriptions.TryRemove(new SymbolId(symbol.Trim()), out _);
     }
 
     /// <summary>
     /// Checks if a symbol is currently subscribed.
     /// </summary>
     public bool IsSubscribed(string symbol)
-        => !string.IsNullOrWhiteSpace(symbol) && _subscriptions.TryGetValue(symbol.Trim(), out var v) && v;
+        => !string.IsNullOrWhiteSpace(symbol) && _subscriptions.TryGetValue(new SymbolId(symbol.Trim()), out var v) && v;
 
     /// <summary>
     /// Attempts to auto-subscribe a symbol if explicit subscription is not required.
@@ -51,7 +52,7 @@ public abstract class SymbolSubscriptionTracker
     protected void TryAutoSubscribe(string symbol)
     {
         if (!_requireExplicitSubscription)
-            _subscriptions.TryAdd(symbol, true);
+            _subscriptions.TryAdd(new SymbolId(symbol), true);
     }
 
     /// <summary>
@@ -70,5 +71,5 @@ public abstract class SymbolSubscriptionTracker
     /// Gets all currently subscribed symbols.
     /// </summary>
     public IReadOnlyCollection<string> GetSubscribedSymbols()
-        => _subscriptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToList();
+        => _subscriptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key.Value).ToList();
 }
