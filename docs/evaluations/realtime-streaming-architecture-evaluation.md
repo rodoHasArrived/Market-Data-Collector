@@ -2,30 +2,35 @@
 
 ## Market Data Collector — Data Pipeline Assessment
 
-**Date:** 2026-02-22
-**Status:** Re-evaluation Complete (supersedes 2026-02-03 assessment)
+**Date:** 2026-03-11
+**Status:** Re-evaluation Complete (supersedes 2026-02-22 assessment)
 **Author:** Architecture Review
 
 ---
 
 ## Executive Summary
 
-This document re-evaluates the real-time streaming architecture of the Market Data Collector system. Since the initial assessment (2026-02-03), several high-priority recommendations have been implemented, substantially strengthening the pipeline.
+This document re-evaluates the real-time streaming architecture of the Market Data Collector system. Since the prior assessment (2026-02-22), several significant new capabilities have been added, notably end-to-end event validation, persistent deduplication, and a comprehensive data quality monitoring subsystem.
 
 **Key changes since last review:**
 
-| Recommendation (Feb 2026) | Status |
-|---------------------------|--------|
-| Implement micro-batching | **Implemented** — 100-event batches with 5 s periodic flush |
-| Add tiered backpressure | **Implemented** — `BackpressureAlertService` with 70 %/90 % thresholds |
-| Add provider failover | **Implemented** — `FailoverAwareMarketDataClient` with automatic provider switching |
-| Add latency histograms | **Implemented** — `ProviderLatencyService` with P50/P95/P99 per provider |
-| Improve reconnection with jitter | **Implemented** — `WebSocketReconnectionHelper` with exponential backoff + jitter |
-| Provider-specific resilience policies | **Implemented** — Three `WebSocketConnectionConfig` profiles (Default, HighFrequency, Resilient) |
+| Recommendation / Addition (Mar 2026) | Status |
+|--------------------------------------|--------|
+| Implement micro-batching | **Retained** — 100-event batches with 5 s periodic flush |
+| Add tiered backpressure | **Retained** — `BackpressureAlertService` with 70 %/90 % thresholds |
+| Add provider failover | **Retained** — `FailoverAwareMarketDataClient` with automatic provider switching |
+| Add latency histograms | **Retained** — `ProviderLatencyService` with P50/P95/P99 per provider |
+| Improve reconnection with jitter | **Retained** — `WebSocketReconnectionHelper` with exponential backoff + jitter |
+| Provider-specific resilience policies | **Retained** — Three `WebSocketConnectionConfig` profiles (Default, HighFrequency, Resilient) |
+| Event validation + dead-letter sink | **Implemented** — `IEventValidator` + `DeadLetterSink` routes invalid events to JSONL dead-letter file |
+| Persistent deduplication ledger | **Implemented** — `PersistentDedupLedger` with TTL-based JSONL cache survives restarts |
+| Data quality monitoring subsystem | **Implemented** — `DataQualityMonitoringService` orchestrates 7 quality analyzers with liquidity-aware thresholds |
+| SLA freshness monitoring | **Implemented** — `DataFreshnessSlaMonitor` with configurable warning (60 s) and critical (300 s) thresholds |
+| Centralized alert infrastructure | **Implemented** — `AlertDispatcher`, `HealthCheckAggregator`, `AlertRunbookRegistry`, `SloDefinitionRegistry` |
 | Add parallel channel consumers | Deferred — single consumer batching meets current throughput needs |
 | Connection pooling | Deferred — not required at current symbol counts |
 
-**Overall finding:** The streaming architecture has matured from a sound foundation into a production-grade pipeline with WAL-backed durability, profile-based resilience, automated failover, and comprehensive backpressure alerting. Remaining improvements are incremental optimisations rather than architectural gaps.
+**Overall finding:** The streaming architecture now spans data quality monitoring, persistent deduplication, event-level validation with dead-letter routing, and a formal SLO registry alongside all previously implemented capabilities. The system is production-grade with clear observability, resilience, and data integrity guarantees. Remaining improvements are incremental optimisations.
 
 ---
 
@@ -66,10 +71,15 @@ External Sources                    Internal Processing
 | `IMarketDataClient` | `ProviderSdk/` | Provider abstraction (ADR-001) |
 | `EventPipeline` | `Application/Pipeline/` | Bounded channel routing with WAL |
 | `EventPipelinePolicy` | `Core/Pipeline/` | Preset channel configurations (ADR-013) |
+| `IEventValidator` | `Application/Pipeline/` | Pre-persistence event validation gate (ADR-007) |
+| `DeadLetterSink` | `Application/Pipeline/` | JSONL dead-letter file for rejected events (ADR-007) |
+| `PersistentDedupLedger` | `Application/Pipeline/` | TTL-based persistent deduplication with JSONL backing |
+| `SchemaValidationService` | `Application/Monitoring/` | Consolidated schema version validation for ingestion path |
 | `TradeDataCollector` | `Domain/Collectors/` | Trade event processing with sequence validation |
 | `MarketDepthCollector` | `Domain/Collectors/` | L2 order book maintenance |
 | `QuoteCollector` | `Domain/Collectors/` | BBO state tracking |
 | `FailoverAwareMarketDataClient` | `Infrastructure/Adapters/Failover/` | Automatic provider switching |
+| `StreamingFailoverRegistry` | `Infrastructure/Adapters/Failover/` | Singleton registry for API endpoint access to failover service |
 | `WebSocketConnectionManager` | `Infrastructure/Resilience/` | Unified WebSocket lifecycle |
 | `WebSocketConnectionConfig` | `Infrastructure/Resilience/` | Profile-based resilience tuning |
 | `WebSocketReconnectionHelper` | `Infrastructure/Shared/` | Standardised reconnection with jitter |
@@ -82,6 +92,13 @@ External Sources                    Internal Processing
 | `BackpressureAlertService` | `Application/Monitoring/` | Tiered backpressure alerting |
 | `DroppedEventAuditTrail` | `Application/Pipeline/` | Dropped event accounting |
 | `SubscriptionOrchestrator` | `Application/Subscriptions/` | Hot-reloadable subscription management |
+| `DataQualityMonitoringService` | `Application/Monitoring/DataQuality/` | Central orchestrator for 7 quality analyzers |
+| `LiquidityProfileProvider` | `Application/Monitoring/DataQuality/` | Liquidity-aware monitoring thresholds (High/Normal/Low/VeryLow/Minimal) |
+| `DataFreshnessSlaMonitor` | `Application/Monitoring/DataQuality/` | Configurable data freshness SLA enforcement |
+| `AlertDispatcher` | `Application/Monitoring/Core/` | Centralized alert publishing and subscription management |
+| `HealthCheckAggregator` | `Application/Monitoring/Core/` | Parallel health check aggregation across components |
+| `SloDefinitionRegistry` | `Application/Monitoring/Core/` | Runtime SLO definitions per subsystem |
+| `AlertRunbookRegistry` | `Application/Monitoring/Core/` | Alert-to-runbook mapping for incident triage |
 
 ---
 
@@ -316,11 +333,16 @@ Events arrive → TryPublish → Bounded Channel → Consumer Task
 | `DroppedCount` | Events dropped due to backpressure |
 | `ConsumedCount` | Events consumed by sinks |
 | `RecoveredCount` | Events recovered from WAL on startup |
+| `RejectedCount` | Events rejected by the validator and routed to the dead-letter sink |
+| `DeduplicatedCount` | Duplicate events filtered by `PersistentDedupLedger` |
 | `PeakQueueSize` | Maximum observed queue depth |
 | `CurrentQueueSize` | Current queue depth |
 | `QueueUtilization` | 0 – 100 % current utilisation |
 | `AverageProcessingTimeUs` | Average per-event processing time (microseconds) |
 | `TimeSinceLastFlush` | Time since last sink flush |
+| `IsWalEnabled` | Whether a WAL is configured |
+| `IsValidationEnabled` | Whether event validation is configured |
+| `IsDeduplicationEnabled` | Whether deduplication is configured |
 
 ### Evaluation
 
@@ -332,10 +354,14 @@ Events arrive → TryPublish → Bounded Channel → Consumer Task
 | Micro-batching | 100-event batches reduce per-event I/O overhead (was single-event in prior review) |
 | Periodic flush | 5 s timer ensures data reaches disk even during low-activity periods |
 | DropOldest default | Providers never block; oldest data sacrificed under extreme load |
-| Rich statistics | Queue utilisation, drop count, processing time all exposed for monitoring |
+| Rich statistics | Queue utilisation, drop count, reject count, dedup count, processing time all exposed for monitoring |
 | Dropped event audit | `DroppedEventAuditTrail` records every dropped event with reason |
 | High water mark alerts | Warning logged at 80 % utilisation; recovery at 50 % |
 | Consistent policies | `EventPipelinePolicy` presets enforce uniform channel configuration (ADR-013) |
+| Event validation gate | `IEventValidator` intercepts bad events before WAL/sink; rejected events routed to dead-letter |
+| Dead-letter sink | `DeadLetterSink` persists rejected events to `_dead_letter/rejected_events.jsonl` for replay/inspection |
+| Persistent deduplication | `PersistentDedupLedger` uses a TTL-keyed JSONL cache that survives restarts; supports compaction |
+| Schema validation | `SchemaValidationService` bridges `EventSchemaValidator` and `SchemaVersionManager` for a single ingestion-path entrypoint |
 
 **Weaknesses:**
 
@@ -363,6 +389,7 @@ Benchmarked in `benchmarks/MarketDataCollector.Benchmarks/EventPipelineBenchmark
 1. **Adaptive batch sizing** — Scale batch size based on queue utilisation (smaller at low load, larger at high load)
 2. **Parallel consumers** — Add when single consumer saturates (not currently a bottleneck)
 3. **Priority channels** — Separate channels for quotes vs. trades if latency-sensitive use cases emerge
+4. **Dedup ledger compaction scheduling** — Schedule periodic `CompactAsync()` calls (e.g., daily) to prevent unbounded growth of `dedup_ledger.jsonl`
 
 ---
 
@@ -742,6 +769,8 @@ Location: `Application/Monitoring/SpreadMonitor.cs`
 | No clock skew detection | `ClockSkewEstimator` with EWMA |
 | No spread monitoring | `SpreadMonitor` with preset configurations |
 | Single-event storage writes | Batched writes (100 events) reduce I/O overhead |
+| No SLO definitions at runtime | `SloDefinitionRegistry` with P95 latency, drop-rate, and availability SLOs |
+| No centralized alert dispatch | `AlertDispatcher` with per-severity and per-category routing |
 
 ### Remaining Recommendations
 
@@ -751,7 +780,163 @@ Location: `Application/Monitoring/SpreadMonitor.cs`
 
 ---
 
-## H. Scalability Assessment
+## H. Data Quality Monitoring
+
+### Overview
+
+Location: `Application/Monitoring/DataQuality/`
+
+A comprehensive data quality monitoring subsystem was introduced after the prior review. `DataQualityMonitoringService` is the central orchestrator that initialises and wires together seven specialised analyzers.
+
+### Sub-Services
+
+| Component | Responsibility |
+|-----------|----------------|
+| `CompletenessScoreCalculator` | Calculates data completeness scores (A–F grade) per symbol per day |
+| `GapAnalyzer` | Detects and classifies data gaps (Minor/Moderate/Significant/Major/Critical) |
+| `SequenceErrorTracker` | Tracks out-of-order and duplicate sequence numbers |
+| `AnomalyDetector` | Detects price spikes, volume outliers, and stale data using statistical methods |
+| `LatencyHistogram` | Per-symbol latency distribution for fine-grained quality analysis |
+| `CrossProviderComparisonService` | Identifies price/volume discrepancies across providers |
+| `DataQualityReportGenerator` | Generates structured quality reports from all analyzers |
+
+### Liquidity-Aware Thresholds
+
+`LiquidityProfileProvider` maps a symbol's liquidity tier to monitoring parameters, preventing false positives for illiquid instruments:
+
+| Profile | Gap Threshold | Expected Events/Hour | Freshness SLA | Spread Threshold |
+|---------|--------------|----------------------|---------------|-----------------|
+| High | 60 s | 1,000 | 60 s | 10 bps |
+| Normal | 120 s | 200 | 120 s | 50 bps |
+| Low | 600 s | 20 | 600 s | 500 bps |
+| VeryLow | 1,800 s | 5 | 1,800 s | 1,000 bps |
+| Minimal | 3,600 s | 1 | 3,600 s | 2,000 bps |
+
+Profiles are registered per symbol via `DataQualityMonitoringService.RegisterSymbolLiquidity(symbol, profile)`. All sub-services automatically adopt the relevant thresholds.
+
+### Data Freshness SLA Monitor
+
+`DataFreshnessSlaMonitor` enforces data freshness SLAs with two tiers:
+
+| Parameter | Default |
+|-----------|---------|
+| Warning threshold | 60 s |
+| Critical threshold | 300 s |
+| Check interval | 10 s |
+| Alert cooldown | 300 s |
+| Market hours only | Yes (13:30 – 20:00 UTC) |
+| Per-symbol overrides | Supported |
+
+### Gap Classification
+
+Gaps are classified based on duration relative to the symbol's liquidity profile:
+
+| Severity | Description |
+|----------|-------------|
+| Minor | < 1 minute (or proportional equivalent for illiquid symbols) |
+| Moderate | 1 – 5 minutes |
+| Significant | 5 – 30 minutes |
+| Major | 30 – 60 minutes |
+| Critical | > 60 minutes |
+
+### Evaluation
+
+**Strengths:**
+
+| Strength | Detail |
+|----------|--------|
+| Unified orchestration | Single `DataQualityMonitoringService` with consistent event wiring |
+| Liquidity awareness | Thresholds scale with symbol liquidity — no false alerts on illiquid instruments |
+| Cross-provider comparison | Detects price discrepancies when multiple providers are active |
+| Report generation | Structured quality reports available for API consumption |
+| Statistical anomaly detection | Price spike and volume outlier detection using rolling statistics |
+| SLA freshness enforcement | Per-symbol thresholds with market-hours awareness |
+
+**Remaining Recommendations:**
+
+1. **Completeness back-fill** — Feed historical data through `CompletenessScoreCalculator` on startup to populate initial baselines
+2. **Cross-provider auto-routing** — Use `CrossProviderComparisonService` discrepancy detection to automatically prefer higher-quality provider
+3. **Quality-gated backfill** — Trigger gap-fill backfill automatically when `GapAnalyzer` detects a significant gap
+
+---
+
+## I. Monitoring Core Infrastructure
+
+### Overview
+
+Location: `Application/Monitoring/Core/`
+
+A centralized monitoring infrastructure layer was added to provide structured alert dispatch, health aggregation, SLO tracking, and runbook integration.
+
+### AlertDispatcher
+
+`AlertDispatcher` implements the central alert bus:
+
+| Feature | Detail |
+|---------|--------|
+| Severity routing | Info / Warning / Error / Critical |
+| Category tracking | Per-category alert counts |
+| Recent alert buffer | Configurable ring buffer (default: 1,000 entries) |
+| Subscription model | Subscribe/unsubscribe handlers via GUID |
+| Statistics | Total alerts, alerts by severity, by category, by source |
+
+### HealthCheckAggregator
+
+`HealthCheckAggregator` runs all registered `IHealthCheckProvider` implementations in parallel:
+
+| Feature | Detail |
+|---------|--------|
+| Parallel execution | All checks run concurrently |
+| Per-check timeout | 5 s default; configurable |
+| Aggregated report | `AggregatedHealthReport` with worst-case composite state |
+| Dynamic registration | `Register()` / `Unregister()` at runtime |
+
+### SloDefinitionRegistry
+
+`SloDefinitionRegistry` holds runtime SLO definitions with metric linkage:
+
+| SLO ID | Subsystem | Target | Critical Threshold |
+|--------|-----------|--------|-------------------|
+| SLO-ING-001 | Ingestion | P95 latency ≤ 2 s | 5 s |
+| SLO-ING-002 | Ingestion | Drop rate ≤ 0.1 % | — |
+| SLO-AV-001 | Availability | — (via MdcDown alert) | — |
+
+Each SLO entry links to the relevant Prometheus metric, alert rule, and runbook section.
+
+### AlertRunbookRegistry
+
+`AlertRunbookRegistry` maps alert rule names to operator runbook sections:
+
+| Feature | Detail |
+|---------|--------|
+| Runbook URL | Direct link to operator runbook section |
+| Probable causes | Pre-populated list for faster triage |
+| Immediate actions | Step-by-step mitigation instructions |
+| SLO linkage | Each alert maps to its SLO ID |
+| Incident priority | P1 / P2 / P3 classification |
+
+**Key benefit:** When `AlertDispatcher` fires an alert, the runbook entry is immediately available — eliminating the need for engineers to search documentation during incidents.
+
+### Evaluation
+
+**Strengths:**
+
+| Strength | Detail |
+|----------|--------|
+| Centralized dispatch | Single `AlertDispatcher` for all subsystem alerts |
+| Parallel health checks | `HealthCheckAggregator` avoids serial health check delays |
+| Formal SLO definitions | `SloDefinitionRegistry` makes compliance measurable at runtime |
+| Runbook linkage | `AlertRunbookRegistry` reduces MTTR by embedding remediation guidance |
+
+**Remaining Recommendations:**
+
+1. **Webhook integration** — Route `AlertDispatcher` alerts to PagerDuty or Slack via webhook
+2. **SLO burn-rate alerts** — Track error budget consumption rate, not just point-in-time violations
+3. **Health check caching** — Cache last-known-good state to avoid thundering-herd on health endpoints during incidents
+
+---
+
+## J. Scalability Assessment
 
 ### Current Limits
 
@@ -791,7 +976,7 @@ StockSharp uses a dedicated `EventPipelinePolicy.MessageBuffer` channel (50 K ca
 
 ---
 
-## I. Alternative Architecture Patterns
+## K. Alternative Architecture Patterns
 
 ### Pattern 1: Actor Model (Akka.NET / Proto.Actor)
 
@@ -858,32 +1043,41 @@ StockSharp uses a dedicated `EventPipelinePolicy.MessageBuffer` channel (50 K ca
 
 ---
 
-## J. Summary & Recommendations
+## L. Summary & Recommendations
 
 ### Architecture Maturity Assessment
 
-The streaming architecture has progressed from a solid foundation to a production-grade system:
+The streaming architecture has continued to evolve since the February 2026 re-evaluation:
 
-| Capability | Feb 2026 Status | Current Status |
-|------------|-----------------|----------------|
+| Capability | Feb 2026 Status | Mar 2026 Status |
+|------------|-----------------|-----------------|
 | Provider abstraction | Mature | Mature |
-| Channel-based pipeline | Basic | Mature (WAL, batching, audit trail) |
-| Resilience policies | Generic | Profile-based (Default / HighFrequency / Resilient) |
-| Backpressure handling | Wait mode (risky) | Tiered alerting (70 % / 90 %) + DropOldest |
-| Failover | Not implemented | Automatic with subscription recovery |
-| Latency observability | Not implemented | P50/P95/P99 histograms + clock skew detection |
-| Spread monitoring | Not implemented | Per-symbol with preset configurations |
-| Degradation scoring | Not implemented | Composite 4-factor scoring |
-| Connection management | Basic reconnection | Centralised manager with heartbeat + jitter |
+| Channel-based pipeline | Mature (WAL, batching, audit trail) | Mature + event validation + dedup ledger |
+| Resilience policies | Profile-based (Default / HighFrequency / Resilient) | Unchanged |
+| Backpressure handling | Tiered alerting (70 % / 90 %) + DropOldest | Unchanged |
+| Failover | Automatic with subscription recovery | Unchanged + `StreamingFailoverRegistry` |
+| Latency observability | P50/P95/P99 histograms + clock skew detection | Unchanged |
+| Spread monitoring | Per-symbol with preset configurations | Unchanged |
+| Degradation scoring | Composite 4-factor scoring | Unchanged |
+| Connection management | Centralised manager with heartbeat + jitter | Unchanged |
+| Event validation | Not implemented | `IEventValidator` + `DeadLetterSink` (ADR-007) |
+| Deduplication | Not implemented | `PersistentDedupLedger` with TTL cache + compaction |
+| Data quality monitoring | Not implemented | `DataQualityMonitoringService` with 7 analyzers |
+| SLA freshness | Not implemented | `DataFreshnessSlaMonitor` with configurable tiers |
+| Liquidity-aware thresholds | Not implemented | `LiquidityProfileProvider` (5 tiers) |
+| Alert infrastructure | Ad-hoc | `AlertDispatcher` + `AlertRunbookRegistry` |
+| SLO definitions | Not implemented | `SloDefinitionRegistry` with metric + runbook linkage |
+| Health aggregation | Not implemented | `HealthCheckAggregator` with parallel execution |
 
 ### Retain (Proven Components)
 
-1. **Channel-based pipeline** — Efficient, well-tuned, now WAL-backed
-2. **Polly resilience** — Industry-standard, now profile-based
+1. **Channel-based pipeline** — Efficient, WAL-backed, now with validation and dedup
+2. **Polly resilience** — Industry-standard, profile-based per provider
 3. **Provider abstraction** — Clean separation via `IMarketDataClient`
 4. **Micro-batching** — 100-event batches balance throughput and latency
-5. **Failover client** — Transparent provider switching
+5. **Failover client** — Transparent provider switching with subscription recovery
 6. **Degradation scorer** — Multi-factor health assessment
+7. **Data quality monitoring** — Comprehensive liquidity-aware quality subsystem
 
 ### Remaining Improvements
 
@@ -892,10 +1086,13 @@ The streaming architecture has progressed from a solid foundation to a productio
 | Medium | Parallel channel consumers | 2 – 4x throughput when single consumer saturates |
 | Medium | Object pooling for hot path | Reduce GC pauses under sustained load |
 | Medium | Warm standby for failover | Reduce failover latency from seconds to milliseconds |
+| Medium | Dedup ledger compaction scheduling | Prevent unbounded `dedup_ledger.jsonl` growth |
 | Low | Adaptive batch sizing | Better throughput/latency balance across load levels |
 | Low | Priority channels per event type | Latency-sensitive quote processing |
 | Low | Kafka integration | Horizontal scaling for 1,000+ symbol deployments |
 | Low | Chaos engineering hooks | Validate failover paths in staging |
+| Low | AlertDispatcher webhook integration | Route alerts to PagerDuty or Slack |
+| Low | SLO burn-rate tracking | Measure error budget consumption rate |
 
 ### Performance Targets
 
@@ -910,11 +1107,11 @@ The streaming architecture has progressed from a solid foundation to a productio
 
 ## Key Insight
 
-The streaming architecture has addressed all high-priority recommendations from the February 2026 assessment. WAL-backed durability, profile-based resilience, automated failover, and tiered backpressure alerting have transformed the pipeline from a promising foundation into a production-ready system.
+Since the February 2026 assessment, the streaming architecture has added end-to-end event integrity guarantees (validation + dead-letter routing, persistent deduplication, schema validation), a comprehensive data quality monitoring subsystem with liquidity-aware thresholds and SLA enforcement, and a formal monitoring infrastructure with centralized alert dispatch, SLO definitions, and runbook linkage.
 
-The remaining improvements — parallel consumers, object pooling, warm standby — are incremental optimisations that should be driven by observed production bottlenecks rather than speculative engineering. The architecture is well-positioned for its current scale (hundreds of symbols across five providers) and has clear scaling paths when needed.
+The system is now production-grade across all primary dimensions: data integrity, resilience, observability, quality, and operational readiness. Remaining improvements — parallel consumers, object pooling, warm standby, dedup compaction scheduling — are operational refinements rather than architectural gaps, and should be driven by observed production bottlenecks.
 
 ---
 
-*Evaluation Date: 2026-02-22*
-*Prior Evaluation: 2026-02-03*
+*Evaluation Date: 2026-03-11*
+*Prior Evaluation: 2026-02-22*
