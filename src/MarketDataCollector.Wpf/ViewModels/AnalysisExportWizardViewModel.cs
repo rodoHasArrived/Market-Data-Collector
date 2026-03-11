@@ -3,9 +3,27 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using MarketDataCollector.Wpf.Views;
 
 namespace MarketDataCollector.Wpf.ViewModels;
+
+/// <summary>
+/// Simple option model for exportable metrics.
+/// Defined in the ViewModel layer to avoid View dependencies.
+/// </summary>
+public sealed class MetricOption
+{
+    public MetricOption(string name)
+    {
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+    }
+
+    public string Name { get; }
+
+    /// <summary>
+    /// Whether this metric is selected for export.
+    /// </summary>
+    public bool IsSelected { get; set; }
+}
 
 /// <summary>
 /// ViewModel for the multi-step Analysis Export Wizard page.
