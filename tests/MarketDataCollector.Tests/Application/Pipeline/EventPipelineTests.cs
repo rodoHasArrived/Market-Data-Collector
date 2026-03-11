@@ -588,7 +588,8 @@ public class EventPipelineTests : IAsyncLifetime
     {
         // Arrange — tiny pipeline in DropWrite mode so it fills immediately,
         // and a blocking sink + batchSize: 1 so the queue stays at capacity.
-        using var sink = new BlockingStorageSink();
+        var releaseConsumer = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var sink = new BlockingStorageSink(releaseConsumer.Task);
         await using var pipeline = new EventPipeline(
             sink,
             capacity: 2,
@@ -596,7 +597,11 @@ public class EventPipelineTests : IAsyncLifetime
             fullMode: BoundedChannelFullMode.DropWrite,
             enablePeriodicFlush: false);
 
-        // Fill the channel
+        // Trigger the consumer and wait for it to block so the queue won't be drained.
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+        await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(2));
+
+        // Fill the channel (consumer is blocked so these stay queued)
         pipeline.TryPublish(CreateTradeEvent("SPY"));
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
@@ -605,6 +610,9 @@ public class EventPipelineTests : IAsyncLifetime
 
         // Assert
         result.Should().Be(PublishResult.Dropped);
+
+        // Cleanup - release the blocked consumer so the pipeline can drain during disposal
+        releaseConsumer.TrySetResult(true);
     }
 
     #endregion
