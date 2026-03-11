@@ -276,8 +276,7 @@ public static class ProviderExtendedEndpoints
             //   red    = no enabled providers, or active failover detected
             var enabledCount = allProviders.Count(p => p.IsEnabled);
             var yellowCount = providerSummaries.Count(p => p.trafficLight == "yellow");
-            var redCount = providerSummaries.Count(p => p.trafficLight == "red" && allProviders
-                .FirstOrDefault(a => a.Name == p.name)?.IsEnabled == true);
+            var redCount = providerSummaries.Count(p => p.trafficLight == "red");
 
             var overallTrafficLight = enabledCount == 0 || redCount > 0
                 ? "red"
