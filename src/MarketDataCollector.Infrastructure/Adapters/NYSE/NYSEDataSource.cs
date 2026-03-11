@@ -15,6 +15,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
 using MarketDataCollector.Infrastructure.Shared;
 using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
@@ -50,9 +51,9 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     private readonly NYSEOptions _options;
     private readonly HttpClient _httpClient;
-    private ClientWebSocket? _webSocket;
-    private CancellationTokenSource? _connectionCts;
-    private Task? _receiveTask;
+
+    // WebSocket lifecycle managed by WebSocketConnectionManager (replaces _webSocket, _connectionCts, _receiveTask)
+    private readonly WebSocketConnectionManager _wsManager;
 
     private readonly Subject<RealtimeTrade> _trades = new();
     private readonly Subject<RealtimeQuote> _quotes = new();
@@ -145,6 +146,12 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
 
+        _wsManager = new WebSocketConnectionManager(
+            providerName: "NYSE",
+            config: WebSocketConnectionConfig.Resilient,
+            logger: logger ?? LoggingSetup.ForContext<NYSEDataSource>());
+        _wsManager.ConnectionLost += OnWsConnectionLostAsync;
+
         _httpClient = new HttpClient
         {
             BaseAddress = new Uri(_options.EffectiveBaseUrl),
@@ -204,6 +211,9 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     protected override async ValueTask OnDisposeAsync()
     {
         await DisconnectAsync().ConfigureAwait(false);
+
+        _wsManager.ConnectionLost -= OnWsConnectionLostAsync;
+        await _wsManager.DisposeAsync().ConfigureAwait(false);
 
         _trades.OnCompleted();
         _trades.Dispose();
