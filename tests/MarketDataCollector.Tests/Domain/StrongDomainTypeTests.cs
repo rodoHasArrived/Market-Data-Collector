@@ -5,9 +5,9 @@ using Xunit;
 namespace MarketDataCollector.Tests.Domain;
 
 /// <summary>
-/// Tests for the strong domain-type value objects introduced in Item 1 of the
-/// high-impact improvements list: <see cref="SymbolId"/>, <see cref="ProviderId"/>,
-/// and <see cref="VenueCode"/>.
+/// Tests for the strong domain-type value objects: <see cref="SymbolId"/>, <see cref="ProviderId"/>,
+/// <see cref="VenueCode"/>, <see cref="CanonicalSymbol"/>, <see cref="StreamId"/>,
+/// and <see cref="SubscriptionId"/>.
 /// </summary>
 public sealed class StrongDomainTypeTests
 {
@@ -169,5 +169,192 @@ public sealed class StrongDomainTypeTests
         _ = symbol;
         _ = provider;
         _ = venue;
+    }
+
+    // ------------------------------------------------------------------ //
+    //  CanonicalSymbol                                                     //
+    // ------------------------------------------------------------------ //
+
+    [Fact]
+    public void CanonicalSymbol_Value_IsUpperCase()
+    {
+        var cs = new CanonicalSymbol("aapl");
+        cs.Value.Should().Be("AAPL");
+    }
+
+    [Fact]
+    public void CanonicalSymbol_ImplicitConversion_YieldsString()
+    {
+        CanonicalSymbol cs = new("SPY");
+        string s = cs;
+        s.Should().Be("SPY");
+    }
+
+    [Fact]
+    public void CanonicalSymbol_ExplicitConversion_FromString()
+    {
+        var cs = (CanonicalSymbol)"msft";
+        cs.Value.Should().Be("MSFT");
+    }
+
+    [Fact]
+    public void CanonicalSymbol_EqualityIsCaseInsensitive()
+    {
+        var a = new CanonicalSymbol("SPY");
+        var b = new CanonicalSymbol("spy");
+        a.Should().Be(b);
+        (a == b).Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanonicalSymbol_NullOrWhitespace_ThrowsArgumentException()
+    {
+        var act1 = () => new CanonicalSymbol("");
+        var act2 = () => new CanonicalSymbol("  ");
+        act1.Should().Throw<ArgumentException>();
+        act2.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void CanonicalSymbol_ToString_ReturnsTicker()
+    {
+        var cs = new CanonicalSymbol("QQQ");
+        cs.ToString().Should().Be("QQQ");
+    }
+
+    [Fact]
+    public void CanonicalSymbol_HashCode_IsCaseInsensitiveConsistent()
+    {
+        var a = new CanonicalSymbol("AAPL");
+        var b = new CanonicalSymbol("aapl");
+        a.GetHashCode().Should().Be(b.GetHashCode(),
+            "case-insensitive equality requires matching hash codes");
+    }
+
+    [Fact]
+    public void CanonicalSymbol_IsDistinctFrom_SymbolId()
+    {
+        // CanonicalSymbol and SymbolId carry the same raw letters but are different types.
+        var raw = new SymbolId("AAPL");
+        var canonical = new CanonicalSymbol("AAPL");
+        // The compiler prevents direct assignment between them (verified by code not compiling
+        // without an explicit cast). This test documents the intent.
+        ((string)raw).Should().Be((string)canonical,
+            because: "both normalise the same ticker to uppercase");
+    }
+
+    // ------------------------------------------------------------------ //
+    //  StreamId                                                            //
+    // ------------------------------------------------------------------ //
+
+    [Fact]
+    public void StreamId_Value_PreservesOriginalCase()
+    {
+        var id = new StreamId("T.SPY");
+        id.Value.Should().Be("T.SPY");
+    }
+
+    [Fact]
+    public void StreamId_ImplicitConversion_YieldsString()
+    {
+        StreamId id = new("trades-AAPL");
+        string s = id;
+        s.Should().Be("trades-AAPL");
+    }
+
+    [Fact]
+    public void StreamId_ExplicitConversion_FromString()
+    {
+        var id = (StreamId)"channel-42";
+        id.Value.Should().Be("channel-42");
+    }
+
+    [Fact]
+    public void StreamId_EqualityIsCaseSensitive()
+    {
+        var a = new StreamId("Stream-X");
+        var b = new StreamId("stream-x");
+        a.Should().NotBe(b, "stream IDs are case-sensitive provider-specific tokens");
+        (a == b).Should().BeFalse();
+    }
+
+    [Fact]
+    public void StreamId_SameValue_AreEqual()
+    {
+        var a = new StreamId("T.SPY");
+        var b = new StreamId("T.SPY");
+        a.Should().Be(b);
+        (a == b).Should().BeTrue();
+    }
+
+    [Fact]
+    public void StreamId_NullOrWhitespace_ThrowsArgumentException()
+    {
+        var act1 = () => new StreamId("");
+        var act2 = () => new StreamId("   ");
+        act1.Should().Throw<ArgumentException>();
+        act2.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void StreamId_ToString_ReturnsValue()
+    {
+        var id = new StreamId("channel-1");
+        id.ToString().Should().Be("channel-1");
+    }
+
+    // ------------------------------------------------------------------ //
+    //  SubscriptionId                                                      //
+    // ------------------------------------------------------------------ //
+
+    [Fact]
+    public void SubscriptionId_Value_IsStored()
+    {
+        var id = new SubscriptionId(42);
+        id.Value.Should().Be(42);
+    }
+
+    [Fact]
+    public void SubscriptionId_ImplicitConversion_YieldsInt()
+    {
+        SubscriptionId id = new(99);
+        int i = id;
+        i.Should().Be(99);
+    }
+
+    [Fact]
+    public void SubscriptionId_ExplicitConversion_FromInt()
+    {
+        var id = (SubscriptionId)7;
+        id.Value.Should().Be(7);
+    }
+
+    [Fact]
+    public void SubscriptionId_Equality_BasedOnValue()
+    {
+        var a = new SubscriptionId(10);
+        var b = new SubscriptionId(10);
+        var c = new SubscriptionId(11);
+        a.Should().Be(b);
+        a.Should().NotBe(c);
+        (a == b).Should().BeTrue();
+        (a != c).Should().BeTrue();
+    }
+
+    [Fact]
+    public void SubscriptionId_CompareTo_OrdersByValue()
+    {
+        var a = new SubscriptionId(1);
+        var b = new SubscriptionId(2);
+        a.CompareTo(b).Should().BeNegative();
+        b.CompareTo(a).Should().BePositive();
+        a.CompareTo(a).Should().Be(0);
+    }
+
+    [Fact]
+    public void SubscriptionId_ToString_ReturnsIntegerString()
+    {
+        var id = new SubscriptionId(123);
+        id.ToString().Should().Be("123");
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using MarketDataCollector.Contracts.Domain;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
@@ -13,8 +14,8 @@ public sealed class QuoteCollector : IQuoteStateStore
 {
     private readonly IMarketEventPublisher _publisher;
 
-    private readonly ConcurrentDictionary<string, BboQuotePayload> _latest = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, long> _seq = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<SymbolId, BboQuotePayload> _latest = new();
+    private readonly ConcurrentDictionary<SymbolId, long> _seq = new();
 
     public QuoteCollector(IMarketEventPublisher publisher)
     {
@@ -34,7 +35,7 @@ public sealed class QuoteCollector : IQuoteStateStore
     }
 
     public bool TryGet(string symbol, out BboQuotePayload? quote)
-        => _latest.TryGetValue(symbol, out quote);
+        => _latest.TryGetValue(new SymbolId(symbol), out quote);
 
     public BboQuotePayload Upsert(MarketQuoteUpdate update)
     {
@@ -42,25 +43,32 @@ public sealed class QuoteCollector : IQuoteStateStore
         if (string.IsNullOrWhiteSpace(update.Symbol))
             throw new ArgumentException("Symbol is required", nameof(update));
 
-        var symbol = update.Symbol;
+        var symbolId = new SymbolId(update.Symbol);
 
         // We keep our own monotonically increasing per-symbol sequence for quotes.
-        var nextSeq = _seq.AddOrUpdate(symbol, _ => 1, (_, v) => v + 1);
+        var nextSeq = _seq.AddOrUpdate(symbolId, _ => 1, (_, v) => v + 1);
 
         var payload = BboQuotePayload.FromUpdate(update, nextSeq);
-        _latest[symbol] = payload;
+        _latest[symbolId] = payload;
 
         return payload;
     }
 
     public bool TryRemove(string symbol, out BboQuotePayload? removed)
     {
-        var removedLatest = _latest.TryRemove(symbol, out removed);
-        _seq.TryRemove(symbol, out _);
+        if (string.IsNullOrWhiteSpace(symbol))
+        {
+            removed = null;
+            return false;
+        }
+
+        var key = new SymbolId(symbol.Trim());
+        var removedLatest = _latest.TryRemove(key, out removed);
+        _seq.TryRemove(key, out _);
 
         return removedLatest;
     }
 
     public IReadOnlyDictionary<string, BboQuotePayload> Snapshot()
-        => new Dictionary<string, BboQuotePayload>(_latest, StringComparer.OrdinalIgnoreCase);
+        => _latest.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
 }

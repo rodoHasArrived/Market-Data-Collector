@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Contracts.Domain;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
@@ -13,7 +14,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 {
     private readonly IMarketEventPublisher _publisher;
 
-    private readonly ConcurrentDictionary<string, SymbolOrderBookBuffer> _books = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<SymbolId, SymbolOrderBookBuffer> _books = new();
     private readonly ConcurrentQueue<DepthIntegrityEvent> _recentIntegrity = new();
     private const ushort MaxDepth = 50;
 
@@ -26,14 +27,14 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     public void ResetSymbolStream(string symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return;
-        if (_books.TryGetValue(symbol.Trim(), out var buf))
+        if (_books.TryGetValue(new SymbolId(symbol.Trim()), out var buf))
             buf.Reset();
     }
 
     public bool IsSymbolStreamStale(string symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return false;
-        return _books.TryGetValue(symbol.Trim(), out var buf) && buf.IsStale;
+        return _books.TryGetValue(new SymbolId(symbol.Trim()), out var buf) && buf.IsStale;
     }
 
     public IReadOnlyList<DepthIntegrityEvent> GetRecentIntegrityEvents(int max = 20)
@@ -49,15 +50,16 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     public LOBSnapshot? GetCurrentSnapshot(string symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return null;
-        if (!_books.TryGetValue(symbol.Trim(), out var book)) return null;
-        return book.GetSnapshot(symbol.Trim());
+        var trimmed = symbol.Trim();
+        if (!_books.TryGetValue(new SymbolId(trimmed), out var book)) return null;
+        return book.GetSnapshot(trimmed);
     }
 
     /// <summary>
     /// Returns all symbols that currently have order book data.
     /// </summary>
     public IReadOnlyList<string> GetTrackedSymbols()
-        => _books.Keys.ToList();
+        => _books.Keys.Select(k => k.Value).ToList();
 
     /// <summary>
     /// Apply a single depth delta update.
@@ -72,7 +74,7 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
         if (!ShouldProcessUpdate(symbol))
             return;
 
-        var book = _books.GetOrAdd(symbol, _ => new SymbolOrderBookBuffer(MaxDepth));
+        var book = _books.GetOrAdd(new SymbolId(symbol), _ => new SymbolOrderBookBuffer(MaxDepth));
 
         var result = book.Apply(update, out var snapshot);
 

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Contracts.Domain;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
@@ -15,13 +16,29 @@ public sealed class TradeDataCollector
     private readonly IMarketEventPublisher _publisher;
     private readonly IQuoteStateStore? _quotes;
 
-    // Per-symbol rolling state
-    private readonly ConcurrentDictionary<string, SymbolTradeState> _stateBySymbol =
-        new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Typed key that combines symbol, stream, and venue for per-stream continuity tracking.
+    /// Using strongly-typed components prevents accidental construction from unrelated strings.
+    /// Venue is normalized to uppercase to preserve case-insensitive semantics across sources.
+    /// </summary>
+    private readonly record struct StreamKey
+    {
+        public SymbolId Symbol { get; }
+        public string? StreamId { get; }
+        public string? Venue { get; }
+
+        public StreamKey(SymbolId symbol, string? streamId, string? venue)
+        {
+            Symbol = symbol;
+            StreamId = streamId;
+            Venue = venue is null ? null : venue.ToUpperInvariant();
+        }
+    }
+    // Per-stream rolling state (one entry per unique symbol+stream+venue combination)
+    private readonly ConcurrentDictionary<StreamKey, SymbolTradeState> _stateBySymbol = new();
 
     // Per-symbol recent trade ring buffer (capped at MaxRecentTrades)
-    private readonly ConcurrentDictionary<string, RecentTradeRing> _recentTrades =
-        new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<SymbolId, RecentTradeRing> _recentTrades = new();
 
     /// <summary>
     /// Maximum allowed length for a symbol. Covers most instrument types including options and futures.
@@ -119,8 +136,9 @@ public sealed class TradeDataCollector
             return;
         }
 
-        var continuityKey = BuildContinuityKey(symbol, update.StreamId, update.Venue);
-        var state = _stateBySymbol.GetOrAdd(continuityKey, _ => new SymbolTradeState(_rollingWindows));
+        var symbolId = new SymbolId(symbol);
+        var streamKey = BuildStreamKey(symbolId, update.StreamId, update.Venue);
+        var state = _stateBySymbol.GetOrAdd(streamKey, _ => new SymbolTradeState(_rollingWindows));
 
         // -------- Integrity / continuity --------
         // Rules:
@@ -195,7 +213,7 @@ public sealed class TradeDataCollector
             venue: update.Venue);
 
         // Buffer for API access
-        var ring = _recentTrades.GetOrAdd(symbol, _ => new RecentTradeRing(MaxRecentTrades));
+        var ring = _recentTrades.GetOrAdd(symbolId, _ => new RecentTradeRing(MaxRecentTrades));
         ring.Add(trade);
 
         _publisher.TryPublish(MarketEvent.Trade(trade.Timestamp, trade.Symbol, trade));
@@ -211,7 +229,8 @@ public sealed class TradeDataCollector
     public IReadOnlyList<Trade> GetRecentTrades(string symbol, int limit = 50)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return Array.Empty<Trade>();
-        if (!_recentTrades.TryGetValue(symbol, out var ring)) return Array.Empty<Trade>();
+        var key = new SymbolId(symbol);
+        if (!_recentTrades.TryGetValue(key, out var ring)) return Array.Empty<Trade>();
         return ring.GetRecent(Math.Min(limit, MaxRecentTrades));
     }
 
@@ -221,8 +240,9 @@ public sealed class TradeDataCollector
     public OrderFlowStatistics? GetOrderFlowSnapshot(string symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return null;
+        var symbolId = new SymbolId(symbol);
         var states = _stateBySymbol
-            .Where(kvp => kvp.Key.StartsWith(symbol + "|", StringComparison.OrdinalIgnoreCase))
+            .Where(kvp => kvp.Key.Symbol == symbolId)
             .Select(kvp => kvp.Value)
             .ToArray();
         if (states.Length == 0) return null;
@@ -240,12 +260,12 @@ public sealed class TradeDataCollector
     /// </summary>
     public IReadOnlyList<string> GetTrackedSymbols()
         => _stateBySymbol.Keys
-            .Select(k => k.Split('|')[0])
+            .Select(k => k.Symbol.Value)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    private static string BuildContinuityKey(string symbol, string? streamId, string? venue)
-        => $"{symbol}|{streamId ?? "-"}|{venue ?? "-"}";
+    private static StreamKey BuildStreamKey(SymbolId symbol, string? streamId, string? venue)
+        => new(symbol, streamId, venue);
 
     // =========================
     // Per-symbol state
