@@ -193,7 +193,7 @@ Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** ac
 - ⚠️ Some providers and integrations require credentials and/or build-time flags (for example, Interactive Brokers).
 - ⚠️ A subset of provider paths (notably Polygon streaming and portions of StockSharp integration) remain partial and continue to evolve.
 
-For detailed, continuously maintained status tracking, see `docs/status/production-status.md`, `docs/status/FEATURE_INVENTORY.md`, and `docs/status/ROADMAP.md`.
+For detailed, continuously maintained status tracking, see [docs/status/production-status.md](docs/status/production-status.md), [docs/status/FEATURE_INVENTORY.md](docs/status/FEATURE_INVENTORY.md), and [docs/status/ROADMAP.md](docs/status/ROADMAP.md).
 
 ## Key Features
 
