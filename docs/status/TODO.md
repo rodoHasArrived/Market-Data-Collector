@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-10T20:19:23.732737+00:00
+> Last updated: 2026-03-11T11:23:09.300004+00:00
 
 ## Summary
 
@@ -68,10 +68,10 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `tests/MarketDataCollector.Tests/Application/Monitoring/DataQuality/DataFreshnessSlaMonitorTests.cs:525`
   > Actual result depends on current time, so we check the logic is working
 
-- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:284`
+- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:293`
   > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
 
-- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:516`
+- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:525`
   > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
