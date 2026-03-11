@@ -210,7 +210,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     /// <returns>The message text, or <c>null</c> if the connection closed.</returns>
     public async Task<string?> ReadOneMessageAsync(CancellationToken ct = default)
     {
-        if (_webSocket == null) return null;
+        if (_webSocket == null)
+            throw new InvalidOperationException("WebSocket not connected. Call ConnectAsync first.");
 
         var buffer = new byte[4096];
         var sb = new StringBuilder();
