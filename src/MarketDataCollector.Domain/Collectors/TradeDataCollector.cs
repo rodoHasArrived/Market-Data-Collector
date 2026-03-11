@@ -137,7 +137,7 @@ public sealed class TradeDataCollector
             _lastSequenceByStream[streamKey] = seq;
         }
 
-        var state = _stateBySymbol.GetOrAdd(symbol, _ => new SymbolTradeState());
+        var state = _stateBySymbol.GetOrAdd(symbol, _ => new SymbolTradeState(RollingWindows));
 
         var aggressor = update.Aggressor;
         var quoteFresh = false;
@@ -165,7 +165,7 @@ public sealed class TradeDataCollector
             StreamId: update.StreamId,
             Venue: update.Venue);
 
-        var currentStats = state.RegisterTradeAndBuildStats(trade, RollingWindows);
+        var currentStats = state.RegisterTradeAndBuildStats(trade);
 
         var ring = _recentTrades.GetOrAdd(symbol, _ => new RecentTradeRing(MaxRecentTrades));
         ring.Add(trade);
@@ -192,8 +192,7 @@ public sealed class TradeDataCollector
             symbol: symbol,
             seq: state.LastSequenceNumber,
             streamId: null,
-            venue: null,
-            RollingWindows);
+            venue: null);
     }
 
     public IReadOnlyList<string> GetTrackedSymbols()
@@ -215,7 +214,7 @@ public sealed class TradeDataCollector
     private sealed class SymbolTradeState
     {
         private readonly object _sync = new();
-        private readonly Queue<Trade> _rollingTrades = new();
+        private readonly RollingWindowState[] _rollingWindows;
 
         private long _buyVolume;
         private long _sellVolume;
@@ -227,15 +226,19 @@ public sealed class TradeDataCollector
         private int _tradeCount;
         private long _lastSequence;
 
-        public long LastSequenceNumber
+        public SymbolTradeState(TimeSpan[] windows)
         {
-            get
-            {
-                lock (_sync) return _lastSequence;
-            }
+            _rollingWindows = new RollingWindowState[windows.Length];
+            for (var i = 0; i < windows.Length; i++)
+                _rollingWindows[i] = new RollingWindowState(windows[i]);
         }
 
-        public OrderFlowStatistics RegisterTradeAndBuildStats(Trade trade, TimeSpan[] windows)
+        public long LastSequenceNumber
+        {
+            get { lock (_sync) return _lastSequence; }
+        }
+
+        public OrderFlowStatistics RegisterTradeAndBuildStats(Trade trade)
         {
             lock (_sync)
             {
@@ -258,12 +261,12 @@ public sealed class TradeDataCollector
                         break;
                 }
 
-                _rollingTrades.Enqueue(trade);
-                var maxWindow = windows.Max();
-                while (_rollingTrades.Count > 0 && trade.Timestamp - _rollingTrades.Peek().Timestamp > maxWindow)
-                    _rollingTrades.Dequeue();
+                // Update each rolling window in O(1) amortized: evict stale entries
+                // then record the new trade using per-window running sums.
+                foreach (var ws in _rollingWindows)
+                    ws.AddAndEvict(trade);
 
-                return BuildStatsLocked(trade.Timestamp, trade.Symbol, trade.SequenceNumber, trade.StreamId, trade.Venue, windows);
+                return BuildStatsLocked(trade.Timestamp, trade.Symbol, trade.SequenceNumber, trade.StreamId, trade.Venue);
             }
         }
 
@@ -272,12 +275,15 @@ public sealed class TradeDataCollector
             string symbol,
             long seq,
             string? streamId,
-            string? venue,
-            TimeSpan[] windows)
+            string? venue)
         {
             lock (_sync)
             {
-                return BuildStatsLocked(timestamp, symbol, seq, streamId, venue, windows);
+                // Evict stale trades from each window before reading the snapshot.
+                foreach (var ws in _rollingWindows)
+                    ws.EvictStale(timestamp);
+
+                return BuildStatsLocked(timestamp, symbol, seq, streamId, venue);
             }
         }
 
@@ -286,8 +292,7 @@ public sealed class TradeDataCollector
             string symbol,
             long seq,
             string? streamId,
-            string? venue,
-            TimeSpan[] windows)
+            string? venue)
         {
             var total = _buyVolume + _sellVolume + _unknownVolume;
 
@@ -299,95 +304,10 @@ public sealed class TradeDataCollector
                 ? 0m
                 : _vwapNumerator / _vwapDenominator;
 
-            var rolling = new List<RollingOrderFlowWindow>(windows.Length);
-
-            // Take a consistent snapshot of the rolling trades so we can compute
-            // all windows in (roughly) O(N + windows * log N) instead of
-            // O(N * windows) by using prefix sums and binary search.
-            var tradesSnapshot = _rollingTrades.ToArray();
-
-            if (tradesSnapshot.Length == 0)
-            {
-                // No trades in the rolling buffer: all rolling window stats are zero.
-                foreach (var window in windows)
-                {
-                    rolling.Add(new RollingOrderFlowWindow(
-                        (int)window.TotalSeconds,
-                        0,
-                        0,
-                        0,
-                        0m,
-                        0m));
-                }
-            }
-            else
-            {
-                var n = tradesSnapshot.Length;
-                var timestamps = new DateTimeOffset[n];
-                var prefixBuy = new long[n + 1];
-                var prefixSell = new long[n + 1];
-                var prefixUnknown = new long[n + 1];
-                var prefixNum = new decimal[n + 1];
-                var prefixDen = new long[n + 1];
-
-                for (var i = 0; i < n; i++)
-                {
-                    var t = tradesSnapshot[i];
-                    timestamps[i] = t.Timestamp;
-
-                    prefixBuy[i + 1] = prefixBuy[i];
-                    prefixSell[i + 1] = prefixSell[i];
-                    prefixUnknown[i + 1] = prefixUnknown[i];
-                    prefixNum[i + 1] = prefixNum[i];
-                    prefixDen[i + 1] = prefixDen[i];
-
-                    switch (t.Aggressor)
-                    {
-                        case AggressorSide.Buy:
-                            prefixBuy[i + 1] += t.Size;
-                            break;
-                        case AggressorSide.Sell:
-                            prefixSell[i + 1] += t.Size;
-                            break;
-                        default:
-                            prefixUnknown[i + 1] += t.Size;
-                            break;
-                    }
-
-                    prefixNum[i + 1] += t.Price * t.Size;
-                    prefixDen[i + 1] += t.Size;
-                }
-
-                foreach (var window in windows)
-                {
-                    var cutoff = timestamp - window;
-
-                    // Find the first index where timestamps[index] >= cutoff.
-                    var idx = Array.BinarySearch(timestamps, cutoff);
-                    if (idx < 0)
-                    {
-                        idx = ~idx;
-                    }
-
-                    var buy = prefixBuy[n] - prefixBuy[idx];
-                    var sell = prefixSell[n] - prefixSell[idx];
-                    var unknown = prefixUnknown[n] - prefixUnknown[idx];
-                    var num = prefixNum[n] - prefixNum[idx];
-                    var den = prefixDen[n] - prefixDen[idx];
-
-                    var rollTotal = buy + sell + unknown;
-                    var rollVwap = den == 0 ? 0m : num / den;
-                    var rollImbalance = rollTotal == 0 ? 0m : (decimal)(buy - sell) / rollTotal;
-
-                    rolling.Add(new RollingOrderFlowWindow(
-                        (int)window.TotalSeconds,
-                        buy,
-                        sell,
-                        unknown,
-                        rollVwap,
-                        rollImbalance));
-                }
-            }
+            // Build rolling window stats from per-window running sums in O(1) per window.
+            var rolling = new List<RollingOrderFlowWindow>(_rollingWindows.Length);
+            foreach (var ws in _rollingWindows)
+                rolling.Add(ws.BuildWindow());
 
             return new OrderFlowStatistics(
                 Timestamp: timestamp,
@@ -402,6 +322,85 @@ public sealed class TradeDataCollector
                 StreamId: streamId,
                 Venue: venue,
                 RollingWindows: rolling);
+        }
+
+        /// <summary>
+        /// Maintains a time-bounded queue and running aggregates for a single rolling window.
+        /// All methods must be called under <see cref="SymbolTradeState"/>'s lock.
+        /// </summary>
+        private sealed class RollingWindowState
+        {
+            private readonly TimeSpan _window;
+            private readonly Queue<Trade> _trades = new();
+
+            private long _buyVolume;
+            private long _sellVolume;
+            private long _unknownVolume;
+            private decimal _vwapNumerator;
+            private long _vwapDenominator;
+            private int _tradeCount;
+
+            public RollingWindowState(TimeSpan window) => _window = window;
+
+            /// <summary>
+            /// Evicts trades that have aged out of the window, then records the new trade.
+            /// O(1) amortized — each trade is added and removed at most once.
+            /// </summary>
+            public void AddAndEvict(Trade trade)
+            {
+                EvictStale(trade.Timestamp);
+
+                _trades.Enqueue(trade);
+                _tradeCount++;
+                switch (trade.Aggressor)
+                {
+                    case AggressorSide.Buy:   _buyVolume    += trade.Size; break;
+                    case AggressorSide.Sell:  _sellVolume   += trade.Size; break;
+                    default:                  _unknownVolume += trade.Size; break;
+                }
+                _vwapNumerator   += trade.Price * trade.Size;
+                _vwapDenominator += trade.Size;
+            }
+
+            /// <summary>
+            /// Evicts trades older than <paramref name="now"/> minus the window duration.
+            /// Called before snapshot reads to ensure the window reflects the current time.
+            /// </summary>
+            public void EvictStale(DateTimeOffset now)
+            {
+                var cutoff = now - _window;
+                while (_trades.Count > 0 && _trades.Peek().Timestamp < cutoff)
+                {
+                    var expired = _trades.Dequeue();
+                    _tradeCount = Math.Max(0, _tradeCount - 1);
+                    switch (expired.Aggressor)
+                    {
+                        case AggressorSide.Buy:   _buyVolume    -= expired.Size; break;
+                        case AggressorSide.Sell:  _sellVolume   -= expired.Size; break;
+                        default:                  _unknownVolume -= expired.Size; break;
+                    }
+                    _vwapNumerator   -= expired.Price * expired.Size;
+                    _vwapDenominator -= expired.Size;
+                }
+            }
+
+            /// <summary>
+            /// Returns the current rolling window stats directly from running sums — O(1).
+            /// </summary>
+            public RollingOrderFlowWindow BuildWindow()
+            {
+                var rollTotal = _buyVolume + _sellVolume + _unknownVolume;
+                var rollVwap = _vwapDenominator == 0 ? 0m : _vwapNumerator / _vwapDenominator;
+                var rollImbalance = rollTotal == 0 ? 0m : (decimal)(_buyVolume - _sellVolume) / rollTotal;
+
+                return new RollingOrderFlowWindow(
+                    (int)_window.TotalSeconds,
+                    _buyVolume,
+                    _sellVolume,
+                    _unknownVolume,
+                    rollVwap,
+                    rollImbalance);
+            }
         }
     }
 
