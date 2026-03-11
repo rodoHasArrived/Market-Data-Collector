@@ -15,6 +15,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
 using MarketDataCollector.Infrastructure.Shared;
 using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
@@ -50,9 +51,9 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     private readonly NYSEOptions _options;
     private readonly HttpClient _httpClient;
-    private ClientWebSocket? _webSocket;
-    private CancellationTokenSource? _connectionCts;
-    private Task? _receiveTask;
+
+    // WebSocket lifecycle managed by WebSocketConnectionManager (replaces _webSocket, _connectionCts, _receiveTask)
+    private readonly WebSocketConnectionManager _wsManager;
 
     private readonly Subject<RealtimeTrade> _trades = new();
     private readonly Subject<RealtimeQuote> _quotes = new();
@@ -145,6 +146,13 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
 
+        _wsManager = new WebSocketConnectionManager(
+            providerName: "NYSE",
+            config: WebSocketConnectionConfig.Resilient,
+            logger: logger ?? LoggingSetup.ForContext<NYSEDataSource>());
+
+        _wsManager.ConnectionLost += OnWsConnectionLostAsync;
+
         _httpClient = new HttpClient
         {
             BaseAddress = new Uri(_options.EffectiveBaseUrl),
@@ -205,6 +213,9 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         await DisconnectAsync().ConfigureAwait(false);
 
+        _wsManager.ConnectionLost -= OnWsConnectionLostAsync;
+        await _wsManager.DisposeAsync().ConfigureAwait(false);
+
         _trades.OnCompleted();
         _trades.Dispose();
         _quotes.OnCompleted();
@@ -220,7 +231,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     #region Connection (Real-time)
 
-    public bool IsConnected => _webSocket?.State == WebSocketState.Open;
+    public bool IsConnected => _wsManager.IsConnected;
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
@@ -234,25 +245,21 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
         Log.Information("Connecting to NYSE WebSocket at {Url}", _options.EffectiveWebSocketUrl);
 
-        _connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        _webSocket = new ClientWebSocket();
-
-        // Add authentication to WebSocket
-        _webSocket.Options.SetRequestHeader("Authorization", $"Bearer {_accessToken}");
-
         try
         {
-            await _webSocket.ConnectAsync(new Uri(_options.EffectiveWebSocketUrl), _connectionCts.Token)
-                .ConfigureAwait(false);
+            await _wsManager.ConnectAsync(
+                new Uri(_options.EffectiveWebSocketUrl),
+                ws => ws.Options.SetRequestHeader("Authorization", $"Bearer {_accessToken}"),
+                ct).ConfigureAwait(false);
 
             Status = DataSourceStatus.Connected;
             Log.Information("Connected to NYSE WebSocket");
 
-            // Start receiving messages
-            _receiveTask = ReceiveMessagesAsync(_connectionCts.Token);
+            // Start receiving messages via the connection manager
+            _wsManager.StartReceiveLoop(msg => { ProcessWebSocketMessage(msg); return Task.CompletedTask; }, ct);
 
             // Re-subscribe to any existing subscriptions
-            await ResubscribeAllAsync(_connectionCts.Token).ConfigureAwait(false);
+            await ResubscribeAllAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -264,25 +271,13 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     public async Task DisconnectAsync(CancellationToken ct = default)
     {
-        if (_webSocket == null) return;
+        if (!IsConnected) return;
 
         Log.Information("Disconnecting from NYSE WebSocket");
 
         try
         {
-            _connectionCts?.Cancel();
-
-            if (_webSocket.State == WebSocketState.Open)
-            {
-                await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnecting", ct)
-                    .ConfigureAwait(false);
-            }
-
-            if (_receiveTask != null)
-            {
-                try { await _receiveTask.ConfigureAwait(false); }
-                catch (OperationCanceledException) { }
-            }
+            await _wsManager.DisconnectAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -290,10 +285,6 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         }
         finally
         {
-            _webSocket?.Dispose();
-            _webSocket = null;
-            _connectionCts?.Dispose();
-            _connectionCts = null;
             Status = DataSourceStatus.Disconnected;
         }
     }
@@ -722,40 +713,32 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     #region WebSocket Message Handling
 
-    private async Task ReceiveMessagesAsync(CancellationToken ct)
+    private async Task OnWsConnectionLostAsync()
     {
-        var buffer = new byte[8192];
-
-        try
+        Status = DataSourceStatus.Disconnected;
+        for (int attempt = 1; attempt <= _options.MaxReconnectAttempts; attempt++)
         {
-            while (_webSocket?.State == WebSocketState.Open && !ct.IsCancellationRequested)
+            MigrationDiagnostics.IncReconnectAttempt("nyse");
+            Log.Information("NYSE reconnection attempt {Attempt}/{Max}", attempt, _options.MaxReconnectAttempts);
+
+            await Task.Delay(TimeSpan.FromSeconds(_options.ReconnectDelaySeconds * attempt))
+                .ConfigureAwait(false);
+
+            try
             {
-                var result = await _webSocket.ReceiveAsync(buffer, ct).ConfigureAwait(false);
-
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    Log.Information("NYSE WebSocket closed by server");
-                    break;
-                }
-
-                if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    ProcessWebSocketMessage(message);
-                }
+                await ConnectAsync().ConfigureAwait(false);
+                MigrationDiagnostics.IncReconnectSuccess("nyse");
+                return;
+            }
+            catch (Exception ex)
+            {
+                MigrationDiagnostics.IncReconnectFailure("nyse");
+                Log.Warning(ex, "NYSE reconnection attempt {Attempt} failed", attempt);
             }
         }
-        catch (OperationCanceledException)
-        {
-            // Expected on disconnect
-        }
-        catch (WebSocketException ex)
-        {
-            Log.Error(ex, "NYSE WebSocket error");
-            Status = DataSourceStatus.Disconnected;
-            TryReconnectAsync()
-                .ObserveException(Log, "NYSE WebSocket reconnection after error");
-        }
+
+        Log.Error("NYSE failed to reconnect after {Max} attempts", _options.MaxReconnectAttempts);
+        Status = DataSourceStatus.Unavailable;
     }
 
     private void ProcessWebSocketMessage(string message)
@@ -851,7 +834,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         try
         {
-            if (_webSocket?.State != WebSocketState.Open) return;
+            if (!IsConnected) return;
 
             var message = JsonSerializer.Serialize(new
             {
@@ -860,9 +843,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
                 symbol
             });
 
-            var bytes = Encoding.UTF8.GetBytes(message);
-            await _webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None)
-                .ConfigureAwait(false);
+            await _wsManager.SendAsync(message, CancellationToken.None).ConfigureAwait(false);
 
             Log.Debug("NYSE {Action} {Channel} for {Symbol}", action, channel, symbol);
         }
@@ -877,12 +858,10 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         try
         {
-            if (_webSocket?.State != WebSocketState.Open) return;
+            if (!IsConnected) return;
 
             var message = JsonSerializer.Serialize(new { action = "unsubscribe_all" });
-            var bytes = Encoding.UTF8.GetBytes(message);
-            await _webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None)
-                .ConfigureAwait(false);
+            await _wsManager.SendAsync(message, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -897,33 +876,6 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             var channel = info.Type.ToString().ToLowerInvariant();
             await SendSubscriptionMessageAsync(info.Symbol, channel, "subscribe").ConfigureAwait(false);
         }
-    }
-
-    private async Task TryReconnectAsync()
-    {
-        for (int attempt = 1; attempt <= _options.MaxReconnectAttempts; attempt++)
-        {
-            MigrationDiagnostics.IncReconnectAttempt("nyse");
-            Log.Information("NYSE reconnection attempt {Attempt}/{Max}", attempt, _options.MaxReconnectAttempts);
-
-            await Task.Delay(TimeSpan.FromSeconds(_options.ReconnectDelaySeconds * attempt))
-                .ConfigureAwait(false);
-
-            try
-            {
-                await ConnectAsync().ConfigureAwait(false);
-                MigrationDiagnostics.IncReconnectSuccess("nyse");
-                return;
-            }
-            catch (Exception ex)
-            {
-                MigrationDiagnostics.IncReconnectFailure("nyse");
-                Log.Warning(ex, "NYSE reconnection attempt {Attempt} failed", attempt);
-            }
-        }
-
-        Log.Error("NYSE failed to reconnect after {Max} attempts", _options.MaxReconnectAttempts);
-        Status = DataSourceStatus.Unavailable;
     }
 
     #endregion

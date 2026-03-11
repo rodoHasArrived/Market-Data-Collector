@@ -201,6 +201,39 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     }
 
     /// <summary>
+    /// Reads a single text message from the WebSocket.
+    /// Must only be called after <see cref="ConnectAsync"/> and before
+    /// <see cref="StartReceiveLoop"/> — it reads directly from the socket
+    /// for initial handshake sequences (e.g., Polygon "connected" + "auth_success").
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The message text, or <c>null</c> if the connection closed.</returns>
+    public async Task<string?> ReadOneMessageAsync(CancellationToken ct = default)
+    {
+        if (_webSocket == null)
+            throw new InvalidOperationException("WebSocket not connected. Call ConnectAsync first.");
+
+        // Enforce documented invariant: must only be used before StartReceiveLoop.
+        if (_receiveTask != null || _receiveLoopCts != null)
+            throw new InvalidOperationException("ReadOneMessageAsync can only be called before StartReceiveLoop is started.");
+        var buffer = new byte[4096];
+        var sb = new StringBuilder();
+
+        WebSocketReceiveResult result;
+        do
+        {
+            result = await _webSocket.ReceiveAsync(buffer, ct).ConfigureAwait(false);
+            if (result.MessageType == WebSocketMessageType.Close)
+                return null;
+            if (result.MessageType == WebSocketMessageType.Text)
+                sb.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
+        }
+        while (!result.EndOfMessage);
+
+        return sb.ToString();
+    }
+
+    /// <summary>
     /// Sends a text message through the WebSocket.
     /// </summary>
     /// <param name="message">The message to send.</param>

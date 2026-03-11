@@ -81,7 +81,7 @@ public abstract class WebSocketProviderBase : IMarketDataClient
     public abstract bool IsEnabled { get; }
 
     /// <inheritdoc/>
-    public async Task ConnectAsync(CancellationToken ct = default)
+    public virtual async Task ConnectAsync(CancellationToken ct = default)
     {
         if (_connectionManager.IsConnected) return;
 
@@ -185,6 +185,14 @@ public abstract class WebSocketProviderBase : IMarketDataClient
     /// </summary>
     protected Task SendAsync(string message, CancellationToken ct = default)
         => _connectionManager.SendAsync(message, ct);
+
+    /// <summary>
+    /// Reads a single text message directly from the WebSocket.
+    /// Call only during <see cref="AuthenticateAsync"/> — before the receive loop starts —
+    /// to handle initial handshake messages (e.g., connection confirmation, auth response).
+    /// </summary>
+    protected Task<string?> ReadOneMessageAsync(CancellationToken ct = default)
+        => _connectionManager.ReadOneMessageAsync(ct);
 
     /// <summary>
     /// Records heartbeat activity. Call this when data is received to prevent
