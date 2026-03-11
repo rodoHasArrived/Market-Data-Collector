@@ -339,7 +339,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
                 if (drained == 0)
                 {
                     // Nothing to do — yield briefly to avoid spinning at 100 % CPU.
-                    await Task.Delay(0, _cts.Token).ConfigureAwait(false);
+                    await Task.Yield().ConfigureAwait(false);
                     continue;
                 }
 
