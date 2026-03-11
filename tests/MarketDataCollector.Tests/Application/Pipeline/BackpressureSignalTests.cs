@@ -83,17 +83,31 @@ public sealed class BackpressureSignalTests : IAsyncLifetime
     }
 
     [Fact]
-    public void PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent()
+    public async Task PublicQueueUtilization_And_SignalQueueUtilization_AreConsistent()
     {
-        // Public property returns 0–100; interface returns 0–1 fraction
-        IBackpressureSignal signal = _pipeline;
+        // Use a dedicated blocking pipeline (batchSize: 1) so the consumer holds one event in
+        // AppendAsync while the remaining events stay in the channel, giving a stable non-zero
+        // utilization to read from both properties without a race condition.
+        var releaseTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var sink = new BlockingStorageSink(releaseTcs.Task);
+        await using var pipeline = new EventPipeline(sink, capacity: 100, batchSize: 1, enablePeriodicFlush: false);
+        IBackpressureSignal signal = pipeline;
 
+        // Publish 10 events so the consumer processes event 1 (and blocks) while events 2-10 stay in the channel.
         var ts = DateTimeOffset.UtcNow;
         var trade = new Trade(ts, "MSFT", 420m, 50L, AggressorSide.Sell, 1L);
-        _pipeline.TryPublish(MarketEvent.Trade(ts, "MSFT", trade, seq: 1));
+        for (var i = 1; i <= 10; i++)
+            pipeline.TryPublish(MarketEvent.Trade(ts, "MSFT", trade, seq: i));
 
-        var publicUtil = _pipeline.QueueUtilization; // 0–100
-        var signalUtil = signal.QueueUtilization;    // 0–1
+        // Wait until the consumer is blocked inside AppendAsync.
+        await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(5));
+
+        // Both reads happen while the consumer is frozen — no race possible.
+        var publicUtil = pipeline.QueueUtilization; // 0–100
+        var signalUtil = signal.QueueUtilization;   // 0–1
+
+        // Release the consumer for clean disposal.
+        releaseTcs.SetResult(true);
 
         (publicUtil / 100.0).Should().BeApproximately(signalUtil, precision: 1e-9,
             "IBackpressureSignal.QueueUtilization must be the public property divided by 100");
