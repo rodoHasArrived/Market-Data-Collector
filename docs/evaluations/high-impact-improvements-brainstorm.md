@@ -983,7 +983,7 @@ These questions do not yet have agreed answers and should be resolved before det
    - **Recommendation:** Solution B. Golden hashes are too brittle (any library version bump can change serialization and break the test). Field-level diff with a configurable ignore list for non-deterministic fields is more maintainable.
 
 4. **What load and latency benchmarks should gate promotion of consensus scoring to production?**
-   - _Proposal:_ Add a `ConsensusEngineBenchmarks` class to `MarketDataCollector.Benchmarks` measuring: (a) throughput (events/second through the consensus window buffer at 1, 2, and 3 providers), (b) median and P99 latency added by the consensus step, and (c) memory overhead of the in-flight window buffers.
+   - _Proposal:_ Create or extend a BenchmarkDotNet benchmark project (for example, a new `MarketDataCollector.Benchmarks` project) and add a `ConsensusEngineBenchmarks` class measuring: (a) throughput (events/second through the consensus window buffer at 1, 2, and 3 providers), (b) median and P99 latency added by the consensus step, and (c) memory overhead of the in-flight window buffers.
    - _Acceptance criteria:_ P99 added latency < 100 ms; throughput degradation < 10% vs. single-provider baseline; memory overhead < 50 MB at 1,000 concurrent symbols.
 
 ---
