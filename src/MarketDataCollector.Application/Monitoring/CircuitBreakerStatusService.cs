@@ -23,12 +23,21 @@ public sealed class CircuitBreakerStatusService
     /// Registers or updates a circuit breaker's state.
     /// Call this from resilience policy callbacks (OnOpened, OnClosed, OnHalfOpened).
     /// </summary>
+    /// <param name="name">Unique name identifying this circuit breaker.</param>
+    /// <param name="newState">The new state being transitioned to.</param>
+    /// <param name="lastError">Optional error message that caused the transition.</param>
+    /// <param name="failureCount">Optional number of failures that triggered the transition.</param>
+    /// <param name="breakDuration">Optional break duration (stored for cooldown computation when state is Open).</param>
     public void RecordStateTransition(
         string name,
         CircuitBreakerState newState,
-        string? lastError = null)
+        string? lastError = null,
+        int? failureCount = null,
+        TimeSpan? breakDuration = null)
     {
         var now = DateTimeOffset.UtcNow;
+        CircuitBreakerState oldState = CircuitBreakerState.Closed;
+
         var info = _breakers.AddOrUpdate(
             name,
             _ => new CircuitBreakerInfo
@@ -37,20 +46,26 @@ public sealed class CircuitBreakerStatusService
                 State = newState,
                 LastStateChange = now,
                 TripCount = newState == CircuitBreakerState.Open ? 1 : 0,
-                LastError = lastError
+                LastError = lastError,
+                BreakDuration = breakDuration
             },
-            (_, existing) => new CircuitBreakerInfo
+            (_, existing) =>
             {
-                Name = existing.Name,
-                State = newState,
-                LastStateChange = now,
-                TripCount = newState == CircuitBreakerState.Open ? existing.TripCount + 1 : existing.TripCount,
-                LastError = lastError ?? existing.LastError
+                oldState = existing.State;
+                return new CircuitBreakerInfo
+                {
+                    Name = existing.Name,
+                    State = newState,
+                    LastStateChange = now,
+                    TripCount = newState == CircuitBreakerState.Open ? existing.TripCount + 1 : existing.TripCount,
+                    LastError = lastError ?? existing.LastError,
+                    BreakDuration = breakDuration ?? existing.BreakDuration
+                };
             });
 
         _log.Information(
-            "CircuitBreaker {Name} transitioned to {NewState}. Trip count: {TripCount}",
-            name, newState, info.TripCount);
+            "CircuitBreaker {Name} transitioned from {OldState} to {NewState} after {FailureCount} failures",
+            name, oldState, newState, failureCount ?? 0);
 
         try
         {
@@ -81,15 +96,28 @@ public sealed class CircuitBreakerStatusService
     /// </summary>
     public CircuitBreakerDashboard GetDashboard()
     {
+        var now = DateTimeOffset.UtcNow;
         var breakers = _breakers.Values
             .OrderBy(b => b.Name)
-            .Select(b => new CircuitBreakerStatus(
-                Name: b.Name,
-                State: b.State.ToString(),
-                LastStateChange: b.LastStateChange,
-                TripCount: b.TripCount,
-                LastError: b.LastError,
-                TimeSinceLastChange: DateTimeOffset.UtcNow - b.LastStateChange))
+            .Select(b =>
+            {
+                TimeSpan? cooldownRemaining = null;
+                if (b.State == CircuitBreakerState.Open && b.BreakDuration.HasValue)
+                {
+                    var remaining = b.BreakDuration.Value - (now - b.LastStateChange);
+                    if (remaining > TimeSpan.Zero)
+                        cooldownRemaining = remaining;
+                }
+
+                return new CircuitBreakerStatus(
+                    Name: b.Name,
+                    State: b.State.ToString(),
+                    LastStateChange: b.LastStateChange,
+                    TripCount: b.TripCount,
+                    LastError: b.LastError,
+                    TimeSinceLastChange: now - b.LastStateChange,
+                    CooldownRemaining: cooldownRemaining);
+            })
             .ToList();
 
         var openCount = breakers.Count(b => b.State == nameof(CircuitBreakerState.Open));
@@ -108,7 +136,7 @@ public sealed class CircuitBreakerStatusService
             HalfOpenCount: halfOpenCount,
             ClosedCount: breakers.Count - openCount - halfOpenCount,
             Breakers: breakers,
-            Timestamp: DateTimeOffset.UtcNow);
+            Timestamp: now);
     }
 
     private sealed class CircuitBreakerInfo
@@ -118,6 +146,7 @@ public sealed class CircuitBreakerStatusService
         public DateTimeOffset LastStateChange { get; set; }
         public int TripCount { get; set; }
         public string? LastError { get; set; }
+        public TimeSpan? BreakDuration { get; set; }
     }
 }
 
@@ -149,7 +178,8 @@ public sealed record CircuitBreakerStatus(
     DateTimeOffset LastStateChange,
     int TripCount,
     string? LastError,
-    TimeSpan TimeSinceLastChange);
+    TimeSpan TimeSinceLastChange,
+    TimeSpan? CooldownRemaining);
 
 /// <summary>
 /// Dashboard view of all circuit breakers.

@@ -77,15 +77,52 @@ public static class SharedResiliencePolicies
     /// </summary>
     /// <param name="failureThreshold">Number of failures before opening circuit (default: 5).</param>
     /// <param name="breakDuration">How long circuit stays open (default: 30s).</param>
+    /// <param name="breakerName">Optional name used when reporting state transitions via <paramref name="onStateChanged"/>.</param>
+    /// <param name="onStateChanged">
+    /// Optional callback invoked on every state transition.
+    /// Parameters: (breakerName, newState "Open"|"Closed"|"HalfOpen", lastError or null).
+    /// </param>
     public static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(
         int failureThreshold = 5,
-        TimeSpan? breakDuration = null)
+        TimeSpan? breakDuration = null,
+        string? breakerName = null,
+        Action<string, string, string?>? onStateChanged = null)
     {
+        var duration = breakDuration ?? TimeSpan.FromSeconds(30);
+        var name = breakerName ?? "HttpCircuitBreaker";
+
         return HttpPolicyExtensions
             .HandleTransientHttpError()
             .CircuitBreakerAsync(
                 handledEventsAllowedBeforeBreaking: failureThreshold,
-                durationOfBreak: breakDuration ?? TimeSpan.FromSeconds(30));
+                durationOfBreak: duration,
+                onBreak: (outcome, _) =>
+                    onStateChanged?.Invoke(name, "Open",
+                        outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString()),
+                onReset: () => onStateChanged?.Invoke(name, "Closed", null),
+                onHalfOpen: () => onStateChanged?.Invoke(name, "HalfOpen", null));
+    }
+
+    /// <summary>
+    /// Adds standard resilience policies (retry with exponential backoff, circuit breaker)
+    /// to an HttpClient builder, reporting circuit breaker state changes via <paramref name="onStateChanged"/>.
+    /// </summary>
+    /// <param name="builder">The HttpClient builder to configure.</param>
+    /// <param name="clientName">Name used to identify this circuit breaker in state-change reports.</param>
+    /// <param name="onStateChanged">
+    /// Callback invoked on every circuit breaker state transition.
+    /// Parameters: (breakerName, newState "Open"|"Closed"|"HalfOpen", lastError or null).
+    /// </param>
+    public static IHttpClientBuilder AddSharedResiliencePolicyTracked(
+        this IHttpClientBuilder builder,
+        string clientName,
+        Action<string, string, string?> onStateChanged)
+    {
+        return builder
+            .AddPolicyHandler(GetRetryPolicy())
+            .AddPolicyHandler(GetCircuitBreakerPolicy(
+                breakerName: clientName,
+                onStateChanged: onStateChanged));
     }
 
     /// <summary>

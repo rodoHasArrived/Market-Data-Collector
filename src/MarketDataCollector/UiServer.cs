@@ -108,6 +108,9 @@ public sealed class UiServer : IAsyncDisposable
         _app = builder.Build();
         _logger = _app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<UiServer>();
 
+        // Wire Polly circuit breaker callbacks to CircuitBreakerStatusService
+        ServiceCompositionRoot.InitializeCircuitBreakerCallbackRouter(_app.Services);
+
         // Enable Swagger middleware
         _app.UseSwagger();
         _app.UseSwaggerUI(options =>
@@ -245,10 +248,7 @@ public sealed class UiServer : IAsyncDisposable
         // Canonicalization parity dashboard (Phase 2)
         _app.MapCanonicalizationEndpoints(s_jsonOptions);
 
-        // Resilience, cost estimation, and compliance API
-        _app.MapResilienceEndpoints(s_jsonOptions);
-
-        // UI API
+        // UI API (includes resilience, quality, SLA, and all other endpoint groups)
         _app.MapUiEndpoints(s_jsonOptions);
     }
 
