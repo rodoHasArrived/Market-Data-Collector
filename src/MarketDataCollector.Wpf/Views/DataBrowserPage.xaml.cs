@@ -10,21 +10,72 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.ViewModels;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 public partial class DataBrowserPage : Page
 {
+    private const string PageTag = "DataBrowser";
     private readonly DataBrowserViewModel _viewModel = new();
 
     public DataBrowserPage()
     {
         InitializeComponent();
         DataContext = _viewModel;
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        SavePageFilterState();
+    }
+
+    private void SavePageFilterState()
+    {
+        var ws = WpfServices.WorkspaceService.Instance;
+        ws.UpdatePageFilterState(PageTag, "SymbolFilter", _viewModel.SymbolFilter);
+        ws.UpdatePageFilterState(PageTag, "SelectedDataType", _viewModel.SelectedDataType);
+        ws.UpdatePageFilterState(PageTag, "SelectedVenue", _viewModel.SelectedVenue);
+        ws.UpdatePageFilterState(PageTag, "SortField", _viewModel.SortField);
+        ws.UpdatePageFilterState(PageTag, "PageSize", _viewModel.PageSize.ToString());
+        ws.UpdatePageFilterState(PageTag, "FromDate", _viewModel.FromDate?.ToString("yyyy-MM-dd"));
+        ws.UpdatePageFilterState(PageTag, "ToDate", _viewModel.ToDate?.ToString("yyyy-MM-dd"));
+    }
+
+    private void RestorePageFilterState()
+    {
+        var ws = WpfServices.WorkspaceService.Instance;
+
+        var symbolFilter = ws.GetPageFilterState(PageTag, "SymbolFilter");
+        if (symbolFilter is not null)
+            _viewModel.SymbolFilter = symbolFilter;
+
+        var dataType = ws.GetPageFilterState(PageTag, "SelectedDataType");
+        if (dataType is not null)
+            _viewModel.SelectedDataType = dataType;
+
+        var venue = ws.GetPageFilterState(PageTag, "SelectedVenue");
+        if (venue is not null)
+            _viewModel.SelectedVenue = venue;
+
+        var sortField = ws.GetPageFilterState(PageTag, "SortField");
+        if (sortField is not null)
+            _viewModel.SortField = sortField;
+
+        if (int.TryParse(ws.GetPageFilterState(PageTag, "PageSize"), out var pageSize) && pageSize > 0)
+            _viewModel.PageSize = pageSize;
+
+        if (DateTime.TryParse(ws.GetPageFilterState(PageTag, "FromDate"), out var fromDate))
+            _viewModel.FromDate = fromDate;
+
+        if (DateTime.TryParse(ws.GetPageFilterState(PageTag, "ToDate"), out var toDate))
+            _viewModel.ToDate = toDate;
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        RestorePageFilterState();
         _viewModel.RefreshResults();
     }
 
