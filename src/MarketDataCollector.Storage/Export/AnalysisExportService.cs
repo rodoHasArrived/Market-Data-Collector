@@ -20,12 +20,14 @@ public sealed partial class AnalysisExportService
     private readonly ILogger _log = LoggingSetup.ForContext<AnalysisExportService>();
     private readonly string _dataRoot;
     private readonly Dictionary<string, ExportProfile> _profiles;
+    private readonly ExportValidator _validator;
 
     public AnalysisExportService(string dataRoot)
     {
         _dataRoot = dataRoot;
         _profiles = ExportProfile.GetBuiltInProfiles()
             .ToDictionary(p => p.Id, p => p);
+        _validator = new ExportValidator(dataRoot);
     }
 
     /// <summary>
@@ -202,6 +204,23 @@ public sealed partial class AnalysisExportService
             _log.Information("Starting export with profile {ProfileId} to {OutputDir}",
                 profile.Id, request.OutputDirectory);
 
+            // Pre-export validation
+            if (request.ValidateBeforeExport)
+            {
+                var validation = await _validator.ValidateAsync(request, ct);
+                if (!validation.IsValid)
+                {
+                    var errorMessages = string.Join("; ", validation.Errors.Select(e => e.Message));
+                    _log.Warning("Pre-export validation failed: {Errors}", errorMessages);
+                    return ExportResult.CreateFailure(profile.Id, $"Validation failed: {errorMessages}");
+                }
+
+                // Append any warnings to the result
+                var warningMessages = validation.Warnings.Select(w => $"[Validation] {w.Message}").ToArray();
+                if (warningMessages.Length > 0)
+                    result.Warnings = [.. result.Warnings, .. warningMessages];
+            }
+
             // Ensure output directory exists
             Directory.CreateDirectory(request.OutputDirectory);
 
@@ -279,9 +298,12 @@ public sealed partial class AnalysisExportService
             }
 
             // Generate lineage manifest with provenance information
-            var lineagePath = await GenerateLineageManifestAsync(
-                request.OutputDirectory, request, profile, sourceFiles, exportedFiles, ct);
-            result.LineageManifestPath = lineagePath;
+            if (request.IncludeManifest)
+            {
+                var lineagePath = await GenerateLineageManifestAsync(
+                    request.OutputDirectory, request, profile, sourceFiles, exportedFiles, ct);
+                result.LineageManifestPath = lineagePath;
+            }
 
             result.CompletedAt = DateTime.UtcNow;
             result.Success = true;
