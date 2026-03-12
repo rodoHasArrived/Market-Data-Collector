@@ -669,6 +669,7 @@ Market-Data-Collector/
 │   │   │   ├── IEventCanonicalizer.cs
 │   │   │   └── VenueMicMapper.cs
 │   │   ├── Commands/
+│   │   │   ├── CatalogCommand.cs
 │   │   │   ├── CliArguments.cs
 │   │   │   ├── CommandDispatcher.cs
 │   │   │   ├── ConfigCommands.cs
@@ -1223,6 +1224,7 @@ Market-Data-Collector/
 │   │   │   ├── BackfillScheduleEndpoints.cs
 │   │   │   ├── CalendarEndpoints.cs
 │   │   │   ├── CanonicalizationEndpoints.cs
+│   │   │   ├── CatalogEndpoints.cs
 │   │   │   ├── CheckpointEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── CronEndpoints.cs
