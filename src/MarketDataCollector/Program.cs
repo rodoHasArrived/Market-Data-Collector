@@ -89,6 +89,10 @@ public partial class Program
         // Registration order determines priority when multiple flags are present.
         var symbolService = new SymbolManagementService(new ConfigStore(cfgPath), cfg.DataRoot, log);
 
+        var storageSearchService = new StorageSearchService(
+            cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress ?? false)
+                ?? new StorageOptions { RootPath = cfg.DataRoot });
+
         var dispatcher = new CommandDispatcher(
             new HelpCommand(),
             new ConfigCommands(configService, log),
@@ -101,6 +105,7 @@ public partial class Program
             new PackageCommands(cfg, log),
             new ConfigPresetCommand(new AutoConfigurationService(), log),
             new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log),
+            new CatalogCommand(storageSearchService, log),
             new GenerateLoaderCommand(cfg.DataRoot, log)
         );
 

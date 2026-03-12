@@ -199,6 +199,7 @@ public static class UiEndpoints
         app.MapSymbolEndpoints(jsonOptions);
         app.MapStorageEndpoints(jsonOptions);
         app.MapStorageQualityEndpoints(jsonOptions);
+        app.MapCatalogEndpoints(jsonOptions);
 
         // Phase 3B endpoint groups
         app.MapHealthEndpoints(jsonOptions);
@@ -286,6 +287,7 @@ public static class UiEndpoints
         app.MapSymbolEndpoints(jsonOptions);
         app.MapStorageEndpoints(jsonOptions);
         app.MapStorageQualityEndpoints(jsonOptions);
+        app.MapCatalogEndpoints(jsonOptions);
 
         // Phase 3B endpoint groups
         app.MapHealthEndpoints(jsonOptions);

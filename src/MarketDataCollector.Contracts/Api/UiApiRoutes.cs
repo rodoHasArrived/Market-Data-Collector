@@ -120,6 +120,12 @@ public static class UiApiRoutes
     public const string SymbolsBatch = "/api/symbols/batch";
     public const string SymbolMappings = "/api/symbols/mappings";
 
+    // Catalog search and discovery endpoints
+    public const string CatalogSearch = "/api/catalog/search";
+    public const string CatalogTimeline = "/api/catalog/timeline";
+    public const string CatalogSymbols = "/api/catalog/symbols";
+    public const string CatalogCoverage = "/api/catalog/coverage";
+
     // Storage endpoints
     public const string StorageProfiles = "/api/storage/profiles";
     public const string StorageStats = "/api/storage/stats";
