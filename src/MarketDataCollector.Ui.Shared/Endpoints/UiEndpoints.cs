@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using MarketDataCollector.Application.Composition;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.UI;
@@ -45,6 +46,10 @@ public static class UiEndpoints
         });
 
         var app = builder.Build();
+
+        // Wire Polly circuit breaker callbacks to CircuitBreakerStatusService
+        ServiceCompositionRoot.InitializeCircuitBreakerCallbackRouter(app.Services);
+
         app.UseApiKeyAuthentication();
         app.UseLoginSessionAuthentication();
         app.UseRateLimiter();
@@ -72,6 +77,10 @@ public static class UiEndpoints
     {
         builder.Services.AddUiSharedServices(statusHandlers, configPath);
         var app = builder.Build();
+
+        // Wire Polly circuit breaker callbacks to CircuitBreakerStatusService
+        ServiceCompositionRoot.InitializeCircuitBreakerCallbackRouter(app.Services);
+
         app.UseApiKeyAuthentication();
         app.UseLoginSessionAuthentication();
         app.UseRateLimiter();
@@ -231,6 +240,9 @@ public static class UiEndpoints
             app.MapSlaEndpoints(slaMonitor);
         }
 
+        // Resilience: circuit breaker dashboard, cost estimation, compliance report
+        app.MapResilienceEndpoints(jsonOptions);
+
         // Authentication endpoints (login page, login API, logout API)
         app.MapAuthEndpoints();
 
@@ -315,6 +327,9 @@ public static class UiEndpoints
         {
             app.MapSlaEndpoints(slaMonitor);
         }
+
+        // Resilience: circuit breaker dashboard, cost estimation, compliance report
+        app.MapResilienceEndpoints(jsonOptions);
 
         // Authentication endpoints (login page, login API, logout API)
         app.MapAuthEndpoints();

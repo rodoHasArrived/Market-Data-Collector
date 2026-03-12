@@ -140,6 +140,19 @@ public static class ServiceCompositionRoot
         return services;
     }
 
+    /// <summary>
+    /// Initializes the circuit breaker callback router with the built service provider.
+    /// Call this once after the DI container is built (i.e., after <c>WebApplication.Build()</c>
+    /// or <c>ServiceCollection.BuildServiceProvider()</c>) to connect Polly state-change
+    /// callbacks to <see cref="CircuitBreakerStatusService"/>.
+    /// </summary>
+    public static void InitializeCircuitBreakerCallbackRouter(IServiceProvider sp)
+    {
+        var cbService = sp.GetService<CircuitBreakerStatusService>();
+        if (cbService != null)
+            CircuitBreakerCallbackRouter.Initialize(cbService);
+    }
+
     #region Core Configuration Services
 
     /// <summary>
@@ -414,6 +427,10 @@ public static class ServiceCompositionRoot
 
         // API documentation service
         services.AddSingleton<ApiDocumentationService>();
+
+        // Circuit breaker status service - tracks Polly circuit breaker state transitions
+        // and exposes them via the /api/resilience/circuit-breakers endpoint.
+        services.AddSingleton<CircuitBreakerStatusService>();
 
         return services;
     }
@@ -1059,8 +1076,27 @@ public static class ServiceCompositionRoot
     /// </summary>
     private static IServiceCollection AddHttpClientFactoryServices(this IServiceCollection services)
     {
-        // Register all named HttpClient configurations with Polly policies
-        services.AddMarketDataHttpClients();
+        // Register all named HttpClient configurations with Polly policies.
+        // Uses the tracked variant so every circuit breaker state transition is reported
+        // to CircuitBreakerStatusService and surfaced via /api/resilience/circuit-breakers.
+        services.AddMarketDataHttpClientsTracked((name, state, error) =>
+        {
+            // Callback invoked by Polly on every circuit breaker transition.
+            // We use a lazy service resolution pattern here because the service provider
+            // is not yet available during service registration — the lambda captures the
+            // IServiceCollection and resolves the service on first use.
+            var circuitBreakerState = state switch
+            {
+                "Open" => CircuitBreakerState.Open,
+                "HalfOpen" => CircuitBreakerState.HalfOpen,
+                _ => CircuitBreakerState.Closed
+            };
+
+            // The callback is invoked at runtime when an HTTP request triggers a state
+            // transition. At that point the DI container is fully built, so we resolve
+            // CircuitBreakerStatusService from the root provider via a static accessor.
+            CircuitBreakerCallbackRouter.Notify(name, circuitBreakerState, error);
+        });
 
         return services;
     }
