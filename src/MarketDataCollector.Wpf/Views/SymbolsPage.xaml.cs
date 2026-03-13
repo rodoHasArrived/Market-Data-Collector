@@ -17,6 +17,8 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class SymbolsPage : Page
 {
+    private const string PageTag = "Symbols";
+
     private readonly WpfServices.ConfigService _configService;
     private readonly WpfServices.WatchlistService _watchlistService;
     private readonly ObservableCollection<SymbolViewModel> _symbols = new();
@@ -74,8 +76,28 @@ public partial class SymbolsPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        // Restore persisted filter state before loading symbols so ApplyFilters uses saved values
+        RestoreFilterState();
         await LoadSymbolsFromConfigAsync();
         await LoadWatchlistsAsync();
+    }
+
+    /// <summary>Restores saved filter state from the per-page state store.</summary>
+    private void RestoreFilterState()
+    {
+        var pss = WpfServices.PageStateService.Instance;
+
+        var searchText = pss.GetFilter(PageTag, "searchText");
+        if (searchText != null)
+            SymbolSearchBox.Text = searchText;
+
+        var filterTag = pss.GetFilter(PageTag, "filterTag");
+        if (filterTag != null)
+            SelectComboItemByTag(FilterCombo, filterTag);
+
+        var exchangeTag = pss.GetFilter(PageTag, "exchangeTag");
+        if (exchangeTag != null)
+            SelectComboItemByTag(ExchangeFilterCombo, exchangeTag);
     }
 
     private async Task LoadSymbolsFromConfigAsync()
@@ -176,11 +198,18 @@ public partial class SymbolsPage : Page
 
     private void SymbolSearch_TextChanged(object sender, TextChangedEventArgs e)
     {
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "searchText",
+            string.IsNullOrEmpty(SymbolSearchBox.Text) ? null : SymbolSearchBox.Text);
         ApplyFilters();
     }
 
     private void Filter_Changed(object sender, SelectionChangedEventArgs e)
     {
+        var pss = WpfServices.PageStateService.Instance;
+        var filterTag = GetComboSelectedTag(FilterCombo);
+        pss.SetFilter(PageTag, "filterTag", filterTag == "All" ? null : filterTag);
+        var exchangeTag = GetComboSelectedTag(ExchangeFilterCombo);
+        pss.SetFilter(PageTag, "exchangeTag", exchangeTag == "All" ? null : exchangeTag);
         ApplyFilters();
     }
 
@@ -189,6 +218,7 @@ public partial class SymbolsPage : Page
         SymbolSearchBox.Text = "";
         SelectComboItemByTag(FilterCombo, "All");
         SelectComboItemByTag(ExchangeFilterCombo, "All");
+        WpfServices.PageStateService.Instance.ClearPageFilters(PageTag);
         ApplyFilters();
     }
 

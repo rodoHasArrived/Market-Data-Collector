@@ -597,6 +597,9 @@ public partial class MainWindow : Window
                     await _workspaceService.ActivateWorkspaceAsync(session.ActiveWorkspaceId);
                 }
 
+                // Populate per-page filter state so individual pages can restore filters on load
+                PageStateService.Instance.LoadFromSession(session);
+
                 // Restore last active page after MainPage loads
                 if (!string.IsNullOrEmpty(session.ActivePageTag) && session.ActivePageTag != "Dashboard")
                 {
@@ -628,6 +631,7 @@ public partial class MainWindow : Window
             {
                 ActivePageTag = currentPage ?? "Dashboard",
                 ActiveWorkspaceId = activeWorkspace?.Id,
+                ActiveFilters = PageStateService.Instance.GetAllFiltersFlat(),
                 WindowBounds = new Ui.Services.WindowBounds
                 {
                     X = RestoreBounds.Left,

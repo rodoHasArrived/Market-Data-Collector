@@ -23,6 +23,8 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class BackfillPage : Page
 {
+    private const string PageTag = "Backfill";
+
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.NavigationService _navigationService;
     private readonly BackfillApiService _backfillApiService;
@@ -68,12 +70,53 @@ public partial class BackfillPage : Page
         ToDatePicker.SelectedDate = DateTime.Today;
         FromDatePicker.SelectedDate = DateTime.Today.AddDays(-30);
 
+        // Restore persisted configuration state before updating derived UI elements
+        RestoreFilterState();
+
         UpdateProviderPrioritySummary();
         UpdateGranularityHint();
 
         await LoadScheduledJobsAsync();
         await LoadResumableJobsAsync();
         await RefreshStatusFromApiAsync();
+    }
+
+    /// <summary>Restores saved backfill configuration from the per-page state store.</summary>
+    private void RestoreFilterState()
+    {
+        var pss = WpfServices.PageStateService.Instance;
+
+        var symbols = pss.GetFilter(PageTag, "symbols");
+        if (symbols != null)
+            SymbolsBox.Text = symbols;
+
+        var granularity = pss.GetFilter(PageTag, "granularity");
+        if (granularity != null)
+            SelectComboItemByTag(GranularityCombo, granularity);
+
+        var primaryProvider = pss.GetFilter(PageTag, "primaryProvider");
+        if (primaryProvider != null)
+            SelectComboItemByTag(PrimaryProviderCombo, primaryProvider);
+
+        var secondaryProvider = pss.GetFilter(PageTag, "secondaryProvider");
+        if (secondaryProvider != null)
+            SelectComboItemByTag(SecondaryProviderCombo, secondaryProvider);
+
+        var tertiaryProvider = pss.GetFilter(PageTag, "tertiaryProvider");
+        if (tertiaryProvider != null)
+            SelectComboItemByTag(TertiaryProviderCombo, tertiaryProvider);
+    }
+
+    private static void SelectComboItemByTag(ComboBox combo, string tag)
+    {
+        foreach (var item in combo.Items)
+        {
+            if (item is ComboBoxItem cbi && cbi.Tag?.ToString() == tag)
+            {
+                combo.SelectedItem = item;
+                return;
+            }
+        }
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -322,19 +365,31 @@ public partial class BackfillPage : Page
 
     private void SymbolsBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        var symbols = SymbolsBox.Text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
+        var text = SymbolsBox.Text;
+        var symbols = text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
         SymbolCountText.Text = $"{symbols.Length} symbols";
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "symbols",
+            string.IsNullOrWhiteSpace(text) ? null : text);
     }
 
     private void ProviderPriority_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        var pss = WpfServices.PageStateService.Instance;
+        pss.SetFilter(PageTag, "primaryProvider", GetComboTag(PrimaryProviderCombo));
+        pss.SetFilter(PageTag, "secondaryProvider", GetComboTag(SecondaryProviderCombo));
+        pss.SetFilter(PageTag, "tertiaryProvider", GetComboTag(TertiaryProviderCombo));
         UpdateProviderPrioritySummary();
     }
 
     private void GranularityCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "granularity",
+            GetComboTag(GranularityCombo));
         UpdateGranularityHint();
     }
+
+    private static string? GetComboTag(ComboBox combo)
+        => (combo?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
 
     private void ApplySmartRange_Click(object sender, RoutedEventArgs e)
     {
