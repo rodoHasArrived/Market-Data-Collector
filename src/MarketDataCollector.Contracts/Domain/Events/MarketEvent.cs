@@ -127,4 +127,34 @@ public sealed record MarketEvent(
     /// </summary>
     public static MarketEvent CreateOpenInterest(DateTimeOffset ts, string symbol, OpenInterestUpdate oi, long seq = 0, string source = "IB")
         => new(ts, symbol, MarketEventType.OpenInterest, oi, seq == 0 ? oi.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an order-add market event.
+    /// </summary>
+    public static MarketEvent CreateOrderAdd(DateTimeOffset ts, string symbol, OrderAdd order, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderAdd, order, seq == 0 ? order.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an order-modify market event.
+    /// </summary>
+    public static MarketEvent CreateOrderModify(DateTimeOffset ts, string symbol, OrderModify modify, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderModify, modify, seq == 0 ? modify.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an order-cancel market event.
+    /// </summary>
+    public static MarketEvent CreateOrderCancel(DateTimeOffset ts, string symbol, OrderCancel cancel, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderCancel, cancel, seq == 0 ? cancel.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an order-execute market event.
+    /// </summary>
+    public static MarketEvent CreateOrderExecute(DateTimeOffset ts, string symbol, OrderExecute execute, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderExecute, execute, seq == 0 ? execute.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an order-replace market event.
+    /// </summary>
+    public static MarketEvent CreateOrderReplace(DateTimeOffset ts, string symbol, OrderReplace replace, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderReplace, replace, seq == 0 ? replace.SequenceNumber : seq, source);
 }

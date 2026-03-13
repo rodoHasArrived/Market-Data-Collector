@@ -59,6 +59,12 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(OpenInterestUpdate))]
 [JsonSerializable(typeof(List<OptionQuote>))]
 [JsonSerializable(typeof(List<OptionTrade>))]
+// Order book event types
+[JsonSerializable(typeof(OrderAdd))]
+[JsonSerializable(typeof(OrderModify))]
+[JsonSerializable(typeof(OrderCancel))]
+[JsonSerializable(typeof(OrderExecute))]
+[JsonSerializable(typeof(OrderReplace))]
 // Canonicalization types
 [JsonSerializable(typeof(CanonicalTradeCondition))]
 [JsonSerializable(typeof(CanonicalTradeCondition[]))]
