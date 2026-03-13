@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Contracts;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
