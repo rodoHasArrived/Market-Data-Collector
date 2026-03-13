@@ -1,10 +1,13 @@
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.FSharp.Interop;
 using MarketDataCollector.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using FSharpTradeEventWrapper = MarketDataCollector.FSharp.Interop.TradeEventWrapper;
+using FSharpQuoteEventWrapper = MarketDataCollector.FSharp.Interop.QuoteEventWrapper;
+using FSharpTradeValidator = MarketDataCollector.FSharp.Interop.TradeValidator;
+using FSharpQuoteValidator = MarketDataCollector.FSharp.Interop.QuoteValidator;
 
 namespace MarketDataCollector.Application.Pipeline;
 
@@ -83,7 +86,7 @@ public sealed class FSharpEventValidator : IEventValidator
         var isRelaxed = _relaxedSymbols.Contains(evt.EffectiveSymbol);
 
         // Build the F# TradeEvent via the interop wrapper (zero-allocation path uses struct fields).
-        var fsharpTrade = TradeEventWrapper.Create(
+        var fsharpTrade = FSharpTradeEventWrapper.Create(
             trade.Symbol,
             trade.Price,
             trade.Size,
@@ -92,18 +95,9 @@ public sealed class FSharpEventValidator : IEventValidator
             evt.Timestamp
         ).ToFSharpEvent();
 
-        ValidationResultWrapper<FSharp.Domain.MarketEvents.TradeEvent> result;
-
-        if (isRelaxed)
-        {
-            result = TradeValidator.ValidateWithConfig(
-                fsharpTrade,
-                FSharp.Validation.TradeValidator.TradeValidationConfig.CreateHistorical());
-        }
-        else
-        {
-            result = TradeValidator.Validate(fsharpTrade);
-        }
+        var result = isRelaxed
+            ? FSharpTradeValidator.ValidateHistorical(fsharpTrade)
+            : FSharpTradeValidator.Validate(fsharpTrade);
 
         ValidationMetrics.RecordValidated("trade");
 
@@ -128,7 +122,7 @@ public sealed class FSharpEventValidator : IEventValidator
 
         var isRelaxed = _relaxedSymbols.Contains(evt.EffectiveSymbol);
 
-        var fsharpQuote = QuoteEventWrapper.Create(
+        var fsharpQuote = FSharpQuoteEventWrapper.Create(
             quote.Symbol,
             quote.BidPrice,
             quote.BidSize,
@@ -138,18 +132,9 @@ public sealed class FSharpEventValidator : IEventValidator
             evt.Timestamp
         ).ToFSharpEvent();
 
-        ValidationResultWrapper<FSharp.Domain.MarketEvents.QuoteEvent> result;
-
-        if (isRelaxed)
-        {
-            result = QuoteValidator.ValidateWithConfig(
-                fsharpQuote,
-                FSharp.Validation.QuoteValidator.QuoteValidationConfig.CreateHistorical());
-        }
-        else
-        {
-            result = QuoteValidator.Validate(fsharpQuote);
-        }
+        var result = isRelaxed
+            ? FSharpQuoteValidator.ValidateHistorical(fsharpQuote)
+            : FSharpQuoteValidator.Validate(fsharpQuote);
 
         ValidationMetrics.RecordValidated("quote");
 

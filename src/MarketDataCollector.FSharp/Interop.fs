@@ -201,6 +201,9 @@ type TradeValidator private () =
     static member ValidateWithConfig(trade: TradeEvent, config: Validation.TradeValidator.TradeValidationConfig) =
         ValidationResultWrapper(Validation.TradeValidator.validateTrade config trade)
 
+    static member ValidateHistorical(trade: TradeEvent) : ValidationResultWrapper<TradeEvent> =
+        ValidationResultWrapper(Validation.TradeValidator.validateTrade (Validation.TradeValidator.TradeValidationConfig.createHistorical()) trade)
+
 /// C#-friendly quote validator.
 [<Sealed>]
 type QuoteValidator private () =
@@ -216,6 +219,9 @@ type QuoteValidator private () =
 
     static member ValidateWithConfig(quote: QuoteEvent, config: Validation.QuoteValidator.QuoteValidationConfig) =
         ValidationResultWrapper(Validation.QuoteValidator.validateQuote config quote)
+
+    static member ValidateHistorical(quote: QuoteEvent) : ValidationResultWrapper<QuoteEvent> =
+        ValidationResultWrapper(Validation.QuoteValidator.validateQuote (Validation.QuoteValidator.QuoteValidationConfig.createHistorical()) quote)
 
 /// C#-friendly aggressor inference.
 [<Sealed>]

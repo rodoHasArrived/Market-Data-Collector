@@ -874,15 +874,61 @@ public static class ServiceCompositionRoot
             return new Pipeline.DroppedEventAuditTrail(storageOptions.RootPath, logger);
         });
 
-        // EventPipeline - bounded channel event routing with WAL for durability
-        // Uses IStorageSink which may be a CompositeSink wrapping JSONL + Parquet
+        // DeadLetterSink - persists validation-rejected events to a separate JSONL file
+        services.AddSingleton<Pipeline.DeadLetterSink>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.DeadLetterSink>>();
+            return new Pipeline.DeadLetterSink(storageOptions.RootPath, logger);
+        });
+
+        // FSharpEventValidator - optional F# validation stage (enabled via Validation.Enabled in config)
+        services.AddSingleton<Pipeline.FSharpEventValidator>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var validationConfig = config.Validation;
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.FSharpEventValidator>>();
+            return new Pipeline.FSharpEventValidator(
+                symbolConfigs: config.Symbols,
+                useRealTimeMode: validationConfig?.UseRealTimeMode ?? false,
+                logger: logger);
+        });
+
+        // EventPipeline - bounded channel event routing with WAL for durability.
+        // When Validation.Enabled is true in config, the F# validation gate and dead-letter sink
+        // are wired in so invalid events are rejected before reaching primary storage.
         services.AddSingleton<EventPipeline>(sp =>
         {
             var sink = sp.GetRequiredService<IStorageSink>();
             var metrics = sp.GetRequiredService<IEventMetrics>();
             var wal = sp.GetService<Storage.Archival.WriteAheadLog>();
             var auditTrail = sp.GetService<Pipeline.DroppedEventAuditTrail>();
-            return new EventPipeline(sink, EventPipelinePolicy.HighThroughput, metrics: metrics, wal: wal, auditTrail: auditTrail);
+
+            // Resolve validation components only when the feature is enabled.
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            Pipeline.IEventValidator? validator = null;
+            Pipeline.DeadLetterSink? deadLetterSink = null;
+
+            if (config.Validation is { Enabled: true })
+            {
+                validator = sp.GetRequiredService<Pipeline.FSharpEventValidator>();
+                deadLetterSink = sp.GetRequiredService<Pipeline.DeadLetterSink>();
+
+                Log.ForContext<EventPipeline>().Information(
+                    "F# validation pipeline enabled (realTimeMode={RealTimeMode})",
+                    config.Validation.UseRealTimeMode);
+            }
+
+            return new EventPipeline(
+                sink,
+                EventPipelinePolicy.HighThroughput,
+                metrics: metrics,
+                wal: wal,
+                auditTrail: auditTrail,
+                validator: validator,
+                deadLetterSink: deadLetterSink);
         });
 
         // IMarketEventPublisher - facade for publishing events.
