@@ -143,8 +143,7 @@ This project has millisecond-accuracy requirements for market data capture. Perf
    - `ObservableCollection` modifications in a loop without using batch operations
 
 5. **Channel and pipeline concerns:**
-   - Unbounded channels or queues (should use `BoundedChannel` with backpressure policy)
-   - Missing `BoundedChannelFullMode` specification (project standard is `DropOldest`)
+   - Unbounded channels or queues — all channels must be created via `EventPipelinePolicy.*.CreateChannel<T>()` (e.g., `EventPipelinePolicy.Default.CreateChannel<MarketEvent>()`), which wraps `Channel.CreateBounded` with consistent `BoundedChannelOptions` including `FullMode = BoundedChannelFullMode.DropOldest`. Flag raw `Channel.CreateUnbounded` or bare `Channel.CreateBounded` without using a policy preset.
    - Large batch sizes without configurable limits
    - Missing flush timeouts on shutdown paths
 
@@ -172,7 +171,7 @@ MarketDataCollector must handle provider disconnections, rate limits, data corru
 
 **What to look for:**
 
-1. **Exception hierarchy compliance** — All domain exceptions must derive from `MarketDataException`. Flag:
+1. **Exception hierarchy compliance** — All domain exceptions must derive from `MarketDataCollectorException` (in `src/MarketDataCollector.Core/Exceptions/`). Flag:
    - `throw new Exception(...)` or `throw new ApplicationException(...)` for domain errors
    - Catch blocks that catch `Exception` and don't rethrow or handle specifically
    - Missing exception context (inner exception not passed to constructor)
@@ -250,10 +249,10 @@ Provider implementations in `Infrastructure/` must follow the `ProviderSdk` cont
    - `StreamEventsAsync` as a proper `IAsyncEnumerable<MarketEvent>`
    - `DisposeAsync` with cleanup (cancel tokens, close connections, flush)
 
-2. **Rate limit tracking** — Must use `ProviderRateLimitTracker` from ProviderSdk:
+2. **Rate limit enforcement** — Historical providers must extend `BaseHistoricalDataProvider` and call `WaitForRateLimitSlotAsync(ct)` before each request (which delegates to `RateLimiter.WaitForSlotAsync(ct)`). `ProviderRateLimitTracker` is a status/tracking utility — not a wait mechanism. Flag:
    - No `Task.Delay(1000)` or similar self-throttling
-   - Must call `tracker.WaitIfNeededAsync(ct)` before each request
-   - Rate limit config must come from `IOptionsMonitor<T>`, not hardcoded
+   - Missing call to `WaitForRateLimitSlotAsync(ct)` before outbound HTTP requests
+   - Rate limit config hardcoded instead of read from `IOptionsMonitor<T>`
 
 3. **Reconnection logic:**
    - Must implement exponential backoff with jitter (not fixed delay)
@@ -386,13 +385,13 @@ namespace MarketDataCollector.Wpf.ViewModels;
 - Structured logging with semantic parameters — never string interpolation: `_logger.LogInformation("Received {Count} bars for {Symbol}", count, symbol)`
 
 **Architecture patterns:**
-- Use `System.Threading.Channels` for producer-consumer patterns
+- Use `EventPipelinePolicy.*.CreateChannel<T>()` for all producer-consumer channels (wraps `Channel.CreateBounded` with consistent `BoundedChannelOptions`; default policy uses `FullMode = DropOldest`)
 - Prefer `Span<T>` and `Memory<T>` for buffer operations
-- Use custom exception types from `Core/Exceptions/` (not bare `Exception`)
+- Use custom exception types from `Core/Exceptions/` deriving from `MarketDataCollectorException` (not bare `Exception`)
 - All classes should be `sealed` unless designed for inheritance
 - Follow ADR decisions in `docs/adr/`:
   - ADR-004: async streaming patterns (CancellationToken everywhere)
-  - ADR-013: bounded channels with `DropOldest` policy
+  - ADR-013: bounded channels with `DropOldest` policy via `EventPipelinePolicy`
   - ADR-014: JSON source generators (no reflection-based serialization)
 
 **Serialization (ADR-014):**

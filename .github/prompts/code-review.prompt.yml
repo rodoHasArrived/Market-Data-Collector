@@ -26,13 +26,13 @@ messages:
 
       - No blocking calls on the UI thread (`Task.Result`, `Task.Wait()`, synchronous `Dispatcher.Invoke`).
       - No allocations in hot paths: avoid LINQ, string interpolation, boxing, new collection instances per event.
-      - All channels must be `BoundedChannel` with `BoundedChannelFullMode.DropOldest`.
+      - All channels must use `EventPipelinePolicy.*.CreateChannel<T>()` (e.g., `EventPipelinePolicy.Default.CreateChannel<MarketEvent>()`) which wraps `Channel.CreateBounded` with `BoundedChannelFullMode.DropOldest`. Flag raw `Channel.CreateUnbounded` or bare `Channel.CreateBounded` without a policy.
       - JSON serialization must use ADR-014 source generators — never `JsonSerializer.Serialize<T>(obj)` without a `JsonSerializerContext`.
       - Use `IOptionsMonitor<T>` (not `IOptions<T>`) for runtime-reloadable settings.
 
       ## Lens 3: Error Handling & Resilience
 
-      - All domain exceptions must derive from `MarketDataException`; never throw bare `Exception` or `ApplicationException`.
+      - All domain exceptions must derive from `MarketDataCollectorException` (see `src/MarketDataCollector.Core/Exceptions/`); never throw bare `Exception` or `ApplicationException`.
       - Provider implementations must reconnect with exponential backoff + jitter; never catch `OperationCanceledException` as a provider failure.
       - Every `IAsyncDisposable` must flush buffers before disposing; pipeline shutdown must drain with a timeout.
       - Rate limit handling: catch `RateLimitException` and respect `RetryAfter`; no `Task.Delay()` self-throttling.
@@ -48,7 +48,7 @@ messages:
       ## Lens 5: Provider Implementation Compliance
 
       - Every `IMarketDataClient` implementation must provide `ConnectAsync`, `SubscribeAsync`, `StreamEventsAsync` (as `IAsyncEnumerable<MarketEvent>`), and `DisposeAsync`.
-      - Use `ProviderRateLimitTracker.WaitIfNeededAsync(ct)` — no hardcoded `Task.Delay()` throttling.
+      - Historical providers must call `WaitForRateLimitSlotAsync(ct)` (from `BaseHistoricalDataProvider`) before each request, which delegates to `RateLimiter.WaitForSlotAsync(ct)` — no hardcoded `Task.Delay()` throttling.
       - Timestamps must be UTC; symbol normalization at the provider boundary; sequence numbers preserved.
 
       ## Lens 6: Cross-Cutting Concerns
