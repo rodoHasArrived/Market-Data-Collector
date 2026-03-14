@@ -34,6 +34,7 @@ public partial class DataQualityPage : Page
     private string _baseUrl = "http://localhost:8080";
     private string _timeRange = "7d";
     private double _lastOverallScore = 98.5;
+    private const string PageTag = "DataQuality";
 
     private readonly StatusService _statusService;
     private readonly WpfServices.LoggingService _loggingService;
@@ -68,8 +69,32 @@ public partial class DataQualityPage : Page
         _cts?.Dispose();
     }
 
+    private void RestoreFilterState()
+    {
+        var pss = WpfServices.PageStateService.Instance;
+        var symbolFilter = pss.GetFilter(PageTag, "symbolFilter");
+        if (symbolFilter != null) SymbolFilterBox.Text = symbolFilter;
+        var timeWindow = pss.GetFilter(PageTag, "timeWindow");
+        if (timeWindow != null) SelectComboItemByTag(TimeWindowCombo, timeWindow);
+        var severity = pss.GetFilter(PageTag, "severity");
+        if (severity != null) SelectComboItemByTag(SeverityFilterCombo, severity);
+        var anomalyType = pss.GetFilter(PageTag, "anomalyType");
+        if (anomalyType != null) SelectComboItemByTag(AnomalyTypeCombo, anomalyType);
+    }
+
+    private static void SelectComboItemByTag(ComboBox combo, string tag)
+    {
+        foreach (var item in combo.Items)
+            if (item is ComboBoxItem cbi && cbi.Tag?.ToString() == tag)
+            { combo.SelectedItem = item; return; }
+    }
+
+    private static string? GetComboTag(ComboBox combo)
+        => (combo?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        RestoreFilterState();
         await RefreshDataAsync();
 
         _refreshTimer = new Timer(30000);
@@ -520,6 +545,7 @@ public partial class DataQualityPage : Page
         if (TimeWindowCombo.SelectedItem is ComboBoxItem item && item.Tag is string window)
         {
             _timeRange = window;
+            WpfServices.PageStateService.Instance.SetFilter(PageTag, "timeWindow", GetComboTag(TimeWindowCombo));
             UpdateTrendDisplay();
             _ = RefreshDataAsync();
         }
@@ -1100,6 +1126,8 @@ public partial class DataQualityPage : Page
 
     private void SymbolFilter_TextChanged(object sender, TextChangedEventArgs e)
     {
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "symbolFilter",
+            string.IsNullOrWhiteSpace(SymbolFilterBox.Text) ? null : SymbolFilterBox.Text);
         ApplySymbolFilter();
     }
 
@@ -1186,6 +1214,9 @@ public partial class DataQualityPage : Page
 
     private void SeverityFilter_Changed(object sender, SelectionChangedEventArgs e)
     {
+        var tag = GetComboTag(SeverityFilterCombo);
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "severity",
+            tag is "All" or null ? null : tag);
         ApplyAlertFilter();
     }
 
@@ -1252,6 +1283,9 @@ public partial class DataQualityPage : Page
 
     private void AnomalyType_Changed(object sender, SelectionChangedEventArgs e)
     {
+        var tag = GetComboTag(AnomalyTypeCombo);
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "anomalyType",
+            tag is "All" or null ? null : tag);
         ApplyAnomalyFilter();
     }
 

@@ -199,7 +199,7 @@ public partial class SymbolsPage : Page
     private void SymbolSearch_TextChanged(object sender, TextChangedEventArgs e)
     {
         WpfServices.PageStateService.Instance.SetFilter(PageTag, "searchText",
-            string.IsNullOrEmpty(SymbolSearchBox.Text) ? null : SymbolSearchBox.Text);
+            string.IsNullOrWhiteSpace(SymbolSearchBox.Text) ? null : SymbolSearchBox.Text);
         ApplyFilters();
     }
 

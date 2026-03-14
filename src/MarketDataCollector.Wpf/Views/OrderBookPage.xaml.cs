@@ -23,6 +23,8 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class OrderBookPage : Page
 {
     private readonly HttpClient _httpClient = new();
+    private const string PageTag = "OrderBook";
+
     private readonly ObservableCollection<OrderBookDisplayLevel> _bids = new();
     private readonly ObservableCollection<OrderBookDisplayLevel> _asks = new();
     private readonly ObservableCollection<RecentTradeModel> _recentTrades = new();
@@ -74,6 +76,7 @@ public partial class OrderBookPage : Page
     {
         UpdateConnectionStatus();
         await LoadSymbolsAsync();
+        RestoreFilterState();
 
         // Start refresh timer (every 250ms for order book updates)
         _refreshTimer = new Timer(250);
@@ -478,8 +481,22 @@ public partial class OrderBookPage : Page
             if (int.TryParse(item.Content?.ToString(), out var levels))
             {
                 _depthLevels = levels;
+                WpfServices.PageStateService.Instance.SetFilter(PageTag, "depthLevels", item.Content?.ToString());
             }
         }
+    }
+
+    private void RestoreFilterState()
+    {
+        var levels = WpfServices.PageStateService.Instance.GetFilter(PageTag, "depthLevels");
+        if (levels != null) SelectComboItemByContent(LevelsComboBox, levels);
+    }
+
+    private static void SelectComboItemByContent(ComboBox combo, string content)
+    {
+        foreach (var item in combo.Items)
+            if (item is ComboBoxItem cbi && cbi.Content?.ToString() == content)
+            { combo.SelectedItem = item; return; }
     }
 }
 

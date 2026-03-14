@@ -88,7 +88,11 @@ public sealed class PageStateService
         }
 
         if (value == null)
+        {
             dict.Remove(key);
+            if (dict.Count == 0)
+                _pageFilters.Remove(pageTag);
+        }
         else
             dict[key] = value;
     }

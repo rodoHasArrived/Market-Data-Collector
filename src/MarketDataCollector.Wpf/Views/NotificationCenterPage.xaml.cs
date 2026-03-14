@@ -19,6 +19,8 @@ public partial class NotificationCenterPage : Page
 {
     private readonly WpfServices.NotificationService _notificationService;
     private readonly AlertService _alertService;
+    private const string PageTag = "NotificationCenter";
+
     private readonly ObservableCollection<NotificationItem> _allNotifications = new();
     private readonly ObservableCollection<NotificationItem> _filteredNotifications = new();
     private bool _suppressFilterEvents;
@@ -41,6 +43,7 @@ public partial class NotificationCenterPage : Page
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        RestoreFilterState();
         _notificationService.NotificationReceived += OnNotificationReceived;
         _alertService.AlertRaised += OnAlertChanged;
         _alertService.AlertResolved += OnAlertChanged;
@@ -571,6 +574,23 @@ public partial class NotificationCenterPage : Page
 
         ApplyFilters();
         UpdateCounters();
+
+        var pss = WpfServices.PageStateService.Instance;
+        pss.SetFilter(PageTag, "showErrors", FilterErrorsCheck.IsChecked == false ? "false" : null);
+        pss.SetFilter(PageTag, "showWarnings", FilterWarningsCheck.IsChecked == false ? "false" : null);
+        pss.SetFilter(PageTag, "showInfo", FilterInfoCheck.IsChecked == false ? "false" : null);
+        pss.SetFilter(PageTag, "showSuccess", FilterSuccessCheck.IsChecked == false ? "false" : null);
+    }
+
+    private void RestoreFilterState()
+    {
+        var pss = WpfServices.PageStateService.Instance;
+        _suppressFilterEvents = true;
+        if (pss.GetFilter(PageTag, "showErrors") == "false") FilterErrorsCheck.IsChecked = false;
+        if (pss.GetFilter(PageTag, "showWarnings") == "false") FilterWarningsCheck.IsChecked = false;
+        if (pss.GetFilter(PageTag, "showInfo") == "false") FilterInfoCheck.IsChecked = false;
+        if (pss.GetFilter(PageTag, "showSuccess") == "false") FilterSuccessCheck.IsChecked = false;
+        _suppressFilterEvents = false;
     }
 
     private void ApplyFilters()

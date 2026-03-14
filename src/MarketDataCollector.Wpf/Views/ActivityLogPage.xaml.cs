@@ -33,6 +33,7 @@ public partial class ActivityLogPage : Page
     private string _levelFilter = "All";
     private string _categoryFilter = "All";
     private string _searchText = string.Empty;
+    private const string PageTag = "ActivityLog";
 
     private readonly WpfServices.StatusService _statusService;
     private readonly WpfServices.LoggingService _loggingService;
@@ -69,8 +70,27 @@ public partial class ActivityLogPage : Page
         _cts?.Dispose();
     }
 
+    private void RestoreFilterState()
+    {
+        var pss = WpfServices.PageStateService.Instance;
+        var level = pss.GetFilter(PageTag, "levelFilter");
+        if (level != null) SelectComboItemByContent(LevelFilterCombo, level);
+        var category = pss.GetFilter(PageTag, "categoryFilter");
+        if (category != null) SelectComboItemByContent(CategoryFilterCombo, category);
+        var search = pss.GetFilter(PageTag, "searchText");
+        if (search != null) SearchBox.Text = search;
+    }
+
+    private static void SelectComboItemByContent(ComboBox combo, string content)
+    {
+        foreach (var item in combo.Items)
+            if (item is ComboBoxItem cbi && cbi.Content?.ToString() == content)
+            { combo.SelectedItem = item; return; }
+    }
+
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        RestoreFilterState();
         await LoadLogsAsync();
 
         // Start refresh timer (every 5 seconds to check for new logs from API)
@@ -295,12 +315,18 @@ public partial class ActivityLogPage : Page
             _categoryFilter = categoryItem.Content?.ToString() ?? "All";
         }
 
+        var pss = WpfServices.PageStateService.Instance;
+        pss.SetFilter(PageTag, "levelFilter", _levelFilter == "All" ? null : _levelFilter);
+        pss.SetFilter(PageTag, "categoryFilter", _categoryFilter == "All" ? null : _categoryFilter);
+
         ApplyFilters();
     }
 
     private void Search_Changed(object sender, TextChangedEventArgs e)
     {
         _searchText = SearchBox.Text;
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "searchText",
+            string.IsNullOrWhiteSpace(_searchText) ? null : _searchText);
         ApplyFilters();
     }
 

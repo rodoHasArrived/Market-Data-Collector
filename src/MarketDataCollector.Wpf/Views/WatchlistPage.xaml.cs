@@ -26,6 +26,7 @@ public partial class WatchlistPage : Page
     private readonly ObservableCollection<WatchlistDisplayModel> _watchlists = new();
     private readonly ObservableCollection<WatchlistDisplayModel> _filteredWatchlists = new();
     private CancellationTokenSource? _loadCts;
+    private const string PageTag = "Watchlist";
 
     public WatchlistPage(
         WpfServices.WatchlistService watchlistService,
@@ -58,7 +59,14 @@ public partial class WatchlistPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        RestoreFilterState();
         await LoadWatchlistsAsync();
+    }
+
+    private void RestoreFilterState()
+    {
+        var search = WpfServices.PageStateService.Instance.GetFilter(PageTag, "searchText");
+        if (search != null) SearchBox.Text = search;
     }
 
     private async Task LoadWatchlistsAsync()
@@ -123,6 +131,8 @@ public partial class WatchlistPage : Page
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
+        WpfServices.PageStateService.Instance.SetFilter(PageTag, "searchText",
+            string.IsNullOrWhiteSpace(SearchBox.Text) ? null : SearchBox.Text);
         ApplyFilter();
         UpdateEmptyState();
     }
