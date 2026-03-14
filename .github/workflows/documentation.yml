@@ -113,6 +113,8 @@ permissions:
   issues: write
   pull-requests: write
   models: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: documentation-${{ github.ref }}
@@ -1458,12 +1460,76 @@ jobs:
             echo "Metrics dashboard script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  # ─── Build DocFX Documentation Site ─────────────────────────────────
+  build-docfx:
+    name: Build DocFX Documentation Site
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: detect-changes
+    if: |
+      github.event_name != 'issues' &&
+      needs.detect-changes.outputs.any_changed == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install DocFX
+        run: dotnet tool update -g docfx
+
+      - name: Build project for XML documentation
+        run: |
+          set -euo pipefail
+          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+          dotnet build MarketDataCollector.sln -c Release --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true
+        continue-on-error: true
+
+      - name: Build DocFX site
+        run: docfx docs/docfx/docfx.json
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/docfx/_site
+
+  # ─── Deploy to GitHub Pages ──────────────────────────────────────────
+  deploy-pages:
+    name: Deploy Documentation to GitHub Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build-docfx
+    if: |
+      needs.build-docfx.result == 'success' &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch'
+      )
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   # ─── Report ──────────────────────────────────────────────────────────
   report:
     name: Documentation Automation Report
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues, link-repair, validate-examples, coverage-report, generate-changelog, validate-api-docs, generate-dependency-graph, sync-readme-badges, generate-metrics-dashboard]
+    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues, link-repair, validate-examples, coverage-report, generate-changelog, validate-api-docs, generate-dependency-graph, sync-readme-badges, generate-metrics-dashboard, build-docfx, deploy-pages]
     if: github.event_name != 'issues' && always()
     steps:
       - name: Publish summary
@@ -1506,6 +1572,8 @@ jobs:
           echo "| Dependency graph | ${{ needs.generate-dependency-graph.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Sync README badges | ${{ needs.sync-readme-badges.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Metrics dashboard | ${{ needs.generate-metrics-dashboard.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build DocFX site | ${{ needs.build-docfx.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy to Pages | ${{ needs.deploy-pages.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Generated Changes | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------------------|-------|" >> $GITHUB_STEP_SUMMARY

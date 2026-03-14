@@ -61,4 +61,10 @@ New namespaces are discovered automatically from source code. Ensure classes hav
 
 ## CI Integration
 
-The `documentation.yml` workflow runs DocFX as part of the documentation generation pipeline. It does not publish the output to a hosting service by default — the generated site is available as a build artifact.
+The `documentation.yml` workflow builds the DocFX site and publishes it to **GitHub Pages** by default.
+
+- On every push to `main` (and on the weekly schedule), the `build-docfx` job installs DocFX, builds the full site from source, and the `deploy-pages` job deploys it to the repository's GitHub Pages environment.
+- On pull requests the site is built and validated but not deployed, so review builds are kept separate from production.
+- Manual runs via `workflow_dispatch` also trigger a full build and deployment.
+
+The live documentation is served at `https://<org>.github.io/<repo>/` once GitHub Pages is enabled in repository settings (**Settings → Pages → Source: GitHub Actions**).
