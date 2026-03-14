@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ========================================== -->
     <!-- CONSOLE-INSPIRED COLOR PALETTE (GitHub Dark) -->
@@ -81,10 +82,17 @@
     <SolidColorBrush x:Key="InfoColorBrush" Color="{StaticResource ConsoleAccentBlue}" />
     <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource ConsoleAccentCyan}" />
     <SolidColorBrush x:Key="AccentPurpleBrush" Color="{StaticResource ConsoleAccentPurple}" />
+    <SolidColorBrush x:Key="ConsoleAccentGreenDimBrush" Color="{StaticResource ConsoleAccentGreenDim}" />
+    <SolidColorBrush x:Key="ConsoleAccentGreenLightBrush" Color="{StaticResource ConsoleAccentGreenLight}" />
     <SolidColorBrush x:Key="ConsoleAccentGreenAlpha10Brush" Color="{StaticResource ConsoleAccentGreenAlpha10}" />
+    <SolidColorBrush x:Key="ConsoleAccentGreenAlpha20Brush" Color="{StaticResource ConsoleAccentGreenAlpha20}" />
     <SolidColorBrush x:Key="ConsoleAccentBlueAlpha10Brush" Color="{StaticResource ConsoleAccentBlueAlpha10}" />
+    <SolidColorBrush x:Key="ConsoleAccentBlueAlpha20Brush" Color="{StaticResource ConsoleAccentBlueAlpha20}" />
     <SolidColorBrush x:Key="ConsoleAccentRedAlpha10Brush" Color="{StaticResource ConsoleAccentRedAlpha10}" />
+    <SolidColorBrush x:Key="ConsoleAccentRedAlpha20Brush" Color="{StaticResource ConsoleAccentRedAlpha20}" />
     <SolidColorBrush x:Key="ConsoleAccentOrangeAlpha10Brush" Color="{StaticResource ConsoleAccentOrangeAlpha10}" />
+    <SolidColorBrush x:Key="ConsoleAccentOrangeAlpha20Brush" Color="{StaticResource ConsoleAccentOrangeAlpha20}" />
+    <SolidColorBrush x:Key="ConsoleAccentPurpleAlpha10Brush" Color="{StaticResource ConsoleAccentPurpleAlpha10}" />
 
     <!-- Glow Effect Brush -->
     <LinearGradientBrush x:Key="GlowGradientBrush" StartPoint="0,0" EndPoint="1,0">
@@ -99,8 +107,8 @@
     <SolidColorBrush x:Key="ProgressInfoBrush" Color="{StaticResource ConsoleAccentBlue}" />
 
     <!-- Skeleton Loading -->
-    <SolidColorBrush x:Key="SkeletonBackgroundBrush" Color="#21262d" />
-    <SolidColorBrush x:Key="SkeletonHighlightBrush" Color="#30363d" />
+    <SolidColorBrush x:Key="SkeletonBackgroundBrush" Color="{StaticResource ConsoleBackgroundLight}" />
+    <SolidColorBrush x:Key="SkeletonHighlightBrush" Color="{StaticResource ConsoleBorderColor}" />
 
     <!-- Focus Visual -->
     <SolidColorBrush x:Key="FocusVisualPrimaryBrush" Color="{StaticResource ConsoleAccentBlue}" />
@@ -129,13 +137,7 @@
     </Style>
 
     <!-- Metric Card Styles -->
-    <Style x:Key="MetricCardStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundMediumBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="20" />
-    </Style>
+    <Style x:Key="MetricCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}" />
 
     <Style x:Key="MetricCardSuccessStyle" TargetType="Border" BasedOn="{StaticResource MetricCardStyle}">
         <Setter Property="BorderThickness" Value="1,1,1,3" />
@@ -211,21 +213,15 @@
         <Setter Property="Height" Value="16" />
     </Style>
 
-    <Style x:Key="StatusConnectedStyle" TargetType="Ellipse">
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+    <Style x:Key="StatusConnectedStyle" TargetType="Ellipse" BasedOn="{StaticResource StatusDotMediumStyle}">
         <Setter Property="Fill" Value="{StaticResource SuccessColorBrush}" />
     </Style>
 
-    <Style x:Key="StatusDisconnectedStyle" TargetType="Ellipse">
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+    <Style x:Key="StatusDisconnectedStyle" TargetType="Ellipse" BasedOn="{StaticResource StatusDotMediumStyle}">
         <Setter Property="Fill" Value="{StaticResource ErrorColorBrush}" />
     </Style>
 
-    <Style x:Key="StatusWarningStyle" TargetType="Ellipse">
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+    <Style x:Key="StatusWarningStyle" TargetType="Ellipse" BasedOn="{StaticResource StatusDotMediumStyle}">
         <Setter Property="Fill" Value="{StaticResource WarningColorBrush}" />
     </Style>
 
@@ -275,6 +271,7 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -283,23 +280,16 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="8"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="{StaticResource ConsoleAccentGreenLight}" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ConsoleAccentGreenLightBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="{StaticResource ConsoleAccentGreenDim}" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ConsoleAccentGreenDimBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -323,6 +313,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="16,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -331,7 +322,8 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="8"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -360,6 +352,7 @@
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -368,23 +361,16 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="6"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="{StaticResource ConsoleAccentRedAlpha10}" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ConsoleAccentRedAlpha10Brush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="{StaticResource ConsoleAccentRedAlpha20}" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ConsoleAccentRedAlpha20Brush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -404,6 +390,7 @@
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -412,7 +399,8 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="6"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -440,13 +428,15 @@
         <Setter Property="MinWidth" Value="36" />
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
                             CornerRadius="6"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -471,13 +461,15 @@
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
                             CornerRadius="6"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -503,19 +495,19 @@
     </Style>
 
     <Style x:Key="TagIBStyle" TargetType="Border" BasedOn="{StaticResource TagStyle}">
-        <Setter Property="Background" Value="#1A58a6ff" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
         <Setter Property="BorderBrush" Value="#4D58a6ff" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="TagAlpacaStyle" TargetType="Border" BasedOn="{StaticResource TagStyle}">
-        <Setter Property="Background" Value="#1Ad29922" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentOrangeAlpha10Brush}" />
         <Setter Property="BorderBrush" Value="#4Dd29922" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="TagPolygonStyle" TargetType="Border" BasedOn="{StaticResource TagStyle}">
-        <Setter Property="Background" Value="#1Aa371f7" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentPurpleAlpha10Brush}" />
         <Setter Property="BorderBrush" Value="#4Da371f7" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
@@ -554,25 +546,25 @@
 
     <!-- Status Badges -->
     <Style x:Key="SuccessBadgeStyle" TargetType="Border">
-        <Setter Property="Background" Value="#1A3fb950" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentGreenAlpha10Brush}" />
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="8,4" />
     </Style>
 
     <Style x:Key="WarningBadgeStyle" TargetType="Border">
-        <Setter Property="Background" Value="#1Ad29922" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentOrangeAlpha10Brush}" />
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="8,4" />
     </Style>
 
     <Style x:Key="ErrorBadgeStyle" TargetType="Border">
-        <Setter Property="Background" Value="#1Af85149" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentRedAlpha10Brush}" />
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="8,4" />
     </Style>
 
     <Style x:Key="InfoBadgeStyle" TargetType="Border">
-        <Setter Property="Background" Value="#1A58a6ff" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentBlueAlpha10Brush}" />
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="8,4" />
     </Style>
@@ -787,11 +779,7 @@
     <!-- TABLE STYLES -->
     <!-- ========================================== -->
 
-    <Style x:Key="TableHeaderStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
-        <Setter Property="Padding" Value="12,10" />
-        <Setter Property="CornerRadius" Value="8,8,0,0" />
-    </Style>
+    <Style x:Key="TableHeaderStyle" TargetType="Border" BasedOn="{StaticResource TerminalHeaderStyle}" />
 
     <Style x:Key="TableHeaderTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="12" />
@@ -966,19 +954,19 @@
     <Thickness x:Key="NavigationViewContentMargin">0,0,0,0</Thickness>
     <Thickness x:Key="NavigationViewHeaderMargin">0,0,0,0</Thickness>
 
-    <sys:Double x:Key="SmallSpacing" xmlns:sys="clr-namespace:System;assembly=mscorlib">8</sys:Double>
-    <sys:Double x:Key="MediumSpacing" xmlns:sys="clr-namespace:System;assembly=mscorlib">12</sys:Double>
-    <sys:Double x:Key="LargeSpacing" xmlns:sys="clr-namespace:System;assembly=mscorlib">16</sys:Double>
-    <sys:Double x:Key="XLargeSpacing" xmlns:sys="clr-namespace:System;assembly=mscorlib">24</sys:Double>
+    <sys:Double x:Key="SmallSpacing">8</sys:Double>
+    <sys:Double x:Key="MediumSpacing">12</sys:Double>
+    <sys:Double x:Key="LargeSpacing">16</sys:Double>
+    <sys:Double x:Key="XLargeSpacing">24</sys:Double>
 
     <!-- Responsive Layout Constants -->
-    <sys:Double x:Key="CompactBreakpoint" xmlns:sys="clr-namespace:System;assembly=mscorlib">640</sys:Double>
-    <sys:Double x:Key="MediumBreakpoint" xmlns:sys="clr-namespace:System;assembly=mscorlib">1007</sys:Double>
-    <sys:Double x:Key="WideBreakpoint" xmlns:sys="clr-namespace:System;assembly=mscorlib">1366</sys:Double>
-    <sys:Double x:Key="SidebarWidthCompact" xmlns:sys="clr-namespace:System;assembly=mscorlib">48</sys:Double>
-    <sys:Double x:Key="SidebarWidthExpanded" xmlns:sys="clr-namespace:System;assembly=mscorlib">280</sys:Double>
-    <sys:Double x:Key="ContentMaxWidth" xmlns:sys="clr-namespace:System;assembly=mscorlib">1400</sys:Double>
-    <sys:Double x:Key="FormMaxWidth" xmlns:sys="clr-namespace:System;assembly=mscorlib">600</sys:Double>
+    <sys:Double x:Key="CompactBreakpoint">640</sys:Double>
+    <sys:Double x:Key="MediumBreakpoint">1007</sys:Double>
+    <sys:Double x:Key="WideBreakpoint">1366</sys:Double>
+    <sys:Double x:Key="SidebarWidthCompact">48</sys:Double>
+    <sys:Double x:Key="SidebarWidthExpanded">280</sys:Double>
+    <sys:Double x:Key="ContentMaxWidth">1400</sys:Double>
+    <sys:Double x:Key="FormMaxWidth">600</sys:Double>
 
     <!-- Animation Durations (WPF uses Duration type) -->
     <Duration x:Key="QuickAnimationDuration">0:0:0.15</Duration>
