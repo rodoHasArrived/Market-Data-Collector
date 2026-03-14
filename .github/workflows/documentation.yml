@@ -656,6 +656,20 @@ jobs:
             head -20 docs/status/health-dashboard.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
           fi
 
+      # --- Documentation coverage report ---
+      - name: Generate documentation coverage report
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f "build/scripts/docs/generate-coverage.py" ]; then
+            mkdir -p docs/generated
+            python3 build/scripts/docs/generate-coverage.py \
+              --output docs/generated/documentation-coverage.md \
+              --summary >> "$GITHUB_STEP_SUMMARY" 2>&1
+          else
+            echo "Coverage report script not found, skipping." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       # --- AI-powered documentation quality review ---
       - name: AI documentation quality review
         id: ai-doc-review
@@ -683,6 +697,7 @@ jobs:
             - docs/generated/project-context.md
             - docs/generated/adr-index.md
             - docs/generated/configuration-schema.md
+            - docs/generated/documentation-coverage.md
 
             AI instruction files synced:
             - CLAUDE.md
