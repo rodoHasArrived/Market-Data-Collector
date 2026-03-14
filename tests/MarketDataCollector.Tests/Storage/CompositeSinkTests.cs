@@ -572,14 +572,7 @@ public sealed class CompositeSinkTests
     }
 
     private static MarketEvent CreateTestEvent()
-    {
-        return new MarketEvent(
-            DateTimeOffset.UtcNow,
-            "AAPL",
-            MarketEventType.Trade,
-            Payload: null
-        );
-    }
+        => MarketEvent.Heartbeat(DateTimeOffset.UtcNow);
 
     /// <summary>
     /// A controllable <see cref="TimeProvider"/> that allows tests to advance time

@@ -26,6 +26,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Derivatives">Derivatives (options) data collection configuration.</param>
 /// <param name="ProviderRegistry">Unified provider registry configuration controlling attribute-based discovery.</param>
 /// <param name="Canonicalization">Canonicalization configuration for condition codes and venue MICs.</param>
+/// <param name="Validation">Configuration for the F# validation pipeline stage.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool? Compress = null,
