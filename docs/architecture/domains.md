@@ -53,9 +53,9 @@ The three timestamp fields serve distinct purposes:
 
 `EstimatedLatencyMs` computes end-to-end latency from `ReceivedAtUtc - ExchangeTimestamp` when both are available.
 
-### Planned canonicalization fields
+### Canonicalization envelope fields
 
-The [Deterministic Canonicalization](deterministic-canonicalization.md) design proposes three additional fields on the envelope to support cross-provider data comparison:
+The [Deterministic Canonicalization](deterministic-canonicalization.md) design adds three fields to the envelope for cross-provider data comparison:
 
 | Field | Type | Purpose |
 |-------|------|---------|
@@ -303,7 +303,7 @@ This split keeps domain logic deterministic, testable, and independent from prov
 
 ## Canonicalization Layer
 
-A planned canonicalization stage will sit between provider adapters and the `EventPipeline` to resolve cross-provider differences in symbol identity, condition codes, and venue identifiers. This is a higher-level identity resolution layer that builds on the existing structural normalization performed by the collectors.
+The canonicalization stage sits between provider adapters and the `EventPipeline`, enriching each `MarketEvent` with normalized identifiers before storage:
 
 The canonicalization stage:
 
@@ -316,4 +316,4 @@ The canonicalization design is documented in [Deterministic Canonicalization](de
 
 ---
 
-*Last Updated: 2026-02-24*
+*Last Updated: 2026-03-14*

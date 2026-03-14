@@ -41,8 +41,9 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 │           ▼                    ▼                                        │
 │                       Application Layer                                  │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  Program.cs | ConfigWatcher | StatusWriter | StatusHttpServer   │   │
-│  │  BackfillService | Metrics | EventSchemaValidator               │   │
+│  │  Composition | ConfigWatcher | StatusWriter | StatusHttpServer  │   │
+│  │  BackfillService | Scheduling | Subscriptions | Metrics         │   │
+│  │  EventPipeline | DualPathEventPipeline | IngestionJobService    │   │
 │  └─────────────────────────────────┬───────────────────────────────┘   │
 └────────────────────────────────────┼────────────────────────────────────┘
                                      │ MarketEvents
@@ -56,20 +57,13 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 └────────────────────────────────────┼────────────────────────────────────┘
                                      │ publish()
 ┌────────────────────────────────────┼────────────────────────────────────┐
-│                       Event Pipeline Layer                               │
-│  ┌─────────────────────────────────┴───────────────────────────────┐   │
-│  │  EventPipeline (bounded Channel<MarketEvent>, 100K capacity)    │   │
-│  └──────────────┬──────────────────────────────────────────────────┘   │
-└─────────────────┼───────────────────────────────────────────────────────┘
-                  │ append()
-┌─────────────────┼───────────────────────────────────────────────────────┐
 │           Storage Layer                                                  │
-│  ┌─────────────┴────────────┐                                           │
-│  │ JsonlStorageSink         │                                           │
-│  │ ParquetStorageSink       │                                           │
-│  │ TieredStorageManager     │                                           │
-│  │ DataRetentionPolicy      │                                           │
-│  └──────────────────────────┘                                           │
+│  ┌─────────────────────────────────┴───────────────────────────────┐   │
+│  │ JsonlStorageSink | ParquetStorageSink                           │   │
+│  │ CatalogSyncSink | CompositeSink                                 │   │
+│  │ TierMigrationService | LifecyclePolicyEngine                    │   │
+│  │ DataRetentionPolicy | StorageCatalogService                     │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────┘
                   ↑
 ┌─────────────────┼───────────────────────────────────────────────────────┐
@@ -125,6 +119,12 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
   - `PolygonSymbolSearchProvider` – US equities symbol search
   - `OpenFigiSymbolResolver` – Cross-provider symbol normalization via OpenFIGI
   - `StockSharpSymbolSearchProvider` – Symbol search via StockSharp connectors
+* **Provider Base Classes** in `Infrastructure/Adapters/Core/`:
+  - `BaseHistoricalDataProvider` – shared HTTP handling, retry, and error mapping for all historical providers
+  - `BaseSymbolSearchProvider` – shared base for symbol search providers with pagination and rate-limit handling
+  - `WebSocketProviderBase` – shared WebSocket lifecycle, reconnection, and heartbeat management for streaming providers
+  - `BackfillProgressTracker` – real-time progress tracking and ETA calculation for backfill operations
+  - `ProviderSubscriptionRanges` – utility for splitting large symbol lists into provider-compatible subscription batches
 * **Resilience Layer**:
   - `CircuitBreaker` – Open/Closed/HalfOpen states with automatic recovery
   - `ConcurrentProviderExecutor` – Parallel operations with configurable strategies
@@ -172,10 +172,58 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 * `StatusHttpServer` – lightweight HTTP server for monitoring (Prometheus metrics, JSON status, HTML dashboard)
 * `EventSchemaValidator` – validates event schema integrity
 * `Metrics` – counters for published, dropped, and integrity events
+* **Composition sub-module** (`Application/Composition/`):
+  - `ServiceCompositionRoot` – DI service registration for all application layers
+  - `HostStartup` – unified startup entry point shared across all host types (console, web, desktop)
+  - `HostAdapters` – host-specific adapter wiring
+  - `CircuitBreakerCallbackRouter` – routes circuit-breaker state-change events to monitoring
+* **Event Pipeline** (`Application/Pipeline/`):
+  - `EventPipeline` – bounded `Channel<MarketEvent>` with configurable capacity and drop policy
+  - `EventPipelinePolicy` – shared bounded-channel configuration for pipelines and queues
+  - `DualPathEventPipeline` – zero-allocation hot path for `Trade`/`BboQuote` events via struct ring buffers; all other event types fall through to the standard `EventPipeline`
+  - `HotPathBatchSerializer` – reusable `ArrayBufferWriter`-backed serializer that writes hot-path struct events to JSONL bytes without heap allocation on the producer thread
+  - `PersistentDedupLedger` – JSONL-backed rolling deduplication log that survives restarts; keyed by `(provider, symbol, eventIdentity)` with configurable TTL and in-memory cache
+  - `SchemaUpcasterRegistry` – registry for per-event-type schema migration (upcasting) functions
+  - `DeadLetterSink` – captures events that fail all downstream sinks for later inspection or replay
+  - `DroppedEventAuditTrail` – appends a lightweight audit record for every dropped event for ops visibility
+  - `IngestionJobService` – unified ingestion job lifecycle management (create, transition, checkpoint, query) with disk persistence
+  - `FSharpEventValidator` – bridges the F# `ValidationPipeline` into the C# pipeline for type-safe pre-storage validation
+  - `IEventValidator` – validation contract implemented by F# and C# validators
+* **Scheduling sub-module** (`Application/Scheduling/`):
+  - `OperationalScheduler` – cron-based task scheduler used by both backfill and archive maintenance
+  - `BackfillScheduleManager` – manages named backfill schedules with cron triggers and history
+  - `ScheduledBackfillService` – hosted service that executes backfill jobs on schedule
+  - `BackfillSchedule` / `BackfillExecutionLog` – schedule definition and execution history models
+* **Subscription Orchestration** (`Application/Subscriptions/`):
+  - `SubscriptionOrchestrator` – top-level coordinator for symbol subscriptions across all streaming providers
+  - `AutoResubscribePolicy` – auto-resubscribes symbols after reconnection
+  - `BatchOperationsService` – bulk subscribe/unsubscribe with rate-limited batching
+  - `IndexSubscriptionService` – subscribes to index constituents (e.g. S&P 500) automatically
+  - `MetadataEnrichmentService` – enriches subscription events with static symbol metadata
+  - `PortfolioImportService` – imports watchlists from CSV/JSON portfolio files
+  - `SchedulingService` – time-of-day subscription windows (e.g. market hours only)
+  - `SymbolImportExportService` – persists and restores symbol lists across sessions
+  - `SymbolManagementService` – CRUD operations on the active symbol set
+  - `SymbolSearchService` – cross-provider symbol search and resolution
+  - `TemplateService` – pre-defined subscription templates (e.g. "US large-cap equities")
+  - `WatchlistService` – user watchlist management with persistence
+* **Additional Application Services** (`Application/Services/`):
+  - `DailySummaryWebhook` – publishes a daily metrics/health summary to a configured webhook
+  - `DiagnosticBundleService` – bundles logs, config, and status snapshots for support diagnostics
+  - `DryRunService` – validates configuration and connectivity without starting live collection
+  - `ErrorTracker` – categorizes and counts operational errors for alerting
+  - `FriendlyErrorFormatter` – maps internal error codes to human-readable messages
+  - `GracefulShutdownService` – coordinates ordered shutdown of pipeline, sinks, and providers
+  - `HistoricalDataQueryService` – queries stored JSONL/Parquet files for historical replay or export
+  - `OptionsChainService` – fetches and caches options chain data for derivatives workflows
+  - `PreflightChecker` – validates environment, credentials, and connectivity before startup
+  - `ProgressDisplayService` – renders live progress bars and status for long-running operations
+  - `SampleDataGenerator` – generates synthetic market events for testing and demos
+  - `ServiceRegistry` – runtime service locator used by dynamic plugin scenarios
+  - `StartupSummary` – prints a structured summary of active configuration at startup
+  - `TradingCalendar` – market hours, holiday calendar, and session boundary utilities
 
 ### Storage
-* `EventPipeline` – bounded `Channel<MarketEvent>` with configurable capacity and drop policy
-* `EventPipelinePolicy` – shared bounded-channel configuration for pipelines and queues
 * **Archival-First Storage Pipeline**:
   - `ArchivalStorageService` – Write-Ahead Logging (WAL) for crash-safe persistence
   - `WriteAheadLog` – Append-only log with checksums and transaction semantics
@@ -183,17 +231,40 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 * **Storage Sinks**:
   - `JsonlStorageSink` – writes events to append-only JSONL files with retention enforcement
   - `ParquetStorageSink` – columnar storage format for efficient analytics
+  - `CatalogSyncSink` – decorator that automatically updates the storage catalog on every flush, keeping directory indexes in sync without periodic rebuild calls
+  - `CompositeSink` – fan-out sink that writes events to multiple underlying sinks in parallel
 * **Compression & Archival**:
   - `CompressionProfileManager` – Storage tier-optimized compression (LZ4, ZSTD, Gzip)
   - `SchemaVersionManager` – Schema versioning with migration support and JSON Schema export
 * **Export System**:
-  - `AnalysisExportService` – Pre-built profiles for Python, R, Lean, Excel, PostgreSQL
+  - `AnalysisExportService` – Pre-built profiles for Python, R, Lean, Excel, PostgreSQL, Arrow/Feather, and XLSX
   - `AnalysisQualityReportGenerator` – Quality metrics with outlier detection and gap analysis
 * **File Organization**:
   - `JsonlStoragePolicy` – flexible file organization with multiple naming conventions and date partitioning
   - `JsonlReplayer` – replays captured JSONL events for backtesting (supports gzip compression)
-  - `TieredStorageManager` – hot/warm/cold storage tier management with automatic migration
+  - `MemoryMappedJsonlReader` – high-throughput JSONL reader using memory-mapped I/O for large replay workloads
+  - `TierMigrationService` – moves files between hot/warm/cold storage tiers
+  - `LifecyclePolicyEngine` – enforces tier-based lifecycle policies: compression upgrades, tier migrations, and retention
   - `DataRetentionPolicy` – time-based and capacity-based retention enforcement
+* **Catalog & Discovery**:
+  - `StorageCatalogService` – maintains a queryable root catalog (`_catalog.json`) and per-symbol manifests
+  - `SourceRegistry` – maps provider identifiers to their data roots for cross-provider queries
+  - `SymbolRegistryService` – tracks all symbols with stored data and their date ranges
+  - `StorageSearchService` – searches across the catalog for symbol/date/type combinations
+* **Data Quality & Governance**:
+  - `DataQualityScoringService` – assigns multi-dimensional quality scores (completeness, accuracy, timeliness) to stored data
+  - `DataQualityService` – higher-level quality orchestration wiring scoring and alerting
+  - `DataLineageService` – records provenance, transformations, and dependency graphs for stored files
+  - `StorageChecksumService` – validates SHA-256 checksums on stored files for integrity assurance
+  - `RetentionComplianceReporter` – generates reports on retention compliance and upcoming expirations
+  - `QuotaEnforcementService` – monitors and enforces per-symbol and per-provider storage quotas
+* **Metadata & Maintenance**:
+  - `MetadataTagService` – attaches user-defined key-value tags to stored files with background persistence
+  - `FileMaintenanceService` – compaction, re-index, and repair operations on individual files
+  - `FilePermissionsService` – validates and corrects file system permissions on data directories
+  - `MaintenanceScheduler` – schedules background maintenance tasks with cron expressions
+  - `EventBuffer` – in-memory accumulation buffer before batched flush to sinks
+  - `ParquetConversionService` – converts existing JSONL archives to Parquet for analytics
 * `StorageOptions` – configurable naming conventions, partitioning strategies, retention policies, and capacity limits
 * `StorageProfilePresets` – optional presets for research, low-latency, and archival workflows
 
@@ -209,13 +280,16 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
    - `QuoteCollector.OnQuote(MarketQuoteUpdate)`
 4. Collectors emit strongly-typed `MarketEvent` objects via `IMarketEventPublisher`
 5. `CanonicalizingPublisher` resolves canonical symbols, maps condition codes, and normalizes venue identifiers — see [Deterministic Canonicalization](deterministic-canonicalization.md)
-6. `EventPipeline` routes events through a bounded channel to decouple producers from I/O
-7. `JsonlStorageSink` appends events as JSONL
-8. `StatusWriter` periodically dumps health snapshots for UI/monitoring
+6. `FSharpEventValidator` runs railway-oriented F# validation before events enter the pipeline
+7. `EventPipeline` (or `DualPathEventPipeline` for high-throughput Trade/Quote) routes events through a bounded channel to decouple producers from I/O
+8. `JsonlStorageSink` appends events as JSONL; `CatalogSyncSink` keeps the storage catalog in sync on every flush
+9. `StatusWriter` periodically dumps health snapshots for UI/monitoring
 
 ### Event Pipeline Details
 
 * **Bounded channel** – `EventPipeline` uses `System.Threading.Channels` with configurable capacity (default 100,000) and `DropOldest` backpressure policy.
+* **Dual-path hot routing** – `DualPathEventPipeline` routes `Trade`/`BboQuote` events through zero-allocation struct ring buffers (`SpscRingBuffer<T>`), bypassing `MarketEvent` heap allocation entirely. Events that do not fit fall back to the standard `EventPipeline` without data loss.
+* **Persistent deduplication** – `PersistentDedupLedger` provides a JSONL-backed dedup log that survives restarts, keyed by `(provider, symbol, eventIdentity)` with TTL-based eviction.
 * **Storage policy** – `JsonlStoragePolicy` supports multiple file organization strategies:
   - **BySymbol**: `{root}/{symbol}/{type}/{date}.jsonl` (default)
   - **ByDate**: `{root}/{date}/{symbol}/{type}.jsonl`
@@ -295,6 +369,30 @@ The `EventSchemaValidator` component validates that emitted events conform to ex
 * **`TracedEventMetrics`** – Wraps `IEventMetrics` to emit OTEL span events alongside Prometheus counters, enabling trace-linked latency analysis
 * Supports OTLP, Jaeger, or console exporters via configuration
 
+### Advanced Monitoring Components
+
+The `Application/Monitoring/Core/` sub-module provides a production-grade alerting and SLO framework:
+
+* **`AlertDispatcher`** – Centralized alert publishing with subscription management; tracks recent alerts and per-category/source statistics
+* **`AlertRunbookRegistry`** – Maps alert rule IDs to operator runbook sections for automated escalation guidance
+* **`HealthCheckAggregator`** – Aggregates health-check results from all sub-systems into a composite status
+* **`SloDefinitionRegistry`** – Runtime registry of Service Level Objectives per sub-system; provides programmatic compliance scoring and maps SLOs to alert thresholds
+
+Additional monitoring services in `Application/Monitoring/`:
+
+* **`BadTickFilter`** – Filters out obvious data-quality anomalies (e.g. zero prices, extreme outliers) before events reach the pipeline
+* **`CircuitBreakerStatusService`** – Exposes circuit-breaker open/closed state per provider to the health API
+* **`ClockSkewEstimator`** – Estimates provider-to-collector clock skew using exchange vs. received timestamps
+* **`ConnectionStatusWebhook`** – Publishes provider connection-state changes to a configured webhook URL
+* **`DataLossAccounting`** – Tracks dropped-event counts by provider and symbol for audit purposes
+* **`DetailedHealthCheck`** – Comprehensive health check that validates pipeline depth, storage access, and provider connectivity
+* **`ErrorRingBuffer`** – Fixed-size ring buffer of recent operational errors for the monitoring dashboard
+* **`SchemaValidationService`** – Validates stored JSONL lines against registered JSON Schema versions
+* **`SystemHealthChecker`** – Aggregates CPU, memory, disk, and queue-depth metrics into an overall health status
+* **`TickSizeValidator`** – Validates that trade prices conform to the minimum tick size for each instrument
+* **`TimestampMonotonicityChecker`** – Detects backward-jumping timestamps within a symbol stream
+* **`ValidationMetrics`** – Counters for validation pass/fail/skip outcomes by event type and provider
+
 ---
 
 ## Storage Management
@@ -324,12 +422,10 @@ Date partitioning strategies (`DatePartition` enum) allow fine-tuning file granu
 
 ### Data Replay
 
-The `JsonlReplayer` component enables backtesting and analysis by streaming previously captured events:
+The `JsonlReplayer` and `MemoryMappedJsonlReader` components enable backtesting and analysis by streaming previously captured events:
 
-* Reads JSONL files in chronological order across directories
-* Automatically decompresses gzip-compressed files (`.jsonl.gz`)
-* Deserializes events back into strongly-typed `MarketEvent` objects
-* Supports filtering and selective replay through standard LINQ operations
+* **`JsonlReplayer`** – reads JSONL files in chronological order, automatically decompresses gzip (`.jsonl.gz`) files, and deserializes events back into strongly-typed `MarketEvent` objects. Supports filtering through standard LINQ operations.
+* **`MemoryMappedJsonlReader`** – high-throughput alternative that uses memory-mapped I/O for large replay workloads, reducing GC pressure compared to stream-based reads.
 
 Example usage:
 ```csharp
@@ -491,6 +587,6 @@ The system includes several high-performance features:
 
 ---
 
-**Version:** 1.6.2
-**Last Updated:** 2026-02-25
+**Version:** 1.7.0
+**Last Updated:** 2026-03-14
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [deterministic-canonicalization.md](deterministic-canonicalization.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)

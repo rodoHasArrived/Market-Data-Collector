@@ -39,22 +39,20 @@ flowchart LR
     HIST[Historical Providers\nYahoo/Stooq/Nasdaq]:::ext
     OPR[Operator]:::person
     UI[Web Dashboard\nASP.NET]:::container
-    UWP[Desktop App\nWinUI 3/UWP]:::container
+    WPF[Desktop App\nWPF]:::container
     COL[Market Data Collector\nService]:::system
     DISK[(Local Storage\nJSONL / Parquet)]:::store
-    MQ[Message Bus\nRabbitMQ / Azure SB]:::ext
 
     OPR --> UI
-    OPR --> UWP
+    OPR --> WPF
     UI <--> DISK
-    UWP <--> DISK
+    WPF <--> DISK
     UI --> COL
-    UWP --> COL
+    WPF --> COL
     IB --> COL
     ALP --> COL
     HIST --> COL
     COL --> DISK
-    COL --> MQ
 
 classDef person fill:#fff,stroke:#333,stroke-width:1px;
 classDef ext fill:#f8f8f8,stroke:#333,stroke-dasharray: 4 2;
@@ -70,11 +68,10 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 ```mermaid
 flowchart TB
     subgraph C[Market Data Collector (Process)]
-        APP[Application Layer\nProgram/ConfigWatcher/StatusWriter/BackfillService]:::container
+        APP[Application Layer\nComposition/ConfigWatcher/StatusWriter/BackfillService/Scheduling]:::container
         DOM[Domain Layer\nCollectors + Models]:::container
-        PIPE[Event Pipeline\nEventPipeline/Bounded Channel]:::container
-        MSG[Messaging\nMassTransit/CompositePublisher]:::container
-        STOR[Storage\nJsonl/Parquet Sinks]:::container
+        PIPE[Event Pipeline\nEventPipeline/DualPathEventPipeline/IngestionJobService]:::container
+        STOR[Storage\nJsonl/Parquet/CatalogSync Sinks]:::container
         INFRA[Infrastructure\nStreaming + Historical Providers]:::container
     end
 
@@ -82,15 +79,14 @@ flowchart TB
     ALP[Alpaca\nWebSocket + REST]:::ext
     HIST[Historical APIs\nYahoo/Stooq/Nasdaq]:::ext
     DISK[(Filesystem\n./data)]:::store
-    MQ[(Message Bus\nRabbitMQ)]:::store
     UI[Web Dashboard\nMarketDataCollector.Ui]:::container
-    UWP[Desktop App\nMarketDataCollector.Uwp]:::container
+    WPF[Desktop App\nMarketDataCollector.Wpf]:::container
     OPR[Operator]:::person
 
     OPR --> UI
-    OPR --> UWP
+    OPR --> WPF
     UI <--> DISK
-    UWP <--> DISK
+    WPF <--> DISK
 
     IB --> INFRA
     ALP --> INFRA
@@ -98,9 +94,7 @@ flowchart TB
     INFRA --> DOM
     DOM --> PIPE
     PIPE --> STOR
-    PIPE --> MSG
     STOR --> DISK
-    MSG --> MQ
 
     APP --> INFRA
     APP --> DOM
@@ -229,6 +223,6 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 
 ---
 
-**Version:** 1.6.1
-**Last Updated:** 2026-01-28
+**Version:** 1.7.0
+**Last Updated:** 2026-03-14
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [ADR Index](../adr/README.md)

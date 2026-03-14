@@ -1,6 +1,6 @@
 # Provider Management Architecture
 
-**Version:** 3.0 | **Last Updated:** 2026-02-21
+**Version:** 3.1 | **Last Updated:** 2026-03-14
 
 This document describes the provider management architecture used by Market Data Collector. It covers provider contracts, discovery, lifecycle management, failover, health monitoring, degradation scoring, and data quality operations.
 
@@ -44,11 +44,14 @@ UI / API Layer
                         └── IProviderModule (DI registration)
                             └── Concrete Providers
                                 ├── Streaming: Alpaca, Polygon, IB, NYSE, StockSharp
+                                │   (base: WebSocketProviderBase)
                                 ├── Historical: Alpaca, Polygon, Tiingo, Yahoo, Stooq,
                                 │              Finnhub, AlphaVantage, NasdaqDataLink,
                                 │              IB, StockSharp
+                                │   (base: BaseHistoricalDataProvider)
                                 └── Symbol Search: Alpaca, Finnhub, Polygon,
                                                    OpenFIGI, StockSharp
+                                    (base: BaseSymbolSearchProvider)
 ```
 
 ---
@@ -597,3 +600,10 @@ export TIINGO__TOKEN=your-token
 - Added UI services (`ProviderManagementService`, `ProviderHealthService`) and API endpoint reference.
 - Documented gap detection/repair pipeline (`DataGapAnalyzer`, `DataGapRepair`, `DataQualityMonitor`).
 - Documented `PriorityBackfillQueue` and `BackfillWorkerService` for historical backfill job management.
+
+## Migration Notes (v3.0 -> v3.1)
+
+- Added provider base classes to the layered architecture diagram: `WebSocketProviderBase` (streaming), `BaseHistoricalDataProvider` (historical), `BaseSymbolSearchProvider` (symbol search).
+- Added `BackfillProgressTracker` – real-time ETA and progress tracking for backfill jobs; available via `/api/backfill/status` endpoint.
+- Added `ProviderSubscriptionRanges` utility for splitting large symbol lists into provider-compatible batches.
+- Updated version and date.

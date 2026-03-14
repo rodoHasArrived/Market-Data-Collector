@@ -25,8 +25,16 @@ MarketDataCollector.Infrastructure   MarketDataCollector.Storage
                 ↑
 MarketDataCollector.Application  →  Infrastructure, Storage, Core,
                                     Domain, Contracts, ProviderSdk
-                ↑
+                ↑                         ↑
 MarketDataCollector (Host/Exe)   →  Application (+ transitive)
+                                         ↑
+                         ┌───────────────┴────────────────┐
+                         ↑                                ↑
+          MarketDataCollector.Ui.Shared          MarketDataCollector.Ui.Services
+            →  Application, Contracts              →  Contracts
+                         ↑                                ↑
+          MarketDataCollector.Ui                  MarketDataCollector.Wpf
+            →  Ui.Shared                            →  Ui.Services, Contracts
 ```
 
 ## Forbidden Dependencies
@@ -38,6 +46,10 @@ MarketDataCollector (Host/Exe)   →  Application (+ transitive)
 | **Infrastructure**  | Application, Storage                       | No upward deps, no peer deps         |
 | **Storage**         | Application, Infrastructure                | No upward deps, no peer deps         |
 | **Application**     | (none forbidden)                           | Top-level orchestrator                |
+| **Ui.Services**     | Wpf host types                             | Must stay platform-neutral            |
+| **Ui.Shared**       | WPF-only APIs, Ui.Services                 | Must stay web-host-agnostic           |
+| **Ui / Wpf hosts**  | Each other                                 | No host-to-host references            |
+| **Contracts**       | UI or application hosts                    | Pure contract layer                   |
 
 ## Enforcement Mechanisms
 
@@ -101,3 +113,14 @@ If a new cross-layer dependency is needed:
 ## BannedReferences.txt
 
 The `MarketDataCollector.Domain` project includes a `BannedReferences.txt` file that explicitly lists assemblies that Domain must never reference. This provides an additional safety net beyond project references.
+
+## UI Layer Dependency Rules
+
+The four UI-facing projects follow the same dependency direction rules but are isolated from one another:
+
+* **`MarketDataCollector.Ui.Shared`** – web endpoint mapping and host wiring; may reference `Application` and `Contracts`. Must not reference `Ui.Services` or `Wpf`.
+* **`MarketDataCollector.Ui.Services`** – cross-feature shared UI services (API client, fixture data, validation); may reference `Contracts` and lightweight platform-neutral libs. Must not reference WPF or `Ui.Shared`.
+* **`MarketDataCollector.Ui`** – intentionally thin web host; delegates to `Ui.Shared`. No application logic lives here.
+* **`MarketDataCollector.Wpf`** – Windows desktop host with XAML views and WPF services; references `Ui.Services` and `Contracts`. Must not reference `Ui.Shared` or `Ui`.
+
+See [Desktop & UI Layer Architecture](desktop-layers.md) for a detailed diagram and communication flow.
