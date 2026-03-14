@@ -1,34 +1,34 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-12T18:00:33.796647+00:00
+> Last updated: 2026-03-14T00:15:41.055553+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 70 |
+| **Total Items** | 71 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 70 |
+| **Untracked** | 71 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `TODO` | 52 | General tasks to complete |
-| `NOTE` | 18 | Important notes and documentation |
+| `NOTE` | 19 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `src/` | 57 |
-| `tests/` | 11 |
+| `tests/` | 12 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-70 items have no assignee and no issue tracking:
+71 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
@@ -192,7 +192,7 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:147`
   > If the provider supports server-side filtering, implement it here. Otherwise, keep this call to the base class which filters client-side.
 
-### NOTE (18)
+### NOTE (19)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -232,6 +232,9 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:525`
   > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
+
+- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/FSharpEventValidatorTests.cs:72`
+  > Trade.ctor only checks Price > 0, so $2,000,000 is constructible.
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
   > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
