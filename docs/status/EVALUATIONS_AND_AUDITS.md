@@ -1,10 +1,10 @@
 # Market Data Collector - Consolidated Evaluations & Audits
 
-**Version:** 1.6.1
-**Last Updated:** 2026-02-21
+**Version:** 1.6.2
+**Last Updated:** 2026-03-14
 **Status:** Consolidated reference document
 
-This document consolidates all architecture evaluations, code audits, desktop assessments, and operational reviews into a single navigable reference. It replaces the need to read 15+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
+This document consolidates all architecture evaluations, code audits, desktop assessments, improvement brainstorms, and architecture proposals into a single navigable reference. It replaces the need to read 20+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
 
 **Canonical tracking documents (not merged here):**
 - [`ROADMAP.md`](ROADMAP.md) — phased execution timeline (Phases 0-10)
@@ -26,7 +26,6 @@ This document consolidates all architecture evaluations, code audits, desktop as
 - [Desktop Assessments](#desktop-assessments)
   - [Desktop UX Assessment](#desktop-ux-assessment)
   - [Desktop Provider Configurability](#desktop-provider-configurability)
-  - [Desktop Improvement Shortlist](#desktop-improvement-shortlist)
 - [Code Audits](#code-audits)
   - [Repository Hygiene (H1-H3)](#repository-hygiene-h1-h3)
   - [Debug Code Analysis (H3)](#debug-code-analysis-h3)
@@ -35,6 +34,14 @@ This document consolidates all architecture evaluations, code audits, desktop as
 - [Repository Cleanup](#repository-cleanup)
   - [Cleanup Action Plan Status](#cleanup-action-plan-status)
   - [Config Consolidation](#config-consolidation)
+- [Improvement Brainstorms](#improvement-brainstorms)
+  - [High-Impact Improvement Brainstorm (March 2026)](#high-impact-improvement-brainstorm-march-2026)
+  - [High-Impact Improvements Brainstorm (Feb/Mar 2026)](#high-impact-improvements-brainstorm-febmar-2026)
+  - [High-Value Low-Cost Improvements](#high-value-low-cost-improvements)
+- [Architecture Proposals](#architecture-proposals)
+  - [Nautilus-Inspired Restructuring](#nautilus-inspired-restructuring)
+  - [Assembly-Level Performance Opportunities](#assembly-level-performance-opportunities)
+  - [Next Frontier Brainstorm (March 2026)](#next-frontier-brainstorm-march-2026)
 - [Cross-Cutting Findings](#cross-cutting-findings)
 - [Archived Evaluations](#archived-evaluations)
 
@@ -52,8 +59,12 @@ This document consolidates all architecture evaluations, code audits, desktop as
 | Operational Readiness | Pilot Ready | Good monitoring baseline; needs standardized SLOs and runbook-linked alerts | [Evaluation](#operational-readiness) |
 | Desktop UX | Partial parity | 49 pages, 104 services; key features implemented; remaining gaps in live backend integration | [Assessment](#desktop-ux-assessment) |
 | Code Quality | Excellent | Debug code is intentional; no cleanup required; repository hygiene complete | [Audit](#debug-code-analysis-h3) |
-| Repository Cleanup | 95% Complete | Phases 1-6 done; residual: generated docs refresh, HtmlTemplateGenerator CSS/JS extraction | [Audit](#cleanup-action-plan-status) |
+| Repository Cleanup | Complete | Phases 1-6 done; generated docs refresh and HtmlTemplateGenerator CSS/JS extraction remain | [Audit](#cleanup-action-plan-status) |
 | Simplification Backlog | ~2,800-3,400 LOC removable | 12 categories identified; highest priority: bare catches, dead code, Task.Run misuse | [Audit](#further-simplification-opportunities) |
+| Critical Defects (March 2026) | 6.5/10 — Architecturally Sound, Operationally Risky | Silent data-loss paths in flush semantics, WAL transactions, price precision, and deduplication | [Brainstorm](#high-impact-improvement-brainstorm-march-2026) |
+| Code Generalization | Strong domain types needed | Stringly-typed identifiers, thin singletons, and duplicated WebSocket lifecycle code are top risks | [Brainstorm](#high-impact-improvements-brainstorm-febmar-2026) |
+| Nautilus-Inspired Restructuring | Partially Implemented | 5/12 proposals implemented; co-located provider configs, parsing layer, FSM base still open | [Proposal](#nautilus-inspired-restructuring) |
+| Next Frontier (March 2026) | 94%+ core complete | 11 capabilities shipped; correlation engine, ML anomaly detection, cloud sinks remain future work | [Brainstorm](#next-frontier-brainstorm-march-2026) |
 
 ---
 
@@ -284,30 +295,6 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ---
 
-### Desktop Improvement Shortlist
-
-> Source: `docs/evaluations/desktop-end-user-improvements-shortlist.md`
-
-**Target Personas:** Active Trader, Quant Researcher, Data Engineer, Portfolio Analyst, New User
-
-**P0 — Critical Trust and Continuity (All Resolved):**
-- ~~Replace demo/simulated values with live backend state~~ — **Done**: `StatusServiceBase` sets `DataProvenance`
-- ~~Add resumable jobs with crash recovery~~ — **Done**: `IngestionJobService` with disk-persisted checkpoints
-- ~~Show explicit staleness + source provenance~~ — **Done**: `SimpleStatus` provenance fields
-- ~~Hard visual distinction for sample/offline mode~~ — **Done**: `MainPage.xaml` fixture mode banner with dynamic color/label
-
-**P1 — Productivity and Incident Response:**
-- Actionable error diagnostics with guided remediation
-- Bulk symbol import with validation previews
-- Provider health badges on data-consuming pages
-
-**P2 — Intelligence and Polish:**
-- Alert intelligence (suppress duplicates, recommend actions)
-- Data quality explainability (root-cause hints)
-- Export workflow hardening (format validation, progress)
-
----
-
 ## Code Audits
 
 ### Repository Hygiene (H1-H3)
@@ -431,7 +418,257 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ---
 
-## Cross-Cutting Findings
+## Improvement Brainstorms
+
+### High-Impact Improvement Brainstorm (March 2026)
+
+> Source: `docs/evaluations/high-impact-improvement-brainstorm-2026-03.md`
+> Date: 2026-03-01 (follow-ups: 2026-03-10, 2026-03-11) | Status: Active — several items implemented
+
+**Overall Rating:** 6.5/10 — Architecturally Sound, Operationally Risky
+
+| Component | Design | Implementation | Robustness |
+|-----------|--------|----------------|------------|
+| Event Pipeline | 9/10 | 5/10 | 5/10 |
+| Write-Ahead Log | 8/10 | 4/10 | 4/10 |
+| Alpaca Client | 7/10 | 4/10 | 4/10 |
+| WebSocket Resilience | 8/10 | 5/10 | 6/10 |
+| Data Quality Monitoring | 9/10 | 6/10 | 6/10 |
+| Domain Models | 9/10 | 8/10 | 8/10 |
+| Configuration System | 8/10 | 7/10 | 7/10 |
+| Test Suite | 8/10 | 6/10 | 6/10 |
+| F# Integration | 7/10 | 5/10 | 5/10 |
+
+**Category 1 — Data Integrity & Correctness:**
+
+| # | Issue | Status |
+|---|-------|--------|
+| 1.1 | EventPipeline flush semantics count dropped events as persisted — silent data loss | Open |
+| 1.2 | WAL-to-Sink transaction gap — crash recovery may produce duplicates | Open |
+| 1.3 | Alpaca price precision loss (`double → decimal` round-trip) and large trade size truncation | ✅ Fixed (2026-03-10): `GetInt64()` for sizes; timestamps reject on parse failure |
+| 1.4 | No trade message deduplication — phantom trades inflate volume and VWAP | ✅ Fixed (2026-03-10): bounded sliding-window content deduplication |
+| 1.5 | Completeness score locked at first-event rate; wrong for most symbols | Open |
+
+**Category 2 — Resource Management & Stability:**
+
+| # | Issue | Status |
+|---|-------|--------|
+| 2.1 | Memory leaks in `SequenceErrorTracker`, `GapAnalyzer`, `CompletenessScoreCalculator` — entries never evicted | Open |
+| 2.2 | `GapAnalyzer.GetEffectiveConfig()` allocates a new record per event on the hot path | Open |
+| 2.3 | `EventPipeline` sink flush has no timeout — hung sink stalls the entire pipeline | ✅ Fixed (2026-03-11): 60 s configurable flush timeout |
+| 2.4 | `WebSocketConnectionManager` receive buffer has no size limit — OOM via oversized message | Open |
+| 2.5 | `TryReconnectAsync` reconnection race condition — `_isReconnecting` check not inside semaphore | Open |
+| 2.6 | `dataClient.ConnectAsync()` at startup has no timeout — application hangs forever on firewall drop | ✅ Fixed (2026-03-11): 30 s connection timeout with `ErrorCode.ConnectionTimeout` exit |
+
+**Category 3 — Architectural Improvements:**
+
+| # | Improvement | Status |
+|---|-------------|--------|
+| 3.1 | End-to-end trace context propagation via `System.Diagnostics.Activity` | Open |
+| 3.2 | WebSocket provider base class (Polygon, NYSE, StockSharp share ~200-300 LOC lifecycle code) | Open |
+| 3.3 | Decide F# strategy: deepen validation/calculation coverage or remove interop overhead | Open |
+| 3.4 | Idempotent storage writes (bloom filter / hash-set dedup at sink layer) | Open |
+| 3.5 | Config fail-fast vs. self-healing separation with severity levels | Open |
+| 3.6 | Backpressure feedback loop — `TryPublish()` returns `bool`; providers can't throttle proactively | ✅ Fixed (2026-03-11): `TryPublishWithResult()` returning `PublishResult` enum |
+
+**Category 4 — Observability & Operational Excellence:**
+
+| # | Improvement | Status |
+|---|-------------|--------|
+| 4.1 | Alert-to-runbook linkage in Prometheus alert rule annotations | Open |
+| 4.2 | Backpressure alerting is single-shot; sustained load produces only one warning | Open |
+| 4.3 | WAL corruption alerting — invalid checksums are silently skipped | ✅ Fixed (2026-03-10): `WalCorruptionMode` enum (Skip/Alert/Halt) |
+| 4.4 | Provider health dashboard — no unified traffic-light view across providers | ✅ Fixed (2026-03-11): `GET /api/providers/dashboard` with green/yellow/red status |
+
+**Category 5 — Test Infrastructure:**
+
+| # | Improvement | Status |
+|---|-------------|--------|
+| 5.1 | Timing-dependent skipped tests (`Task.Delay`-based synchronization) | ✅ Fixed (2026-03-11): deterministic `BlockingStorageSink` synchronization |
+| 5.2 | Mock sinks support no error injection — pipeline failure modes untested | Open |
+| 5.3 | No provider resilience tests (rate limits, malformed JSON, reconnection under loss) | Open |
+| 5.4 | Property-based testing absent for domain models (serialization round-trips, ordering) | Open |
+
+**Category 6-7 — Code Quality & Correctness by Construction:**
+
+| # | Improvement | Status |
+|---|-------------|--------|
+| 6.1 | 42-service `Lazy<T>` singleton anti-pattern — untestable, tightly coupled | Open |
+| 6.2 | `ServiceCompositionRoot` 50-100+ service registrations in one file | Open |
+| 6.3 | Inconsistent error handling across providers | Open |
+| 7.1 | Typed symbol keys (`Symbol`, `CanonicalSymbol`, `ProviderSymbol` value types) | Open |
+| 7.2 | Sequence number domain separation (`PipelineSequence` vs. `ExchangeSequence`) | Open |
+| 7.3 | Non-nullable event payloads via generic specialization | Open |
+
+---
+
+### High-Impact Improvements Brainstorm (Feb/Mar 2026)
+
+> Source: `docs/evaluations/high-impact-improvements-brainstorm.md`
+> Date: 2026-03-02 | Status: Active — Improvements Identified
+
+**Top themes from deep codebase analysis:**
+
+| Theme | Summary |
+|-------|---------|
+| Stringly-typed identifiers | `string Symbol`, `string Source`, provider IDs are bare strings; introduce value-object wrappers (`Symbol`, `CanonicalSymbol`, `ProviderId`, `Venue`, `StreamId`) |
+| Provider registration unification | 3 separate creation mechanisms; consolidate via `ProviderFactory` + `DataSourceRegistry` |
+| Endpoint response contract | HTTP endpoints lack versioned OpenAPI schemas; response shapes evolve silently |
+| F# integration depth | 12 F# files vs. 652 C#; validation pipeline rarely called; interop overhead without coverage depth |
+| WPF ViewModel extraction | All pages except Dashboard perform business logic in code-behind; untestable without UI thread |
+| Test doubles | Mock sinks, fake providers, and stub calendars are not shared; each test reinvents infrastructure |
+
+> For the full item-by-item analysis see `docs/evaluations/high-impact-improvements-brainstorm.md`.
+
+---
+
+### High-Value Low-Cost Improvements
+
+> Source: `docs/evaluations/high-value-low-cost-improvements-brainstorm.md`
+> Date: 2026-02-23 | Status: Active — Improvements Identified
+
+**Context:** Identified after 94.3% of core improvements were complete (33/35 items). Focus on high-ROI, low-effort changes.
+
+**Top categories:**
+
+| Category | Key Improvements |
+|----------|-----------------|
+| Startup & Configuration Hardening | Credential validation in `PreflightChecker`; deprecation warning for legacy `DataSource` string config |
+| Provider Resilience | Per-provider retry budget; explicit provider degradation thresholds configurable per environment |
+| Developer Experience | Shared test double library; `[Theory]`-based provider message parsing tests |
+| Operations | Prometheus alert annotations with runbook URLs; structured log correlation IDs |
+| Code Simplification | Replace `Lazy<T>` singletons with DI; remove thin wrapper services |
+
+> For the full item-by-item analysis see `docs/evaluations/high-value-low-cost-improvements-brainstorm.md`.
+
+---
+
+## Architecture Proposals
+
+### Nautilus-Inspired Restructuring
+
+> Source: `docs/evaluations/nautilus-inspired-restructuring-proposal.md`
+> Date: 2026-03-01 | Last Reviewed: 2026-03-11 | Status: Partially Implemented
+
+**Scope:** 7 structural changes + 5 procedural/code enhancements inspired by [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader). All changes are backward-compatible.
+
+**Implementation Status:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 1.1 | Unified Per-Provider Directories | ✅ Implemented — reorganized under `Adapters/` by vendor |
+| 1.2 | Provider Template Scaffold | ⚠️ Partial — `ProviderTemplate.cs` factory exists; no `_Template/` scaffold dir |
+| 1.3 | Co-located Provider Configuration | ❌ Not Started — configs remain in `Application/Config/` |
+| 1.4 | Explicit Parsing Layer Per Provider | ❌ Not Started — parsing is still inline within provider clients |
+| 1.5 | Per-Provider Factory Classes | ❌ Not Started — central `ProviderFactory.cs` unchanged |
+| 1.6 | Consolidated Domain Enums | ✅ Implemented — 14 enums in `Contracts/Domain/Enums/` |
+| 1.7 | Persistence Read/Write/Transform Separation | ⚠️ Partial — functional separation via `Archival/`, `Replay/`, `Export/`; no literal dirs |
+| 2.1 | Component Lifecycle FSM Base Class | ❌ Not Started — no `ComponentBase`; abstract bases exist without FSM |
+| 2.2 | Provider-Local Common Types | ⚠️ Partial — some providers have internal files; not universal |
+| 2.3 | Module-Scoped Message Types | ⚠️ Partial — `Application/Commands/` exists; no pipeline/backfill command types |
+| 2.4 | Credential Isolation at Provider Boundary | ⚠️ Partial — hybrid: `ICredentialResolver` + `ProviderCredentialResolver` |
+| 2.5 | ArchUnitNET Dependency Rules | ❌ Not Started — no architecture boundary tests |
+
+**Remaining work:** Items 1.3, 1.4, 1.5, 2.1, 2.5 are all open. The highest-value unopened items are the explicit parsing layer (1.4) and the component FSM base class (2.1).
+
+---
+
+### Assembly-Level Performance Opportunities
+
+> Source: `docs/evaluations/assembly-performance-opportunities.md`
+> Date: 2026-03-01 | Status: Proposal
+
+**Scope:** Identifies where .NET hardware intrinsics / SIMD can materially improve hot-path performance. Assembly is **not** recommended for orchestration, I/O-bound, or framework-heavy paths.
+
+**Highest-potential candidates:**
+
+| # | Area | Opportunity | Expected Gain |
+|---|------|-------------|---------------|
+| 1 | `MemoryMappedJsonlReader` — newline scanning & UTF-8 | Vectorized `\n` delimiter search (`Vector128/256<byte>`) | 1.5–4× scan throughput for large replay files |
+| 2 | `DataQualityScoringService.ComputeSequenceScoreAsync` — digit parsing | SIMD-assisted key search & numeric span extraction | Reduced GC and branch mispredicts |
+| 3 | Bulk event-buffer copy/drain | `Unsafe.CopyBlock` or `MemoryMarshal.Cast` over raw event structs | Reduced per-event overhead at high throughput |
+| 4 | Checksum / compression fast paths | CPU-bound profiling may reveal SIMD checksum candidates | Only if profiling confirms CPU-bound |
+
+> For the full analysis see `docs/evaluations/assembly-performance-opportunities.md`.
+
+---
+
+### Next Frontier Brainstorm (March 2026)
+
+> Source: `docs/evaluations/2026-03-brainstorm-next-frontier.md`
+> Date: 2026-03-03 (updated 2026-03-12) | Status: Living Document
+
+**Context:** Core platform at v1.6.2 with 94.3%+ of improvement items complete (33/35 core items, 6/8 extended items). This brainstorm targets new capabilities not yet covered by existing evaluations.
+
+**Implementation Status by Area:**
+
+**Area 1 — Data Intelligence & Analytics:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 1.1 | Cross-Symbol Correlation Engine (rolling correlation matrices, lead-lag) | 📝 Future |
+| 1.2 | Microstructure Event Annotations (sweep, block, halt, spread spike) | 📝 Future |
+| 1.3 | Cost-Per-Query Estimator for Backfill | ✅ Implemented — `BackfillCostEstimator`, `/api/backfill/cost-estimate` |
+
+**Area 2 — Resilience & Operational Maturity:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 2.1 | Replay-Based Regression Testing (golden snapshot diffs) | 🔄 Partial — infrastructure in place; drift-canary CI job pending |
+| 2.2 | Provider Health Scorecard with Trend Analysis | 🔄 Partial — current-state metrics implemented; historical snapshot + trend pending |
+| 2.3 | Circuit Breaker Dashboard | ✅ Implemented — `CircuitBreakerStatusService`, `/api/resilience/circuit-breakers` |
+
+**Area 3 — Developer & User Experience:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 3.1 | Data Catalog with Search & Discovery | 🔄 Partial — `StorageSearchService`, `DataBrowserPage` done; CLI shortcut + Gantt timeline pending |
+| 3.2 | Provider Credential Rotation Automation | 🔄 Partial — expiry states and OAuth refresh implemented; proactive rotation pending |
+| 3.3 | Interactive Backfill Planner | 🔄 Partial — cost estimator, calendar, checkpoints done; pause/resume and conflict UI pending |
+
+**Area 4 — Data Integrity & Governance:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 4.1 | Data Lineage Visualization | ✅ Implemented — `DataLineageService` |
+| 4.2 | Automated Data Retention Compliance Reports | ✅ Implemented — `RetentionComplianceReporter`, `/api/resilience/compliance-report` |
+| 4.3 | Schema Evolution & Migration Toolkit | 🔄 Partial — `ISchemaUpcaster`, `SchemaVersionManager`, `SchemaUpcasterRegistry` done; lazy upcasting + migration CLI pending |
+
+**Area 5 — Ecosystem & Integration:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 5.1 | Webhook & Notification Framework | 🔄 Partial — `AlertDispatcher`, webhooks implemented; user-defined JSON rule engine pending |
+| 5.2 | Data Export to Cloud Storage (S3, GCS, Azure Blob) | 📝 Future |
+| 5.3 | QuantConnect Lean Tight Integration | ✅ Implemented — `LeanIntegrationService`, `LeanAutoExportService`, `LeanSymbolMapper` |
+
+**Area 6 — Performance & Scale:**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 6.1 | Tiered Memory Buffer with Spill-to-Disk | 📝 Future |
+| 6.2 | Parallel Backfill Orchestration | ✅ Implemented — `PriorityBackfillQueue`, `BackfillJobManager`, `BackfillWorkerService` |
+
+**Area 7 — Architecture & Technical Debt (added 2026-03-12):**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 7.1 | WebSocket Provider Base Class Consolidation | 📝 Future |
+| 7.2 | End-to-End OpenTelemetry Trace Propagation | 📝 Future |
+| 7.3 | WPF MVVM Full Migration (all pages beyond `DashboardViewModel`) | 📝 Future |
+
+**Area 8 — New Capabilities (added 2026-03-12):**
+
+| # | Proposal | Status |
+|---|----------|--------|
+| 8.1 | ML-Based Anomaly Detection (Isolation Forest / LSTM) | 📝 Future |
+| 8.2 | Reference Data Integration (corporate actions, earnings, economic calendar) | 📝 Future |
+| 8.3 | Multi-Instance Coordination (horizontal scaling, symbol partitioning) | 📝 Future |
+| 8.4 | FIX Protocol / Drop-Copy Integration | 📝 Future |
+
+---
+
+
 
 These themes recur across multiple evaluations:
 
@@ -467,6 +704,7 @@ These evaluations are superseded or no longer applicable:
 
 | Document | Location | Reason Archived |
 |----------|----------|----------------|
+| `desktop-end-user-improvements-shortlist.md` | `docs/archived/` | All P0 items resolved; superseded by current desktop assessment |
 | `desktop-ui-alternatives-evaluation.md` | `docs/archived/` | Decision made: WPF is sole desktop platform |
 | `UWP_COMPREHENSIVE_AUDIT.md` | `docs/audits/` | UWP fully removed from codebase |
 | `uwp-development-roadmap.md` | `docs/archived/` | UWP deprecated; WPF is sole client |
@@ -492,8 +730,13 @@ All source documents that feed into this consolidation:
 | Ingestion Orchestration Evaluation | `docs/evaluations/ingestion-orchestration-evaluation.md` | Evaluation | Current |
 | Operational Readiness Evaluation | `docs/evaluations/operational-readiness-evaluation.md` | Evaluation | Current |
 | Desktop End-User Improvements | `docs/evaluations/desktop-end-user-improvements.md` | Assessment | Current |
-| Desktop Improvement Shortlist | `docs/evaluations/desktop-end-user-improvements-shortlist.md` | Assessment | Current |
 | Desktop Provider Configurability | `docs/evaluations/windows-desktop-provider-configurability-assessment.md` | Assessment | Current |
+| High-Impact Improvement Brainstorm (Mar 2026) | `docs/evaluations/high-impact-improvement-brainstorm-2026-03.md` | Brainstorm | Active |
+| High-Impact Improvements Brainstorm | `docs/evaluations/high-impact-improvements-brainstorm.md` | Brainstorm | Active |
+| High-Value Low-Cost Improvements | `docs/evaluations/high-value-low-cost-improvements-brainstorm.md` | Brainstorm | Active |
+| Nautilus-Inspired Restructuring Proposal | `docs/evaluations/nautilus-inspired-restructuring-proposal.md` | Proposal | Partially Implemented |
+| Assembly-Level Performance Opportunities | `docs/evaluations/assembly-performance-opportunities.md` | Proposal | Proposal |
+| Next Frontier Brainstorm (Mar 2026) | `docs/evaluations/2026-03-brainstorm-next-frontier.md` | Brainstorm | Living Document |
 | Cleanup Summary | `docs/audits/CLEANUP_SUMMARY.md` | Audit | Complete |
 | Cleanup Opportunities | `docs/audits/CLEANUP_OPPORTUNITIES.md` | Audit | Complete |
 | Debug Code Analysis | `docs/audits/H3_DEBUG_CODE_ANALYSIS.md` | Audit | Complete |
@@ -504,7 +747,8 @@ All source documents that feed into this consolidation:
 | Desktop Improvements Exec Summary | `docs/development/desktop-improvements-executive-summary.md` | Summary | Current |
 | Desktop Improvements Quick Ref | `docs/development/desktop-improvements-quick-reference.md` | Reference | Current |
 | Desktop Platform Improvements Guide | `docs/development/desktop-platform-improvements-implementation-guide.md` | Guide | Current |
+| Desktop Improvement Shortlist | `docs/archived/desktop-end-user-improvements-shortlist.md` | Assessment | Archived |
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-03-14*
