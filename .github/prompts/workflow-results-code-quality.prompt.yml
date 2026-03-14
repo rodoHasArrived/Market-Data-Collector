@@ -1,8 +1,8 @@
 name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-10
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22922468265
+# Generated: 2026-03-14
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082459939
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,15 +19,15 @@ messages:
 
       ## Findings from Workflow Run
       ### Code Quality
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(149,24): warning CS1573:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(148,24): warning CS1573:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(147,33): warning CS1573:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(146,33): warning CS1573:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(145,14): warning CS1573:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(37,5): warning CS1587:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(32,5): warning CS1587:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(27,5): warning CS1587:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(22,5): warning CS1587:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(17,5): warning CS1587:...`
 
 
       ## Error Codes
-      - `CS1573`
+      - `CS1587`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -40,7 +40,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22922468265
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082459939
 
       Additional context:
       {{additional_context}}
