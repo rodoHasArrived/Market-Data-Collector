@@ -1512,11 +1512,13 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        continue-on-error: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/docfx/_site
+        continue-on-error: true
 
   # ─── Deploy to GitHub Pages ──────────────────────────────────────────
   deploy-pages:
@@ -1538,6 +1540,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
 
   # ─── Report ──────────────────────────────────────────────────────────
   report:
