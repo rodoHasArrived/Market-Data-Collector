@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-03-14 19:23:37 UTC
+> Auto-generated on 2026-03-14 19:47:17 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -31,10 +31,13 @@ Market-Data-Collector/
 │   │   └── setup-dotnet-cache/
 │   │       └── action.yml
 │   ├── agents/
+│   │   ├── code-review-agent.md
 │   │   └── documentation-agent.md
 │   ├── instructions/
+│   │   ├── csharp.instructions.md
 │   │   ├── docs.instructions.md
-│   │   └── dotnet-tests.instructions.md
+│   │   ├── dotnet-tests.instructions.md
+│   │   └── wpf.instructions.md
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── .gitkeep
 │   │   ├── bug_report.yml

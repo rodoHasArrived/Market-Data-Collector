@@ -1,27 +1,27 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-14T19:23:41.237405+00:00
+> Last updated: 2026-03-14T19:47:22.301035+00:00
 
 ## Overall Health Score
 
 ```
-  [###########################---] 90/100
-  Rating: Excellent
+  [###########################---] 89/100
+  Rating: Good
 ```
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 175 |
-| Total lines | 73,738 |
-| Average file size (lines) | 421.4 |
-| Orphaned files | 40 |
+| Total documentation files | 178 |
+| Total lines | 74,231 |
+| Average file size (lines) | 417.0 |
+| Orphaned files | 43 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 155 |
-| **Health score** | **90/100** |
+| **Health score** | **89/100** |
 
 ### Score Breakdown
 
@@ -54,18 +54,18 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/QUICKSTART.md`
 - `.github/TEST_MATRIX_FIX_SUMMARY.md`
 - `.github/WORKFLOW_IMPROVEMENTS.md`
+- `.github/agents/code-review-agent.md`
+- `.github/instructions/csharp.instructions.md`
 - `.github/instructions/docs.instructions.md`
 - `.github/instructions/dotnet-tests.instructions.md`
+- `.github/instructions/wpf.instructions.md`
 - `.github/pull_request_template_desktop.md`
 - `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
 - `.github/workflows/TESTING_AI_SYNC.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/architecture/crystallized-storage-format.md`
-- `docs/archived/2026-02_PR_SUMMARY.md`
-- `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
-- `docs/archived/2026-02_VISUAL_CODE_EXAMPLES.md`
-- ... and 20 more
+- ... and 23 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-14 | 90 | 175 | 40 | 0 |
+| 2026-03-14 | 89 | 178 | 43 | 0 |
 
 ---
 
