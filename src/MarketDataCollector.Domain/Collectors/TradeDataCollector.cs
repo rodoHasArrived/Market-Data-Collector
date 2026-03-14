@@ -200,7 +200,8 @@ public sealed class TradeDataCollector
             Aggressor: aggressor,
             SequenceNumber: seq,
             StreamId: update.StreamId,
-            Venue: update.Venue);
+            Venue: update.Venue,
+            RawConditions: update.RawConditions);
 
         // Combine RegisterTrade + BuildOrderFlowStats into a single lock acquisition
         // to eliminate the double lock overhead (was two separate lock(_sync) calls per trade).
@@ -216,7 +217,10 @@ public sealed class TradeDataCollector
         var ring = _recentTrades.GetOrAdd(symbolId, _ => new RecentTradeRing(MaxRecentTrades));
         ring.Add(trade);
 
-        _publisher.TryPublish(MarketEvent.Trade(trade.Timestamp, trade.Symbol, trade));
+        // Stamp the exchange timestamp so latency metrics are available after canonicalization.
+        // update.Timestamp is the exchange-reported execution time.
+        _publisher.TryPublish(MarketEvent.Trade(trade.Timestamp, trade.Symbol, trade)
+            .StampReceiveTime(exchangeTs: update.Timestamp));
 
         // -------- OrderFlow statistics --------
         _publisher.TryPublish(MarketEvent.OrderFlow(update.Timestamp, symbol, stats));

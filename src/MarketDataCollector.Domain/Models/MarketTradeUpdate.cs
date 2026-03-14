@@ -14,5 +14,6 @@ public sealed record MarketTradeUpdate(
     AggressorSide Aggressor,
     long SequenceNumber,
     string? StreamId = null,
-    string? Venue = null
+    string? Venue = null,
+    string[]? RawConditions = null
 );

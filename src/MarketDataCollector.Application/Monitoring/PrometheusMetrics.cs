@@ -309,6 +309,10 @@ public static class PrometheusMetrics
         "mdc_canonicalization_dual_writes_total",
         "Total number of events dual-written (raw + canonical) during Phase 2 validation");
 
+    private static readonly Counter CanonicalizationQuarantinedTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_canonicalization_quarantined_total",
+        "Total number of unresolved-symbol events written to the quarantine sink");
+
     private static readonly Histogram CanonicalizationDurationSeconds = Prometheus.Metrics.CreateHistogram(
         "mdc_canonicalization_duration_seconds",
         "Canonicalization processing time per event",
@@ -526,6 +530,7 @@ public static class PrometheusMetrics
         CanonicalizationSkippedTotal.IncTo(snapshot.Skipped);
         CanonicalizationUnresolvedTotal.IncTo(snapshot.Unresolved);
         CanonicalizationDualWritesTotal.IncTo(snapshot.DualWrites);
+        CanonicalizationQuarantinedTotal.IncTo(snapshot.Quarantined);
         CanonicalizationVersionActive.Set(activeVersion);
 
         // Record average duration as a histogram observation if available

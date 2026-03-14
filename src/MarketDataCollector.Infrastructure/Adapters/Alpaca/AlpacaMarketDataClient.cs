@@ -361,7 +361,14 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
                 Aggressor: AggressorSide.Unknown,
                 SequenceNumber: tradeId <= 0 ? 0L : tradeId,
                 StreamId: "ALPACA",
-                Venue: venue ?? "ALPACA"
+                Venue: venue ?? "ALPACA",
+                RawConditions: el.TryGetProperty("c", out var cProp) && cProp.ValueKind == JsonValueKind.Array
+                    ? cProp.EnumerateArray()
+                            .Select(c => c.GetString())
+                            .Where(c => c is not null)
+                            .Select(c => c!)
+                            .ToArray()
+                    : null
             );
 
             _tradeCollector.OnTrade(update);
