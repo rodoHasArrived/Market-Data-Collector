@@ -1,7 +1,7 @@
 # High-Impact Improvement Brainstorm — March 2026
 
 **Date:** 2026-03-01
-**Status:** Active — Defects and Improvements Identified
+**Status:** Active — 9 of 14 priority items implemented; 5 open
 **Author:** Architecture Review
 
 > **Scope**: Ideas that meaningfully improve the quality of the codebase and the
@@ -586,22 +586,22 @@ exhaustive and the compiler catches missing cases.
 
 ## Priority Matrix
 
-| # | Improvement | Category | Data Impact | Reliability Impact |
-|---|------------|----------|-------------|-------------------|
-| 1.1 | Fix flush semantics | Correctness | **Critical** | High |
-| 1.2 | WAL-sink transaction | Correctness | **Critical** | High |
-| 1.3 | Price precision fix | Correctness | **Critical** | Medium |
-| 1.4 | Trade deduplication | Correctness | **Critical** | Medium |
-| 2.1 | Memory leak fixes | Stability | Low | **Critical** |
-| 2.3 | Sink timeout/buffering | Stability | High | **Critical** |
-| 2.5 | Reconnection race fix | Stability | Medium | High |
-| 3.1 | E2E trace propagation | Architecture | Low | High |
-| 3.4 | Idempotent writes | Architecture | **Critical** | **Critical** |
-| 3.6 | Backpressure feedback | Architecture | High | High |
-| 5.1 | Fix flaky tests | Testing | Low | Medium |
-| 5.3 | Provider resilience tests | Testing | Medium | High |
-| 6.1 | Eliminate singletons | Maintainability | Low | Medium |
-| 7.1 | Typed symbol keys | Type Safety | Medium | Medium |
+| # | Improvement | Category | Data Impact | Reliability Impact | Status |
+|---|------------|----------|-------------|-------------------|--------|
+| 1.1 | Fix flush semantics | Correctness | **Critical** | High | ✅ Done (2026-03-12) |
+| 1.2 | WAL-sink transaction | Correctness | **Critical** | High | 📝 Open |
+| 1.3 | Price precision fix | Correctness | **Critical** | Medium | ✅ Done (2026-03-10) |
+| 1.4 | Trade deduplication | Correctness | **Critical** | Medium | ✅ Done (2026-03-10) |
+| 2.1 | Memory leak fixes | Stability | Low | **Critical** | ✅ Done (2026-03-12) |
+| 2.3 | Sink timeout/buffering | Stability | High | **Critical** | ✅ Done (2026-03-11) |
+| 2.5 | Reconnection race fix | Stability | Medium | High | ✅ Done (2026-03-12) |
+| 3.1 | E2E trace propagation | Architecture | Low | High | 📝 Open |
+| 3.4 | Idempotent writes | Architecture | **Critical** | **Critical** | 📝 Open |
+| 3.6 | Backpressure feedback | Architecture | High | High | ✅ Done (2026-03-11) |
+| 5.1 | Fix flaky tests | Testing | Low | Medium | ✅ Done (2026-03-11) |
+| 5.3 | Provider resilience tests | Testing | Medium | High | 📝 Open |
+| 6.1 | Eliminate singletons | Maintainability | Low | Medium | 📝 Open |
+| 7.1 | Typed symbol keys | Type Safety | Medium | Medium | 📝 Open |
 
 ---
 
@@ -636,6 +636,28 @@ Test coverage added:
 - `EventPipelineTests.TryPublishWithResult_WhenQueueFull_ReturnsDropped` — verifies `Dropped` result when pipeline is at capacity (DropWrite mode).
 - `EventPipelineTests.QueueUtilization_ReflectsQueueFill` — previously skipped, now enabled and passes deterministically.
 - `DataValidatorTests.ValidateFileAsync_SupportsCancellation` — previously skipped, now enabled and passes deterministically.
+
+---
+
+## Implementation Follow-Up (2026-03-12)
+
+| Item | Status | Implementation |
+|------|--------|----------------|
+| 1.1 — EventPipeline flush semantics | ✅ Done | `EventPipeline.FlushAsync()`: the break condition was changed from `consumed + dropped >= targetPublished` to `consumed + _rejectedCount >= targetPublished`. Dropped events no longer count toward the flush target, so callers can no longer receive a successful flush while data is silently missing. A secondary channel-empty + consumer-idle double-check handles `DropOldest` mode where events are discarded by the channel before reaching the consumer. A post-flush `LogWarning` is emitted when any events were dropped during the flush window so callers are explicitly informed of data loss. |
+| 1.5 — Completeness score miscalculation | 🔄 Partial | `CompletenessScoreCalculator.RegisterSymbolLiquidity()` now immediately propagates the new expected-events-per-hour to all existing `SymbolDateState` entries for that symbol via `state.SetExpectedEventsPerHour()`. Liquidity profiles registered after the first event of the day are therefore reflected in the score without waiting until the next day. The public `SetExpectedEventsPerHour(string symbol, long expectedPerHour)` overload allows operators to push ad-hoc corrections at any time. Automatic self-calibration from observed event patterns (the original fix proposal) remains future work. |
+| 2.1 — Memory leaks in monitoring services | ✅ Done | All three services now evict stale entries on a background timer. `SequenceErrorTracker`: removes error lists and symbol states that have had no activity within the configured retention window. `GapAnalyzer`: removes both `_detectedGaps` and `_symbolStates` entries for symbols inactive beyond the retention threshold, and also clears the `_effectiveConfigCache` entry. `CompletenessScoreCalculator`: removes `SymbolDateState` entries for dates older than `RetentionDays` (default 7 days). Each service logs a `Debug` message when entries are removed, making cleanup visible in diagnostic traces. |
+| 2.2 — Hot-path allocations in GapAnalyzer | ✅ Done | `GapAnalyzer.GetEffectiveConfig()` now returns from a per-symbol `ConcurrentDictionary<string, GapAnalyzerConfig> _effectiveConfigCache`. The `record with` allocation only occurs on first access or when `RegisterLiquidityProfile()` invalidates the cache entry. At 50,000 events/second this eliminates ~50,000 short-lived heap allocations per second, reducing GC pressure on the analysis hot path. |
+| 2.4 — WebSocket receive buffer unbounded | ✅ Done | `WebSocketConnectionManager` now enforces `WebSocketConnectionConfig.MaxMessageSizeBytes` inside the receive loop. When the accumulated `StringBuilder` length exceeds the limit the connection is closed with a structured `Warning` log: `"{Provider} WebSocket message exceeds max size {MaxBytes} bytes — discarding"`. This prevents a misbehaving or malicious provider from exhausting heap memory via an oversized message. |
+| 2.5 — WebSocket reconnection race condition | ✅ Done | The fast-path `if (_isReconnecting) return false` check-without-lock has been removed from `TryReconnectAsync()`. The `SemaphoreSlim _reconnectGate` is now the sole gating mechanism: `await _reconnectGate.WaitAsync(0, ct)` provides the non-blocking try-acquire. The code comment explicitly documents why the fast path was removed. This closes the race window where two threads could both observe `_isReconnecting == false` and proceed to duplicate the reconnection attempt. |
+| 4.1 — Alert-to-runbook linkage | ✅ Done | `deploy/monitoring/alert-rules.yml` now includes a `runbook_url` annotation on every alert rule, pointing to the relevant section of `docs/operations/operator-runbook.md` (e.g., `#application-down`, `#high-drop-rate`, `#pipeline-backpressure`). The in-process `AlertRunbookRegistry` mirrors these mappings so the `AlertDispatcher` can attach runbook URLs to programmatic alert objects at dispatch time. Monitoring tools (Grafana, PagerDuty) that support annotation rendering display the URL inline when an alert fires. |
+| 4.2 — Backpressure alerting is single-shot | ✅ Done | `BackpressureAlertService` now maintains a persistent `_isInBackpressureState` flag and `_backpressureStartTime`. The alert fires at every check interval while pressure is sustained, reporting the per-interval drop delta, total drops, current drop-rate percentage (as `DropRate`), and the full episode duration. An `OnBackpressureResolved` event fires when utilization drops below threshold, providing the episode duration and total event loss for post-mortem reporting. Alert de-bounce (`ConsecutiveChecksBeforeAlert`) prevents spurious single-cycle spikes from triggering the onset alert. |
+
+Test coverage added:
+- `EventPipelineTests.TryPublish_WhenQueueFull_DropOldestMode_DropsEvents` — verifies `FlushAsync` completes and the sink receives only the latest events when `DropOldest` mode discards older entries.
+- `DataQualityTests` (31 tests) — cover `CompletenessScoreCalculator`, `GapAnalyzer`, `SequenceErrorTracker`, and `AnomalyDetector` including liquidity-profile registration and mid-day re-registration behaviour.
+- `LiquidityProfileTests` (22 tests) — cover threshold calculation, profile inference, gap classification, completeness grading, and propagation to all monitoring services via `DataQualityMonitoringService.RegisterSymbolLiquidity()`.
+- `BackpressureAlertServiceTests` (8 tests) — cover `GetStatus` at normal/warning/critical utilisation, high drop-rate detection, zero-denominator safety, message content, and the fire-and-forget async guard (`CheckBackpressure_IsNotAsyncVoid`).
+- `WebSocketConnectionManagerTests` (3 tests) — cover construction validation, `StartReceiveLoop` pre-connect guard, and graceful `DisposeAsync` without a live connection.
 
 ---
 
