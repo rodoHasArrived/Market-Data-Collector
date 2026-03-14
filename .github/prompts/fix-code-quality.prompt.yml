@@ -2,7 +2,7 @@ name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23075841937
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -20,16 +20,16 @@ messages:
       - `CA2022`
 
       ## Failure Patterns
-      - `2026-03-14T00:22:08.3333437Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(138,16): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3336568Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(139,16): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3340184Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(140,18): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3343459Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(141,16): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3346650Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(142,16): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3350272Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(145,21): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3353452Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(147,17): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3356603Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(148,20): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3359737Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(149,20): warning CS1591: Missing XML comment f...`
-      - `2026-03-14T00:22:08.3363443Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(150,20): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3121835Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(133,34): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3124283Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(136,21): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3126498Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(138,16): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3128531Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(139,16): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3130992Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(140,18): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3133476Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(141,16): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3135897Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(142,16): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3137912Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(145,21): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3140057Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(147,17): warning CS1591: Missing XML comment f...`
+      - `2026-03-14T00:31:57.3142089Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels.cs(148,20): warning CS1591: Missing XML comment f...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

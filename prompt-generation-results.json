@@ -1,27 +1,26 @@
 {
-  "generated_at": "2026-03-14T00:22:55.500696+00:00",
+  "generated_at": "2026-03-14T00:32:42.348500+00:00",
   "workflow": "test-matrix.yml",
-  "run_id": 23075841937,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23075841937",
+  "run_id": 23076048491,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Test (Windows)",
-    "Test (macOS)"
+    "Test (Windows)"
   ],
   "findings_by_category": {
-    "test": 4,
+    "test": 2,
     "code-quality": 10
   },
   "total_error_codes": 8,
-  "total_failed_tests": 4,
+  "total_failed_tests": 2,
   "existing_prompts": 16,
   "generated_prompts": [
     {
       "file": "fix-test-failures.prompt.yml",
       "category": "test",
       "action": "update",
-      "findings_count": 4,
+      "findings_count": 2,
       "error_codes": [
         "CA2022",
         "CS0219",
@@ -33,10 +32,8 @@
         "CS8625"
       ],
       "failed_tests": [
-        "2026-03-14T00:22:17.6466686Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [64 ms]",
-        "2026-03-14T00:20:37.7246750Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [1 s]",
-        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError",
-        "MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically"
+        "2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]",
+        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError"
       ]
     },
     {
@@ -53,7 +50,7 @@
       "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 14,
+      "findings_count": 12,
       "error_codes": [
         "CA2022",
         "CS0219",
@@ -65,10 +62,8 @@
         "CS8625"
       ],
       "failed_tests": [
-        "2026-03-14T00:22:17.6466686Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [64 ms]",
-        "2026-03-14T00:20:37.7246750Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [1 s]",
-        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError",
-        "MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically"
+        "2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]",
+        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError"
       ]
     }
   ],
