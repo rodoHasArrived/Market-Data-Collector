@@ -131,6 +131,27 @@ public sealed class ExportPreset
     /// </summary>
     [JsonPropertyName("isBuiltIn")]
     public bool IsBuiltIn { get; set; }
+
+    /// <summary>
+    /// Specific columns to include in the export.
+    /// Empty array means all available columns.
+    /// </summary>
+    [JsonPropertyName("columns")]
+    public string[] Columns { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Whether to include a manifest file with the export.
+    /// The manifest documents what data was exported, quality metrics, and file checksums.
+    /// </summary>
+    [JsonPropertyName("includeManifest")]
+    public bool IncludeManifest { get; set; } = true;
+
+    /// <summary>
+    /// Pre-export validation rules. When set, the export validates these conditions
+    /// before writing any files and aborts if any error-level issues are found.
+    /// </summary>
+    [JsonPropertyName("validation")]
+    public ExportValidationRules? Validation { get; set; }
 }
 
 /// <summary>
@@ -244,4 +265,31 @@ public enum ExportPresetCompression : byte
     Lz4,
     /// <summary>ZIP archive.</summary>
     Zip
+}
+
+/// <summary>
+/// Validation rules applied before an export starts.
+/// </summary>
+public sealed class ExportValidationRules
+{
+    /// <summary>
+    /// Minimum available disk space multiplier relative to the estimated output size.
+    /// Default 1.2 means 20% headroom required beyond the estimated export size.
+    /// </summary>
+    [JsonPropertyName("diskSpaceMultiplier")]
+    public double DiskSpaceMultiplier { get; set; } = 1.2;
+
+    /// <summary>
+    /// Whether to abort the export when no data is found for the requested filters.
+    /// When false, an empty export is allowed with a warning.
+    /// </summary>
+    [JsonPropertyName("requireData")]
+    public bool RequireData { get; set; }
+
+    /// <summary>
+    /// Emit a warning when exporting nested data structures to CSV format,
+    /// because nested fields are flattened and may lose precision.
+    /// </summary>
+    [JsonPropertyName("warnCsvComplexTypes")]
+    public bool WarnCsvComplexTypes { get; set; } = true;
 }

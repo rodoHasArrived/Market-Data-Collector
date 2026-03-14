@@ -62,6 +62,21 @@ public sealed class ExportRequest
     public bool ValidateBeforeExport { get; set; } = true;
 
     /// <summary>
+    /// Whether to include a manifest file (lineage_manifest.json) with the export.
+    /// Defaults to true; the manifest documents which files were exported, their
+    /// checksums, record counts, and data-quality metrics.
+    /// </summary>
+    [JsonPropertyName("includeManifest")]
+    public bool IncludeManifest { get; set; } = true;
+
+    /// <summary>
+    /// Overrides the validation rules used for pre-export checks.
+    /// When null the default rules apply (20 % disk headroom, warn on CSV + nested types).
+    /// </summary>
+    [JsonPropertyName("validationRules")]
+    public ExportValidationRulesRequest? ValidationRules { get; set; }
+
+    /// <summary>
     /// Time series aggregation settings (null = export raw data).
     /// </summary>
     [JsonPropertyName("aggregation")]
@@ -261,4 +276,30 @@ public enum NormalizationType : byte
     ZScore,
     /// <summary>Robust scaling (using median and IQR).</summary>
     Robust
+}
+
+/// <summary>
+/// Per-request override of export validation rules.
+/// </summary>
+public sealed class ExportValidationRulesRequest
+{
+    /// <summary>
+    /// Multiplier applied to the estimated output size to determine required free disk space.
+    /// A value of 1.2 means 20 % headroom is required.  Defaults to 1.2.
+    /// </summary>
+    [JsonPropertyName("diskSpaceMultiplier")]
+    public double DiskSpaceMultiplier { get; set; } = 1.2;
+
+    /// <summary>
+    /// When <c>true</c> the export is aborted (rather than warned) when no data
+    /// is found for the requested filters.
+    /// </summary>
+    [JsonPropertyName("requireData")]
+    public bool RequireData { get; set; }
+
+    /// <summary>
+    /// Emit a warning when exporting nested data (e.g. LOBSnapshot) to CSV format.
+    /// </summary>
+    [JsonPropertyName("warnCsvComplexTypes")]
+    public bool WarnCsvComplexTypes { get; set; } = true;
 }
