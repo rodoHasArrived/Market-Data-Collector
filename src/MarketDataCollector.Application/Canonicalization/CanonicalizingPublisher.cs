@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Threading;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Domain.Events;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MarketDataCollector.Application.Canonicalization;
 
@@ -17,6 +20,10 @@ namespace MarketDataCollector.Application.Canonicalization;
 /// only the canonicalized event is published.</para>
 /// <para>Pilot symbol filtering limits canonicalization to a configurable subset
 /// during rollout. Events for non-pilot symbols pass through unchanged.</para>
+/// <para><b>Quarantine Sink:</b> When a <see cref="DeadLetterSink"/> is provided via
+/// <paramref name="quarantine"/>, events whose symbol cannot be resolved are written
+/// to the quarantine file in addition to being published with raw data.
+/// This prevents unmappable events from silently accumulating with no audit trail.</para>
 /// </remarks>
 public sealed class CanonicalizingPublisher : IMarketEventPublisher
 {
@@ -24,23 +31,30 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
     private readonly IEventCanonicalizer _canonicalizer;
     private readonly HashSet<string>? _pilotSymbols;
     private readonly bool _dualWrite;
+    private readonly DeadLetterSink? _quarantine;
+    private readonly ILogger<CanonicalizingPublisher> _logger;
 
     // Metrics counters (lock-free via Interlocked)
     private long _canonicalizedCount;
     private long _skippedCount;
     private long _unresolvedCount;
     private long _dualWriteCount;
+    private long _quarantinedCount;
     private long _totalDurationTicks;
 
     public CanonicalizingPublisher(
         IMarketEventPublisher inner,
         IEventCanonicalizer canonicalizer,
         IEnumerable<string>? pilotSymbols = null,
-        bool dualWrite = true)
+        bool dualWrite = true,
+        DeadLetterSink? quarantine = null,
+        ILogger<CanonicalizingPublisher>? logger = null)
     {
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _canonicalizer = canonicalizer ?? throw new ArgumentNullException(nameof(canonicalizer));
         _dualWrite = dualWrite;
+        _quarantine = quarantine;
+        _logger = logger ?? NullLogger<CanonicalizingPublisher>.Instance;
 
         if (pilotSymbols is not null)
         {
@@ -60,6 +74,9 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
 
     /// <summary>Events dual-written (raw + canonical).</summary>
     public long DualWriteCount => Interlocked.Read(ref _dualWriteCount);
+
+    /// <summary>Events with unresolved symbols sent to the quarantine sink.</summary>
+    public long QuarantinedCount => Interlocked.Read(ref _quarantinedCount);
 
     /// <summary>Average canonicalization time in microseconds.</summary>
     public double AverageDurationUs
@@ -100,16 +117,42 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
         var elapsed = Stopwatch.GetTimestamp() - start;
         Interlocked.Add(ref _totalDurationTicks, elapsed);
 
-        // Track unresolved symbols
+        // Track unresolved symbols and route to quarantine sink when configured.
+        // The event is still published to the main pipeline with raw symbol data so
+        // downstream consumers are not silently starved; the quarantine sink creates
+        // an explicit audit trail of every unmappable event.
         if (canonical.CanonicalSymbol is null && canonical.CanonicalizationVersion > 0)
         {
             Interlocked.Increment(ref _unresolvedCount);
+
+            if (_quarantine is not null)
+            {
+                Interlocked.Increment(ref _quarantinedCount);
+                _ = RecordQuarantineAsync(canonical);
+            }
         }
 
         Interlocked.Increment(ref _canonicalizedCount);
 
         // Publish the canonical event (or replace the raw if not dual-writing)
         return _inner.TryPublish(in canonical);
+    }
+
+    private async Task RecordQuarantineAsync(MarketEvent evt)
+    {
+        try
+        {
+            await _quarantine!.RecordAsync(
+                evt,
+                ["symbol_unresolved"],
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to write unresolved symbol event to quarantine sink for {Symbol}",
+                evt.EffectiveSymbol);
+        }
     }
 
     /// <summary>
@@ -120,6 +163,7 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
         SkippedCount,
         UnresolvedCount,
         DualWriteCount,
+        QuarantinedCount,
         AverageDurationUs);
 }
 
@@ -131,4 +175,5 @@ public readonly record struct CanonicalizationMetricsSnapshot(
     long Skipped,
     long Unresolved,
     long DualWrites,
+    long Quarantined,
     double AverageDurationUs);

@@ -49,6 +49,18 @@ public sealed record Trade : MarketEventPayload
     public string? Venue { get; }
 
     /// <summary>
+    /// Gets the raw provider-specific condition codes exactly as received from the data source.
+    /// Preserved for auditability; use <see cref="CanonicalConditions"/> for cross-provider filtering.
+    /// </summary>
+    public string[]? RawConditions { get; init; }
+
+    /// <summary>
+    /// Gets the canonicalized condition codes mapped from <see cref="RawConditions"/> by
+    /// <c>EventCanonicalizer</c>. Null until the event has been canonicalized.
+    /// </summary>
+    public CanonicalTradeCondition[]? CanonicalConditions { get; init; }
+
+    /// <summary>
     /// Validates trade data at construction time to prevent corrupt datasets.
     /// </summary>
     public Trade(
@@ -59,7 +71,8 @@ public sealed record Trade : MarketEventPayload
         AggressorSide Aggressor,
         long SequenceNumber,
         string? StreamId = null,
-        string? Venue = null)
+        string? Venue = null,
+        string[]? RawConditions = null)
     {
         if (Price <= 0)
             throw new ArgumentOutOfRangeException(nameof(Price), Price, "Price must be greater than 0");
@@ -78,5 +91,6 @@ public sealed record Trade : MarketEventPayload
         this.SequenceNumber = SequenceNumber;
         this.StreamId = StreamId;
         this.Venue = Venue;
+        this.RawConditions = RawConditions;
     }
 }

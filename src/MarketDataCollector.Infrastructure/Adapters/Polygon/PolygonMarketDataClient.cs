@@ -652,10 +652,14 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
             }
 
             var aggressor = AggressorSide.Unknown;
+            string[]? rawConditions = null;
             if (elem.TryGetProperty("c", out var conditions) && conditions.ValueKind == JsonValueKind.Array)
             {
-                var conditionCodes = conditions.EnumerateArray().Select(c => c.GetInt32());
+                var conditionArray = conditions.EnumerateArray().ToArray();
+                var conditionCodes = conditionArray.Select(c => c.GetInt32());
                 aggressor = MapConditionCodesToAggressor(conditionCodes);
+                // Store as strings matching the keys used in condition-codes.json (e.g. "0", "12")
+                rawConditions = conditionArray.Select(c => c.GetInt32().ToString()).ToArray();
             }
 
             var seq = Interlocked.Increment(ref _messageSequence);
@@ -669,7 +673,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
                 Aggressor: aggressor,
                 SequenceNumber: seq,
                 StreamId: tradeId ?? $"POLYGON_{seq}",
-                Venue: MapExchangeCode(exchange));
+                Venue: MapExchangeCode(exchange),
+                RawConditions: rawConditions);
 
             _tradeCollector.OnTrade(trade);
         }

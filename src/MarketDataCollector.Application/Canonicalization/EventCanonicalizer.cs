@@ -50,13 +50,22 @@ public sealed class EventCanonicalizer : IEventCanonicalizer
         var rawVenue = ExtractVenue(raw.Payload);
         var canonicalVenue = _venues.TryMapVenue(rawVenue, raw.Source);
 
-        return raw with
+        var result = raw with
         {
             CanonicalSymbol = canonicalSymbol,
             CanonicalVenue = canonicalVenue,
             CanonicalizationVersion = _version,
             Tier = raw.Tier < MarketEventTier.Enriched ? MarketEventTier.Enriched : raw.Tier
         };
+
+        // Condition code mapping: apply for Trade payloads that carry raw conditions.
+        if (raw.Payload is Trade trade && trade.RawConditions is { Length: > 0 })
+        {
+            var (canonical, _) = _conditions.MapConditions(raw.Source, trade.RawConditions);
+            result = result with { Payload = trade with { CanonicalConditions = canonical } };
+        }
+
+        return result;
     }
 
     /// <summary>

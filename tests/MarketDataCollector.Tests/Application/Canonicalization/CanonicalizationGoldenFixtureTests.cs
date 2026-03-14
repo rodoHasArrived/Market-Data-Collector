@@ -121,11 +121,24 @@ public sealed class CanonicalizationGoldenFixtureTests
             result.Symbol.Should().Be(raw.Symbol,
                 because: $"[{fixtureFileName}] {description}: raw Symbol must never be mutated during canonicalization");
         }
+
+        if (expectedEl.TryGetProperty("canonicalConditions", out var expConditionsEl) &&
+            expConditionsEl.ValueKind == JsonValueKind.Array)
+        {
+            var expectedConditions = expConditionsEl.EnumerateArray()
+                .Select(c => Enum.Parse<CanonicalTradeCondition>(c.GetString()!))
+                .ToArray();
+            var tradePaylod = result.Payload as Trade;
+            tradePaylod.Should().NotBeNull(
+                because: $"[{fixtureFileName}] {description}: expected Trade payload for canonicalConditions assertion");
+            tradePaylod!.CanonicalConditions.Should().BeEquivalentTo(expectedConditions,
+                because: $"[{fixtureFileName}] {description}: canonicalConditions mismatch");
+        }
     }
 
     /// <summary>
     /// Builds a raw (pre-canonicalization) <see cref="MarketEvent"/> from the "raw" object in a fixture file.
-    /// Supports minimal required fields (symbol, source, venue, price, size, sequenceNumber).
+    /// Supports minimal required fields (symbol, source, venue, price, size, sequenceNumber, conditions).
     /// </summary>
     private static MarketEvent BuildMarketEventFromFixture(JsonElement raw)
     {
@@ -136,6 +149,17 @@ public sealed class CanonicalizationGoldenFixtureTests
         var size = raw.TryGetProperty("size", out var s) ? s.GetInt64() : 100L;
         var seq = raw.TryGetProperty("sequenceNumber", out var sn) ? sn.GetInt64() : 1L;
 
+        string[]? rawConditions = null;
+        if (raw.TryGetProperty("conditions", out var condEl) && condEl.ValueKind == JsonValueKind.Array)
+        {
+            rawConditions = condEl.EnumerateArray()
+                .Select(c => c.GetString())
+                .Where(c => c is not null)
+                .Select(c => c!)
+                .ToArray();
+            if (rawConditions.Length == 0) rawConditions = null;
+        }
+
         var trade = new Trade(
             Timestamp: new DateTimeOffset(2026, 2, 25, 14, 30, 0, TimeSpan.Zero),
             Symbol: symbol,
@@ -144,7 +168,8 @@ public sealed class CanonicalizationGoldenFixtureTests
             Aggressor: AggressorSide.Unknown,
             SequenceNumber: seq,
             StreamId: source,
-            Venue: venue);
+            Venue: venue,
+            RawConditions: rawConditions);
 
         return new MarketEvent(
             Timestamp: new DateTimeOffset(2026, 2, 25, 14, 30, 0, TimeSpan.Zero),

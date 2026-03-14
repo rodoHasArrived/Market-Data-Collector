@@ -1102,11 +1102,26 @@ public static class ServiceCompositionRoot
             var canonConfig = config.Canonicalization;
             var canonicalizer = sp.GetRequiredService<IEventCanonicalizer>();
 
+            // Optional quarantine sink: when canonicalization is enabled, unresolved-symbol
+            // events are written to <dataRoot>/_quarantine/ so they are never silently lost.
+            Pipeline.DeadLetterSink? quarantine = null;
+            if (canonConfig?.Enabled == true)
+            {
+                var storageOptions = sp.GetRequiredService<StorageOptions>();
+                var qLogger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.DeadLetterSink>>();
+                quarantine = new Pipeline.DeadLetterSink(
+                    Path.Combine(storageOptions.RootPath, "_quarantine"), qLogger);
+            }
+
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CanonicalizingPublisher>>();
+
             return new CanonicalizingPublisher(
                 innerPublisher,
                 canonicalizer,
                 canonConfig?.PilotSymbols,
-                canonConfig?.EnableDualWrite ?? true);
+                canonConfig?.EnableDualWrite ?? true,
+                quarantine,
+                logger);
         });
 
         return services;

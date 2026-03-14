@@ -14,6 +14,7 @@
     "canonicalVenue": "XNAS",
     "tier": "Enriched",
     "canonicalizationVersion": 1,
-    "rawSymbolUnchanged": true
+    "rawSymbolUnchanged": true,
+    "canonicalConditions": ["Regular"]
   }
 }

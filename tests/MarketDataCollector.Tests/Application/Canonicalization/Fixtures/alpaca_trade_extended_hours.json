@@ -14,6 +14,7 @@
     "canonicalVenue": "ARCX",
     "tier": "Enriched",
     "canonicalizationVersion": 1,
-    "rawSymbolUnchanged": true
+    "rawSymbolUnchanged": true,
+    "canonicalConditions": ["FormT_ExtendedHours"]
   }
 }
