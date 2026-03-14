@@ -2,7 +2,7 @@ name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082459939
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082785371
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,11 +19,11 @@ messages:
 
       ## Findings from Workflow Run
       ### Code Quality
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(53,5): warning CS1587:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(48,5): warning CS1587:...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(42,5): warning CS1587:...`
       - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(37,5): warning CS1587:...`
       - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(32,5): warning CS1587:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(27,5): warning CS1587:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(22,5): warning CS1587:...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/Domain/Models/OrderReplace.cs(17,5): warning CS1587:...`
 
 
       ## Error Codes
@@ -40,7 +40,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082459939
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082785371
 
       Additional context:
       {{additional_context}}
