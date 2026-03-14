@@ -2,7 +2,7 @@ name: Fix Test Failures Identified By Ci
 description: Fix test failures identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23075841937
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -32,16 +32,12 @@ messages:
       - `CS8625`
 
       ## Failure Patterns
-      - `2026-03-14T00:22:35.4196262Z Failed!  - Failed:     1, Passed:  2725, Skipped:     0, Total:  2726, Duration: 24 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-14T00:20:53.2475690Z Failed!  - Failed:     1, Passed:  2725, Skipped:     0, Total:  2726, Duration: 16 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-14T00:22:16.8788024Z [xUnit.net 00:00:06.73]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [FAIL]`
-      - `2026-03-14T00:20:37.7210830Z [xUnit.net 00:00:01.74]     MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [FAIL]`
+      - `2026-03-14T00:32:19.7291302Z Failed!  - Failed:     1, Passed:  2792, Skipped:     0, Total:  2793, Duration: 19 s - MarketDataCollector.Tests.dll (net9.0)`
+      - `2026-03-14T00:32:03.8499725Z [xUnit.net 00:00:04.89]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [FAIL]`
 
       ## Failed Tests
-      - `2026-03-14T00:22:17.6466686Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [64 ms]`
-      - `2026-03-14T00:20:37.7246750Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [1 s]`
+      - `2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]`
       - `MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError`
-      - `MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23075841937
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,24 +19,20 @@ messages:
 
       ## Findings from Workflow Run
       ### Test
-      - `2026-03-14T00:22:35.4196262Z Failed!  - Failed:     1, Passed:  2725, Skipped:     0, Total:  2726, Duration: 24 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-14T00:20:53.2475690Z Failed!  - Failed:     1, Passed:  2725, Skipped:     0, Total:  2726, Duration: 16 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-14T00:22:16.8788024Z [xUnit.net 00:00:06.73]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_Retu...`
-      - `2026-03-14T00:20:37.7210830Z [xUnit.net 00:00:01.74]     MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutoma...`
+      - `2026-03-14T00:32:19.7291302Z Failed!  - Failed:     1, Passed:  2792, Skipped:     0, Total:  2793, Duration: 19 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-14T00:32:03.8499725Z [xUnit.net 00:00:04.89]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_Retu...`
 
       ### Code Quality
-      - `2026-03-14T00:22:08.3333437Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:22:08.3336568Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:22:08.3340184Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:22:08.3343459Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:22:08.3346650Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-14T00:31:57.3121835Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-14T00:31:57.3124283Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-14T00:31:57.3126498Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-14T00:31:57.3128531Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-14T00:31:57.3130992Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
 
 
       ## Failed Tests
-      - `2026-03-14T00:22:17.6466686Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [64 ms]`
-      - `2026-03-14T00:20:37.7246750Z   Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically [1 s]`
+      - `2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]`
       - `MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError`
-      - `MarketDataCollector.Tests.Pipeline.EventPipelineTests.PeriodicFlush_WhenEnabled_FlushesAutomatically`
 
       ## Error Codes
       - `CA2022`
@@ -59,7 +55,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23075841937
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491
 
       Additional context:
       {{additional_context}}
