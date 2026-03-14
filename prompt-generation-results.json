@@ -1,38 +1,70 @@
 {
-  "generated_at": "2026-03-14T19:15:03.015438+00:00",
-  "workflow": "code-quality.yml",
-  "run_id": 23094490917,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23094490917",
+  "generated_at": "2026-03-14T21:07:08.997671+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 23096313132,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23096313132",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Code Quality Checks"
+    "Test (Linux)",
+    "Test (Windows)",
+    "Test (macOS)"
   ],
   "findings_by_category": {
+    "build": 10,
     "code-quality": 10
   },
-  "total_error_codes": 1,
+  "total_error_codes": 10,
   "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
+    {
+      "file": "fix-build-errors.prompt.yml",
+      "category": "build",
+      "action": "update",
+      "findings_count": 10,
+      "error_codes": [
+        "CS0103",
+        "CS0219",
+        "CS0246",
+        "CS1503",
+        "CS1573",
+        "CS1734",
+        "CS1998",
+        "CS4014",
+        "CS8602"
+      ],
+      "failed_tests": []
+    },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
       "action": "update",
       "findings_count": 10,
-      "error_codes": [],
+      "error_codes": [
+        "CA2022"
+      ],
       "failed_tests": []
     },
     {
-      "file": "workflow-results-code-quality.prompt.yml",
+      "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 10,
+      "findings_count": 20,
       "error_codes": [
-        "CS1587"
+        "CA2022",
+        "CS0103",
+        "CS0219",
+        "CS0246",
+        "CS1503",
+        "CS1573",
+        "CS1734",
+        "CS1998",
+        "CS4014",
+        "CS8602"
       ],
       "failed_tests": []
     }
   ],
-  "total_generated": 2
+  "total_generated": 3
 }
