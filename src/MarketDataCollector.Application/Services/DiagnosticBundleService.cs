@@ -348,14 +348,16 @@ public sealed class DiagnosticBundleService
 
     private static async Task ListDirectoryAsync(string path, StringBuilder sb, string indent, int maxDepth)
     {
-        if (maxDepth <= 0) return;
+        if (maxDepth <= 0)
+            return;
 
         try
         {
             foreach (var dir in Directory.GetDirectories(path))
             {
                 var dirName = Path.GetFileName(dir);
-                if (dirName.StartsWith(".")) continue;
+                if (dirName.StartsWith("."))
+                    continue;
 
                 sb.AppendLine($"{indent}[DIR] {dirName}/");
 
@@ -375,9 +377,12 @@ public sealed class DiagnosticBundleService
 
     private static string FormatSize(long bytes)
     {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        if (bytes < 1024 * 1024 * 1024) return $"{bytes / 1024.0 / 1024.0:F1} MB";
+        if (bytes < 1024)
+            return $"{bytes} B";
+        if (bytes < 1024 * 1024)
+            return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024)
+            return $"{bytes / 1024.0 / 1024.0:F1} MB";
         return $"{bytes / 1024.0 / 1024.0 / 1024.0:F2} GB";
     }
 

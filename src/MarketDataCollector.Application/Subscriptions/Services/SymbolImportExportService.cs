@@ -58,16 +58,21 @@ public sealed class SymbolImportExportService
             var line = lines[i].Trim();
 
             // Skip empty lines and full-line comments
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            if (line.StartsWith('#') || line.StartsWith(';') || line.StartsWith("//")) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            if (line.StartsWith('#') || line.StartsWith(';') || line.StartsWith("//"))
+                continue;
 
             // Strip inline comments
             var commentIndex = line.IndexOf('#');
-            if (commentIndex > 0) line = line[..commentIndex].Trim();
+            if (commentIndex > 0)
+                line = line[..commentIndex].Trim();
             commentIndex = line.IndexOf(';');
-            if (commentIndex > 0) line = line[..commentIndex].Trim();
+            if (commentIndex > 0)
+                line = line[..commentIndex].Trim();
             commentIndex = line.IndexOf("//");
-            if (commentIndex > 0) line = line[..commentIndex].Trim();
+            if (commentIndex > 0)
+                line = line[..commentIndex].Trim();
 
             // Handle comma-separated or whitespace-separated symbols on same line
             var symbols = Regex.Split(line, @"[\s,]+")
@@ -77,7 +82,8 @@ public sealed class SymbolImportExportService
 
             foreach (var symbol in symbols)
             {
-                if (string.IsNullOrWhiteSpace(symbol)) continue;
+                if (string.IsNullOrWhiteSpace(symbol))
+                    continue;
 
                 if (options.ValidateSymbols && !IsValidSymbol(symbol))
                 {
@@ -208,7 +214,8 @@ public sealed class SymbolImportExportService
         {
             var lineNumber = i + 1;
             var line = lines[i].Trim();
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
             try
             {
@@ -330,7 +337,8 @@ public sealed class SymbolImportExportService
         ImportDefaults? defaults)
     {
         var values = ParseCsvValues(line);
-        if (values.Length == 0) return null;
+        if (values.Length == 0)
+            return null;
 
         defaults ??= new ImportDefaults();
 
@@ -361,7 +369,8 @@ public sealed class SymbolImportExportService
         }
 
         var symbol = GetValue(CsvColumns.Symbol);
-        if (string.IsNullOrWhiteSpace(symbol)) return null;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return null;
 
         return new SymbolConfig(
             Symbol: symbol,
@@ -434,30 +443,38 @@ public sealed class SymbolImportExportService
 
     private static bool IsValidSymbol(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return false;
-        if (symbol.Length > 20) return false;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return false;
+        if (symbol.Length > 20)
+            return false;
         // Allow alphanumeric, dots, dashes, and spaces (for preferreds)
         return symbol.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == ' ');
     }
 
     private static bool ParseBool(string value, bool defaultValue)
     {
-        if (string.IsNullOrWhiteSpace(value)) return defaultValue;
-        if (bool.TryParse(value, out var result)) return result;
-        if (value == "1" || value.Equals("yes", StringComparison.OrdinalIgnoreCase)) return true;
-        if (value == "0" || value.Equals("no", StringComparison.OrdinalIgnoreCase)) return false;
+        if (string.IsNullOrWhiteSpace(value))
+            return defaultValue;
+        if (bool.TryParse(value, out var result))
+            return result;
+        if (value == "1" || value.Equals("yes", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (value == "0" || value.Equals("no", StringComparison.OrdinalIgnoreCase))
+            return false;
         return defaultValue;
     }
 
     private static int ParseInt(string value, int defaultValue)
     {
-        if (string.IsNullOrWhiteSpace(value)) return defaultValue;
+        if (string.IsNullOrWhiteSpace(value))
+            return defaultValue;
         return int.TryParse(value, out var result) ? result : defaultValue;
     }
 
     private static int? ParseNullableInt(string value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
         return int.TryParse(value, out var result) ? result : null;
     }
 

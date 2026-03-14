@@ -286,7 +286,8 @@ public sealed class CanonicalizingPublisherTests
 
         public bool TryPublish(in MarketEvent evt)
         {
-            if (ShouldReject) return false;
+            if (ShouldReject)
+                return false;
             PublishedEvents.Add(evt);
             return true;
         }

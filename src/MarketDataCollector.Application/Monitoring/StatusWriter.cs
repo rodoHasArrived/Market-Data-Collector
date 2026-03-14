@@ -36,7 +36,8 @@ public sealed class StatusWriter : IAsyncDisposable
         while (!_cts.IsCancellationRequested)
         {
             await WriteOnceAsync();
-            try { await Task.Delay(interval, _cts.Token); }
+            try
+            { await Task.Delay(interval, _cts.Token); }
             catch (TaskCanceledException) { }
         }
     }

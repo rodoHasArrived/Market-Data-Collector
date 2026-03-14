@@ -6,8 +6,8 @@ using StockSharp.Messages;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
@@ -400,7 +400,8 @@ public sealed class StockSharpSymbolSearchProvider : ISymbolSearchProvider, IDis
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
 #if STOCKSHARP

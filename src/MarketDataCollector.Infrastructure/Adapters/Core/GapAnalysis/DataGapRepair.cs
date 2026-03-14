@@ -1,5 +1,5 @@
-using MarketDataCollector.Application.Logging;
 using System.Threading;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;

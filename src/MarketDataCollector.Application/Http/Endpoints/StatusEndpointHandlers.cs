@@ -99,7 +99,8 @@ public sealed class StatusEndpointHandlers
                 Status = "degraded",
                 Message = $"Elevated drop rate: {metrics.DropRate:F2}%. Consider reducing load."
             });
-            if (overallStatus == HealthStatus.Healthy) overallStatus = HealthStatus.Degraded;
+            if (overallStatus == HealthStatus.Healthy)
+                overallStatus = HealthStatus.Degraded;
         }
         else
         {
@@ -130,7 +131,8 @@ public sealed class StatusEndpointHandlers
                 Status = "degraded",
                 Message = $"Queue filling: {pipeline.QueueUtilization:F1}%"
             });
-            if (overallStatus == HealthStatus.Healthy) overallStatus = HealthStatus.Degraded;
+            if (overallStatus == HealthStatus.Healthy)
+                overallStatus = HealthStatus.Degraded;
         }
         else
         {
@@ -151,7 +153,8 @@ public sealed class StatusEndpointHandlers
                 Status = "degraded",
                 Message = $"No events for {pipeline.TimeSinceLastFlush.TotalSeconds:F0}s"
             });
-            if (overallStatus == HealthStatus.Healthy) overallStatus = HealthStatus.Degraded;
+            if (overallStatus == HealthStatus.Healthy)
+                overallStatus = HealthStatus.Degraded;
         }
         else
         {
@@ -173,7 +176,8 @@ public sealed class StatusEndpointHandlers
                 Status = "degraded",
                 Message = $"{recentIntegrity} integrity events in last 5 minutes"
             });
-            if (overallStatus == HealthStatus.Healthy) overallStatus = HealthStatus.Degraded;
+            if (overallStatus == HealthStatus.Healthy)
+                overallStatus = HealthStatus.Degraded;
         }
         else
         {
@@ -194,7 +198,8 @@ public sealed class StatusEndpointHandlers
                 Status = "degraded",
                 Message = $"High memory usage: {metrics.MemoryUsageMb:F0} MB"
             });
-            if (overallStatus == HealthStatus.Healthy) overallStatus = HealthStatus.Degraded;
+            if (overallStatus == HealthStatus.Healthy)
+                overallStatus = HealthStatus.Degraded;
         }
         else
         {

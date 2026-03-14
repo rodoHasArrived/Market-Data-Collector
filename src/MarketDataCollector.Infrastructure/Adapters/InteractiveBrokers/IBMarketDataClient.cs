@@ -1,9 +1,9 @@
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.DataSources;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;

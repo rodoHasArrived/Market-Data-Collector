@@ -157,7 +157,8 @@ public sealed class CanonicalizationGoldenFixtureTests
                 .Where(c => c is not null)
                 .Select(c => c!)
                 .ToArray();
-            if (rawConditions.Length == 0) rawConditions = null;
+            if (rawConditions.Length == 0)
+                rawConditions = null;
         }
 
         var trade = new Trade(

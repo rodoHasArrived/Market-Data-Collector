@@ -171,8 +171,10 @@ public sealed class TiingoHistoricalDataProvider : BaseHistoricalDataProvider
                 var sessionDate = DateOnly.ParseExact(price.Date[..10], "yyyy-MM-dd", CultureInfo.InvariantCulture);
 
                 // Skip if outside requested range
-                if (from.HasValue && sessionDate < from.Value) continue;
-                if (to.HasValue && sessionDate > to.Value) continue;
+                if (from.HasValue && sessionDate < from.Value)
+                    continue;
+                if (to.HasValue && sessionDate > to.Value)
+                    continue;
 
                 // Validate OHLC using base class helper
                 if (!ValidateOhlc(price.Open, price.High, price.Low, price.Close, symbol, sessionDate))

@@ -2,8 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Polygon;
@@ -265,7 +265,8 @@ public sealed class PolygonSymbolSearchProvider : IFilterableSymbolSearchProvide
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _rateLimiter.Dispose();
         _http.Dispose();

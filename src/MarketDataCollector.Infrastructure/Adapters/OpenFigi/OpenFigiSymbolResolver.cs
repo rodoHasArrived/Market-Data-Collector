@@ -130,7 +130,8 @@ public sealed class OpenFigiSymbolResolver : ISymbolResolver, IDisposable
     public async Task<string?> MapSymbolAsync(string symbol, string fromProvider, string toProvider, CancellationToken ct = default)
     {
         var resolution = await ResolveAsync(symbol, ct: ct).ConfigureAwait(false);
-        if (resolution is null) return null;
+        if (resolution is null)
+            return null;
 
         if (resolution.ProviderSymbols.TryGetValue(toProvider.ToLowerInvariant(), out var mapped))
         {
@@ -197,7 +198,8 @@ public sealed class OpenFigiSymbolResolver : ISymbolResolver, IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _rateLimiter.Dispose();
         _http.Dispose();

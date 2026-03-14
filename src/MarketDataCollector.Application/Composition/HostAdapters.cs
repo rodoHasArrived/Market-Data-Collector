@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Infrastructure.Contracts;
 using Microsoft.AspNetCore.Builder;
@@ -5,7 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace MarketDataCollector.Application.Composition;
 

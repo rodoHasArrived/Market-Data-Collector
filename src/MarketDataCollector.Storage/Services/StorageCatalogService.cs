@@ -675,7 +675,8 @@ public sealed class StorageCatalogService : IStorageCatalogService
     private async Task<IndexedFileEntry?> ScanFileAsync(string filePath, CatalogRebuildOptions options, CancellationToken ct)
     {
         var fileInfo = new FileInfo(filePath);
-        if (!fileInfo.Exists) return null;
+        if (!fileInfo.Exists)
+            return null;
 
         var relativePath = Path.GetRelativePath(_rootPath, filePath);
         var fileName = Path.GetFileName(filePath);
@@ -810,7 +811,8 @@ public sealed class StorageCatalogService : IStorageCatalogService
     private static bool TryParseDate(string input, out DateTime? date)
     {
         date = null;
-        if (string.IsNullOrEmpty(input)) return false;
+        if (string.IsNullOrEmpty(input))
+            return false;
 
         // Try various date formats
         var formats = new[]
@@ -853,7 +855,8 @@ public sealed class StorageCatalogService : IStorageCatalogService
             string? line;
             while ((line = await reader.ReadLineAsync(ct)) != null)
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 eventCount++;
                 uncompressedSize += System.Text.Encoding.UTF8.GetByteCount(line) + 1; // +1 for newline
@@ -1101,7 +1104,8 @@ public sealed class StorageCatalogService : IStorageCatalogService
 
     private void UpdateSymbolEntry(IndexedFileEntry entry)
     {
-        if (string.IsNullOrEmpty(entry.Symbol)) return;
+        if (string.IsNullOrEmpty(entry.Symbol))
+            return;
 
         if (!_catalog.Symbols.TryGetValue(entry.Symbol, out var symbolEntry))
         {

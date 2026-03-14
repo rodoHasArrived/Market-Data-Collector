@@ -85,7 +85,6 @@ jobs:
             /p:EnforceCodeStyleInBuild=true \
             /p:RunAnalyzersDuringBuild=true \
             /p:GenerateDocumentationFile=true \
-            /p:NoWarn=1591 \
             2>&1 | tee build-output.log
 
       # Analyze build output for issues

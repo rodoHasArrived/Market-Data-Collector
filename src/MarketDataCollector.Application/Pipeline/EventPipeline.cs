@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading.Channels;
 using System.Threading;
+using System.Threading.Channels;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Core.Performance;
@@ -246,7 +246,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         get
         {
             var consumed = Interlocked.Read(ref _consumedCount);
-            if (consumed == 0) return 0;
+            if (consumed == 0)
+                return 0;
             var totalNs = Interlocked.Read(ref _totalProcessingTimeNs);
             return totalNs / 1000.0 / consumed;
         }
@@ -294,7 +295,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// </remarks>
     public async Task RecoverAsync(CancellationToken ct = default)
     {
-        if (_wal == null) return;
+        if (_wal == null)
+            return;
 
         _logger.LogInformation("Initializing WAL for pipeline recovery");
         await _wal.InitializeAsync(ct).ConfigureAwait(false);
@@ -304,7 +306,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
         await foreach (var walRecord in _wal.GetUncommittedRecordsAsync(ct).ConfigureAwait(false))
         {
-            if (walRecord.RecordType == "COMMIT") continue;
+            if (walRecord.RecordType == "COMMIT")
+                continue;
 
             try
             {

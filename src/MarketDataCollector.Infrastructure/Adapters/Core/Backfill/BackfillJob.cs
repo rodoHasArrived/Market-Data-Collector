@@ -112,9 +112,11 @@ public sealed class BackfillJob
     {
         get
         {
-            if (SymbolProgress.IsEmpty) return 0;
+            if (SymbolProgress.IsEmpty)
+                return 0;
             var totalRequests = SymbolProgress.Values.Sum(p => p.TotalRequests);
-            if (totalRequests == 0) return 0;
+            if (totalRequests == 0)
+                return 0;
             var completedRequests = SymbolProgress.Values.Sum(p => p.CompletedRequests);
             return (completedRequests * 100.0) / totalRequests;
         }
@@ -146,7 +148,8 @@ public sealed class BackfillJob
     {
         get
         {
-            if (!StartedAt.HasValue) return TimeSpan.Zero;
+            if (!StartedAt.HasValue)
+                return TimeSpan.Zero;
             var endTime = CompletedAt ?? PausedAt ?? DateTimeOffset.UtcNow;
             return endTime - StartedAt.Value;
         }

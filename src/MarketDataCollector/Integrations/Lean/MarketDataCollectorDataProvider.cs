@@ -1,8 +1,8 @@
+using System.IO.Compression;
 using QuantConnect;
 using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Util;
-using System.IO.Compression;
 
 namespace MarketDataCollector.Integrations.Lean;
 

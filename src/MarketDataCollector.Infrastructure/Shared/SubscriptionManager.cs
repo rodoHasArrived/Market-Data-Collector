@@ -229,7 +229,8 @@ public sealed class SubscriptionManager : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         lock (_gate)

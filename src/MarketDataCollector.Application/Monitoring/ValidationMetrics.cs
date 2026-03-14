@@ -34,7 +34,8 @@ public static class ValidationMetrics
         get
         {
             var validated = TotalValidated;
-            if (validated == 0) return 100.0;
+            if (validated == 0)
+                return 100.0;
             var rejected = TotalRejected;
             return Math.Round(100.0 * (validated - rejected) / validated, 2);
         }

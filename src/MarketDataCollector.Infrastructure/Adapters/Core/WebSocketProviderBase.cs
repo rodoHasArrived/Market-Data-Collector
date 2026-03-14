@@ -83,7 +83,8 @@ public abstract class WebSocketProviderBase : IMarketDataClient
     /// <inheritdoc/>
     public virtual async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_connectionManager.IsConnected) return;
+        if (_connectionManager.IsConnected)
+            return;
 
         _wsUri = BuildWebSocketUri();
 
@@ -207,7 +208,8 @@ public abstract class WebSocketProviderBase : IMarketDataClient
 
     private async Task OnConnectionLostAsync()
     {
-        if (_wsUri == null) return;
+        if (_wsUri == null)
+            return;
 
         MigrationDiagnostics.IncReconnectAttempt(ProviderId);
 

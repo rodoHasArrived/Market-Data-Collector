@@ -33,8 +33,10 @@ public sealed class LatencyHistogram : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RecordLatency(string symbol, double latencyMs, string? provider = null)
     {
-        if (_isDisposed) return;
-        if (latencyMs < 0) return;
+        if (_isDisposed)
+            return;
+        if (latencyMs < 0)
+            return;
 
         var key = GetKey(symbol, provider);
         var tracker = _trackers.GetOrAdd(key, _ => new LatencyTracker(_config));
@@ -193,7 +195,8 @@ public sealed class LatencyHistogram : IDisposable
 
     private void CleanupOldData(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -211,7 +214,8 @@ public sealed class LatencyHistogram : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _trackers.Clear();
@@ -356,7 +360,8 @@ public sealed class LatencyHistogram : IDisposable
         {
             lock (_lock)
             {
-                if (_samples.Count == 0) return 0;
+                if (_samples.Count == 0)
+                    return 0;
                 var sorted = _samples.OrderBy(s => s.LatencyMs).ToList();
                 return GetPercentileFromSorted(sorted, percentile);
             }
@@ -372,15 +377,18 @@ public sealed class LatencyHistogram : IDisposable
 
         private static double GetPercentileFromSorted(List<LatencySample> sorted, double percentile)
         {
-            if (sorted.Count == 0) return 0;
-            if (sorted.Count == 1) return sorted[0].LatencyMs;
+            if (sorted.Count == 0)
+                return 0;
+            if (sorted.Count == 1)
+                return sorted[0].LatencyMs;
 
             var index = (percentile / 100.0) * (sorted.Count - 1);
             var lower = (int)Math.Floor(index);
             var upper = (int)Math.Ceiling(index);
             var fraction = index - lower;
 
-            if (upper >= sorted.Count) upper = sorted.Count - 1;
+            if (upper >= sorted.Count)
+                upper = sorted.Count - 1;
 
             return sorted[lower].LatencyMs * (1 - fraction) + sorted[upper].LatencyMs * fraction;
         }

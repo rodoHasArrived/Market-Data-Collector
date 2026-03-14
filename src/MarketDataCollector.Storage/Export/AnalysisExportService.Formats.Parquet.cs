@@ -68,7 +68,8 @@ public sealed partial class AnalysisExportService
         List<Dictionary<string, object?>> records,
         CancellationToken ct)
     {
-        if (records.Count == 0) return;
+        if (records.Count == 0)
+            return;
 
         // Build schema from the first record's keys
         var firstRecord = records[0];

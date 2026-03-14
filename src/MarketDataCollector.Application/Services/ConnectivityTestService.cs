@@ -509,7 +509,8 @@ public sealed class ConnectivityTestService : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _httpClient.Dispose();
         _progress.Dispose();

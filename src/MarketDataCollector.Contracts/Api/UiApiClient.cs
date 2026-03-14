@@ -124,9 +124,12 @@ public sealed class UiApiClient
     {
         var route = UiApiRoutes.WithParam(UiApiRoutes.OptionsChains, "underlyingSymbol", underlyingSymbol);
         var queryParts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(expiration)) queryParts.Add($"expiration={expiration}");
-        if (strikeRange.HasValue) queryParts.Add($"strikeRange={strikeRange.Value}");
-        if (queryParts.Count > 0) route = UiApiRoutes.WithQuery(route, string.Join("&", queryParts));
+        if (!string.IsNullOrWhiteSpace(expiration))
+            queryParts.Add($"expiration={expiration}");
+        if (strikeRange.HasValue)
+            queryParts.Add($"strikeRange={strikeRange.Value}");
+        if (queryParts.Count > 0)
+            route = UiApiRoutes.WithQuery(route, string.Join("&", queryParts));
         return await GetAsync<OptionsChainResponse>(route, ct).ConfigureAwait(false);
     }
 

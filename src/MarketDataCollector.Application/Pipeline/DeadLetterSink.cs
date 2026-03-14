@@ -63,7 +63,8 @@ public sealed class DeadLetterSink : IAsyncDisposable
         IReadOnlyList<string> errors,
         CancellationToken ct = default)
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         Interlocked.Increment(ref _totalRejected);
         _rejectedCountsBySymbol.AddOrUpdate(evt.EffectiveSymbol, 1, (_, count) => count + 1);
@@ -117,7 +118,8 @@ public sealed class DeadLetterSink : IAsyncDisposable
     /// <param name="ct">Cancellation token.</param>
     public async Task FlushAsync(CancellationToken ct = default)
     {
-        if (_disposed || _writer is null) return;
+        if (_disposed || _writer is null)
+            return;
 
         await _writeLock.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -147,7 +149,8 @@ public sealed class DeadLetterSink : IAsyncDisposable
 
     private StreamWriter EnsureWriter()
     {
-        if (_writer is not null) return _writer;
+        if (_writer is not null)
+            return _writer;
 
         Directory.CreateDirectory(_deadLetterDirectory);
         var filePath = Path.Combine(_deadLetterDirectory, "rejected_events.jsonl");
@@ -170,7 +173,8 @@ public sealed class DeadLetterSink : IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         await _writeLock.WaitAsync().ConfigureAwait(false);

@@ -12,12 +12,12 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Resilience;
-using Serilog;
 using MarketDataCollector.Infrastructure.Shared;
+using Serilog;
 using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 
 namespace MarketDataCollector.Infrastructure.Adapters.NYSE;
@@ -271,7 +271,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     public async Task DisconnectAsync(CancellationToken ct = default)
     {
-        if (!IsConnected) return;
+        if (!IsConnected)
+            return;
 
         Log.Information("Disconnecting from NYSE WebSocket");
 
@@ -834,7 +835,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         try
         {
-            if (!IsConnected) return;
+            if (!IsConnected)
+                return;
 
             var message = JsonSerializer.Serialize(new
             {
@@ -858,7 +860,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         try
         {
-            if (!IsConnected) return;
+            if (!IsConnected)
+                return;
 
             var message = JsonSerializer.Serialize(new { action = "unsubscribe_all" });
             await _wsManager.SendAsync(message, CancellationToken.None).ConfigureAwait(false);

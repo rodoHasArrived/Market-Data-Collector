@@ -158,8 +158,10 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider
                 var sessionDate = DateOnly.FromDateTime(date);
 
                 // Skip if outside requested range
-                if (from.HasValue && sessionDate < from.Value) continue;
-                if (to.HasValue && sessionDate > to.Value) continue;
+                if (from.HasValue && sessionDate < from.Value)
+                    continue;
+                if (to.HasValue && sessionDate > to.Value)
+                    continue;
 
                 var open = GetDecimalValue(data.Open, i);
                 var high = GetDecimalValue(data.High, i);
@@ -257,8 +259,10 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider
                 var sessionDate = DateOnly.FromDateTime(timestamp.Date);
 
                 // Skip if outside requested range
-                if (from.HasValue && timestamp < from.Value) continue;
-                if (to.HasValue && timestamp > to.Value) continue;
+                if (from.HasValue && timestamp < from.Value)
+                    continue;
+                if (to.HasValue && timestamp > to.Value)
+                    continue;
 
                 var open = GetDecimalValue(data.Open, i);
                 var high = GetDecimalValue(data.High, i);

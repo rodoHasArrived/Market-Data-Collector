@@ -22,7 +22,8 @@ public sealed partial class PortableDataPackager
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
             var manifestEntry = archive.GetEntry(ManifestFileName);
-            if (manifestEntry == null) return null;
+            if (manifestEntry == null)
+                return null;
 
             await using var entryStream = manifestEntry.Open();
             return await JsonSerializer.DeserializeAsync<PackageManifest>(entryStream, cancellationToken: ct);
@@ -34,12 +35,14 @@ public sealed partial class PortableDataPackager
         using var reader = new StreamReader(gzipStream);
 
         var line = await reader.ReadLineAsync(ct);
-        if (line?.StartsWith("__MANIFEST__:") != true) return null;
+        if (line?.StartsWith("__MANIFEST__:") != true)
+            return null;
 
         var jsonBuilder = new StringBuilder();
         while ((line = await reader.ReadLineAsync(ct)) != null)
         {
-            if (line == "__END_MANIFEST__") break;
+            if (line == "__END_MANIFEST__")
+                break;
             jsonBuilder.AppendLine(line);
         }
 
@@ -93,7 +96,8 @@ public sealed partial class PortableDataPackager
             {
                 ct.ThrowIfCancellationRequested();
 
-                if (string.IsNullOrEmpty(entry.Name)) continue; // Skip directories
+                if (string.IsNullOrEmpty(entry.Name))
+                    continue; // Skip directories
 
                 var destinationPath = Path.Combine(destinationDirectory, entry.FullName);
                 var destinationDir = Path.GetDirectoryName(destinationPath);

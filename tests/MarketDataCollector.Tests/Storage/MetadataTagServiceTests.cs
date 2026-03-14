@@ -20,7 +20,8 @@ public sealed class MetadataTagServiceTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(_tempDir, recursive: true); }
+        try
+        { Directory.Delete(_tempDir, recursive: true); }
         catch { /* Best effort cleanup */ }
     }
 

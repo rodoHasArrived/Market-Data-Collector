@@ -1,5 +1,5 @@
-using MarketDataCollector.Application.Backfill;
 using System.Threading;
+using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
@@ -11,11 +11,11 @@ using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
 using MarketDataCollector.Infrastructure.Adapters.Stooq;
 using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
 using MarketDataCollector.Infrastructure.Contracts;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
 using Serilog;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 
 namespace MarketDataCollector.Application.UI;
 
@@ -82,7 +82,8 @@ public sealed class BackfillCoordinator : IDisposable
     /// </summary>
     public object? GetProgress()
     {
-        if (_lastRun is null) return null;
+        if (_lastRun is null)
+            return null;
         return new
         {
             lastRun = _lastRun,
@@ -297,7 +298,8 @@ public sealed class BackfillCoordinator : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         _symbolResolver?.Dispose();

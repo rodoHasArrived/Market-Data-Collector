@@ -53,8 +53,10 @@ public sealed class SpreadMonitor : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ProcessQuote(string symbol, decimal bidPrice, decimal askPrice, string? provider = null)
     {
-        if (_isDisposed) return false;
-        if (bidPrice <= 0 || askPrice <= 0) return false;
+        if (_isDisposed)
+            return false;
+        if (bidPrice <= 0 || askPrice <= 0)
+            return false;
 
         Interlocked.Increment(ref _totalQuotesProcessed);
 
@@ -205,7 +207,8 @@ public sealed class SpreadMonitor : IDisposable
 
     private void CleanupOldStates(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -233,7 +236,8 @@ public sealed class SpreadMonitor : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _symbolStates.Clear();
@@ -280,8 +284,10 @@ public sealed class SpreadMonitor : IDisposable
             _sumSpreadBps += spreadBps;
             _lastUpdateTime = DateTimeOffset.UtcNow;
 
-            if (spreadBps < _minSpreadBps) _minSpreadBps = spreadBps;
-            if (spreadBps > _maxSpreadBps) _maxSpreadBps = spreadBps;
+            if (spreadBps < _minSpreadBps)
+                _minSpreadBps = spreadBps;
+            if (spreadBps > _maxSpreadBps)
+                _maxSpreadBps = spreadBps;
         }
 
         public void IncrementWideCount()

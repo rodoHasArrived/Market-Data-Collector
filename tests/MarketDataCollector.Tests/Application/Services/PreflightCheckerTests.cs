@@ -22,7 +22,9 @@ public sealed class PreflightCheckerTests : IDisposable
     {
         if (Directory.Exists(_tempDir))
         {
-            try { Directory.Delete(_tempDir, true); } catch { }
+            try
+            { Directory.Delete(_tempDir, true); }
+            catch { }
         }
     }
 

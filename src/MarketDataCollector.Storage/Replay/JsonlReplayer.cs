@@ -1,6 +1,6 @@
 using System.IO.Compression;
-using System.Text.Json;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Serialization;
@@ -24,7 +24,8 @@ public sealed class JsonlReplayer
 
     public async IAsyncEnumerable<MarketEvent> ReadEventsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (!Directory.Exists(_root)) yield break;
+        if (!Directory.Exists(_root))
+            yield break;
 
         var files = Directory.EnumerateFiles(_root, "*.jsonl*", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
@@ -48,10 +49,12 @@ public sealed class JsonlReplayer
         {
             ct.ThrowIfCancellationRequested();
             var line = await reader.ReadLineAsync();
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
             MarketEvent? evt = null;
-            try { evt = JsonSerializer.Deserialize<MarketEvent>(line, MarketDataJsonContext.HighPerformanceOptions); }
+            try
+            { evt = JsonSerializer.Deserialize<MarketEvent>(line, MarketDataJsonContext.HighPerformanceOptions); }
             catch (JsonException ex) { Log.Debug(ex, "Failed to parse JSONL line in {File}", file); }
 
             if (evt is not null)

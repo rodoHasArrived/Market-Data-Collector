@@ -200,7 +200,8 @@ public static class SamplingEndpoints
     private static List<string> FindDataFiles(string rootPath, string? symbol)
     {
         var files = new List<string>();
-        if (!Directory.Exists(rootPath)) return files;
+        if (!Directory.Exists(rootPath))
+            return files;
 
         try
         {
@@ -234,7 +235,8 @@ public static class SamplingEndpoints
                 lines.Add(line);
 
             // Safety limit to avoid reading enormous files
-            if (lines.Count >= 100_000) break;
+            if (lines.Count >= 100_000)
+                break;
         }
 
         return lines;
@@ -259,7 +261,8 @@ public static class SamplingEndpoints
 
     private static List<string> ApplySamplingStrategy(List<string> population, string strategy, int sampleSize)
     {
-        if (population.Count == 0) return new List<string>();
+        if (population.Count == 0)
+            return new List<string>();
         sampleSize = Math.Min(sampleSize, population.Count);
 
         return strategy.ToLowerInvariant() switch

@@ -14,8 +14,10 @@ public sealed class MarketEventFilter
             !string.Equals(evt.Symbol, Symbol, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        if (Type.HasValue && evt.Type != Type.Value) return false;
-        if (Tier.HasValue && evt.Tier != Tier.Value) return false;
+        if (Type.HasValue && evt.Type != Type.Value)
+            return false;
+        if (Tier.HasValue && evt.Tier != Tier.Value)
+            return false;
 
         return true;
     }

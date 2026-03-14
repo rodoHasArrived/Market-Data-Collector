@@ -4,8 +4,8 @@ using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
@@ -327,7 +327,8 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
         {
             adjustedProviders = adjustedProviders.OrderBy(p =>
             {
-                if (_rateLimitTracker.IsRateLimited(p.Name)) return 1000;
+                if (_rateLimitTracker.IsRateLimited(p.Name))
+                    return 1000;
                 if (_rateLimitTracker.IsApproachingLimit(p.Name, _rateLimitRotationThreshold))
                     return 100 + (int)(_rateLimitTracker.GetStatus(p.Name)?.UsagePercent ?? 0);
                 return p.Priority;
@@ -435,7 +436,8 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
     {
         // Try to validate with a different provider
         var validationProvider = _providers.FirstOrDefault(p => p.Name != sourceProvider);
-        if (validationProvider is null) return;
+        if (validationProvider is null)
+            return;
 
         try
         {
@@ -505,7 +507,8 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         _rateLimitTracker.Dispose();

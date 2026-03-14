@@ -99,7 +99,8 @@ public sealed class BackpressureAlertService : IDisposable
 
     private void CheckBackpressure(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         // Timer callbacks must not be async void; fire-and-forget with logging wrapper
         _ = CheckBackpressureCoreAsync();
@@ -110,7 +111,8 @@ public sealed class BackpressureAlertService : IDisposable
         try
         {
             var stats = _pipelineStatsProvider?.Invoke();
-            if (stats == null) return;
+            if (stats == null)
+                return;
 
             var utilization = stats.Value.QueueUtilization;
             var droppedDelta = stats.Value.DroppedCount - _lastDroppedCount;
@@ -209,7 +211,8 @@ public sealed class BackpressureAlertService : IDisposable
 
     private bool ShouldSendAlert(BackpressureLevel level)
     {
-        if (level == BackpressureLevel.None) return false;
+        if (level == BackpressureLevel.None)
+            return false;
 
         var timeSinceLastAlert = DateTimeOffset.UtcNow - _lastAlertTime;
         var minInterval = level == BackpressureLevel.Critical
@@ -221,7 +224,8 @@ public sealed class BackpressureAlertService : IDisposable
 
     private async Task SendWebhookAsync(string message)
     {
-        if (_webhook == null) return;
+        if (_webhook == null)
+            return;
 
         try
         {
@@ -251,7 +255,8 @@ public sealed class BackpressureAlertService : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _checkTimer.Dispose();
     }

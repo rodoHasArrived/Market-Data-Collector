@@ -45,7 +45,8 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
         string reason,
         CancellationToken ct = default)
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         Interlocked.Increment(ref _totalDropped);
         _dropCountsBySymbol.AddOrUpdate(evt.EffectiveSymbol, 1, (_, count) => count + 1);
@@ -95,7 +96,8 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
 
     private StreamWriter EnsureWriter()
     {
-        if (_writer != null) return _writer;
+        if (_writer != null)
+            return _writer;
 
         Directory.CreateDirectory(_auditPath);
         var filePath = Path.Combine(_auditPath, "dropped_events.jsonl");
@@ -106,7 +108,8 @@ public sealed class DroppedEventAuditTrail : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         // Acquire the write lock to ensure no concurrent write is in progress

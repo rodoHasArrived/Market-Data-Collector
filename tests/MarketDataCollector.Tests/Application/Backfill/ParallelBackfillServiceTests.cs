@@ -60,7 +60,8 @@ public sealed class ParallelBackfillServiceTests : IAsyncLifetime
             do
             {
                 observed = Volatile.Read(ref maxObserved);
-                if (inFlight <= observed) break;
+                if (inFlight <= observed)
+                    break;
             }
             while (Interlocked.CompareExchange(ref maxObserved, inFlight, observed) != observed);
 
@@ -105,7 +106,8 @@ public sealed class ParallelBackfillServiceTests : IAsyncLifetime
             do
             {
                 observed = Volatile.Read(ref maxObserved);
-                if (inFlight <= observed) break;
+                if (inFlight <= observed)
+                    break;
             }
             while (Interlocked.CompareExchange(ref maxObserved, inFlight, observed) != observed);
 
@@ -147,7 +149,8 @@ public sealed class ParallelBackfillServiceTests : IAsyncLifetime
             do
             {
                 observed = Volatile.Read(ref maxObserved);
-                if (inFlight <= observed) break;
+                if (inFlight <= observed)
+                    break;
             }
             while (Interlocked.CompareExchange(ref maxObserved, inFlight, observed) != observed);
             gate.Release();
@@ -243,7 +246,7 @@ public sealed class ParallelBackfillServiceTests : IAsyncLifetime
         var svc = new HistoricalBackfillService([provider]);
         var priorities = new Dictionary<string, int>
         {
-            ["SPY"]  = 3,
+            ["SPY"] = 3,
             ["AAPL"] = 1,
             ["MSFT"] = 2,
         };
@@ -311,7 +314,7 @@ public sealed class ParallelBackfillServiceTests : IAsyncLifetime
         // priority map uses lowercase; symbols are uppercase in the request
         var priorities = new Dictionary<string, int>
         {
-            ["spy"]  = 2,
+            ["spy"] = 2,
             ["aapl"] = 1,
         };
         var request = new AppBackfillRequest(
@@ -563,7 +566,8 @@ public sealed class ParallelBackfillServiceTests : IAsyncLifetime
             do
             {
                 observed = Volatile.Read(ref maxObserved);
-                if (inFlight <= observed) break;
+                if (inFlight <= observed)
+                    break;
             }
             while (Interlocked.CompareExchange(ref maxObserved, inFlight, observed) != observed);
             gate.Release();

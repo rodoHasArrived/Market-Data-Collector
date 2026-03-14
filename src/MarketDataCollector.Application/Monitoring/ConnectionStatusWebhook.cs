@@ -43,9 +43,11 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
 
     private async void HandleConnectionLost(ConnectionLostEvent evt)
     {
-        if (_isDisposed || _webhook == null || !_config.NotifyOnConnectionLost) return;
+        if (_isDisposed || _webhook == null || !_config.NotifyOnConnectionLost)
+            return;
 
-        if (!ShouldSendAlert($"lost:{evt.ConnectionId}")) return;
+        if (!ShouldSendAlert($"lost:{evt.ConnectionId}"))
+            return;
 
         var message = FormatConnectionLostMessage(evt);
         _log.Warning("Connection lost: {ConnectionId} ({Provider}) - {Reason}",
@@ -63,9 +65,11 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
 
     private async void HandleConnectionRecovered(ConnectionRecoveredEvent evt)
     {
-        if (_isDisposed || _webhook == null || !_config.NotifyOnConnectionRecovered) return;
+        if (_isDisposed || _webhook == null || !_config.NotifyOnConnectionRecovered)
+            return;
 
-        if (!ShouldSendAlert($"recovered:{evt.ConnectionId}")) return;
+        if (!ShouldSendAlert($"recovered:{evt.ConnectionId}"))
+            return;
 
         var message = FormatConnectionRecoveredMessage(evt);
         _log.Information("Connection recovered: {ConnectionId} ({Provider}) after {Downtime}",
@@ -83,12 +87,15 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
 
     private async void HandleHeartbeatMissed(HeartbeatMissedEvent evt)
     {
-        if (_isDisposed || _webhook == null || !_config.NotifyOnHeartbeatMissed) return;
+        if (_isDisposed || _webhook == null || !_config.NotifyOnHeartbeatMissed)
+            return;
 
         // Only notify if missed count exceeds threshold
-        if (evt.MissedCount < _config.HeartbeatMissedThreshold) return;
+        if (evt.MissedCount < _config.HeartbeatMissedThreshold)
+            return;
 
-        if (!ShouldSendAlert($"heartbeat:{evt.ConnectionId}")) return;
+        if (!ShouldSendAlert($"heartbeat:{evt.ConnectionId}"))
+            return;
 
         var message = FormatHeartbeatMissedMessage(evt);
         _log.Warning("Heartbeat missed: {ConnectionId} ({Provider}) - {MissedCount} missed",
@@ -106,12 +113,15 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
 
     private async void HandleHighLatency(HighLatencyEvent evt)
     {
-        if (_isDisposed || _webhook == null || !_config.NotifyOnHighLatency) return;
+        if (_isDisposed || _webhook == null || !_config.NotifyOnHighLatency)
+            return;
 
         // Only notify if latency exceeds our threshold
-        if (evt.LatencyMs < _config.HighLatencyThresholdMs) return;
+        if (evt.LatencyMs < _config.HighLatencyThresholdMs)
+            return;
 
-        if (!ShouldSendAlert($"latency:{evt.ConnectionId}")) return;
+        if (!ShouldSendAlert($"latency:{evt.ConnectionId}"))
+            return;
 
         var message = FormatHighLatencyMessage(evt);
         _log.Warning("High latency: {ConnectionId} ({Provider}) - {LatencyMs:F1}ms",
@@ -201,7 +211,8 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
     /// </summary>
     public async Task SendStatusUpdateAsync(string message, string? title = null, CancellationToken ct = default)
     {
-        if (_webhook == null) return;
+        if (_webhook == null)
+            return;
 
         try
         {
@@ -218,7 +229,8 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
     /// </summary>
     public async Task SendConnectionSummaryAsync(CancellationToken ct = default)
     {
-        if (_webhook == null) return;
+        if (_webhook == null)
+            return;
 
         var snapshot = _connectionMonitor.GetSnapshot();
         var message = FormatConnectionSummary(snapshot);
@@ -258,7 +270,8 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
-        if (_isDisposed) return default;
+        if (_isDisposed)
+            return default;
         _isDisposed = true;
 
         _connectionMonitor.OnConnectionLost -= HandleConnectionLost;

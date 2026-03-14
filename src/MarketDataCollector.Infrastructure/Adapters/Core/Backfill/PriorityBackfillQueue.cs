@@ -488,7 +488,8 @@ public sealed class PriorityBackfillQueue : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         foreach (var cts in _cancellationTokens.Values)

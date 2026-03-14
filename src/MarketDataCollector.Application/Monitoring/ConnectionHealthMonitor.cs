@@ -284,7 +284,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     public double GetAverageLatencyMs()
     {
         var samples = Interlocked.Read(ref _totalLatencySamples);
-        if (samples == 0) return 0;
+        if (samples == 0)
+            return 0;
 
         var ticks = Interlocked.Read(ref _totalLatencyTicks);
         return (double)ticks / samples / Stopwatch.Frequency * 1000;
@@ -296,7 +297,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     public double GetMinLatencyMs()
     {
         var ticks = Interlocked.Read(ref _minLatencyTicks);
-        if (ticks == long.MaxValue) return 0;
+        if (ticks == long.MaxValue)
+            return 0;
         return (double)ticks / Stopwatch.Frequency * 1000;
     }
 
@@ -319,7 +321,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
         while (ticks < currentMin)
         {
             var prev = Interlocked.CompareExchange(ref _minLatencyTicks, ticks, currentMin);
-            if (prev == currentMin) break;
+            if (prev == currentMin)
+                break;
             currentMin = prev;
         }
 
@@ -328,14 +331,16 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
         while (ticks > currentMax)
         {
             var prev = Interlocked.CompareExchange(ref _maxLatencyTicks, ticks, currentMax);
-            if (prev == currentMax) break;
+            if (prev == currentMax)
+                break;
             currentMax = prev;
         }
     }
 
     private async void CheckHeartbeats(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -345,7 +350,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
             foreach (var kvp in _connections)
             {
                 var conn = kvp.Value;
-                if (!conn.IsConnected) continue;
+                if (!conn.IsConnected)
+                    continue;
 
                 var timeSinceLastActivity = now - conn.LastActivityTime;
 
@@ -402,7 +408,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
 
     private void UpdateStats(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         // Update per-connection statistics
         foreach (var kvp in _connections)
@@ -436,7 +443,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _heartbeatTimer.Dispose();
         _statsTimer.Dispose();
@@ -522,7 +530,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
             while (ticks < currentMin)
             {
                 var prev = Interlocked.CompareExchange(ref _minLatencyTicks, ticks, currentMin);
-                if (prev == currentMin) break;
+                if (prev == currentMin)
+                    break;
                 currentMin = prev;
             }
 
@@ -531,7 +540,8 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
             while (ticks > currentMax)
             {
                 var prev = Interlocked.CompareExchange(ref _maxLatencyTicks, ticks, currentMax);
-                if (prev == currentMax) break;
+                if (prev == currentMax)
+                    break;
                 currentMax = prev;
             }
         }

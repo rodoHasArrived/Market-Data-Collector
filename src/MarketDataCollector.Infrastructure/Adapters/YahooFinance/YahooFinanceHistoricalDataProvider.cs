@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
@@ -173,8 +173,10 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
             var sessionDate = DateOnly.FromDateTime(date);
 
             // Skip if outside requested range
-            if (from.HasValue && sessionDate < from.Value) continue;
-            if (to.HasValue && sessionDate > to.Value) continue;
+            if (from.HasValue && sessionDate < from.Value)
+                continue;
+            if (to.HasValue && sessionDate > to.Value)
+                continue;
 
             var open = GetDecimalValue(quote.Open, i);
             var high = GetDecimalValue(quote.High, i);

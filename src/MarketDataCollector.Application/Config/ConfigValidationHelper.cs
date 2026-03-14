@@ -55,7 +55,8 @@ public sealed class AppConfigValidator : AbstractValidator<AppConfig>
             RuleFor(x => x.Symbols)
                 .Must(symbols =>
                 {
-                    if (symbols == null) return true;
+                    if (symbols == null)
+                        return true;
                     var distinctCount = symbols.Select(s => s.Symbol)
                         .Distinct(StringComparer.OrdinalIgnoreCase).Count();
                     return distinctCount == symbols.Length;

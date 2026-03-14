@@ -75,7 +75,8 @@ public sealed class GapBackfillService
 
     private void OnReconnected(ReconnectionEvent evt)
     {
-        if (!_enabled) return;
+        if (!_enabled)
+            return;
 
         // Skip very short gaps (likely just a WebSocket ping timeout)
         if (evt.GapDuration < _minimumGap)

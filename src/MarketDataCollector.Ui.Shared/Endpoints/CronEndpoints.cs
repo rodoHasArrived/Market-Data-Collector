@@ -52,7 +52,8 @@ public static class CronEndpoints
 
             if (!string.IsNullOrWhiteSpace(req.TimeZoneId))
             {
-                try { timeZone = TimeZoneInfo.FindSystemTimeZoneById(req.TimeZoneId); }
+                try
+                { timeZone = TimeZoneInfo.FindSystemTimeZoneById(req.TimeZoneId); }
                 catch { /* fall back to UTC */ }
             }
 
@@ -61,7 +62,8 @@ public static class CronEndpoints
             for (int i = 0; i < count; i++)
             {
                 var next = CronExpressionParser.GetNextOccurrence(req.Expression, timeZone, from);
-                if (next is null) break;
+                if (next is null)
+                    break;
                 nextRuns.Add(next.Value);
                 from = next.Value.AddMinutes(1);
             }

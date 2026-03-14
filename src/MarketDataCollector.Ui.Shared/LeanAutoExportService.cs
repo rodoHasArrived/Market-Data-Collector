@@ -201,12 +201,14 @@ public sealed class LeanAutoExportService : BackgroundService
 
             foreach (var filePath in allFiles)
             {
-                if (ct.IsCancellationRequested) break;
+                if (ct.IsCancellationRequested)
+                    break;
 
                 // Extract symbol from path convention: {root}/{symbol}/...
                 var relativePath = Path.GetRelativePath(sourceRoot, filePath);
                 var parts = relativePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 2) continue;
+                if (parts.Length < 2)
+                    continue;
 
                 var symbol = parts[0].ToUpperInvariant();
 
@@ -313,7 +315,8 @@ public sealed class LeanAutoExportService : BackgroundService
                 string? line;
                 while ((line = await reader.ReadLineAsync(ct).ConfigureAwait(false)) != null)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
 
                     // Minimal Lean CSV format: Milliseconds,Price,Volume
                     // We attempt to extract these fields from JSON by looking for known keys.
@@ -331,7 +334,9 @@ public sealed class LeanAutoExportService : BackgroundService
         catch (Exception)
         {
             // Clean up partial output
-            try { File.Delete(zipOutputPath); } catch { /* best-effort */ }
+            try
+            { File.Delete(zipOutputPath); }
+            catch { /* best-effort */ }
             return 0;
         }
     }
@@ -371,7 +376,8 @@ public sealed class LeanAutoExportService : BackgroundService
             else if (root.TryGetProperty("Volume", out var vElem))
                 vElem.TryGetDecimal(out size);
 
-            if (price == 0) return null; // skip records without a price
+            if (price == 0)
+                return null; // skip records without a price
 
             // Lean uses integer prices (scale to 10000 for equity tick data)
             var scaledPrice = (long)(price * 10000m);
@@ -392,7 +398,8 @@ public sealed class LeanAutoExportService : BackgroundService
     {
         foreach (var key in new[] { "Timestamp", "timestamp", "Time", "time" })
         {
-            if (!root.TryGetProperty(key, out var elem)) continue;
+            if (!root.TryGetProperty(key, out var elem))
+                continue;
 
             if (elem.ValueKind == System.Text.Json.JsonValueKind.String)
             {

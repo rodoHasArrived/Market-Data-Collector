@@ -1,9 +1,9 @@
 using System.Globalization;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
@@ -87,25 +87,36 @@ public sealed class StooqHistoricalDataProvider : BaseHistoricalDataProvider
         string? line;
         while ((line = reader.ReadLine()) is not null)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
             var parts = line.Split(',', StringSplitOptions.TrimEntries);
-            if (parts.Length < 6) continue;
+            if (parts.Length < 6)
+                continue;
 
-            if (!DateOnly.TryParse(parts[0], out var date)) continue;
+            if (!DateOnly.TryParse(parts[0], out var date))
+                continue;
 
             // Apply date filter
-            if (from is not null && date < from.Value) continue;
-            if (to is not null && date > to.Value) continue;
+            if (from is not null && date < from.Value)
+                continue;
+            if (to is not null && date > to.Value)
+                continue;
 
-            if (!decimal.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var open)) continue;
-            if (!decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var high)) continue;
-            if (!decimal.TryParse(parts[3], NumberStyles.Any, CultureInfo.InvariantCulture, out var low)) continue;
-            if (!decimal.TryParse(parts[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var close)) continue;
-            if (!long.TryParse(parts[5], NumberStyles.Any, CultureInfo.InvariantCulture, out var volume)) continue;
+            if (!decimal.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var open))
+                continue;
+            if (!decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var high))
+                continue;
+            if (!decimal.TryParse(parts[3], NumberStyles.Any, CultureInfo.InvariantCulture, out var low))
+                continue;
+            if (!decimal.TryParse(parts[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var close))
+                continue;
+            if (!long.TryParse(parts[5], NumberStyles.Any, CultureInfo.InvariantCulture, out var volume))
+                continue;
 
             // Validate OHLC
-            if (!IsValidOhlc(open, high, low, close)) continue;
+            if (!IsValidOhlc(open, high, low, close))
+                continue;
 
             bars.Add(new HistoricalBar(
                 Symbol: symbol.ToUpperInvariant(),

@@ -369,7 +369,8 @@ public class MemoryMappedJsonlReaderTests : IDisposable
         var reader = new MemoryMappedJsonlReader(_testRoot);
 
         // Act
-        await foreach (var _ in reader.ReadEventsAsync()) { }
+        await foreach (var _ in reader.ReadEventsAsync())
+        { }
 
         // Assert
         reader.FilesRead.Should().Be(1);

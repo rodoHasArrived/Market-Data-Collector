@@ -57,7 +57,8 @@ public sealed class ConfigWatcher : IDisposable
 
     private void OnChanged(object sender, FileSystemEventArgs e)
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         lock (_gate)
         {
@@ -68,7 +69,8 @@ public sealed class ConfigWatcher : IDisposable
 
     private void Flush()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         bool doWork;
         lock (_gate)
@@ -76,7 +78,8 @@ public sealed class ConfigWatcher : IDisposable
             doWork = _pending;
             _pending = false;
         }
-        if (!doWork) return;
+        if (!doWork)
+            return;
 
         // Fire-and-forget async flush with proper error handling
         _ = FlushAsyncCore();
@@ -103,7 +106,8 @@ public sealed class ConfigWatcher : IDisposable
         {
             try
             {
-                if (!File.Exists(path)) return new AppConfig();
+                if (!File.Exists(path))
+                    return new AppConfig();
                 var json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
                 var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
                 return cfg ?? new AppConfig();

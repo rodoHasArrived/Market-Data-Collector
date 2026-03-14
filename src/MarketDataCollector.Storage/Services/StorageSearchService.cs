@@ -44,7 +44,8 @@ public sealed class StorageSearchService : IStorageSearchService
             ct.ThrowIfCancellationRequested();
 
             var metadata = await GetOrCreateMetadataAsync(file, ct);
-            if (metadata == null) continue;
+            if (metadata == null)
+                continue;
 
             // Apply filters
             if (query.Symbols?.Length > 0 && !query.Symbols.Contains(metadata.Symbol, StringComparer.OrdinalIgnoreCase))
@@ -140,7 +141,8 @@ public sealed class StorageSearchService : IStorageSearchService
 
             await foreach (var evt in ReadEventsAsync(fileResult.Path, ct))
             {
-                if (results.Count >= query.Limit) break;
+                if (results.Count >= query.Limit)
+                    break;
 
                 // Apply event-level filters
                 if (query.MinPrice.HasValue || query.MaxPrice.HasValue || query.MinVolume.HasValue || query.Side.HasValue)
@@ -165,7 +167,8 @@ public sealed class StorageSearchService : IStorageSearchService
                 ));
             }
 
-            if (results.Count >= query.Limit) break;
+            if (results.Count >= query.Limit)
+                break;
         }
 
         return new SearchResult<EventSearchResult>(
@@ -190,7 +193,8 @@ public sealed class StorageSearchService : IStorageSearchService
             ct.ThrowIfCancellationRequested();
 
             var metadata = await GetOrCreateMetadataAsync(file, ct);
-            if (metadata == null) continue;
+            if (metadata == null)
+                continue;
 
             // Update aggregations
             if (!symbols.ContainsKey(metadata.Symbol))
@@ -224,8 +228,10 @@ public sealed class StorageSearchService : IStorageSearchService
             totalEvents += metadata.EventCount;
             totalBytes += metadata.SizeBytes;
 
-            if (metadata.Date < dateRange.MinDate) dateRange.MinDate = metadata.Date;
-            if (metadata.Date > dateRange.MaxDate) dateRange.MaxDate = metadata.Date;
+            if (metadata.Date < dateRange.MinDate)
+                dateRange.MinDate = metadata.Date;
+            if (metadata.Date > dateRange.MaxDate)
+                dateRange.MaxDate = metadata.Date;
         }
 
         return new DataCatalog(
@@ -450,7 +456,8 @@ public sealed class StorageSearchService : IStorageSearchService
         try
         {
             var fileInfo = new FileInfo(filePath);
-            if (!fileInfo.Exists) return null;
+            if (!fileInfo.Exists)
+                return null;
 
             // Use centralized path parser if available
             var parsed = _pathParser?.TryParsePath(filePath);
@@ -464,9 +471,12 @@ public sealed class StorageSearchService : IStorageSearchService
             if (symbol == "Unknown" || eventType == "Unknown")
             {
                 var fallback = ParsePathFallback(filePath, fileInfo);
-                if (symbol == "Unknown") symbol = fallback.Symbol;
-                if (eventType == "Unknown") eventType = fallback.EventType;
-                if (source == "Unknown" && fallback.Source != "Unknown") source = fallback.Source;
+                if (symbol == "Unknown")
+                    symbol = fallback.Symbol;
+                if (eventType == "Unknown")
+                    eventType = fallback.EventType;
+                if (source == "Unknown" && fallback.Source != "Unknown")
+                    source = fallback.Source;
             }
 
             // Count events
@@ -559,11 +569,13 @@ public sealed class StorageSearchService : IStorageSearchService
 
     private async IAsyncEnumerable<MarketEvent> ReadEventsAsync(string filePath, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
     {
-        if (!File.Exists(filePath)) yield break;
+        if (!File.Exists(filePath))
+            yield break;
 
         await foreach (var line in File.ReadLinesAsync(filePath, ct))
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
             MarketEvent? evt = null;
             try

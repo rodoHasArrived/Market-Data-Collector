@@ -482,7 +482,8 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
 
     private static string GetEasternTimeZoneId()
     {
-        try { return TimeZoneInfo.FindSystemTimeZoneById("America/New_York").Id; }
+        try
+        { return TimeZoneInfo.FindSystemTimeZoneById("America/New_York").Id; }
         catch { return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time").Id; }
     }
 

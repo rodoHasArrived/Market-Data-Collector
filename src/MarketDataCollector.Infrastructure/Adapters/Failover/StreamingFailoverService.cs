@@ -190,7 +190,8 @@ public sealed class StreamingFailoverService : IDisposable
 
     private void EvaluateHealth(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -340,7 +341,8 @@ public sealed class StreamingFailoverService : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
 
         _evaluationTimer?.Dispose();

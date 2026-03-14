@@ -47,8 +47,10 @@ public sealed class PriceContinuityChecker : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public PriceContinuityResult CheckPrice(string symbol, decimal price, DateTimeOffset timestamp, string? provider = null)
     {
-        if (_isDisposed) return PriceContinuityResult.Ok;
-        if (price <= 0) return PriceContinuityResult.Ok;
+        if (_isDisposed)
+            return PriceContinuityResult.Ok;
+        if (price <= 0)
+            return PriceContinuityResult.Ok;
 
         Interlocked.Increment(ref _totalChecks);
 
@@ -70,7 +72,8 @@ public sealed class PriceContinuityChecker : IDisposable
         DateTimeOffset timestamp,
         string? provider = null)
     {
-        if (_isDisposed) return PriceContinuityResult.Ok;
+        if (_isDisposed)
+            return PriceContinuityResult.Ok;
 
         Interlocked.Increment(ref _totalChecks);
 
@@ -113,8 +116,10 @@ public sealed class PriceContinuityChecker : IDisposable
         DateTimeOffset timestamp,
         string? provider = null)
     {
-        if (_isDisposed) return PriceContinuityResult.Ok;
-        if (bidPrice <= 0 || askPrice <= 0) return PriceContinuityResult.Ok;
+        if (_isDisposed)
+            return PriceContinuityResult.Ok;
+        if (bidPrice <= 0 || askPrice <= 0)
+            return PriceContinuityResult.Ok;
 
         var midPrice = (bidPrice + askPrice) / 2;
         return CheckPrice(symbol, midPrice, timestamp, provider);
@@ -211,7 +216,8 @@ public sealed class PriceContinuityChecker : IDisposable
 
     private void CleanupStaleEntries(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -239,7 +245,8 @@ public sealed class PriceContinuityChecker : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _priceStates.Clear();
@@ -362,8 +369,10 @@ public sealed class PriceContinuityChecker : IDisposable
         {
             _lastPrice = price;
             _lastTimestamp = timestamp;
-            if (price < _minPrice) _minPrice = price;
-            if (price > _maxPrice) _maxPrice = price;
+            if (price < _minPrice)
+                _minPrice = price;
+            if (price > _maxPrice)
+                _maxPrice = price;
         }
 
         public SymbolPriceStatistics GetStatistics()

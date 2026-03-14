@@ -4,8 +4,8 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
@@ -137,7 +137,8 @@ public sealed class IBSimulationClient : IMarketDataClient
 
     private void GenerateSimulatedTicks(object? state)
     {
-        if (!_connected || _disposed) return;
+        if (!_connected || _disposed)
+            return;
 
         try
         {
@@ -174,7 +175,8 @@ public sealed class IBSimulationClient : IMarketDataClient
 
     public ValueTask DisposeAsync()
     {
-        if (_disposed) return ValueTask.CompletedTask;
+        if (_disposed)
+            return ValueTask.CompletedTask;
         _disposed = true;
         _tickTimer?.Dispose();
         _tradeSubs.Clear();

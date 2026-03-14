@@ -386,7 +386,8 @@ public sealed class DataQualityReportGenerator
 
     private double CalculateScoreTrend(List<DailyQualityReport> reports)
     {
-        if (reports.Count < 2) return 0;
+        if (reports.Count < 2)
+            return 0;
 
         var ordered = reports.OrderBy(r => r.Date).ToList();
         var firstHalf = ordered.Take(ordered.Count / 2).Average(r => r.OverallScore);
@@ -424,7 +425,8 @@ public sealed class DataQualityReportGenerator
     {
         var improvements = new List<string>();
 
-        if (reports.Count < 2) return improvements;
+        if (reports.Count < 2)
+            return improvements;
 
         var ordered = reports.OrderBy(r => r.Date).ToList();
         var lastDay = ordered.Last();

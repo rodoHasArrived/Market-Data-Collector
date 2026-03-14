@@ -52,7 +52,8 @@ public sealed class SequenceErrorTracker : IDisposable
         string? streamId = null,
         string? provider = null)
     {
-        if (_isDisposed) return null;
+        if (_isDisposed)
+            return null;
 
         Interlocked.Increment(ref _totalEventsChecked);
 
@@ -290,7 +291,8 @@ public sealed class SequenceErrorTracker : IDisposable
 
     private void CleanupOldData(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -342,7 +344,8 @@ public sealed class SequenceErrorTracker : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _symbolStates.Clear();

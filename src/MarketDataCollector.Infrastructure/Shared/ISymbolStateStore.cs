@@ -259,7 +259,8 @@ public sealed class SymbolStateStore<T> : ISymbolStateStore<T> where T : class
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         // Dispose any disposable state
@@ -267,7 +268,8 @@ public sealed class SymbolStateStore<T> : ISymbolStateStore<T> where T : class
         {
             if (value is IDisposable disposable)
             {
-                try { disposable.Dispose(); }
+                try
+                { disposable.Dispose(); }
                 catch (ObjectDisposedException) { /* already disposed */ }
             }
         }
@@ -435,7 +437,8 @@ public sealed class ExpiringSymbolStateStore<T> : ISymbolStateStore<T> where T :
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         _cleanupTimer?.Dispose();

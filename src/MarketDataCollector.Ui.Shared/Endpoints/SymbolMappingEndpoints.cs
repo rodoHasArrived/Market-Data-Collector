@@ -62,8 +62,10 @@ public static class SymbolMappingEndpoints
 
             var idx = mappings.FindIndex(m =>
                 string.Equals(m.CanonicalSymbol, req.CanonicalSymbol, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) mappings[idx] = mapping;
-            else mappings.Add(mapping);
+            if (idx >= 0)
+                mappings[idx] = mapping;
+            else
+                mappings.Add(mapping);
 
             var next = cfg with
             {
@@ -147,7 +149,8 @@ public static class SymbolMappingEndpoints
                 string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
 
                     var parts = line.Split(',');
                     if (!headerParsed)
@@ -161,10 +164,12 @@ public static class SymbolMappingEndpoints
                         continue;
                     }
 
-                    if (parts.Length < 2) continue;
+                    if (parts.Length < 2)
+                        continue;
 
                     var canonicalSymbol = parts[0].Trim();
-                    if (string.IsNullOrWhiteSpace(canonicalSymbol)) continue;
+                    if (string.IsNullOrWhiteSpace(canonicalSymbol))
+                        continue;
 
                     string? ibSymbol = null, alpacaSymbol = null, polygonSymbol = null, yahooSymbol = null, name = null, figi = null;
 
@@ -177,12 +182,24 @@ public static class SymbolMappingEndpoints
                             {
                                 switch (colName)
                                 {
-                                    case "ib": ibSymbol = value; break;
-                                    case "alpaca": alpacaSymbol = value; break;
-                                    case "polygon": polygonSymbol = value; break;
-                                    case "yahoo": yahooSymbol = value; break;
-                                    case "name": name = value; break;
-                                    case "figi": figi = value; break;
+                                    case "ib":
+                                        ibSymbol = value;
+                                        break;
+                                    case "alpaca":
+                                        alpacaSymbol = value;
+                                        break;
+                                    case "polygon":
+                                        polygonSymbol = value;
+                                        break;
+                                    case "yahoo":
+                                        yahooSymbol = value;
+                                        break;
+                                    case "name":
+                                        name = value;
+                                        break;
+                                    case "figi":
+                                        figi = value;
+                                        break;
                                 }
                             }
                         }
@@ -210,8 +227,10 @@ public static class SymbolMappingEndpoints
             {
                 var idx = existingMappings.FindIndex(m =>
                     string.Equals(m.CanonicalSymbol, mapping.CanonicalSymbol, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) existingMappings[idx] = mapping;
-                else existingMappings.Add(mapping);
+                if (idx >= 0)
+                    existingMappings[idx] = mapping;
+                else
+                    existingMappings.Add(mapping);
             }
 
             var next = cfg with

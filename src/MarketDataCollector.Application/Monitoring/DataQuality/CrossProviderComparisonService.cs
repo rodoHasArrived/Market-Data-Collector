@@ -41,7 +41,8 @@ public sealed class CrossProviderComparisonService : IDisposable
         decimal volume,
         long? sequence = null)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         var key = GetKey(symbol, "Trade");
         var tracker = _providerData.GetOrAdd(key, _ => new ProviderDataTracker(symbol, "Trade"));
@@ -63,7 +64,8 @@ public sealed class CrossProviderComparisonService : IDisposable
         decimal bidSize,
         decimal askSize)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         var key = GetKey(symbol, "Quote");
         var tracker = _providerData.GetOrAdd(key, _ => new ProviderDataTracker(symbol, "Quote"));
@@ -179,7 +181,8 @@ public sealed class CrossProviderComparisonService : IDisposable
     private void CheckForDiscrepancies(ProviderDataTracker tracker, DateTimeOffset timestamp)
     {
         var recentData = tracker.GetRecentDataByProvider(TimeSpan.FromSeconds(_config.ComparisonWindowSeconds));
-        if (recentData.Count < 2) return;
+        if (recentData.Count < 2)
+            return;
 
         var providers = recentData.Keys.ToList();
         for (int i = 0; i < providers.Count - 1; i++)
@@ -189,7 +192,8 @@ public sealed class CrossProviderComparisonService : IDisposable
                 var p1Data = recentData[providers[i]];
                 var p2Data = recentData[providers[j]];
 
-                if (p1Data.Count == 0 || p2Data.Count == 0) continue;
+                if (p1Data.Count == 0 || p2Data.Count == 0)
+                    continue;
 
                 var latestP1 = p1Data[^1];
                 var latestP2 = p2Data[^1];
@@ -225,7 +229,8 @@ public sealed class CrossProviderComparisonService : IDisposable
     private void CheckForQuoteDiscrepancies(ProviderDataTracker tracker, DateTimeOffset timestamp)
     {
         var recentQuotes = tracker.GetRecentQuotesByProvider(TimeSpan.FromSeconds(_config.ComparisonWindowSeconds));
-        if (recentQuotes.Count < 2) return;
+        if (recentQuotes.Count < 2)
+            return;
 
         var providers = recentQuotes.Keys.ToList();
         for (int i = 0; i < providers.Count - 1; i++)
@@ -235,7 +240,8 @@ public sealed class CrossProviderComparisonService : IDisposable
                 var q1List = recentQuotes[providers[i]];
                 var q2List = recentQuotes[providers[j]];
 
-                if (q1List.Count == 0 || q2List.Count == 0) continue;
+                if (q1List.Count == 0 || q2List.Count == 0)
+                    continue;
 
                 var q1 = q1List[^1];
                 var q2 = q2List[^1];
@@ -318,7 +324,8 @@ public sealed class CrossProviderComparisonService : IDisposable
 
     private void CleanupOldData(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -336,7 +343,8 @@ public sealed class CrossProviderComparisonService : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _providerData.Clear();
@@ -452,7 +460,8 @@ public sealed class CrossProviderComparisonService : IDisposable
                 foreach (var (provider, data) in _dataByProvider)
                 {
                     var dateData = data.Where(d => DateOnly.FromDateTime(d.Timestamp.UtcDateTime) == date).ToList();
-                    if (dateData.Count == 0) continue;
+                    if (dateData.Count == 0)
+                        continue;
 
                     var firstEvent = dateData.Min(d => d.Timestamp);
                     var lastEvent = dateData.Max(d => d.Timestamp);

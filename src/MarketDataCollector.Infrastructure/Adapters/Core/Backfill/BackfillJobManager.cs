@@ -475,7 +475,8 @@ public sealed class BackfillJobManager : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _persistLock.Dispose();
     }

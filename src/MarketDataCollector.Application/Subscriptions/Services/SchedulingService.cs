@@ -183,7 +183,8 @@ public sealed class SchedulingService : IAsyncDisposable
 
     private void CheckSchedules(object? state)
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         lock (_gate)
         {
@@ -223,7 +224,8 @@ public sealed class SchedulingService : IAsyncDisposable
 
         // Check if we're within the minute of scheduled time
         var timeDiff = Math.Abs((currentTime.ToTimeSpan() - scheduledTime.ToTimeSpan()).TotalMinutes);
-        if (timeDiff > 1) return false;
+        if (timeDiff > 1)
+            return false;
 
         // Check last execution to avoid double-execution
         if (_executionStatus.TryGetValue(schedule.Id, out var lastStatus))
@@ -429,7 +431,8 @@ public sealed class SchedulingService : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         await _timer.DisposeAsync();
     }

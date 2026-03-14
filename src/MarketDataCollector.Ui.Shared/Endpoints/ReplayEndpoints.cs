@@ -216,7 +216,8 @@ public static class ReplayEndpoints
                     });
 
                     count++;
-                    if (count >= maxEvents) break;
+                    if (count >= maxEvents)
+                        break;
                 }
             }
             catch (OperationCanceledException) { /* request cancelled */ }
@@ -281,10 +282,14 @@ public static class ReplayEndpoints
     private static string ExtractEventTypeFromFileName(string fileName)
     {
         var lower = fileName.ToLowerInvariant();
-        if (lower.Contains("trade")) return "trade";
-        if (lower.Contains("quote")) return "quote";
-        if (lower.Contains("depth")) return "depth";
-        if (lower.Contains("bar")) return "bar";
+        if (lower.Contains("trade"))
+            return "trade";
+        if (lower.Contains("quote"))
+            return "quote";
+        if (lower.Contains("depth"))
+            return "depth";
+        if (lower.Contains("bar"))
+            return "bar";
         return "unknown";
     }
 

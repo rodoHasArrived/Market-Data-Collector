@@ -153,7 +153,8 @@ public abstract class DataSourceBase : IDataSource
     /// <inheritdoc />
     public virtual async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         Log.Debug("Disposing {Source}", DisplayName);
@@ -251,7 +252,8 @@ public abstract class DataSourceBase : IDataSource
             catch (HttpRequestException ex)
             {
                 lastException = ex;
-                if (attempt == maxRetries) break;
+                if (attempt == maxRetries)
+                    break;
 
                 var delay = CalculateRetryDelay(attempt, baseDelay, maxDelay);
                 Log.Warning(ex, "{Source} {Operation} attempt {Attempt}/{MaxRetries} failed, retrying in {Delay}ms",
@@ -261,7 +263,8 @@ public abstract class DataSourceBase : IDataSource
             catch (TimeoutException ex)
             {
                 lastException = ex;
-                if (attempt == maxRetries) break;
+                if (attempt == maxRetries)
+                    break;
 
                 var delay = CalculateRetryDelay(attempt, baseDelay, maxDelay);
                 Log.Warning(ex, "{Source} {Operation} timed out, attempt {Attempt}/{MaxRetries}, retrying in {Delay}ms",
@@ -410,7 +413,8 @@ internal sealed class HealthTracker
     {
         get
         {
-            lock (_lock) return _currentHealth;
+            lock (_lock)
+                return _currentHealth;
         }
     }
 
@@ -482,7 +486,8 @@ internal sealed class HealthTracker
     private double CalculateHealthScore()
     {
         var total = _totalSuccesses + _totalFailures;
-        if (total == 0) return 100.0;
+        if (total == 0)
+            return 100.0;
 
         var baseScore = (_totalSuccesses * 100.0) / total;
 

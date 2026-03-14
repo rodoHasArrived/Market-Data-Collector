@@ -105,7 +105,8 @@ public sealed class ParquetStorageSink : IStorageSink
 
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
-        if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(ParquetStorageSink));
+        if (Volatile.Read(ref _disposed) != 0)
+            throw new ObjectDisposedException(nameof(ParquetStorageSink));
 
         EventSchemaValidator.Validate(evt);
 
@@ -167,7 +168,8 @@ public sealed class ParquetStorageSink : IStorageSink
         // Flushes are serialised by _flushGate so the returned list is not cleared
         // before this method returns.
         var events = buffer.DrainAll();
-        if (events.Count == 0) return;
+        if (events.Count == 0)
+            return;
 
         try
         {
@@ -211,10 +213,12 @@ public sealed class ParquetStorageSink : IStorageSink
         var count = 0;
         for (var i = 0; i < events.Count; i++)
         {
-            if (events[i].Payload is Trade) count++;
+            if (events[i].Payload is Trade)
+                count++;
         }
 
-        if (count == 0) return;
+        if (count == 0)
+            return;
 
         // Single-pass: build all column arrays simultaneously
         var timestamps = new DateTimeOffset[count];
@@ -229,7 +233,8 @@ public sealed class ParquetStorageSink : IStorageSink
         var idx = 0;
         for (var i = 0; i < events.Count; i++)
         {
-            if (events[i].Payload is not Trade trade) continue;
+            if (events[i].Payload is not Trade trade)
+                continue;
             var evt = events[i];
             timestamps[idx] = evt.Timestamp;
             symbols[idx] = evt.EffectiveSymbol;
@@ -260,10 +265,12 @@ public sealed class ParquetStorageSink : IStorageSink
         var count = 0;
         for (var i = 0; i < events.Count; i++)
         {
-            if (events[i].Payload is BboQuotePayload) count++;
+            if (events[i].Payload is BboQuotePayload)
+                count++;
         }
 
-        if (count == 0) return;
+        if (count == 0)
+            return;
 
         var timestamps = new DateTimeOffset[count];
         var symbols = new string[count];
@@ -278,7 +285,8 @@ public sealed class ParquetStorageSink : IStorageSink
         var idx = 0;
         for (var i = 0; i < events.Count; i++)
         {
-            if (events[i].Payload is not BboQuotePayload quote) continue;
+            if (events[i].Payload is not BboQuotePayload quote)
+                continue;
             var evt = events[i];
             timestamps[idx] = evt.Timestamp;
             symbols[idx] = evt.EffectiveSymbol;
@@ -314,7 +322,8 @@ public sealed class ParquetStorageSink : IStorageSink
             .Select(x => (x.Event, Snapshot: x.Data.Snapshot!, x.Data.SequenceNumber))
             .ToList();
 
-        if (snapshots.Count is 0) return;
+        if (snapshots.Count is 0)
+            return;
 
         using var groupWriter = await ParquetWriter.CreateAsync(L2Schema, File.Create(path));
         using var rowGroupWriter = groupWriter.CreateRowGroup();
@@ -351,10 +360,12 @@ public sealed class ParquetStorageSink : IStorageSink
         var count = 0;
         for (var i = 0; i < events.Count; i++)
         {
-            if (events[i].Payload is HistoricalBar) count++;
+            if (events[i].Payload is HistoricalBar)
+                count++;
         }
 
-        if (count == 0) return;
+        if (count == 0)
+            return;
 
         var timestamps = new DateTimeOffset[count];
         var symbols = new string[count];
@@ -369,7 +380,8 @@ public sealed class ParquetStorageSink : IStorageSink
         var idx = 0;
         for (var i = 0; i < events.Count; i++)
         {
-            if (events[i].Payload is not HistoricalBar bar) continue;
+            if (events[i].Payload is not HistoricalBar bar)
+                continue;
             var evt = events[i];
             timestamps[idx] = evt.Timestamp;
             symbols[idx] = evt.EffectiveSymbol;
@@ -450,7 +462,8 @@ public sealed class ParquetStorageSink : IStorageSink
 
     public async ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
 
         // 1. Signal cancellation to stop any in-flight timer callbacks
         _disposalCts.Cancel();

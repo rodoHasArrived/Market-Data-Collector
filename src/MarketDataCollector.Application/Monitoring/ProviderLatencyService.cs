@@ -37,8 +37,10 @@ public sealed class ProviderLatencyService : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RecordLatency(string provider, double latencyMs, string? symbol = null)
     {
-        if (_isDisposed || string.IsNullOrEmpty(provider)) return;
-        if (latencyMs < 0) return;
+        if (_isDisposed || string.IsNullOrEmpty(provider))
+            return;
+        if (latencyMs < 0)
+            return;
 
         // Normalize provider name to lowercase for consistent API output
         var normalizedProvider = provider.ToLowerInvariant();
@@ -173,7 +175,8 @@ public sealed class ProviderLatencyService : IDisposable
 
     private void CleanupOldData(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -209,7 +212,8 @@ public sealed class ProviderLatencyService : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _providers.Clear();
@@ -335,15 +339,18 @@ public sealed class ProviderLatencyService : IDisposable
 
         private static double GetPercentile(List<LatencySample> sorted, double percentile)
         {
-            if (sorted.Count == 0) return 0;
-            if (sorted.Count == 1) return sorted[0].LatencyMs;
+            if (sorted.Count == 0)
+                return 0;
+            if (sorted.Count == 1)
+                return sorted[0].LatencyMs;
 
             var index = (percentile / 100.0) * (sorted.Count - 1);
             var lower = (int)Math.Floor(index);
             var upper = (int)Math.Ceiling(index);
             var fraction = index - lower;
 
-            if (upper >= sorted.Count) upper = sorted.Count - 1;
+            if (upper >= sorted.Count)
+                upper = sorted.Count - 1;
 
             return sorted[lower].LatencyMs * (1 - fraction) + sorted[upper].LatencyMs * fraction;
         }

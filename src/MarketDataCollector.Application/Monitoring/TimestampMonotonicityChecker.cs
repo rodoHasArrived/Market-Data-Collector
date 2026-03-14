@@ -55,7 +55,8 @@ public sealed class TimestampMonotonicityChecker : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool CheckTimestamp(string symbol, string eventType, DateTimeOffset timestamp)
     {
-        if (_isDisposed) return false;
+        if (_isDisposed)
+            return false;
 
         Interlocked.Increment(ref _totalEventsChecked);
 
@@ -230,7 +231,8 @@ public sealed class TimestampMonotonicityChecker : IDisposable
         get
         {
             var total = Interlocked.Read(ref _totalEventsChecked);
-            if (total == 0) return 0;
+            if (total == 0)
+                return 0;
             return (double)Interlocked.Read(ref _totalViolations) / total * 100;
         }
     }
@@ -270,7 +272,8 @@ public sealed class TimestampMonotonicityChecker : IDisposable
 
     private void CleanupOldStates(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -303,7 +306,8 @@ public sealed class TimestampMonotonicityChecker : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _symbolStates.Clear();

@@ -179,7 +179,8 @@ public sealed class AnalysisQualityReportGenerator
         string path,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
     {
-        if (!File.Exists(path)) yield break;
+        if (!File.Exists(path))
+            yield break;
 
         Stream stream = File.OpenRead(path);
         if (path.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
@@ -193,7 +194,8 @@ public sealed class AnalysisQualityReportGenerator
             while (!reader.EndOfStream && !ct.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 Dictionary<string, object?>? record = null;
                 try
@@ -226,7 +228,8 @@ public sealed class AnalysisQualityReportGenerator
 
     private static DescriptiveStats CalculateStats(List<double> values)
     {
-        if (values.Count == 0) return new DescriptiveStats();
+        if (values.Count == 0)
+            return new DescriptiveStats();
 
         var sorted = values.OrderBy(v => v).ToList();
         var n = values.Count;
@@ -253,7 +256,8 @@ public sealed class AnalysisQualityReportGenerator
 
     private static double CalculateStdDev(List<double> values)
     {
-        if (values.Count < 2) return 0;
+        if (values.Count < 2)
+            return 0;
         var mean = values.Average();
         var sumSquares = values.Sum(v => Math.Pow(v - mean, 2));
         return Math.Sqrt(sumSquares / (values.Count - 1));
@@ -286,7 +290,8 @@ public sealed class AnalysisQualityReportGenerator
         string fieldName)
     {
         var outliers = new List<DataOutlier>();
-        if (values.Count < 10) return outliers;
+        if (values.Count < 10)
+            return outliers;
 
         var mean = values.Average();
         var stdDev = CalculateStdDev(values);
@@ -315,7 +320,8 @@ public sealed class AnalysisQualityReportGenerator
     private static List<DataGap> DetectGaps(List<DateTime> timestamps)
     {
         var gaps = new List<DataGap>();
-        if (timestamps.Count < 2) return gaps;
+        if (timestamps.Count < 2)
+            return gaps;
 
         var sorted = timestamps.OrderBy(t => t).ToList();
 
@@ -357,7 +363,8 @@ public sealed class AnalysisQualityReportGenerator
 
     private static double CalculateCompleteness(List<DateTime> timestamps)
     {
-        if (timestamps.Count < 2) return 100.0;
+        if (timestamps.Count < 2)
+            return 100.0;
 
         var sorted = timestamps.OrderBy(t => t).ToList();
         var totalTradingMinutes = 0.0;
@@ -677,7 +684,8 @@ public sealed class AnalysisQualityReportGenerator
 
     private static string EscapeCsv(string? value)
     {
-        if (string.IsNullOrEmpty(value)) return "";
+        if (string.IsNullOrEmpty(value))
+            return "";
         if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
             return $"\"{value.Replace("\"", "\"\"")}\"";
         return value;

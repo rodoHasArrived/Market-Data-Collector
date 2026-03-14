@@ -304,7 +304,8 @@ public static class ExportEndpoints
     {
         try
         {
-            if (!Directory.Exists(ExportBaseDir)) return;
+            if (!Directory.Exists(ExportBaseDir))
+                return;
 
             foreach (var dir in Directory.EnumerateDirectories(ExportBaseDir))
             {

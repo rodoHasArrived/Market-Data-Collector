@@ -54,7 +54,8 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// </summary>
     public void Start()
     {
-        if (_refreshLoop != null) return;
+        if (_refreshLoop != null)
+            return;
 
         _cts = new CancellationTokenSource();
         _refreshLoop = RefreshLoopAsync(_cts.Token);
@@ -66,13 +67,15 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// </summary>
     public async Task StopAsync()
     {
-        if (_cts == null) return;
+        if (_cts == null)
+            return;
 
         _cts.Cancel();
 
         if (_refreshLoop != null)
         {
-            try { await _refreshLoop; }
+            try
+            { await _refreshLoop; }
             catch (OperationCanceledException) { }
         }
 
@@ -202,8 +205,10 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
 
     private bool ShouldRefreshToken(OAuthToken token)
     {
-        if (!token.CanRefresh) return false;
-        if (token.IsExpired) return true;
+        if (!token.CanRefresh)
+            return false;
+        if (token.IsExpired)
+            return true;
 
         var daysUntilExpiration = (token.ExpiresAt - DateTimeOffset.UtcNow).TotalDays;
         return daysUntilExpiration <= _config.AutoRefreshDaysBeforeExpiration;
@@ -312,8 +317,10 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
 
     private static TokenStatus GetTokenStatus(OAuthToken token)
     {
-        if (token.IsExpired) return TokenStatus.Expired;
-        if (token.IsExpiringSoon) return TokenStatus.ExpiringSoon;
+        if (token.IsExpired)
+            return TokenStatus.Expired;
+        if (token.IsExpiringSoon)
+            return TokenStatus.ExpiringSoon;
         return TokenStatus.Valid;
     }
 

@@ -66,7 +66,8 @@ public sealed class BackfillScheduleManager
     /// </summary>
     public async Task LoadSchedulesAsync(CancellationToken ct = default)
     {
-        if (_isLoaded) return;
+        if (_isLoaded)
+            return;
 
         try
         {

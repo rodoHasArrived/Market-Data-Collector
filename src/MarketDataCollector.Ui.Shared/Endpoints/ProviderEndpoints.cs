@@ -68,8 +68,10 @@ public static class ProviderEndpoints
             );
 
             var idx = sources.FindIndex(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) sources[idx] = source;
-            else sources.Add(source);
+            if (idx >= 0)
+                sources[idx] = source;
+            else
+                sources.Add(source);
 
             var next = cfg with { DataSources = dataSources with { Sources = sources.ToArray() } };
             await store.SaveAsync(next);
@@ -431,8 +433,10 @@ public static class ProviderEndpoints
             );
 
             var idx = sources.FindIndex(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) sources[idx] = source;
-            else sources.Add(source);
+            if (idx >= 0)
+                sources[idx] = source;
+            else
+                sources.Add(source);
 
             var next = cfg with { DataSources = dataSources with { Sources = sources.ToArray() } };
             await store.SaveAsync(next);

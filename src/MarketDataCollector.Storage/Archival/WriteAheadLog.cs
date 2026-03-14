@@ -227,7 +227,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
     /// </summary>
     private async Task FlushInternalAsync(CancellationToken ct = default)
     {
-        if (_currentWriter == null || _currentWalFile == null) return;
+        if (_currentWriter == null || _currentWalFile == null)
+            return;
 
         await _currentWriter.FlushAsync().ConfigureAwait(false);
 
@@ -289,8 +290,10 @@ public sealed class WriteAheadLog : IAsyncDisposable
         {
             await foreach (var record in ReadWalFileAsync(walFile, ct))
             {
-                if (record.RecordType == "COMMIT") continue;
-                if (record.Sequence <= lastCommittedSequence) continue;
+                if (record.RecordType == "COMMIT")
+                    continue;
+                if (record.Sequence <= lastCommittedSequence)
+                    continue;
 
                 batch.Add(record);
 
@@ -461,7 +464,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
                 case WalCorruptionMode.Alert:
                     // Fire the event so monitoring infrastructure can alert operators.
                     // We continue recovery — the valid records are still usable.
-                    try { CorruptionDetected?.Invoke(corruptedInFile); }
+                    try
+                    { CorruptionDetected?.Invoke(corruptedInFile); }
                     catch (Exception ex)
                     {
                         _log.Error(ex, "Exception in CorruptionDetected event handler; ignoring to continue recovery");
@@ -506,7 +510,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
         while (!reader.EndOfStream && !ct.IsCancellationRequested)
         {
             var line = await reader.ReadLineAsync();
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
             var parts = line.Split('|', 5);
             if (parts.Length < 5)
@@ -703,7 +708,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
             while (!reader.EndOfStream && !ct.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 totalRecords++;
 

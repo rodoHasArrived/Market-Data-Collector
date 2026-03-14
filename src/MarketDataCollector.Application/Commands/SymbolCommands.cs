@@ -77,7 +77,8 @@ internal sealed class SymbolCommands : ICliCommand
     private async Task<CliResult> RunAddAsync(string[] args, CancellationToken ct)
     {
         var symbolsToAdd = CliArguments.RequireList(args, "--symbols-add", "--symbols-add AAPL,MSFT,GOOGL");
-        if (symbolsToAdd is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+        if (symbolsToAdd is null)
+            return CliResult.Fail(ErrorCode.RequiredFieldMissing);
         var options = new SymbolAddOptions(
             SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
             SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
@@ -102,7 +103,8 @@ internal sealed class SymbolCommands : ICliCommand
     private async Task<CliResult> RunImportAsync(string[] args, CancellationToken ct)
     {
         var filePath = CliArguments.RequireValue(args, "--symbols-import", "--symbols-import symbols.csv");
-        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+        if (filePath is null)
+            return CliResult.Fail(ErrorCode.RequiredFieldMissing);
 
         if (!File.Exists(filePath))
         {
@@ -153,7 +155,8 @@ internal sealed class SymbolCommands : ICliCommand
     private async Task<CliResult> RunRemoveAsync(string[] args, CancellationToken ct)
     {
         var symbolsToRemove = CliArguments.RequireList(args, "--symbols-remove", "--symbols-remove AAPL,MSFT");
-        if (symbolsToRemove is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+        if (symbolsToRemove is null)
+            return CliResult.Fail(ErrorCode.RequiredFieldMissing);
         var result = await _symbolService.RemoveSymbolsAsync(symbolsToRemove, ct);
 
         Console.WriteLine();
@@ -172,7 +175,8 @@ internal sealed class SymbolCommands : ICliCommand
     private async Task<CliResult> RunStatusAsync(string[] args, CancellationToken ct)
     {
         var symbolArg = CliArguments.RequireValue(args, "--symbol-status", "--symbol-status AAPL");
-        if (symbolArg is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+        if (symbolArg is null)
+            return CliResult.Fail(ErrorCode.RequiredFieldMissing);
 
         var status = await _symbolService.GetSymbolStatusAsync(symbolArg, ct);
 
@@ -217,7 +221,8 @@ internal sealed class SymbolCommands : ICliCommand
     {
         var filePath = CliArguments.RequireValue(args, "--symbols-export",
             "--symbols-export symbols.txt");
-        if (filePath is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+        if (filePath is null)
+            return CliResult.Fail(ErrorCode.RequiredFieldMissing);
 
         var symbols = _symbolService.GetMonitoredSymbols();
         if (symbols.Symbols.Length == 0)

@@ -104,7 +104,8 @@ public sealed class RateLimiter : IDisposable
         if (_requestTimestamps.TryPeek(out var oldest))
         {
             remaining = oldest.Add(_window) - DateTimeOffset.UtcNow;
-            if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+            if (remaining < TimeSpan.Zero)
+                remaining = TimeSpan.Zero;
         }
 
         return (_requestTimestamps.Count, _maxRequests, remaining);
@@ -121,7 +122,8 @@ public sealed class RateLimiter : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _semaphore.Dispose();
     }
@@ -169,7 +171,8 @@ public sealed class RateLimiterRegistry : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         foreach (var limiter in _limiters.Values)

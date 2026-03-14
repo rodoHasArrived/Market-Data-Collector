@@ -75,7 +75,8 @@ public sealed class ExportVerifier
             var expectedRecords = outputEntry.TryGetProperty("recordCount", out var rc)
                 ? rc.GetInt64() : (long?)null;
 
-            if (string.IsNullOrEmpty(relativePath)) continue;
+            if (string.IsNullOrEmpty(relativePath))
+                continue;
 
             var filePath = Path.Combine(exportDirectory, relativePath);
             var fileResult = new ExportFileVerificationResult { RelativePath = relativePath };

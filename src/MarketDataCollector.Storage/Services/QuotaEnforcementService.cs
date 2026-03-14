@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Infrastructure.Contracts;
-using Microsoft.Extensions.Logging;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Policies;
+using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Storage.Services;
 
@@ -153,7 +153,8 @@ public sealed class QuotaEnforcementService : IQuotaEnforcementService
                 try
                 {
                     var info = new FileInfo(file);
-                    if (!info.Exists) continue;
+                    if (!info.Exists)
+                        continue;
                     RecordUsage(file, info.Length);
                     totalBytes += info.Length;
                 }
@@ -297,7 +298,8 @@ public sealed class QuotaEnforcementService : IQuotaEnforcementService
     {
         var violations = new List<QuotaViolation>();
         var quotas = _options.Quotas;
-        if (quotas == null) return violations;
+        if (quotas == null)
+            return violations;
 
         if (quotas.Global != null)
         {

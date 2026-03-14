@@ -3,13 +3,12 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Configuration;
+// Import extension methods for DTO to domain conversion
+using MarketDataCollector.Ui.Shared;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
-// Import extension methods for DTO to domain conversion
-using MarketDataCollector.Ui.Shared;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -166,8 +165,10 @@ public static class ConfigEndpoints
 
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
             var idx = list.FindIndex(s => string.Equals(s.Symbol, symbol.Symbol, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) list[idx] = symbol;
-            else list.Add(symbol);
+            if (idx >= 0)
+                list[idx] = symbol;
+            else
+                list.Add(symbol);
 
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);

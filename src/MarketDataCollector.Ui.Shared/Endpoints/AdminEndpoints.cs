@@ -343,7 +343,8 @@ public static class AdminEndpoints
 
     private static bool IsWritable(string path)
     {
-        if (!Directory.Exists(path)) return false;
+        if (!Directory.Exists(path))
+            return false;
         try
         {
             var testFile = Path.Combine(path, $".write-test-{Guid.NewGuid():N}");

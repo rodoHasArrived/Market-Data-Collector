@@ -2,17 +2,17 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using AlpacaOptions = MarketDataCollector.Application.Config.AlpacaOptions;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Contracts.Domain.Models;
+using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using MarketDataCollector.Infrastructure.Shared;
 using Serilog;
+using AlpacaOptions = MarketDataCollector.Application.Config.AlpacaOptions;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Alpaca;
 
@@ -126,7 +126,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_connectionManager.IsConnected) return;
+        if (_connectionManager.IsConnected)
+            return;
 
         var host = _opt.UseSandbox ? "stream.data.sandbox.alpaca.markets" : "stream.data.alpaca.markets";
         _wsUri = new Uri($"wss://{host}/v2/{_opt.Feed}");
@@ -150,7 +151,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     /// </summary>
     private async Task OnConnectionLostAsync()
     {
-        if (_wsUri == null) return;
+        if (_wsUri == null)
+            return;
 
         var success = await _connectionManager.TryReconnectAsync(
             _wsUri,
@@ -183,9 +185,11 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
     public int SubscribeTrades(SymbolConfig cfg)
     {
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (cfg is null)
+            throw new ArgumentNullException(nameof(cfg));
         var id = _subscriptionManager.Subscribe(cfg.Symbol, "trades");
-        if (id == -1) return -1;
+        if (id == -1)
+            return -1;
 
         SendSubscribeWithLoggingAsync("SubscribeTrades", cfg.Symbol)
             .ObserveException(_log, $"Alpaca subscribe trades for {cfg.Symbol}");
@@ -206,11 +210,14 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     {
         // Not supported for stocks: Alpaca provides quotes, not full L2 depth updates.
         // If you later add QuoteCollector -> L2Snapshot mapping, wire it here.
-        if (!_opt.SubscribeQuotes) return -1;
+        if (!_opt.SubscribeQuotes)
+            return -1;
 
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (cfg is null)
+            throw new ArgumentNullException(nameof(cfg));
         var id = _subscriptionManager.Subscribe(cfg.Symbol, "quotes");
-        if (id == -1) return -1;
+        if (id == -1)
+            return -1;
 
         SendSubscribeWithLoggingAsync("SubscribeMarketDepth", cfg.Symbol)
             .ObserveException(_log, $"Alpaca subscribe depth for {cfg.Symbol}");
@@ -251,7 +258,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     {
         try
         {
-            if (!_connectionManager.IsConnected) return;
+            if (!_connectionManager.IsConnected)
+                return;
 
             var trades = _subscriptionManager.GetSymbolsByKind("trades");
             var quotes = _subscriptionManager.GetSymbolsByKind("quotes");
@@ -280,7 +288,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     /// </summary>
     private Task HandleMessageAsync(string json)
     {
-        if (string.IsNullOrWhiteSpace(json)) return Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(json))
+            return Task.CompletedTask;
 
         // Alpaca sends arrays of objects: [{"T":"success",...}, {"T":"t",...}]
         try
@@ -313,12 +322,14 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private void HandleMessage(JsonElement el)
     {
         // Trades: "T":"t" (per Alpaca docs)
-        if (!el.TryGetProperty("T", out var tProp)) return;
+        if (!el.TryGetProperty("T", out var tProp))
+            return;
         var t = tProp.GetString();
         if (t == "t")
         {
             var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
-            if (string.IsNullOrWhiteSpace(sym)) return;
+            if (string.IsNullOrWhiteSpace(sym))
+                return;
 
             var price = el.TryGetProperty("p", out var pProp) ? pProp.GetDecimal() : 0m;
             // Use GetInt64 to avoid truncation on large block trades (> int.MaxValue shares).
@@ -379,7 +390,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         if (t == "q")
         {
             var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
-            if (string.IsNullOrWhiteSpace(sym)) return;
+            if (string.IsNullOrWhiteSpace(sym))
+                return;
 
             var bidPrice = el.TryGetProperty("bp", out var bpProp) ? bpProp.GetDecimal() : 0m;
             var bidSize = el.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt64() : 0L;

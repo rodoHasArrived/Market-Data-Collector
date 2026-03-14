@@ -6,9 +6,9 @@ using StockSharp.Messages;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
@@ -390,7 +390,8 @@ public sealed class StockSharpHistoricalDataProvider : IHistoricalDataProvider
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
 #if STOCKSHARP

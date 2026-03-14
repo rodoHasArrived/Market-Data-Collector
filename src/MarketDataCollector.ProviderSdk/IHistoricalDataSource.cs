@@ -1,5 +1,5 @@
-using MarketDataCollector.Contracts.Domain.Models;
 using System.Threading;
+using MarketDataCollector.Contracts.Domain.Models;
 
 namespace MarketDataCollector.Infrastructure.DataSources;
 

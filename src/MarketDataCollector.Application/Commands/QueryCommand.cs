@@ -293,7 +293,8 @@ internal sealed class QueryCommand : ICliCommand
 
     private static void TryPrintPriceInfo(string? rawJson)
     {
-        if (string.IsNullOrEmpty(rawJson)) return;
+        if (string.IsNullOrEmpty(rawJson))
+            return;
 
         try
         {

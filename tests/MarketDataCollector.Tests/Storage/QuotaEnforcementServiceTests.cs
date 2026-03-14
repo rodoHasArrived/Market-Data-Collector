@@ -21,7 +21,8 @@ public sealed class QuotaEnforcementServiceTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(_tempDir, recursive: true); }
+        try
+        { Directory.Delete(_tempDir, recursive: true); }
         catch { /* Best effort cleanup */ }
     }
 

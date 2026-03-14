@@ -1,9 +1,9 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
@@ -393,7 +393,8 @@ public abstract class BaseSymbolSearchProvider : IFilterableSymbolSearchProvider
 
     protected virtual void Dispose(bool disposing)
     {
-        if (Disposed) return;
+        if (Disposed)
+            return;
         Disposed = true;
 
         if (disposing)

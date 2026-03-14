@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using MarketDataCollector.Contracts.Api;
-using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
-using AppBackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using AppBackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
@@ -54,7 +54,8 @@ public static class BackfillEndpoints
         group.MapPost(UiApiRoutes.BackfillRun + "/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {
             var validation = ValidateBackfillRequest(req);
-            if (validation is not null) return validation;
+            if (validation is not null)
+                return validation;
 
             try
             {
@@ -86,7 +87,8 @@ public static class BackfillEndpoints
         group.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {
             var validation = ValidateBackfillRequest(req);
-            if (validation is not null) return validation;
+            if (validation is not null)
+                return validation;
 
             try
             {
@@ -232,7 +234,8 @@ public static class BackfillEndpoints
         MarketDataCollector.Contracts.Configuration.BackfillProvidersConfigDto? config,
         string providerId)
     {
-        if (config == null) return null;
+        if (config == null)
+            return null;
         return providerId switch
         {
             "alpaca" => config.Alpaca,

@@ -185,7 +185,8 @@ public sealed class ParquetConversionService
             while (!reader.EndOfStream && !ct.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync(ct);
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 try
                 {
@@ -213,7 +214,8 @@ public sealed class ParquetConversionService
         CancellationToken ct)
     {
         // Detect schema from first record
-        if (records.Count == 0) return;
+        if (records.Count == 0)
+            return;
 
         var fields = records[0].Keys.Select(key =>
         {

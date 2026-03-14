@@ -1,9 +1,9 @@
+using System.Threading;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
-using System.Threading;
+using MarketDataCollector.Infrastructure.Contracts;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
 

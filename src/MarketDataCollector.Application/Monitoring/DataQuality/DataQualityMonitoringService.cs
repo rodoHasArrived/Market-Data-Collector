@@ -94,7 +94,8 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
         string? provider = null,
         double? latencyMs = null)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         // Completeness tracking
         Completeness.RecordEvent(symbol, timestamp, "Trade");
@@ -140,7 +141,8 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
         string? provider = null,
         double? latencyMs = null)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         Completeness.RecordEvent(symbol, timestamp, "Quote");
         GapAnalyzer.RecordEvent(symbol, "Quote", timestamp, null);
@@ -316,7 +318,8 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
 
     private static double CalculateOverallHealth(IReadOnlyList<SymbolHealthStatus> symbols)
     {
-        if (symbols.Count == 0) return 1.0;
+        if (symbols.Count == 0)
+            return 1.0;
 
         var healthyCount = symbols.Count(s => s.State == HealthState.Healthy);
         var degradedCount = symbols.Count(s => s.State == HealthState.Degraded);
@@ -327,7 +330,8 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
 
     private void UpdateMetrics(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -373,7 +377,8 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
 
         await _metricsUpdateTimer.DisposeAsync();

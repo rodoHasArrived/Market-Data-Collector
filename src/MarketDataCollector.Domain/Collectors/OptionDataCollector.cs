@@ -49,7 +49,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public void OnOptionQuote(OptionQuote quote)
     {
-        if (quote is null) throw new ArgumentNullException(nameof(quote));
+        if (quote is null)
+            throw new ArgumentNullException(nameof(quote));
 
         var key = BuildContractKey(quote.Contract);
         _latestQuotes[key] = quote;
@@ -62,7 +63,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public void OnOptionTrade(OptionTrade trade)
     {
-        if (trade is null) throw new ArgumentNullException(nameof(trade));
+        if (trade is null)
+            throw new ArgumentNullException(nameof(trade));
 
         var key = BuildContractKey(trade.Contract);
 
@@ -77,7 +79,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public void OnGreeksUpdate(GreeksSnapshot greeks)
     {
-        if (greeks is null) throw new ArgumentNullException(nameof(greeks));
+        if (greeks is null)
+            throw new ArgumentNullException(nameof(greeks));
 
         var key = BuildContractKey(greeks.Contract);
         _latestGreeks[key] = greeks;
@@ -90,7 +93,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public void OnChainSnapshot(OptionChainSnapshot chain)
     {
-        if (chain is null) throw new ArgumentNullException(nameof(chain));
+        if (chain is null)
+            throw new ArgumentNullException(nameof(chain));
 
         var key = BuildChainKey(chain.UnderlyingSymbol, chain.Expiration);
         _latestChains[key] = chain;
@@ -103,7 +107,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public void OnOpenInterestUpdate(OpenInterestUpdate update)
     {
-        if (update is null) throw new ArgumentNullException(nameof(update));
+        if (update is null)
+            throw new ArgumentNullException(nameof(update));
 
         var key = BuildContractKey(update.Contract);
         _latestOpenInterest[key] = update;
@@ -145,7 +150,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public IReadOnlyList<OptionChainSnapshot> GetChainsForUnderlying(string underlyingSymbol)
     {
-        if (string.IsNullOrWhiteSpace(underlyingSymbol)) return Array.Empty<OptionChainSnapshot>();
+        if (string.IsNullOrWhiteSpace(underlyingSymbol))
+            return Array.Empty<OptionChainSnapshot>();
 
         var prefix = underlyingSymbol.ToUpperInvariant() + ":";
         var result = new List<OptionChainSnapshot>();
@@ -188,7 +194,8 @@ public sealed class OptionDataCollector
     /// </summary>
     public IReadOnlyList<OptionQuote> GetQuotesForUnderlying(string underlyingSymbol)
     {
-        if (string.IsNullOrWhiteSpace(underlyingSymbol)) return Array.Empty<OptionQuote>();
+        if (string.IsNullOrWhiteSpace(underlyingSymbol))
+            return Array.Empty<OptionQuote>();
 
         var result = new List<OptionQuote>();
         foreach (var kvp in _latestQuotes)
@@ -260,7 +267,8 @@ public sealed class OptionDataCollector
             {
                 _buffer[_head] = trade;
                 _head = (_head + 1) % _buffer.Length;
-                if (_count < _buffer.Length) _count++;
+                if (_count < _buffer.Length)
+                    _count++;
             }
         }
 

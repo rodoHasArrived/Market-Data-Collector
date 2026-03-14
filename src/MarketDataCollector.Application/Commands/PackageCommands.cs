@@ -36,21 +36,24 @@ internal sealed class PackageCommands : ICliCommand
         if (CliArguments.HasFlag(args, "--import-package"))
         {
             var path = CliArguments.RequireValue(args, "--import-package", "--import-package ./packages/data.zip");
-            if (path is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+            if (path is null)
+                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             return await RunImportAsync(path, args, ct);
         }
 
         if (CliArguments.HasFlag(args, "--list-package"))
         {
             var path = CliArguments.RequireValue(args, "--list-package", "--list-package ./packages/data.zip");
-            if (path is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+            if (path is null)
+                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             return await RunListAsync(path, ct);
         }
 
         if (CliArguments.HasFlag(args, "--validate-package"))
         {
             var path = CliArguments.RequireValue(args, "--validate-package", "--validate-package ./packages/data.zip");
-            if (path is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
+            if (path is null)
+                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             return await RunValidateAsync(path, ct);
         }
 

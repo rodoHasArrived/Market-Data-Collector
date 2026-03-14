@@ -301,7 +301,8 @@ public sealed class ConfigurationWizard
             ? options.FindIndex(o => o.Name == configuredRealTime.First().DisplayName) + 1
             : 1;
 
-        if (defaultChoice < 1) defaultChoice = 1;
+        if (defaultChoice < 1)
+            defaultChoice = 1;
 
         var choice = await PromptChoiceAsync("Select data source", 1, options.Count, defaultChoice, ct);
         selection.DataSource = options[choice - 1].Kind;

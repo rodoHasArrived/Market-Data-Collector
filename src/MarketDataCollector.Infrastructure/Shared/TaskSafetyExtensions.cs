@@ -23,7 +23,8 @@ public static class TaskSafetyExtensions
     /// <param name="operation">A short description of the operation for log context.</param>
     public static void ObserveException(this Task task, ILogger? logger = null, string? operation = null)
     {
-        if (task.IsCompletedSuccessfully) return;
+        if (task.IsCompletedSuccessfully)
+            return;
 
         var log = logger ?? s_log;
         var op = operation ?? "fire-and-forget operation";
@@ -42,7 +43,8 @@ public static class TaskSafetyExtensions
     /// <param name="operation">A short description of the operation for log context.</param>
     public static void ObserveException(this ValueTask valueTask, ILogger? logger = null, string? operation = null)
     {
-        if (valueTask.IsCompletedSuccessfully) return;
+        if (valueTask.IsCompletedSuccessfully)
+            return;
 
         valueTask.AsTask().ObserveException(logger, operation);
     }

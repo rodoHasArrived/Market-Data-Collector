@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Failover;
@@ -350,7 +350,8 @@ public sealed class FailoverAwareMarketDataClient : IMarketDataClient
             try
             {
                 var id = newClient.SubscribeMarketDepth(kvp.Value);
-                if (id > 0) _depthSubIds[kvp.Key] = id;
+                if (id > 0)
+                    _depthSubIds[kvp.Key] = id;
                 _log.Debug("Re-subscribed depth for {Symbol} on new provider (id={Id})", kvp.Key, id);
             }
             catch (Exception ex)
@@ -364,7 +365,8 @@ public sealed class FailoverAwareMarketDataClient : IMarketDataClient
             try
             {
                 var id = newClient.SubscribeTrades(kvp.Value);
-                if (id > 0) _tradeSubIds[kvp.Key] = id;
+                if (id > 0)
+                    _tradeSubIds[kvp.Key] = id;
                 _log.Debug("Re-subscribed trades for {Symbol} on new provider (id={Id})", kvp.Key, id);
             }
             catch (Exception ex)

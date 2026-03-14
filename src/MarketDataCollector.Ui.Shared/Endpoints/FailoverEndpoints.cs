@@ -142,8 +142,10 @@ public static class FailoverEndpoints
             );
 
             var idx = rules.FindIndex(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) rules[idx] = rule;
-            else rules.Add(rule);
+            if (idx >= 0)
+                rules[idx] = rule;
+            else
+                rules.Add(rule);
 
             var next = cfg with { DataSources = dataSources with { FailoverRules = rules.ToArray() } };
             await store.SaveAsync(next);

@@ -2,8 +2,8 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Application.Services;
@@ -137,7 +137,8 @@ public sealed class OptionsChainService
         DerivativesConfig config,
         CancellationToken ct = default)
     {
-        if (config is null) throw new ArgumentNullException(nameof(config));
+        if (config is null)
+            throw new ArgumentNullException(nameof(config));
 
         if (!config.Enabled || _provider is null)
         {
@@ -283,7 +284,8 @@ public sealed class OptionsChainService
 
     private static bool IsThirdFriday(DateOnly date)
     {
-        if (date.DayOfWeek != DayOfWeek.Friday) return false;
+        if (date.DayOfWeek != DayOfWeek.Friday)
+            return false;
         // Third Friday is day 15-21
         return date.Day >= 15 && date.Day <= 21;
     }

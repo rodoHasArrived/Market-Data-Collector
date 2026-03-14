@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Infrastructure.Contracts;
-using Microsoft.Extensions.Logging;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Policies;
+using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Storage.Services;
 
@@ -122,7 +122,8 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
             ct.ThrowIfCancellationRequested();
 
             var parsed = _pathParser.TryParsePath(file);
-            if (parsed == null) continue;
+            if (parsed == null)
+                continue;
 
             if (!string.Equals(parsed.Symbol, symbol, StringComparison.OrdinalIgnoreCase))
                 continue;
@@ -205,7 +206,8 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
         try
         {
             var fileInfo = new FileInfo(filePath);
-            if (fileInfo.Length == 0) return 0.0;
+            if (fileInfo.Length == 0)
+                return 0.0;
 
             long lineCount = 0;
             long emptyLines = 0;
@@ -213,11 +215,14 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
             await foreach (var line in File.ReadLinesAsync(filePath, ct))
             {
                 lineCount++;
-                if (string.IsNullOrWhiteSpace(line)) emptyLines++;
-                if (lineCount >= 10000) break; // Sample first 10K lines
+                if (string.IsNullOrWhiteSpace(line))
+                    emptyLines++;
+                if (lineCount >= 10000)
+                    break; // Sample first 10K lines
             }
 
-            if (lineCount == 0) return 0.0;
+            if (lineCount == 0)
+                return 0.0;
             return Math.Clamp(1.0 - ((double)emptyLines / lineCount), 0.0, 1.0);
         }
         catch
@@ -237,14 +242,16 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
 
             await foreach (var line in File.ReadLinesAsync(filePath, ct))
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
                 total++;
 
                 // Try to extract sequence from JSON
                 try
                 {
                     var seqStart = line.IndexOf("\"Sequence\":", StringComparison.OrdinalIgnoreCase);
-                    if (seqStart < 0) seqStart = line.IndexOf("\"sequence\":", StringComparison.OrdinalIgnoreCase);
+                    if (seqStart < 0)
+                        seqStart = line.IndexOf("\"sequence\":", StringComparison.OrdinalIgnoreCase);
                     if (seqStart >= 0)
                     {
                         var numStart = seqStart + 11;
@@ -259,8 +266,10 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                         {
                             if (lastSequence >= 0)
                             {
-                                if (seq < lastSequence) outOfOrder++;
-                                else if (seq > lastSequence + 1) gaps++;
+                                if (seq < lastSequence)
+                                    outOfOrder++;
+                                else if (seq > lastSequence + 1)
+                                    gaps++;
                             }
                             lastSequence = seq;
                         }
@@ -283,10 +292,12 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                         line);
                 }
 
-                if (total >= 10000) break;
+                if (total >= 10000)
+                    break;
             }
 
-            if (total == 0) return 1.0;
+            if (total == 0)
+                return 1.0;
             var errorRate = (double)(gaps + outOfOrder) / total;
             return Math.Clamp(1.0 - (errorRate * 10), 0.0, 1.0);
         }
@@ -299,12 +310,18 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
     private static double ComputeFreshnessScore(FileInfo fileInfo)
     {
         var age = DateTime.UtcNow - fileInfo.LastWriteTimeUtc;
-        if (age.TotalHours < 1) return 1.0;
-        if (age.TotalDays < 1) return 0.95;
-        if (age.TotalDays < 7) return 0.9;
-        if (age.TotalDays < 30) return 0.8;
-        if (age.TotalDays < 90) return 0.7;
-        if (age.TotalDays < 365) return 0.6;
+        if (age.TotalHours < 1)
+            return 1.0;
+        if (age.TotalDays < 1)
+            return 0.95;
+        if (age.TotalDays < 7)
+            return 0.9;
+        if (age.TotalDays < 30)
+            return 0.8;
+        if (age.TotalDays < 90)
+            return 0.7;
+        if (age.TotalDays < 365)
+            return 0.6;
         return 0.5;
     }
 
@@ -320,7 +337,8 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
 
             await foreach (var line in File.ReadLinesAsync(filePath, ct))
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
                 try
                 {
                     System.Text.Json.JsonDocument.Parse(line);
@@ -331,7 +349,8 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                     invalidLines++;
                 }
 
-                if (validLines + invalidLines >= 1000) break;
+                if (validLines + invalidLines >= 1000)
+                    break;
             }
 
             var total = validLines + invalidLines;
@@ -345,10 +364,12 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
 
     private double ComputeSourceReliabilityScore(string source)
     {
-        if (_sourceRegistry == null) return 0.8;
+        if (_sourceRegistry == null)
+            return 0.8;
 
         var info = _sourceRegistry.GetSourceInfo(source);
-        if (info == null) return 0.5;
+        if (info == null)
+            return 0.5;
 
         return info.Reliability ?? 0.8;
     }

@@ -58,7 +58,8 @@ public sealed class IngestionJobService : IDisposable
     /// </summary>
     public async Task LoadJobsAsync(CancellationToken ct = default)
     {
-        if (!Directory.Exists(_persistenceDir)) return;
+        if (!Directory.Exists(_persistenceDir))
+            return;
 
         var files = Directory.GetFiles(_persistenceDir, "job_*.json");
         var loaded = 0;
@@ -233,8 +234,10 @@ public sealed class IngestionJobService : IDisposable
         }
 
         progress.DataPointsProcessed = dataPointsProcessed;
-        if (expectedDataPoints.HasValue) progress.ExpectedDataPoints = expectedDataPoints.Value;
-        if (lastCommittedDate.HasValue) progress.LastCommittedDate = lastCommittedDate.Value;
+        if (expectedDataPoints.HasValue)
+            progress.ExpectedDataPoints = expectedDataPoints.Value;
+        if (lastCommittedDate.HasValue)
+            progress.LastCommittedDate = lastCommittedDate.Value;
         if (errorMessage != null)
         {
             progress.ErrorMessage = errorMessage;
@@ -376,7 +379,8 @@ public sealed class IngestionJobService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _persistLock.Dispose();
     }

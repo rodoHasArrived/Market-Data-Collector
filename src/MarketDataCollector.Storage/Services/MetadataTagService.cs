@@ -221,7 +221,8 @@ public sealed class MetadataTagService : IMetadataTagService
     {
         try
         {
-            if (!File.Exists(_metadataStorePath)) return;
+            if (!File.Exists(_metadataStorePath))
+                return;
 
             var json = File.ReadAllText(_metadataStorePath);
             var data = JsonSerializer.Deserialize<MetadataStore>(json, new JsonSerializerOptions
@@ -254,7 +255,8 @@ public sealed class MetadataTagService : IMetadataTagService
 
     private async Task SaveInBackgroundAsync()
     {
-        try { await SaveAsync(); }
+        try
+        { await SaveAsync(); }
         catch (IOException) { /* Background save failure is non-critical */ }
         catch (UnauthorizedAccessException) { /* Permission issues during background save */ }
     }

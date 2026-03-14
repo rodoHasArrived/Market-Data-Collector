@@ -58,7 +58,8 @@ public sealed class ErrorRingBuffer
         do
         {
             currentCount = Interlocked.Read(ref _count);
-            if (currentCount >= _capacity) break;
+            if (currentCount >= _capacity)
+                break;
         }
         while (Interlocked.CompareExchange(ref _count, currentCount + 1, currentCount) != currentCount);
     }
@@ -128,10 +129,12 @@ public sealed class ErrorRingBuffer
     /// <returns>List of recent errors, most recent first.</returns>
     public IReadOnlyList<ErrorEntry> GetRecent(int count = 10)
     {
-        if (count <= 0) return Array.Empty<ErrorEntry>();
+        if (count <= 0)
+            return Array.Empty<ErrorEntry>();
 
         var actualCount = Math.Min(count, (int)Interlocked.Read(ref _count));
-        if (actualCount == 0) return Array.Empty<ErrorEntry>();
+        if (actualCount == 0)
+            return Array.Empty<ErrorEntry>();
 
         var result = new List<ErrorEntry>(actualCount);
         var head = Interlocked.Read(ref _head);
@@ -139,7 +142,8 @@ public sealed class ErrorRingBuffer
         for (var i = 0; i < actualCount; i++)
         {
             var index = (int)((head - 1 - i) % _capacity);
-            if (index < 0) index += _capacity;
+            if (index < 0)
+                index += _capacity;
 
             var entry = _buffer[index];
             if (entry.Timestamp != default) // Skip uninitialized entries

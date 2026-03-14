@@ -13,7 +13,8 @@ public sealed class TradingCalendarTests
 
     private static TimeZoneInfo GetEasternTimeZone()
     {
-        try { return TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); }
+        try
+        { return TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); }
         catch { return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); }
     }
 

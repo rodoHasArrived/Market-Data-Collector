@@ -523,8 +523,8 @@ public sealed record IntradayBar(
 
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 
 namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
 

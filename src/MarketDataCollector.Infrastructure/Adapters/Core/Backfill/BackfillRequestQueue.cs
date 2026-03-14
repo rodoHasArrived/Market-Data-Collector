@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using System.Threading.Channels;
 using System.Threading;
+using System.Threading.Channels;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
 using Serilog;
@@ -70,7 +70,8 @@ public sealed class BackfillRequestQueue : IDisposable
         {
             foreach (var (symbol, gaps) in gapAnalysis.SymbolGaps)
             {
-                if (!gaps.HasGaps) continue;
+                if (!gaps.HasGaps)
+                    continue;
 
                 // Get consolidated date ranges to minimize requests
                 var ranges = gaps.GetGapRanges(job.Options.BatchSizeDays);
@@ -352,12 +353,14 @@ public sealed class BackfillRequestQueue : IDisposable
         {
             if (predicate(req))
             {
-                if (!removeMatching) tempQueue.Enqueue(req, pri);
+                if (!removeMatching)
+                    tempQueue.Enqueue(req, pri);
                 matching.Add(req);
             }
             else
             {
-                if (removeMatching) tempQueue.Enqueue(req, pri);
+                if (removeMatching)
+                    tempQueue.Enqueue(req, pri);
             }
         }
 
@@ -443,7 +446,8 @@ public sealed class BackfillRequestQueue : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _queueLock.Dispose();
         _completedChannel.Writer.Complete();

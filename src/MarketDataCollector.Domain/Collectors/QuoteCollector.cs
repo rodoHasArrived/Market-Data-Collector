@@ -27,8 +27,10 @@ public sealed class QuoteCollector : IQuoteStateStore
     /// </summary>
     public void OnQuote(MarketQuoteUpdate update)
     {
-        if (update is null) throw new ArgumentNullException(nameof(update));
-        if (string.IsNullOrWhiteSpace(update.Symbol)) return;
+        if (update is null)
+            throw new ArgumentNullException(nameof(update));
+        if (string.IsNullOrWhiteSpace(update.Symbol))
+            return;
 
         var payload = Upsert(update);
         _publisher.TryPublish(MarketEvent.BboQuote(payload.Timestamp, payload.Symbol, payload));
@@ -39,7 +41,8 @@ public sealed class QuoteCollector : IQuoteStateStore
 
     public BboQuotePayload Upsert(MarketQuoteUpdate update)
     {
-        if (update is null) throw new ArgumentNullException(nameof(update));
+        if (update is null)
+            throw new ArgumentNullException(nameof(update));
         if (string.IsNullOrWhiteSpace(update.Symbol))
             throw new ArgumentException("Symbol is required", nameof(update));
 

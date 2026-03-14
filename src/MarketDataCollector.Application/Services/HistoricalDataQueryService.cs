@@ -113,7 +113,8 @@ public sealed class HistoricalDataQueryService
         foreach (var file in Directory.GetFiles(_dataRoot, "*.jsonl*", SearchOption.AllDirectories))
         {
             var fileName = Path.GetFileNameWithoutExtension(file);
-            if (fileName.EndsWith(".jsonl")) fileName = Path.GetFileNameWithoutExtension(fileName);
+            if (fileName.EndsWith(".jsonl"))
+                fileName = Path.GetFileNameWithoutExtension(fileName);
 
             var parts = fileName.Split('_');
             if (parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]))
@@ -148,8 +149,10 @@ public sealed class HistoricalDataQueryService
             var date = ExtractDateFromPath(file);
             if (date.HasValue)
             {
-                if (!earliest.HasValue || date < earliest) earliest = date;
-                if (!latest.HasValue || date > latest) latest = date;
+                if (!earliest.HasValue || date < earliest)
+                    earliest = date;
+                if (!latest.HasValue || date > latest)
+                    latest = date;
             }
         }
 
@@ -183,10 +186,13 @@ public sealed class HistoricalDataQueryService
             files = files.Where(f =>
             {
                 var date = ExtractDateFromPath(f);
-                if (!date.HasValue) return true; // Include if can't determine date
+                if (!date.HasValue)
+                    return true; // Include if can't determine date
 
-                if (query.From.HasValue && date < query.From) return false;
-                if (query.To.HasValue && date > query.To) return false;
+                if (query.From.HasValue && date < query.From)
+                    return false;
+                if (query.To.HasValue && date > query.To)
+                    return false;
                 return true;
             }).ToList();
         }
@@ -308,13 +314,15 @@ public sealed class HistoricalDataQueryService
         if (query.From.HasValue)
         {
             var recordDate = DateOnly.FromDateTime(record.Timestamp.DateTime);
-            if (recordDate < query.From) return false;
+            if (recordDate < query.From)
+                return false;
         }
 
         if (query.To.HasValue)
         {
             var recordDate = DateOnly.FromDateTime(record.Timestamp.DateTime);
-            if (recordDate > query.To) return false;
+            if (recordDate > query.To)
+                return false;
         }
 
         return true;

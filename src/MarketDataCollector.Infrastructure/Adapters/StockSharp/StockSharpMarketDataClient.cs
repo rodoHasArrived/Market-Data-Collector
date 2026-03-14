@@ -4,18 +4,18 @@ using System.Threading;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif
-using StockSharpConfig = MarketDataCollector.Application.Config.StockSharpConfig;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Contracts.Domain.Models;
+using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters;
+using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
+using StockSharpConfig = MarketDataCollector.Application.Config.StockSharpConfig;
 
 namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
 

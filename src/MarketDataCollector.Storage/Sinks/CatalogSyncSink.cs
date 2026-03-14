@@ -77,7 +77,8 @@ public sealed class CatalogSyncSink : IStorageSink
 
     private async Task SyncDirtyPathsAsync(CancellationToken ct)
     {
-        if (_dirty.IsEmpty) return;
+        if (_dirty.IsEmpty)
+            return;
 
         // Snapshot and clear dirty set atomically per-key
         var snapshot = new List<KeyValuePair<string, FileWriteTracker>>();
@@ -260,7 +261,8 @@ public sealed class CatalogSyncSink : IStorageSink
             do
             {
                 current = Interlocked.Read(ref location);
-                if (value >= current) return;
+                if (value >= current)
+                    return;
             } while (Interlocked.CompareExchange(ref location, value, current) != current);
         }
 
@@ -270,7 +272,8 @@ public sealed class CatalogSyncSink : IStorageSink
             do
             {
                 current = Interlocked.Read(ref location);
-                if (value <= current) return;
+                if (value <= current)
+                    return;
             } while (Interlocked.CompareExchange(ref location, value, current) != current);
         }
     }

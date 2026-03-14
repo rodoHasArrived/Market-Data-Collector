@@ -47,7 +47,8 @@ public sealed class SampleDataGenerator
         {
             foreach (var symbol in symbols)
             {
-                if (events.Count >= options.MaxEvents) break;
+                if (events.Count >= options.MaxEvents)
+                    break;
 
                 var basePrice = symbolPrices[symbol];
 
@@ -297,10 +298,14 @@ public sealed class SampleDataGenerator
         var symbols = options.Symbols?.Length > 0 ? options.Symbols.Length : DefaultSymbols.Length;
         var eventsPerSecond = 0;
 
-        if (options.IncludeTrades) eventsPerSecond += 2 * symbols;
-        if (options.IncludeQuotes) eventsPerSecond += symbols;
-        if (options.IncludeDepth) eventsPerSecond += 4 * symbols;
-        if (options.IncludeBars) eventsPerSecond += symbols / 60;
+        if (options.IncludeTrades)
+            eventsPerSecond += 2 * symbols;
+        if (options.IncludeQuotes)
+            eventsPerSecond += symbols;
+        if (options.IncludeDepth)
+            eventsPerSecond += 4 * symbols;
+        if (options.IncludeBars)
+            eventsPerSecond += symbols / 60;
 
         return Math.Min(options.MaxEvents, eventsPerSecond * options.DurationMinutes * 60);
     }

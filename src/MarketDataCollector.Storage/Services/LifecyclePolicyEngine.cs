@@ -59,7 +59,8 @@ public sealed class LifecyclePolicyEngine : ILifecyclePolicyEngine
             try
             {
                 var fileInfo = new FileInfo(filePath);
-                if (!fileInfo.Exists) continue;
+                if (!fileInfo.Exists)
+                    continue;
 
                 var fileAge = now - fileInfo.LastWriteTimeUtc;
                 var policy = ResolvePolicy(filePath);
@@ -262,7 +263,8 @@ public sealed class LifecyclePolicyEngine : ILifecyclePolicyEngine
                     FileCount: filesInTier.Count,
                     TotalBytes: filesInTier.Sum(f =>
                     {
-                        try { return new FileInfo(f.Key).Length; }
+                        try
+                        { return new FileInfo(f.Key).Length; }
                         catch (IOException) { return 0L; }
                         catch (UnauthorizedAccessException) { return 0L; }
                     }),
@@ -303,7 +305,8 @@ public sealed class LifecyclePolicyEngine : ILifecyclePolicyEngine
 
     private static CompressionCodec? GetTargetCompression(StorageTier tier, StoragePolicyConfig policy)
     {
-        if (policy.Compression == null) return null;
+        if (policy.Compression == null)
+            return null;
 
         var tierName = tier.ToString().ToLowerInvariant();
         return policy.Compression.TryGetValue(tierName, out var codec) ? codec : null;

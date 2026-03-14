@@ -102,7 +102,8 @@ public sealed class TickSizeValidator : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ValidatePrice(string symbol, decimal price, TickSizePriceType priceType, string? provider)
     {
-        if (_isDisposed || price <= 0) return false;
+        if (_isDisposed || price <= 0)
+            return false;
 
         Interlocked.Increment(ref _totalPricesProcessed);
 
@@ -218,7 +219,8 @@ public sealed class TickSizeValidator : IDisposable
 
     private void CleanupOldStates(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -246,7 +248,8 @@ public sealed class TickSizeValidator : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _symbolStates.Clear();

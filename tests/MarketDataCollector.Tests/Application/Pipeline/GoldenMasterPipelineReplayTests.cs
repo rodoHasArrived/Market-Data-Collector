@@ -185,7 +185,8 @@ public sealed class GoldenMasterPipelineReplayTests : IAsyncLifetime
 
         public ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
         {
-            lock (_lock) _events.Add(evt);
+            lock (_lock)
+                _events.Add(evt);
             return ValueTask.CompletedTask;
         }
 

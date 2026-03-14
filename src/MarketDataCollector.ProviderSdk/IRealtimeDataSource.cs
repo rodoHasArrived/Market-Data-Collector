@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Configuration;
 using System.Threading;
+using MarketDataCollector.Contracts.Configuration;
+using MarketDataCollector.Contracts.Domain.Enums;
 
 namespace MarketDataCollector.Infrastructure.DataSources;
 

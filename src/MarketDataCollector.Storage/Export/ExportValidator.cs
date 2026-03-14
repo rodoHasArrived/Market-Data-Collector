@@ -107,16 +107,17 @@ public sealed class ExportValidator
 
     private long EstimateExportSizeBytes(ExportRequest request)
     {
-        if (!Directory.Exists(_dataRoot)) return 0;
+        if (!Directory.Exists(_dataRoot))
+            return 0;
 
         var profile = request.CustomProfile;
         var ratio = profile?.Format switch
         {
             ExportFormat.Parquet => 0.3,
-            ExportFormat.Arrow   => 0.4,
-            ExportFormat.Xlsx    => 0.5,
-            ExportFormat.Csv     => 0.8,
-            _                    => 1.0
+            ExportFormat.Arrow => 0.4,
+            ExportFormat.Xlsx => 0.5,
+            ExportFormat.Csv => 0.8,
+            _ => 1.0
         };
 
         var sourceBytes = new[] { "*.jsonl", "*.jsonl.gz" }
@@ -163,7 +164,8 @@ public sealed class ExportValidator
 
     private async Task<long> CountDataPointsAsync(ExportRequest request, CancellationToken ct)
     {
-        if (!Directory.Exists(_dataRoot)) return 0;
+        if (!Directory.Exists(_dataRoot))
+            return 0;
 
         long count = 0;
         // Line-by-line counting is deliberate: source files are JSONL records stored

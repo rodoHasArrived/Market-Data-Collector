@@ -53,10 +53,12 @@ public sealed class EndpointTestFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         Client?.Dispose();
-        if (_app != null) await _app.DisposeAsync();
+        if (_app != null)
+            await _app.DisposeAsync();
         if (_tempConfigDir != null && Directory.Exists(_tempConfigDir))
         {
-            try { Directory.Delete(_tempConfigDir, recursive: true); }
+            try
+            { Directory.Delete(_tempConfigDir, recursive: true); }
             catch { /* best-effort cleanup */ }
         }
     }

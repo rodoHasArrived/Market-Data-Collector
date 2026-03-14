@@ -100,7 +100,8 @@ public sealed class HistoricalBackfillService
                 do
                 {
                     observed = Volatile.Read(ref currentConcurrency);
-                    if (observed <= 1) break;
+                    if (observed <= 1)
+                        break;
                 }
                 while (Interlocked.CompareExchange(ref currentConcurrency, observed - 1, observed) != observed);
 

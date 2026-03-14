@@ -1,15 +1,15 @@
-using System.Net;
 using System.Collections.Generic;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Application.UI;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Application.UI;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring;
@@ -103,7 +103,8 @@ public sealed class StatusHttpServer : IAsyncDisposable
         while (!_cts.IsCancellationRequested)
         {
             HttpListenerContext ctx;
-            try { ctx = await _listener.GetContextAsync(); }
+            try
+            { ctx = await _listener.GetContextAsync(); }
             catch (HttpListenerException) when (_cts.IsCancellationRequested) { break; }
             catch (ObjectDisposedException) { break; }
 
@@ -523,7 +524,8 @@ setInterval(refresh,2000);refresh();
         _listener.Close();
         if (_loop is not null)
         {
-            try { await _loop.ConfigureAwait(false); }
+            try
+            { await _loop.ConfigureAwait(false); }
             catch (OperationCanceledException) { }
         }
         _cts.Dispose();

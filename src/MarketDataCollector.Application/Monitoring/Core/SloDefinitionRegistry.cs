@@ -268,14 +268,18 @@ public sealed class SloDefinitionRegistry
         // For "lower is better" metrics (latency, errors, drop rate)
         if (def.Unit is "seconds" or "count" or "ratio" && def.TargetValue < def.CriticalThreshold)
         {
-            if (value <= def.TargetValue) return SloComplianceState.Healthy;
-            if (value <= def.CriticalThreshold) return SloComplianceState.Warning;
+            if (value <= def.TargetValue)
+                return SloComplianceState.Healthy;
+            if (value <= def.CriticalThreshold)
+                return SloComplianceState.Warning;
             return SloComplianceState.Violation;
         }
 
         // For "higher is better" metrics (uptime, completeness)
-        if (value >= def.TargetValue) return SloComplianceState.Healthy;
-        if (value >= def.CriticalThreshold) return SloComplianceState.Warning;
+        if (value >= def.TargetValue)
+            return SloComplianceState.Healthy;
+        if (value >= def.CriticalThreshold)
+            return SloComplianceState.Warning;
         return SloComplianceState.Violation;
     }
 
@@ -284,15 +288,19 @@ public sealed class SloDefinitionRegistry
         if (def.TargetValue < def.CriticalThreshold)
         {
             // Lower is better
-            if (value <= def.TargetValue) return 100.0;
-            if (value >= def.CriticalThreshold) return 0.0;
+            if (value <= def.TargetValue)
+                return 100.0;
+            if (value >= def.CriticalThreshold)
+                return 0.0;
             return 100.0 * (1.0 - (value - def.TargetValue) / (def.CriticalThreshold - def.TargetValue));
         }
         else
         {
             // Higher is better
-            if (value >= def.TargetValue) return 100.0;
-            if (value <= def.CriticalThreshold) return 0.0;
+            if (value >= def.TargetValue)
+                return 100.0;
+            if (value <= def.CriticalThreshold)
+                return 0.0;
             return 100.0 * (value - def.CriticalThreshold) / (def.TargetValue - def.CriticalThreshold);
         }
     }

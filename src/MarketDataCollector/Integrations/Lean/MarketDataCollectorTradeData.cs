@@ -1,11 +1,11 @@
-using QuantConnect;
-using QuantConnect.Data;
+using System.Text.Json;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
-using System.Text.Json;
-using Serilog;
 using Prometheus;
+using QuantConnect;
+using QuantConnect.Data;
+using Serilog;
 
 namespace MarketDataCollector.Integrations.Lean;
 

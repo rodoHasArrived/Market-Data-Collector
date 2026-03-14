@@ -347,7 +347,8 @@ public sealed class DataQualityMonitor
 
     private double CalculateAccuracy(IReadOnlyList<HistoricalBar> bars, List<QualityIssue> issues)
     {
-        if (bars.Count == 0) return 0;
+        if (bars.Count == 0)
+            return 0;
 
         var issueCount = 0;
         HistoricalBar? previousBar = null;
@@ -431,18 +432,22 @@ public sealed class DataQualityMonitor
 
     private double CalculateTimeliness(IReadOnlyList<HistoricalBar> bars, List<QualityIssue> issues)
     {
-        if (bars.Count == 0) return 0;
+        if (bars.Count == 0)
+            return 0;
 
         var latestBar = bars.OrderByDescending(b => b.SessionDate).FirstOrDefault();
-        if (latestBar == null) return 0;
+        if (latestBar == null)
+            return 0;
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var daysSinceLatest = today.DayNumber - latestBar.SessionDate.DayNumber;
 
         // Adjust for weekends
         var effectiveDays = daysSinceLatest;
-        if (today.DayOfWeek == DayOfWeek.Saturday) effectiveDays--;
-        if (today.DayOfWeek == DayOfWeek.Sunday) effectiveDays -= 2;
+        if (today.DayOfWeek == DayOfWeek.Saturday)
+            effectiveDays--;
+        if (today.DayOfWeek == DayOfWeek.Sunday)
+            effectiveDays -= 2;
 
         if (effectiveDays > _options.MaxDataAge.TotalDays)
         {
@@ -461,7 +466,8 @@ public sealed class DataQualityMonitor
 
     private double CalculateConsistency(IReadOnlyList<HistoricalBar> bars, List<QualityIssue> issues)
     {
-        if (bars.Count < 2) return 1.0;
+        if (bars.Count < 2)
+            return 1.0;
 
         var issueCount = 0;
 
@@ -504,7 +510,8 @@ public sealed class DataQualityMonitor
 
     private double CalculateValidity(IReadOnlyList<HistoricalBar> bars, List<QualityIssue> issues)
     {
-        if (bars.Count == 0) return 0;
+        if (bars.Count == 0)
+            return 0;
 
         var issueCount = 0;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -575,7 +582,8 @@ public sealed class DataQualityMonitor
                 var fileContent = await File.ReadAllLinesAsync(kvp.Value.Path, ct).ConfigureAwait(false);
                 foreach (var line in fileContent)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
 
                     try
                     {

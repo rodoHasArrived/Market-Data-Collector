@@ -57,7 +57,8 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
     /// </summary>
     public void RegisterFlushable(IFlushable flushable)
     {
-        if (_isShuttingDown) return;
+        if (_isShuttingDown)
+            return;
         _flushables.Add(flushable);
         _log.Debug("Registered flushable: {Type}", flushable.GetType().Name);
     }
@@ -67,7 +68,8 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
     /// </summary>
     public void RegisterDisposable(IAsyncDisposable disposable)
     {
-        if (_isShuttingDown) return;
+        if (_isShuttingDown)
+            return;
         _disposables.Add(disposable);
         _log.Debug("Registered disposable: {Type}", disposable.GetType().Name);
     }
@@ -78,7 +80,8 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
     /// </summary>
     public void RegisterShutdownCallback(Func<ShutdownContext, Task> callback)
     {
-        if (_isShuttingDown) return;
+        if (_isShuttingDown)
+            return;
         _shutdownCallbacks.Add(callback);
     }
 
@@ -239,7 +242,8 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
 
     private async Task ExecuteShutdownCallbacksAsync(ShutdownContext context, CancellationToken ct)
     {
-        if (_shutdownCallbacks.Count == 0) return;
+        if (_shutdownCallbacks.Count == 0)
+            return;
 
         _log.Debug("Executing {Count} shutdown callbacks", _shutdownCallbacks.Count);
 
@@ -415,7 +419,8 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
-        if (_isDisposed) return default;
+        if (_isDisposed)
+            return default;
         _isDisposed = true;
 
         Console.CancelKeyPress -= OnCancelKeyPress;

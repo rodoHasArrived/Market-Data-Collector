@@ -20,17 +20,17 @@ namespace MarketDataCollector.Application.Pipeline;
 /// <b>Not thread-safe.</b> A single instance must only be used from the consumer
 /// thread that drains the corresponding <see cref="SpscRingBuffer{T}"/>.
 /// </para>
-    /// <para>
-    /// The JSON schema emitted for each event is a compact, flat JSON line intended for
-    /// hot-path processing. Each line represents a single trade or quote object:
-    /// <code>
-    /// {"timestamp":"…","symbol":"SPY","price":100.01,"size":200,"aggressor":1,"sequence":42}
-    /// </code>
-    /// Quote events follow a similar shape with bid/ask-specific fields.
-    /// This schema is specific to the hot-path pipeline and does not include the
-    /// higher-level <c>MarketEvent</c> envelope (such as <c>type</c> or <c>payload</c>).
-    /// </para>
-    /// </remarks>
+/// <para>
+/// The JSON schema emitted for each event is a compact, flat JSON line intended for
+/// hot-path processing. Each line represents a single trade or quote object:
+/// <code>
+/// {"timestamp":"…","symbol":"SPY","price":100.01,"size":200,"aggressor":1,"sequence":42}
+/// </code>
+/// Quote events follow a similar shape with bid/ask-specific fields.
+/// This schema is specific to the hot-path pipeline and does not include the
+/// higher-level <c>MarketEvent</c> envelope (such as <c>type</c> or <c>payload</c>).
+/// </para>
+/// </remarks>
 public sealed class HotPathBatchSerializer
 {
     private readonly SymbolTable _symbolTable;

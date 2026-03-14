@@ -1,5 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Infrastructure.DataSources;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
 

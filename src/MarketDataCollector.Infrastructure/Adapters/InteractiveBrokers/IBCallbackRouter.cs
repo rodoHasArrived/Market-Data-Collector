@@ -46,7 +46,8 @@ public sealed class IBCallbackRouter
 
     public void UpdateMktDepth(int tickerId, int position, int operation, int side, double price, double size)
     {
-        if (!_depthTickerMap.TryGetValue(tickerId, out var symbol)) return;
+        if (!_depthTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
 
         var upd = new MarketDepthUpdate(
             Timestamp: DateTimeOffset.UtcNow,
@@ -67,7 +68,8 @@ public sealed class IBCallbackRouter
 
     public void UpdateMktDepthL2(int tickerId, int position, string marketMaker, int operation, int side, double price, double size, bool isSmartDepth)
     {
-        if (!_depthTickerMap.TryGetValue(tickerId, out var symbol)) return;
+        if (!_depthTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
 
         var upd = new MarketDepthUpdate(
             Timestamp: DateTimeOffset.UtcNow,
@@ -92,7 +94,8 @@ public sealed class IBCallbackRouter
     // ---------------------------
     public void OnTickByTickAllLast(int reqId, int tickType, long time, double price, double size, string exchange, string specialConditions)
     {
-        if (!_tradeTickerMap.TryGetValue(reqId, out var symbol)) return;
+        if (!_tradeTickerMap.TryGetValue(reqId, out var symbol))
+            return;
 
         // IB provides epoch seconds in 'time'
         var ts = DateTimeOffset.FromUnixTimeSeconds(time);
@@ -123,8 +126,10 @@ public sealed class IBCallbackRouter
     /// </summary>
     public void OnTickPrice(int tickerId, int field, double price, bool canAutoExecute, bool pastLimit)
     {
-        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol)) return;
-        if (!_quoteStates.TryGetValue(tickerId, out var state)) return;
+        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
+        if (!_quoteStates.TryGetValue(tickerId, out var state))
+            return;
 
         var now = DateTimeOffset.UtcNow;
 
@@ -164,8 +169,10 @@ public sealed class IBCallbackRouter
     /// </summary>
     public void OnTickSize(int tickerId, int field, long size)
     {
-        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol)) return;
-        if (!_quoteStates.TryGetValue(tickerId, out var state)) return;
+        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
+        if (!_quoteStates.TryGetValue(tickerId, out var state))
+            return;
 
         switch (field)
         {
@@ -191,8 +198,10 @@ public sealed class IBCallbackRouter
     /// </summary>
     public void OnTickString(int tickerId, int field, string value)
     {
-        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol)) return;
-        if (!_quoteStates.TryGetValue(tickerId, out var state)) return;
+        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
+        if (!_quoteStates.TryGetValue(tickerId, out var state))
+            return;
 
         switch (field)
         {
@@ -216,8 +225,10 @@ public sealed class IBCallbackRouter
     /// </summary>
     public void OnTickGeneric(int tickerId, int field, double value)
     {
-        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol)) return;
-        if (!_quoteStates.TryGetValue(tickerId, out var state)) return;
+        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
+        if (!_quoteStates.TryGetValue(tickerId, out var state))
+            return;
 
         switch (field)
         {
@@ -242,8 +253,10 @@ public sealed class IBCallbackRouter
     public void OnTickSnapshotEnd(int tickerId)
     {
         // Snapshot complete - could emit final quote state here
-        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol)) return;
-        if (!_quoteStates.TryGetValue(tickerId, out var state)) return;
+        if (!_quoteTickerMap.TryGetValue(tickerId, out var symbol))
+            return;
+        if (!_quoteStates.TryGetValue(tickerId, out var state))
+            return;
 
         // Force emit whatever state we have
         if (state.BidPrice.HasValue || state.AskPrice.HasValue)
@@ -255,8 +268,10 @@ public sealed class IBCallbackRouter
     private void TryEmitQuote(int tickerId, string symbol, QuoteState state)
     {
         // Only emit when we have both bid and ask with recent timestamps
-        if (!state.BidPrice.HasValue || !state.AskPrice.HasValue) return;
-        if (!state.BidTimestamp.HasValue || !state.AskTimestamp.HasValue) return;
+        if (!state.BidPrice.HasValue || !state.AskPrice.HasValue)
+            return;
+        if (!state.BidTimestamp.HasValue || !state.AskTimestamp.HasValue)
+            return;
 
         // Emit quote
         EmitQuote(symbol, state);
@@ -264,7 +279,8 @@ public sealed class IBCallbackRouter
 
     private void EmitQuote(string symbol, QuoteState state)
     {
-        if (_quoteCollector == null) return;
+        if (_quoteCollector == null)
+            return;
 
         var quote = new MarketQuoteUpdate(
             Timestamp: state.BidTimestamp ?? state.AskTimestamp ?? DateTimeOffset.UtcNow,
@@ -287,14 +303,19 @@ public sealed class IBCallbackRouter
     /// </summary>
     private void ParseRTVolume(int tickerId, string symbol, string value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return;
+        if (string.IsNullOrWhiteSpace(value))
+            return;
 
         var parts = value.Split(';');
-        if (parts.Length < 6) return;
+        if (parts.Length < 6)
+            return;
 
-        if (!double.TryParse(parts[0], out var price)) return;
-        if (!double.TryParse(parts[1], out var size)) return;
-        if (!long.TryParse(parts[2], out var timeMs)) return;
+        if (!double.TryParse(parts[0], out var price))
+            return;
+        if (!double.TryParse(parts[1], out var size))
+            return;
+        if (!long.TryParse(parts[2], out var timeMs))
+            return;
 
         var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(timeMs);
 

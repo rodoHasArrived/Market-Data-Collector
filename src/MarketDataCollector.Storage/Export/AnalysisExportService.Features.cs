@@ -15,11 +15,13 @@ public sealed partial class AnalysisExportService
         List<Dictionary<string, object?>> records,
         FeatureSettings features)
     {
-        if (records.Count == 0) return records;
+        if (records.Count == 0)
+            return records;
 
         // Extract price series for computations
         var prices = ExtractPriceSeries(records);
-        if (prices.Length == 0) return records;
+        if (prices.Length == 0)
+            return records;
 
         // 1. Return features
         if (features.IncludeReturns)
@@ -233,7 +235,8 @@ public sealed partial class AnalysisExportService
                 if (i >= period - 1)
                 {
                     var sum = 0.0;
-                    for (int j = i - period + 1; j <= i; j++) sum += prices[j];
+                    for (int j = i - period + 1; j <= i; j++)
+                        sum += prices[j];
                     ema = sum / period;
                 }
             }
@@ -396,7 +399,8 @@ public sealed partial class AnalysisExportService
         List<Dictionary<string, object?>> records,
         FeatureSettings features)
     {
-        if (records.Count == 0) return;
+        if (records.Count == 0)
+            return;
 
         // Find all computed feature columns (not original data)
         var featureCols = records[0].Keys
@@ -413,7 +417,8 @@ public sealed partial class AnalysisExportService
                 .ToArray();
 
             var validValues = values.Where(v => v.HasValue).Select(v => v!.Value).ToArray();
-            if (validValues.Length < 2) continue;
+            if (validValues.Length < 2)
+                continue;
 
             switch (features.Normalization)
             {
@@ -422,7 +427,8 @@ public sealed partial class AnalysisExportService
                         var min = validValues.Min();
                         var max = validValues.Max();
                         var range = max - min;
-                        if (range == 0) break;
+                        if (range == 0)
+                            break;
 
                         for (int i = 0; i < records.Count; i++)
                         {
@@ -435,7 +441,8 @@ public sealed partial class AnalysisExportService
                     {
                         var mean = Mean(validValues);
                         var std = StdDev(validValues, mean);
-                        if (std == 0) break;
+                        if (std == 0)
+                            break;
 
                         for (int i = 0; i < records.Count; i++)
                         {
@@ -451,7 +458,8 @@ public sealed partial class AnalysisExportService
                         var q1 = sorted[sorted.Length / 4];
                         var q3 = sorted[3 * sorted.Length / 4];
                         var iqr = q3 - q1;
-                        if (iqr == 0) break;
+                        if (iqr == 0)
+                            break;
 
                         for (int i = 0; i < records.Count; i++)
                         {
@@ -468,7 +476,8 @@ public sealed partial class AnalysisExportService
     private static double Mean(ReadOnlySpan<double> values)
     {
         var sum = 0.0;
-        foreach (var v in values) sum += v;
+        foreach (var v in values)
+            sum += v;
         return sum / values.Length;
     }
 
@@ -490,28 +499,39 @@ public sealed partial class AnalysisExportService
     private static double Min(ReadOnlySpan<double> values)
     {
         var min = double.MaxValue;
-        foreach (var v in values) if (v < min) min = v;
+        foreach (var v in values)
+            if (v < min)
+                min = v;
         return min;
     }
 
     private static double Max(ReadOnlySpan<double> values)
     {
         var max = double.MinValue;
-        foreach (var v in values) if (v > max) max = v;
+        foreach (var v in values)
+            if (v > max)
+                max = v;
         return max;
     }
 
     private static bool TryGetDouble(Dictionary<string, object?> record, string key, out double value)
     {
         value = 0;
-        if (!record.TryGetValue(key, out var obj) || obj is null) return false;
+        if (!record.TryGetValue(key, out var obj) || obj is null)
+            return false;
 
-        if (obj is double d) { value = d; return true; }
-        if (obj is float f) { value = f; return true; }
-        if (obj is decimal dec) { value = (double)dec; return true; }
-        if (obj is int i) { value = i; return true; }
-        if (obj is long l) { value = l; return true; }
-        if (obj is string s && double.TryParse(s, out var parsed)) { value = parsed; return true; }
+        if (obj is double d)
+        { value = d; return true; }
+        if (obj is float f)
+        { value = f; return true; }
+        if (obj is decimal dec)
+        { value = (double)dec; return true; }
+        if (obj is int i)
+        { value = i; return true; }
+        if (obj is long l)
+        { value = l; return true; }
+        if (obj is string s && double.TryParse(s, out var parsed))
+        { value = parsed; return true; }
 
         return false;
     }

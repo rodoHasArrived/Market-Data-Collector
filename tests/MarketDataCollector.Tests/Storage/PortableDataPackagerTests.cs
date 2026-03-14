@@ -1,7 +1,7 @@
-using System.Threading;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using FluentAssertions;
 using MarketDataCollector.Storage.Packaging;
 using Xunit;

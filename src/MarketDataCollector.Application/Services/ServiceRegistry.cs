@@ -140,7 +140,8 @@ public sealed class ServiceRegistry : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         foreach (var instance in _instances.Values)

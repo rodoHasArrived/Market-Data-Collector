@@ -3,10 +3,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
@@ -252,16 +252,22 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
                 continue;
 
             // Skip if outside requested range
-            if (from.HasValue && sessionDate < from.Value) continue;
-            if (to.HasValue && sessionDate > to.Value) continue;
+            if (from.HasValue && sessionDate < from.Value)
+                continue;
+            if (to.HasValue && sessionDate > to.Value)
+                continue;
 
             var price = kvp.Value;
 
             // Parse values
-            if (!TryParseDecimal(price.Open, out var open)) continue;
-            if (!TryParseDecimal(price.High, out var high)) continue;
-            if (!TryParseDecimal(price.Low, out var low)) continue;
-            if (!TryParseDecimal(price.Close, out var close)) continue;
+            if (!TryParseDecimal(price.Open, out var open))
+                continue;
+            if (!TryParseDecimal(price.High, out var high))
+                continue;
+            if (!TryParseDecimal(price.Low, out var low))
+                continue;
+            if (!TryParseDecimal(price.Close, out var close))
+                continue;
             TryParseLong(price.Volume, out var volume);
             TryParseDecimal(price.AdjustedClose, out var adjClose);
             TryParseDecimal(price.DividendAmount, out var dividend);
@@ -335,15 +341,21 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
                 continue;
 
             // Skip if outside requested range
-            if (from.HasValue && timestamp < from.Value) continue;
-            if (to.HasValue && timestamp > to.Value) continue;
+            if (from.HasValue && timestamp < from.Value)
+                continue;
+            if (to.HasValue && timestamp > to.Value)
+                continue;
 
             var price = prop.Value;
 
-            if (!TryParseDecimalFromJson(price, "1. open", out var open)) continue;
-            if (!TryParseDecimalFromJson(price, "2. high", out var high)) continue;
-            if (!TryParseDecimalFromJson(price, "3. low", out var low)) continue;
-            if (!TryParseDecimalFromJson(price, "4. close", out var close)) continue;
+            if (!TryParseDecimalFromJson(price, "1. open", out var open))
+                continue;
+            if (!TryParseDecimalFromJson(price, "2. high", out var high))
+                continue;
+            if (!TryParseDecimalFromJson(price, "3. low", out var low))
+                continue;
+            if (!TryParseDecimalFromJson(price, "4. close", out var close))
+                continue;
             TryParseLongFromJson(price, "5. volume", out var volume);
 
             if (!IsValidOhlc(open, high, low, close))
@@ -381,28 +393,32 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
     private static bool TryParseDecimal(string? value, out decimal result)
     {
         result = 0m;
-        if (string.IsNullOrEmpty(value)) return false;
+        if (string.IsNullOrEmpty(value))
+            return false;
         return decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
     }
 
     private static bool TryParseLong(string? value, out long result)
     {
         result = 0;
-        if (string.IsNullOrEmpty(value)) return false;
+        if (string.IsNullOrEmpty(value))
+            return false;
         return long.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
     }
 
     private static bool TryParseDecimalFromJson(JsonElement element, string propertyName, out decimal result)
     {
         result = 0m;
-        if (!element.TryGetProperty(propertyName, out var prop)) return false;
+        if (!element.TryGetProperty(propertyName, out var prop))
+            return false;
         return decimal.TryParse(prop.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out result);
     }
 
     private static bool TryParseLongFromJson(JsonElement element, string propertyName, out long result)
     {
         result = 0;
-        if (!element.TryGetProperty(propertyName, out var prop)) return false;
+        if (!element.TryGetProperty(propertyName, out var prop))
+            return false;
         return long.TryParse(prop.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out result);
     }
 

@@ -34,7 +34,8 @@ public sealed class TechnicalIndicatorService : IDisposable
     /// </summary>
     public IndicatorSnapshot? ProcessTrade(MarketTradeUpdate trade)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(TechnicalIndicatorService));
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(TechnicalIndicatorService));
 
         var state = _symbolStates.GetOrAdd(trade.Symbol, sym => new SymbolIndicatorState(sym, _config));
         return state.AddTrade(trade);
@@ -45,7 +46,8 @@ public sealed class TechnicalIndicatorService : IDisposable
     /// </summary>
     public IndicatorSnapshot? ProcessQuote(MarketQuoteUpdate quote)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(TechnicalIndicatorService));
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(TechnicalIndicatorService));
 
         var state = _symbolStates.GetOrAdd(quote.Symbol, sym => new SymbolIndicatorState(sym, _config));
         return state.AddQuote(quote);
@@ -267,7 +269,8 @@ public sealed class TechnicalIndicatorService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _symbolStates.Clear();
     }
@@ -333,8 +336,10 @@ internal sealed class SymbolIndicatorState
 
             // Update intraday stats
             _lastPrice = trade.Price;
-            if (trade.Price > _dayHigh) _dayHigh = trade.Price;
-            if (trade.Price < _dayLow) _dayLow = trade.Price;
+            if (trade.Price > _dayHigh)
+                _dayHigh = trade.Price;
+            if (trade.Price < _dayLow)
+                _dayLow = trade.Price;
             _dayVolume += trade.Size;
 
             return CalculateCurrentSnapshot();

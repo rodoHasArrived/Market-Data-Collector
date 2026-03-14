@@ -306,7 +306,8 @@ internal sealed class CatalogCommand : ICliCommand
             return;
 
         var totalDays = (end.DayNumber - start.DayNumber) + 1;
-        if (totalDays <= 0) return;
+        if (totalDays <= 0)
+            return;
 
         const int barWidth = 60;
         var daysPerChar = Math.Max(1.0, totalDays / (double)barWidth);
@@ -326,16 +327,21 @@ internal sealed class CatalogCommand : ICliCommand
     private static string DescribeQuery(StorageQuery q)
     {
         var parts = new List<string>();
-        if (q.Symbols?.Length > 0) parts.Add($"symbols={string.Join(",", q.Symbols)}");
-        if (q.Types?.Length > 0) parts.Add($"types={string.Join(",", q.Types)}");
-        if (q.From.HasValue) parts.Add($"from={q.From.Value:yyyy-MM-dd}");
-        if (q.To.HasValue) parts.Add($"to={q.To.Value:yyyy-MM-dd}");
+        if (q.Symbols?.Length > 0)
+            parts.Add($"symbols={string.Join(",", q.Symbols)}");
+        if (q.Types?.Length > 0)
+            parts.Add($"types={string.Join(",", q.Types)}");
+        if (q.From.HasValue)
+            parts.Add($"from={q.From.Value:yyyy-MM-dd}");
+        if (q.To.HasValue)
+            parts.Add($"to={q.To.Value:yyyy-MM-dd}");
         return parts.Count > 0 ? string.Join(", ", parts) : "(no filters)";
     }
 
     private static MarketEventType[]? ParseTypeArg(string? typeArg)
     {
-        if (string.IsNullOrWhiteSpace(typeArg)) return null;
+        if (string.IsNullOrWhiteSpace(typeArg))
+            return null;
         var mapped = typeArg
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(t => t.ToLowerInvariant() switch
@@ -354,9 +360,12 @@ internal sealed class CatalogCommand : ICliCommand
 
     private static string FormatBytes(long bytes)
     {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        if (bytes < 1024 * 1024 * 1024) return $"{bytes / 1024.0 / 1024:F1} MB";
+        if (bytes < 1024)
+            return $"{bytes} B";
+        if (bytes < 1024 * 1024)
+            return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024)
+            return $"{bytes / 1024.0 / 1024:F1} MB";
         return $"{bytes / 1024.0 / 1024 / 1024:F2} GB";
     }
 

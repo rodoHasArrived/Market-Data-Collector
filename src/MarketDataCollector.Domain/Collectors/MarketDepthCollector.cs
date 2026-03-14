@@ -26,14 +26,16 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 
     public void ResetSymbolStream(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
         if (_books.TryGetValue(new SymbolId(symbol.Trim()), out var buf))
             buf.Reset();
     }
 
     public bool IsSymbolStreamStale(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return false;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return false;
         return _books.TryGetValue(new SymbolId(symbol.Trim()), out var buf) && buf.IsStale;
     }
 
@@ -49,9 +51,11 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     /// </summary>
     public LOBSnapshot? GetCurrentSnapshot(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return null;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return null;
         var trimmed = symbol.Trim();
-        if (!_books.TryGetValue(new SymbolId(trimmed), out var book)) return null;
+        if (!_books.TryGetValue(new SymbolId(trimmed), out var book))
+            return null;
         return book.GetSnapshot(trimmed);
     }
 
@@ -66,8 +70,10 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     /// </summary>
     public void OnDepth(MarketDepthUpdate update)
     {
-        if (update is null) throw new ArgumentNullException(nameof(update));
-        if (string.IsNullOrWhiteSpace(update.Symbol)) return;
+        if (update is null)
+            throw new ArgumentNullException(nameof(update));
+        if (string.IsNullOrWhiteSpace(update.Symbol))
+            return;
 
         var symbol = update.Symbol.Trim();
 
@@ -106,7 +112,8 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
             return;
         }
 
-        if (snapshot is null) return;
+        if (snapshot is null)
+            return;
 
         // Emit snapshot. Support explicit payload wrapper too if you want to swap later.
         _publisher.TryPublish(MarketEvent.L2Snapshot(snapshot.Timestamp, symbol, snapshot));
@@ -146,7 +153,8 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
             get
             {
                 _rwLock.EnterReadLock();
-                try { return _stale; }
+                try
+                { return _stale; }
                 finally { _rwLock.ExitReadLock(); }
             }
         }
@@ -183,7 +191,8 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
             _rwLock.EnterReadLock();
             try
             {
-                if (_bids.Count == 0 && _asks.Count == 0) return null;
+                if (_bids.Count == 0 && _asks.Count == 0)
+                    return null;
 
                 var bidsCopy = _bids.ToArray();
                 var asksCopy = _asks.ToArray();
@@ -338,7 +347,8 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 
         private void TrimToMaxDepth(List<OrderBookLevel> levels)
         {
-            if (levels.Count <= _maxDepth) return;
+            if (levels.Count <= _maxDepth)
+                return;
             levels.RemoveRange(_maxDepth, levels.Count - _maxDepth);
         }
 
@@ -370,7 +380,8 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                 var b = bidsCopy[0].Size;
                 var a = asksCopy[0].Size;
                 var tot = b + a;
-                if (tot > 0) imb = (b - a) / tot;
+                if (tot > 0)
+                    imb = (b - a) / tot;
             }
 
             return new LOBSnapshot(

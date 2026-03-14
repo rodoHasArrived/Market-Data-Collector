@@ -150,9 +150,9 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
     {
         return evt.Type switch
         {
-            MarketEventType.Trade   => TryRouteTrade(in evt),
+            MarketEventType.Trade => TryRouteTrade(in evt),
             MarketEventType.BboQuote => TryRouteQuote(in evt),
-            _                       => _slowPath.TryPublish(in evt)
+            _ => _slowPath.TryPublish(in evt)
         };
     }
 

@@ -29,10 +29,12 @@ public sealed partial class PortableDataPackager
                 ct.ThrowIfCancellationRequested();
 
                 var fileInfo = ParseSourceFile(filePath);
-                if (fileInfo == null) continue;
+                if (fileInfo == null)
+                    continue;
 
                 // Apply filters
-                if (!MatchesFilters(fileInfo, options)) continue;
+                if (!MatchesFilters(fileInfo, options))
+                    continue;
 
                 files.Add(fileInfo);
             }
@@ -278,9 +280,12 @@ public sealed partial class PortableDataPackager
 
             fileEntries.Add(entry);
 
-            if (!string.IsNullOrEmpty(file.Symbol)) symbols.Add(file.Symbol);
-            if (!string.IsNullOrEmpty(file.EventType)) eventTypes.Add(file.EventType);
-            if (!string.IsNullOrEmpty(file.Source)) sources.Add(file.Source);
+            if (!string.IsNullOrEmpty(file.Symbol))
+                symbols.Add(file.Symbol);
+            if (!string.IsNullOrEmpty(file.EventType))
+                eventTypes.Add(file.EventType);
+            if (!string.IsNullOrEmpty(file.Source))
+                sources.Add(file.Source);
 
             if (file.Date.HasValue)
             {
@@ -581,7 +586,8 @@ public sealed partial class PortableDataPackager
         PackageFormat format,
         CancellationToken ct)
     {
-        if (format != PackageFormat.Zip) return;
+        if (format != PackageFormat.Zip)
+            return;
 
         // Reopen and update manifest
         using var stream = new FileStream(packagePath, FileMode.Open, FileAccess.ReadWrite);

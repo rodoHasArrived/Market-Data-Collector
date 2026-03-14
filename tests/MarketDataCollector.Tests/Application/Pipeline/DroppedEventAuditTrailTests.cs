@@ -22,7 +22,9 @@ public sealed class DroppedEventAuditTrailTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await _trail.DisposeAsync();
-        try { Directory.Delete(_testDir, recursive: true); } catch { /* cleanup best effort */ }
+        try
+        { Directory.Delete(_testDir, recursive: true); }
+        catch { /* cleanup best effort */ }
     }
 
     [Fact]

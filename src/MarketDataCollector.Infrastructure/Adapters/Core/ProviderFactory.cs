@@ -13,15 +13,14 @@ using MarketDataCollector.Infrastructure.Adapters.Tiingo;
 using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
 using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
-
+using AlphaVantageBackfillConfig = MarketDataCollector.Application.Config.AlphaVantageConfig;
+using FinnhubBackfillConfig = MarketDataCollector.Application.Config.FinnhubConfig;
+using NasdaqBackfillConfig = MarketDataCollector.Application.Config.NasdaqDataLinkConfig;
+using PolygonBackfillConfig = MarketDataCollector.Application.Config.PolygonConfig;
+using StooqBackfillConfig = MarketDataCollector.Application.Config.StooqConfig;
+using TiingoBackfillConfig = MarketDataCollector.Application.Config.TiingoConfig;
 // Type aliases for clarity when dealing with backfill provider configs
 using YahooBackfillConfig = MarketDataCollector.Application.Config.YahooFinanceConfig;
-using PolygonBackfillConfig = MarketDataCollector.Application.Config.PolygonConfig;
-using TiingoBackfillConfig = MarketDataCollector.Application.Config.TiingoConfig;
-using FinnhubBackfillConfig = MarketDataCollector.Application.Config.FinnhubConfig;
-using StooqBackfillConfig = MarketDataCollector.Application.Config.StooqConfig;
-using AlphaVantageBackfillConfig = MarketDataCollector.Application.Config.AlphaVantageConfig;
-using NasdaqBackfillConfig = MarketDataCollector.Application.Config.NasdaqDataLinkConfig;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
 
@@ -152,10 +151,12 @@ public sealed class ProviderFactory
 
     private IHistoricalDataProvider? CreateAlpacaBackfillProvider(AlpacaBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
 
         var (keyId, secretKey) = _credentialResolver.ResolveAlpacaCredentials(cfg?.KeyId, cfg?.SecretKey);
-        if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey)) return null;
+        if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey))
+            return null;
 
         return new AlpacaHistoricalDataProvider(
             keyId: keyId,
@@ -169,60 +170,71 @@ public sealed class ProviderFactory
 
     private IHistoricalDataProvider? CreateYahooBackfillProvider(YahooBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
         return new YahooFinanceHistoricalDataProvider(log: _log);
     }
 
     private IHistoricalDataProvider? CreatePolygonBackfillProvider(PolygonBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
 
         var apiKey = _credentialResolver.ResolvePolygonCredentials(cfg?.ApiKey);
-        if (string.IsNullOrEmpty(apiKey)) return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         return new PolygonHistoricalDataProvider(apiKey: apiKey, log: _log);
     }
 
     private IHistoricalDataProvider? CreateTiingoBackfillProvider(TiingoBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
 
         var token = _credentialResolver.ResolveTiingoCredentials(cfg?.ApiToken);
-        if (string.IsNullOrEmpty(token)) return null;
+        if (string.IsNullOrEmpty(token))
+            return null;
 
         return new TiingoHistoricalDataProvider(apiToken: token, log: _log);
     }
 
     private IHistoricalDataProvider? CreateFinnhubBackfillProvider(FinnhubBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
 
         var apiKey = _credentialResolver.ResolveFinnhubCredentials(cfg?.ApiKey);
-        if (string.IsNullOrEmpty(apiKey)) return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         return new FinnhubHistoricalDataProvider(apiKey: apiKey, log: _log);
     }
 
     private IHistoricalDataProvider? CreateStooqBackfillProvider(StooqBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
         return new StooqHistoricalDataProvider(log: _log);
     }
 
     private IHistoricalDataProvider? CreateAlphaVantageBackfillProvider(AlphaVantageBackfillConfig? cfg)
     {
         // Disabled by default due to very limited free tier
-        if (!(cfg?.Enabled ?? false)) return null;
+        if (!(cfg?.Enabled ?? false))
+            return null;
 
         var apiKey = _credentialResolver.ResolveAlphaVantageCredentials(cfg?.ApiKey);
-        if (string.IsNullOrEmpty(apiKey)) return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         return new AlphaVantageHistoricalDataProvider(apiKey: apiKey, log: _log);
     }
 
     private IHistoricalDataProvider? CreateNasdaqBackfillProvider(NasdaqBackfillConfig? cfg)
     {
-        if (!(cfg?.Enabled ?? true)) return null;
+        if (!(cfg?.Enabled ?? true))
+            return null;
 
         var apiKey = _credentialResolver.ResolveNasdaqCredentials(cfg?.ApiKey);
         return new NasdaqDataLinkHistoricalDataProvider(
@@ -275,10 +287,12 @@ public sealed class ProviderFactory
     private ISymbolSearchProvider? CreateAlpacaSearchProvider(AlpacaBackfillConfig? cfg)
     {
         // Enabled by default if config is null (credential-based activation)
-        if (cfg != null && !cfg.Enabled) return null;
+        if (cfg != null && !cfg.Enabled)
+            return null;
 
         var (keyId, secretKey) = _credentialResolver.ResolveAlpacaCredentials(cfg?.KeyId, cfg?.SecretKey);
-        if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey)) return null;
+        if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey))
+            return null;
 
         return new AlpacaSymbolSearchProviderRefactored(keyId, secretKey, httpClient: null, log: _log);
     }
@@ -286,10 +300,12 @@ public sealed class ProviderFactory
     private ISymbolSearchProvider? CreateFinnhubSearchProvider(FinnhubBackfillConfig? cfg)
     {
         // Enabled by default if config is null (credential-based activation)
-        if (cfg != null && !cfg.Enabled) return null;
+        if (cfg != null && !cfg.Enabled)
+            return null;
 
         var apiKey = _credentialResolver.ResolveFinnhubCredentials(cfg?.ApiKey);
-        if (string.IsNullOrEmpty(apiKey)) return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         return new FinnhubSymbolSearchProviderRefactored(apiKey, httpClient: null, log: _log);
     }
@@ -297,10 +313,12 @@ public sealed class ProviderFactory
     private ISymbolSearchProvider? CreatePolygonSearchProvider(PolygonBackfillConfig? cfg)
     {
         // Enabled by default if config is null (credential-based activation)
-        if (cfg != null && !cfg.Enabled) return null;
+        if (cfg != null && !cfg.Enabled)
+            return null;
 
         var apiKey = _credentialResolver.ResolvePolygonCredentials(cfg?.ApiKey);
-        if (string.IsNullOrEmpty(apiKey)) return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         return new PolygonSymbolSearchProvider(apiKey, httpClient: null, log: _log);
     }

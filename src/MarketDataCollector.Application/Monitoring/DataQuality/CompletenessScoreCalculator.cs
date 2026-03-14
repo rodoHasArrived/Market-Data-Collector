@@ -54,7 +54,8 @@ public sealed class CompletenessScoreCalculator : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RecordEvent(string symbol, DateTimeOffset timestamp, string eventType)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         var date = DateOnly.FromDateTime(timestamp.UtcDateTime);
         var key = GetKey(symbol, date);
@@ -77,7 +78,8 @@ public sealed class CompletenessScoreCalculator : IDisposable
     /// </summary>
     public void RecordEvents(string symbol, IEnumerable<DateTimeOffset> timestamps, string eventType)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         foreach (var ts in timestamps)
         {
@@ -228,7 +230,8 @@ public sealed class CompletenessScoreCalculator : IDisposable
 
     private void CleanupOldStates(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -255,7 +258,8 @@ public sealed class CompletenessScoreCalculator : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _states.Clear();

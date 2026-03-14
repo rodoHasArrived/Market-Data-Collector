@@ -203,8 +203,10 @@ public static class MessagingEndpoints
                         Timestamp = DateTimeOffset.UtcNow
                     };
                     s_activityLog.Add(entry);
-                    if (allSuccess) s_totalSent++;
-                    else s_totalFailed++;
+                    if (allSuccess)
+                        s_totalSent++;
+                    else
+                        s_totalFailed++;
 
                     // Keep activity log bounded
                     while (s_activityLog.Count > 500)

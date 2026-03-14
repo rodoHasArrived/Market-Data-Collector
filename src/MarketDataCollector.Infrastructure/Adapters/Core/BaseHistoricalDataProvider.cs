@@ -542,7 +542,8 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
 
     protected virtual void Dispose(bool disposing)
     {
-        if (Disposed) return;
+        if (Disposed)
+            return;
         Disposed = true;
 
         if (disposing)

@@ -254,7 +254,8 @@ public static class StorageEndpoints
                         if (fi.LastWriteTimeUtc < cutoff)
                         {
                             candidates.Add(new { path = file, sizeBytes = fi.Length, lastModified = fi.LastWriteTimeUtc });
-                            if (candidates.Count >= 100) break;
+                            if (candidates.Count >= 100)
+                                break;
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Storage.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MarketDataCollector.Storage;
 

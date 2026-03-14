@@ -59,7 +59,8 @@ public sealed class RetentionComplianceReporter
             try
             {
                 var fileInfo = new FileInfo(filePath);
-                if (!fileInfo.Exists) continue;
+                if (!fileInfo.Exists)
+                    continue;
 
                 totalFiles++;
                 totalBytes += fileInfo.Length;

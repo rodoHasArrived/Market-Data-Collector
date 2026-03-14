@@ -57,7 +57,8 @@ public sealed class EventBufferTests
     public void ShouldFlush_AtThreshold_ReturnsTrue()
     {
         var buffer = new EventBuffer<MarketEvent>();
-        for (var i = 0; i < 5; i++) buffer.Add(CreateEvent("AAPL", i));
+        for (var i = 0; i < 5; i++)
+            buffer.Add(CreateEvent("AAPL", i));
         buffer.ShouldFlush(5).Should().BeTrue();
     }
 
@@ -127,7 +128,8 @@ public sealed class EventBufferTests
     public void DrainAll_CountResetToZero()
     {
         var buffer = new EventBuffer<MarketEvent>();
-        for (var i = 0; i < 7; i++) buffer.Add(CreateEvent("AAPL", i));
+        for (var i = 0; i < 7; i++)
+            buffer.Add(CreateEvent("AAPL", i));
         buffer.DrainAll();
         buffer.Count.Should().Be(0);
     }
@@ -147,7 +149,8 @@ public sealed class EventBufferTests
     public void Drain_LessThanAvailable_ReturnsMaxCountAndLeavesRest()
     {
         var buffer = new EventBuffer<MarketEvent>();
-        for (var i = 1; i <= 10; i++) buffer.Add(CreateEvent("AAPL", i));
+        for (var i = 1; i <= 10; i++)
+            buffer.Add(CreateEvent("AAPL", i));
 
         var result = buffer.Drain(3);
 
@@ -183,7 +186,8 @@ public sealed class EventBufferTests
     public void Add_WhenAtMaxCapacity_DropsOldest()
     {
         var buffer = new EventBuffer<MarketEvent>(initialCapacity: 3, maxCapacity: 3);
-        for (var i = 1; i <= 3; i++) buffer.Add(CreateEvent("AAPL", i));
+        for (var i = 1; i <= 3; i++)
+            buffer.Add(CreateEvent("AAPL", i));
 
         // Adding a 4th event should drop the first
         buffer.Add(CreateEvent("AAPL", 4));
@@ -202,7 +206,8 @@ public sealed class EventBufferTests
     public void Clear_EmptiesBuffer()
     {
         var buffer = new EventBuffer<MarketEvent>();
-        for (var i = 0; i < 5; i++) buffer.Add(CreateEvent("AAPL", i));
+        for (var i = 0; i < 5; i++)
+            buffer.Add(CreateEvent("AAPL", i));
 
         buffer.Clear();
 

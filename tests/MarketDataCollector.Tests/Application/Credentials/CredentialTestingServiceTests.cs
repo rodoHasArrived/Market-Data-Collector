@@ -1,9 +1,9 @@
+using System.Net;
 using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
 using Moq;
 using Moq.Protected;
-using System.Net;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Credentials;
@@ -34,7 +34,8 @@ public class CredentialTestingServiceTests : IAsyncLifetime
 
         if (Directory.Exists(_testDataRoot))
         {
-            try { Directory.Delete(_testDataRoot, recursive: true); }
+            try
+            { Directory.Delete(_testDataRoot, recursive: true); }
             catch { /* Ignore cleanup errors */ }
         }
     }
@@ -267,7 +268,8 @@ public class CredentialTestingServiceWithMockedHttpTests : IAsyncLifetime
 
         if (Directory.Exists(_testDataRoot))
         {
-            try { Directory.Delete(_testDataRoot, recursive: true); }
+            try
+            { Directory.Delete(_testDataRoot, recursive: true); }
             catch { /* Ignore cleanup errors */ }
         }
     }

@@ -34,7 +34,8 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
         var allFiles = new List<FileInfo>();
         foreach (var path in paths)
         {
-            if (!Directory.Exists(path)) continue;
+            if (!Directory.Exists(path))
+                continue;
 
             var files = Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
                 .Where(f => DataExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
@@ -178,7 +179,8 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
                     _ => false
                 };
 
-                if (repaired) filesRepaired++;
+                if (repaired)
+                    filesRepaired++;
             }
             catch (Exception ex)
             {
@@ -240,7 +242,8 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
                     {
                         foreach (var file in filesToMerge)
                         {
-                            try { file.Delete(); }
+                            try
+                            { file.Delete(); }
                             catch (IOException) { /* File may be in use */ }
                         }
                     }
@@ -466,7 +469,8 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
 
         foreach (var line in lines)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
             try
             {
                 JsonDocument.Parse(line);
@@ -516,7 +520,8 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
 
     private async Task<string?> MergeFilesAsync(List<FileInfo> files, DefragOptions options, CancellationToken ct)
     {
-        if (files.Count == 0) return null;
+        if (files.Count == 0)
+            return null;
 
         var directory = files[0].DirectoryName!;
         var extension = files[0].Extension;

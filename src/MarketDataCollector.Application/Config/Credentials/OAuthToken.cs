@@ -55,10 +55,12 @@ public sealed record OAuthToken(
     {
         get
         {
-            if (!IssuedAt.HasValue) return IsExpired ? 0 : 100;
+            if (!IssuedAt.HasValue)
+                return IsExpired ? 0 : 100;
             var totalLifetime = ExpiresAt - IssuedAt.Value;
             var remaining = ExpiresAt - DateTimeOffset.UtcNow;
-            if (remaining <= TimeSpan.Zero) return 0;
+            if (remaining <= TimeSpan.Zero)
+                return 0;
             return Math.Min(100, (remaining.TotalSeconds / totalLifetime.TotalSeconds) * 100);
         }
     }

@@ -325,7 +325,8 @@ public sealed partial class AnalysisExportService
 
     private List<SourceFile> FindSourceFiles(ExportRequest request)
     {
-        if (!Directory.Exists(_dataRoot)) return new List<SourceFile>();
+        if (!Directory.Exists(_dataRoot))
+            return new List<SourceFile>();
 
         return new[] { "*.jsonl", "*.jsonl.gz" }
             .SelectMany(pattern => Directory.GetFiles(_dataRoot, pattern, SearchOption.AllDirectories))
@@ -348,7 +349,8 @@ public sealed partial class AnalysisExportService
         var fileName = Path.GetFileName(path);
         var parts = fileName.Split('.');
 
-        if (parts.Length < 2) return null;
+        if (parts.Length < 2)
+            return null;
 
         // Handle patterns like: AAPL.Trade.jsonl, SPY.BboQuote.2026-01-03.jsonl.gz
         var result = new SourceFile

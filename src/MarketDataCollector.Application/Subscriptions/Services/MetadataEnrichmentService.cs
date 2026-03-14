@@ -230,12 +230,14 @@ public sealed class MetadataEnrichmentService
 
     private async Task EnsureCacheLoadedAsync(CancellationToken ct)
     {
-        if (_cacheLoaded) return;
+        if (_cacheLoaded)
+            return;
 
         await _loadLock.WaitAsync(ct);
         try
         {
-            if (_cacheLoaded) return;
+            if (_cacheLoaded)
+                return;
             await LoadCacheAsync(ct);
             _cacheLoaded = true;
         }

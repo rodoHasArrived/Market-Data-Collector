@@ -42,14 +42,16 @@ public static class DataLossAccounting
     public static void IncReceived(string? provider = null)
     {
         Interlocked.Increment(ref _received);
-        if (provider != null) GetProvider(provider).IncReceived();
+        if (provider != null)
+            GetProvider(provider).IncReceived();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IncReceivedDuplicate(string? provider = null)
     {
         Interlocked.Increment(ref _receivedDuplicates);
-        if (provider != null) GetProvider(provider).IncDuplicate();
+        if (provider != null)
+            GetProvider(provider).IncDuplicate();
     }
 
     #endregion

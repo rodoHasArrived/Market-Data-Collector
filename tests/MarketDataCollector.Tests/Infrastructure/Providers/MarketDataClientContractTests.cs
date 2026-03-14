@@ -83,7 +83,8 @@ public abstract class MarketDataClientContractTests<TClient>
     public async Task SubscribeMarketDepth_ValidConfig_ReturnsNonNegativeId()
     {
         await using var client = CreateClient();
-        if (!client.IsEnabled) return; // skip live subscription for disabled clients
+        if (!client.IsEnabled)
+            return; // skip live subscription for disabled clients
 
         var cfg = CreateMinimalSymbolConfig("SPY");
         var id = client.SubscribeMarketDepth(cfg);
@@ -105,7 +106,8 @@ public abstract class MarketDataClientContractTests<TClient>
     public async Task SubscribeTrades_ValidConfig_ReturnsNonNegativeId()
     {
         await using var client = CreateClient();
-        if (!client.IsEnabled) return; // skip live subscription for disabled clients
+        if (!client.IsEnabled)
+            return; // skip live subscription for disabled clients
 
         var cfg = CreateMinimalSymbolConfig("SPY");
         var id = client.SubscribeTrades(cfg);

@@ -338,7 +338,8 @@ public sealed class DataFreshnessSlaMonitor : IDisposable
     /// </summary>
     public bool IsMarketOpen()
     {
-        if (!_config.SkipOutsideMarketHours) return true;
+        if (!_config.SkipOutsideMarketHours)
+            return true;
 
         var now = TimeOnly.FromDateTime(DateTime.UtcNow);
         var dayOfWeek = DateTime.UtcNow.DayOfWeek;
@@ -352,7 +353,8 @@ public sealed class DataFreshnessSlaMonitor : IDisposable
 
     private void CheckSlaCompliance(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -426,7 +428,8 @@ public sealed class DataFreshnessSlaMonitor : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _checkTimer.Dispose();
         _symbolStates.Clear();

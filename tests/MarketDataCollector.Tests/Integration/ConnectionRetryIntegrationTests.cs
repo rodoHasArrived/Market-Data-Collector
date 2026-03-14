@@ -1,7 +1,7 @@
+using System.Net.WebSockets;
 using FluentAssertions;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
-using System.Net.WebSockets;
 using Xunit;
 
 namespace MarketDataCollector.Tests;

@@ -127,7 +127,8 @@ public sealed class ErrorTracker
     /// </summary>
     public void Clear()
     {
-        while (_errors.TryDequeue(out _)) { }
+        while (_errors.TryDequeue(out _))
+        { }
         Interlocked.Exchange(ref _totalErrorCount, 0);
     }
 
@@ -164,7 +165,8 @@ public sealed class ErrorTracker
         {
             ct.ThrowIfCancellationRequested();
 
-            if (errors.Count >= maxErrors) break;
+            if (errors.Count >= maxErrors)
+                break;
 
             try
             {

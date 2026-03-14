@@ -69,7 +69,8 @@ public sealed partial class AnalysisExportService
         List<Dictionary<string, object?>> records,
         CancellationToken ct)
     {
-        if (records.Count == 0) return;
+        if (records.Count == 0)
+            return;
 
         var firstRecord = records[0];
         var columns = firstRecord.Keys.ToList();
@@ -156,8 +157,10 @@ public sealed partial class AnalysisExportService
                     var builder = new Int32Array.Builder();
                     foreach (var v in values)
                     {
-                        if (v is null) builder.AppendNull();
-                        else builder.Append(Convert.ToInt32(v));
+                        if (v is null)
+                            builder.AppendNull();
+                        else
+                            builder.Append(Convert.ToInt32(v));
                     }
                     return builder.Build();
                 }
@@ -166,8 +169,10 @@ public sealed partial class AnalysisExportService
                     var builder = new Int64Array.Builder();
                     foreach (var v in values)
                     {
-                        if (v is null) builder.AppendNull();
-                        else builder.Append(Convert.ToInt64(v));
+                        if (v is null)
+                            builder.AppendNull();
+                        else
+                            builder.Append(Convert.ToInt64(v));
                     }
                     return builder.Build();
                 }
@@ -176,8 +181,10 @@ public sealed partial class AnalysisExportService
                     var builder = new FloatArray.Builder();
                     foreach (var v in values)
                     {
-                        if (v is null) builder.AppendNull();
-                        else builder.Append(Convert.ToSingle(v));
+                        if (v is null)
+                            builder.AppendNull();
+                        else
+                            builder.Append(Convert.ToSingle(v));
                     }
                     return builder.Build();
                 }
@@ -186,8 +193,10 @@ public sealed partial class AnalysisExportService
                     var builder = new DoubleArray.Builder();
                     foreach (var v in values)
                     {
-                        if (v is null) builder.AppendNull();
-                        else builder.Append(Convert.ToDouble(v));
+                        if (v is null)
+                            builder.AppendNull();
+                        else
+                            builder.Append(Convert.ToDouble(v));
                     }
                     return builder.Build();
                 }
@@ -196,8 +205,10 @@ public sealed partial class AnalysisExportService
                     var builder = new BooleanArray.Builder();
                     foreach (var v in values)
                     {
-                        if (v is null) builder.AppendNull();
-                        else builder.Append(Convert.ToBoolean(v));
+                        if (v is null)
+                            builder.AppendNull();
+                        else
+                            builder.Append(Convert.ToBoolean(v));
                     }
                     return builder.Build();
                 }
@@ -224,8 +235,10 @@ public sealed partial class AnalysisExportService
                     var builder = new StringArray.Builder();
                     foreach (var v in values)
                     {
-                        if (v is null) builder.AppendNull();
-                        else builder.Append(v.ToString() ?? string.Empty);
+                        if (v is null)
+                            builder.AppendNull();
+                        else
+                            builder.Append(v.ToString() ?? string.Empty);
                     }
                     return builder.Build();
                 }

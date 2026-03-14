@@ -3,9 +3,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
@@ -192,8 +192,10 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : BaseHistoricalDataPro
             if (bar is not null)
             {
                 // Apply date filter
-                if (from.HasValue && bar.SessionDate < from.Value) continue;
-                if (to.HasValue && bar.SessionDate > to.Value) continue;
+                if (from.HasValue && bar.SessionDate < from.Value)
+                    continue;
+                if (to.HasValue && bar.SessionDate > to.Value)
+                    continue;
 
                 bars.Add(bar);
             }

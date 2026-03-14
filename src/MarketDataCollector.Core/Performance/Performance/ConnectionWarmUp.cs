@@ -150,8 +150,10 @@ public sealed class ConnectionWarmUp
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Percentile(List<double> values, double percentile)
     {
-        if (values.Count == 0) return 0;
-        if (values.Count == 1) return values[0];
+        if (values.Count == 0)
+            return 0;
+        if (values.Count == 1)
+            return values[0];
 
         values.Sort();
         var index = (int)Math.Ceiling(percentile * values.Count) - 1;
@@ -277,7 +279,8 @@ public sealed class HeartbeatMonitor : IDisposable
         get
         {
             var last = Interlocked.Read(ref _lastSuccessTimestamp);
-            if (last == 0) return TimeSpan.MaxValue;
+            if (last == 0)
+                return TimeSpan.MaxValue;
             return TimeSpan.FromTicks((long)((Stopwatch.GetTimestamp() - last) *
                 (TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency)));
         }
@@ -302,7 +305,8 @@ public sealed class HeartbeatMonitor : IDisposable
 
     public void Start()
     {
-        if (IsRunning) return;
+        if (IsRunning)
+            return;
 
         _cts = new CancellationTokenSource();
         _monitorTask = MonitorLoopAsync(_cts.Token);
@@ -310,7 +314,8 @@ public sealed class HeartbeatMonitor : IDisposable
 
     public async Task StopAsync()
     {
-        if (_cts is null || _monitorTask is null) return;
+        if (_cts is null || _monitorTask is null)
+            return;
 
         _cts.Cancel();
         try

@@ -63,7 +63,8 @@ public sealed record BboQuotePayload(
     /// <returns>A new BboQuotePayload</returns>
     public static BboQuotePayload FromUpdate(MarketQuoteUpdate update, long seq)
     {
-        if (update is null) throw new ArgumentNullException(nameof(update));
+        if (update is null)
+            throw new ArgumentNullException(nameof(update));
 
         // Calculate spread and mid-price conditionally
         decimal? midPrice = null;

@@ -100,8 +100,10 @@ public sealed class TradeDataCollector
     /// </summary>
     public void OnTrade(MarketTradeUpdate update)
     {
-        if (update is null) throw new ArgumentNullException(nameof(update));
-        if (string.IsNullOrWhiteSpace(update.Symbol)) return;
+        if (update is null)
+            throw new ArgumentNullException(nameof(update));
+        if (string.IsNullOrWhiteSpace(update.Symbol))
+            return;
 
         var symbol = update.Symbol;
 
@@ -186,8 +188,10 @@ public sealed class TradeDataCollector
             var quoteAge = update.Timestamp - bbo.Timestamp;
             if (quoteAge <= QuoteFreshnessThreshold)
             {
-                if (bbo.AskPrice > 0m && update.Price >= bbo.AskPrice) aggressor = AggressorSide.Buy;
-                else if (bbo.BidPrice > 0m && update.Price <= bbo.BidPrice) aggressor = AggressorSide.Sell;
+                if (bbo.AskPrice > 0m && update.Price >= bbo.AskPrice)
+                    aggressor = AggressorSide.Buy;
+                else if (bbo.BidPrice > 0m && update.Price <= bbo.BidPrice)
+                    aggressor = AggressorSide.Sell;
             }
         }
 
@@ -232,9 +236,11 @@ public sealed class TradeDataCollector
     /// </summary>
     public IReadOnlyList<Trade> GetRecentTrades(string symbol, int limit = 50)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return Array.Empty<Trade>();
+        if (string.IsNullOrWhiteSpace(symbol))
+            return Array.Empty<Trade>();
         var key = new SymbolId(symbol);
-        if (!_recentTrades.TryGetValue(key, out var ring)) return Array.Empty<Trade>();
+        if (!_recentTrades.TryGetValue(key, out var ring))
+            return Array.Empty<Trade>();
         return ring.GetRecent(Math.Min(limit, MaxRecentTrades));
     }
 
@@ -243,13 +249,15 @@ public sealed class TradeDataCollector
     /// </summary>
     public OrderFlowStatistics? GetOrderFlowSnapshot(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return null;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return null;
         var symbolId = new SymbolId(symbol);
         var states = _stateBySymbol
             .Where(kvp => kvp.Key.Symbol == symbolId)
             .Select(kvp => kvp.Value)
             .ToArray();
-        if (states.Length == 0) return null;
+        if (states.Length == 0)
+            return null;
 
         return states[0].BuildOrderFlowStats(
             timestamp: DateTimeOffset.UtcNow,
@@ -316,7 +324,8 @@ public sealed class TradeDataCollector
 
         public long GetLastSequenceNumber()
         {
-            lock (_sync) return _lastSequenceNumber ?? 0;
+            lock (_sync)
+                return _lastSequenceNumber ?? 0;
         }
 
         public void RegisterTrade(Trade trade)
@@ -416,12 +425,14 @@ public sealed class TradeDataCollector
 
                 foreach (var (window, state) in _rollingByWindow)
                 {
-                    if (now - oldest.Timestamp <= window) continue;
+                    if (now - oldest.Timestamp <= window)
+                        continue;
                     RemoveFromRollingWindow(state, oldest);
                     shouldPop = true;
                 }
 
-                if (!shouldPop) break;
+                if (!shouldPop)
+                    break;
                 _tradeWindow.Dequeue();
             }
         }
@@ -499,7 +510,8 @@ public sealed class TradeDataCollector
             {
                 _buffer[_head] = trade;
                 _head = (_head + 1) % _buffer.Length;
-                if (_count < _buffer.Length) _count++;
+                if (_count < _buffer.Length)
+                    _count++;
             }
         }
 

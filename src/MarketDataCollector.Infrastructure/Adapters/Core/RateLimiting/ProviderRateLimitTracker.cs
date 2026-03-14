@@ -174,7 +174,8 @@ public sealed class ProviderRateLimitTracker : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         // Dispose all tracked provider states (which now own RateLimiter instances)
@@ -294,7 +295,8 @@ internal sealed class ProviderRateLimitState : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _rateLimiter.Dispose();
     }

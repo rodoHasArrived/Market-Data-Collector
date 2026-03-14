@@ -143,8 +143,10 @@ public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider
                 var sessionDate = DateOnly.FromDateTime(date);
 
                 // Skip if outside requested range
-                if (from.HasValue && sessionDate < from.Value) continue;
-                if (to.HasValue && sessionDate > to.Value) continue;
+                if (from.HasValue && sessionDate < from.Value)
+                    continue;
+                if (to.HasValue && sessionDate > to.Value)
+                    continue;
 
                 // Validate OHLC using base class helper
                 if (!ValidateOhlc(result.Open, result.High, result.Low, result.Close, symbol, sessionDate))

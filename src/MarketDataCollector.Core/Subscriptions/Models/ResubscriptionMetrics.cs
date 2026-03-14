@@ -56,7 +56,8 @@ public static class ResubscriptionMetrics
         get
         {
             var total = ResubscribeAttempts;
-            if (total == 0) return 100.0;
+            if (total == 0)
+                return 100.0;
             return (double)ResubscribeSuccesses / total * 100;
         }
     }
@@ -69,7 +70,8 @@ public static class ResubscriptionMetrics
         get
         {
             var successes = ResubscribeSuccesses;
-            if (successes == 0) return 0;
+            if (successes == 0)
+                return 0;
             return (double)TotalResubscribeTimeMs / successes;
         }
     }

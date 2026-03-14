@@ -1,17 +1,17 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Linq;
 using System.Threading;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MarketDataCollector.Storage.Sinks;
 
@@ -181,7 +181,8 @@ public sealed class JsonlStorageSink : IStorageSink
 
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
-        if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(JsonlStorageSink));
+        if (Volatile.Read(ref _disposed) != 0)
+            throw new ObjectDisposedException(nameof(JsonlStorageSink));
 
         EventSchemaValidator.Validate(evt);
         var path = _policy.GetPath(evt);
@@ -216,7 +217,8 @@ public sealed class JsonlStorageSink : IStorageSink
     private async Task FlushBufferAsync(string path, MarketEventBuffer buffer, CancellationToken ct)
     {
         var events = buffer.DrainAll();
-        if (events.Count == 0) return;
+        if (events.Count == 0)
+            return;
 
         var writer = _writers.GetOrAdd(path, _writerFactory).Value;
 
@@ -248,7 +250,8 @@ public sealed class JsonlStorageSink : IStorageSink
 
     private async Task FlushAllBuffersAsync(CancellationToken ct = default)
     {
-        if (Volatile.Read(ref _disposed) != 0 || _disposalCts.IsCancellationRequested) return;
+        if (Volatile.Read(ref _disposed) != 0 || _disposalCts.IsCancellationRequested)
+            return;
 
         await _flushGate.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -319,7 +322,8 @@ public sealed class JsonlStorageSink : IStorageSink
 
     public async ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
 
         // 1. Signal disposal to timer callbacks
         _disposalCts.Cancel();
@@ -428,7 +432,8 @@ public sealed class JsonlStorageSink : IStorageSink
         /// </summary>
         public async ValueTask WriteBatchAsync(string[] lines, CancellationToken ct)
         {
-            if (lines.Length == 0) return;
+            if (lines.Length == 0)
+                return;
 
             await _gate.WaitAsync(ct).ConfigureAwait(false);
             try

@@ -369,7 +369,8 @@ load_trades <- function(symbol = NULL) {
             while (!reader.EndOfStream && !ct.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 var doc = JsonDocument.Parse(line);
                 var dict = new Dictionary<string, object?>();
@@ -420,10 +421,14 @@ load_trades <- function(symbol = NULL) {
 
     private static string SqlEscape(object? value)
     {
-        if (value == null) return "NULL";
-        if (value is string s) return $"'{s.Replace("'", "''")}'";
-        if (value is bool b) return b ? "TRUE" : "FALSE";
-        if (value is DateTime dt) return $"'{dt:yyyy-MM-dd HH:mm:ss.ffffff}'";
+        if (value == null)
+            return "NULL";
+        if (value is string s)
+            return $"'{s.Replace("'", "''")}'";
+        if (value is bool b)
+            return b ? "TRUE" : "FALSE";
+        if (value is DateTime dt)
+            return $"'{dt:yyyy-MM-dd HH:mm:ss.ffffff}'";
         return value.ToString() ?? "NULL";
     }
 }

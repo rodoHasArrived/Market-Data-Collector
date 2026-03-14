@@ -120,7 +120,8 @@ public sealed class TierMigrationService : ITierMigrationService
             var targetTier = sortedTiers[i + 1];
             var cutoffDate = now.AddDays(-sourceTier.MaxAgeDays!.Value);
 
-            if (!Directory.Exists(sourceTier.Path)) continue;
+            if (!Directory.Exists(sourceTier.Path))
+                continue;
 
             var eligibleFiles = Directory.EnumerateFiles(sourceTier.Path, "*", SearchOption.AllDirectories)
                 .Select(f => new FileInfo(f))

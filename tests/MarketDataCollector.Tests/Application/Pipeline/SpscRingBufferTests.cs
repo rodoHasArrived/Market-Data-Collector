@@ -95,7 +95,8 @@ public class SpscRingBufferTests
     public void TryWrite_WhenFull_ReturnsFalse()
     {
         var buffer = new SpscRingBuffer<int>(4);
-        for (var i = 0; i < 4; i++) buffer.TryWrite(i);
+        for (var i = 0; i < 4; i++)
+            buffer.TryWrite(i);
 
         buffer.TryWrite(99).Should().BeFalse();
         buffer.Count.Should().Be(4);
@@ -105,7 +106,8 @@ public class SpscRingBufferTests
     public void MultipleWritesAndReads_PreserveFifoOrder()
     {
         var buffer = new SpscRingBuffer<int>(8);
-        for (var i = 0; i < 5; i++) buffer.TryWrite(i);
+        for (var i = 0; i < 5; i++)
+            buffer.TryWrite(i);
 
         for (var expected = 0; expected < 5; expected++)
         {
@@ -138,10 +140,14 @@ public class SpscRingBufferTests
         buffer.TryWrite(30).Should().BeTrue();
         buffer.TryWrite(40).Should().BeTrue();
 
-        buffer.TryRead(out var a); a.Should().Be(10);
-        buffer.TryRead(out var b); b.Should().Be(20);
-        buffer.TryRead(out var c); c.Should().Be(30);
-        buffer.TryRead(out var d); d.Should().Be(40);
+        buffer.TryRead(out var a);
+        a.Should().Be(10);
+        buffer.TryRead(out var b);
+        b.Should().Be(20);
+        buffer.TryRead(out var c);
+        c.Should().Be(30);
+        buffer.TryRead(out var d);
+        d.Should().Be(40);
         buffer.IsEmpty.Should().BeTrue();
     }
 
@@ -154,7 +160,8 @@ public class SpscRingBufferTests
         for (var i = 0; i < total; i++)
         {
             // Drain one before writing if full
-            if (buffer.IsFull) buffer.TryRead(out _);
+            if (buffer.IsFull)
+                buffer.TryRead(out _);
             buffer.TryWrite(i);
         }
 
@@ -178,7 +185,8 @@ public class SpscRingBufferTests
     public void DrainTo_DrainsSmallerOfBatchAndAvailable()
     {
         var buffer = new SpscRingBuffer<int>(8);
-        for (var i = 0; i < 6; i++) buffer.TryWrite(i);
+        for (var i = 0; i < 6; i++)
+            buffer.TryWrite(i);
 
         Span<int> dest = stackalloc int[4];
         var count = buffer.DrainTo(dest, maxItems: 4);
@@ -193,7 +201,8 @@ public class SpscRingBufferTests
     public void DrainTo_MaxItemsLimitApplied()
     {
         var buffer = new SpscRingBuffer<int>(8);
-        for (var i = 0; i < 8; i++) buffer.TryWrite(i);
+        for (var i = 0; i < 8; i++)
+            buffer.TryWrite(i);
 
         var dest = new int[8];
         var count = buffer.DrainTo(dest, maxItems: 3);

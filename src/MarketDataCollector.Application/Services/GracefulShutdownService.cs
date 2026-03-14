@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using MarketDataCollector.Application.Monitoring;
 using Microsoft.Extensions.Hosting;
-using System.Threading;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;

@@ -53,7 +53,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
     /// </summary>
     public LOBSnapshot? GetCurrentSnapshot(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return null;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return null;
         return _books.TryGetValue(new SymbolId(symbol.Trim()), out var book)
             ? book.BuildSnapshot(symbol.Trim())
             : null;
@@ -69,11 +70,14 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
     /// </summary>
     public void OnOrderAdd(OrderAdd order)
     {
-        if (order is null) throw new ArgumentNullException(nameof(order));
-        if (string.IsNullOrWhiteSpace(order.Symbol)) return;
+        if (order is null)
+            throw new ArgumentNullException(nameof(order));
+        if (string.IsNullOrWhiteSpace(order.Symbol))
+            return;
 
         var symbol = order.Symbol.Trim();
-        if (!ShouldProcessUpdate(symbol)) return;
+        if (!ShouldProcessUpdate(symbol))
+            return;
 
         var book = _books.GetOrAdd(new SymbolId(symbol), _ => new SymbolL3Book());
         book.Add(order);
@@ -88,11 +92,14 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
     /// </summary>
     public void OnOrderModify(DateTimeOffset ts, string symbol, OrderModify modify)
     {
-        if (modify is null) throw new ArgumentNullException(nameof(modify));
-        if (string.IsNullOrWhiteSpace(symbol)) return;
+        if (modify is null)
+            throw new ArgumentNullException(nameof(modify));
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
 
         var sym = symbol.Trim();
-        if (!ShouldProcessUpdate(sym)) return;
+        if (!ShouldProcessUpdate(sym))
+            return;
 
         var book = _books.GetOrAdd(new SymbolId(sym), _ => new SymbolL3Book());
         book.Modify(modify);
@@ -107,11 +114,14 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
     /// </summary>
     public void OnOrderCancel(DateTimeOffset ts, string symbol, OrderCancel cancel)
     {
-        if (cancel is null) throw new ArgumentNullException(nameof(cancel));
-        if (string.IsNullOrWhiteSpace(symbol)) return;
+        if (cancel is null)
+            throw new ArgumentNullException(nameof(cancel));
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
 
         var sym = symbol.Trim();
-        if (!ShouldProcessUpdate(sym)) return;
+        if (!ShouldProcessUpdate(sym))
+            return;
 
         var book = _books.GetOrAdd(new SymbolId(sym), _ => new SymbolL3Book());
         book.Cancel(cancel);
@@ -126,11 +136,14 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
     /// </summary>
     public void OnOrderExecute(DateTimeOffset ts, string symbol, OrderExecute execute)
     {
-        if (execute is null) throw new ArgumentNullException(nameof(execute));
-        if (string.IsNullOrWhiteSpace(symbol)) return;
+        if (execute is null)
+            throw new ArgumentNullException(nameof(execute));
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
 
         var sym = symbol.Trim();
-        if (!ShouldProcessUpdate(sym)) return;
+        if (!ShouldProcessUpdate(sym))
+            return;
 
         var book = _books.GetOrAdd(new SymbolId(sym), _ => new SymbolL3Book());
         book.Execute(execute);
@@ -145,11 +158,14 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
     /// </summary>
     public void OnOrderReplace(DateTimeOffset ts, string symbol, OrderReplace replace)
     {
-        if (replace is null) throw new ArgumentNullException(nameof(replace));
-        if (string.IsNullOrWhiteSpace(symbol)) return;
+        if (replace is null)
+            throw new ArgumentNullException(nameof(replace));
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
 
         var sym = symbol.Trim();
-        if (!ShouldProcessUpdate(sym)) return;
+        if (!ShouldProcessUpdate(sym))
+            return;
 
         var book = _books.GetOrAdd(new SymbolId(sym), _ => new SymbolL3Book());
         book.Replace(replace);
@@ -196,7 +212,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
         {
             lock (_lock)
             {
-                if (!_orders.TryGetValue(modify.OrderId, out var existing)) return;
+                if (!_orders.TryGetValue(modify.OrderId, out var existing))
+                    return;
                 _orders[modify.OrderId] = existing with
                 {
                     Price = modify.NewPrice ?? existing.Price,
@@ -209,7 +226,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
         {
             lock (_lock)
             {
-                if (!_orders.TryGetValue(cancel.OrderId, out var existing)) return;
+                if (!_orders.TryGetValue(cancel.OrderId, out var existing))
+                    return;
                 var remaining = existing.DisplayedSize - cancel.CanceledSize;
                 if (remaining <= 0)
                     _orders.Remove(cancel.OrderId);
@@ -222,7 +240,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
         {
             lock (_lock)
             {
-                if (!_orders.TryGetValue(execute.RestingOrderId, out var existing)) return;
+                if (!_orders.TryGetValue(execute.RestingOrderId, out var existing))
+                    return;
                 var remaining = existing.DisplayedSize - execute.ExecSize;
                 if (remaining <= 0)
                     _orders.Remove(execute.RestingOrderId);
@@ -235,7 +254,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
         {
             lock (_lock)
             {
-                if (!_orders.TryGetValue(replace.OldOrderId, out var existing)) return;
+                if (!_orders.TryGetValue(replace.OldOrderId, out var existing))
+                    return;
                 _orders.Remove(replace.OldOrderId);
                 _orders[replace.NewOrderId] = existing with
                 {
@@ -261,7 +281,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
             OrderState[] snapshot;
             lock (_lock)
             {
-                if (_orders.Count == 0) return null;
+                if (_orders.Count == 0)
+                    return null;
                 snapshot = [.. _orders.Values];
             }
 
@@ -297,7 +318,8 @@ public sealed class L3OrderBookCollector : SymbolSubscriptionTracker
                 var b = bids[0].Size;
                 var a = asks[0].Size;
                 var tot = b + a;
-                if (tot > 0) imb = (b - a) / tot;
+                if (tot > 0)
+                    imb = (b - a) / tot;
             }
 
             return new LOBSnapshot(

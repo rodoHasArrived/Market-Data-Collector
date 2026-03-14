@@ -1,8 +1,8 @@
+using System.Net.WebSockets;
 using FluentAssertions;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
 using Polly.Timeout;
-using System.Net.WebSockets;
 using Xunit;
 
 namespace MarketDataCollector.Tests;

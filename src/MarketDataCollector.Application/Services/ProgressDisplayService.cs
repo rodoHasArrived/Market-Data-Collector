@@ -39,7 +39,8 @@ public sealed class ProgressDisplayService : IDisposable
     /// </summary>
     public void DisplayProgress(string operation, int current, int total, string? currentItem = null)
     {
-        if (total <= 0) return;
+        if (total <= 0)
+            return;
 
         lock (_lock)
         {
@@ -211,7 +212,8 @@ public sealed class ProgressDisplayService : IDisposable
 
     private void UpdateSpinner()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         lock (_lock)
         {
@@ -244,7 +246,8 @@ public sealed class ProgressDisplayService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _spinnerTimer?.Dispose();
     }

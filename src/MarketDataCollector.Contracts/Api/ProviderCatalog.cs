@@ -805,16 +805,26 @@ public sealed class CapabilityInfo
     {
         var dict = new Dictionary<string, object>();
 
-        if (SupportsStreaming) dict["SupportsStreaming"] = true;
-        if (SupportsMarketDepth) dict["SupportsMarketDepth"] = true;
-        if (MaxDepthLevels.HasValue) dict["MaxDepthLevels"] = MaxDepthLevels.Value;
-        if (SupportsAdjustedPrices) dict["SupportsAdjustedPrices"] = true;
-        if (SupportsDividends) dict["SupportsDividends"] = true;
-        if (SupportsSplits) dict["SupportsSplits"] = true;
-        if (SupportsIntraday) dict["SupportsIntraday"] = true;
-        if (SupportsTrades) dict["SupportsTrades"] = true;
-        if (SupportsQuotes) dict["SupportsQuotes"] = true;
-        if (SupportsAuctions) dict["SupportsAuctions"] = true;
+        if (SupportsStreaming)
+            dict["SupportsStreaming"] = true;
+        if (SupportsMarketDepth)
+            dict["SupportsMarketDepth"] = true;
+        if (MaxDepthLevels.HasValue)
+            dict["MaxDepthLevels"] = MaxDepthLevels.Value;
+        if (SupportsAdjustedPrices)
+            dict["SupportsAdjustedPrices"] = true;
+        if (SupportsDividends)
+            dict["SupportsDividends"] = true;
+        if (SupportsSplits)
+            dict["SupportsSplits"] = true;
+        if (SupportsIntraday)
+            dict["SupportsIntraday"] = true;
+        if (SupportsTrades)
+            dict["SupportsTrades"] = true;
+        if (SupportsQuotes)
+            dict["SupportsQuotes"] = true;
+        if (SupportsAuctions)
+            dict["SupportsAuctions"] = true;
 
         return dict;
     }

@@ -160,7 +160,8 @@ public sealed class BackfillCostEstimator
     {
         // Rough estimate: ~252 trading days per year, ~21 per month
         var totalDays = to.DayNumber - from.DayNumber;
-        if (totalDays <= 0) return 0;
+        if (totalDays <= 0)
+            return 0;
         // Weekdays only (approximate)
         return (int)(totalDays * 5.0 / 7.0);
     }

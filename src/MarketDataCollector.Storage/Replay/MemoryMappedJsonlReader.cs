@@ -129,7 +129,8 @@ public sealed class MemoryMappedJsonlReader
     /// </summary>
     public async IAsyncEnumerable<MarketEvent> ReadEventsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (!Directory.Exists(_root)) yield break;
+        if (!Directory.Exists(_root))
+            yield break;
 
         var files = Directory.EnumerateFiles(_root, "*.jsonl*", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
@@ -329,7 +330,8 @@ public sealed class MemoryMappedJsonlReader
             ct.ThrowIfCancellationRequested();
 
             var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
             Interlocked.Add(ref _bytesRead, Encoding.UTF8.GetByteCount(line));
             pendingLines.Add(line);
@@ -360,7 +362,8 @@ public sealed class MemoryMappedJsonlReader
     /// </summary>
     private IEnumerable<MarketEvent> DeserializeLines(List<string> lines)
     {
-        if (lines.Count == 0) yield break;
+        if (lines.Count == 0)
+            yield break;
 
         if (_options.UseParallelDeserialization && lines.Count >= _options.ParallelDeserializationThreshold)
         {

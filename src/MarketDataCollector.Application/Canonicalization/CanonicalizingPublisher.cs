@@ -84,7 +84,8 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
         get
         {
             var count = Interlocked.Read(ref _canonicalizedCount);
-            if (count == 0) return 0;
+            if (count == 0)
+                return 0;
             var ticks = Interlocked.Read(ref _totalDurationTicks);
             return (double)ticks / Stopwatch.Frequency * 1_000_000 / count;
         }

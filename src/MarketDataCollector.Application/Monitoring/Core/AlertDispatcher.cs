@@ -233,7 +233,8 @@ public sealed class AlertDispatcher : IAlertDispatcher, IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
         _subscriptions.Clear();
     }
@@ -258,7 +259,8 @@ public sealed class AlertDispatcher : IAlertDispatcher, IDisposable
 
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
             _disposed = true;
             _dispatcher.Unsubscribe(_subscriptionId);
         }

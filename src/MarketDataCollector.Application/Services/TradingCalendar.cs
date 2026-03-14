@@ -508,14 +508,20 @@ public sealed class TradingCalendar
         var day = date.Day;
 
         // Check specific dates first
-        if (month == 1 && day <= 2) return "New Year's Day";
-        if (month == 6 && day >= 18 && day <= 20) return "Juneteenth";
-        if (month == 7 && day >= 3 && day <= 5) return "Independence Day";
-        if (month == 12 && day >= 24 && day <= 26) return "Christmas Day";
+        if (month == 1 && day <= 2)
+            return "New Year's Day";
+        if (month == 6 && day >= 18 && day <= 20)
+            return "Juneteenth";
+        if (month == 7 && day >= 3 && day <= 5)
+            return "Independence Day";
+        if (month == 12 && day >= 24 && day <= 26)
+            return "Christmas Day";
 
         // Check by month and weekday patterns
-        if (month == 1 && date.DayOfWeek == DayOfWeek.Monday) return "Martin Luther King Jr. Day";
-        if (month == 2 && date.DayOfWeek == DayOfWeek.Monday) return "Presidents' Day";
+        if (month == 1 && date.DayOfWeek == DayOfWeek.Monday)
+            return "Martin Luther King Jr. Day";
+        if (month == 2 && date.DayOfWeek == DayOfWeek.Monday)
+            return "Presidents' Day";
 
         // Good Friday - calculate precisely for the year
         if ((month == 3 || month == 4) && date.DayOfWeek == DayOfWeek.Friday)
@@ -525,9 +531,12 @@ public sealed class TradingCalendar
                 return "Good Friday";
         }
 
-        if (month == 5 && date.DayOfWeek == DayOfWeek.Monday) return "Memorial Day";
-        if (month == 9 && date.DayOfWeek == DayOfWeek.Monday) return "Labor Day";
-        if (month == 11 && date.DayOfWeek == DayOfWeek.Thursday) return "Thanksgiving Day";
+        if (month == 5 && date.DayOfWeek == DayOfWeek.Monday)
+            return "Memorial Day";
+        if (month == 9 && date.DayOfWeek == DayOfWeek.Monday)
+            return "Labor Day";
+        if (month == 11 && date.DayOfWeek == DayOfWeek.Thursday)
+            return "Thanksgiving Day";
 
         return "Market Holiday";
     }

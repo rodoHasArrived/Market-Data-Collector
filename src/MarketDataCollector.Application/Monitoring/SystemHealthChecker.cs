@@ -232,7 +232,8 @@ public sealed class SystemHealthChecker : IDisposable
 
     private void CheckHealth(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -279,7 +280,8 @@ public sealed class SystemHealthChecker : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _checkTimer.Dispose();
     }

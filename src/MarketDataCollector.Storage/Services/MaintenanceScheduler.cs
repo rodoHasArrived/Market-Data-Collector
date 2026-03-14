@@ -455,7 +455,8 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
     private TimeSpan GetRemainingWindowTime(DateTimeOffset now, MaintenanceWindow window)
     {
         var end = now.Date + window.End;
-        if (window.End < window.Start) end = end.AddDays(1);
+        if (window.End < window.Start)
+            end = end.AddDays(1);
         return end - now;
     }
 
@@ -486,7 +487,8 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
 
     public async ValueTask DisposeAsync()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
 
         _cts.Cancel();

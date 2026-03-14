@@ -1,19 +1,19 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using PolygonOptions = MarketDataCollector.Application.Config.PolygonOptions;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using MarketDataCollector.Infrastructure.Shared;
+using PolygonOptions = MarketDataCollector.Application.Config.PolygonOptions;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Polygon;
 
@@ -281,7 +281,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     protected override Task HandleMessageAsync(string message)
     {
-        if (string.IsNullOrWhiteSpace(message)) return Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(message))
+            return Task.CompletedTask;
         RecordActivity();
         ProcessMessage(message);
         return Task.CompletedTask;
@@ -356,7 +357,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     public override int SubscribeMarketDepth(SymbolConfig cfg)
     {
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (cfg is null)
+            throw new ArgumentNullException(nameof(cfg));
 
         // Polygon provides quotes (BBO), not full L2 depth
         if (!_options.SubscribeQuotes)
@@ -368,7 +370,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
         var isNewSymbol = !Subscriptions.HasSubscription(symbol, "quotes");
         var id = Subscriptions.Subscribe(symbol, "quotes");
-        if (id == -1) return -1;
+        if (id == -1)
+            return -1;
 
         Log.Debug("Subscribed to Polygon quotes for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
@@ -386,7 +389,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     public override void UnsubscribeMarketDepth(int subscriptionId)
     {
         var subscription = Subscriptions.Unsubscribe(subscriptionId);
-        if (subscription == null) return;
+        if (subscription == null)
+            return;
 
         if (!Subscriptions.HasSubscription(subscription.Symbol, "quotes"))
         {
@@ -402,7 +406,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     public override int SubscribeTrades(SymbolConfig cfg)
     {
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (cfg is null)
+            throw new ArgumentNullException(nameof(cfg));
 
         if (!_options.SubscribeTrades)
         {
@@ -413,7 +418,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
         var isNewSymbol = !Subscriptions.HasSubscription(symbol, "trades");
         var id = Subscriptions.Subscribe(symbol, "trades");
-        if (id == -1) return -1;
+        if (id == -1)
+            return -1;
 
         Log.Debug("Subscribed to Polygon trades for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
@@ -443,7 +449,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     public override void UnsubscribeTrades(int subscriptionId)
     {
         var subscription = Subscriptions.Unsubscribe(subscriptionId);
-        if (subscription == null) return;
+        if (subscription == null)
+            return;
 
         if (!Subscriptions.HasSubscription(subscription.Symbol, "trades"))
         {
@@ -463,7 +470,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     /// <returns>Subscription ID, or -1 if not supported/not subscribed.</returns>
     public int SubscribeAggregates(SymbolConfig cfg)
     {
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (cfg is null)
+            throw new ArgumentNullException(nameof(cfg));
 
         if (!_options.SubscribeAggregates)
         {
@@ -474,7 +482,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
         var isNewSymbol = !Subscriptions.HasSubscription(symbol, "aggregates");
         var id = Subscriptions.Subscribe(symbol, "aggregates");
-        if (id == -1) return -1;
+        if (id == -1)
+            return -1;
 
         Log.Debug("Subscribed to Polygon aggregates for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
@@ -494,7 +503,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     public void UnsubscribeAggregates(int subscriptionId)
     {
         var subscription = Subscriptions.Unsubscribe(subscriptionId);
-        if (subscription == null) return;
+        if (subscription == null)
+            return;
 
         if (!Subscriptions.HasSubscription(subscription.Symbol, "aggregates"))
         {
@@ -602,11 +612,21 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
                 var eventType = evProp.GetString();
                 switch (eventType)
                 {
-                    case "T": ProcessTrade(elem); break;
-                    case "Q": ProcessQuote(elem); break;
-                    case "A":  ProcessAggregate(elem, Domain.Models.AggregateTimeframe.Second); break;
-                    case "AM": ProcessAggregate(elem, Domain.Models.AggregateTimeframe.Minute); break;
-                    case "status": ProcessStatus(elem); break;
+                    case "T":
+                        ProcessTrade(elem);
+                        break;
+                    case "Q":
+                        ProcessQuote(elem);
+                        break;
+                    case "A":
+                        ProcessAggregate(elem, Domain.Models.AggregateTimeframe.Second);
+                        break;
+                    case "AM":
+                        ProcessAggregate(elem, Domain.Models.AggregateTimeframe.Minute);
+                        break;
+                    case "status":
+                        ProcessStatus(elem);
+                        break;
                     default:
                         Log.Debug("Unhandled Polygon event type: {EventType}", eventType);
                         break;
@@ -628,7 +648,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         try
         {
             var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
-            if (string.IsNullOrEmpty(symbol)) return;
+            if (string.IsNullOrEmpty(symbol))
+                return;
 
             if (!Subscriptions.HasSubscription(symbol, "trades"))
                 return;
@@ -693,7 +714,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         try
         {
             var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
-            if (string.IsNullOrEmpty(symbol)) return;
+            if (string.IsNullOrEmpty(symbol))
+                return;
 
             if (!Subscriptions.HasSubscription(symbol, "quotes"))
                 return;
@@ -750,14 +772,15 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         try
         {
             var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
-            if (string.IsNullOrEmpty(symbol)) return;
+            if (string.IsNullOrEmpty(symbol))
+                return;
 
             if (!Subscriptions.HasSubscription(symbol, "aggregates"))
                 return;
 
-            var open  = elem.TryGetProperty("o", out var oProp) ? oProp.GetDecimal() : 0m;
-            var high  = elem.TryGetProperty("h", out var hProp) ? hProp.GetDecimal() : 0m;
-            var low   = elem.TryGetProperty("l", out var lProp) ? lProp.GetDecimal() : 0m;
+            var open = elem.TryGetProperty("o", out var oProp) ? oProp.GetDecimal() : 0m;
+            var high = elem.TryGetProperty("h", out var hProp) ? hProp.GetDecimal() : 0m;
+            var low = elem.TryGetProperty("l", out var lProp) ? lProp.GetDecimal() : 0m;
             var close = elem.TryGetProperty("c", out var cProp) ? cProp.GetDecimal() : 0m;
             var volume = elem.TryGetProperty("v", out var vProp) ? vProp.GetInt64() : 0L;
 
@@ -776,8 +799,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
 
             var vwap = elem.TryGetProperty("vw", out var vwProp) ? vwProp.GetDecimal() : 0m;
             var startTimestamp = elem.TryGetProperty("s", out var sProp) ? sProp.GetInt64() : 0L;
-            var endTimestamp   = elem.TryGetProperty("e", out var eProp) ? eProp.GetInt64() : 0L;
-            var tradeCount     = elem.TryGetProperty("n", out var nProp) ? nProp.GetInt32() : 0;
+            var endTimestamp = elem.TryGetProperty("e", out var eProp) ? eProp.GetInt64() : 0L;
+            var tradeCount = elem.TryGetProperty("n", out var nProp) ? nProp.GetInt32() : 0;
 
             var startTime = startTimestamp > 0
                 ? DateTimeOffset.FromUnixTimeMilliseconds(startTimestamp)
@@ -843,15 +866,15 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     /// </summary>
     private static string MapExchangeCode(int code) => code switch
     {
-        1  => "NYSE",
-        2  => "AMEX",
-        3  => "ARCA",
-        4  => "NASDAQ",
-        5  => "NASDAQ_BX",
-        6  => "NASDAQ_PSX",
-        7  => "BATS_Y",
-        8  => "BATS",
-        9  => "IEX",
+        1 => "NYSE",
+        2 => "AMEX",
+        3 => "ARCA",
+        4 => "NASDAQ",
+        5 => "NASDAQ_BX",
+        6 => "NASDAQ_PSX",
+        7 => "BATS_Y",
+        8 => "BATS",
+        9 => "IEX",
         10 => "EDGX",
         11 => "EDGA",
         12 => "CHX",
@@ -861,7 +884,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         16 => "MEMX",
         17 => "MIAX",
         19 => "LTSE",
-        _  => $"EX_{code}"
+        _ => $"EX_{code}"
     };
 
     /// <summary>

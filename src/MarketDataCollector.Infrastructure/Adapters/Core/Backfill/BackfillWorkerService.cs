@@ -91,7 +91,8 @@ public sealed class BackfillWorkerService : IDisposable
     /// </summary>
     public void Start()
     {
-        if (_isRunning) return;
+        if (_isRunning)
+            return;
 
         _isRunning = true;
         _workerTask = RunWorkerLoopAsync(_cts.Token);
@@ -106,7 +107,8 @@ public sealed class BackfillWorkerService : IDisposable
     /// </summary>
     public async Task StopAsync()
     {
-        if (!_isRunning) return;
+        if (!_isRunning)
+            return;
 
         _cts.Cancel();
 
@@ -450,11 +452,13 @@ public sealed class BackfillWorkerService : IDisposable
         // Look for "Retry-After: <value>" or "retry-after: <value>" pattern
         const string prefix = "Retry-After:";
         var idx = message.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
-        if (idx < 0) return null;
+        if (idx < 0)
+            return null;
 
         var valueStart = idx + prefix.Length;
         var valueEnd = message.IndexOf('\n', valueStart);
-        if (valueEnd < 0) valueEnd = message.Length;
+        if (valueEnd < 0)
+            valueEnd = message.Length;
 
         var value = message[valueStart..valueEnd].Trim().TrimEnd('\r');
 
@@ -621,7 +625,8 @@ public sealed class BackfillWorkerService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         _cts.Cancel();

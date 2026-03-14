@@ -211,7 +211,8 @@ public sealed class CronExpressionParserTests
     {
         // Test with Eastern Time
         TimeZoneInfo et;
-        try { et = TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); }
+        try
+        { et = TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); }
         catch { et = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); }
 
         // "0 9 * * *" = 9 AM in target timezone

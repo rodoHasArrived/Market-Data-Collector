@@ -192,7 +192,8 @@ public class EventBuffer<T> : IDisposable where T : class
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         lock (_lock)

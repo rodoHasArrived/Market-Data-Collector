@@ -89,12 +89,14 @@ public static class LeanEndpoints
             // Check 1: LEAN_PATH environment variable set
             var pathSet = !string.IsNullOrEmpty(leanPath);
             checks.Add(new { check = "lean_path_set", passed = pathSet, detail = pathSet ? leanPath : "LEAN_PATH environment variable not set" });
-            if (!pathSet) allPassed = false;
+            if (!pathSet)
+                allPassed = false;
 
             // Check 2: Lean directory exists
             var dirExists = pathSet && Directory.Exists(leanPath);
             checks.Add(new { check = "lean_directory_exists", passed = dirExists, detail = dirExists ? "Directory found" : "Lean directory not found at specified path" });
-            if (!dirExists) allPassed = false;
+            if (!dirExists)
+                allPassed = false;
 
             // Check 3: Lean binary/DLL exists
             var binaryExists = false;
@@ -111,14 +113,16 @@ public static class LeanEndpoints
                 }
             }
             checks.Add(new { check = "lean_binary_exists", passed = binaryExists, detail = binaryExists ? "Lean launcher found" : "Lean launcher binary not found" });
-            if (!binaryExists) allPassed = false;
+            if (!binaryExists)
+                allPassed = false;
 
             // Check 4: Data directory exists
             var dataPath = Environment.GetEnvironmentVariable("LEAN_DATA_PATH")
                 ?? (dirExists ? Path.Combine(leanPath!, "Data") : null);
             var dataExists = !string.IsNullOrEmpty(dataPath) && Directory.Exists(dataPath);
             checks.Add(new { check = "data_directory_exists", passed = dataExists, detail = dataExists ? $"Data directory: {dataPath}" : "Data directory not found" });
-            if (!dataExists) allPassed = false;
+            if (!dataExists)
+                allPassed = false;
 
             var message = allPassed
                 ? "Lean Engine installation verified successfully."
@@ -552,7 +556,8 @@ public static class LeanEndpoints
 
     private static void ScanAlgorithmDirectory(string directory, string language, List<object> algorithms)
     {
-        if (!Directory.Exists(directory)) return;
+        if (!Directory.Exists(directory))
+            return;
 
         var extensions = language == "Python" ? new[] { "*.py" } : new[] { "*.cs" };
         foreach (var ext in extensions)

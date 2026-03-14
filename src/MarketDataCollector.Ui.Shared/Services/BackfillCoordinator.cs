@@ -3,9 +3,9 @@ using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Adapters.Stooq;
 using MarketDataCollector.Infrastructure.Contracts;
-using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
+using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 

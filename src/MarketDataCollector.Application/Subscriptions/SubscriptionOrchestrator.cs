@@ -68,7 +68,8 @@ public sealed class SubscriptionOrchestrator
 
     public void Apply(AppConfig cfg)
     {
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (cfg is null)
+            throw new ArgumentNullException(nameof(cfg));
 
         lock (_gate)
         {
@@ -89,17 +90,20 @@ public sealed class SubscriptionOrchestrator
                 {
                     if (_depthSubs.TryRemove(existing, out var depthId) && depthId > 0)
                     {
-                        try { _ib.UnsubscribeMarketDepth(depthId); }
+                        try
+                        { _ib.UnsubscribeMarketDepth(depthId); }
                         catch (Exception ex) { _log.Debug(ex, "Error unsubscribing market depth for {Symbol}", existing); }
                     }
                     if (_tradeSubs.TryRemove(existing, out var tradeId) && tradeId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(tradeId); }
+                        try
+                        { _ib.UnsubscribeTrades(tradeId); }
                         catch (Exception ex) { _log.Debug(ex, "Error unsubscribing trades for {Symbol}", existing); }
                     }
                     if (_optionSubs.TryRemove(existing, out var optionId) && optionId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(optionId); }
+                        try
+                        { _ib.UnsubscribeTrades(optionId); }
                         catch (Exception ex) { _log.Debug(ex, "Error unsubscribing option trades for {Symbol}", existing); }
                     }
                     _depthCollector.UnregisterSubscription(existing);
@@ -151,7 +155,8 @@ public sealed class SubscriptionOrchestrator
                         try
                         {
                             var id = _ib.SubscribeTrades(sc);
-                            if (id > 0) _optionSubs[symbol] = id;
+                            if (id > 0)
+                                _optionSubs[symbol] = id;
                         }
                         catch (Exception ex)
                         {
@@ -174,7 +179,8 @@ public sealed class SubscriptionOrchestrator
                         try
                         {
                             var id = _ib.SubscribeMarketDepth(sc);
-                            if (id > 0) _depthSubs[symbol] = id;
+                            if (id > 0)
+                                _depthSubs[symbol] = id;
                         }
                         catch (Exception ex)
                         {
@@ -189,7 +195,8 @@ public sealed class SubscriptionOrchestrator
 
                     if (_depthSubs.TryRemove(symbol, out var subId) && subId > 0)
                     {
-                        try { _ib.UnsubscribeMarketDepth(subId); }
+                        try
+                        { _ib.UnsubscribeMarketDepth(subId); }
                         catch (Exception ex) { _log.Debug(ex, "Error unsubscribing market depth for {Symbol}", symbol); }
                     }
                 }
@@ -202,7 +209,8 @@ public sealed class SubscriptionOrchestrator
                         try
                         {
                             var id = _ib.SubscribeTrades(sc);
-                            if (id > 0) _tradeSubs[symbol] = id;
+                            if (id > 0)
+                                _tradeSubs[symbol] = id;
                         }
                         catch (Exception ex)
                         {
@@ -215,7 +223,8 @@ public sealed class SubscriptionOrchestrator
                 {
                     if (_tradeSubs.TryRemove(symbol, out var tradeId) && tradeId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(tradeId); }
+                        try
+                        { _ib.UnsubscribeTrades(tradeId); }
                         catch (Exception ex) { _log.Debug(ex, "Error unsubscribing trades for {Symbol}", symbol); }
                     }
                 }

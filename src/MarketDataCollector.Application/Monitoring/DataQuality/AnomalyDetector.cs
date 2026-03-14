@@ -65,8 +65,10 @@ public sealed class AnomalyDetector : IDisposable
         decimal volume,
         string? provider = null)
     {
-        if (_isDisposed) return null;
-        if (price <= 0) return null;
+        if (_isDisposed)
+            return null;
+        if (price <= 0)
+            return null;
 
         var stats = _symbolStats.GetOrAdd(symbol.ToUpperInvariant(),
             _ => new SymbolStatistics(symbol, _config.MinSamplesForStatistics));
@@ -92,8 +94,10 @@ public sealed class AnomalyDetector : IDisposable
         decimal askPrice,
         string? provider = null)
     {
-        if (_isDisposed) return null;
-        if (bidPrice <= 0 || askPrice <= 0) return null;
+        if (_isDisposed)
+            return null;
+        if (bidPrice <= 0 || askPrice <= 0)
+            return null;
 
         var stats = _symbolStats.GetOrAdd(symbol.ToUpperInvariant(),
             _ => new SymbolStatistics(symbol, _config.MinSamplesForStatistics));
@@ -158,7 +162,8 @@ public sealed class AnomalyDetector : IDisposable
         return _anomalies.Values
             .SelectMany(list =>
             {
-                lock (list) { return list.ToList(); }
+                lock (list)
+                { return list.ToList(); }
             })
             .Where(a => DateOnly.FromDateTime(a.Timestamp.UtcDateTime) == date)
             .OrderByDescending(a => a.Timestamp)
@@ -173,7 +178,8 @@ public sealed class AnomalyDetector : IDisposable
         return _anomalies.Values
             .SelectMany(list =>
             {
-                lock (list) { return list.ToList(); }
+                lock (list)
+                { return list.ToList(); }
             })
             .OrderByDescending(a => a.Timestamp)
             .Take(count)
@@ -188,7 +194,8 @@ public sealed class AnomalyDetector : IDisposable
         return _anomalies.Values
             .SelectMany(list =>
             {
-                lock (list) { return list.ToList(); }
+                lock (list)
+                { return list.ToList(); }
             })
             .Where(a => a.Type == type)
             .OrderByDescending(a => a.Timestamp)
@@ -204,7 +211,8 @@ public sealed class AnomalyDetector : IDisposable
         return _anomalies.Values
             .SelectMany(list =>
             {
-                lock (list) { return list.ToList(); }
+                lock (list)
+                { return list.ToList(); }
             })
             .Where(a => a.Severity >= severity)
             .OrderByDescending(a => a.Timestamp)
@@ -240,7 +248,8 @@ public sealed class AnomalyDetector : IDisposable
         return _anomalies.Values
             .SelectMany(list =>
             {
-                lock (list) { return list.ToList(); }
+                lock (list)
+                { return list.ToList(); }
             })
             .Where(a => !a.IsAcknowledged)
             .OrderByDescending(a => a.Timestamp)
@@ -256,7 +265,8 @@ public sealed class AnomalyDetector : IDisposable
         var allAnomalies = _anomalies.Values
             .SelectMany(list =>
             {
-                lock (list) { return list.ToList(); }
+                lock (list)
+                { return list.ToList(); }
             })
             .ToList();
 
@@ -295,7 +305,8 @@ public sealed class AnomalyDetector : IDisposable
         return _symbolStats
             .Where(kvp =>
             {
-                if (kvp.Value.LastEventTime == DateTimeOffset.MinValue) return false;
+                if (kvp.Value.LastEventTime == DateTimeOffset.MinValue)
+                    return false;
                 var staleThreshold = _symbolStaleThresholds.TryGetValue(kvp.Key, out var perSymbol)
                     ? perSymbol
                     : _config.StaleDataThresholdSeconds;
@@ -408,8 +419,10 @@ public sealed class AnomalyDetector : IDisposable
 
     private void CheckForStaleData(object? state)
     {
-        if (_isDisposed) return;
-        if (!_config.EnableStaleDataDetection) return;
+        if (_isDisposed)
+            return;
+        if (!_config.EnableStaleDataDetection)
+            return;
 
         try
         {
@@ -447,7 +460,8 @@ public sealed class AnomalyDetector : IDisposable
 
     private void CleanupOldData(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -480,7 +494,8 @@ public sealed class AnomalyDetector : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _staleCheckTimer.Dispose();

@@ -32,7 +32,8 @@ public static class StorageConfigExtensions
 
     private static FileNamingConvention ParseNamingConvention(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return FileNamingConvention.BySymbol;
+        if (string.IsNullOrWhiteSpace(value))
+            return FileNamingConvention.BySymbol;
 
         return value.ToLowerInvariant() switch
         {
@@ -50,7 +51,8 @@ public static class StorageConfigExtensions
 
     private static DatePartition ParseDatePartition(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return DatePartition.Daily;
+        if (string.IsNullOrWhiteSpace(value))
+            return DatePartition.Daily;
 
         return value.ToLowerInvariant() switch
         {

@@ -4,10 +4,10 @@ using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using FSharpTradeEventWrapper = MarketDataCollector.FSharp.Interop.TradeEventWrapper;
 using FSharpQuoteEventWrapper = MarketDataCollector.FSharp.Interop.QuoteEventWrapper;
-using FSharpTradeValidator = MarketDataCollector.FSharp.Interop.TradeValidator;
 using FSharpQuoteValidator = MarketDataCollector.FSharp.Interop.QuoteValidator;
+using FSharpTradeEventWrapper = MarketDataCollector.FSharp.Interop.TradeEventWrapper;
+using FSharpTradeValidator = MarketDataCollector.FSharp.Interop.TradeValidator;
 
 namespace MarketDataCollector.Application.Pipeline;
 

@@ -59,7 +59,8 @@ public static class LoggingSetup
     /// </summary>
     public static void ToggleDebug()
     {
-        if (_levelSwitch == null) return;
+        if (_levelSwitch == null)
+            return;
 
         var newLevel = _levelSwitch.MinimumLevel == LogEventLevel.Debug
             ? LogEventLevel.Information

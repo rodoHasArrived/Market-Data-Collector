@@ -7,8 +7,8 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage.Interfaces;
 using Xunit;
 
@@ -57,8 +57,10 @@ public sealed class FixtureMarketDataClient : IMarketDataClient
     public Task DisconnectAsync(CancellationToken ct = default)
     {
         _connected = false;
-        foreach (var sub in _tradeSubs.Values) sub.Cts.Cancel();
-        foreach (var sub in _depthSubs.Values) sub.Cts.Cancel();
+        foreach (var sub in _tradeSubs.Values)
+            sub.Cts.Cancel();
+        foreach (var sub in _depthSubs.Values)
+            sub.Cts.Cancel();
         _tradeSubs.Clear();
         _depthSubs.Clear();
         return Task.CompletedTask;
@@ -127,7 +129,8 @@ public sealed class FixtureMarketDataClient : IMarketDataClient
                 _publisher.TryPublish(in evt);
             }
 
-            try { await Task.Delay(TickInterval, ct); }
+            try
+            { await Task.Delay(TickInterval, ct); }
             catch (OperationCanceledException) { break; }
         }
     }
@@ -160,7 +163,8 @@ public sealed class FixtureMarketDataClient : IMarketDataClient
             GeneratedEvents.Add(evt);
             _publisher.TryPublish(in evt);
 
-            try { await Task.Delay(TickInterval, ct); }
+            try
+            { await Task.Delay(TickInterval, ct); }
             catch (OperationCanceledException) { break; }
         }
     }

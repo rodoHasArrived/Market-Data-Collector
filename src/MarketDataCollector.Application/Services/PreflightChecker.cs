@@ -3,10 +3,10 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Application.Config;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -276,7 +276,9 @@ public sealed class PreflightChecker
                 // Clean up test file if it exists
                 if (File.Exists(testFile))
                 {
-                    try { File.Delete(testFile); } catch (IOException) { }
+                    try
+                    { File.Delete(testFile); }
+                    catch (IOException) { }
                 }
             }
 
@@ -314,7 +316,8 @@ public sealed class PreflightChecker
 
         foreach (var (protocol, host, port) in endpoints)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+                break;
 
             try
             {
@@ -669,7 +672,8 @@ public sealed class PreflightChecker
 
         foreach (var (name, url, _) in providers)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+                break;
 
             try
             {

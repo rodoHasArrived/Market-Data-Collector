@@ -1,9 +1,9 @@
+using System.Text.Json;
 using FluentAssertions;
 using MarketDataCollector.Contracts.Catalog;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
-using System.Text.Json;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Storage;

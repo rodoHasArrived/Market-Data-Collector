@@ -333,7 +333,8 @@ public static class MarketDataTracing
     /// </summary>
     public static void RecordError(Activity? activity, Exception ex)
     {
-        if (activity == null) return;
+        if (activity == null)
+            return;
 
         activity.SetStatus(ActivityStatusCode.Error, ex.Message);
         activity.AddException(ex);

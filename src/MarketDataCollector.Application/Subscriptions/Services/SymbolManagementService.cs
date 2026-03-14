@@ -332,7 +332,8 @@ public sealed class SymbolManagementService
                 ? $"{symbol.OldestData:yyyy-MM-dd} to {symbol.NewestData:yyyy-MM-dd}"
                 : "Unknown";
             var types = string.Join(", ", symbol.DataTypes.Take(3));
-            if (symbol.DataTypes.Length > 3) types += "...";
+            if (symbol.DataTypes.Length > 3)
+                types += "...";
 
             Console.WriteLine($"  {symbol.Symbol,-12} {symbol.FileCount,-8} {sizeStr,-12} {dateRange,-25} {types}");
         }
@@ -403,10 +404,12 @@ public sealed class SymbolManagementService
             foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
             {
                 // Skip system directories
-                if (file.Contains("/_") || file.Contains("\\_")) continue;
+                if (file.Contains("/_") || file.Contains("\\_"))
+                    continue;
 
                 var extension = GetDataExtension(file);
-                if (extension == null) continue;
+                if (extension == null)
+                    continue;
 
                 var fileName = Path.GetFileName(file);
                 var dirPath = Path.GetDirectoryName(file) ?? "";
@@ -414,7 +417,8 @@ public sealed class SymbolManagementService
 
                 // Try to extract symbol from file path
                 var symbol = ExtractSymbolFromPath(relativePath, fileName);
-                if (string.IsNullOrEmpty(symbol)) continue;
+                if (string.IsNullOrEmpty(symbol))
+                    continue;
 
                 if (options.FilterSymbols?.Length > 0 &&
                     !options.FilterSymbols.Contains(symbol, StringComparer.OrdinalIgnoreCase))
@@ -571,9 +575,12 @@ public sealed class SymbolManagementService
 
     private static bool IsLikelySymbol(string value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return false;
-        if (value.Length > 10) return false;
-        if (value.Length < 1) return false;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+        if (value.Length > 10)
+            return false;
+        if (value.Length < 1)
+            return false;
 
         // Symbols are typically uppercase letters, possibly with dots or dashes
         return Regex.IsMatch(value, @"^[A-Za-z][A-Za-z0-9\.\-]{0,9}$");
@@ -605,8 +612,10 @@ public sealed class SymbolManagementService
 
     private static bool IsValidSymbol(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return false;
-        if (symbol.Length > 20) return false;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return false;
+        if (symbol.Length > 20)
+            return false;
         // Allow alphanumeric, dots, dashes, and spaces (for preferreds)
         return symbol.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == ' ');
     }
@@ -627,9 +636,12 @@ public sealed class SymbolManagementService
     private static string BuildResultMessage(int added, int updated, int skipped)
     {
         var parts = new List<string>();
-        if (added > 0) parts.Add($"added {added}");
-        if (updated > 0) parts.Add($"updated {updated}");
-        if (skipped > 0) parts.Add($"skipped {skipped}");
+        if (added > 0)
+            parts.Add($"added {added}");
+        if (updated > 0)
+            parts.Add($"updated {updated}");
+        if (skipped > 0)
+            parts.Add($"skipped {skipped}");
         return parts.Count > 0 ? string.Join(", ", parts) : "No changes made";
     }
 

@@ -102,7 +102,8 @@ public static class AuthEndpoints
     private static string BuildLoginRedirect(string? returnUrl, bool error)
     {
         var url = "/login";
-        if (error) url += "?error=1";
+        if (error)
+            url += "?error=1";
         if (!string.IsNullOrWhiteSpace(returnUrl))
             url += $"{(error ? "&" : "?")}returnUrl={Uri.EscapeDataString(returnUrl)}";
         return url;

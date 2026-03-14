@@ -321,14 +321,17 @@ public sealed class DetailedHealthCheck : IDisposable
 
     private static DetailedHealthStatus GetStatusFromMemory(MemoryInfo memory)
     {
-        if (memory.IsCritical) return DetailedHealthStatus.Unhealthy;
-        if (memory.IsWarning) return DetailedHealthStatus.Degraded;
+        if (memory.IsCritical)
+            return DetailedHealthStatus.Unhealthy;
+        if (memory.IsWarning)
+            return DetailedHealthStatus.Degraded;
         return DetailedHealthStatus.Healthy;
     }
 
     private void CheckDependencies(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         // Fire-and-forget the async work, but with proper exception handling in the async method
         _ = CheckDependenciesInternalAsync();
@@ -385,7 +388,8 @@ public sealed class DetailedHealthCheck : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _checkTimer.Dispose();
         _dependencies.Clear();

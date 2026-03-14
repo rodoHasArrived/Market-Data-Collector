@@ -80,7 +80,8 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
                 string? line;
                 while ((line = await reader.ReadLineAsync(ct).ConfigureAwait(false)) != null)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
                     try
                     {
                         using var doc = JsonDocument.Parse(line);
@@ -237,7 +238,8 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
     /// </summary>
     private void EvictExpiredBackground()
     {
-        if (_cache.Count <= _maxInMemoryEntries) return;
+        if (_cache.Count <= _maxInMemoryEntries)
+            return;
         EvictExpired(DateTimeOffset.UtcNow.Ticks);
     }
 
@@ -265,7 +267,8 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
     /// </summary>
     public async Task FlushAsync(CancellationToken ct = default)
     {
-        if (_writer == null) return;
+        if (_writer == null)
+            return;
         await _writeLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
@@ -318,7 +321,8 @@ public sealed class PersistentDedupLedger : IAsyncDisposable
             catch (Exception ex)
             {
                 _log.Warning(ex, "Dedup ledger compaction failed, cleaning up temp file");
-                try { File.Delete(tempPath); }
+                try
+                { File.Delete(tempPath); }
                 catch { /* best effort */ }
             }
 

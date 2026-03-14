@@ -1,5 +1,5 @@
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 
 namespace MarketDataCollector.Infrastructure.Adapters.Core;
 
@@ -97,16 +97,24 @@ public interface IProviderMetadata
         if (caps.SupportsBackfill)
         {
             types.Add("DailyBars");
-            if (caps.SupportsIntraday) types.Add("IntradayBars");
-            if (caps.SupportsDividends) types.Add("Dividends");
-            if (caps.SupportsSplits) types.Add("Splits");
+            if (caps.SupportsIntraday)
+                types.Add("IntradayBars");
+            if (caps.SupportsDividends)
+                types.Add("Dividends");
+            if (caps.SupportsSplits)
+                types.Add("Splits");
         }
 
-        if (caps.SupportsRealtimeTrades || caps.SupportsHistoricalTrades) types.Add("Trades");
-        if (caps.SupportsRealtimeQuotes || caps.SupportsHistoricalQuotes) types.Add("Quotes");
-        if (caps.SupportsMarketDepth) types.Add("MarketDepth");
-        if (caps.SupportsHistoricalAuctions) types.Add("Auctions");
-        if (caps.SupportsOptionsChain) types.Add("OptionsChain");
+        if (caps.SupportsRealtimeTrades || caps.SupportsHistoricalTrades)
+            types.Add("Trades");
+        if (caps.SupportsRealtimeQuotes || caps.SupportsHistoricalQuotes)
+            types.Add("Quotes");
+        if (caps.SupportsMarketDepth)
+            types.Add("MarketDepth");
+        if (caps.SupportsHistoricalAuctions)
+            types.Add("Auctions");
+        if (caps.SupportsOptionsChain)
+            types.Add("OptionsChain");
 
         return types.ToArray();
     }
@@ -366,40 +374,64 @@ public sealed record ProviderCapabilities
         var dict = new Dictionary<string, object>();
 
         // Provider types
-        if (SupportsStreaming) dict["SupportsStreaming"] = true;
-        if (SupportsBackfill) dict["SupportsBackfill"] = true;
-        if (SupportsSymbolSearch) dict["SupportsSymbolSearch"] = true;
-        if (SupportsOptionsChain) dict["SupportsOptionsChain"] = true;
+        if (SupportsStreaming)
+            dict["SupportsStreaming"] = true;
+        if (SupportsBackfill)
+            dict["SupportsBackfill"] = true;
+        if (SupportsSymbolSearch)
+            dict["SupportsSymbolSearch"] = true;
+        if (SupportsOptionsChain)
+            dict["SupportsOptionsChain"] = true;
 
         // Streaming
-        if (SupportsRealtimeTrades) dict["SupportsRealtimeTrades"] = true;
-        if (SupportsRealtimeQuotes) dict["SupportsRealtimeQuotes"] = true;
-        if (SupportsMarketDepth) dict["SupportsMarketDepth"] = true;
-        if (MaxDepthLevels.HasValue) dict["MaxDepthLevels"] = MaxDepthLevels.Value;
-        if (MaxSymbolsPerSubscription.HasValue) dict["MaxSymbolsPerSubscription"] = MaxSymbolsPerSubscription.Value;
+        if (SupportsRealtimeTrades)
+            dict["SupportsRealtimeTrades"] = true;
+        if (SupportsRealtimeQuotes)
+            dict["SupportsRealtimeQuotes"] = true;
+        if (SupportsMarketDepth)
+            dict["SupportsMarketDepth"] = true;
+        if (MaxDepthLevels.HasValue)
+            dict["MaxDepthLevels"] = MaxDepthLevels.Value;
+        if (MaxSymbolsPerSubscription.HasValue)
+            dict["MaxSymbolsPerSubscription"] = MaxSymbolsPerSubscription.Value;
 
         // Backfill
-        if (SupportsAdjustedPrices) dict["SupportsAdjustedPrices"] = true;
-        if (SupportsIntraday) dict["SupportsIntraday"] = true;
-        if (SupportsDividends) dict["SupportsDividends"] = true;
-        if (SupportsSplits) dict["SupportsSplits"] = true;
-        if (SupportsHistoricalQuotes) dict["SupportsQuotes"] = true;
-        if (SupportsHistoricalTrades) dict["SupportsTrades"] = true;
-        if (SupportsHistoricalAuctions) dict["SupportsAuctions"] = true;
-        if (MinBarResolution.HasValue) dict["MinBarResolutionMs"] = MinBarResolution.Value.TotalMilliseconds;
-        if (SupportedBarIntervals is { Count: > 0 }) dict["SupportedBarIntervals"] = SupportedBarIntervals;
+        if (SupportsAdjustedPrices)
+            dict["SupportsAdjustedPrices"] = true;
+        if (SupportsIntraday)
+            dict["SupportsIntraday"] = true;
+        if (SupportsDividends)
+            dict["SupportsDividends"] = true;
+        if (SupportsSplits)
+            dict["SupportsSplits"] = true;
+        if (SupportsHistoricalQuotes)
+            dict["SupportsQuotes"] = true;
+        if (SupportsHistoricalTrades)
+            dict["SupportsTrades"] = true;
+        if (SupportsHistoricalAuctions)
+            dict["SupportsAuctions"] = true;
+        if (MinBarResolution.HasValue)
+            dict["MinBarResolutionMs"] = MinBarResolution.Value.TotalMilliseconds;
+        if (SupportedBarIntervals is { Count: > 0 })
+            dict["SupportedBarIntervals"] = SupportedBarIntervals;
 
         // Symbol search
-        if (SupportedAssetTypes is { Count: > 0 }) dict["SupportedAssetTypes"] = SupportedAssetTypes;
-        if (SupportedExchanges is { Count: > 0 }) dict["SupportedExchanges"] = SupportedExchanges;
+        if (SupportedAssetTypes is { Count: > 0 })
+            dict["SupportedAssetTypes"] = SupportedAssetTypes;
+        if (SupportedExchanges is { Count: > 0 })
+            dict["SupportedExchanges"] = SupportedExchanges;
 
         // Markets
-        if (SupportedMarkets is { Count: > 0 }) dict["SupportedMarkets"] = SupportedMarkets;
+        if (SupportedMarkets is { Count: > 0 })
+            dict["SupportedMarkets"] = SupportedMarkets;
 
         // Rate limiting
-        if (MaxRequestsPerWindow.HasValue) dict["MaxRequestsPerWindow"] = MaxRequestsPerWindow.Value;
-        if (RateLimitWindow.HasValue) dict["RateLimitWindowSeconds"] = RateLimitWindow.Value.TotalSeconds;
-        if (MinRequestDelay.HasValue) dict["RateLimitMinDelayMs"] = MinRequestDelay.Value.TotalMilliseconds;
+        if (MaxRequestsPerWindow.HasValue)
+            dict["MaxRequestsPerWindow"] = MaxRequestsPerWindow.Value;
+        if (RateLimitWindow.HasValue)
+            dict["RateLimitWindowSeconds"] = RateLimitWindow.Value.TotalSeconds;
+        if (MinRequestDelay.HasValue)
+            dict["RateLimitMinDelayMs"] = MinRequestDelay.Value.TotalMilliseconds;
 
         return dict;
     }

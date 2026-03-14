@@ -95,7 +95,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
 
     private string GetExtension()
     {
-        if (!_options.Compress) return ".jsonl";
+        if (!_options.Compress)
+            return ".jsonl";
 
         return _options.CompressionCodec switch
         {
@@ -220,7 +221,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
 
     private static string Sanitize(string s)
     {
-        if (string.IsNullOrWhiteSpace(s)) return "_unknown";
+        if (string.IsNullOrWhiteSpace(s))
+            return "_unknown";
         Span<char> buf = stackalloc char[s.Length];
         int j = 0;
         foreach (var ch in s)
@@ -241,7 +243,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     /// <returns>Parsed metadata, or null if the path cannot be parsed.</returns>
     public ParsedPathMetadata? TryParsePath(string filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath)) return null;
+        if (string.IsNullOrWhiteSpace(filePath))
+            return null;
 
         var root = string.IsNullOrWhiteSpace(_options.RootPath) ? "data" : _options.RootPath;
         var relativePath = filePath.StartsWith(root, StringComparison.OrdinalIgnoreCase)
@@ -288,7 +291,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
             fileName = fileName[prefix.Length..];
 
         var segments = fileName.Split('_');
-        if (segments.Length < 2) return null;
+        if (segments.Length < 2)
+            return null;
 
         var symbol = segments[0];
         var eventType = segments.Length > 1 ? segments[1] : "Unknown";
@@ -301,7 +305,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // BySymbol: {root}/{symbol}/{type}/{prefix}{date}.ext
     private ParsedPathMetadata? ParseBySymbolPath(string[] parts, string fileName)
     {
-        if (parts.Length < 2) return null;
+        if (parts.Length < 2)
+            return null;
 
         var symbol = parts[0];
         var eventType = parts.Length > 1 ? parts[1] : "Unknown";
@@ -314,7 +319,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // ByDate: {root}/{date}/{symbol}/{prefix}{type}.ext
     private ParsedPathMetadata? ParseByDatePath(string[] parts, string fileName)
     {
-        if (parts.Length < 2) return null;
+        if (parts.Length < 2)
+            return null;
 
         var dateStr = parts[0];
         var symbol = parts.Length > 1 ? parts[1] : "Unknown";
@@ -327,7 +333,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // ByType: {root}/{type}/{symbol}/{prefix}{date}.ext
     private ParsedPathMetadata? ParseByTypePath(string[] parts, string fileName)
     {
-        if (parts.Length < 2) return null;
+        if (parts.Length < 2)
+            return null;
 
         var eventType = parts[0];
         var symbol = parts.Length > 1 ? parts[1] : "Unknown";
@@ -340,7 +347,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // BySource: {root}/{source}/{symbol}/{type}/{prefix}{date}.ext
     private ParsedPathMetadata? ParseBySourcePath(string[] parts, string fileName)
     {
-        if (parts.Length < 3) return null;
+        if (parts.Length < 3)
+            return null;
 
         var source = parts[0];
         var symbol = parts[1];
@@ -354,7 +362,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // ByAssetClass: {root}/{asset_class}/{symbol}/{type}/{prefix}{date}.ext
     private ParsedPathMetadata? ParseByAssetClassPath(string[] parts, string fileName)
     {
-        if (parts.Length < 3) return null;
+        if (parts.Length < 3)
+            return null;
 
         // Asset class is parts[0], not needed for metadata
         var symbol = parts[1];
@@ -368,7 +377,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // Hierarchical: {root}/{source}/{asset_class}/{symbol}/{type}/{prefix}{date}.ext
     private ParsedPathMetadata? ParseHierarchicalPath(string[] parts, string fileName)
     {
-        if (parts.Length < 4) return null;
+        if (parts.Length < 4)
+            return null;
 
         var source = parts[0];
         // Asset class is parts[1], not needed for metadata
@@ -383,7 +393,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
     // Canonical: {root}/{year}/{month}/{day}/{source}/{symbol}/{prefix}{type}.ext
     private ParsedPathMetadata? ParseCanonicalPath(string[] parts, string fileName)
     {
-        if (parts.Length < 5) return null;
+        if (parts.Length < 5)
+            return null;
 
         var year = parts[0];
         var month = parts[1];
@@ -395,7 +406,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
         DateTimeOffset? date = null;
         if (int.TryParse(year, out var y) && int.TryParse(month, out var m) && int.TryParse(day, out var d))
         {
-            try { date = new DateTimeOffset(new DateTime(y, m, d), TimeSpan.Zero); }
+            try
+            { date = new DateTimeOffset(new DateTime(y, m, d), TimeSpan.Zero); }
             catch (ArgumentOutOfRangeException) { /* invalid date components */ }
         }
 
@@ -463,7 +475,8 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
 
     private static DateTimeOffset? TryExtractDate(string? dateStr)
     {
-        if (string.IsNullOrWhiteSpace(dateStr)) return null;
+        if (string.IsNullOrWhiteSpace(dateStr))
+            return null;
 
         // Try various date formats
         var formats = new[]

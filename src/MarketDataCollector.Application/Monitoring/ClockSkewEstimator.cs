@@ -96,8 +96,10 @@ public sealed class ClockSkewEstimator
                 }
 
                 Interlocked.Increment(ref SampleCount);
-                if (skewMs < MinSkewMs) MinSkewMs = skewMs;
-                if (skewMs > MaxSkewMs) MaxSkewMs = skewMs;
+                if (skewMs < MinSkewMs)
+                    MinSkewMs = skewMs;
+                if (skewMs > MaxSkewMs)
+                    MaxSkewMs = skewMs;
             }
         }
     }

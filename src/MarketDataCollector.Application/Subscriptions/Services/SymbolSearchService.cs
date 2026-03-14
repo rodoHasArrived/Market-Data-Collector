@@ -452,7 +452,8 @@ public sealed class SymbolSearchService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
         _disposed = true;
 
         foreach (var provider in _providers)

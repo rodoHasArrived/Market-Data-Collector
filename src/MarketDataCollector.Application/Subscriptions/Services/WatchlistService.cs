@@ -103,7 +103,8 @@ public sealed class WatchlistService
     {
         var watchlists = await LoadWatchlistsAsync(ct);
         var index = watchlists.FindIndex(w => w.Id.Equals(watchlistId, StringComparison.OrdinalIgnoreCase));
-        if (index < 0) return null;
+        if (index < 0)
+            return null;
 
         var existing = watchlists[index];
         var updated = existing with
@@ -294,7 +295,8 @@ public sealed class WatchlistService
                 PropertyNameCaseInsensitive = true
             });
 
-            if (imported is null) return null;
+            if (imported is null)
+                return null;
 
             var request = new CreateWatchlistRequest(
                 Name: imported.Name,
@@ -319,7 +321,8 @@ public sealed class WatchlistService
     public async Task<string?> ExportWatchlistAsync(string watchlistId, CancellationToken ct = default)
     {
         var watchlist = await GetWatchlistAsync(watchlistId, ct);
-        if (watchlist is null) return null;
+        if (watchlist is null)
+            return null;
 
         return JsonSerializer.Serialize(watchlist, new JsonSerializerOptions
         {

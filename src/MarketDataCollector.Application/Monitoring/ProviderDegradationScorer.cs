@@ -56,7 +56,8 @@ public sealed class ProviderDegradationScorer : IDisposable
     /// </summary>
     public void RecordError(string providerName, string errorType)
     {
-        if (_isDisposed || string.IsNullOrEmpty(providerName)) return;
+        if (_isDisposed || string.IsNullOrEmpty(providerName))
+            return;
 
         var tracker = _errorTrackers.GetOrAdd(providerName, _ => new ProviderErrorTracker(_config.ErrorWindowSeconds));
         tracker.RecordError(errorType);
@@ -67,7 +68,8 @@ public sealed class ProviderDegradationScorer : IDisposable
     /// </summary>
     public void RecordSuccess(string providerName)
     {
-        if (_isDisposed || string.IsNullOrEmpty(providerName)) return;
+        if (_isDisposed || string.IsNullOrEmpty(providerName))
+            return;
 
         var tracker = _errorTrackers.GetOrAdd(providerName, _ => new ProviderErrorTracker(_config.ErrorWindowSeconds));
         tracker.RecordSuccess();
@@ -212,7 +214,8 @@ public sealed class ProviderDegradationScorer : IDisposable
 
     private void EvaluateScores(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -248,7 +251,8 @@ public sealed class ProviderDegradationScorer : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _scoringTimer.Dispose();
         _errorTrackers.Clear();
@@ -284,7 +288,8 @@ public sealed class ProviderDegradationScorer : IDisposable
             PruneOldEntries();
 
             var entries = _events.ToArray();
-            if (entries.Length == 0) return 0.0;
+            if (entries.Length == 0)
+                return 0.0;
 
             var errorCount = entries.Count(e => e.IsError);
             return (double)errorCount / entries.Length;

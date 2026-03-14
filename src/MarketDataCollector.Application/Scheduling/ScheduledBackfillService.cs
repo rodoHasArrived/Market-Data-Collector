@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Logging;
 using MarketDataCollector.Infrastructure.Adapters.Core;
+using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Application.Scheduling;
 
@@ -122,8 +122,10 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
         _cts?.Cancel();
 
         var tasks = new List<Task>();
-        if (_schedulerTask != null) tasks.Add(_schedulerTask);
-        if (_executionTask != null) tasks.Add(_executionTask);
+        if (_schedulerTask != null)
+            tasks.Add(_schedulerTask);
+        if (_executionTask != null)
+            tasks.Add(_executionTask);
 
         try
         {

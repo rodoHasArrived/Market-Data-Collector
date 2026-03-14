@@ -205,8 +205,10 @@ public sealed class ConfigValidatorCli
             foreach (var sym in config.Symbols.Take(10))
             {
                 var flags = new List<string>();
-                if (sym.SubscribeTrades) flags.Add("Trades");
-                if (sym.SubscribeDepth) flags.Add($"Depth({sym.DepthLevels})");
+                if (sym.SubscribeTrades)
+                    flags.Add("Trades");
+                if (sym.SubscribeDepth)
+                    flags.Add($"Depth({sym.DepthLevels})");
                 Console.WriteLine($"      • {sym.Symbol}: {string.Join(", ", flags)}");
             }
 

@@ -3,14 +3,13 @@ using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Commands;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
-using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
-using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Application.ResultTypes;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -20,14 +19,15 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Adapters.Core;
 using MarketDataCollector.Infrastructure.Adapters.Failover;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
-using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Replay;
 using MarketDataCollector.Storage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
+using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
 
 namespace MarketDataCollector;
 
@@ -557,7 +557,8 @@ public partial class Program
 
     private static AppConfig EnsureDefaultSymbols(AppConfig cfg)
     {
-        if (cfg.Symbols is { Length: > 0 }) return cfg;
+        if (cfg.Symbols is { Length: > 0 })
+            return cfg;
 
         var fallback = new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
         return cfg with { Symbols = fallback };

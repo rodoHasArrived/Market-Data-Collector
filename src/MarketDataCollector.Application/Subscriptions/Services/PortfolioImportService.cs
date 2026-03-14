@@ -327,7 +327,8 @@ public sealed class PortfolioImportService
         var filteredPositions = portfolio.Positions
             .Where(p =>
             {
-                if (excludeSymbols.Contains(p.Symbol)) return false;
+                if (excludeSymbols.Contains(p.Symbol))
+                    return false;
 
                 if (options.MinPositionValue.HasValue && p.MarketValue < options.MinPositionValue.Value)
                     return false;
@@ -421,7 +422,8 @@ public sealed class PortfolioImportService
 
     private static string MapAssetClass(string? assetClass)
     {
-        if (string.IsNullOrEmpty(assetClass)) return "STK";
+        if (string.IsNullOrEmpty(assetClass))
+            return "STK";
 
         return assetClass.ToLowerInvariant() switch
         {

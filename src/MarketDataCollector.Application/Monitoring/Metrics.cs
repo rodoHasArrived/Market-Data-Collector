@@ -87,7 +87,8 @@ public static class Metrics
     public static void RecordLatency(long startTimestamp)
     {
         var elapsed = Stopwatch.GetTimestamp() - startTimestamp;
-        if (elapsed < 0) return;
+        if (elapsed < 0)
+            return;
 
         Interlocked.Add(ref _totalProcessingTicks, elapsed);
         Interlocked.Increment(ref _latencySampleCount);
@@ -97,7 +98,8 @@ public static class Metrics
         while (elapsed < currentMin)
         {
             var previous = Interlocked.CompareExchange(ref _minLatencyTicks, elapsed, currentMin);
-            if (previous == currentMin) break;
+            if (previous == currentMin)
+                break;
             currentMin = previous;
         }
 
@@ -106,7 +108,8 @@ public static class Metrics
         while (elapsed > currentMax)
         {
             var previous = Interlocked.CompareExchange(ref _maxLatencyTicks, elapsed, currentMax);
-            if (previous == currentMax) break;
+            if (previous == currentMax)
+                break;
             currentMax = previous;
         }
     }
@@ -119,7 +122,8 @@ public static class Metrics
         get
         {
             var samples = Interlocked.Read(ref _latencySampleCount);
-            if (samples == 0) return 0;
+            if (samples == 0)
+                return 0;
 
             var totalTicks = Interlocked.Read(ref _totalProcessingTicks);
             return (double)totalTicks / samples / Stopwatch.Frequency * 1_000_000;
@@ -134,7 +138,8 @@ public static class Metrics
         get
         {
             var ticks = Interlocked.Read(ref _minLatencyTicks);
-            if (ticks == long.MaxValue) return 0;
+            if (ticks == long.MaxValue)
+                return 0;
             return (double)ticks / Stopwatch.Frequency * 1_000_000;
         }
     }
@@ -168,7 +173,8 @@ public static class Metrics
         get
         {
             var elapsed = GetElapsedSeconds();
-            if (elapsed <= 0) return 0;
+            if (elapsed <= 0)
+                return 0;
             return Published / elapsed;
         }
     }
@@ -181,7 +187,8 @@ public static class Metrics
         get
         {
             var elapsed = GetElapsedSeconds();
-            if (elapsed <= 0) return 0;
+            if (elapsed <= 0)
+                return 0;
             return Trades / elapsed;
         }
     }
@@ -194,7 +201,8 @@ public static class Metrics
         get
         {
             var elapsed = GetElapsedSeconds();
-            if (elapsed <= 0) return 0;
+            if (elapsed <= 0)
+                return 0;
             return DepthUpdates / elapsed;
         }
     }
@@ -207,7 +215,8 @@ public static class Metrics
         get
         {
             var elapsed = GetElapsedSeconds();
-            if (elapsed <= 0) return 0;
+            if (elapsed <= 0)
+                return 0;
             return HistoricalBars / elapsed;
         }
     }
@@ -220,7 +229,8 @@ public static class Metrics
         get
         {
             var total = Published + Dropped;
-            if (total == 0) return 0;
+            if (total == 0)
+                return 0;
             return (double)Dropped / total * 100;
         }
     }

@@ -27,7 +27,8 @@ public abstract class SymbolSubscriptionTracker
     /// </summary>
     public void RegisterSubscription(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) throw new ArgumentException("Symbol required.", nameof(symbol));
+        if (string.IsNullOrWhiteSpace(symbol))
+            throw new ArgumentException("Symbol required.", nameof(symbol));
         _subscriptions[new SymbolId(symbol.Trim())] = true;
     }
 
@@ -36,7 +37,8 @@ public abstract class SymbolSubscriptionTracker
     /// </summary>
     public void UnregisterSubscription(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol)) return;
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
         _subscriptions.TryRemove(new SymbolId(symbol.Trim()), out _);
     }
 

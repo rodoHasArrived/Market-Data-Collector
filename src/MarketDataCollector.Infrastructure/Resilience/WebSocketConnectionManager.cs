@@ -270,7 +270,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         // Cancel receive loop
         if (_connectionCts != null)
         {
-            try { _connectionCts.Cancel(); }
+            try
+            { _connectionCts.Cancel(); }
             catch (Exception ex)
             {
                 _log.Debug(ex, "CancellationTokenSource.Cancel failed during {Provider} disconnect", _providerName);
@@ -302,7 +303,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         // Wait for receive loop to complete
         if (_receiveTask != null)
         {
-            try { await _receiveTask.ConfigureAwait(false); }
+            try
+            { await _receiveTask.ConfigureAwait(false); }
             catch (Exception ex)
             {
                 _log.Debug(ex, "Receive loop completion error during {Provider} disconnect", _providerName);
@@ -441,7 +443,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
     private async Task ReceiveLoopAsync(Func<string, Task> messageHandler, CancellationToken ct)
     {
-        if (_webSocket == null) return;
+        if (_webSocket == null)
+            return;
 
         var buffer = new byte[64 * 1024];
         var messageBuilder = new StringBuilder(128 * 1024);
@@ -484,7 +487,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
                 }
                 while (!result.EndOfMessage);
 
-                if (oversized) continue;
+                if (oversized)
+                    continue;
 
                 var message = messageBuilder.ToString();
                 if (!string.IsNullOrWhiteSpace(message))
@@ -553,44 +557,51 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         // 2. Cancel tokens to signal the receive loop to stop
         if (cts != null)
         {
-            try { cts.Cancel(); }
+            try
+            { cts.Cancel(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} CTS cancel failed during cleanup", _providerName); }
         }
 
         // 3. Wait for the receive task to complete before disposing resources it uses
         if (receiveTask != null)
         {
-            try { await receiveTask.ConfigureAwait(false); }
+            try
+            { await receiveTask.ConfigureAwait(false); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} receive task failed during cleanup", _providerName); }
         }
 
         // 4. Now safe to dispose CTS and WebSocket — receive loop has exited
         if (receiveLoopCts != null)
         {
-            try { receiveLoopCts.Dispose(); }
+            try
+            { receiveLoopCts.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} receive loop CTS dispose failed during cleanup", _providerName); }
         }
 
         if (cts != null)
         {
-            try { cts.Dispose(); }
+            try
+            { cts.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} CTS dispose failed during cleanup", _providerName); }
         }
 
         if (ws != null)
         {
-            try { ws.Dispose(); }
+            try
+            { ws.Dispose(); }
             catch (Exception ex) { _log.Debug(ex, "{Provider} WebSocket dispose failed during cleanup", _providerName); }
         }
     }
 
     private void CleanupFailedConnection()
     {
-        try { _webSocket?.Dispose(); }
+        try
+        { _webSocket?.Dispose(); }
         catch (Exception ex) { _log.Debug(ex, "{Provider} WebSocket dispose failed during connection cleanup", _providerName); }
         _webSocket = null;
 
-        try { _connectionCts?.Dispose(); }
+        try
+        { _connectionCts?.Dispose(); }
         catch (Exception ex) { _log.Debug(ex, "{Provider} CTS dispose failed during connection cleanup", _providerName); }
         _connectionCts = null;
     }

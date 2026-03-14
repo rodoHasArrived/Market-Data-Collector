@@ -351,7 +351,8 @@ public sealed class AlertRunbookRegistry
         ArgumentNullException.ThrowIfNull(alert);
 
         var entry = GetByAlertName(alert.Title);
-        if (entry == null) return alert;
+        if (entry == null)
+            return alert;
 
         // Build augmented context with runbook info
         var augmented = new Dictionary<string, object>(

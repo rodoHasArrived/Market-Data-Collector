@@ -80,27 +80,48 @@ public sealed class UiServer : IAsyncDisposable
             options.TagActionsBy(api =>
             {
                 var path = api.RelativePath ?? string.Empty;
-                if (path.StartsWith("api/symbols")) return ["Symbols"];
-                if (path.StartsWith("api/storage/quality")) return ["Storage Quality"];
-                if (path.StartsWith("api/storage")) return ["Storage"];
-                if (path.StartsWith("api/config")) return ["Configuration"];
-                if (path.StartsWith("api/backfill")) return ["Backfill"];
-                if (path.StartsWith("api/providers")) return ["Providers"];
-                if (path.StartsWith("api/quality")) return ["Data Quality"];
-                if (path.StartsWith("api/sla")) return ["SLA"];
-                if (path.StartsWith("api/maintenance")) return ["Maintenance"];
-                if (path.StartsWith("api/packaging")) return ["Packaging"];
-                if (path.StartsWith("api/failover")) return ["Failover"];
-                if (path.StartsWith("api/export")) return ["Export"];
-                if (path.StartsWith("api/diagnostics")) return ["Diagnostics"];
-                if (path.StartsWith("api/admin")) return ["Admin"];
-                if (path.StartsWith("api/live")) return ["Live Data"];
-                if (path.StartsWith("api/replay")) return ["Replay"];
-                if (path.StartsWith("api/lean")) return ["Lean Integration"];
-                if (path.StartsWith("api/messaging")) return ["Messaging"];
-                if (path.StartsWith("api/analytics")) return ["Analytics"];
-                if (path.StartsWith("api/historical")) return ["Historical"];
-                if (path.StartsWith("api/options")) return ["Options"];
+                if (path.StartsWith("api/symbols"))
+                    return ["Symbols"];
+                if (path.StartsWith("api/storage/quality"))
+                    return ["Storage Quality"];
+                if (path.StartsWith("api/storage"))
+                    return ["Storage"];
+                if (path.StartsWith("api/config"))
+                    return ["Configuration"];
+                if (path.StartsWith("api/backfill"))
+                    return ["Backfill"];
+                if (path.StartsWith("api/providers"))
+                    return ["Providers"];
+                if (path.StartsWith("api/quality"))
+                    return ["Data Quality"];
+                if (path.StartsWith("api/sla"))
+                    return ["SLA"];
+                if (path.StartsWith("api/maintenance"))
+                    return ["Maintenance"];
+                if (path.StartsWith("api/packaging"))
+                    return ["Packaging"];
+                if (path.StartsWith("api/failover"))
+                    return ["Failover"];
+                if (path.StartsWith("api/export"))
+                    return ["Export"];
+                if (path.StartsWith("api/diagnostics"))
+                    return ["Diagnostics"];
+                if (path.StartsWith("api/admin"))
+                    return ["Admin"];
+                if (path.StartsWith("api/live"))
+                    return ["Live Data"];
+                if (path.StartsWith("api/replay"))
+                    return ["Replay"];
+                if (path.StartsWith("api/lean"))
+                    return ["Lean Integration"];
+                if (path.StartsWith("api/messaging"))
+                    return ["Messaging"];
+                if (path.StartsWith("api/analytics"))
+                    return ["Analytics"];
+                if (path.StartsWith("api/historical"))
+                    return ["Historical"];
+                if (path.StartsWith("api/options"))
+                    return ["Options"];
                 return ["General"];
             });
         });

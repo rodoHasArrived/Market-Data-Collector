@@ -38,7 +38,8 @@ public sealed class BackfillStatusStore
     {
         try
         {
-            if (!File.Exists(_path)) return null;
+            if (!File.Exists(_path))
+                return null;
             var json = File.ReadAllText(_path);
             return JsonSerializer.Deserialize<BackfillResult>(json, JsonOptions);
         }

@@ -2,12 +2,10 @@ using ArchUnitNET.Fluent;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
 using Xunit;
-
-// Alias the ArchUnitNET domain type to avoid collision with this test's namespace.
-using ArchModel = ArchUnitNET.Domain.Architecture;
-
 // Import ArchRuleDefinition statically for concise fluent rules.
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
+// Alias the ArchUnitNET domain type to avoid collision with this test's namespace.
+using ArchModel = ArchUnitNET.Domain.Architecture;
 
 namespace MarketDataCollector.Tests.Architecture;
 

@@ -164,7 +164,8 @@ public sealed class DataLineageService : IDataLineageService
 
     private void CollectUpstream(string filePath, HashSet<string> visited, int maxDepth)
     {
-        if (maxDepth <= 0 || !visited.Add(filePath)) return;
+        if (maxDepth <= 0 || !visited.Add(filePath))
+            return;
 
         if (_graphs.TryGetValue(filePath, out var graph))
         {
@@ -177,7 +178,8 @@ public sealed class DataLineageService : IDataLineageService
 
     private void CollectDownstream(string filePath, HashSet<string> visited, int maxDepth)
     {
-        if (maxDepth <= 0 || !visited.Add(filePath)) return;
+        if (maxDepth <= 0 || !visited.Add(filePath))
+            return;
 
         if (_graphs.TryGetValue(filePath, out var graph))
         {
@@ -192,7 +194,8 @@ public sealed class DataLineageService : IDataLineageService
     {
         try
         {
-            if (!File.Exists(_lineageStorePath)) return;
+            if (!File.Exists(_lineageStorePath))
+                return;
 
             var json = File.ReadAllText(_lineageStorePath);
             var data = JsonSerializer.Deserialize<LineageStore>(json, new JsonSerializerOptions
@@ -221,7 +224,8 @@ public sealed class DataLineageService : IDataLineageService
 
     private async Task SaveInBackgroundAsync()
     {
-        try { await SaveAsync(); }
+        try
+        { await SaveAsync(); }
         catch (IOException) { /* Background save failure is non-critical */ }
         catch (UnauthorizedAccessException) { /* Permission issues during background save */ }
     }

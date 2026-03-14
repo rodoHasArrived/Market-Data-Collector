@@ -110,9 +110,15 @@ internal sealed class ProviderParityStats
     {
         switch (field)
         {
-            case "symbol": Interlocked.Increment(ref _unresolvedSymbol); break;
-            case "venue": Interlocked.Increment(ref _unresolvedVenue); break;
-            case "condition": Interlocked.Increment(ref _unresolvedCondition); break;
+            case "symbol":
+                Interlocked.Increment(ref _unresolvedSymbol);
+                break;
+            case "venue":
+                Interlocked.Increment(ref _unresolvedVenue);
+                break;
+            case "condition":
+                Interlocked.Increment(ref _unresolvedCondition);
+                break;
         }
     }
 

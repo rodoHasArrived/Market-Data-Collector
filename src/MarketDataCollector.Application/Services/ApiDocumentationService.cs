@@ -141,10 +141,14 @@ public sealed class ApiDocumentationService
 
         foreach (var (path, pathItem) in spec.Paths ?? new Dictionary<string, OpenApiPathItem>())
         {
-            if (pathItem.Get != null) AddToTagGroup(pathsByTag, path, "GET", pathItem.Get);
-            if (pathItem.Post != null) AddToTagGroup(pathsByTag, path, "POST", pathItem.Post);
-            if (pathItem.Put != null) AddToTagGroup(pathsByTag, path, "PUT", pathItem.Put);
-            if (pathItem.Delete != null) AddToTagGroup(pathsByTag, path, "DELETE", pathItem.Delete);
+            if (pathItem.Get != null)
+                AddToTagGroup(pathsByTag, path, "GET", pathItem.Get);
+            if (pathItem.Post != null)
+                AddToTagGroup(pathsByTag, path, "POST", pathItem.Post);
+            if (pathItem.Put != null)
+                AddToTagGroup(pathsByTag, path, "PUT", pathItem.Put);
+            if (pathItem.Delete != null)
+                AddToTagGroup(pathsByTag, path, "DELETE", pathItem.Delete);
         }
 
         foreach (var (tag, endpoints) in pathsByTag.OrderBy(kvp => kvp.Key))

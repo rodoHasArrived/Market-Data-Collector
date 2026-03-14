@@ -680,8 +680,10 @@ public sealed class AutoConfigurationService
         var priority = historical.Select(p => p.Name.ToLowerInvariant()).ToList();
 
         // Always add free providers
-        if (!priority.Contains("yahoo")) priority.Add("yahoo");
-        if (!priority.Contains("stooq")) priority.Add("stooq");
+        if (!priority.Contains("yahoo"))
+            priority.Add("yahoo");
+        if (!priority.Contains("stooq"))
+            priority.Add("stooq");
 
         return new BackfillConfig(
             Enabled: false,
@@ -858,8 +860,10 @@ public sealed class AutoConfigurationService
         var backfillProviders = new List<string>();
         foreach (var p in providers.Where(p => p.HasCredentials && p.Capabilities.Contains("Historical")))
             backfillProviders.Add(p.Name.ToLowerInvariant());
-        if (!backfillProviders.Contains("yahoo")) backfillProviders.Add("yahoo");
-        if (!backfillProviders.Contains("stooq")) backfillProviders.Add("stooq");
+        if (!backfillProviders.Contains("yahoo"))
+            backfillProviders.Add("yahoo");
+        if (!backfillProviders.Contains("stooq"))
+            backfillProviders.Add("stooq");
 
         return config with
         {

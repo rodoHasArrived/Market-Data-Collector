@@ -185,13 +185,16 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
 
                 foreach (var bar in data.Bars)
                 {
-                    if (bar.Timestamp is null) continue;
+                    if (bar.Timestamp is null)
+                        continue;
 
                     var sessionDate = DateOnly.FromDateTime(bar.Timestamp.Value.UtcDateTime);
 
                     // Skip if outside requested range
-                    if (from.HasValue && sessionDate < from.Value) continue;
-                    if (to.HasValue && sessionDate > to.Value) continue;
+                    if (from.HasValue && sessionDate < from.Value)
+                        continue;
+                    if (to.HasValue && sessionDate > to.Value)
+                        continue;
 
                     // Validate OHLC using base class helper
                     if (!ValidateOhlc(bar.Open, bar.High, bar.Low, bar.Close, symbol, sessionDate))
@@ -292,7 +295,8 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
                     var sym = kvp.Key;
                     foreach (var quote in kvp.Value)
                     {
-                        if (quote.Timestamp is null) continue;
+                        if (quote.Timestamp is null)
+                            continue;
 
                         allQuotes.Add(new HistoricalQuote(
                             Symbol: sym.ToUpperInvariant(),
@@ -410,7 +414,8 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
                     var sym = kvp.Key;
                     foreach (var trade in kvp.Value)
                     {
-                        if (trade.Timestamp is null) continue;
+                        if (trade.Timestamp is null)
+                            continue;
 
                         allTrades.Add(new HistoricalTrade(
                             Symbol: sym.ToUpperInvariant(),
@@ -523,12 +528,14 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
                     var sym = kvp.Key;
                     foreach (var auctionDay in kvp.Value)
                     {
-                        if (auctionDay.Date is null) continue;
+                        if (auctionDay.Date is null)
+                            continue;
 
                         var sessionDate = DateOnly.FromDateTime(auctionDay.Date.Value.UtcDateTime);
 
                         // Skip if outside requested range
-                        if (sessionDate < start || sessionDate > end) continue;
+                        if (sessionDate < start || sessionDate > end)
+                            continue;
 
                         var openingAuctions = (auctionDay.OpeningAuctions ?? Array.Empty<AlpacaAuctionPrice>())
                             .Where(a => a.Timestamp.HasValue && a.Price > 0)

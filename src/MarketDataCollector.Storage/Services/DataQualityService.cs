@@ -376,7 +376,8 @@ public sealed class DataQualityService : IDataQualityService
 
             await foreach (var line in File.ReadLinesAsync(path, ct))
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
                 totalLines++;
 
                 try
@@ -462,7 +463,8 @@ public sealed class DataQualityService : IDataQualityService
             await foreach (var line in File.ReadLinesAsync(path, ct))
             {
                 lineNumber++;
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 try
                 {
@@ -499,7 +501,8 @@ public sealed class DataQualityService : IDataQualityService
 
     private async Task<long> CountEventsAsync(string path, CancellationToken ct)
     {
-        if (!File.Exists(path)) return 0;
+        if (!File.Exists(path))
+            return 0;
 
         long count = 0;
         try
@@ -519,7 +522,8 @@ public sealed class DataQualityService : IDataQualityService
     private int CountGaps(DataQualityScore score)
     {
         var continuity = score.Dimensions.FirstOrDefault(d => d.Name == "Continuity");
-        if (continuity == null) return 0;
+        if (continuity == null)
+            return 0;
 
         var gapIssue = continuity.Issues.FirstOrDefault(i => i.Contains("gap"));
         if (gapIssue != null && int.TryParse(gapIssue.Split(' ')[0], out var gapCount))

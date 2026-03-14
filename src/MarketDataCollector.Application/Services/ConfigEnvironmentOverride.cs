@@ -106,7 +106,8 @@ public sealed class ConfigEnvironmentOverride
         foreach (var (envVar, configPath) in EnvToConfigMapping)
         {
             var value = Environment.GetEnvironmentVariable(envVar);
-            if (string.IsNullOrEmpty(value)) continue;
+            if (string.IsNullOrEmpty(value))
+                continue;
 
             try
             {
@@ -134,7 +135,8 @@ public sealed class ConfigEnvironmentOverride
             var configPath = ConvertEnvVarToConfigPath(key);
             var value = env.Value?.ToString();
 
-            if (string.IsNullOrEmpty(value)) continue;
+            if (string.IsNullOrEmpty(value))
+                continue;
 
             try
             {
@@ -236,7 +238,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var alpaca = config.Alpaca ?? new AlpacaOptions();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         alpaca = path[0] switch
         {
@@ -255,7 +258,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var storage = config.Storage ?? new StorageConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         storage = path[0] switch
         {
@@ -273,7 +277,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var backfill = config.Backfill ?? new BackfillConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         if (path[0] == "Providers" && path.Length >= 3)
         {
@@ -300,7 +305,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var stockSharp = config.StockSharp ?? new StockSharpConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         stockSharp = path[0] switch
         {
@@ -326,7 +332,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var rithmic = config.Rithmic ?? new RithmicConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         rithmic = path[0] switch
         {
@@ -345,7 +352,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var iqFeed = config.IQFeed ?? new IQFeedConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         iqFeed = path[0] switch
         {
@@ -365,7 +373,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var cqg = config.CQG ?? new CQGConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         cqg = path[0] switch
         {
@@ -382,7 +391,8 @@ public sealed class ConfigEnvironmentOverride
     {
         var ib = config.InteractiveBrokers ?? new StockSharpIBConfig();
 
-        if (path.Length == 0) return config;
+        if (path.Length == 0)
+            return config;
 
         ib = path[0] switch
         {
@@ -438,11 +448,16 @@ public sealed class ConfigEnvironmentOverride
 
     private static string GetCategory(string envVar)
     {
-        if (envVar.StartsWith("MDC_ALPACA") || envVar.StartsWith("ALPACA")) return "Alpaca Configuration";
-        if (envVar.StartsWith("MDC_STOCKSHARP")) return "StockSharp Configuration";
-        if (envVar.StartsWith("MDC_STORAGE")) return "Storage Configuration";
-        if (envVar.StartsWith("MDC_BACKFILL")) return "Backfill Configuration";
-        if (envVar.Contains("API_KEY") || envVar.Contains("TOKEN")) return "API Keys";
+        if (envVar.StartsWith("MDC_ALPACA") || envVar.StartsWith("ALPACA"))
+            return "Alpaca Configuration";
+        if (envVar.StartsWith("MDC_STOCKSHARP"))
+            return "StockSharp Configuration";
+        if (envVar.StartsWith("MDC_STORAGE"))
+            return "Storage Configuration";
+        if (envVar.StartsWith("MDC_BACKFILL"))
+            return "Backfill Configuration";
+        if (envVar.Contains("API_KEY") || envVar.Contains("TOKEN"))
+            return "API Keys";
         return "Core Configuration";
     }
 

@@ -24,8 +24,10 @@ public sealed class ExportValidatorTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_dataRoot)) Directory.Delete(_dataRoot, true);
-        if (Directory.Exists(_outputDir)) Directory.Delete(_outputDir, true);
+        if (Directory.Exists(_dataRoot))
+            Directory.Delete(_dataRoot, true);
+        if (Directory.Exists(_outputDir))
+            Directory.Delete(_outputDir, true);
     }
 
     // -------------------------------------------------------------------------

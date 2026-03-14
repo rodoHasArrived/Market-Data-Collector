@@ -158,7 +158,8 @@ public sealed class SourceRegistry : ISourceRegistry
     {
         try
         {
-            if (string.IsNullOrEmpty(_persistencePath)) return;
+            if (string.IsNullOrEmpty(_persistencePath))
+                return;
 
             var json = File.ReadAllText(_persistencePath);
             var data = JsonSerializer.Deserialize<RegistryData>(json);
@@ -191,7 +192,8 @@ public sealed class SourceRegistry : ISourceRegistry
 
     private void SaveAsync()
     {
-        if (string.IsNullOrEmpty(_persistencePath)) return;
+        if (string.IsNullOrEmpty(_persistencePath))
+            return;
 
         _ = SaveToDiskAsync();
     }

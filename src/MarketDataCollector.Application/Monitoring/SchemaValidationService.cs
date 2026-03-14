@@ -110,7 +110,8 @@ public sealed class SchemaValidationService : IAsyncDisposable
 
             foreach (var file in jsonlFiles)
             {
-                if (ct.IsCancellationRequested) break;
+                if (ct.IsCancellationRequested)
+                    break;
 
                 var checkResult = await CheckFileSchemaAsync(file, ct).ConfigureAwait(false);
                 filesChecked++;

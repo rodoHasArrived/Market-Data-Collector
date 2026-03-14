@@ -86,7 +86,8 @@ public sealed class ArchivalStorageService : IStorageSink
     /// <inheritdoc/>
     public async Task FlushAsync(CancellationToken ct = default)
     {
-        if (_pendingEvents == 0) return;
+        if (_pendingEvents == 0)
+            return;
 
         await _flushLock.WaitAsync(ct);
         try
@@ -101,7 +102,8 @@ public sealed class ArchivalStorageService : IStorageSink
                 maxSequence = Math.Max(maxSequence, pending.WalSequence);
             }
 
-            if (eventsToFlush.Count == 0) return;
+            if (eventsToFlush.Count == 0)
+                return;
 
             _log.Debug("Flushing {Count} events to primary storage", eventsToFlush.Count);
 
@@ -143,7 +145,8 @@ public sealed class ArchivalStorageService : IStorageSink
         var recoveredCount = 0;
         await foreach (var walRecord in _wal.GetUncommittedRecordsAsync(ct))
         {
-            if (walRecord.RecordType == "COMMIT") continue;
+            if (walRecord.RecordType == "COMMIT")
+                continue;
 
             try
             {
@@ -217,7 +220,8 @@ public sealed class ArchivalStorageService : IStorageSink
 
         if (_backgroundFlushTask != null)
         {
-            try { await _backgroundFlushTask; }
+            try
+            { await _backgroundFlushTask; }
             catch (OperationCanceledException) { /* Expected on cancellation */ }
         }
 

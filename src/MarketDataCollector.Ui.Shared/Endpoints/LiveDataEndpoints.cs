@@ -278,9 +278,11 @@ public static class LiveDataEndpoints
             var allSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (quoteSnapshot is not null)
             {
-                foreach (var sym in quoteSnapshot.Keys) allSymbols.Add(sym);
+                foreach (var sym in quoteSnapshot.Keys)
+                    allSymbols.Add(sym);
             }
-            foreach (var sym in depthSymbols) allSymbols.Add(sym);
+            foreach (var sym in depthSymbols)
+                allSymbols.Add(sym);
 
             var symbolHealth = new List<SymbolDataHealthDto>();
             foreach (var sym in allSymbols.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))

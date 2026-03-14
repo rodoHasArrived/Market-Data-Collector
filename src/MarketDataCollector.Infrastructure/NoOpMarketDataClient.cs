@@ -1,7 +1,7 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Adapters.Core;
 using System.Threading;
+using MarketDataCollector.Application.Config;
+using MarketDataCollector.Infrastructure.Adapters.Core;
+using MarketDataCollector.Infrastructure.Contracts;
 
 namespace MarketDataCollector.Infrastructure;
 

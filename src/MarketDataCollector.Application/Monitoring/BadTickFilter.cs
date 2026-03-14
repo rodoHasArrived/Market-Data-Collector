@@ -59,7 +59,8 @@ public sealed class BadTickFilter : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsBadTrade(string symbol, decimal price, decimal size, DateTimeOffset timestamp, string? provider = null)
     {
-        if (_isDisposed) return false;
+        if (_isDisposed)
+            return false;
 
         Interlocked.Increment(ref _totalTicksProcessed);
 
@@ -139,7 +140,8 @@ public sealed class BadTickFilter : IDisposable
     public bool IsBadQuote(string symbol, decimal bidPrice, decimal askPrice, int bidSize, int askSize,
         DateTimeOffset timestamp, string? provider = null)
     {
-        if (_isDisposed) return false;
+        if (_isDisposed)
+            return false;
 
         Interlocked.Increment(ref _totalTicksProcessed);
 
@@ -212,16 +214,22 @@ public sealed class BadTickFilter : IDisposable
     private static bool IsPlaceholderPrice(decimal price)
     {
         // Common placeholder patterns used by various data providers
-        if (price == 0.01m || price == 0.001m || price == 0.0001m) return true;
-        if (price == 9999m || price == 9999.99m || price == 99999.99m || price == 999999.99m) return true;
-        if (price == 1234.56m || price == 12345.67m) return true; // Sequential placeholders
+        if (price == 0.01m || price == 0.001m || price == 0.0001m)
+            return true;
+        if (price == 9999m || price == 9999.99m || price == 99999.99m || price == 999999.99m)
+            return true;
+        if (price == 1234.56m || price == 12345.67m)
+            return true; // Sequential placeholders
 
         // Valid round numbers that are NOT placeholders
-        if (price == 1m || price == 10m || price == 100m || price == 1000m || price == 10000m) return false;
-        if (price == 0.1m || price == 0.5m || price == 5m || price == 50m || price == 500m) return false;
+        if (price == 1m || price == 10m || price == 100m || price == 1000m || price == 10000m)
+            return false;
+        if (price == 0.1m || price == 0.5m || price == 5m || price == 50m || price == 500m)
+            return false;
 
         // Check for repeating digit patterns that often indicate bad/test data
-        if (IsRepeatingDigitPattern(price)) return true;
+        if (IsRepeatingDigitPattern(price))
+            return true;
 
         return false;
     }
@@ -243,7 +251,8 @@ public sealed class BadTickFilter : IDisposable
 
         foreach (var pattern in repeatingPatterns)
         {
-            if (price == pattern) return true;
+            if (price == pattern)
+                return true;
         }
 
         // Check for all-same-digit patterns in the string representation
@@ -413,7 +422,8 @@ public sealed class BadTickFilter : IDisposable
 
     private void CleanupOldStates(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -441,7 +451,8 @@ public sealed class BadTickFilter : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _symbolStates.Clear();

@@ -69,7 +69,8 @@ public sealed class GapAnalyzer : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RecordEvent(string symbol, string eventType, DateTimeOffset timestamp, long? sequenceNumber = null)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         Interlocked.Increment(ref _totalEventsProcessed);
 
@@ -387,7 +388,8 @@ public sealed class GapAnalyzer : IDisposable
 
     private void CleanupOldData(object? state)
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
 
         try
         {
@@ -436,7 +438,8 @@ public sealed class GapAnalyzer : IDisposable
 
     public void Dispose()
     {
-        if (_isDisposed) return;
+        if (_isDisposed)
+            return;
         _isDisposed = true;
         _cleanupTimer.Dispose();
         _symbolStates.Clear();
