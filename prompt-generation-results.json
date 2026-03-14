@@ -1,71 +1,38 @@
 {
-  "generated_at": "2026-03-14T00:32:42.348500+00:00",
-  "workflow": "test-matrix.yml",
-  "run_id": 23076048491,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491",
+  "generated_at": "2026-03-14T06:38:10.842704+00:00",
+  "workflow": "code-quality.yml",
+  "run_id": 23082459939,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23082459939",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Test (Windows)"
+    "Code Quality Checks"
   ],
   "findings_by_category": {
-    "test": 2,
     "code-quality": 10
   },
-  "total_error_codes": 8,
-  "total_failed_tests": 2,
+  "total_error_codes": 1,
+  "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
-    {
-      "file": "fix-test-failures.prompt.yml",
-      "category": "test",
-      "action": "update",
-      "findings_count": 2,
-      "error_codes": [
-        "CA2022",
-        "CS0219",
-        "CS1573",
-        "CS1591",
-        "CS1998",
-        "CS4014",
-        "CS8602",
-        "CS8625"
-      ],
-      "failed_tests": [
-        "2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]",
-        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError"
-      ]
-    },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
       "action": "update",
       "findings_count": 10,
-      "error_codes": [
-        "CA2022"
-      ],
+      "error_codes": [],
       "failed_tests": []
     },
     {
-      "file": "workflow-results-test-matrix.prompt.yml",
+      "file": "workflow-results-code-quality.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 12,
+      "findings_count": 10,
       "error_codes": [
-        "CA2022",
-        "CS0219",
-        "CS1573",
-        "CS1591",
-        "CS1998",
-        "CS4014",
-        "CS8602",
-        "CS8625"
+        "CS1587"
       ],
-      "failed_tests": [
-        "2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]",
-        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError"
-      ]
+      "failed_tests": []
     }
   ],
-  "total_generated": 3
+  "total_generated": 2
 }
