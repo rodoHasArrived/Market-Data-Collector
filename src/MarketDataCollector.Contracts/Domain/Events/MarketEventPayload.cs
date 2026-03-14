@@ -30,6 +30,11 @@ namespace MarketDataCollector.Contracts.Domain.Events;
 [JsonDerivedType(typeof(GreeksSnapshot), "greeks")]
 [JsonDerivedType(typeof(OptionChainSnapshot), "option_chain")]
 [JsonDerivedType(typeof(OpenInterestUpdate), "open_interest")]
+[JsonDerivedType(typeof(OrderAdd), "order_add")]
+[JsonDerivedType(typeof(OrderModify), "order_modify")]
+[JsonDerivedType(typeof(OrderCancel), "order_cancel")]
+[JsonDerivedType(typeof(OrderExecute), "order_execute")]
+[JsonDerivedType(typeof(OrderReplace), "order_replace")]
 public abstract record MarketEventPayload : IMarketEventPayload
 {
     /// <summary>

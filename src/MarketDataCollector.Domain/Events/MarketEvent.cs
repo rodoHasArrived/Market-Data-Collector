@@ -101,6 +101,21 @@ public sealed record MarketEvent(
     public static MarketEvent OpenInterest(DateTimeOffset ts, string symbol, OpenInterestUpdate oi, long seq = 0, string source = "IB")
         => new(ts, symbol, MarketEventType.OpenInterest, oi, seq == 0 ? oi.SequenceNumber : seq, source);
 
+    public static MarketEvent OrderAdd(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OrderAdd order, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderAdd, order, seq == 0 ? order.SequenceNumber : seq, source);
+
+    public static MarketEvent OrderModify(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OrderModify modify, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderModify, modify, seq == 0 ? modify.SequenceNumber : seq, source);
+
+    public static MarketEvent OrderCancel(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OrderCancel cancel, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderCancel, cancel, seq == 0 ? cancel.SequenceNumber : seq, source);
+
+    public static MarketEvent OrderExecute(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OrderExecute execute, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderExecute, execute, seq == 0 ? execute.SequenceNumber : seq, source);
+
+    public static MarketEvent OrderReplace(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OrderReplace replace, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OrderReplace, replace, seq == 0 ? replace.SequenceNumber : seq, source);
+
     /// <summary>
     /// Stamps the event with wall-clock and monotonic receive timestamps.
     /// Call this at the earliest point when the event enters the system.

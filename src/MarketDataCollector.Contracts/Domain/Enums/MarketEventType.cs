@@ -103,5 +103,30 @@ public enum MarketEventType : byte
     /// <summary>
     /// Open interest update for an option contract.
     /// </summary>
-    OpenInterest = 19
+    OpenInterest = 19,
+
+    /// <summary>
+    /// New order added to the matching engine's order book.
+    /// </summary>
+    OrderAdd = 20,
+
+    /// <summary>
+    /// Existing order modified (price, size, or flags changed).
+    /// </summary>
+    OrderModify = 21,
+
+    /// <summary>
+    /// Existing order cancelled (full or partial removal from the book).
+    /// </summary>
+    OrderCancel = 22,
+
+    /// <summary>
+    /// Resting order executed (full or partial fill against an aggressor).
+    /// </summary>
+    OrderExecute = 23,
+
+    /// <summary>
+    /// Venue-side order replace where the venue reassigns the order identifier.
+    /// </summary>
+    OrderReplace = 24
 }
