@@ -269,6 +269,76 @@ public sealed class WorkspaceServiceTests
         act.Should().NotThrow();
     }
 
+    // ── Page Filter State ────────────────────────────────────────────
+
+    [Fact]
+    public void UpdatePageFilterState_ShouldStoreValue()
+    {
+        var svc = CreateService();
+
+        svc.UpdatePageFilterState("Symbols", "SearchText", "SPY");
+
+        svc.GetPageFilterState("Symbols", "SearchText").Should().Be("SPY");
+    }
+
+    [Fact]
+    public void UpdatePageFilterState_NullValue_ShouldRemoveEntry()
+    {
+        var svc = CreateService();
+        svc.UpdatePageFilterState("Symbols", "SearchText", "SPY");
+
+        svc.UpdatePageFilterState("Symbols", "SearchText", null);
+
+        svc.GetPageFilterState("Symbols", "SearchText").Should().BeNull();
+    }
+
+    [Fact]
+    public void UpdatePageFilterState_ShouldScopeKeyByPage()
+    {
+        var svc = CreateService();
+
+        svc.UpdatePageFilterState("Symbols", "Filter", "Trades");
+        svc.UpdatePageFilterState("DataBrowser", "Filter", "All");
+
+        svc.GetPageFilterState("Symbols", "Filter").Should().Be("Trades");
+        svc.GetPageFilterState("DataBrowser", "Filter").Should().Be("All");
+    }
+
+    [Fact]
+    public void GetPageFilterState_UnknownKey_ShouldReturnNull()
+    {
+        var svc = CreateService();
+
+        svc.GetPageFilterState("NonExistentPage", "NonExistentKey").Should().BeNull();
+    }
+
+    [Fact]
+    public void UpdatePageFilterState_OverwriteExisting_ShouldUpdateValue()
+    {
+        var svc = CreateService();
+        svc.UpdatePageFilterState("Backfill", "Granularity", "Daily");
+
+        svc.UpdatePageFilterState("Backfill", "Granularity", "Hourly");
+
+        svc.GetPageFilterState("Backfill", "Granularity").Should().Be("Hourly");
+    }
+
+    [Fact]
+    public async Task UpdatePageFilterState_ShouldBePersisted_AfterSaveSession()
+    {
+        var svc = CreateService();
+        svc.UpdatePageFilterState("Symbols", "SearchText", "AAPL");
+
+        // Simulate session save
+        var session = svc.GetLastSessionState() ?? new SessionState();
+        await svc.SaveSessionStateAsync(session);
+
+        var restored = svc.GetLastSessionState();
+        restored.Should().NotBeNull();
+        restored!.ActiveFilters.Should().ContainKey("Symbols.SearchText");
+        restored.ActiveFilters["Symbols.SearchText"].Should().Be("AAPL");
+    }
+
     // ── CaptureCurrentStateAsync ─────────────────────────────────────
 
     [Fact]

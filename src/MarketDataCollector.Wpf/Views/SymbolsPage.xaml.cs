@@ -65,6 +65,8 @@ public partial class SymbolsPage : Page
         _watchlistService.WatchlistsChanged -= OnWatchlistsChanged;
         _loadCts?.Cancel();
         _loadCts?.Dispose();
+
+        SavePageFilterState();
     }
 
     private void OnWatchlistsChanged(object? sender, WpfServices.WatchlistsChangedEventArgs e)
@@ -76,6 +78,9 @@ public partial class SymbolsPage : Page
     {
         await LoadSymbolsFromConfigAsync();
         await LoadWatchlistsAsync();
+
+        RestorePageFilterState();
+        ApplyFilters();
     }
 
     private async Task LoadSymbolsFromConfigAsync()
@@ -146,6 +151,32 @@ public partial class SymbolsPage : Page
         {
             _loggingService.LogError("Failed to load watchlists", ex);
         }
+    }
+
+    private const string PageTag = "Symbols";
+
+    private void SavePageFilterState()
+    {
+        var ws = WpfServices.WorkspaceService.Instance;
+        ws.UpdatePageFilterState(PageTag, "SearchText", SymbolSearchBox.Text);
+        ws.UpdatePageFilterState(PageTag, "FilterCombo", GetComboSelectedTag(FilterCombo) ?? "All");
+        ws.UpdatePageFilterState(PageTag, "ExchangeFilter", GetComboSelectedTag(ExchangeFilterCombo) ?? "All");
+    }
+
+    private void RestorePageFilterState()
+    {
+        var ws = WpfServices.WorkspaceService.Instance;
+        var searchText = ws.GetPageFilterState(PageTag, "SearchText");
+        if (searchText is not null)
+            SymbolSearchBox.Text = searchText;
+
+        var filter = ws.GetPageFilterState(PageTag, "FilterCombo");
+        if (filter is not null)
+            SelectComboItemByTag(FilterCombo, filter);
+
+        var exchange = ws.GetPageFilterState(PageTag, "ExchangeFilter");
+        if (exchange is not null)
+            SelectComboItemByTag(ExchangeFilterCombo, exchange);
     }
 
     private void ApplyFilters()

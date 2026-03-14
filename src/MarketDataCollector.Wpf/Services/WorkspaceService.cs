@@ -218,6 +218,33 @@ public sealed class WorkspaceService
         return _lastSession;
     }
 
+    /// <summary>
+    /// Saves a single named filter value for a page into the active session's
+    /// <see cref="SessionState.ActiveFilters"/> dictionary.
+    /// Uses the composite key format <c>&quot;{pageTag}.{filterKey}&quot;</c>.
+    /// Passing <see langword="null"/> as <paramref name="value"/> removes the entry.
+    /// </summary>
+    public void UpdatePageFilterState(string pageTag, string filterKey, string? value)
+    {
+        _lastSession ??= new SessionState();
+        var key = $"{pageTag}.{filterKey}";
+        if (value is null)
+            _lastSession.ActiveFilters.Remove(key);
+        else
+            _lastSession.ActiveFilters[key] = value;
+    }
+
+    /// <summary>
+    /// Retrieves a previously saved filter value for a page from the active session.
+    /// Returns <see langword="null"/> when no value has been stored.
+    /// </summary>
+    public string? GetPageFilterState(string pageTag, string filterKey)
+    {
+        if (_lastSession is null) return null;
+        var key = $"{pageTag}.{filterKey}";
+        return _lastSession.ActiveFilters.TryGetValue(key, out var value) ? value : null;
+    }
+
     public Task<string> ExportWorkspaceAsync(string workspaceId)
     {
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);

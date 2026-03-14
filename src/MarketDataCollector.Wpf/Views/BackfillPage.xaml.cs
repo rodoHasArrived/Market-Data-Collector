@@ -64,10 +64,11 @@ public partial class BackfillPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        // Set default dates
+        // Set default dates first; RestorePageFilterState will override with saved values
         ToDatePicker.SelectedDate = DateTime.Today;
         FromDatePicker.SelectedDate = DateTime.Today.AddDays(-30);
 
+        RestorePageFilterState();
         UpdateProviderPrioritySummary();
         UpdateGranularityHint();
 
@@ -82,6 +83,8 @@ public partial class BackfillPage : Page
         _backfillCts?.Cancel();
         _backfillService.ProgressUpdated -= OnBackfillProgressUpdated;
         _backfillService.BackfillCompleted -= OnBackfillCompleted;
+
+        SavePageFilterState();
     }
 
     private async Task LoadScheduledJobsAsync()
@@ -388,6 +391,73 @@ public partial class BackfillPage : Page
     private static string GetProviderName(ComboBox combo)
     {
         return (combo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+    }
+
+    private static string? GetComboSelectedTag(ComboBox combo)
+    {
+        return (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+    }
+
+    private static void SelectComboItemByTag(ComboBox combo, string tag)
+    {
+        foreach (var item in combo.Items)
+        {
+            if (item is ComboBoxItem cbi && cbi.Tag?.ToString() == tag)
+            {
+                combo.SelectedItem = item;
+                return;
+            }
+        }
+    }
+
+    private const string PageTag = "Backfill";
+
+    private void SavePageFilterState()
+    {
+        var ws = WpfServices.WorkspaceService.Instance;
+        ws.UpdatePageFilterState(PageTag, "Symbols", SymbolsBox.Text);
+        ws.UpdatePageFilterState(PageTag, "ProviderCombo", GetComboSelectedTag(ProviderCombo) ?? "composite");
+        ws.UpdatePageFilterState(PageTag, "PrimaryProvider", GetComboSelectedTag(PrimaryProviderCombo) ?? "yahoo");
+        ws.UpdatePageFilterState(PageTag, "SecondaryProvider", GetComboSelectedTag(SecondaryProviderCombo) ?? "stooq");
+        ws.UpdatePageFilterState(PageTag, "TertiaryProvider", GetComboSelectedTag(TertiaryProviderCombo) ?? "nasdaq");
+        ws.UpdatePageFilterState(PageTag, "Granularity", GetComboSelectedTag(GranularityCombo) ?? "Daily");
+        ws.UpdatePageFilterState(PageTag, "FromDate", FromDatePicker.SelectedDate?.ToString("yyyy-MM-dd"));
+        ws.UpdatePageFilterState(PageTag, "ToDate", ToDatePicker.SelectedDate?.ToString("yyyy-MM-dd"));
+    }
+
+    private void RestorePageFilterState()
+    {
+        var ws = WpfServices.WorkspaceService.Instance;
+
+        var symbols = ws.GetPageFilterState(PageTag, "Symbols");
+        if (symbols is not null)
+            SymbolsBox.Text = symbols;
+
+        var provider = ws.GetPageFilterState(PageTag, "ProviderCombo");
+        if (provider is not null)
+            SelectComboItemByTag(ProviderCombo, provider);
+
+        var primary = ws.GetPageFilterState(PageTag, "PrimaryProvider");
+        if (primary is not null)
+            SelectComboItemByTag(PrimaryProviderCombo, primary);
+
+        var secondary = ws.GetPageFilterState(PageTag, "SecondaryProvider");
+        if (secondary is not null)
+            SelectComboItemByTag(SecondaryProviderCombo, secondary);
+
+        var tertiary = ws.GetPageFilterState(PageTag, "TertiaryProvider");
+        if (tertiary is not null)
+            SelectComboItemByTag(TertiaryProviderCombo, tertiary);
+
+        var granularity = ws.GetPageFilterState(PageTag, "Granularity");
+        if (granularity is not null)
+            SelectComboItemByTag(GranularityCombo, granularity);
+
+        if (DateTime.TryParse(ws.GetPageFilterState(PageTag, "FromDate"), out var fromDate))
+            FromDatePicker.SelectedDate = fromDate;
+
+        if (DateTime.TryParse(ws.GetPageFilterState(PageTag, "ToDate"), out var toDate))
+            ToDatePicker.SelectedDate = toDate;
     }
 
     private static string GetGranularityDisplay(string granularity)
