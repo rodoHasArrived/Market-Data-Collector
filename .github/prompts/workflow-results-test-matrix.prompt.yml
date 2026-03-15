@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-15
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23107441071
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,33 +19,25 @@ messages:
 
       ## Findings from Workflow Run
       ### Test
-      - `2026-03-15T06:49:30.2414144Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 20 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-15T06:48:09.0926375Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 12 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-15T06:49:10.6742066Z [xUnit.net 00:00:02.28]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_Retu...`
-      - `2026-03-15T06:47:59.5652744Z [xUnit.net 00:00:07.20]     MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_...`
+      - `2026-03-15T09:18:57.8661370Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 14 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-15T09:18:47.5049210Z [xUnit.net 00:00:05.16]     MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_...`
 
       ### Code Quality
-      - `2026-03-15T06:48:32.2187528Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\MainWindow.xaml.cs(604,21): warni...`
-      - `2026-03-15T06:48:32.2204541Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(241,24...`
-      - `2026-03-15T06:48:32.2225368Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\RetentionAssuranceServic...`
-      - `2026-03-15T06:48:37.8287028Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\MainWindow.xaml.cs(604,21): warni...`
-      - `2026-03-15T06:48:37.8900260Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(241,24...`
+      - `2026-03-15T09:18:33.0940340Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptio...`
+      - `2026-03-15T09:18:33.0969890Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicaliz...`
+      - `2026-03-15T09:18:33.0977970Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
+      - `2026-03-15T09:18:33.0985080Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
+      - `2026-03-15T09:18:33.0991340Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Ev...`
 
 
       ## Failed Tests
-      - `2026-03-15T06:49:10.6951996Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [10 ms]`
-      - `2026-03-15T06:47:59.6311858Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [15 ms]`
-      - `MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError`
+      - `2026-03-15T09:18:47.5050440Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [59 ms]`
       - `MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse`
 
       ## Error Codes
-      - `CA2022`
-      - `CS0219`
       - `CS1573`
       - `CS1734`
       - `CS1998`
-      - `CS4014`
-      - `CS8602`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -58,7 +50,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23107441071
 
       Additional context:
       {{additional_context}}

@@ -2,7 +2,7 @@ name: Fix Test Failures Identified By Ci
 description: Fix test failures identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-15
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23107441071
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -22,24 +22,16 @@ messages:
       - Run tests: `dotnet test tests/MarketDataCollector.Tests`
 
       ## Error Codes Found
-      - `CA2022`
-      - `CS0219`
       - `CS1573`
       - `CS1734`
       - `CS1998`
-      - `CS4014`
-      - `CS8602`
 
       ## Failure Patterns
-      - `2026-03-15T06:49:30.2414144Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 20 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-15T06:48:09.0926375Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 12 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-15T06:49:10.6742066Z [xUnit.net 00:00:02.28]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [FAIL]`
-      - `2026-03-15T06:47:59.5652744Z [xUnit.net 00:00:07.20]     MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [FAIL]`
+      - `2026-03-15T09:18:57.8661370Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 14 s - MarketDataCollector.Tests.dll (net9.0)`
+      - `2026-03-15T09:18:47.5049210Z [xUnit.net 00:00:05.16]     MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [FAIL]`
 
       ## Failed Tests
-      - `2026-03-15T06:49:10.6951996Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [10 ms]`
-      - `2026-03-15T06:47:59.6311858Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [15 ms]`
-      - `MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError`
+      - `2026-03-15T09:18:47.5050440Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [59 ms]`
       - `MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse`
 
       ## Resolution Approach

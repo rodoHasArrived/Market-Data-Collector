@@ -2,7 +2,7 @@ name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-15
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23107441071
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -16,20 +16,17 @@ messages:
       - Async/await for all I/O operations with CancellationToken
       - Classes sealed unless designed for inheritance
 
-      ## Error Codes Found
-      - `CA2022`
-
       ## Failure Patterns
-      - `2026-03-15T06:48:32.2187528Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\MainWindow.xaml.cs(604,21): warning CS4014: Because this call is not awaited, execu...`
-      - `2026-03-15T06:48:32.2204541Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(241,24): warning CS1998: This async method lacks 'await'...`
-      - `2026-03-15T06:48:32.2225368Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\RetentionAssuranceService.cs(481,41): warning CS0219: The variable 'manife...`
-      - `2026-03-15T06:48:37.8287028Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\MainWindow.xaml.cs(604,21): warning CS4014: Because this call is not awaited, execu...`
-      - `2026-03-15T06:48:37.8900260Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(241,24): warning CS1998: This async method lacks 'await'...`
-      - `2026-03-15T06:48:37.9419881Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\RetentionAssuranceService.cs(481,41): warning CS0219: The variable 'manife...`
-      - `2026-03-15T06:48:38.1428129Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The variable 'even...`
-      - `2026-03-15T06:48:42.7237982Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Wpf.Tests\Services\WorkspaceServiceTests.cs(129,9): warning CS8602: Dereference of a ...`
-      - `2026-03-15T06:48:42.7341238Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Wpf.Tests\Services\WorkspaceServiceTests.cs(200,9): warning CS8602: Dereference of a ...`
-      - `2026-03-15T06:48:53.2903984Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Application\Subscriptions\Services\AutoResubscribePolicy.cs(90,29): warning CS1998: Thi...`
+      - `2026-03-15T09:18:33.0940340Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90,29): warni...`
+      - `2026-03-15T09:18:33.0969890Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs(24,21): warning C...`
+      - `2026-03-15T09:18:33.0977970Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(130,32): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.0985080Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(157,22): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.0991340Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(158,29): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.0999180Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(159,19): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.1007080Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(160,13): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.1016400Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(161,14): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.1022410Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(162,33): warning CS1573: Parameter ...`
+      - `2026-03-15T09:18:33.1029280Z ##[warning]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(163,33): warning CS1573: Parameter ...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
