@@ -1,12 +1,29 @@
 # High-Impact Improvement Brainstorm — March 2026
 
 **Date:** 2026-03-01
-**Status:** Active — 9 of 14 priority items implemented; 5 open
+**Status:** Active — 15 of 31 items complete; 1 partial (1.5); 15 open
 **Author:** Architecture Review
 
 > **Scope**: Ideas that meaningfully improve the quality of the codebase and the
 > correctness/reliability of the running program. Implementation effort is
 > explicitly **not** a filter — only impact matters.
+
+---
+
+## Contents
+
+- [Executive Assessment](#executive-assessment)
+- [Category 1: Data Integrity & Correctness](#category-1-data-integrity--correctness)
+- [Category 2: Resource Management & Stability](#category-2-resource-management--stability)
+- [Category 3: Architectural Improvements](#category-3-architectural-improvements)
+- [Category 4: Observability & Operational Excellence](#category-4-observability--operational-excellence)
+- [Category 5: Test Infrastructure](#category-5-test-infrastructure)
+- [Category 6: Code Quality & Maintainability](#category-6-code-quality--maintainability)
+- [Category 7: Correctness by Construction](#category-7-correctness-by-construction)
+- [Priority Matrix](#priority-matrix)
+- [Implementation Follow-Up (2026-03-10)](#implementation-follow-up-2026-03-10)
+- [Implementation Follow-Up (2026-03-11)](#implementation-follow-up-2026-03-11)
+- [Implementation Follow-Up (2026-03-12)](#implementation-follow-up-2026-03-12)
 
 ---
 
@@ -36,6 +53,23 @@ market conditions.
 | Test Suite | 8/10 | 6/10 | 6/10 |
 | F# Integration | 7/10 | 5/10 | 5/10 |
 
+> **Note:** Ratings above reflect the initial assessment (2026-03-01). Follow-up
+> implementations since then have improved the Event Pipeline, WebSocket
+> Resilience, and Data Quality Monitoring components in particular.
+
+### Progress by Category
+
+| Category | Done | Partial | Open | Total |
+|----------|------|---------|------|-------|
+| 1 — Data Integrity & Correctness | 3 | 1 | 1 | 5 |
+| 2 — Resource Management & Stability | 6 | 0 | 0 | 6 |
+| 3 — Architectural Improvements | 1 | 0 | 5 | 6 |
+| 4 — Observability & Operational Excellence | 4 | 0 | 0 | 4 |
+| 5 — Test Infrastructure | 1 | 0 | 3 | 4 |
+| 6 — Code Quality & Maintainability | 0 | 0 | 3 | 3 |
+| 7 — Correctness by Construction | 0 | 0 | 3 | 3 |
+| **Total** | **15** | **1** | **15** | **31** |
+
 ---
 
 ## Category 1: Data Integrity & Correctness
@@ -44,7 +78,7 @@ These are bugs that cause **silent data loss or corruption** in the running
 program. Fixing any one of them directly improves the trustworthiness of every
 byte of data the system collects.
 
-### 1.1 EventPipeline Flush Semantics Are Broken
+### 1.1 EventPipeline Flush Semantics Are Broken — ✅ Done (2026-03-12)
 
 **File**: `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`
 
@@ -68,7 +102,7 @@ user-facing "data saved" confirmation.
 **Fix**: Only break when `consumed >= targetPublished`. Dropped events should be
 tracked separately and reported, not conflated with successful persistence.
 
-### 1.2 WAL-to-Sink Transaction Gap
+### 1.2 WAL-to-Sink Transaction Gap — 📝 Open
 
 **File**: `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs` and
 `EventPipeline.cs`
@@ -94,7 +128,7 @@ calculations, and trade-flow analysis.
 two-phase commit where the WAL commit only happens after verified sink
 persistence.
 
-### 1.3 Alpaca Price Precision Loss
+### 1.3 Alpaca Price Precision Loss — ✅ Done (2026-03-10)
 
 **File**: `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
 
@@ -119,7 +153,7 @@ truncation on large block trades. Incorrect timestamps on malformed messages.
 **Fix**: Parse prices as `GetDecimal()` or parse the raw string. Use `GetInt64()`
 for sizes. Reject events with unparseable timestamps rather than substituting.
 
-### 1.4 No Trade Message Deduplication
+### 1.4 No Trade Message Deduplication — ✅ Done (2026-03-10)
 
 **File**: `AlpacaMarketDataClient.cs` (and likely other providers)
 
@@ -136,7 +170,7 @@ statistics. Every downstream consumer sees phantom trades.
 `(symbol, price, size, exchange_timestamp)` tuples. Bloom filter or LRU hash
 set for memory efficiency.
 
-### 1.5 Completeness Score Miscalculation
+### 1.5 Completeness Score Miscalculation — 🔄 Partial (2026-03-12)
 
 **File**: `src/MarketDataCollector.Application/Monitoring/DataQuality/CompletenessScoreCalculator.cs`
 
@@ -160,7 +194,7 @@ expected counts based on observed patterns after an initial calibration window.
 These issues cause the program to degrade over time through resource exhaustion,
 hangs, or cascading failures.
 
-### 2.1 Memory Leaks in Monitoring Services
+### 2.1 Memory Leaks in Monitoring Services — ✅ Done (2026-03-12)
 
 **Files**: `SequenceErrorTracker.cs`, `GapAnalyzer.cs`,
 `CompletenessScoreCalculator.cs`
@@ -184,7 +218,7 @@ pressure causes latency spikes.
 **Fix**: Implement LRU eviction or time-based expiry on dictionary entries. When
 a symbol hasn't been seen for N hours, remove its entry entirely.
 
-### 2.2 Hot-Path Allocations in Data Quality
+### 2.2 Hot-Path Allocations in Data Quality — ✅ Done (2026-03-12)
 
 **File**: `GapAnalyzer.cs`
 
@@ -204,7 +238,7 @@ under load.
 **Fix**: Cache computed configs per symbol in a dictionary. Invalidate only when
 liquidity profile changes.
 
-### 2.3 Consumer Blocking on Slow Sinks
+### 2.3 Consumer Blocking on Slow Sinks — ✅ Done (2026-03-11)
 
 **File**: `EventPipeline.cs`
 
@@ -223,7 +257,7 @@ symbols.
 (write to buffer while previous buffer flushes). Alert operators when flush
 latency exceeds thresholds.
 
-### 2.4 WebSocket Receive Buffer Unbounded
+### 2.4 WebSocket Receive Buffer Unbounded — ✅ Done (2026-03-12)
 
 **File**: `WebSocketConnectionManager.cs`
 
@@ -245,7 +279,7 @@ WebSocket message.
 **Fix**: Add a maximum message size limit (e.g., 10MB). Disconnect and log a
 warning if exceeded.
 
-### 2.5 WebSocket Reconnection Race Condition
+### 2.5 WebSocket Reconnection Race Condition — ✅ Done (2026-03-12)
 
 **File**: `WebSocketConnectionManager.cs`
 
@@ -268,7 +302,7 @@ state.
 **Fix**: Remove the fast-path check. Let the semaphore be the sole gating
 mechanism.
 
-### 2.6 No Provider Connection Timeout
+### 2.6 No Provider Connection Timeout — ✅ Done (2026-03-11)
 
 **File**: `src/MarketDataCollector/Program.cs`
 
@@ -290,7 +324,7 @@ meaningful error code.
 These changes improve the system's fundamental design, making it more
 maintainable, extensible, and correct by construction.
 
-### 3.1 End-to-End Trace Context Propagation
+### 3.1 End-to-End Trace Context Propagation — 📝 Open
 
 **Current state**: OpenTelemetry is wired up (`TracedEventMetrics`,
 `OpenTelemetrySetup`), but there's no trace context flowing through the event
@@ -308,7 +342,7 @@ timestamps manually" to "filter by trace ID."
 `MarketEvent` with its originating activity context. Propagate to sink
 operations.
 
-### 3.2 WebSocket Provider Base Class
+### 3.2 WebSocket Provider Base Class — 📝 Open
 
 **Current state**: Polygon, NYSE, and StockSharp each implement ~200-300 LOC of
 duplicate WebSocket lifecycle code (connect, authenticate, receive loop,
@@ -330,7 +364,7 @@ public abstract class WebSocketProviderBase : IMarketDataClient
 }
 ```
 
-### 3.3 Decide the F# Strategy: Deepen or Remove
+### 3.3 Decide the F# Strategy: Deepen or Remove — 📝 Open
 
 **Current state**: 12 F# files vs. 652 C# files. F# provides discriminated
 unions for market events, validation pipelines, and spread/imbalance
@@ -356,7 +390,7 @@ and the dual-language build complexity.
 **Impact**: Either direction reduces cognitive load and maintenance surface area.
 The current state is the worst of both worlds.
 
-### 3.4 Idempotent Storage Writes
+### 3.4 Idempotent Storage Writes — 📝 Open
 
 **Current state**: If the same event is written twice (crash recovery, provider
 duplication, reconnection replay), the sink stores both copies. There's no
@@ -372,7 +406,7 @@ absorbed.
 silently deduplicated. The bloom filter is rebuilt from the last N minutes of
 stored data on startup.
 
-### 3.5 Configuration Fail-Fast vs. Self-Healing Separation
+### 3.5 Configuration Fail-Fast vs. Self-Healing Separation — 📝 Open
 
 **Current state**: `ConfigurationPipeline.ApplySelfHealing()` silently fixes
 problems like missing symbols, reversed dates, and unavailable providers. This
@@ -390,7 +424,7 @@ silently), `Warn` (apply but log prominently), `Error` (refuse to start). Let
 operators configure the threshold via an environment variable
 (`MDC_CONFIG_STRICTNESS=production`).
 
-### 3.6 Proper Backpressure Feedback Loop
+### 3.6 Proper Backpressure Feedback Loop — ✅ Done (2026-03-11)
 
 **Current state**: `EventPipeline.TryPublish()` returns `bool` but provides no
 information about *why* it failed or *what to do*. Publishers have no mechanism
@@ -408,7 +442,7 @@ providers can subscribe to for proactive throttling.
 
 ## Category 4: Observability & Operational Excellence
 
-### 4.1 Alert-to-Runbook Linkage
+### 4.1 Alert-to-Runbook Linkage — ✅ Done (2026-03-12)
 
 **Current state**: Alert rules exist in `deploy/monitoring/alert-rules.yml` but
 don't contain runbook URLs or mitigation steps in their annotations. When an
@@ -417,7 +451,7 @@ alert fires, the operator has to search documentation manually.
 **Impact**: Embed runbook URLs directly in alert annotations so monitoring tools
 (Grafana, PagerDuty) display actionable guidance inline.
 
-### 4.2 Backpressure Alerting Is Single-Shot
+### 4.2 Backpressure Alerting Is Single-Shot — ✅ Done (2026-03-12)
 
 **Current state**: The pipeline logs one warning at 80% queue utilization, resets
 at 50%. During sustained high load (80-100%), hundreds or thousands of events
@@ -427,7 +461,7 @@ can be dropped with only that single warning.
 drop rate per second, total events dropped in current episode, and estimated
 data loss percentage.
 
-### 4.3 WAL Corruption Alerting
+### 4.3 WAL Corruption Alerting — ✅ Done (2026-03-10)
 
 **Current state**: During WAL recovery, invalid checksums are logged at Warning
 level and the records are silently skipped. There's no operator alert, no
@@ -438,7 +472,7 @@ were silently discarded.
 behavior), `Alert` (continue but fire alert), `Halt` (refuse to start until
 operator reviews). Default to `Alert` in production.
 
-### 4.4 Provider Health Dashboard
+### 4.4 Provider Health Dashboard — ✅ Done (2026-03-11)
 
 **Current state**: Individual provider metrics exist but there's no unified view
 of "which providers are healthy, which are degraded, which are failing, and
@@ -452,7 +486,7 @@ active), red (primary providers down, data at risk).
 
 ## Category 5: Test Infrastructure
 
-### 5.1 Fix Timing-Dependent Tests
+### 5.1 Fix Timing-Dependent Tests — ✅ Done (2026-03-11)
 
 **Current state**: 5+ tests are skipped with `[Fact(Skip = "...")]` because they
 rely on timing guarantees (`Task.Delay`) that don't hold in CI environments.
@@ -463,7 +497,7 @@ drains the queue faster than expected.
 deterministic signaling (`ManualResetEventSlim`, `TaskCompletionSource`,
 `SemaphoreSlim`). Every skipped test is a regression that's not being caught.
 
-### 5.2 Error Injection in Mock Sinks
+### 5.2 Error Injection in Mock Sinks — 📝 Open
 
 **Current state**: The mock storage sink used in pipeline tests only supports a
 configurable `ProcessingDelay`. There's no way to inject exceptions, simulate
@@ -473,7 +507,7 @@ partial writes, or test concurrent failure scenarios.
 failures correctly: retries, reports errors, doesn't corrupt state. Currently
 this is untested.
 
-### 5.3 Provider Resilience Test Suite
+### 5.3 Provider Resilience Test Suite — 📝 Open
 
 **Current state**: Provider tests primarily cover message parsing and
 subscription management. There are no tests for: rate limit enforcement across
@@ -484,7 +518,7 @@ handling, reconnection under message loss, or heartbeat timeout behavior.
 production. Testing them prevents the "works in dev, fails at 3 AM on a
 holiday" class of incidents.
 
-### 5.4 Property-Based Testing for Domain Models
+### 5.4 Property-Based Testing for Domain Models — 📝 Open
 
 **Current state**: Domain model tests are primarily example-based (specific
 inputs → expected outputs). For types like `MarketEvent`, `Trade`, and
@@ -499,7 +533,7 @@ FsCheck or Hedgehog work well with the existing xUnit setup.
 
 ## Category 6: Code Quality & Maintainability
 
-### 6.1 Eliminate 42-Service Singleton Anti-Pattern
+### 6.1 Eliminate 42-Service Singleton Anti-Pattern — 📝 Open
 
 **Files**: All services in `src/MarketDataCollector.Ui.Services/Services/`
 
@@ -518,7 +552,7 @@ boilerplate).
 composable, and have explicit lifetime management. Dependency graphs become
 visible and verifiable.
 
-### 6.2 ServiceCompositionRoot Decomposition
+### 6.2 ServiceCompositionRoot Decomposition — 📝 Open
 
 **File**: `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
 
@@ -531,7 +565,7 @@ registration order (which matters for some services).
 that resolves all registered services eagerly to catch missing registrations at
 boot rather than at first use.
 
-### 6.3 Consistent Error Handling Across Providers
+### 6.3 Consistent Error Handling Across Providers — 📝 Open
 
 **Current state**: Each provider handles errors differently:
 - Alpaca: fire-and-forget subscription, no auth verification
@@ -551,7 +585,7 @@ reading each provider's implementation individually.
 These improvements make entire classes of bugs impossible rather than catching
 them after the fact.
 
-### 7.1 Typed Symbol Keys
+### 7.1 Typed Symbol Keys — 📝 Open
 
 **Current state**: Symbols are passed as `string` everywhere. Nothing prevents
 passing a ticker where a CUSIP is expected, or vice versa. Canonical vs.
@@ -561,7 +595,7 @@ raw symbols are distinguished only by convention.
 `ProviderSymbol` value types. The compiler prevents mixing them. Mapping between
 types is explicit and auditable.
 
-### 7.2 Sequence Number Domain Separation
+### 7.2 Sequence Number Domain Separation — 📝 Open
 
 **Current state**: `MarketEvent.Sequence` is a pipeline-assigned sequence, but
 payloads like `Trade.SequenceNumber` carry exchange-assigned sequences. These
@@ -571,7 +605,7 @@ two sequence domains are both `long` and easily confused.
 value types. Code that accidentally compares or conflates them becomes a
 compile-time error.
 
-### 7.3 Non-Nullable Event Payloads via Type Specialization
+### 7.3 Non-Nullable Event Payloads via Type Specialization — 📝 Open
 
 **Current state**: `MarketEvent.Payload` is `MarketEventPayload?` — nullable for
 all event types. Some events (like Heartbeat) have null payloads, but most
@@ -592,16 +626,33 @@ exhaustive and the compiler catches missing cases.
 | 1.2 | WAL-sink transaction | Correctness | **Critical** | High | 📝 Open |
 | 1.3 | Price precision fix | Correctness | **Critical** | Medium | ✅ Done (2026-03-10) |
 | 1.4 | Trade deduplication | Correctness | **Critical** | Medium | ✅ Done (2026-03-10) |
+| 1.5 | Completeness score calibration | Correctness | **Critical** | Medium | 🔄 Partial (2026-03-12) |
 | 2.1 | Memory leak fixes | Stability | Low | **Critical** | ✅ Done (2026-03-12) |
+| 2.2 | Hot-path GC allocation (GapAnalyzer) | Stability | Low | High | ✅ Done (2026-03-12) |
 | 2.3 | Sink timeout/buffering | Stability | High | **Critical** | ✅ Done (2026-03-11) |
+| 2.4 | WebSocket buffer size limit | Stability | Low | High | ✅ Done (2026-03-12) |
 | 2.5 | Reconnection race fix | Stability | Medium | High | ✅ Done (2026-03-12) |
+| 2.6 | Provider connection timeout | Stability | Low | High | ✅ Done (2026-03-11) |
 | 3.1 | E2E trace propagation | Architecture | Low | High | 📝 Open |
+| 3.2 | WebSocket provider base class | Architecture | Low | High | 📝 Open |
+| 3.3 | Decide F# strategy | Architecture | Low | Medium | 📝 Open |
 | 3.4 | Idempotent writes | Architecture | **Critical** | **Critical** | 📝 Open |
-| 3.6 | Backpressure feedback | Architecture | High | High | ✅ Done (2026-03-11) |
+| 3.5 | Config fail-fast vs. self-healing | Architecture | Medium | Medium | 📝 Open |
+| 3.6 | Backpressure feedback loop | Architecture | High | High | ✅ Done (2026-03-11) |
+| 4.1 | Alert-to-runbook linkage | Observability | Low | Medium | ✅ Done (2026-03-12) |
+| 4.2 | Continuous backpressure alerting | Observability | High | High | ✅ Done (2026-03-12) |
+| 4.3 | WAL corruption alerting | Observability | High | High | ✅ Done (2026-03-10) |
+| 4.4 | Provider health dashboard | Observability | Low | Medium | ✅ Done (2026-03-11) |
 | 5.1 | Fix flaky tests | Testing | Low | Medium | ✅ Done (2026-03-11) |
-| 5.3 | Provider resilience tests | Testing | Medium | High | 📝 Open |
+| 5.2 | Error injection in mock sinks | Testing | Low | Medium | 📝 Open |
+| 5.3 | Provider resilience test suite | Testing | Medium | High | 📝 Open |
+| 5.4 | Property-based testing for domain models | Testing | Low | Medium | 📝 Open |
 | 6.1 | Eliminate singletons | Maintainability | Low | Medium | 📝 Open |
+| 6.2 | ServiceCompositionRoot decomposition | Maintainability | Low | Medium | 📝 Open |
+| 6.3 | Consistent provider error handling | Maintainability | Low | Medium | 📝 Open |
 | 7.1 | Typed symbol keys | Type Safety | Medium | Medium | 📝 Open |
+| 7.2 | Sequence number domain separation | Type Safety | Medium | Medium | 📝 Open |
+| 7.3 | Non-nullable event payloads | Type Safety | Low | Medium | 📝 Open |
 
 ---
 
