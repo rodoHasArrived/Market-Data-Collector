@@ -354,6 +354,7 @@ Market-Data-Collector/
 │       │   ├── test-scripts.py
 │       │   ├── update-claude-md.py
 │       │   ├── validate-api-docs.py
+│       │   ├── validate-docs-structure.py
 │       │   └── validate-examples.py
 │       ├── hooks/
 │       │   ├── commit-msg
@@ -439,6 +440,7 @@ Market-Data-Collector/
 │   │   ├── layer-boundaries.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
+│   │   ├── README.md
 │   │   ├── storage-design.md
 │   │   ├── ui-redesign.md
 │   │   └── why-this-architecture.md
@@ -448,6 +450,8 @@ Market-Data-Collector/
 │   │   ├── 2026-02_VISUAL_CODE_EXAMPLES.md
 │   │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   │   ├── CHANGES_SUMMARY.md
+│   │   ├── CLEANUP_OPPORTUNITIES.md
+│   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── CONFIG_CONSOLIDATION_REPORT.md
 │   │   ├── consolidation.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
@@ -455,10 +459,12 @@ Market-Data-Collector/
 │   │   ├── desktop-end-user-improvements-shortlist.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── DUPLICATE_CODE_ANALYSIS.md
+│   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   ├── IMPROVEMENTS_2026-02.md
 │   │   ├── INDEX.md
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
+│   │   ├── repository-cleanup-action-plan.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── ROADMAP_UPDATE_SUMMARY.md
 │   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
@@ -467,10 +473,7 @@ Market-Data-Collector/
 │   │   ├── uwp-to-wpf-migration.md
 │   │   └── UWP_COMPREHENSIVE_AUDIT.md
 │   ├── audits/
-│   │   ├── CLEANUP_OPPORTUNITIES.md
-│   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── FURTHER_SIMPLIFICATION_OPPORTUNITIES.md
-│   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   └── README.md
 │   ├── development/
 │   │   ├── policies/
@@ -488,12 +491,40 @@ Market-Data-Collector/
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
+│   │   ├── README.md
 │   │   ├── refactor-map.md
-│   │   ├── repository-cleanup-action-plan.md
 │   │   ├── repository-organization-guide.md
 │   │   ├── ui-fixture-mode-guide.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/
+│   │   ├── uml/
+│   │   │   ├── activity-diagram-backfill.png
+│   │   │   ├── activity-diagram-backfill.puml
+│   │   │   ├── activity-diagram.png
+│   │   │   ├── activity-diagram.puml
+│   │   │   ├── communication-diagram.png
+│   │   │   ├── communication-diagram.puml
+│   │   │   ├── interaction-overview-diagram.png
+│   │   │   ├── interaction-overview-diagram.puml
+│   │   │   ├── README.md
+│   │   │   ├── sequence-diagram-backfill.png
+│   │   │   ├── sequence-diagram-backfill.puml
+│   │   │   ├── sequence-diagram.png
+│   │   │   ├── sequence-diagram.puml
+│   │   │   ├── state-diagram-backfill.png
+│   │   │   ├── state-diagram-backfill.puml
+│   │   │   ├── state-diagram-orderbook.png
+│   │   │   ├── state-diagram-orderbook.puml
+│   │   │   ├── state-diagram-trade-sequence.png
+│   │   │   ├── state-diagram-trade-sequence.puml
+│   │   │   ├── state-diagram.png
+│   │   │   ├── state-diagram.puml
+│   │   │   ├── timing-diagram-backfill.png
+│   │   │   ├── timing-diagram-backfill.puml
+│   │   │   ├── timing-diagram.png
+│   │   │   ├── timing-diagram.puml
+│   │   │   ├── use-case-diagram.png
+│   │   │   └── use-case-diagram.puml
 │   │   ├── c4-level1-context.dot
 │   │   ├── c4-level1-context.png
 │   │   ├── c4-level1-context.svg
@@ -575,20 +606,24 @@ Market-Data-Collector/
 │   │   ├── portable-data-packager.md
 │   │   ├── README.md
 │   │   └── service-level-objectives.md
+│   ├── plans/
+│   │   └── l3-inference-implementation-plan.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
 │   │   ├── backfill-guide.md
 │   │   ├── data-sources.md
 │   │   ├── interactive-brokers-free-equity-reference.md
 │   │   ├── interactive-brokers-setup.md
-│   │   └── provider-comparison.md
+│   │   ├── provider-comparison.md
+│   │   └── README.md
 │   ├── reference/
 │   │   ├── api-reference.md
 │   │   ├── data-dictionary.md
 │   │   ├── data-uniformity.md
 │   │   ├── design-review-memo.md
 │   │   ├── environment-variables.md
-│   │   └── open-source-references.md
+│   │   ├── open-source-references.md
+│   │   └── README.md
 │   ├── security/
 │   │   ├── known-vulnerabilities.md
 │   │   └── README.md

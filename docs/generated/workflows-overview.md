@@ -1,6 +1,10 @@
+> **AUTO-GENERATED — DO NOT EDIT**
+> This file is generated automatically. Manual edits will be overwritten.
+> See `docs/generated/README.md` for details on how generation works.
+
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-15 06:47:38 UTC
+> Auto-generated on 2026-03-15 08:57:01 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
