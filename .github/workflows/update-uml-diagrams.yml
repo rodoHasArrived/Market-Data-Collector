@@ -29,7 +29,14 @@ jobs:
       - name: Install PlantUML
         run: |
           sudo apt-get update
-          sudo apt-get install -y plantuml
+          sudo apt-get install -y default-jre-headless wget
+          PLANTUML_VERSION="1.2024.8"
+          wget -q "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" \
+            -O /usr/local/share/plantuml.jar
+          printf '#!/bin/sh\nexec java -jar /usr/local/share/plantuml.jar "$@"\n' \
+            | sudo tee /usr/local/bin/plantuml > /dev/null
+          sudo chmod +x /usr/local/bin/plantuml
+          plantuml -version
 
       - name: Regenerate UML PNG artifacts
         run: |
