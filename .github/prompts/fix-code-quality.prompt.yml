@@ -1,8 +1,8 @@
 name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23096313132
+# Generated: 2026-03-15
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105092534
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -20,16 +20,16 @@ messages:
       - `CA2022`
 
       ## Failure Patterns
-      - `2026-03-14T21:04:42.4147323Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90,29): warnin...`
-      - `2026-03-14T21:04:42.4160945Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs(24,21): warning CS...`
-      - `2026-03-14T21:04:42.4171416Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(130,32): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4183777Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(157,22): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4196082Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(158,29): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4208863Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(159,19): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4221590Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(160,13): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4234384Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(161,14): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4247358Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(162,33): warning CS1573: Parameter '...`
-      - `2026-03-14T21:04:42.4260295Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(163,33): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1047847Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscriptions/Services/AutoResubscribePolicy.cs(90,29): warnin...`
+      - `2026-03-15T06:35:53.1076672Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs(24,21): warning CS...`
+      - `2026-03-15T06:35:53.1089118Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(130,32): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1102025Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(157,22): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1115748Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(158,29): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1130203Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(159,19): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1142623Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(160,13): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1157406Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(161,14): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1172726Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(162,33): warning CS1573: Parameter '...`
+      - `2026-03-15T06:35:53.1188042Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/EventPipeline.cs(163,33): warning CS1573: Parameter '...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
