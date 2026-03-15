@@ -1,8 +1,8 @@
 name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-05
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22695951417
+# Generated: 2026-03-14
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23096313132
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,20 +23,27 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `CS0452`
+      - `CS0103`
+      - `CS0219`
+      - `CS0246`
+      - `CS1503`
+      - `CS1573`
+      - `CS1734`
       - `CS1998`
+      - `CS4014`
+      - `CS8602`
 
       ## Failure Patterns
-      - `2026-03-05T00:20:04.2558802Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(327,62): error CS0452...`
-      - `2026-03-05T00:20:04.2574012Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(328,57): error CS0452...`
-      - `2026-03-05T00:20:04.2582342Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(329,61): error CS0452...`
-      - `2026-03-05T00:20:04.2589777Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(338,22): error CS0452...`
-      - `2026-03-05T00:20:04.2597632Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(339,22): error CS0452...`
-      - `2026-03-05T00:20:04.2605314Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(347,22): error CS0452...`
-      - `2026-03-05T00:20:06.8612681Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(327,62): error CS0452...`
-      - `2026-03-05T00:20:06.8632225Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(328,57): error CS0452...`
-      - `2026-03-05T00:20:06.8640906Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(329,61): error CS0452...`
-      - `2026-03-05T00:20:06.8649531Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Monitoring/TimestampMonotonicityChecker.cs(338,22): error CS0452...`
+      - `2026-03-14T21:04:57.2278815Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(29,25): error CS...`
+      - `2026-03-14T21:04:57.2283797Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(30,43): error CS...`
+      - `2026-03-14T21:04:57.2287903Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(202,29): error C...`
+      - `2026-03-14T21:04:57.2620188Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(29,25): error CS...`
+      - `2026-03-14T21:04:57.2626908Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(30,43): error CS...`
+      - `2026-03-14T21:04:57.2633884Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(202,29): error C...`
+      - `2026-03-14T21:06:39.4018818Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(29,25): error CS0246: The typ...`
+      - `2026-03-14T21:06:39.4108482Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(30,43): error CS0103: The nam...`
+      - `2026-03-14T21:06:39.4119741Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(202,29): error CS1503: Argume...`
+      - `2026-03-14T21:06:40.7544227Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(29,25): error CS0246: The typ...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

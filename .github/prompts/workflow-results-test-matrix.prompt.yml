@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23096313132
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,31 +18,32 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      ### Test
-      - `2026-03-14T00:32:19.7291302Z Failed!  - Failed:     1, Passed:  2792, Skipped:     0, Total:  2793, Duration: 19 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-14T00:32:03.8499725Z [xUnit.net 00:00:04.89]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_Retu...`
+      ### Build
+      - `2026-03-14T21:04:57.2278815Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
+      - `2026-03-14T21:04:57.2283797Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
+      - `2026-03-14T21:04:57.2287903Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
+      - `2026-03-14T21:04:57.2620188Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
+      - `2026-03-14T21:04:57.2626908Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
 
       ### Code Quality
-      - `2026-03-14T00:31:57.3121835Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:31:57.3124283Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:31:57.3126498Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:31:57.3128531Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
-      - `2026-03-14T00:31:57.3130992Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Contracts\Export\AnalysisExportModels...`
+      - `2026-03-14T21:04:42.4147323Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
+      - `2026-03-14T21:04:42.4160945Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicaliza...`
+      - `2026-03-14T21:04:42.4171416Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-14T21:04:42.4183777Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-14T21:04:42.4196082Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
 
-
-      ## Failed Tests
-      - `2026-03-14T00:32:03.8578452Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [77 ms]`
-      - `MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError`
 
       ## Error Codes
       - `CA2022`
+      - `CS0103`
       - `CS0219`
+      - `CS0246`
+      - `CS1503`
       - `CS1573`
-      - `CS1591`
+      - `CS1734`
       - `CS1998`
       - `CS4014`
       - `CS8602`
-      - `CS8625`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -55,7 +56,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23076048491
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23096313132
 
       Additional context:
       {{additional_context}}
