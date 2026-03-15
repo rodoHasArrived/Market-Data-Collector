@@ -1,8 +1,8 @@
 name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-14
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23096313132
+# Generated: 2026-03-15
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105092534
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -34,16 +34,16 @@ messages:
       - `CS8602`
 
       ## Failure Patterns
-      - `2026-03-14T21:04:57.2278815Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(29,25): error CS...`
-      - `2026-03-14T21:04:57.2283797Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(30,43): error CS...`
-      - `2026-03-14T21:04:57.2287903Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(202,29): error C...`
-      - `2026-03-14T21:04:57.2620188Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(29,25): error CS...`
-      - `2026-03-14T21:04:57.2626908Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(30,43): error CS...`
-      - `2026-03-14T21:04:57.2633884Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(202,29): error C...`
-      - `2026-03-14T21:06:39.4018818Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(29,25): error CS0246: The typ...`
-      - `2026-03-14T21:06:39.4108482Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(30,43): error CS0103: The nam...`
-      - `2026-03-14T21:06:39.4119741Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(202,29): error CS1503: Argume...`
-      - `2026-03-14T21:06:40.7544227Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(29,25): error CS0246: The typ...`
+      - `2026-03-15T06:36:08.9738171Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(29,25): error CS...`
+      - `2026-03-15T06:36:08.9745592Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(30,43): error CS...`
+      - `2026-03-15T06:36:08.9752232Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(202,29): error C...`
+      - `2026-03-15T06:36:09.0171414Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(29,25): error CS...`
+      - `2026-03-15T06:36:09.0178802Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(30,43): error CS...`
+      - `2026-03-15T06:36:09.0186750Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Providers/ProviderResilienceTests.cs(202,29): error C...`
+      - `2026-03-15T06:37:54.0971446Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(29,25): error CS0246: The typ...`
+      - `2026-03-15T06:37:54.0978590Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(30,43): error CS0103: The nam...`
+      - `2026-03-15T06:37:54.0987473Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(202,29): error CS1503: Argume...`
+      - `2026-03-15T06:37:54.1705440Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Tests\Infrastructure\Providers\ProviderResilienceTests.cs(29,25): error CS0246: The typ...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
