@@ -1,40 +1,40 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-15T06:45:25.770723+00:00
+> Last updated: 2026-03-15T06:46:32.822157+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 71 |
+| **Total Items** | 82 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 71 |
+| **Untracked** | 82 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `TODO` | 52 | General tasks to complete |
+| `TODO` | 63 | General tasks to complete |
 | `NOTE` | 19 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 57 |
+| `src/` | 68 |
 | `tests/` | 12 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-71 items have no assignee and no issue tracking:
+82 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### TODO (52)
+### TODO (63)
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:10`
   > Add your provider's base URL or WebSocket URI. Example for a REST API: public const string BaseUrl = "https://api.example.com/v1"; Example for a WebSocket API: public const string WssUri = "wss://stream.example.com/ws";
@@ -50,6 +50,39 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:41`
   > Add message type constants. Example: public const string Trade = "trade"; public const string Quote = "quote"; public const string Error = "error";
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:66`
+  > Resolve credentials — prefer the config value, then fall back to the env var. Follow the same pattern as EnvironmentCredentialResolver in ProviderFactory.cs.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:70`
+  > If the provider requires an API key, guard here and return null when missing. if (string.IsNullOrEmpty(apiKey)) return null;
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:74`
+  > Forward additional constructor arguments (log, priority, rateLimitPerMinute) as needed.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:92`
+  > Remove this method entirely if the provider does not support symbol search.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:102`
+  > If credentials are required for symbol search, guard here. if (string.IsNullOrEmpty(apiKey)) return null;
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:123`
+  > Remove this method entirely if the provider supports historical data only.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:130`
+  > Resolve credentials — prefer options value, then fall back to the env var.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:135`
+  > Pass options to the constructor once the TemplateStreamingOptions parameter is added.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:158`
+  > Register a named HttpClient for this provider: services.AddHttpClient(HttpClientNames.TemplateHistorical, client => { client.BaseAddress = new Uri(TemplateEndpoints.BaseUrl); client.DefaultRequestHeaders.Add("Accept", "application/json"); });
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:165`
+  > Bind streaming options from configuration: services.AddOptions<TemplateStreamingOptions>() .BindConfiguration("Template");
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:169`
+  > Register data sources in the DataSourceRegistry if needed. registry.Register(new DataSourceConfiguration("template", ...));
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:29`
   > Replace "template" with the provider ID, display name, type, and category.
