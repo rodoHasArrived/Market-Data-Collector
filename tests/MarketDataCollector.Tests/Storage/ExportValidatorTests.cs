@@ -101,8 +101,20 @@ public sealed class ExportValidatorTests : IDisposable
     [Fact]
     public async Task ValidateAsync_UnwritableOutputDir_ReturnsPermissionError()
     {
-        // Arrange — use a path that cannot be created (invalid drive on Linux/Mac)
-        var badPath = Path.Combine("/proc/sys/kernel", "no_write_here_please");
+        // Arrange — pick a path that cannot be created on the current platform.
+        // On Windows: embed an existing file (kernel32.dll) as a path component so
+        //   that Directory.CreateDirectory throws because the component is a file.
+        // On Linux/Mac: /proc/sys/kernel is a read-only kernel filesystem.
+        string badPath;
+        if (OperatingSystem.IsWindows())
+        {
+            var system32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            badPath = Path.Combine(system32, "kernel32.dll", "no_write_here_please");
+        }
+        else
+        {
+            badPath = Path.Combine("/proc/sys/kernel", "no_write_here_please");
+        }
 
         var request = new ExportRequest
         {
