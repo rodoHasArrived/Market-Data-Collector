@@ -115,7 +115,7 @@ This keeps organization intact over time.
 ## Suggested Migration Plan (Low Risk)
 
 1. Define and publish folder taxonomy in `docs/README.md`.
-2. Consolidate diagrams (`uml/` → `diagrams/uml/`) with redirects/updated links.
+2. Consolidate diagrams (`uml/` → `diagrams/uml/`): move all files, leave a stub `docs/uml/README.md` that links to the new location, and do a repo-wide search-and-replace to update every relative link that referenced the old `uml/` path.
 3. Add README + ownership metadata to each top-level section.
 4. Migrate audits/evaluations into a unified reviews section.
 5. Add CI checks for links and metadata.
