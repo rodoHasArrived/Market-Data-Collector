@@ -306,7 +306,7 @@ Track these to measure progress:
   
 - **Planning and Roadmap:**
   - [Project Roadmap](../status/ROADMAP.md) - Overall project timeline
-  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Technical debt
+  - [Repository Cleanup Action Plan](../archived/repository-cleanup-action-plan.md) - Technical debt (completed)
 
 ---
 

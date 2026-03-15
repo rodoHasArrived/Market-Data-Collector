@@ -299,7 +299,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ### Repository Hygiene (H1-H3)
 
-> Source: `docs/audits/CLEANUP_SUMMARY.md`
+> Source: `docs/archived/CLEANUP_SUMMARY.md`
 > Date: 2026-02-10 | Status: Complete
 
 | Item | Issue | Resolution |
@@ -314,7 +314,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ### Debug Code Analysis (H3)
 
-> Source: `docs/audits/H3_DEBUG_CODE_ANALYSIS.md`
+> Source: `docs/archived/H3_DEBUG_CODE_ANALYSIS.md`
 > Date: 2026-02-10 | Status: Complete
 
 | Category | Instances | Verdict |
@@ -329,7 +329,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ### Platform Cleanup (UWP Removal)
 
-> Source: `docs/audits/CLEANUP_OPPORTUNITIES.md`
+> Source: `docs/archived/CLEANUP_OPPORTUNITIES.md`
 > Date: 2026-02-10 (updated 2026-02-20) | Status: Complete
 
 **Summary of Completed Work:**
@@ -385,7 +385,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ### Cleanup Action Plan Status
 
-> Source: `docs/development/repository-cleanup-action-plan.md`
+> Source: `docs/archived/repository-cleanup-action-plan.md`
 > Version: 1.2 | Date: 2026-02-16 | Status: Phases 1-6 Complete
 
 | Metric | Before | After | Improvement |
@@ -706,12 +706,16 @@ These evaluations are superseded or no longer applicable:
 |----------|----------|----------------|
 | `desktop-end-user-improvements-shortlist.md` | `docs/archived/` | All P0 items resolved; superseded by current desktop assessment |
 | `desktop-ui-alternatives-evaluation.md` | `docs/archived/` | Decision made: WPF is sole desktop platform |
-| `UWP_COMPREHENSIVE_AUDIT.md` | `docs/audits/` | UWP fully removed from codebase |
+| `UWP_COMPREHENSIVE_AUDIT.md` | `docs/archived/` | UWP fully removed from codebase |
 | `uwp-development-roadmap.md` | `docs/archived/` | UWP deprecated; WPF is sole client |
 | `DUPLICATE_CODE_ANALYSIS.md` | `docs/archived/` | Analysis complete; most items resolved |
 | `IMPROVEMENTS_2026-02.md` | `docs/archived/` | Consolidated into `IMPROVEMENTS.md` |
 | `STRUCTURAL_IMPROVEMENTS_2026-02.md` | `docs/archived/` | Consolidated into `IMPROVEMENTS.md` |
 | `REDESIGN_IMPROVEMENTS.md` | `docs/archived/` | Content merged into current docs |
+| `CLEANUP_SUMMARY.md` | `docs/archived/` | All hygiene phases complete; historical reference only |
+| `H3_DEBUG_CODE_ANALYSIS.md` | `docs/archived/` | Complete — no action required; historical reference only |
+| `CLEANUP_OPPORTUNITIES.md` | `docs/archived/` | All platform cleanup items fully completed; historical reference only |
+| `repository-cleanup-action-plan.md` | `docs/archived/` | All phases (1–6) complete; historical record of completed cleanup work |
 
 See [`docs/archived/INDEX.md`](../archived/INDEX.md) for the full archive index.
 
@@ -737,12 +741,12 @@ All source documents that feed into this consolidation:
 | Nautilus-Inspired Restructuring Proposal | `docs/evaluations/nautilus-inspired-restructuring-proposal.md` | Proposal | Partially Implemented |
 | Assembly-Level Performance Opportunities | `docs/evaluations/assembly-performance-opportunities.md` | Proposal | Proposal |
 | Next Frontier Brainstorm (Mar 2026) | `docs/evaluations/2026-03-brainstorm-next-frontier.md` | Brainstorm | Living Document |
-| Cleanup Summary | `docs/audits/CLEANUP_SUMMARY.md` | Audit | Complete |
-| Cleanup Opportunities | `docs/audits/CLEANUP_OPPORTUNITIES.md` | Audit | Complete |
-| Debug Code Analysis | `docs/audits/H3_DEBUG_CODE_ANALYSIS.md` | Audit | Complete |
+| Cleanup Summary | `docs/archived/CLEANUP_SUMMARY.md` | Audit | Archived |
+| Cleanup Opportunities | `docs/archived/CLEANUP_OPPORTUNITIES.md` | Audit | Archived |
+| Debug Code Analysis | `docs/archived/H3_DEBUG_CODE_ANALYSIS.md` | Audit | Archived |
 | Further Simplification | `docs/audits/FURTHER_SIMPLIFICATION_OPPORTUNITIES.md` | Audit | Documented |
-| UWP Comprehensive Audit | `docs/audits/UWP_COMPREHENSIVE_AUDIT.md` | Audit | Archived |
-| Repository Cleanup Plan | `docs/development/repository-cleanup-action-plan.md` | Plan | Complete |
+| UWP Comprehensive Audit | `docs/archived/UWP_COMPREHENSIVE_AUDIT.md` | Audit | Archived |
+| Repository Cleanup Plan | `docs/archived/repository-cleanup-action-plan.md` | Plan | Archived |
 | Config Consolidation Report | `CONFIG_CONSOLIDATION_REPORT.md` | Report | Complete |
 | Desktop Improvements Exec Summary | `docs/development/desktop-improvements-executive-summary.md` | Summary | Current |
 | Desktop Improvements Quick Ref | `docs/development/desktop-improvements-quick-reference.md` | Reference | Current |

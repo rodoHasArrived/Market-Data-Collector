@@ -1,6 +1,6 @@
 # Archived Documentation Index
 
-**Last Updated:** 2026-02-21
+**Last Updated:** 2026-03-15
 
 This folder contains historical documentation that has been superseded by newer guides or is no longer actively maintained. These documents are preserved for historical reference and to understand the evolution of the project.
 
@@ -28,6 +28,7 @@ Documents are archived when:
 | **desktop-ui-alternatives-evaluation.md** | 2026-02-12 | Decision made: WPF is primary desktop platform | [UI Redesign](../architecture/ui-redesign.md) |
 | **IMPROVEMENTS_2026-02.md** | 2026-02-12 | Consolidated into unified tracker | [IMPROVEMENTS.md](../status/IMPROVEMENTS.md) |
 | **STRUCTURAL_IMPROVEMENTS_2026-02.md** | 2026-02-12 | Consolidated into unified tracker | [IMPROVEMENTS.md](../status/IMPROVEMENTS.md) |
+| **repository-cleanup-action-plan.md** | 2026-03-15 | All phases (1–6) complete; historical record of completed cleanup work | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
 
 ### UWP-Related Documents
 
@@ -60,6 +61,9 @@ Documents are archived when:
 |----------|---------------|--------|-------------------|
 | **UWP_COMPREHENSIVE_AUDIT.md** | 2026-02-21 | UWP fully removed from codebase | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
 | **CONFIG_CONSOLIDATION_REPORT.md** | 2026-02-21 | Consolidation work complete, no duplicates found | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
+| **CLEANUP_SUMMARY.md** | 2026-03-15 | All hygiene phases complete (H1–H3); historical reference only | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
+| **H3_DEBUG_CODE_ANALYSIS.md** | 2026-03-15 | Complete — no action required; historical reference only | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
+| **CLEANUP_OPPORTUNITIES.md** | 2026-03-15 | All platform cleanup items fully completed; historical reference only | [EVALUATIONS_AND_AUDITS.md](../status/EVALUATIONS_AND_AUDITS.md) |
 
 ### Desktop Evaluation Summaries
 

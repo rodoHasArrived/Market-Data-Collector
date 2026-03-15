@@ -596,7 +596,7 @@ Both workstreams are additive and low-to-medium risk. Phase 3 coverage expansion
 
 - **Status and Planning:**
   - [Project Roadmap](../status/ROADMAP.md)
-  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md)
+  - [Repository Cleanup Action Plan](../archived/repository-cleanup-action-plan.md)
 
 ## Questions?
 

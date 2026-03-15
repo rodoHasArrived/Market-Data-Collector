@@ -730,7 +730,7 @@ This guide should evolve as the repository grows. To suggest improvements:
 ## Related Documentation
 
 - **Planning and Cleanup:**
-  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Technical debt reduction plan
+  - [Repository Cleanup Action Plan](../archived/repository-cleanup-action-plan.md) - Technical debt reduction plan (completed)
   - [Refactor Map](./refactor-map.md) - Safe refactoring procedures
   - [Project Roadmap](../status/ROADMAP.md) - Project timeline and phases
 

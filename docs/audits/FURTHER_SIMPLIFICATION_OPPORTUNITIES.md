@@ -6,7 +6,7 @@
 
 This document captures simplification opportunities discovered during two rounds of code review and cleanup. These items were **not implemented** because they require broader discussion, carry higher risk, or have lower priority than the changes already shipped. Each section includes rationale, affected files, estimated impact, and suggested approach.
 
-For already-completed cleanup work, see [`CLEANUP_OPPORTUNITIES.md`](CLEANUP_OPPORTUNITIES.md) and [`CLEANUP_SUMMARY.md`](CLEANUP_SUMMARY.md).
+For already-completed cleanup work, see [`CLEANUP_OPPORTUNITIES.md`](../archived/CLEANUP_OPPORTUNITIES.md) and [`CLEANUP_SUMMARY.md`](../archived/CLEANUP_SUMMARY.md).
 
 ---
 
@@ -307,7 +307,7 @@ The `ROADMAP.md` states: "`StubEndpoints.MapStubEndpoints()` is intentionally em
 
 ## 10. Remaining Stale UWP References in Source
 
-**What was already done:** R1-R9 cleanup (see `CLEANUP_OPPORTUNITIES.md`), plus PR #1302 updated 13+ stale UWP references in comments and project metadata.
+**What was already done:** R1-R9 cleanup (see [`CLEANUP_OPPORTUNITIES.md`](../archived/CLEANUP_OPPORTUNITIES.md)), plus PR #1302 updated 13+ stale UWP references in comments and project metadata.
 
 **What remains (source code):**
 
@@ -409,8 +409,8 @@ Model classes are scattered across multiple projects with potential overlap:
 
 ## Cross-References
 
-- **Completed cleanup:** [`docs/audits/CLEANUP_OPPORTUNITIES.md`](CLEANUP_OPPORTUNITIES.md)
-- **Completed cleanup summary:** [`docs/audits/CLEANUP_SUMMARY.md`](CLEANUP_SUMMARY.md)
+- **Completed cleanup:** [`docs/archived/CLEANUP_OPPORTUNITIES.md`](../archived/CLEANUP_OPPORTUNITIES.md)
+- **Completed cleanup summary:** [`docs/archived/CLEANUP_SUMMARY.md`](../archived/CLEANUP_SUMMARY.md)
 - **Architecture refactor plan:** [`docs/development/refactor-map.md`](../development/refactor-map.md)
 - **Improvement tracking:** [`docs/status/IMPROVEMENTS.md`](../status/IMPROVEMENTS.md) (items C1, C2, C3 are related)
 - **Project roadmap:** [`docs/status/ROADMAP.md`](../status/ROADMAP.md)

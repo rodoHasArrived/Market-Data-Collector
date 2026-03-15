@@ -252,7 +252,7 @@
 ## Related Documentation
 
 - **Architecture and Planning:**
-  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Prioritized technical debt reduction
+  - [Repository Cleanup Action Plan](../archived/repository-cleanup-action-plan.md) - Prioritized technical debt reduction (completed)
   - [Repository Organization Guide](./repository-organization-guide.md) - Code structure conventions
   - [ADR Index](../adr/README.md) - Architectural decision records
 

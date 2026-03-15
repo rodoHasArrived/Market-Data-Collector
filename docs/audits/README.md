@@ -6,31 +6,6 @@ This directory contains comprehensive audits and assessments of the Market Data 
 
 ## Contents
 
-### Repository Hygiene (2026-02-10) — Complete
-
-**CLEANUP_SUMMARY.md**
-- Complete summary of the repository hygiene cleanup audit
-- H1: Accidental artifact file removal
-- H2: Build logs and runtime artifacts cleanup
-- H3: Temporary test files and debug code audit
-- Statistics, impact assessment, and recommendations
-
-**H3_DEBUG_CODE_ANALYSIS.md**
-- Detailed analysis of Console.WriteLine usage (20 instances)
-- Analysis of System.Diagnostics.Debug.WriteLine usage (20 instances)
-- Assessment of skipped tests with rationale review
-- Conclusion: Excellent code quality, no cleanup required
-
-### Platform Cleanup (2026-02-10, updated 2026-02-20) — Complete
-
-**CLEANUP_OPPORTUNITIES.md**
-- UWP removal progress tracking (fully complete)
-- UiServer endpoint extraction (3,030 → 260 LOC)
-- HtmlTemplates split into partial class files
-- Storage services decomposition
-- Architecture debt cleanup (DI, naming)
-- Residual UWP reference cleanup (R1-R9)
-
 ### Simplification Backlog (2026-02-20) — Documented
 
 **FURTHER_SIMPLIFICATION_OPPORTUNITIES.md**
@@ -39,11 +14,16 @@ This directory contains comprehensive audits and assessments of the Market Data 
 - Priority matrix with recommended execution order
 - Covers: thin wrappers, singleton patterns, endpoint boilerplate, dead code, Task.Run misuse
 
-### Platform Assessments (Archived)
+### Completed Audits (Archived)
 
-**UWP_COMPREHENSIVE_AUDIT.md**
-- Comprehensive assessment of UWP platform implementation (now archived — UWP fully removed)
-- Historical reference only
+The following completed audits have been moved to [`docs/archived/`](../archived/):
+
+| Document | Reason Archived |
+|----------|----------------|
+| **[CLEANUP_SUMMARY.md](../archived/CLEANUP_SUMMARY.md)** | All hygiene phases complete (H1–H3 done) |
+| **[H3_DEBUG_CODE_ANALYSIS.md](../archived/H3_DEBUG_CODE_ANALYSIS.md)** | Complete — no action required |
+| **[CLEANUP_OPPORTUNITIES.md](../archived/CLEANUP_OPPORTUNITIES.md)** | All platform cleanup items fully completed |
+| **[UWP_COMPREHENSIVE_AUDIT.md](../archived/UWP_COMPREHENSIVE_AUDIT.md)** | UWP fully removed from codebase |
 
 ## Audit Standards
 
@@ -78,14 +58,15 @@ When creating new audits, follow these guidelines:
 - [`docs/status/ROADMAP.md`](../status/ROADMAP.md) - Project roadmap
 - [`docs/development/`](../development/) - Development guides and best practices
 - [`docs/architecture/`](../architecture/) - Architecture decision records (ADRs)
+- [`docs/archived/`](../archived/) - Archived completed audit documents
 
 ## Audit History
 
 | Date | Audit | Status | Outcome |
 |------|-------|--------|---------|
 | 2026-02-20 | Further Simplification Opportunities | Documented | 12 categories, ~2,800-3,400 LOC removable |
-| 2026-02-20 | Platform Cleanup (UWP Removal) | ✅ Complete | UWP fully removed, all residual refs cleaned |
-| 2026-02-10 | Repository Hygiene Cleanup | ✅ Complete | 2 artifacts removed, .gitignore improved, code quality verified |
+| 2026-02-20 | Platform Cleanup (UWP Removal) | ✅ Complete (Archived) | UWP fully removed, all residual refs cleaned |
+| 2026-02-10 | Repository Hygiene Cleanup | ✅ Complete (Archived) | 2 artifacts removed, .gitignore improved, code quality verified |
 | Earlier | UWP Platform Assessment | ✅ Complete (Archived) | Comprehensive feature inventory |
 
 ---

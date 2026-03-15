@@ -26,6 +26,10 @@ Documents are moved here when they:
 | `2026-02_PR_SUMMARY.md` | Root | Historical PR #701 summary; UI improvements completed | 2026-02-10 |
 | `2026-02_UI_IMPROVEMENTS_SUMMARY.md` | Root | Historical UI improvements documentation snapshot | 2026-02-10 |
 | `2026-02_VISUAL_CODE_EXAMPLES.md` | Root | Historical code examples for UI improvements | 2026-02-10 |
+| `CLEANUP_SUMMARY.md` | `audits/` | All hygiene phases complete (H1–H3); historical reference only | 2026-03-15 |
+| `H3_DEBUG_CODE_ANALYSIS.md` | `audits/` | Complete — no action required; historical reference only | 2026-03-15 |
+| `CLEANUP_OPPORTUNITIES.md` | `audits/` | All platform cleanup items fully completed; historical reference only | 2026-03-15 |
+| `repository-cleanup-action-plan.md` | `development/` | All phases (1–6) complete; historical record of completed cleanup work | 2026-03-15 |
 
 ## Current Documentation
 
@@ -40,4 +44,4 @@ These documents may contain outdated information. If you need to understand hist
 
 ---
 
-*Last Updated: 2026-02-10*
+*Last Updated: 2026-03-15*
