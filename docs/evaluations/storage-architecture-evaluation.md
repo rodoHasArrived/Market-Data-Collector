@@ -2,10 +2,10 @@
 
 ## Market Data Collector — Data Persistence Assessment
 
-**Date:** 2026-02-22
+**Date:** 2026-03-15
 **Status:** Evaluation Complete (Revised)
 **Author:** Architecture Review
-**Previous Revision:** 2026-02-03
+**Previous Revision:** 2026-02-22
 
 ---
 
@@ -13,7 +13,7 @@
 
 This document evaluates the storage architecture of the Market Data Collector system, including file formats, organization strategies, compression, tiered storage, the Write-Ahead Log (WAL) implementation, export system, quota enforcement, data lineage, and catalog management. The evaluation assesses current design decisions against alternatives and identifies remaining optimization opportunities.
 
-**Key Finding:** The storage architecture has matured significantly since the initial evaluation. The core JSONL + Parquet dual-format approach remains well-designed for archival-first market data collection. Major additions since the last review include a comprehensive export pipeline (7 formats), granular quota enforcement with dynamic rebalancing, data lineage tracking, a lifecycle policy engine, a catalog sync system, and expanded compression profiles. Several recommendations from the prior evaluation—parallel tier migration, retention policy automation, and data validation pipelines—have been implemented.
+**Key Finding:** The storage architecture has matured significantly since the initial evaluation. The core JSONL + Parquet dual-format approach remains well-designed for archival-first market data collection. Major additions since the last review include a comprehensive export pipeline (7 formats), granular quota enforcement with dynamic rebalancing, data lineage tracking, a lifecycle policy engine, a catalog sync system, expanded compression profiles, attribute-based sink plugin discovery, cross-platform file permission management, and retention compliance reporting. Several recommendations from the prior evaluation—parallel tier migration, retention policy automation, data validation pipelines, and native LZ4/ZSTD compression—have been implemented.
 
 ---
 
@@ -52,6 +52,10 @@ This document evaluates the storage architecture of the Market Data Collector sy
 | JsonlReplayer | `Storage/Replay/` | Event replay from stored JSONL |
 | MemoryMappedJsonlReader | `Storage/Replay/` | High-performance memory-mapped reads |
 | ScheduledArchiveMaintenanceService | `Storage/Maintenance/` | Automated scheduled maintenance |
+| FilePermissionsService | `Storage/Services/` | Cross-platform file/directory permission management (Unix 0755/0644, Windows NTFS ACLs) |
+| RetentionComplianceReporter | `Storage/Services/` | Machine-readable retention compliance audit reports for regulatory review |
+| StorageSinkRegistry | `Storage/` | Attribute-based storage sink plugin discovery and DI registration (ADR-005 pattern) |
+| StorageSinkAttribute | `Storage/` | Marks a class as a discoverable `IStorageSink` plugin; controls `ActiveSinks` activation |
 
 ### Storage Profiles
 
@@ -275,13 +279,11 @@ The `high-volume-symbols` profile automatically targets high-frequency symbols (
 | Codec | Native .NET Support | Implementation Notes |
 |-------|---------------------|---------------------|
 | None | Yes | Pass-through |
-| LZ4 | No (fallback to GZip Fastest) | Production use would need K4os.Compression.LZ4 |
+| LZ4 | Via `K4os.Compression.LZ4.Streams` | Native LZ4 via K4os.Compression.LZ4.Streams package |
 | Gzip | Yes | Standard System.IO.Compression |
-| ZSTD | No (fallback to GZip Optimal) | Production use would need ZstdNet |
+| ZSTD | Via `ZstdSharp.Port` | Native ZSTD via ZstdSharp.Port package |
 | Brotli | Yes | System.IO.Compression.BrotliStream |
 | Deflate | Yes | System.IO.Compression.DeflateStream |
-
-**Note:** LZ4 and ZSTD currently fall back to GZip equivalents since .NET lacks native implementations. Adding K4os.Compression.LZ4 and ZstdNet NuGet packages would enable true LZ4/ZSTD support.
 
 ### Compression Comparison (Market Data)
 
@@ -309,12 +311,10 @@ A benchmarking API (`BenchmarkAsync`) allows profiling all compression profiles 
 
 | Tier | Current Profile | Assessment |
 |------|----------------|------------|
-| Hot (real-time) | LZ4 (via GZip fallback) | Correct priority; add native LZ4 package for true performance |
-| Warm (recent) | ZSTD-6 (via GZip fallback) | Correct balance; add ZstdNet for true ZSTD |
-| Cold (archive) | ZSTD-19 (via GZip fallback) | Maximum compression; requires ZstdNet |
+| Hot (real-time) | LZ4 (native via K4os.Compression.LZ4.Streams) | Correct priority; native LZ4 performance now realized |
+| Warm (recent) | ZSTD-6 (native via ZstdSharp.Port) | Correct balance; native ZSTD now realized |
+| Cold (archive) | ZSTD-19 (native via ZstdSharp.Port) | Maximum compression; native ZSTD now realized |
 | Export | Gzip-6 | Correct for universal compatibility |
-
-**Priority improvement:** Add native LZ4/ZSTD NuGet packages (`K4os.Compression.LZ4`, `ZstdSharp.Port`) to realize the intended compression performance rather than falling back to GZip.
 
 ---
 
@@ -412,14 +412,12 @@ The `LifecyclePolicyEngine` (`Storage/Services/LifecyclePolicyEngine.cs`) automa
 |----------|--------|
 | Storage spike | Temporary 2x storage during migration |
 | Cloud tier not wired | `StorageClass` config property exists but no S3/Azure upload implementation |
-| LZ4/ZSTD fallback | Native codec packages not yet integrated |
 | No incremental Parquet | JSONL → Parquet conversion requires full rewrite |
 
 **Remaining Recommendations:**
 
 1. **Wire cloud storage uploads** - S3/Azure Blob integration using the existing `StorageClass` configuration
-2. **Add native compression packages** - K4os.Compression.LZ4, ZstdSharp.Port
-3. **Implement incremental Parquet append** - Via row group appending for ongoing tier migration
+2. **Implement incremental Parquet append** - Via row group appending for ongoing tier migration
 
 ---
 
@@ -775,6 +773,7 @@ The file-based approach remains appropriate for Market Data Collector because:
 | Implement retention policy automation | **Done** | `LifecyclePolicyEngine` + `QuotaEnforcementService` |
 | Add data validation pipeline | **Done** | `DataQualityScoringService` with multi-dimensional scoring |
 | Add migration scheduling | **Done** | Cron-based scheduling via `TieringOptions.MigrationSchedule` |
+| Add native LZ4/ZSTD packages | **Done** | `K4os.Compression.LZ4.Streams` + `ZstdSharp.Port` integrated in `CompressionProfileManager` |
 
 ### New Capabilities (Not in Prior Review)
 
@@ -787,6 +786,8 @@ The file-based approach remains appropriate for Market Data Collector because:
 | Catalog sync on write | `CatalogSyncSink` |
 | 6 compression profiles | `CompressionProfileManager` |
 | Compression benchmarking | `CompressionProfileManager.BenchmarkAsync` |
+| Native LZ4 compression | `CompressionProfileManager` via `K4os.Compression.LZ4.Streams` |
+| Native ZSTD compression | `CompressionProfileManager` via `ZstdSharp.Port` |
 | 8 naming conventions | `FileNamingConvention` (was 4) |
 | Multi-dimensional partitioning | `PartitionStrategy` |
 | 5 storage tiers | `StorageTier` (was 3) |
@@ -794,6 +795,9 @@ The file-based approach remains appropriate for Market Data Collector because:
 | Regulatory archive policies | `ArchivePolicyConfig` with compliance support |
 | Memory-mapped JSONL reader | `MemoryMappedJsonlReader` |
 | Symbol-specific compression | `CompressionProfileManager.SetSymbolOverride` |
+| Cross-platform file permissions | `FilePermissionsService` (Unix 0755/0644 + Windows NTFS ACLs) |
+| Retention compliance reporting | `RetentionComplianceReporter` (machine-readable audit reports) |
+| Attribute-based sink discovery | `StorageSinkRegistry` + `StorageSinkAttribute` (ADR-005 pattern for storage plugins) |
 
 ---
 
@@ -815,7 +819,6 @@ The storage architecture is well-designed and has addressed most prior concerns.
 
 | Priority | Improvement | Benefit | Complexity |
 |----------|-------------|---------|------------|
-| **High** | Add native LZ4/ZSTD packages | Realize intended compression performance | Low |
 | **High** | Wire cloud storage uploads (S3/Azure) | Use existing `StorageClass` config for cloud cold tier | Medium |
 | Medium | Add DuckDB query layer | Ad-hoc analytical queries over Parquet | Medium |
 | Medium | Add end-to-end hash chains | Tamper detection across file boundaries | Medium |
@@ -827,8 +830,7 @@ The storage architecture is well-designed and has addressed most prior concerns.
 ### Architecture Evolution Path
 
 ```
-Current State (v1.6.1)
-    ├── Add native LZ4/ZSTD packages
+Current State (v1.7.0)
     ├── Wire cloud cold tier (S3/Azure using existing StorageClass config)
     ├── Add DuckDB query layer for analytics
     └── Add WAL replication for HA
@@ -844,13 +846,12 @@ The storage architecture follows the principle of **separation of concerns**: wr
 
 The primary investment areas should be:
 
-1. **Native compression** - Replace GZip fallbacks with true LZ4/ZSTD for the intended performance characteristics
-2. **Cloud tiering** - Wire the existing `StorageClass` configuration to actual cloud storage uploads
-3. **Query optimization** - Add DuckDB or similar for research and backtesting workflows over the Parquet cold tier
+1. **Cloud tiering** - Wire the existing `StorageClass` configuration to actual cloud storage uploads
+2. **Query optimization** - Add DuckDB or similar for research and backtesting workflows over the Parquet cold tier
 
 The architecture is well-positioned for production use. Major structural changes (e.g., time-series database) remain unjustified given current requirements.
 
 ---
 
-*Evaluation Date: 2026-02-22*
-*Previous Evaluation: 2026-02-03*
+*Evaluation Date: 2026-03-15*
+*Previous Evaluation: 2026-02-22*
