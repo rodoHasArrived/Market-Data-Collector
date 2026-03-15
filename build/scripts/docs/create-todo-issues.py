@@ -16,6 +16,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +100,7 @@ def load_todos(path: Path) -> list[TodoItem]:
         raise ValueError(f"Expected 'todos' to be a list, got {type(todos_list).__name__}")
     
     items = []
-    for index, raw in enumerate(raw_todos):
+    for index, raw in enumerate(todos_list):
         if not isinstance(raw, dict):
             raise ValueError(
                 f"TODO item at index {index} must be a JSON object, got {type(raw).__name__}"
