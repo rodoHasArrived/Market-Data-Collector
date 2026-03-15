@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-15
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105092534
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,27 +18,29 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      ### Build
-      - `2026-03-15T06:36:08.9738171Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
-      - `2026-03-15T06:36:08.9745592Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
-      - `2026-03-15T06:36:08.9752232Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
-      - `2026-03-15T06:36:09.0171414Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
-      - `2026-03-15T06:36:09.0178802Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Infrastructure/Pro...`
+      ### Test
+      - `2026-03-15T06:49:30.2414144Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 20 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-15T06:48:09.0926375Z Failed!  - Failed:     1, Passed:  2810, Skipped:     0, Total:  2811, Duration: 12 s - MarketDataCollector.Tests.dll (ne...`
+      - `2026-03-15T06:49:10.6742066Z [xUnit.net 00:00:02.28]     MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_Retu...`
+      - `2026-03-15T06:47:59.5652744Z [xUnit.net 00:00:07.20]     MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_...`
 
       ### Code Quality
-      - `2026-03-15T06:35:53.1047847Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
-      - `2026-03-15T06:35:53.1076672Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicaliza...`
-      - `2026-03-15T06:35:53.1089118Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-15T06:35:53.1102025Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-15T06:35:53.1115748Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-15T06:48:32.2187528Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\MainWindow.xaml.cs(604,21): warni...`
+      - `2026-03-15T06:48:32.2204541Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(241,24...`
+      - `2026-03-15T06:48:32.2225368Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\RetentionAssuranceServic...`
+      - `2026-03-15T06:48:37.8287028Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\MainWindow.xaml.cs(604,21): warni...`
+      - `2026-03-15T06:48:37.8900260Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(241,24...`
 
+
+      ## Failed Tests
+      - `2026-03-15T06:49:10.6951996Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [10 ms]`
+      - `2026-03-15T06:47:59.6311858Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [15 ms]`
+      - `MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError`
+      - `MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse`
 
       ## Error Codes
       - `CA2022`
-      - `CS0103`
       - `CS0219`
-      - `CS0246`
-      - `CS1503`
       - `CS1573`
       - `CS1734`
       - `CS1998`
@@ -56,7 +58,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105092534
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237
 
       Additional context:
       {{additional_context}}

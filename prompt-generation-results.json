@@ -1,40 +1,42 @@
 {
-  "generated_at": "2026-03-15T06:38:17.623566+00:00",
+  "generated_at": "2026-03-15T06:49:53.315673+00:00",
   "workflow": "test-matrix.yml",
-  "run_id": 23105092534,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105092534",
+  "run_id": 23105250237,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23105250237",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Test (Linux)",
     "Test (Windows)",
-    "Test (macOS)"
+    "Test (Linux)"
   ],
   "findings_by_category": {
-    "build": 10,
+    "test": 4,
     "code-quality": 10
   },
-  "total_error_codes": 10,
-  "total_failed_tests": 0,
+  "total_error_codes": 7,
+  "total_failed_tests": 4,
   "existing_prompts": 16,
   "generated_prompts": [
     {
-      "file": "fix-build-errors.prompt.yml",
-      "category": "build",
+      "file": "fix-test-failures.prompt.yml",
+      "category": "test",
       "action": "update",
-      "findings_count": 10,
+      "findings_count": 4,
       "error_codes": [
-        "CS0103",
+        "CA2022",
         "CS0219",
-        "CS0246",
-        "CS1503",
         "CS1573",
         "CS1734",
         "CS1998",
         "CS4014",
         "CS8602"
       ],
-      "failed_tests": []
+      "failed_tests": [
+        "2026-03-15T06:49:10.6951996Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [10 ms]",
+        "2026-03-15T06:47:59.6311858Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [15 ms]",
+        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError",
+        "MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse"
+      ]
     },
     {
       "file": "fix-code-quality.prompt.yml",
@@ -50,20 +52,22 @@
       "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 20,
+      "findings_count": 14,
       "error_codes": [
         "CA2022",
-        "CS0103",
         "CS0219",
-        "CS0246",
-        "CS1503",
         "CS1573",
         "CS1734",
         "CS1998",
         "CS4014",
         "CS8602"
       ],
-      "failed_tests": []
+      "failed_tests": [
+        "2026-03-15T06:49:10.6951996Z   Failed MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError [10 ms]",
+        "2026-03-15T06:47:59.6311858Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [15 ms]",
+        "MarketDataCollector.Tests.Storage.ExportValidatorTests.ValidateAsync_UnwritableOutputDir_ReturnsPermissionError",
+        "MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse"
+      ]
     }
   ],
   "total_generated": 3
