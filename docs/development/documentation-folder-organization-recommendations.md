@@ -66,13 +66,21 @@ This reduces drift and lowers onboarding cost.
 
 ### 5) Introduce lifecycle tags in front matter
 
-For markdown docs, standardize lightweight metadata:
+For markdown docs, standardize lightweight metadata using the **bold-field style** already
+established in this repository (e.g., `**Status:**`, `**Version:**`, `**Last Updated:**`):
 
-- `status: active | draft | deprecated | archived`
-- `owner: <team-or-alias>`
-- `reviewed: YYYY-MM-DD`
+```markdown
+**Status:** active | draft | deprecated | archived  
+**Owner:** <team-or-alias>  
+**Reviewed:** YYYY-MM-DD  
+```
 
-Then build a simple script to flag stale docs (e.g., > 180 days since review).
+Add these fields to the bold metadata block at the top of each document, alongside existing
+fields such as `**Version:**`, `**Last Updated:**`, and `**Audience:**`. Do **not** use
+YAML front matter (the `---`-fenced format) unless a specific toolchain requires it, as it
+is not the current convention in this repository.
+
+Then build a simple script to flag stale docs (e.g., > 180 days since **Reviewed** date).
 
 ### 6) Separate generated from hand-authored navigation
 
@@ -118,6 +126,6 @@ This keeps organization intact over time.
 ## Quick Wins (Do This First)
 
 - Add folder-scope README files where missing.
-- Add `status/owner/reviewed` metadata to the most-visited docs first.
+- Add `**Status:**` / `**Owner:**` / `**Reviewed:**` bold-field metadata to the most-visited docs first.
 - Merge or cross-link `audits/` and `evaluations/` landing pages.
 - Add a “Where should this doc go?” decision tree in `docs/development/documentation-contribution-guide.md`.
