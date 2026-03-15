@@ -1,9 +1,15 @@
 # High-Value, Low-Cost Improvements Brainstorm
 
 **Date:** 2026-02-23
-**Status:** Active — Improvements Identified
+**Updated:** 2026-03-15
+**Status:** Active — 27 of 47 implemented, 7 partial, 13 open
 **Author:** Architecture Review
-**Context:** With 94.3% of core improvements complete (33/35 items), this document identifies the next wave of high-ROI, low-effort improvements across reliability, developer experience, operations, and code quality.
+**Context:** With 94.3% of core improvements complete (33/35 items), this document identifies the next wave of high-ROI, low-effort improvements across reliability, developer experience, operations, and code quality. Updated 2026-03-15 to reflect implementation progress.
+
+**Implementation status key:**
+- ✅ **Implemented** — shipped and tested
+- 🔄 **Partial** — framework or foundation in place; full capability pending
+- 📝 **Future** — not yet started
 
 **Scoring criteria:**
 - **Value**: Direct impact on reliability, correctness, developer productivity, or operational visibility
@@ -12,9 +18,30 @@
 
 ---
 
+## Implementation Progress (2026-03-15)
+
+| Category | ✅ Done | 🔄 Partial | 📝 Open | Total |
+|----------|---------|------------|---------|-------|
+| 1 — Startup & Configuration Hardening | 2 | 0 | 1 | 3 |
+| 2 — Operational Visibility | 3 | 0 | 1 | 4 |
+| 3 — Developer Experience | 2 | 1 | 1 | 4 |
+| 4 — Data Integrity & Quality | 1 | 0 | 2 | 3 |
+| 5 — Testing & CI Improvements | 1 | 2 | 1 | 4 |
+| 6 — Code Quality Quick Wins | 2 | 0 | 2 | 4 |
+| 7 — Security Hardening | 0 | 1 | 1 | 2 |
+| 8 — Performance Quick Wins | 2 | 0 | 1 | 3 |
+| 9 — End-User Experience | 7 | 3 | 2 | 12 |
+| 10 — Data Consumption & Analysis | 5 | 0 | 1 | 6 |
+| 11 — Trust & Transparency | 2 | 0 | 0 | 2 |
+| **Total** | **27** | **7** | **13** | **47** |
+
+---
+
 ## Category 1: Startup & Configuration Hardening
 
-### 1.1 Startup credential validation with actionable errors
+### 1.1 Startup credential validation with actionable errors — ✅ Implemented
+
+**Status (2026-03-15):** `PreflightChecker.cs` includes `ValidateProviderCredentials()` which iterates enabled providers via `DataSourceRegistry`, checks their credential requirements, and emits a table of missing credentials with the exact environment variable names to set.
 
 **Problem:** The app loads configuration and connects to providers, but if API credentials are missing or malformed the errors surface deep in provider code with cryptic messages (401 Unauthorized, null reference on key parsing, etc.). The `PreflightChecker` exists but doesn't validate that all *enabled* providers have their required credentials set.
 
@@ -26,7 +53,9 @@
 
 ---
 
-### 1.2 Deprecation warning for legacy `DataSource` string config
+### 1.2 Deprecation warning for legacy `DataSource` string config — ✅ Implemented
+
+**Status (2026-03-15):** `ConfigurationPipeline.cs` detects when both `DataSource` and `DataSources` are set and logs: `"Both 'DataSource' and 'DataSources' are set. 'DataSources' takes precedence."` A note was also added to `appsettings.sample.json`.
 
 **Problem:** The config supports both `"DataSource": "IB"` (legacy single-provider) and `"DataSources": { "Sources": [...] }` (new multi-provider). When both are present, the precedence is undocumented and confusing.
 
@@ -38,7 +67,7 @@
 
 ---
 
-### 1.3 Config validation for provider-specific symbol fields
+### 1.3 Config validation for provider-specific symbol fields — 📝 Future
 
 **Problem:** Symbol configs accept IB-specific fields (`SecurityType`, `Exchange`, `PrimaryExchange`) even when using Alpaca or Polygon. No warning is emitted, and users waste time debugging why their IB fields have no effect on Alpaca.
 
@@ -52,7 +81,9 @@
 
 ## Category 2: Operational Visibility
 
-### 2.1 Structured startup summary with health matrix
+### 2.1 Structured startup summary with health matrix — ✅ Implemented
+
+**Status (2026-03-15):** `StartupSummary.cs` now emits a formatted ASCII health matrix at INFO level showing provider connection state, storage component readiness, WAL pending count, active symbol count, and backfill state.
 
 **Problem:** `StartupSummary` logs configuration details at startup, but it reads like a wall of text. Operators need a quick pass/fail matrix to confirm the system is healthy.
 
@@ -82,7 +113,9 @@
 
 ---
 
-### 2.2 Add `/api/config/effective` endpoint
+### 2.2 Add `/api/config/effective` endpoint — ✅ Implemented
+
+**Status (2026-03-15):** `ConfigEndpoints.cs` exposes `/api/config/effective` returning the fully-resolved configuration with source annotations (`appsettings.json`, `env:VARNAME`, `default`). Credentials are masked via `SensitiveValueMasker`.
 
 **Problem:** With environment variable overrides, config file values, defaults, and presets all layering together, operators can't easily see what configuration is *actually* in effect. The existing `/api/config` endpoint shows the raw config, not the resolved values.
 
@@ -104,7 +137,7 @@ Credentials should be masked (already have `SensitiveValueMasker`).
 
 ---
 
-### 2.3 WAL recovery metrics at startup
+### 2.3 WAL recovery metrics at startup — 📝 Future
 
 **Problem:** The Write-Ahead Log (`WriteAheadLog`) recovers pending events on startup, but the recovery count and duration aren't surfaced as metrics or in the startup summary.
 
@@ -119,7 +152,9 @@ Credentials should be masked (already have `SensitiveValueMasker`).
 
 ---
 
-### 2.4 Provider reconnection event log with backoff visibility
+### 2.4 Provider reconnection event log with backoff visibility — ✅ Implemented
+
+**Status (2026-03-15):** `WebSocketReconnectionHelper.cs` logs structured reconnection attempts with `{Attempt}`, `{MaxAttempts}`, and `{DelayMs}` parameters and records attempts via `IReconnectionMetrics`.
 
 **Problem:** When WebSocket connections drop, providers reconnect with exponential backoff. But the retry attempt number and next retry delay aren't logged, making it hard to tell whether the system is recovering or stuck in a retry loop.
 
@@ -138,7 +173,9 @@ Also emit a Prometheus counter `provider_reconnection_attempts_total{provider, o
 
 ## Category 3: Developer Experience
 
-### 3.1 Environment variable reference document
+### 3.1 Environment variable reference document — ✅ Implemented
+
+**Status (2026-03-15):** `docs/reference/environment-variables.md` exists with a comprehensive table of all supported environment variables, including description, required/optional status, provider association, example values, and corresponding config path.
 
 **Problem:** The project uses 30+ environment variables for credentials, configuration overrides, and feature flags. These are scattered across `appsettings.sample.json` comments, `ConfigEnvironmentOverride.cs`, and individual provider code. No canonical list exists.
 
@@ -156,7 +193,9 @@ Also emit a Prometheus counter `provider_reconnection_attempts_total{provider, o
 
 ---
 
-### 3.2 `--check-config` CLI flag for offline config validation
+### 3.2 `--check-config` CLI flag for offline config validation — 🔄 Partial
+
+**Status (2026-03-15):** `--dry-run --offline` is implemented in `DryRunCommand.cs` and performs most of the validation described. An explicit `--check-config` alias is not present, but the combination `--dry-run --offline` covers config parsing, required-field validation, and credential env var checks without network access.
 
 **Problem:** The `--dry-run` flag performs full validation including connectivity checks. There's no way to validate just the config file syntax and required fields without network access (useful in CI or air-gapped environments).
 
@@ -175,7 +214,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 3.3 JSON Schema generation for `appsettings.json`
+### 3.3 JSON Schema generation for `appsettings.json` — 📝 Future
 
 **Problem:** `appsettings.sample.json` is 730 lines with no IDE autocomplete or validation. Developers must read comments to understand valid values. VS Code and JetBrains IDEs support JSON Schema for autocomplete.
 
@@ -194,7 +233,9 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 3.4 `make quickstart` target for zero-to-running
+### 3.4 `make quickstart` target for zero-to-running — ✅ Implemented
+
+**Status (2026-03-15):** The `Makefile` has a `quickstart` target ("Zero-to-running setup for new contributors") that checks .NET SDK, copies sample config, runs restore + build + a fast test subset, and prints next steps.
 
 **Problem:** New contributors must read CLAUDE.md, install the SDK, copy config, set env vars, and run the build. A `make quickstart` target could automate the happy path.
 
@@ -214,7 +255,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ## Category 4: Data Integrity & Quality
 
-### 4.1 Automatic gap backfill on reconnection
+### 4.1 Automatic gap backfill on reconnection — 📝 Future
 
 **Problem:** When a streaming provider disconnects and reconnects, there's a data gap for the disconnection period. The system logs an `IntegrityEvent` but doesn't automatically request backfill for the missing window.
 
@@ -226,7 +267,9 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 4.2 Cross-provider quote divergence alerting
+### 4.2 Cross-provider quote divergence alerting — ✅ Implemented
+
+**Status (2026-03-15):** `CrossProviderComparisonService.cs` detects real-time quote divergence via `CheckForQuoteDiscrepancies()`, emits events via `OnDiscrepancyDetected`, and classifies severity levels. Active when 2+ providers stream the same symbol.
 
 **Problem:** The design review memo flags "feed divergence across providers" as a known risk. When multiple providers are active, their quotes for the same symbol can diverge. The `CrossProviderComparisonService` exists but doesn't emit real-time alerts.
 
@@ -238,7 +281,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 4.3 Storage checksum verification on read
+### 4.3 Storage checksum verification on read — 📝 Future
 
 **Problem:** `StorageChecksumService` computes checksums on write. But there's no verification on read to detect bit rot or corruption in stored files. The `DataValidator` tool exists but must be run manually.
 
@@ -252,7 +295,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ## Category 5: Testing & CI Improvements
 
-### 5.1 Flaky test detection in CI
+### 5.1 Flaky test detection in CI — 📝 Future
 
 **Problem:** With 3,444 tests, occasional flaky tests (timing-dependent, file-system-dependent) can cause spurious CI failures. There's no mechanism to detect or quarantine flaky tests.
 
@@ -264,7 +307,9 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 5.2 Test execution time tracking
+### 5.2 Test execution time tracking — 🔄 Partial
+
+**Status (2026-03-15):** `test-matrix.yml` already logs test results in TRX format (`--logger "trx;LogFileName=..."`). Slow-test extraction and GitHub Actions job summary reporting are not yet implemented.
 
 **Problem:** As the test suite grows (3,444 tests), slow tests can silently degrade CI times. There's no visibility into which tests are slow.
 
@@ -276,7 +321,9 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 5.3 Benchmark regression detection
+### 5.3 Benchmark regression detection — 🔄 Partial
+
+**Status (2026-03-15):** `benchmark.yml` runs BenchmarkDotNet and uploads artifacts. Cross-run comparison and threshold-based regression detection are not yet implemented — artifacts are saved but not diffed.
 
 **Problem:** The `benchmarks/` project runs BenchmarkDotNet but results aren't compared across runs. A performance regression could ship without detection.
 
@@ -288,7 +335,9 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 5.4 Integration test for graceful shutdown data integrity
+### 5.4 Integration test for graceful shutdown data integrity — ✅ Implemented
+
+**Status (2026-03-15):** `tests/MarketDataCollector.Tests/Integration/GracefulShutdownIntegrationTests.cs` contains `GracefulShutdown_AllPublishedEventsReachStorage()` which verifies zero data loss during shutdown with in-flight events.
 
 **Problem:** `GracefulShutdownService` coordinates flushing WAL, closing sinks, and disconnecting providers. But there's no integration test that verifies zero data loss during a shutdown sequence with in-flight events.
 
@@ -306,7 +355,9 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ## Category 6: Code Quality Quick Wins
 
-### 6.1 Replace bare catch blocks with typed exceptions
+### 6.1 Replace bare catch blocks with typed exceptions — ✅ Implemented
+
+**Status (2026-03-15):** Audit of `src/` found no bare `catch {}` or silent `catch (Exception)` blocks that swallow without logging. All exception handlers now log with context.
 
 **Problem:** The `FURTHER_SIMPLIFICATION_OPPORTUNITIES.md` audit identified bare `catch` blocks that swallow exceptions silently. These hide bugs in production.
 
@@ -318,7 +369,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 ---
 
-### 6.2 Add `TimeProvider` abstraction for testability
+### 6.2 Add `TimeProvider` abstraction for testability — 📝 Future
 
 **Problem:** Code that uses `DateTime.UtcNow` or `DateTimeOffset.UtcNow` directly is hard to test deterministically. .NET 8+ introduced `TimeProvider` as a built-in abstraction.
 
@@ -336,7 +387,7 @@ This enables deterministic time-based tests without `Thread.Sleep` or flaky timi
 
 ---
 
-### 6.3 Consolidate `Lazy<T>` initialization pattern
+### 6.3 Consolidate `Lazy<T>` initialization pattern — 📝 Future
 
 **Problem:** The audit identified 43 services using manual double-checked locking for lazy initialization. .NET's `Lazy<T>` is thread-safe by default and eliminates this boilerplate.
 
@@ -348,7 +399,9 @@ This enables deterministic time-based tests without `Thread.Sleep` or flaky timi
 
 ---
 
-### 6.4 Endpoint handler helper to reduce try/catch boilerplate
+### 6.4 Endpoint handler helper to reduce try/catch boilerplate — ✅ Implemented
+
+**Status (2026-03-15):** `EndpointHelpers.cs` has `HandleAsync()` with multiple overloads providing consistent error responses, `CancellationToken` propagation, and exception-to-status-code mapping, used across endpoint files.
 
 **Problem:** The 35 endpoint files each repeat the same try/catch + JSON response pattern. The `EndpointHelpers` class exists but isn't used everywhere.
 
@@ -366,7 +419,9 @@ This enables deterministic time-based tests without `Thread.Sleep` or flaky timi
 
 ## Category 7: Security Hardening
 
-### 7.1 Enforce credential-via-environment at validation time
+### 7.1 Enforce credential-via-environment at validation time — 🔄 Partial
+
+**Status (2026-03-15):** `ConfigValidationHelper.cs` validates credential format (non-empty, valid characters) via FluentValidation. A warning when non-placeholder credentials appear directly in the config file (rather than via environment variables) is not yet emitted.
 
 **Problem:** The design review notes that credentials in `appsettings.json` are a security risk. Environment variable support exists but isn't enforced. A developer could accidentally commit credentials.
 
@@ -384,7 +439,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 ---
 
-### 7.2 API key rotation support
+### 7.2 API key rotation support — 📝 Future
 
 **Problem:** The `ApiKeyMiddleware` supports static API keys for the dashboard. If a key is compromised, the only recourse is to restart the service with a new key.
 
@@ -402,7 +457,9 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 ## Category 8: Performance Quick Wins
 
-### 8.1 Connection warmup with parallel provider initialization
+### 8.1 Connection warmup with parallel provider initialization — ✅ Implemented
+
+**Status (2026-03-15):** `Program.cs` uses `Task.WhenAll` to connect all enabled providers concurrently at startup.
 
 **Problem:** When using failover with 3+ providers, each provider connects sequentially. Connecting all providers in parallel could reduce startup time by the sum of connection latencies minus the maximum.
 
@@ -414,7 +471,9 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 ---
 
-### 8.2 Conditional Parquet sink activation
+### 8.2 Conditional Parquet sink activation — ✅ Implemented
+
+**Status (2026-03-15):** `StorageOptions.cs` has `EnableParquetSink` (and `ActiveSinks`) for conditional Parquet sink registration. Defaults to disabled for real-time-only deployments.
 
 **Problem:** The `CompositeSink` always writes to all registered sinks. If Parquet export isn't needed for real-time collection, the Parquet serialization overhead is wasted.
 
@@ -426,7 +485,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 ---
 
-### 8.3 Reduce config file double-read at startup
+### 8.3 Reduce config file double-read at startup — 📝 Future
 
 **Problem:** Program.cs reads the config file twice: once for `LoadConfigMinimal` (to get `DataRoot` for logging) and once for the full `LoadAndPrepareConfig`. This is redundant I/O.
 
@@ -442,7 +501,9 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 > **Key insight:** Many of the services below are already fully built and tested in the backend (`BackfillCheckpointService`, `WorkspaceService`, `CommandPaletteService`, `AlertService`, `FriendlyErrorFormatter`, `OnboardingTourService`). The work is **wiring**, not building from scratch.
 
-### 9.1 Data freshness indicator on web dashboard
+### 9.1 Data freshness indicator on web dashboard — ✅ Implemented
+
+**Status (2026-03-15):** The web dashboard template shows a persistent status bar with per-provider connection state indicators, "last event received" timestamp with staleness coloring, and a `[DEMO MODE]` badge when fixture data is active.
 
 **Problem:** The web dashboard auto-refreshes but gives no indication of whether the data shown is live, stale, or demo/fixture data. Users report spending 15+ minutes trying to determine if the system is actually collecting real data. The dashboard in fixture mode looks identical to live mode.
 
@@ -460,7 +521,9 @@ The data is already available from `/api/status` and `/api/providers/status`. Th
 
 ---
 
-### 9.2 Backfill progress with ETA and resumability
+### 9.2 Backfill progress with ETA and resumability — 🔄 Partial
+
+**Status (2026-03-15):** `BackfillCheckpointService` is wired into the WPF `BackfillService` and exposed in `BackfillPage.xaml.cs`. It is **not** yet wired into the core `HistoricalBackfillService`. The `--resume` CLI flag and per-symbol ETA in `/api/backfill/status` are pending.
 
 **Problem:** Long-running backfills (e.g., 5 years of daily bars for 100 symbols) show minimal progress feedback. If a backfill fails halfway, users must restart from scratch. `BackfillCheckpointService` exists with 22 passing tests but isn't wired to the backfill execution path or exposed in the web API.
 
@@ -476,7 +539,9 @@ The data is already available from `/api/status` and `/api/providers/status`. Th
 
 ---
 
-### 9.3 Friendly error messages with "what to do next"
+### 9.3 Friendly error messages with "what to do next" — ✅ Implemented
+
+**Status (2026-03-15):** `Program.cs` calls `FriendlyErrorFormatter.Format()` and `FriendlyErrorFormatter.DisplayError()` in the top-level catch handler. `EndpointHelpers.cs` uses the formatter for API error responses.
 
 **Problem:** `FriendlyErrorFormatter` exists with 30+ classified error codes (MDC-CFG-001, MDC-AUTH-002, etc.) and includes suggested actions and doc links. However, it's not integrated into all error paths -- many errors still surface as raw exceptions or generic HTTP status codes. Users report spending 30+ minutes debugging simple credential issues.
 
@@ -502,7 +567,9 @@ MDC-AUTH-002: Authentication failed for Alpaca provider
 
 ---
 
-### 9.4 Role-based configuration presets for first-time setup
+### 9.4 Role-based configuration presets for first-time setup — ✅ Implemented
+
+**Status (2026-03-15):** `AutoConfigurationService.cs` has `ApplyPreset()` with four presets: `Researcher`, `DayTrader`, `OptionsTrader`, `Crypto`. A `--preset <name>` CLI flag is handled by `ConfigPresetCommand.cs`.
 
 **Problem:** The configuration wizard asks many questions. New users don't know which provider to choose, how many depth levels to capture, or what storage settings to use. The project has 5+ streaming providers, 10+ historical providers, and dozens of config knobs.
 
@@ -523,7 +590,9 @@ Each preset sets ~15 config values at once. Users can customize after applying a
 
 ---
 
-### 9.5 Bulk symbol import from CSV/text file
+### 9.5 Bulk symbol import from CSV/text file — ✅ Implemented
+
+**Status (2026-03-15):** `SymbolCommands.cs` has `--symbols-import <file>` supporting CSV, TXT, and JSON formats with auto-detection, symbol validation, preview prompt, and `--symbols-export <file>` for round-trip sharing.
 
 **Problem:** Adding 100+ symbols requires either editing `appsettings.json` manually or using `--symbols-add` one batch at a time. There's no way to import from a watchlist file, a broker export, or a simple text file with one symbol per line.
 
@@ -542,7 +611,7 @@ Also add `--symbols-export <file>` to export the current symbol list for sharing
 
 ---
 
-### 9.6 Collection health email/webhook digest
+### 9.6 Collection health email/webhook digest — 📝 Future
 
 **Problem:** `DailySummaryWebhook` sends Slack/Discord/Teams notifications at market close. But many users want a simple email digest or don't use chat platforms. There's also no weekly summary -- only daily.
 
@@ -561,7 +630,9 @@ Also add `--symbols-export <file>` to export the current symbol list for sharing
 
 ---
 
-### 9.7 One-click data export from web dashboard
+### 9.7 One-click data export from web dashboard — 🔄 Partial
+
+**Status (2026-03-15):** The dashboard has export buttons for comparison reports and symbol mappings, but not a general-purpose export UI with symbol selector, date range, and format chooser. All backend export endpoints are live; frontend wiring remains.
 
 **Problem:** The export API exists (7 formats: Parquet, CSV, JSON, Arrow, SQL, Excel, Lean) but can only be triggered via API calls or the WPF desktop app. The web dashboard has no export UI. Users collecting data headlessly on a server must craft API calls manually.
 
@@ -580,7 +651,7 @@ The backend endpoints already exist. This is a frontend-only addition.
 
 ---
 
-### 9.8 Provider comparison and recommendation engine
+### 9.8 Provider comparison and recommendation engine — 📝 Future
 
 **Problem:** New users face 5 streaming providers and 10 historical providers with no guidance on which to choose. The provider comparison doc exists in markdown but isn't programmatically accessible. Users must read docs and cross-reference feature tables manually.
 
@@ -605,7 +676,9 @@ Recommended providers for your 15 symbols:
 
 ---
 
-### 9.9 Alert noise reduction with smart grouping
+### 9.9 Alert noise reduction with smart grouping — ✅ Implemented
+
+**Status (2026-03-15):** `ConnectionStatusWebhook.cs` implements `ShouldSendAlert()` with rate limiting (`MinAlertIntervalSeconds`). `BackpressureAlertService.cs` tracks consecutive high-utilization periods and suppresses repetitive alerts.
 
 **Problem:** During market volatility or provider outages, users receive 100+ alerts per minute for related issues (each stale symbol generates a separate SLA violation, each reconnection attempt generates a separate alert). The `AlertService` has deduplication and suppression logic, but this is only in the WPF desktop app -- not in the web dashboard or webhook notifications.
 
@@ -620,7 +693,9 @@ Recommended providers for your 15 symbols:
 
 ---
 
-### 9.10 Data completeness summary in CLI output
+### 9.10 Data completeness summary in CLI output — ✅ Implemented
+
+**Status (2026-03-15):** `GracefulShutdownService.cs` prints a formatted collection session summary via `PrintSessionSummary()` on shutdown, covering event counts, throughput, latency, memory, and GC stats.
 
 **Problem:** After a collection session ends (graceful shutdown), there's no summary of what was collected. Users must query the API or inspect storage files to understand the session's output. The daily summary webhook provides some of this, but only for users who configured webhooks.
 
@@ -645,7 +720,9 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 ---
 
-### 9.11 Predictive storage capacity warnings
+### 9.11 Predictive storage capacity warnings — 🔄 Partial
+
+**Status (2026-03-15):** `QuotaEnforcementService.cs` handles hard quota limits and violation detection. Growth-rate trending and predictive capacity forecasting (the "at current rate, full in N days" projection) are not yet implemented.
 
 **Problem:** Storage fills up silently. Users discover disk full errors only when writes start failing. `QuotaEnforcementService` exists for hard limits, but there's no **predictive** warning ("at current rate, storage will be full in 3 days").
 
@@ -661,7 +738,9 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 ---
 
-### 9.12 Keyboard shortcut and command palette wiring (WPF)
+### 9.12 Keyboard shortcut and command palette wiring (WPF) — ✅ Implemented
+
+**Status (2026-03-15):** `MainWindow.xaml.cs` wires `Ctrl+K` to `ShowCommandPalette()` which opens `CommandPaletteWindow`. Top navigation commands are wired and a first-run hint is shown.
 
 **Problem:** The WPF desktop app has `CommandPaletteService` (47 commands with fuzzy search) and `KeyboardShortcutService` (35+ shortcuts) fully implemented and tested. But the Ctrl+K hotkey to open the command palette isn't wired in the main window, and many shortcuts aren't connected to their actions. Users don't know these features exist.
 
@@ -679,7 +758,9 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 ## Category 10: Data Consumption & Analysis Workflow
 
-### 10.1 Quick-query CLI for stored data
+### 10.1 Quick-query CLI for stored data — ✅ Implemented
+
+**Status (2026-03-15):** `QueryCommand.cs` implements `--query` with sub-commands: `last <symbol>`, `count <symbol>`, `summary <symbol>`, `symbols`, and `range`. Backed by `HistoricalDataQueryService` and `StorageCatalogService`.
 
 **Problem:** Users collect data continuously but querying it requires either writing code, using the export API, or opening files manually. There's no quick CLI command to answer "what's the last price for SPY?" or "how many bars do I have for AAPL in January?"
 
@@ -705,7 +786,9 @@ dotnet run -- --query "summary SPY --from 2026-02-01"
 
 ---
 
-### 10.2 Automatic Parquet conversion for completed trading days
+### 10.2 Automatic Parquet conversion for completed trading days — ✅ Implemented
+
+**Status (2026-03-15):** `ParquetConversionService.cs` has `ConvertCompletedDaysAsync()` which identifies prior trading days with JSONL files but no Parquet equivalent and converts them in the background. Configurable JSONL deletion after conversion.
 
 **Problem:** Real-time data is stored as JSONL (optimized for append writes). For analysis, users prefer Parquet (columnar, compressed, fast queries). Currently, Parquet conversion requires manual export or the `CompositeSink` writing both formats simultaneously (doubling I/O).
 
@@ -723,7 +806,9 @@ This separates the write-optimized hot path (JSONL) from the read-optimized arch
 
 ---
 
-### 10.3 Python/R loader script generation with exports
+### 10.3 Python/R loader script generation with exports — ✅ Implemented
+
+**Status (2026-03-15):** `GenerateLoaderCommand.cs` implements `--generate-loader <language>` generating standalone loader scripts for Python, R, PyArrow, and PostgreSQL based on the current data directory.
 
 **Problem:** `PortableDataPackager` creates ZIP packages with loader scripts, but these are only generated for explicit package operations. Users who just want to analyze today's data in Python must write their own loading code.
 
@@ -755,7 +840,9 @@ def load_trades(symbol: str) -> pd.DataFrame:
 
 ---
 
-### 10.4 Wire export API endpoints to real backend processing
+### 10.4 Wire export API endpoints to real backend processing — ✅ Implemented
+
+**Status (2026-03-15):** `ExportEndpoints.cs` injects and calls `AnalysisExportService` directly. Export jobs run in a background task and status is tracked via a real `ConcurrentDictionary<string, ExportJobStatus>`. Download and job-cleanup are functional.
 
 **Problem:** The export endpoints in `ExportEndpoints.cs` are **stubs** -- they accept requests, return a fake `jobId` and `status: "queued"`, but never actually invoke `AnalysisExportService`. Users calling `POST /api/export/analysis` get an immediate 200 response with no export happening. This is the most critical gap in the data consumption workflow because it silently does nothing.
 
@@ -774,7 +861,9 @@ The export service itself is fully implemented with 7 format writers. Only the H
 
 ---
 
-### 10.5 Data preview before export
+### 10.5 Data preview before export — ✅ Implemented
+
+**Status (2026-03-15):** `ExportEndpoints.cs` handles `ExportPreviewRequest` at `POST /api/export/preview`, returning sample rows, column schema, record estimates, and projected file size before committing to a full export.
 
 **Problem:** Users can't preview what an export will produce before committing to it. For a large export (weeks of multi-symbol data), they can't verify that their filters are correct, see the resulting schema, or estimate the output file size. A misconfigured export wastes time and disk.
 
@@ -800,7 +889,7 @@ The export service itself is fully implemented with 7 format writers. Only the H
 
 ---
 
-### 10.6 Wire FeatureSettings in export pipeline
+### 10.6 Wire FeatureSettings in export pipeline — 📝 Future
 
 **Problem:** `ExportRequest` declares `FeatureSettings` and `AggregationSettings` properties that allow users to request technical indicators (SMA, EMA, RSI), rolling statistics, and time-series aggregation on export. These fields are **parsed from the request but completely ignored** during export -- data is always exported raw.
 
@@ -821,7 +910,9 @@ This turns the export from a raw data dump into an analysis-ready dataset.
 
 ## Category 11: Trust & Transparency
 
-### 11.1 Data lineage in exports
+### 11.1 Data lineage in exports — ✅ Implemented
+
+**Status (2026-03-15):** `AnalysisExportService.IO.cs` writes a `lineage_manifest.json` alongside every export containing source provider, symbols, date range, event types, record count, quality scores, and checksum.
 
 **Problem:** When sharing exported data with a research team or auditor, there's no metadata about where the data came from. Which provider? What quality score? Were there gaps? What was the collection session duration? Users must manually track this information.
 
@@ -849,7 +940,9 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 
 ---
 
-### 11.2 Trading calendar awareness in collection status
+### 11.2 Trading calendar awareness in collection status — ✅ Implemented
+
+**Status (2026-03-15):** `CalendarEndpoints.cs` exposes `GET /api/calendar/status` returning current market state, next open/close times, and trading session information. SLA violations are suppressed outside market hours.
 
 **Problem:** Users see "no data received" warnings on weekends, holidays, and outside market hours. The system has `TradingCalendar` with market hours and holiday schedules, but this context isn't surfaced to users. They can't distinguish "no data because market is closed" from "no data because provider is broken."
 
@@ -867,55 +960,55 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 
 ## Priority Matrix
 
-| ID | Improvement | Value | Cost | Priority |
-|----|------------|-------|------|----------|
-| 4.1 | Auto gap backfill on reconnection | High | 6-8h | **P1** |
-| 2.1 | Startup health matrix | High | 4-6h | **P1** |
-| 1.1 | Credential validation at startup | High | 4-8h | **P1** |
-| 7.1 | Enforce credentials via env vars | High | 3-4h | **P1** |
-| 6.1 | Replace bare catch blocks | High | 2-4h | **P1** |
-| 3.1 | Environment variable reference doc | High | 3-4h | **P1** |
-| 5.4 | Graceful shutdown integration test | High | 6-8h | **P1** |
-| 9.1 | Data freshness indicator on dashboard | High | 3-4h | **P1** |
-| 9.3 | Friendly error messages wiring | High | 4-6h | **P1** |
-| 9.4 | Role-based configuration presets | High | 4-6h | **P1** |
-| 9.5 | Bulk symbol import from file | High | 4-6h | **P1** |
-| 10.1 | Quick-query CLI for stored data | High | 6-8h | **P1** |
-| 10.4 | Wire export API to real backend | High | 6-8h | **P1** |
-| 10.6 | Wire FeatureSettings in export | High | 8-12h | **P1** |
-| 3.3 | JSON Schema for config | High | 6-8h | **P2** |
-| 2.2 | `/api/config/effective` endpoint | High | 6-8h | **P2** |
-| 9.2 | Backfill progress with ETA/resume | High | 6-8h | **P2** |
-| 9.7 | One-click export from web dashboard | High | 6-8h | **P2** |
-| 10.5 | Data preview before export | Med-High | 4-6h | **P2** |
-| 11.1 | Data lineage in exports | Med-High | 4-6h | **P2** |
-| 11.2 | Trading calendar in collection status | Med-High | 3-4h | **P2** |
-| 9.8 | Provider recommendation engine | Med-High | 6-8h | **P2** |
-| 9.9 | Alert noise reduction / grouping | Med-High | 6-8h | **P2** |
-| 9.10 | Session summary on shutdown | Med-High | 3-4h | **P2** |
-| 10.2 | Auto Parquet conversion after close | Med-High | 6-8h | **P2** |
-| 1.2 | Legacy config deprecation warning | Medium | 1-2h | **P2** |
-| 1.3 | Provider-specific field validation | Medium | 3-4h | **P2** |
-| 2.3 | WAL recovery metrics | Medium | 2-3h | **P2** |
-| 2.4 | Reconnection log standardization | Medium | 3-4h | **P2** |
-| 4.2 | Cross-provider divergence alerting | Medium | 4-6h | **P2** |
-| 4.3 | Checksum verification on read | Medium | 4-6h | **P2** |
-| 5.1 | Flaky test detection | Medium | 3-4h | **P2** |
-| 5.2 | Test execution time tracking | Medium | 3-4h | **P2** |
-| 5.3 | Benchmark regression detection | Medium | 4-6h | **P2** |
-| 3.2 | Offline config validation CLI | Medium | 4-6h | **P2** |
-| 3.4 | `make quickstart` target | Medium | 2-3h | **P2** |
-| 9.6 | Weekly digest and email support | Medium | 6-8h | **P2** |
-| 9.11 | Predictive storage capacity warnings | Medium | 4-6h | **P2** |
-| 10.3 | Python/R loader script generation | Medium | 3-4h | **P2** |
-| 6.2 | `TimeProvider` abstraction | Medium | 4-6h | **P3** |
-| 6.4 | Endpoint handler consolidation | Medium | 6-8h | **P3** |
-| 7.2 | API key rotation | Medium | 4-6h | **P3** |
-| 8.1 | Parallel provider initialization | Medium | 2-3h | **P3** |
-| 8.2 | Conditional Parquet sink | Medium | 2-3h | **P3** |
-| 9.12 | Command palette hotkey wiring | Medium | 2-3h | **P3** |
-| 6.3 | `Lazy<T>` consolidation | Low-Med | 4-8h | **P3** |
-| 8.3 | Config double-read elimination | Low | 2-3h | **P4** |
+| ID | Improvement | Value | Cost | Priority | Status |
+|----|------------|-------|------|----------|--------|
+| 4.1 | Auto gap backfill on reconnection | High | 6-8h | **P1** | 📝 Future |
+| 2.1 | Startup health matrix | High | 4-6h | **P1** | ✅ Done |
+| 1.1 | Credential validation at startup | High | 4-8h | **P1** | ✅ Done |
+| 7.1 | Enforce credentials via env vars | High | 3-4h | **P1** | 🔄 Partial |
+| 6.1 | Replace bare catch blocks | High | 2-4h | **P1** | ✅ Done |
+| 3.1 | Environment variable reference doc | High | 3-4h | **P1** | ✅ Done |
+| 5.4 | Graceful shutdown integration test | High | 6-8h | **P1** | ✅ Done |
+| 9.1 | Data freshness indicator on dashboard | High | 3-4h | **P1** | ✅ Done |
+| 9.3 | Friendly error messages wiring | High | 4-6h | **P1** | ✅ Done |
+| 9.4 | Role-based configuration presets | High | 4-6h | **P1** | ✅ Done |
+| 9.5 | Bulk symbol import from file | High | 4-6h | **P1** | ✅ Done |
+| 10.1 | Quick-query CLI for stored data | High | 6-8h | **P1** | ✅ Done |
+| 10.4 | Wire export API to real backend | High | 6-8h | **P1** | ✅ Done |
+| 10.6 | Wire FeatureSettings in export | High | 8-12h | **P1** | 📝 Future |
+| 3.3 | JSON Schema for config | High | 6-8h | **P2** | 📝 Future |
+| 2.2 | `/api/config/effective` endpoint | High | 6-8h | **P2** | ✅ Done |
+| 9.2 | Backfill progress with ETA/resume | High | 6-8h | **P2** | 🔄 Partial |
+| 9.7 | One-click export from web dashboard | High | 6-8h | **P2** | 🔄 Partial |
+| 10.5 | Data preview before export | Med-High | 4-6h | **P2** | ✅ Done |
+| 11.1 | Data lineage in exports | Med-High | 4-6h | **P2** | ✅ Done |
+| 11.2 | Trading calendar in collection status | Med-High | 3-4h | **P2** | ✅ Done |
+| 9.8 | Provider recommendation engine | Med-High | 6-8h | **P2** | 📝 Future |
+| 9.9 | Alert noise reduction / grouping | Med-High | 6-8h | **P2** | ✅ Done |
+| 9.10 | Session summary on shutdown | Med-High | 3-4h | **P2** | ✅ Done |
+| 10.2 | Auto Parquet conversion after close | Med-High | 6-8h | **P2** | ✅ Done |
+| 1.2 | Legacy config deprecation warning | Medium | 1-2h | **P2** | ✅ Done |
+| 1.3 | Provider-specific field validation | Medium | 3-4h | **P2** | 📝 Future |
+| 2.3 | WAL recovery metrics | Medium | 2-3h | **P2** | 📝 Future |
+| 2.4 | Reconnection log standardization | Medium | 3-4h | **P2** | ✅ Done |
+| 4.2 | Cross-provider divergence alerting | Medium | 4-6h | **P2** | ✅ Done |
+| 4.3 | Checksum verification on read | Medium | 4-6h | **P2** | 📝 Future |
+| 5.1 | Flaky test detection | Medium | 3-4h | **P2** | 📝 Future |
+| 5.2 | Test execution time tracking | Medium | 3-4h | **P2** | 🔄 Partial |
+| 5.3 | Benchmark regression detection | Medium | 4-6h | **P2** | 🔄 Partial |
+| 3.2 | Offline config validation CLI | Medium | 4-6h | **P2** | 🔄 Partial |
+| 3.4 | `make quickstart` target | Medium | 2-3h | **P2** | ✅ Done |
+| 9.6 | Weekly digest and email support | Medium | 6-8h | **P2** | 📝 Future |
+| 9.11 | Predictive storage capacity warnings | Medium | 4-6h | **P2** | 🔄 Partial |
+| 10.3 | Python/R loader script generation | Medium | 3-4h | **P2** | ✅ Done |
+| 6.2 | `TimeProvider` abstraction | Medium | 4-6h | **P3** | 📝 Future |
+| 6.4 | Endpoint handler consolidation | Medium | 6-8h | **P3** | ✅ Done |
+| 7.2 | API key rotation | Medium | 4-6h | **P3** | 📝 Future |
+| 8.1 | Parallel provider initialization | Medium | 2-3h | **P3** | ✅ Done |
+| 8.2 | Conditional Parquet sink | Medium | 2-3h | **P3** | ✅ Done |
+| 9.12 | Command palette hotkey wiring | Medium | 2-3h | **P3** | ✅ Done |
+| 6.3 | `Lazy<T>` consolidation | Low-Med | 4-8h | **P3** | 📝 Future |
+| 8.3 | Config double-read elimination | Low | 2-3h | **P4** | 📝 Future |
 
 ---
 
@@ -927,7 +1020,37 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 - Items in Categories 1-2 (startup/ops) deliver the most immediate user-facing value
 - Items in Category 5 (CI) compound in value over time as the test suite grows
 - Category 6 (code quality) items can be done opportunistically alongside other work
-- **Category 9 items are disproportionately cheap** because the backend services already exist and are tested -- the work is wiring, not building
-- **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Item 10.4 (wire export API) is critical -- the endpoints exist but return fake data
-- **Category 11 items** build user trust through transparency -- lineage, calendar awareness, and quality metadata make the system credible for research use
-- **Total: 48 improvements** across 11 categories. At estimated effort, the full P1 set is ~65-85 hours of work (roughly 2 developer-weeks)
+- **Category 9 items are disproportionately cheap** because the backend services already exist and are tested — the work is wiring, not building. Most are now complete.
+- **Category 10 items bridge the "collection to analysis" gap** that determines whether users stick with the tool long-term. Items 10.1–10.5 are all complete; 10.6 (FeatureSettings wiring) remains.
+- **Category 11 items** build user trust through transparency — lineage, calendar awareness, and quality metadata make the system credible for research use. Both are complete.
+- **Total: 47 improvements** across 11 categories. As of 2026-03-15: **27 implemented, 7 partial, 13 open**.
+
+### Remaining Open Items (13)
+
+High-priority open work:
+- **4.1** Auto gap backfill on reconnection (`WebSocketReconnectionHelper` → `BackfillCoordinator`)
+- **10.6** Wire FeatureSettings/indicators in export pipeline (`TechnicalIndicatorService` → `AnalysisExportService`)
+- **3.3** JSON Schema for `appsettings.json` (IDE autocomplete)
+
+Medium-priority open work:
+- **2.3** WAL recovery metrics (Prometheus counters + structured log in `WriteAheadLog.RecoverAsync`)
+- **1.3** Provider-specific field validation in config (warn on IB fields with Alpaca active)
+- **4.3** Checksum verification on read (`VerifyOnRead` option in `StorageOptions`)
+- **5.1** Flaky test detection and quarantine in CI
+- **6.2** `TimeProvider` abstraction in time-sensitive services
+- **7.2** API key rotation endpoint (`POST /api/admin/rotate-key`)
+- **9.6** Weekly digest and email support (extend `DailySummaryWebhook`)
+- **9.8** Provider recommendation engine (`--recommend-providers` CLI command)
+
+Partial completions needing follow-through:
+- **3.2** Add `--check-config` alias (currently `--dry-run --offline`)
+- **7.1** Credential-in-config file warning (only format validation today)
+- **9.2** Wire `BackfillCheckpointService` into core `HistoricalBackfillService` + `--resume` flag
+- **9.7** Full export UI section in web dashboard (symbol selector + date range + format)
+- **9.11** Growth-rate trending in `QuotaEnforcementService` (capacity forecast)
+- **5.2** Post top-N slow tests to GitHub Actions job summary from TRX files
+- **5.3** Cross-run benchmark regression comparison (artifacts exist; diff logic missing)
+
+Lower-priority open work:
+- **6.3** `Lazy<T>` consolidation (replace manual double-checked locking)
+- **8.3** Config double-read elimination at startup
