@@ -1,192 +1,232 @@
-# Repository Hygiene Cleanup - Complete Summary
+# Repository Cleanup - Complete Summary
 
-**Date:** 2026-02-10  
-**Status:** ✅ Complete  
-**Branch:** `copilot/cleanup-opportunities-audit`  
-**Related:** Deep Scan Audit, WPF-First Direction
+**Date:** 2026-02-10 (initial) — **Last Updated:** 2026-03-15  
+**Status:** ✅ Substantially Complete (one item pending)  
+**Related:** Deep Scan Audit, WPF-First Direction, CLEANUP_OPPORTUNITIES.md
 
 ## Overview
 
-Comprehensive repository hygiene cleanup implementing all three cleanup opportunities (H1, H2, H3) identified in the Deep Scan audit. Focus on removing tracked artifacts, improving .gitignore patterns, and auditing debug code.
+Multi-phase repository cleanup covering repository hygiene (H1–H3), UWP platform removal (P1–P6), residual reference cleanup (R1–R9), high-impact structural refactors (S1–S3), and architecture debt resolution (A1–A2). All items except the generated-docs refresh (PR-8) have been completed.
 
-## Completed Tasks
+---
+
+## Phase 1 — Repository Hygiene (H1–H3) ✅
+
+_Completed 2026-02-10. Branch: `copilot/cleanup-opportunities-audit` (commit 77179ec)._
 
 ### H1: Remove Accidental Artifact File ✅
 
-**Actions Taken:**
-- ✅ Removed `...` file from git tracking (contained "Line 319: 65" - scratch output)
-- ✅ Added `.gitignore` patterns for scratch files with explanatory comment
-- ✅ Verified removal: `git ls-files | grep '^\.\.\.$'` returns no matches
-
-**Results:**
-- 1 artifact removed (15 bytes)
-- Git history cleaned via `git rm --cached`
-- New patterns prevent future accidental commits
+- Removed `...` file from git tracking (contained "Line 319: 65" — scratch output, 15 bytes)
+- Added `.gitignore` patterns for scratch files with explanatory comment
+- Verified: `git ls-files | grep '^\.\.\.$'` returns no matches
 
 ### H2: Untrack Build Logs and Runtime Artifacts ✅
 
-**Actions Taken:**
-- ✅ Removed `build-output.log` from git tracking (93,549 bytes)
-- ✅ Expanded `.gitignore` with comprehensive build artifact patterns
-- ✅ Added inline comments explaining rationale for each ignore pattern
-- ✅ Ran `dotnet clean` successfully
-- ✅ Verified build succeeds: `dotnet build src/MarketDataCollector/MarketDataCollector.csproj -c Release` (0 errors)
+- Removed `build-output.log` from git tracking (93,549 bytes)
+- Expanded `.gitignore` with comprehensive, commented build-artifact patterns covering:
+  - .NET build output (`bin/`, `obj/`, `out/`)
+  - NuGet packages (`*.nupkg`, `packages/`)
+  - IDE files (`.vs/`, `.idea/`)
+  - Build results (`Debug/`, `Release/`, `x64/`, `x86/`)
+  - Temporary files (`*.tmp`, `*.temp`)
+  - Build logs (`*.log`, `build-output*`, `*_stderr.txt`, `*_stdout.txt`)
+  - Scratch files (`...`, `*-scratch.*`, `scratch-*`)
+- Verified: no log/temp files tracked; patterns documented with rationale
 
-**Gitignore Improvements:**
-- Added inline comments for all major categories:
-  - .NET build output (bin/, obj/, out/)
-  - NuGet packages (*.nupkg, packages/)
-  - IDE files (.vs/, .idea/)
-  - Build results (Debug/, Release/, x64/, x86/)
-  - Temporary files (*.tmp, *.temp)
-  - Build logs (*.log, build-output*, *_stderr.txt, *_stdout.txt)
-  - Scratch files (..., *-scratch.*, scratch-*)
-- Added explicit `*.log` pattern to catch all log files
-- Documented reason for each exclusion
+### H3: Root Documentation Normalisation and Debug Code Audit ✅
 
-**Results:**
-- 1 large artifact removed (93 KB)
-- Comprehensive .gitignore prevents future build artifact commits
-- All patterns documented with rationale
+- Moved `PR_SUMMARY.md`, `UI_IMPROVEMENTS_SUMMARY.md`, `VISUAL_CODE_EXAMPLES.md` from repository root to `docs/archived/` with `2026-02_*` date prefixes
+- Audited 112 test files: 0 temporary test files; 0 TODO/FIXME/HACK markers in tests
+- Reviewed 2 `[Skip]` tests (EventPipelineTests.cs) — both have documented rationale ("Timing-sensitive, flaky in CI")
+- Reviewed 20 `Console.WriteLine` instances (all intentional CLI/user-facing output) and 20 `Debug.WriteLine` instances (all appropriate UI fallback logging)
+- Created analysis document: `docs/audits/H3_DEBUG_CODE_ANALYSIS.md`
 
-### H3: Remove Temporary Test Files and Debug Code ✅
+---
 
-**Actions Taken:**
-- ✅ Audited all test files for temporary/placeholder files (112 test files scanned)
-- ✅ Analyzed all [Skip] and [Ignore] tests (2 found, both properly documented)
-- ✅ Reviewed Console.WriteLine usage (20 instances, all intentional)
-- ✅ Reviewed System.Diagnostics.Debug.WriteLine usage (20 instances, all intentional)
-- ✅ Searched for TODO/FIXME/HACK markers in tests (0 found)
-- ✅ Created comprehensive analysis document: `docs/audits/H3_DEBUG_CODE_ANALYSIS.md`
+## Phase 2 — UWP Platform Removal (P1–P6) ✅
 
-**Findings:**
-- **Skipped Tests:** 2 tests in EventPipelineTests.cs with clear, documented rationale ("Timing-sensitive test that is flaky in CI")
-- **Console.WriteLine:** 20 instances, all in appropriate contexts (CLI tools, user feedback)
-  - DataValidator.cs: 17 instances - CLI tool output
-  - Program.cs: 2 instances - web dashboard URL and shutdown prompt  
-  - ConfigStore.cs: 1 instance - missing config file warning
-- **Debug.WriteLine:** 20 instances in UI Services - appropriate fallback logging pattern
-- **Temporary Test Files:** None found
-- **Technical Debt Markers:** None found in tests
+_Completed 2026-02-20._
 
-**Results:**
-- **No cleanup required** - all code is intentional and properly documented
-- Created detailed analysis document for future reference
-- Demonstrates good code hygiene practices
+UWP was the legacy desktop platform. WPF is now the sole supported desktop client. All structural UWP artefacts have been removed.
+
+### P1 — Solution and Project Graph ✅
+- `src/MarketDataCollector.Uwp/` directory deleted from source tree
+- UWP project removed from `MarketDataCollector.sln`
+- Verified: `dotnet sln list` shows no UWP project; solution builds cleanly
+
+### P2 — CI/CD Workflow Cleanup ✅
+- UWP build jobs removed from `.github/workflows/desktop-builds.yml`
+- Clarification comment added: _"# NOTE: UWP/WinUI 3 application has been removed. WPF is the sole desktop client."_
+- Verified: `grep -rn "MarketDataCollector\.Uwp\|UWP_PROJECT\|uwp-generate-assets" .github/workflows` returns no matches
+
+### P3 — Source Tree Cleanup ✅
+- `src/MarketDataCollector.Uwp/` directory no longer exists
+- Verified: `find src -type d -name "*Uwp*"` returns no results
+
+### P4 — Tests and Coverage Cleanup ✅
+- `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` removed
+- No UWP-specific test files remain in the test suite
+
+### P5 / R1–R9 — Residual Reference Cleanup ✅
+
+All nine stale UWP references across configuration, documentation, and source comments have been resolved:
+
+| Item | File | Fix |
+|------|------|-----|
+| R1 | `.github/labeler.yml` | Replaced `src/MarketDataCollector.Uwp/**/*` with `src/MarketDataCollector.Wpf/**/*` in the `ui` label |
+| R2 | `.github/pull_request_template_desktop.md` | Removed `src/MarketDataCollector.Uwp/**` path and UWP checklist items (`make build-uwp`, `make uwp-xaml-diagnose`) |
+| R3 | `.github/QUICKSTART.md` | Removed `desktop-app.yml | UWP app builds` workflow entry |
+| R4 | `docs/operations/operator-runbook.md` | Replaced "UWP Desktop Application" section with "WPF Desktop Application" |
+| R5 | `docs/status/production-status.md` | Removed UWP Desktop App row; updated WPF to sole desktop client |
+| R6 | `docs/status/IMPROVEMENTS.md` | Marked C7 and F1 COMPLETED (UWP removed; navigation no longer applies) |
+| R7 | `docs/ai/copilot/instructions.md` | Removed `MarketDataCollector.Uwp/` from directory tree; updated to WPF-only |
+| R8 | `docs/operations/msix-packaging.md` | Updated `MarketDataCollector.Uwp.csproj` reference to `MarketDataCollector.Wpf.csproj` |
+| R9 | WPF source comments | Updated `AppConfig.cs` and `RetentionAssuranceService.cs` header comments from "UWP-specific" to "WPF-specific" |
+
+### P6 — Service Migration ✅
+- UWP project deleted; all services now exist only in WPF and/or shared projects
+- 30 service files in `src/MarketDataCollector.Wpf/Services/` — no duplicate UWP counterparts remain
+- Shared service layer: `src/MarketDataCollector.Ui.Services/Services/` contains platform-agnostic base classes
+
+---
+
+## Phase 3 — Structural Refactors (S1–S3) ✅
+
+### S1 — Decompose UiServer Endpoint Monolith ✅
+
+- **Before:** `src/MarketDataCollector/UiServer.cs` — ~3,030 LOC single file
+- **After:** `src/MarketDataCollector/UiServer.cs` — **292 LOC** (90.4% reduction)
+- All endpoint logic extracted to **39 dedicated modules** in `src/MarketDataCollector.Ui.Shared/Endpoints/`:
+  `AdminEndpoints`, `AnalyticsEndpoints`, `ApiKeyMiddleware`, `AuthEndpoints`,
+  `BackfillEndpoints`, `BackfillScheduleEndpoints`, `CalendarEndpoints`, `CanonicalizationEndpoints`,
+  `CatalogEndpoints`, `CheckpointEndpoints`, `ConfigEndpoints`, `CronEndpoints`,
+  `DiagnosticsEndpoints`, `EndpointHelpers`, `ExportEndpoints`, `FailoverEndpoints`,
+  `HealthEndpoints`, `HistoricalEndpoints`, `IBEndpoints`, `IngestionJobEndpoints`,
+  `LeanEndpoints`, `LiveDataEndpoints`, `LoginSessionMiddleware`, `MaintenanceScheduleEndpoints`,
+  `MessagingEndpoints`, `OptionsEndpoints`, `PathValidation`, `ProviderEndpoints`,
+  `ProviderExtendedEndpoints`, `ReplayEndpoints`, `ResilienceEndpoints`, `SamplingEndpoints`,
+  `StatusEndpoints`, `StorageEndpoints`, `StorageQualityEndpoints`, `SubscriptionEndpoints`,
+  `SymbolEndpoints`, `SymbolMappingEndpoints`, `UiEndpoints`
+
+### S2 — Break Apart HTML Template Monolith ✅
+
+- **Before:** `HtmlTemplates.cs` — 2,511 LOC single file
+- **After:** 4 partial class files (2,922 LOC total):
+
+| File | LOC | Responsibility |
+|------|-----|----------------|
+| `HtmlTemplateGenerator.cs` | 718 | Core template logic |
+| `HtmlTemplateGenerator.Scripts.cs` | 1,103 | JavaScript generation |
+| `HtmlTemplateGenerator.Styles.cs` | 925 | CSS generation |
+| `HtmlTemplateGenerator.Login.cs` | 176 | Login page templates |
+
+- Remaining opportunity: static CSS/JS could be moved to versioned `wwwroot/` files for better cacheability.
+
+### S3 — Split Storage Mega-Services ✅
+
+**PortableDataPackager** split into 5 partial class files (2,108 LOC total):
+
+| File | LOC | Responsibility |
+|------|-----|----------------|
+| `PortableDataPackager.cs` | 411 | Core orchestration |
+| `PortableDataPackager.Creation.cs` | 608 | Package creation |
+| `PortableDataPackager.Scripts.cs` | 273 | Script generation |
+| `PortableDataPackager.Scripts.Import.cs` | 395 | Import scripts |
+| `PortableDataPackager.Scripts.Sql.cs` | 173 | SQL scripts |
+| `PortableDataPackager.Validation.cs` | 248 | Validation logic |
+
+**AnalysisExportService** split into 7 partial class files (2,537 LOC total):
+
+| File | LOC | Responsibility |
+|------|-----|----------------|
+| `AnalysisExportService.cs` | 407 | Core service |
+| `AnalysisExportService.Features.cs` | 538 | Feature logic |
+| `AnalysisExportService.Formats.cs` | 320 | Format routing |
+| `AnalysisExportService.Formats.Arrow.cs` | 247 | Apache Arrow export |
+| `AnalysisExportService.Formats.Parquet.cs` | 237 | Parquet export |
+| `AnalysisExportService.Formats.Xlsx.cs` | 354 | Excel export |
+| `AnalysisExportService.IO.cs` | 434 | I/O operations |
+
+---
+
+## Phase 4 — Architecture Debt (A1–A2) ✅
+
+### A1 — Resolve DI Boundary TODO in DataGapRepair ✅
+
+- **File:** `src/MarketDataCollector.Infrastructure/Adapters/Core/GapAnalysis/DataGapRepair.cs`
+- **Previous issue:** `TODO: Implement via dependency injection - Infrastructure cannot reference Storage`
+- **Resolution:** DI boundary properly resolved; no TODO markers remain
+- **Verified:** `grep -rn "TODO.*dependency injection\|TODO.*Infrastructure cannot reference" src/MarketDataCollector.Infrastructure/` returns no matches
+
+### A2 — Resolve SubscriptionManager Naming Collision ✅
+
+- **Previous issue:** Both Application and Infrastructure layers had a class named `SubscriptionManager`
+- **Resolution:** Application layer class renamed to `SubscriptionOrchestrator`
+- **Current state:**
+  - `src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs` — high-level orchestration
+  - `src/MarketDataCollector.Infrastructure/Shared/SubscriptionManager.cs` — low-level subscription lifecycle
+- **Verified:** No naming collision between layers; each name reflects its architectural role
+
+---
 
 ## Summary Statistics
 
-| Metric | Count/Size |
-|--------|-----------|
-| Artifacts Removed | 2 files (93,564 bytes) |
-| Gitignore Patterns Added | 7 new patterns |
-| Gitignore Comments Added | 15 inline comments |
-| Test Files Audited | 112 files |
-| Skipped Tests Reviewed | 2 (both documented) |
-| Console.WriteLine Reviewed | 20 (all intentional) |
-| Debug.WriteLine Reviewed | 20 (all intentional) |
-| Temporary Test Files Found | 0 |
-| Orphaned Debug Code Found | 0 |
+| Category | Metric | Value |
+|----------|--------|-------|
+| **Hygiene** | Artifacts removed | 2 files (93,564 bytes) |
+| **Hygiene** | .gitignore patterns added | 7 new patterns |
+| **Hygiene** | .gitignore comments added | 15 inline comments |
+| **Hygiene** | Test files audited | 112 files |
+| **Hygiene** | Orphaned debug code found | 0 |
+| **UWP Removal** | Source directories deleted | 1 (`src/MarketDataCollector.Uwp/`) |
+| **UWP Removal** | CI workflow jobs removed | All UWP build jobs |
+| **UWP Removal** | Residual references resolved | 9 (R1–R9) |
+| **UWP Removal** | WPF service files (sole desktop) | 30 |
+| **Structural** | UiServer LOC reduction | ~3,030 → 292 (90.4%) |
+| **Structural** | Endpoint modules extracted | 39 |
+| **Structural** | HtmlTemplate files after split | 4 partial class files |
+| **Structural** | PortableDataPackager files after split | 5 partial class files |
+| **Structural** | AnalysisExportService files after split | 7 partial class files |
+| **Architecture** | DI boundary TODOs resolved | 1 (DataGapRepair) |
+| **Architecture** | Naming collisions resolved | 1 (SubscriptionManager → SubscriptionOrchestrator) |
 
-## Files Changed
+---
 
-```
-.gitignore                              | +16 -0
-...                                     | deleted (15 bytes)
-build-output.log                        | deleted (93,549 bytes)
-docs/audits/H3_DEBUG_CODE_ANALYSIS.md  | +136 -0 (new)
-docs/audits/CLEANUP_SUMMARY.md         | +210 -0 (new)
-```
+## Open Items
 
-## Validation Results
+| Item | Description | Priority |
+|------|-------------|----------|
+| **PR-8** | Regenerate repository structure docs and diagrams to reflect post-UWP state (`docs/generated/`, `docs/diagrams/`, `docs/uml/`) | Medium |
+| **S2 follow-up** | Move HtmlTemplateGenerator static CSS/JS to versioned `wwwroot/` files for cacheability and separation of concerns | Low |
 
-### Build Verification
-```bash
-$ dotnet clean
-Build succeeded in 5.9s
-
-$ dotnet build src/MarketDataCollector/MarketDataCollector.csproj -c Release
-Build succeeded.
-    0 Warning(s)
-    0 Error(s)
-Time Elapsed 00:00:04.60
-```
-
-### Git Verification
-```bash
-$ git ls-files | grep -E "^\.\.\.$|build-output\.log"
-(no results - artifacts successfully removed)
-
-$ git ls-files | grep -E "\.log$|\.tmp$|\.temp$"
-(no results - no log/temp files tracked)
-```
-
-### Test Verification
-```bash
-$ find tests -name "*TODO_TEST*" -o -name "*DebugTest*" -o -name "*TempTest*"
-(no results - no temporary test files)
-
-$ grep -rn "\[Skip\]|\[Ignore\]" tests --include="*.cs" | wc -l
-2 (both with clear documentation)
-```
+---
 
 ## Impact Assessment
 
 ### Positive Impacts
-1. **Reduced Repository Size:** 93 KB of unnecessary artifacts removed
-2. **Cleaner History:** No more accidental artifact commits in future
-3. **Better Documentation:** Inline comments explain .gitignore rationale
-4. **Confidence in Code Quality:** Audit confirms no orphaned debug code
-5. **Maintainability:** Future contributors understand ignore patterns
+1. **Reduced Repository Size:** ~94 KB of unnecessary artifacts removed; no UWP binaries/tests to maintain
+2. **Cleaner History:** Comprehensive .gitignore prevents future artifact commits
+3. **Architectural Clarity:** WPF is the unambiguous sole desktop platform — zero UWP references remain
+4. **Maintainability:** UiServer monolith reduced 90.4%; storage mega-services decomposed into logical partial classes
+5. **Naming Clarity:** SubscriptionOrchestrator/SubscriptionManager now clearly reflect layer roles
+6. **DI Integrity:** No cross-layer DI boundary violations or TODO debt
 
 ### No Negative Impacts
-- All builds succeed
-- No functionality removed
-- No tests disabled
+- All builds succeed; 0 errors, 0 warnings introduced
+- No functionality removed or tests disabled
 - All intentional console/debug output preserved
-
-## Lessons Learned
-
-1. **Current Code Quality is Good:** No temporary/orphaned code found
-2. **Console Output is Intentional:** CLI tools and user feedback require console output
-3. **Debug.WriteLine Pattern:** Appropriate for UI services without structured logging
-4. **Test Hygiene:** No temporary test files or undocumented skips
-5. **Gitignore Documentation:** Inline comments help future maintainers
-
-## Recommendations
-
-### Short-term (Completed)
-- ✅ Remove tracked artifacts
-- ✅ Improve .gitignore with comments
-- ✅ Audit debug code
-
-### Long-term (Future Work)
-1. **Skipped Tests:** Consider adding GitHub issue links to track timing improvements
-2. **Pre-commit Hook:** Add check to prevent accidental artifact commits
-3. **CI Check:** Add workflow step to verify no log/artifact files tracked
-4. **Documentation:** Add to CLAUDE.md as example of good practices
-
-## References
-
-- **Problem Statement:** Cleanup Opportunities Audit (Deep Scan, WPF-First Direction)
-- **Branch:** copilot/cleanup-opportunities-audit
-- **Commit:** 77179ec (H1 & H2), [current] (H3 analysis)
-- **Analysis Document:** docs/audits/H3_DEBUG_CODE_ANALYSIS.md
-
-## AI Assistant Notes
-
-This cleanup audit demonstrates effective use of AI for repository maintenance:
-
-1. **Comprehensive Scanning:** Automated search patterns found all relevant code
-2. **Context-Aware Analysis:** Correctly identified intentional vs. temporary code
-3. **Minimal Changes:** Only removed true artifacts, preserved all intentional code
-4. **Documentation:** Created detailed analysis for human review
-5. **Verification:** Multiple validation steps ensure no breakage
-
-**Result:** Clean repository with no orphaned code, improved .gitignore, and clear documentation.
 
 ---
 
-**Audit Status:** ✅ Complete  
-**Human Review Required:** Minimal - all changes are non-breaking  
-**Merge Ready:** Yes (after review)
+## References
+
+- **Audit Source:** [CLEANUP_OPPORTUNITIES.md](CLEANUP_OPPORTUNITIES.md)
+- **Further Opportunities:** [FURTHER_SIMPLIFICATION_OPPORTUNITIES.md](FURTHER_SIMPLIFICATION_OPPORTUNITIES.md)
+- **Debug Code Analysis:** [H3_DEBUG_CODE_ANALYSIS.md](H3_DEBUG_CODE_ANALYSIS.md)
+- **Archived Docs:** `docs/archived/`
+
+---
+
+**Audit Status:** ✅ Substantially Complete (PR-8 generated-docs refresh pending)  
+**Human Review Required:** Minimal — all changes are non-breaking  
+**Last Updated:** 2026-03-15
