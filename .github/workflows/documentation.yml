@@ -450,6 +450,21 @@ jobs:
             echo "Rules engine not configured, skipping." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Validate docs structure (README presence + lifecycle front matter)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          echo "## Docs Structure Validation" >> $GITHUB_STEP_SUMMARY
+          if [ -f "build/scripts/docs/validate-docs-structure.py" ]; then
+            python3 build/scripts/docs/validate-docs-structure.py \
+              --docs-dir docs \
+              --github-actions 2>&1 | tee /tmp/docs-structure-report.txt
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat /tmp/docs-structure-report.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "validate-docs-structure.py not found, skipping." >> $GITHUB_STEP_SUMMARY
+          fi
+
   # ─── Regenerate All Documentation ────────────────────────────────────
   # Runs in PARALLEL with validate-docs and scan-todos
   regenerate-docs:
