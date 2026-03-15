@@ -3,6 +3,7 @@ using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Adapters.Failover;
@@ -27,10 +28,12 @@ public sealed class CompositeSinkCircuitBreakerTests
     private static MarketEvent CreateEvent(string symbol = "SPY")
     {
         var trade = new Trade(
-            Price: 450m, Size: 100, Side: TradeSide.Buy,
-            TradeId: "t1", SequenceNumber: 1,
             Timestamp: DateTimeOffset.UtcNow,
-            ExchangeTimestamp: null, Conditions: null, Exchange: null);
+            Symbol: symbol,
+            Price: 450m,
+            Size: 100,
+            Aggressor: AggressorSide.Buy,
+            SequenceNumber: 1);
         return MarketEvent.Trade(DateTimeOffset.UtcNow, symbol, trade, seq: 1);
     }
 
@@ -188,7 +191,7 @@ public sealed class CompositeSinkCircuitBreakerTests
         var evt = CreateEvent();
 
         // Act & Assert
-        await Assert.ThrowsAsync<AggregateException>(() => composite.AppendAsync(evt).AsTask());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => composite.AppendAsync(evt).AsTask());
     }
 
     [Fact]
@@ -199,7 +202,7 @@ public sealed class CompositeSinkCircuitBreakerTests
         failingSink.Setup(s => s.AppendAsync(It.IsAny<MarketEvent>(), It.IsAny<CancellationToken>()))
                    .ThrowsAsync(new InvalidOperationException("always fails"));
         failingSink.Setup(s => s.FlushAsync(It.IsAny<CancellationToken>()))
-                   .Returns(ValueTask.CompletedTask);
+                   .Returns(Task.CompletedTask);
         var healthySink = new Mock<IStorageSink>();
 
         var composite = new CompositeSink(
