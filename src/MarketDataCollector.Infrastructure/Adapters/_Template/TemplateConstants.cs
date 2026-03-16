@@ -44,12 +44,24 @@ internal static class TemplateRateLimits
 /// </summary>
 internal static class TemplateMessageTypes
 {
-    // TODO: Add message type constants. Examples:
+    /// <summary>Trade event message type.</summary>
     public const string Trade = "trade";
+
+    /// <summary>Quote (BBO) event message type.</summary>
     public const string Quote = "quote";
+
+    /// <summary>Subscribe action sent to the WebSocket server.</summary>
     public const string Subscribe = "subscribe";
+
+    /// <summary>Unsubscribe action sent to the WebSocket server.</summary>
     public const string Unsubscribe = "unsubscribe";
+
+    /// <summary>Error response message type.</summary>
     public const string Error = "error";
+
+    /// <summary>Connection established message type.</summary>
     public const string Connected = "connected";
+
+    /// <summary>Authentication success message type.</summary>
     public const string Authenticated = "authenticated";
 }
