@@ -1,40 +1,40 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-16T16:39:05.546270+00:00
+> Last updated: 2026-03-16T19:51:24.113414+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 61 |
+| **Total Items** | 60 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 61 |
+| **Untracked** | 60 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `TODO` | 42 | General tasks to complete |
+| `TODO` | 41 | General tasks to complete |
 | `NOTE` | 19 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 47 |
+| `src/` | 46 |
 | `tests/` | 12 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-61 items have no assignee and no issue tracking:
+60 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### TODO (42)
+### TODO (41)
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:10`
   > Add your provider's base URL or WebSocket URI. Examples:
@@ -47,9 +47,6 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:35`
   > Set the recommended minimum delay between consecutive requests. MinRequestDelay = Window / MaxRequestsPerWindow
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:47`
-  > Add message type constants. Examples:
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:91`
   > Remove this method entirely if the provider does not support symbol search.
