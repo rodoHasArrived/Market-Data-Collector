@@ -302,4 +302,4 @@ If you have questions about archived documents or need historical context:
 
 ---
 
-*This index is maintained as part of repository cleanup efforts. See [Repository Cleanup Action Plan](../development/repository-cleanup-action-plan.md) Phase 5.*
+*This index is maintained as part of repository cleanup efforts.*

@@ -249,11 +249,19 @@ def _validate_markdown_links(path: Path) -> list[Finding]:
         return findings
 
     link_pattern = re.compile(r'\[([^\]]*)\]\(([^)]+)\)')
+    # Strip inline code spans to avoid false positives from example links
+    inline_code_pattern = re.compile(r'`[^`]*`')
     for i, line in enumerate(content.splitlines(), 1):
-        for match in link_pattern.finditer(line):
+        # Remove inline code spans before checking for links so that example
+        # links like `[text](path/file.md)` are not flagged as broken.
+        clean_line = inline_code_pattern.sub('', line)
+        for match in link_pattern.finditer(clean_line):
             target = match.group(2)
             # Skip external links, anchors, and special URLs
             if target.startswith(("http://", "https://", "#", "mailto:")):
+                continue
+            # Skip regex/glob patterns (contain regex metacharacters)
+            if re.search(r'[*?+{}\[\]\\]|\.\*', target):
                 continue
             # Remove anchor from path
             target_path_str = target.split("#")[0]
@@ -505,7 +513,10 @@ def cmd_drift(report: Report) -> None:
     if prompts_readme.exists() and prompts_dir.exists():
         actual_prompts = {f.name for f in prompts_dir.glob("*.prompt.yml")}
         readme_content = prompts_readme.read_text(encoding="utf-8")
-        referenced_prompts = set(re.findall(r'`(\w[\w-]+\.prompt\.yml)`', readme_content))
+        # Match prompt filenames in backtick notation OR in markdown link notation
+        referenced_prompts = set(re.findall(
+            r'[`\[](\w[\w-]+\.prompt\.yml)[`\]\(]', readme_content
+        ))
         missing_from_readme = actual_prompts - referenced_prompts
         for p in sorted(missing_from_readme):
             report.drift.append(DriftEntry(

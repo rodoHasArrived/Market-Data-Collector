@@ -4,9 +4,9 @@
 > Workflows have since been **consolidated from 25 to 17 files** (2026-02-05) with AI-powered analysis added throughout.
 >
 > **For current documentation, see:**
-> - [workflows/README.md](workflows/README.md) - Authoritative workflow reference (17 workflows)
-> - [../docs/development/github-actions-summary.md](../docs/development/github-actions-summary.md) - Quick reference
-> - [../docs/ai/claude/CLAUDE.actions.md](../docs/ai/claude/CLAUDE.actions.md) - AI assistant CI/CD guide
+> - [.github/workflows/README.md](../../.github/workflows/README.md) - Authoritative workflow reference
+> - [docs/development/github-actions-summary.md](../development/github-actions-summary.md) - Quick reference
+> - [docs/ai/claude/CLAUDE.actions.md](../ai/claude/CLAUDE.actions.md) - AI assistant CI/CD guide
 
 This document summarizes the initial GitHub workflow improvements added to the Market Data Collector repository (2026-01-08). Many filenames below have since been renamed or consolidated.
 
@@ -84,7 +84,7 @@ We initially added **12 new workflows** plus comprehensive automation infrastruc
 
 ## Workflow Triggers (Historical)
 
-> **Note:** Triggers have changed since consolidation. See [workflows/README.md](workflows/README.md) for current triggers.
+> **Note:** Triggers have changed since consolidation. See [.github/workflows/README.md](../../.github/workflows/README.md) for current triggers.
 
 | Workflow | Push | PR | Schedule | Manual |
 |----------|------|-----|----------|--------|
@@ -196,7 +196,7 @@ Automatic labels based on:
 ## File Structure (Historical - 2026-01-08)
 
 > **Note:** These filenames are from the initial setup. Current filenames differ due to consolidation.
-> See [workflows/README.md](workflows/README.md) for the current 17 workflow files.
+> See [.github/workflows/README.md](../../.github/workflows/README.md) for the current workflow files.
 
 ```
 .github/

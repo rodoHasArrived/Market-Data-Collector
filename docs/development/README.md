@@ -91,7 +91,6 @@ This directory contains guides for developers contributing to or extending the M
 | Document | Description |
 |----------|-------------|
 | [Refactor Map](refactor-map.md) | Code areas earmarked for refactoring |
-| [Repository Cleanup Action Plan](repository-cleanup-action-plan.md) | Active cleanup items |
 
 ---
 

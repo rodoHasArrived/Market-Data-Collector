@@ -4,7 +4,7 @@ This guide covers the CI/CD pipeline for the Market Data Collector, including wo
 
 ## Workflow Inventory
 
-The project uses 26 GitHub Actions workflows in `.github/workflows/`:
+The project uses 28 GitHub Actions workflows in `.github/workflows/`:
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
@@ -34,6 +34,8 @@ The project uses 26 GitHub Actions workflows in `.github/workflows/`:
 | Update Diagrams | `update-diagrams.yml` | Push/PRs (source changes), manual | Architecture diagram generation |
 | Update UML Diagrams | `update-uml-diagrams.yml` | Push/PRs (source changes), manual | UML diagram generation |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | Called by other workflows | Shared build/test steps |
+| Copilot PR Reviewer | `copilot-pull-request-reviewer.yml` | PR opened/synchronize | AI-powered code review on every PR |
+| Copilot SWE Agent | `copilot-swe-agent-copilot.yml` | Manual dispatch | GitHub Copilot coding agent workflow |
 
 ## Key Locations
 

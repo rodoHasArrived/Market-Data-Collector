@@ -221,7 +221,7 @@ All nine stale UWP references across configuration, documentation, and source co
 ## References
 
 - **Audit Source:** [CLEANUP_OPPORTUNITIES.md](CLEANUP_OPPORTUNITIES.md)
-- **Further Opportunities:** [FURTHER_SIMPLIFICATION_OPPORTUNITIES.md](FURTHER_SIMPLIFICATION_OPPORTUNITIES.md)
+- **Further Opportunities:** [FURTHER_SIMPLIFICATION_OPPORTUNITIES.md](../audits/FURTHER_SIMPLIFICATION_OPPORTUNITIES.md)
 - **Debug Code Analysis:** [H3_DEBUG_CODE_ANALYSIS.md](H3_DEBUG_CODE_ANALYSIS.md)
 - **Archived Docs:** `docs/archived/`
 

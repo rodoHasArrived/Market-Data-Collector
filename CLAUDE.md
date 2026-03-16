@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 779 source files
+**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 732 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,10 +22,10 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 779 |
-| C# Files | 769 |
+| Total Source Files | 732 |
+| C# Files | 732 |
 | F# Files | 14 |
-| Test Files | 266 |
+| Test Files | 252 |
 | Test Methods | ~4,135 |
 | Documentation Files | 163 |
 | Main Projects | 13 (+ 4 test + 1 benchmark) |
@@ -33,7 +33,7 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 | Symbol Search Providers | 5 |
 | API Route Constants | 309 |
 | Endpoint Files | 39 |
-| CI/CD Workflows | 27 |
+| CI/CD Workflows | 28 |
 | Makefile Targets | 96 |
 
 ---
@@ -1721,24 +1721,39 @@ When contributing to this project, **always follow these rules**:
 
 ### Historical Providers (IHistoricalDataProvider)
 
-| Provider | Free Tier | Data Types | Rate Limits |
-|----------|-----------|------------|-------------|
-| Alpaca | Yes (with account) | Bars, trades, quotes | 200/min |
-| Polygon | Limited | Bars, trades, quotes, aggregates | Varies |
-| Tiingo | Yes | Daily bars | 500/hour |
-| Yahoo Finance | Yes | Daily bars | Unofficial |
-| Stooq | Yes | Daily bars | Low |
-| StockSharp | Yes (with account) | Various | Varies |
-| Finnhub | Yes | Daily bars | 60/min |
-| Alpha Vantage | Yes | Daily bars | 5/min |
-| Nasdaq Data Link | Limited | Various | Varies |
-| Interactive Brokers | Yes (with account) | All types | IB pacing rules |
+| Provider | Class | Free Tier | Data Types | Rate Limits |
+|----------|-------|-----------|------------|-------------|
+| Alpaca | `AlpacaHistoricalDataProvider` | Yes (with account) | Bars, trades, quotes | 200/min |
+| Polygon | `PolygonHistoricalDataProvider` | Limited | Bars, trades, quotes, aggregates | Varies |
+| Tiingo | `TiingoHistoricalDataProvider` | Yes | Daily bars | 500/hour |
+| Yahoo Finance | `YahooFinanceHistoricalDataProvider` | Yes | Daily bars | Unofficial |
+| Stooq | `StooqHistoricalDataProvider` | Yes | Daily bars | Low |
+| StockSharp | `StockSharpHistoricalDataProvider` | Yes (with account) | Various | Varies |
+| Finnhub | `FinnhubHistoricalDataProvider` | Yes | Daily bars | 60/min |
+| Alpha Vantage | `AlphaVantageHistoricalDataProvider` | Yes | Daily bars | 5/min |
+| Nasdaq Data Link | `NasdaqDataLinkHistoricalDataProvider` | Limited | Various | Varies |
+| Interactive Brokers | `IBHistoricalDataProvider` | Yes (with account) | All types | IB pacing rules |
 
 **CompositeHistoricalDataProvider** provides automatic multi-provider routing with:
 - Priority-based fallback chain
 - Rate limit tracking
 - Provider health monitoring
 - Symbol resolution across providers
+
+**Provider base classes** (in `Infrastructure/Adapters/Core/`):
+
+| Base Class | Purpose |
+|------------|---------|
+| `BaseHistoricalDataProvider` | Abstract base with rate limiting and retry logic |
+| `BaseSymbolSearchProvider` | Abstract base for symbol search implementations |
+
+**Template scaffolding** (in `Infrastructure/Adapters/_Template/`):
+
+| Template Class | Purpose |
+|----------------|---------|
+| `TemplateHistoricalDataProvider` | Reference scaffold for new historical providers |
+| `TemplateMarketDataClient` | Reference scaffold for new streaming clients |
+| `TemplateSymbolSearchProvider` | Reference scaffold for new symbol search providers |
 
 ### Symbol Search Providers (ISymbolSearchProvider)
 
