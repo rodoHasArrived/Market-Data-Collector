@@ -25,7 +25,8 @@
         build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
         icons desktop desktop-publish install-hooks \
         build-wpf test-desktop-services desktop-dev-bootstrap \
-        ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-verify ai-report
+        ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-audit-ai-docs ai-verify ai-report \
+        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive
 
 # Default target
 .DEFAULT_GOAL := help
@@ -102,7 +103,7 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'icons|desktop' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Pre-PR & Quality:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify|ai-docs|ai-report' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-24s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Diagnostics:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -617,7 +618,39 @@ ai-verify: ## Run build + test + lint verification
 	@echo "$(BLUE)Running verification (build + test + lint)...$(NC)"
 	@$(AI_UPDATER) verify
 
+ai-audit-ai-docs: ## Run AI documentation freshness and drift audit
+	@echo "$(BLUE)Auditing AI documentation health...$(NC)"
+	@$(AI_UPDATER) audit-ai-docs --summary
+
 ai-report: ## Generate AI improvement report
 	@echo "$(BLUE)Generating improvement report...$(NC)"
 	@$(AI_UPDATER) report --output docs/generated/improvement-report.md
 	@echo "$(GREEN)Report written to docs/generated/improvement-report.md$(NC)"
+
+# =============================================================================
+# AI Documentation Maintenance
+# =============================================================================
+
+AI_DOCS := python3 build/scripts/docs/ai-docs-maintenance.py
+
+ai-docs-freshness: ## Check staleness of AI documentation files
+	@echo "$(BLUE)Checking AI doc freshness...$(NC)"
+	@$(AI_DOCS) freshness --summary
+
+ai-docs-drift: ## Detect AI documentation drift from code reality
+	@echo "$(BLUE)Detecting AI doc drift...$(NC)"
+	@$(AI_DOCS) drift --summary
+
+ai-docs-sync-report: ## Generate AI docs sync report (markdown)
+	@echo "$(BLUE)Generating AI docs sync report...$(NC)"
+	@$(AI_DOCS) sync-report --output docs/generated/ai-docs-sync-report.md
+	@echo "$(GREEN)Report written to docs/generated/ai-docs-sync-report.md$(NC)"
+
+ai-docs-archive: ## Preview stale docs that could be archived
+	@echo "$(BLUE)Scanning for archive candidates...$(NC)"
+	@$(AI_DOCS) archive-stale --summary
+
+ai-docs-archive-execute: ## Actually archive stale docs (moves files)
+	@echo "$(YELLOW)Archiving stale documents...$(NC)"
+	@$(AI_DOCS) archive-stale --execute --summary
+	@echo "$(GREEN)Archive complete$(NC)"

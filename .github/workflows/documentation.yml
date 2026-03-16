@@ -1558,11 +1558,88 @@ jobs:
         continue-on-error: true
 
   # ─── Report ──────────────────────────────────────────────────────────
+  # ─── AI Documentation Maintenance ──────────────────────────────────
+  ai-docs-maintenance:
+    name: AI Documentation Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [detect-changes]
+    if: |
+      github.event_name != 'issues' &&
+      (
+        github.event_name == 'schedule' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.ai_files_changed == 'true' ||
+        needs.detect-changes.outputs.src_changed == 'true' ||
+        needs.detect-changes.outputs.docs_changed == 'true'
+      )
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run AI docs freshness check
+        id: freshness
+        run: |
+          python3 build/scripts/docs/ai-docs-maintenance.py freshness \
+            --json-output /tmp/ai-docs-freshness.json --summary
+          STALE=$(python3 -c "import json; d=json.load(open('/tmp/ai-docs-freshness.json')); print(d.get('summary',{}).get('stale_docs',0))")
+          echo "stale_count=$STALE" >> "$GITHUB_OUTPUT"
+
+      - name: Run AI docs drift check
+        id: drift
+        run: |
+          python3 build/scripts/docs/ai-docs-maintenance.py drift \
+            --json-output /tmp/ai-docs-drift.json --summary
+          DRIFT=$(python3 -c "import json; d=json.load(open('/tmp/ai-docs-drift.json')); print(d.get('summary',{}).get('drift_items',0))")
+          echo "drift_count=$DRIFT" >> "$GITHUB_OUTPUT"
+
+      - name: Run cross-reference validation
+        run: |
+          python3 build/scripts/docs/ai-docs-maintenance.py validate-refs \
+            --json-output /tmp/ai-docs-refs.json --summary
+
+      - name: Generate sync report
+        run: |
+          mkdir -p docs/generated
+          python3 build/scripts/docs/ai-docs-maintenance.py sync-report \
+            --output docs/generated/ai-docs-sync-report.md
+
+      - name: Publish AI docs health summary
+        run: |
+          echo "## AI Documentation Health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Stale docs | ${{ steps.freshness.outputs.stale_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Drift items | ${{ steps.drift.outputs.drift_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f docs/generated/ai-docs-sync-report.md ]; then
+            echo "<details><summary>Full Sync Report</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat docs/generated/ai-docs-sync-report.md >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload sync report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-docs-sync-report
+          path: docs/generated/ai-docs-sync-report.md
+          retention-days: 30
+
   report:
     name: Documentation Automation Report
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues, link-repair, validate-examples, coverage-report, generate-changelog, validate-api-docs, generate-dependency-graph, sync-readme-badges, generate-metrics-dashboard, build-docfx, deploy-pages]
+    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues, link-repair, validate-examples, coverage-report, generate-changelog, validate-api-docs, generate-dependency-graph, sync-readme-badges, generate-metrics-dashboard, build-docfx, deploy-pages, ai-docs-maintenance]
     if: github.event_name != 'issues' && always()
     steps:
       - name: Publish summary
@@ -1607,6 +1684,7 @@ jobs:
           echo "| Metrics dashboard | ${{ needs.generate-metrics-dashboard.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build DocFX site | ${{ needs.build-docfx.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Deploy to Pages | ${{ needs.deploy-pages.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI docs maintenance | ${{ needs.ai-docs-maintenance.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Generated Changes | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------------------|-------|" >> $GITHUB_STEP_SUMMARY

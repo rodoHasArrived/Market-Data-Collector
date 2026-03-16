@@ -20,6 +20,7 @@ Commands:
     audit-tests        Test coverage gaps and missing test patterns.
     audit-config       Configuration and CI/CD analysis.
     audit-providers    Provider implementation completeness.
+    audit-ai-docs      AI documentation freshness and drift detection.
     verify             Run build + tests + lint to validate changes.
     report             Generate a markdown improvement report.
     known-errors       List known AI errors to avoid repeating.
@@ -512,6 +513,68 @@ def audit_providers(root: Path, report: AuditReport) -> None:
                 ))
 
 
+def audit_ai_docs(root: Path, report: AuditReport) -> None:
+    """Check AI documentation freshness, drift, and cross-reference validity."""
+    # Delegate to the dedicated ai-docs-maintenance.py script
+    script = root / "build" / "scripts" / "docs" / "ai-docs-maintenance.py"
+    if not script.exists():
+        report.add(Finding(
+            category="missing-tool",
+            severity="warning",
+            file="build/scripts/docs/ai-docs-maintenance.py",
+            line=0,
+            message="AI docs maintenance script not found.",
+            fix_hint="Create build/scripts/docs/ai-docs-maintenance.py",
+        ))
+        return
+
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), "full", "--root", str(root)],
+            capture_output=True, text=True, cwd=str(root), timeout=60,
+        )
+        if result.returncode in (0, 1) and result.stdout.strip():
+            data = json.loads(result.stdout)
+            # Import findings from the maintenance script
+            for f in data.get("findings", []):
+                report.add(Finding(
+                    category=f.get("category", "ai-docs"),
+                    severity=f.get("severity", "info"),
+                    file=f.get("file", ""),
+                    line=f.get("line", 0),
+                    message=f.get("message", ""),
+                    fix_hint=f.get("fix_hint", ""),
+                ))
+            # Import drift entries as findings
+            for d in data.get("drift", []):
+                report.add(Finding(
+                    category=f"ai-drift-{d.get('area', 'unknown')}",
+                    severity=d.get("severity", "info"),
+                    file="",
+                    line=0,
+                    message=f"{d.get('actual', '')} (expected: {d.get('expected', '')})",
+                    fix_hint=d.get("fix_hint", ""),
+                ))
+    except subprocess.TimeoutExpired:
+        report.add(Finding(
+            category="ai-docs-timeout",
+            severity="warning",
+            file="build/scripts/docs/ai-docs-maintenance.py",
+            line=0,
+            message="AI docs maintenance script timed out.",
+            fix_hint="Run manually: python3 build/scripts/docs/ai-docs-maintenance.py full",
+        ))
+    except (json.JSONDecodeError, Exception) as exc:
+        report.add(Finding(
+            category="ai-docs-error",
+            severity="warning",
+            file="build/scripts/docs/ai-docs-maintenance.py",
+            line=0,
+            message=f"AI docs maintenance script error: {exc}",
+            fix_hint="Run manually and check output",
+        ))
+
+
 # ---------------------------------------------------------------------------
 # Verification
 # ---------------------------------------------------------------------------
@@ -685,12 +748,13 @@ def run_audit(root: Path, command: str) -> AuditReport:
     report = AuditReport(command=command)
 
     auditors = {
-        "audit": [audit_code, audit_docs, audit_tests, audit_config, audit_providers],
+        "audit": [audit_code, audit_docs, audit_tests, audit_config, audit_providers, audit_ai_docs],
         "audit-docs": [audit_docs],
         "audit-code": [audit_code],
         "audit-tests": [audit_tests],
         "audit-config": [audit_config],
         "audit-providers": [audit_providers],
+        "audit-ai-docs": [audit_ai_docs],
     }
 
     for fn in auditors.get(command, []):
@@ -710,7 +774,7 @@ def main(argv: list[str] | None = None) -> int:
         "command",
         choices=[
             "audit", "audit-docs", "audit-code", "audit-tests",
-            "audit-config", "audit-providers",
+            "audit-config", "audit-providers", "audit-ai-docs",
             "verify", "report", "known-errors", "diff-summary",
         ],
         help="Command to run.",
@@ -727,7 +791,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command in (
         "audit", "audit-docs", "audit-code", "audit-tests",
-        "audit-config", "audit-providers", "report",
+        "audit-config", "audit-providers", "audit-ai-docs", "report",
     ):
         cmd = args.command if args.command != "report" else "audit"
         report = run_audit(args.root, cmd)

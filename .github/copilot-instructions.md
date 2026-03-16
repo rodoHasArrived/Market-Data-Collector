@@ -2,6 +2,8 @@
 
 Use these instructions for every task in this repository to improve quality, reliability, and review speed.
 
+> **See also:** [CLAUDE.md](../CLAUDE.md) for full project context | [docs/ai/README.md](../docs/ai/README.md) for the master AI resource index
+
 ## 0) Standard execution flow
 
 For each task, follow this sequence:
@@ -85,5 +87,16 @@ Also follow any matching files under `.github/instructions/**/*.instructions.md`
 
 Relevant examples:
 
-- `.github/instructions/docs.instructions.md` for Markdown edits.
+- `.github/instructions/csharp.instructions.md` for C# source files.
+- `.github/instructions/wpf.instructions.md` for WPF/MVVM files.
 - `.github/instructions/dotnet-tests.instructions.md` for C# test changes.
+- `.github/instructions/docs.instructions.md` for Markdown edits.
+
+## 7) Related resources
+
+- [`CLAUDE.md`](../CLAUDE.md) — comprehensive project context, architecture, conventions
+- [`docs/ai/README.md`](../docs/ai/README.md) — master AI resource index with reading order by task type
+- [`docs/ai/ai-known-errors.md`](../docs/ai/ai-known-errors.md) — mandatory error prevention registry
+- [`docs/ai/copilot/instructions.md`](../docs/ai/copilot/instructions.md) — extended Copilot guide with project structure and decision tree
+- [`.github/agents/code-review-agent.md`](.github/agents/code-review-agent.md) — 6-lens code review framework
+- [`.github/prompts/`](.github/prompts/) — 16 reusable prompt templates

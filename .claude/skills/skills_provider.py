@@ -1,13 +1,17 @@
 """Code-defined skills provider for MarketDataCollector.
 
-Creates a :class:`SkillsProvider` that exposes the ``mdc-code-review``
-skill both as a file-based skill (discovered from the ``mdc-code-review/``
-directory) and as a code-defined skill.
+Creates a :class:`SkillsProvider` that exposes two skills:
 
-When both exist with the same name the file-based version takes precedence,
-so the code-defined definition acts as a documented fallback and as the host
-for **dynamic resources** and **in-process scripts** that cannot be expressed
-as static files.
+1. ``mdc-code-review`` — Code review and architecture compliance, available
+   both as a file-based skill (discovered from the ``mdc-code-review/``
+   directory) and as a code-defined skill.  When both exist the file-based
+   version takes precedence; the code-defined definition acts as a fallback
+   and hosts **dynamic resources** and **in-process scripts**.
+
+2. ``ai-docs-maintain`` — AI documentation maintenance (freshness checks,
+   drift detection, cross-reference validation, stale doc archiving).
+   Purely code-defined with scripts that delegate to
+   ``build/scripts/docs/ai-docs-maintenance.py``.
 
 Usage (from a custom agent or MCP server)::
 
@@ -24,6 +28,9 @@ Usage (from a custom agent or MCP server)::
 
     # Execute a code-defined script
     result = skills_provider.run_skill_script("mdc-code-review", "validate-skill")
+
+    # AI docs maintenance
+    report = skills_provider.run_skill_script("ai-docs-maintain", "run-full")
 """
 
 from __future__ import annotations
@@ -43,6 +50,7 @@ from agent_framework import Skill, SkillResource, SkillScript, SkillsProvider
 _SKILLS_DIR = Path(__file__).parent
 _SKILL_DIR = _SKILLS_DIR / "mdc-code-review"
 _REFS_DIR = _SKILL_DIR / "references"
+_REPO_ROOT = _SKILLS_DIR.parent.parent
 
 
 def _read(path: Path) -> str:
@@ -120,6 +128,174 @@ mdc_code_review_skill = Skill(
 )
 
 # ---------------------------------------------------------------------------
+# AI Documentation Maintenance skill
+# ---------------------------------------------------------------------------
+
+ai_docs_maintain_skill = Skill(
+    name="ai-docs-maintain",
+    description=dedent("""\
+        AI documentation maintenance skill for the MarketDataCollector project.
+        Use this skill when the user asks to check AI doc freshness, detect drift
+        between documentation and code, archive stale docs, validate cross-references,
+        or generate a sync report for AI-related files. Also trigger when asked to
+        "update AI docs", "check doc staleness", "archive deprecated docs", or
+        "sync AI instructions".
+    """),
+    content=dedent("""\
+        # AI Documentation Maintenance
+
+        This skill maintains the health of AI assistant documentation in the
+        MarketDataCollector repository.
+
+        ## Available Commands
+
+        Run via the `ai-docs-maintenance.py` script:
+
+        ```bash
+        # Check staleness of all AI docs
+        python3 build/scripts/docs/ai-docs-maintenance.py freshness
+
+        # Detect drift between docs and code reality
+        python3 build/scripts/docs/ai-docs-maintenance.py drift
+
+        # Preview stale docs for archiving
+        python3 build/scripts/docs/ai-docs-maintenance.py archive-stale
+
+        # Validate cross-references between AI docs
+        python3 build/scripts/docs/ai-docs-maintenance.py validate-refs
+
+        # Generate a full sync report (markdown)
+        python3 build/scripts/docs/ai-docs-maintenance.py sync-report --output docs/generated/ai-docs-sync-report.md
+
+        # Run all checks
+        python3 build/scripts/docs/ai-docs-maintenance.py full --json-output /tmp/ai-docs-report.json
+        ```
+
+        Or via Makefile targets:
+
+        ```bash
+        make ai-docs-freshness      # Check AI doc freshness
+        make ai-docs-drift          # Detect doc/code drift
+        make ai-docs-sync-report    # Generate sync report
+        make ai-docs-archive        # Preview archive candidates
+        make ai-docs-archive-execute # Actually archive stale docs
+        make ai-audit-ai-docs       # Integrated audit via ai-repo-updater
+        ```
+
+        ## Workflow
+
+        1. Run `freshness` to find stale docs (>60 days warning, >120 days critical)
+        2. Run `drift` to find where docs diverge from code (provider counts, workflow counts, file counts)
+        3. Fix stale/drifted docs by updating content and timestamps
+        4. Run `archive-stale` to identify deprecated content for archiving
+        5. Run `validate-refs` to check for broken cross-references
+        6. Generate a `sync-report` for human review
+
+        ## Key Files
+
+        - Script: `build/scripts/docs/ai-docs-maintenance.py`
+        - Integrated auditor: `build/scripts/ai-repo-updater.py` (command: `audit-ai-docs`)
+        - Master AI index: `docs/ai/README.md`
+        - Root context: `CLAUDE.md`
+    """),
+    resources=[],
+)
+
+
+_AI_DOCS_SCRIPT = _REPO_ROOT / "build" / "scripts" / "docs" / "ai-docs-maintenance.py"
+
+
+def _run_ai_docs_cmd(command: str, extra_args: list[str] | None = None,
+                     timeout: int = 30) -> str:
+    """Run an ai-docs-maintenance.py command and return output.
+
+    Exit codes: 0 = clean, 1 = findings exist (still returns valid JSON),
+    2 = script error.
+    """
+    cmd = [sys.executable, str(_AI_DOCS_SCRIPT), command]
+    if extra_args:
+        cmd.extend(extra_args)
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True,
+            cwd=str(_REPO_ROOT), timeout=timeout,
+        )
+        # Exit code 0 (clean) and 1 (findings) both produce valid output
+        if result.returncode <= 1:
+            return result.stdout.strip() or result.stderr.strip()
+        # Exit code 2 = script error
+        return f"Error (exit {result.returncode}): {result.stderr.strip()}"
+    except (subprocess.SubprocessError, OSError) as exc:
+        return f"Error: {exc}"
+
+
+@ai_docs_maintain_skill.resource(
+    name="doc-health-summary",
+    description=(
+        "Live AI documentation health summary: stale doc count, drift items, "
+        "and broken references. Refreshed on every read."
+    ),
+)
+def doc_health_summary() -> Any:
+    """Return current AI doc health status from the maintenance script."""
+    import json as _json
+    raw = _run_ai_docs_cmd("full", timeout=60)
+    try:
+        data = _json.loads(raw)
+        s = data.get("summary", {})
+        lines = [
+            f"Stale docs    : {s.get('stale_docs', 0)}",
+            f"Critical      : {s.get('critical', 0)}",
+            f"Warnings      : {s.get('warning', 0)}",
+            f"Drift items   : {s.get('drift_items', 0)}",
+            f"Info          : {s.get('info', 0)}",
+        ]
+        return "\n".join(lines)
+    except (_json.JSONDecodeError, KeyError):
+        return raw
+
+
+@ai_docs_maintain_skill.script(
+    name="run-freshness",
+    description="Check staleness of all AI documentation files. Returns JSON report.",
+)
+def run_freshness_script() -> str:
+    """Execute ai-docs-maintenance.py freshness check."""
+    return _run_ai_docs_cmd("freshness")
+
+
+@ai_docs_maintain_skill.script(
+    name="run-drift",
+    description="Detect where AI documentation diverges from code reality. Returns JSON report.",
+)
+def run_drift_script() -> str:
+    """Execute ai-docs-maintenance.py drift check."""
+    return _run_ai_docs_cmd("drift")
+
+
+@ai_docs_maintain_skill.script(
+    name="run-full",
+    description="Run all AI doc maintenance checks (freshness, drift, refs, archive). Returns JSON.",
+)
+def run_full_script() -> str:
+    """Execute ai-docs-maintenance.py full check."""
+    return _run_ai_docs_cmd("full", timeout=60)
+
+
+@ai_docs_maintain_skill.script(
+    name="run-archive",
+    description=(
+        "Find deprecated docs that should be archived. "
+        "Set execute=True to actually move files (default: dry-run preview only)."
+    ),
+)
+def run_archive_script(execute: bool = False) -> str:
+    """Execute ai-docs-maintenance.py archive-stale with optional execution."""
+    extra = ["--execute"] if execute else []
+    return _run_ai_docs_cmd("archive-stale", extra_args=extra)
+
+
+# ---------------------------------------------------------------------------
 # Dynamic resources — re-evaluated on every read
 # ---------------------------------------------------------------------------
 
@@ -133,7 +309,7 @@ mdc_code_review_skill = Skill(
 )
 def project_stats() -> Any:
     """Return current source-file and test-file statistics for the repository."""
-    repo_root = _SKILL_DIR.parent.parent.parent  # .claude/skills/ → repo root
+    repo_root = _REPO_ROOT
 
     def _count(directory: str, pattern: str) -> int:
         try:
@@ -183,7 +359,7 @@ def project_stats() -> Any:
 )
 def git_context() -> Any:
     """Return current git context: branch, last relevant commit, changed files."""
-    repo_root = _SKILL_DIR.parent.parent.parent
+    repo_root = _REPO_ROOT
 
     def _git(*args: str) -> str:
         try:
@@ -388,6 +564,7 @@ def _skill_script_runner(
         cmd,
         capture_output=True,
         text=True,
+        cwd=str(_REPO_ROOT),
         timeout=300,
     )
 
@@ -410,7 +587,7 @@ skills_provider = SkillsProvider(
     # fallback and as the host for dynamic resources and in-process scripts.
     skill_paths=_SKILLS_DIR,
     # Register the code-defined skill.
-    skills=[mdc_code_review_skill],
+    skills=[mdc_code_review_skill, ai_docs_maintain_skill],
     # Provide a runner for any file-based .py scripts that may be added to
     # skill directories in the future.
     script_runner=_skill_script_runner,

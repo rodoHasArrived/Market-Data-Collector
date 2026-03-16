@@ -856,6 +856,13 @@ let validate trade =
 - [F# for Fun and Profit](https://fsharpforfunandprofit.com/) - F# learning resource
 - [Railway-Oriented Programming](https://fsharpforfunandprofit.com/rop/) - Error handling pattern
 
+## Related Resources
+
+- **Master AI index:** [`docs/ai/README.md`](../README.md)
+- **Root context:** [`CLAUDE.md`](../../../CLAUDE.md)
+- **Code review (Lens 6 - F# interop):** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
+- **Integration docs:** [`docs/integrations/fsharp-integration.md`](../../integrations/fsharp-integration.md)
+
 ---
 
-*Last Updated: 2026-02-20*
+*Last Updated: 2026-03-16*
