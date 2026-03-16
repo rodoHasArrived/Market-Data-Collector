@@ -249,6 +249,7 @@ Market-Data-Collector/
 │   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
 │   │   ├── copilot-setup-steps.yml
+│   │   ├── copilot-swe-agent-copilot.yml
 │   │   ├── desktop-builds.yml
 │   │   ├── docker.yml
 │   │   ├── docs-check.yml
