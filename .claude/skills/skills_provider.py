@@ -35,13 +35,48 @@ Usage (from a custom agent or MCP server)::
 
 from __future__ import annotations
 
+import argparse as _argparse
+import dataclasses as _dataclasses
+import datetime as _dt
+import json as _json_mod
+import logging as _logging
 import subprocess
 import sys
+import time as _time
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-from agent_framework import Skill, SkillResource, SkillScript, SkillsProvider
+try:
+    from agent_framework import Skill, SkillResource, SkillScript, SkillsProvider
+
+    _HAS_AGENT_FRAMEWORK = True
+except ImportError:
+    # Running as a standalone CLI — provide minimal no-op stubs so all
+    # decorator registrations and constructor calls succeed without
+    # agent_framework being installed.
+    _HAS_AGENT_FRAMEWORK = False
+
+    class _Stub:  # type: ignore[no-redef]
+        """No-op stub used when agent_framework is absent (standalone CLI mode)."""
+
+        def __init__(self, *a: Any, **kw: Any) -> None:
+            for k, v in kw.items():
+                setattr(self, k, v)
+
+        def resource(self, **kw: Any):  # noqa: ANN201
+            def _dec(fn: Any) -> Any:
+                return fn
+
+            return _dec
+
+        def script(self, **kw: Any):  # noqa: ANN201
+            def _dec(fn: Any) -> Any:
+                return fn
+
+            return _dec
+
+    Skill = SkillResource = SkillScript = SkillsProvider = _Stub  # type: ignore[assignment,misc]
 
 # ---------------------------------------------------------------------------
 # Path helpers
@@ -592,3 +627,633 @@ skills_provider = SkillsProvider(
     # skill directories in the future.
     script_runner=_skill_script_runner,
 )
+
+
+# ---------------------------------------------------------------------------
+# Execution metrics
+# ---------------------------------------------------------------------------
+
+_logger = _logging.getLogger(__name__)
+
+
+@_dataclasses.dataclass
+class ExecutionRecord:
+    """Record of a single skill script execution with timing and outcome."""
+
+    skill: str
+    script: str
+    started_at: str
+    duration_ms: int
+    success: bool
+    output_preview: str
+    error: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a plain dict representation suitable for JSON serialisation."""
+        return _dataclasses.asdict(self)
+
+
+def _timed_call(
+    skill_name: str,
+    script_name: str,
+    fn: Any,
+    *args: Any,
+    **kwargs: Any,
+) -> tuple[str, ExecutionRecord]:
+    """Call *fn*, capturing wall-clock time and success/failure.
+
+    Returns a ``(output, record)`` tuple where *output* is the string
+    returned by *fn* and *record* is an :class:`ExecutionRecord` with
+    timing metadata.  Exceptions are caught and stored in the record
+    instead of propagating to the caller.
+    """
+    t0 = _time.monotonic()
+    started_at = _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    error: str | None = None
+    output = ""
+    try:
+        output = fn(*args, **kwargs) or ""
+        success = True
+    except Exception as exc:
+        error = str(exc)
+        success = False
+        _logger.error("Script %s/%s failed: %s", skill_name, script_name, exc)
+    duration_ms = int((_time.monotonic() - t0) * 1000)
+    record = ExecutionRecord(
+        skill=skill_name,
+        script=script_name,
+        started_at=started_at,
+        duration_ms=duration_ms,
+        success=success,
+        output_preview=output[:200],
+        error=error,
+    )
+    _logger.info(
+        "Executed %s/%s in %d ms (success=%s)",
+        skill_name,
+        script_name,
+        duration_ms,
+        success,
+    )
+    return output, record
+
+
+# ---------------------------------------------------------------------------
+# Task chaining — predefined multi-step workflows
+# ---------------------------------------------------------------------------
+
+#: Named chains per skill: { skill_name: { chain_name: [script_name, …] } }
+_SKILL_CHAINS: dict[str, dict[str, list[str]]] = {
+    "mdc-code-review": {
+        "validate-and-eval": ["validate-skill", "run-eval"],
+        "full-check": ["validate-skill", "run-eval", "aggregate-benchmark"],
+    },
+    "ai-docs-maintain": {
+        "health-check": ["run-freshness", "run-drift"],
+        "full-health-check": ["run-freshness", "run-drift", "run-full"],
+        "archive-workflow": ["run-freshness", "run-archive"],
+    },
+}
+
+#: Script callables keyed by (skill_name, script_name) — used by the CLI and
+#: :func:`run_skill_chain` to look up the right function without going through
+#: the SkillsProvider API.
+_SCRIPT_REGISTRY: dict[tuple[str, str], Any] = {
+    ("mdc-code-review", "validate-skill"): validate_skill_script,
+    ("mdc-code-review", "run-eval"): run_eval_script,
+    ("mdc-code-review", "aggregate-benchmark"): aggregate_benchmark_script,
+    ("ai-docs-maintain", "run-freshness"): run_freshness_script,
+    ("ai-docs-maintain", "run-drift"): run_drift_script,
+    ("ai-docs-maintain", "run-full"): run_full_script,
+    ("ai-docs-maintain", "run-archive"): run_archive_script,
+}
+
+#: Resource callables keyed by (skill_name, resource_name).
+_RESOURCE_REGISTRY: dict[tuple[str, str], Any] = {
+    ("mdc-code-review", "project-stats"): project_stats,
+    ("mdc-code-review", "git-context"): git_context,
+    ("ai-docs-maintain", "doc-health-summary"): doc_health_summary,
+}
+
+
+def run_skill_chain(
+    skill_name: str,
+    scripts: list[str],
+    params: dict[str, Any] | None = None,
+    stop_on_error: bool = True,
+) -> list[ExecutionRecord]:
+    """Run *scripts* sequentially for *skill_name*.
+
+    Parameters
+    ----------
+    skill_name:
+        Name of the skill whose scripts should be executed.
+    scripts:
+        Ordered list of script names to run.
+    params:
+        Optional mapping of ``{script_name: {param_name: value}}`` for
+        scripts that accept keyword arguments.
+    stop_on_error:
+        When *True* (default) the chain halts at the first failing script.
+        When *False* all scripts are attempted regardless of failures.
+
+    Returns
+    -------
+    list[ExecutionRecord]
+        One record per attempted step, in execution order.
+    """
+    params = params or {}
+    records: list[ExecutionRecord] = []
+    for script_name in scripts:
+        fn = _SCRIPT_REGISTRY.get((skill_name, script_name))
+        if fn is None:
+            records.append(
+                ExecutionRecord(
+                    skill=skill_name,
+                    script=script_name,
+                    started_at=_dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                    duration_ms=0,
+                    success=False,
+                    output_preview="",
+                    error=f"Unknown script '{script_name}' for skill '{skill_name}'",
+                )
+            )
+            if stop_on_error:
+                break
+            continue
+        script_params = params.get(script_name, {})
+        _output, record = _timed_call(skill_name, script_name, fn, **script_params)
+        records.append(record)
+        if not record.success and stop_on_error:
+            break
+    return records
+
+
+# ---------------------------------------------------------------------------
+# Dynamic skill discovery
+# ---------------------------------------------------------------------------
+
+
+def discover_skills(search_root: Path | None = None) -> list[str]:
+    """Scan *search_root* for ``SKILL.md`` files and return skill names.
+
+    Defaults to ``_SKILLS_DIR`` when *search_root* is *None*.  The skill
+    name is read from the ``name:`` field in the YAML frontmatter; the
+    containing directory name is used as a fallback when the frontmatter
+    cannot be parsed.
+    """
+    root = search_root or _SKILLS_DIR
+    found: list[str] = []
+    for skill_md in sorted(root.rglob("SKILL.md")):
+        name = _parse_skill_name(skill_md) or skill_md.parent.name
+        found.append(name)
+    return found
+
+
+def _parse_skill_name(skill_md: Path) -> str | None:
+    """Extract ``name:`` from a SKILL.md YAML frontmatter block.
+
+    Returns *None* when the file cannot be read or has no ``name:`` entry.
+    """
+    try:
+        content = skill_md.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if not content.startswith("---"):
+        return None
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return None
+    for line in parts[1].splitlines():
+        if line.startswith("name:"):
+            return line.split(":", 1)[1].strip()
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Command-line interface
+# ---------------------------------------------------------------------------
+
+
+class SkillsProviderCli:
+    """Unified CLI for interacting with the skills provider.
+
+    Provides commands to list skills, read resources, run individual scripts,
+    chain multiple steps together, and discover new skills from the filesystem.
+
+    Invoke directly::
+
+        python3 .claude/skills/skills_provider.py --help
+        python3 .claude/skills/skills_provider.py list
+        python3 .claude/skills/skills_provider.py run-script mdc-code-review validate-skill
+        python3 .claude/skills/skills_provider.py chain mdc-code-review validate-skill run-eval
+        python3 .claude/skills/skills_provider.py run-chain ai-docs-maintain full-health-check
+    """
+
+    # ------------------------------------------------------------------
+    # Metadata tables (used by list-* commands)
+    # ------------------------------------------------------------------
+
+    _SKILL_DESCRIPTIONS: dict[str, str] = {
+        "mdc-code-review": (
+            "Code review and architecture compliance for the MarketDataCollector project."
+        ),
+        "ai-docs-maintain": (
+            "AI documentation maintenance: freshness checks, drift detection, archiving."
+        ),
+    }
+
+    _RESOURCES: dict[str, dict[str, list[str]]] = {
+        "mdc-code-review": {
+            "static": ["architecture", "schemas", "grader", "evals"],
+            "dynamic": ["project-stats", "git-context"],
+        },
+        "ai-docs-maintain": {
+            "static": [],
+            "dynamic": ["doc-health-summary"],
+        },
+    }
+
+    _SCRIPTS: dict[str, list[str]] = {
+        "mdc-code-review": ["validate-skill", "run-eval", "aggregate-benchmark"],
+        "ai-docs-maintain": ["run-freshness", "run-drift", "run-full", "run-archive"],
+    }
+
+    # Static resource → file path (for read-resource fallback)
+    _STATIC_RESOURCE_PATHS: dict[str, Path] = {
+        "architecture": _REFS_DIR / "architecture.md",
+        "schemas": _REFS_DIR / "schemas.md",
+        "grader": _SKILL_DIR / "agents" / "grader.md",
+        "evals": _SKILL_DIR / "evals" / "evals.json",
+    }
+
+    def __init__(self) -> None:
+        self._parser = self._build_parser()
+
+    # ------------------------------------------------------------------
+    # Argument parser
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _build_parser() -> _argparse.ArgumentParser:
+        p = _argparse.ArgumentParser(
+            prog="skills_provider.py",
+            description=(
+                "MarketDataCollector skills provider CLI.\n\n"
+                "Manage, inspect, and execute skill scripts and resources "
+                "directly from the command line."
+            ),
+            formatter_class=_argparse.RawDescriptionHelpFormatter,
+        )
+        sub = p.add_subparsers(dest="command", metavar="COMMAND")
+
+        # list
+        sub.add_parser("list", help="List all registered skill names and descriptions")
+
+        # list-resources
+        lr = sub.add_parser("list-resources", help="List resources available for a skill")
+        lr.add_argument("skill", help="Skill name (e.g. mdc-code-review)")
+
+        # list-scripts
+        ls = sub.add_parser("list-scripts", help="List scripts available for a skill")
+        ls.add_argument("skill", help="Skill name")
+
+        # list-chains
+        lc = sub.add_parser(
+            "list-chains",
+            help="List predefined task chains; omit SKILL to list all",
+        )
+        lc.add_argument("skill", nargs="?", help="Skill name (optional)")
+
+        # read-resource
+        rr = sub.add_parser(
+            "read-resource", help="Read and print a skill resource (static or dynamic)"
+        )
+        rr.add_argument("skill", help="Skill name")
+        rr.add_argument(
+            "resource",
+            help="Resource name (e.g. project-stats, git-context, architecture)",
+        )
+
+        # run-script
+        rs = sub.add_parser("run-script", help="Execute a skill script and print output")
+        rs.add_argument("skill", help="Skill name")
+        rs.add_argument("script", help="Script name")
+        rs.add_argument(
+            "--param",
+            action="append",
+            dest="params",
+            metavar="KEY=VALUE",
+            help=(
+                "Script parameter (repeatable). "
+                "Example: --param runs_per_query=5 --param workspace=/tmp/bench"
+            ),
+        )
+        rs.add_argument(
+            "--json",
+            action="store_true",
+            dest="as_json",
+            help="Wrap output and timing in an ExecutionRecord JSON envelope",
+        )
+
+        # chain
+        ch = sub.add_parser(
+            "chain", help="Run multiple scripts for a skill sequentially"
+        )
+        ch.add_argument("skill", help="Skill name")
+        ch.add_argument("scripts", nargs="+", help="Script names to run in order")
+        ch.add_argument(
+            "--no-stop-on-error",
+            action="store_true",
+            help="Continue even if a script fails (default: stop at first error)",
+        )
+        ch.add_argument(
+            "--param",
+            action="append",
+            dest="params",
+            metavar="SCRIPT:KEY=VALUE",
+            help=(
+                "Script-specific parameter (repeatable). "
+                "Example: --param run-eval:runs_per_query=5 "
+                "--param aggregate-benchmark:workspace=/tmp/bench"
+            ),
+        )
+
+        # run-chain
+        rc = sub.add_parser(
+            "run-chain", help="Execute a predefined named chain (see list-chains)"
+        )
+        rc.add_argument("skill", help="Skill name")
+        rc.add_argument("chain", help="Chain name")
+        rc.add_argument(
+            "--no-stop-on-error",
+            action="store_true",
+            help="Continue even if a step fails",
+        )
+
+        # discover
+        dsc = sub.add_parser(
+            "discover", help="Scan the filesystem for SKILL.md files"
+        )
+        dsc.add_argument(
+            "--root",
+            metavar="DIR",
+            default=None,
+            help="Directory to scan (default: .claude/skills/)",
+        )
+
+        return p
+
+    # ------------------------------------------------------------------
+    # Command handlers
+    # ------------------------------------------------------------------
+
+    def _cmd_list(self) -> int:
+        print("Registered skills:\n")
+        for name, desc in self._SKILL_DESCRIPTIONS.items():
+            print(f"  {name}")
+            print(f"    {desc}\n")
+        return 0
+
+    def _cmd_list_resources(self, skill: str) -> int:
+        if skill not in self._RESOURCES:
+            print(f"Unknown skill: '{skill}'. Available: {', '.join(self._RESOURCES)}")
+            return 1
+        r = self._RESOURCES[skill]
+        print(f"Resources for '{skill}':\n")
+        if r["static"]:
+            print("  Static (bundled from files):")
+            for name in r["static"]:
+                print(f"    {name}")
+        if r["dynamic"]:
+            print("  Dynamic (re-evaluated on every read):")
+            for name in r["dynamic"]:
+                print(f"    {name}")
+        return 0
+
+    def _cmd_list_scripts(self, skill: str) -> int:
+        if skill not in self._SCRIPTS:
+            print(f"Unknown skill: '{skill}'. Available: {', '.join(self._SCRIPTS)}")
+            return 1
+        print(f"Scripts for '{skill}':\n")
+        for name in self._SCRIPTS[skill]:
+            print(f"  {name}")
+        return 0
+
+    def _cmd_list_chains(self, skill: str | None) -> int:
+        targets = (
+            _SKILL_CHAINS
+            if skill is None
+            else {skill: _SKILL_CHAINS.get(skill, {})}
+        )
+        if skill and skill not in _SKILL_CHAINS:
+            print(f"No chains defined for skill: '{skill}'")
+            return 1
+        for sname, chains in targets.items():
+            print(f"Chains for '{sname}':")
+            for cname, steps in chains.items():
+                print(f"  {cname}: {' -> '.join(steps)}")
+            print()
+        return 0
+
+    def _cmd_read_resource(self, skill: str, resource: str) -> int:
+        fn = _RESOURCE_REGISTRY.get((skill, resource))
+        if fn is not None:
+            output, record = _timed_call(skill, resource, fn)
+            print(output)
+            _logger.debug("Resource metrics: %s", record.to_dict())
+            return 0
+        # Fallback: static file-based resources for mdc-code-review
+        if skill == "mdc-code-review" and resource in self._STATIC_RESOURCE_PATHS:
+            content = _read(self._STATIC_RESOURCE_PATHS[resource])
+            if content:
+                print(content)
+                return 0
+            print(f"Resource file not found: {self._STATIC_RESOURCE_PATHS[resource]}")
+            return 1
+        all_resources = (
+            self._RESOURCES.get(skill, {}).get("static", [])
+            + self._RESOURCES.get(skill, {}).get("dynamic", [])
+        )
+        print(
+            f"Unknown resource '{resource}' for skill '{skill}'. "
+            f"Available: {', '.join(all_resources) or '(none)'}"
+        )
+        return 1
+
+    @staticmethod
+    def _parse_params(raw: list[str] | None) -> dict[str, Any]:
+        """Parse ``--param KEY=VALUE`` entries into a plain dict.
+
+        Booleans (``true``/``false``) and integers are coerced to native types.
+        """
+        result: dict[str, Any] = {}
+        for item in raw or []:
+            if "=" not in item:
+                continue
+            k, _, v = item.partition("=")
+            k = k.strip()
+            if v.lower() == "true":
+                result[k] = True
+            elif v.lower() == "false":
+                result[k] = False
+            elif v.lstrip("-").isdigit():
+                result[k] = int(v)
+            else:
+                result[k] = v
+        return result
+
+    @staticmethod
+    def _parse_chain_params(raw: list[str] | None) -> dict[str, dict[str, Any]]:
+        """Parse ``--param SCRIPT:KEY=VALUE`` into ``{script: {key: value}}``.
+
+        Booleans and integers are coerced as in :meth:`_parse_params`.
+        """
+        result: dict[str, dict[str, Any]] = {}
+        for item in raw or []:
+            if ":" not in item or "=" not in item:
+                continue
+            script, _, rest = item.partition(":")
+            k, _, v = rest.partition("=")
+            script, k = script.strip(), k.strip()
+            params = result.setdefault(script, {})
+            if v.lower() == "true":
+                params[k] = True
+            elif v.lower() == "false":
+                params[k] = False
+            elif v.lstrip("-").isdigit():
+                params[k] = int(v)
+            else:
+                params[k] = v
+        return result
+
+    def _cmd_run_script(
+        self,
+        skill: str,
+        script: str,
+        params: dict[str, Any],
+        as_json: bool,
+    ) -> int:
+        fn = _SCRIPT_REGISTRY.get((skill, script))
+        if fn is None:
+            available = ", ".join(self._SCRIPTS.get(skill, []))
+            print(
+                f"Unknown script '{script}' for skill '{skill}'. "
+                f"Available: {available or '(none)'}"
+            )
+            return 1
+        output, record = _timed_call(skill, script, fn, **params)
+        if as_json:
+            print(
+                _json_mod.dumps(
+                    {"output": output, "metrics": record.to_dict()}, indent=2
+                )
+            )
+        else:
+            print(output)
+            status = "OK" if record.success else "FAIL"
+            print(f"\n[{record.duration_ms} ms | {status}]", file=sys.stderr)
+        return 0 if record.success else 1
+
+    def _cmd_chain(
+        self,
+        skill: str,
+        scripts: list[str],
+        stop_on_error: bool,
+        params: dict[str, dict[str, Any]],
+    ) -> int:
+        records = run_skill_chain(
+            skill, scripts, params=params, stop_on_error=stop_on_error
+        )
+        total = len(records)
+        passed = sum(1 for r in records if r.success)
+        for i, r in enumerate(records, 1):
+            status = "OK  " if r.success else "FAIL"
+            print(f"[{i}/{total}] {status}  {r.script}  ({r.duration_ms} ms)")
+            if r.error:
+                print(f"       Error: {r.error}")
+        print(f"\nChain result: {passed}/{total} scripts succeeded")
+        return 0 if passed == total else 1
+
+    def _cmd_run_chain(self, skill: str, chain_name: str, stop_on_error: bool) -> int:
+        skill_chains = _SKILL_CHAINS.get(skill)
+        if not skill_chains:
+            print(f"No chains defined for skill: '{skill}'")
+            return 1
+        scripts = skill_chains.get(chain_name)
+        if not scripts:
+            available = ", ".join(skill_chains)
+            print(
+                f"Unknown chain '{chain_name}' for skill '{skill}'. "
+                f"Available: {available}"
+            )
+            return 1
+        return self._cmd_chain(skill, scripts, stop_on_error, params={})
+
+    def _cmd_discover(self, root: str | None) -> int:
+        search = Path(root) if root else None
+        found = discover_skills(search)
+        if not found:
+            print("No skills found.")
+            return 0
+        print(f"Discovered {len(found)} skill(s):\n")
+        for name in found:
+            print(f"  {name}")
+        return 0
+
+    # ------------------------------------------------------------------
+    # Entry point
+    # ------------------------------------------------------------------
+
+    def run(self, argv: list[str] | None = None) -> int:
+        """Parse *argv* and dispatch to the appropriate command handler."""
+        args = self._parser.parse_args(argv)
+        if args.command is None:
+            self._parser.print_help()
+            return 0
+        if args.command == "list":
+            return self._cmd_list()
+        if args.command == "list-resources":
+            return self._cmd_list_resources(args.skill)
+        if args.command == "list-scripts":
+            return self._cmd_list_scripts(args.skill)
+        if args.command == "list-chains":
+            return self._cmd_list_chains(getattr(args, "skill", None))
+        if args.command == "read-resource":
+            return self._cmd_read_resource(args.skill, args.resource)
+        if args.command == "run-script":
+            params = self._parse_params(args.params)
+            return self._cmd_run_script(args.skill, args.script, params, args.as_json)
+        if args.command == "chain":
+            chain_params = self._parse_chain_params(args.params)
+            return self._cmd_chain(
+                args.skill,
+                args.scripts,
+                stop_on_error=not args.no_stop_on_error,
+                params=chain_params,
+            )
+        if args.command == "run-chain":
+            return self._cmd_run_chain(
+                args.skill, args.chain, stop_on_error=not args.no_stop_on_error
+            )
+        if args.command == "discover":
+            return self._cmd_discover(getattr(args, "root", None))
+        self._parser.print_help()
+        return 0
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Entry point for the standalone CLI.
+
+    Configures basic logging (warnings and above to stderr) then delegates
+    to :class:`SkillsProviderCli`.
+    """
+    _logging.basicConfig(
+        level=_logging.WARNING,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
+    raise SystemExit(SkillsProviderCli().run(argv))
+
+
+if __name__ == "__main__":
+    main()

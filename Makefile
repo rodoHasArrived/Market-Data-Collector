@@ -26,7 +26,10 @@
         icons desktop desktop-publish install-hooks \
         build-wpf test-desktop-services desktop-dev-bootstrap \
         ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-audit-ai-docs ai-verify ai-report \
-        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive
+	ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute \
+	skill-list skill-resources skill-scripts skill-chains skill-resource \
+	skill-run skill-chain skill-run-chain skill-validate skill-run-eval \
+	skill-benchmark skill-discover
 
 # Default target
 .DEFAULT_GOAL := help
@@ -654,3 +657,62 @@ ai-docs-archive-execute: ## Actually archive stale docs (moves files)
 	@echo "$(YELLOW)Archiving stale documents...$(NC)"
 	@$(AI_DOCS) archive-stale --execute --summary
 	@echo "$(GREEN)Archive complete$(NC)"
+
+# =============================================================================
+# Skills Provider CLI
+# =============================================================================
+
+SKILLS_CLI := python3 .claude/skills/skills_provider.py
+SKILL      ?= mdc-code-review
+SCRIPT     ?=
+RESOURCE   ?=
+CHAIN      ?=
+SCRIPTS    ?=
+PARAMS     ?=
+WORKSPACE  ?=
+RUNS       ?= 3
+
+skill-list: ## List all registered skills and their descriptions
+	@echo "$(BLUE)Registered skills:$(NC)"
+	@$(SKILLS_CLI) list
+
+skill-resources: ## List resources for SKILL (default: mdc-code-review)
+	@echo "$(BLUE)Resources for '$(SKILL)':$(NC)"
+	@$(SKILLS_CLI) list-resources $(SKILL)
+
+skill-scripts: ## List scripts for SKILL (default: mdc-code-review)
+	@echo "$(BLUE)Scripts for '$(SKILL)':$(NC)"
+	@$(SKILLS_CLI) list-scripts $(SKILL)
+
+skill-chains: ## List predefined chains for SKILL (default: mdc-code-review)
+	@echo "$(BLUE)Chains for '$(SKILL)':$(NC)"
+	@$(SKILLS_CLI) list-chains $(SKILL)
+
+skill-resource: ## Read a skill resource  (SKILL=… RESOURCE=project-stats)
+	@$(SKILLS_CLI) read-resource $(SKILL) $(RESOURCE)
+
+skill-run: ## Run a skill script  (SKILL=… SCRIPT=validate-skill [PARAMS="--param k=v"])
+	@$(SKILLS_CLI) run-script $(SKILL) $(SCRIPT) $(PARAMS)
+
+skill-chain: ## Run scripts in sequence  (SKILL=… SCRIPTS="validate-skill run-eval" [PARAMS="…"])
+	@$(SKILLS_CLI) chain $(SKILL) $(SCRIPTS) $(PARAMS)
+
+skill-run-chain: ## Run a named chain  (SKILL=… CHAIN=full-check)
+	@$(SKILLS_CLI) run-chain $(SKILL) $(CHAIN)
+
+skill-validate: ## Validate the mdc-code-review skill definition
+	@echo "$(BLUE)Validating mdc-code-review skill...$(NC)"
+	@$(SKILLS_CLI) run-script mdc-code-review validate-skill
+
+skill-run-eval: ## Run the eval suite  (RUNS=3 to set runs_per_query)
+	@echo "$(BLUE)Running eval suite (runs_per_query=$(RUNS))...$(NC)"
+	@$(SKILLS_CLI) run-script mdc-code-review run-eval --param runs_per_query=$(RUNS)
+
+skill-benchmark: ## Aggregate benchmark results  (WORKSPACE=<dir> required)
+	@echo "$(BLUE)Aggregating benchmark results from '$(WORKSPACE)'...$(NC)"
+	@$(SKILLS_CLI) run-script mdc-code-review aggregate-benchmark \
+		--param workspace=$(WORKSPACE)
+
+skill-discover: ## Discover all SKILL.md definitions in the repository
+	@echo "$(BLUE)Discovering skills...$(NC)"
+	@$(SKILLS_CLI) discover
