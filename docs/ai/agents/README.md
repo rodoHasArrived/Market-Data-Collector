@@ -58,7 +58,7 @@ Copilot agents, referencing these files in the issue or prompt body improves out
 | [`docs/ai/skills/README.md`](../skills/README.md) | Claude Code skill equivalents |
 | [`docs/ai/README.md`](../README.md) | Master AI resource index |
 | [`docs/ai/ai-known-errors.md`](../ai-known-errors.md) | Error prevention registry |
-| [`.github/instructions/`](../instructions/README.md) | Path-specific Copilot instructions |
+| [`docs/ai/instructions/README.md`](../instructions/README.md) | Path-specific Copilot instructions |
 
 ---
 
