@@ -26,10 +26,10 @@
         icons desktop desktop-publish install-hooks \
         build-wpf test-desktop-services desktop-dev-bootstrap \
         ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-audit-ai-docs ai-verify ai-report \
-	ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute \
-	skill-list skill-resources skill-scripts skill-chains skill-resource \
-	skill-run skill-chain skill-run-chain skill-validate skill-run-eval \
-	skill-benchmark skill-discover
+        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute \
+        skill-list skill-resources skill-scripts skill-chains skill-resource \
+        skill-run skill-chain skill-run-chain skill-validate skill-run-eval \
+        skill-benchmark skill-discover
 
 # Default target
 .DEFAULT_GOAL := help

@@ -635,6 +635,11 @@ skills_provider = SkillsProvider(
 
 _logger = _logging.getLogger(__name__)
 
+#: Output prefixes that indicate a script failure reported via return value
+#: rather than an exception.  ``_timed_call`` checks for these so that
+#: automation never silently succeeds when a script signals an error.
+_SCRIPT_ERROR_PREFIXES: tuple[str, ...] = ("Error: ", "Error (exit", "FAIL: ")
+
 
 @_dataclasses.dataclass
 class ExecutionRecord:
@@ -673,7 +678,16 @@ def _timed_call(
     output = ""
     try:
         output = fn(*args, **kwargs) or ""
-        success = True
+        # Several scripts signal failure by returning an error-prefixed string
+        # rather than raising.  Treat those outputs as failures so that chains
+        # and automation never silently succeed on a script that reported an
+        # error.
+        if any(output.startswith(p) for p in _SCRIPT_ERROR_PREFIXES):
+            success = False
+            error = output
+            _logger.error("Script %s/%s reported failure: %s", skill_name, script_name, output)
+        else:
+            success = True
     except Exception as exc:
         error = str(exc)
         success = False
@@ -739,7 +753,7 @@ _RESOURCE_REGISTRY: dict[tuple[str, str], Any] = {
 def run_skill_chain(
     skill_name: str,
     scripts: list[str],
-    params: dict[str, Any] | None = None,
+    params: dict[str, dict[str, Any]] | None = None,
     stop_on_error: bool = True,
 ) -> list[ExecutionRecord]:
     """Run *scripts* sequentially for *skill_name*.
