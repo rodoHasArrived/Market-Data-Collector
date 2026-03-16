@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-16 10:15:09 UTC
+> Auto-generated on 2026-03-16 10:26:16 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -242,6 +242,8 @@ Market-Data-Collector/
 │   │   ├── _template.md
 │   │   └── README.md
 │   ├── ai/
+│   │   ├── agents/
+│   │   │   └── README.md
 │   │   ├── claude/
 │   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
@@ -250,15 +252,13 @@ Market-Data-Collector/
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
-│   │   │   ├── instructions.md
-│   │   │   └── ai-sync-workflow.md
-│   │   ├── agents/
-│   │   │   └── README.md
-│   │   ├── skills/
-│   │   │   └── README.md
+│   │   │   ├── ai-sync-workflow.md
+│   │   │   └── instructions.md
 │   │   ├── instructions/
 │   │   │   └── README.md
 │   │   ├── prompts/
+│   │   │   └── README.md
+│   │   ├── skills/
 │   │   │   └── README.md
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
@@ -287,6 +287,7 @@ Market-Data-Collector/
 │   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── CONFIG_CONSOLIDATION_REPORT.md
 │   │   ├── consolidation.md
+│   │   ├── CS0101_FIX_SUMMARY.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── desktop-devex-high-value-improvements.md
 │   │   ├── desktop-end-user-improvements-shortlist.md
@@ -295,16 +296,19 @@ Market-Data-Collector/
 │   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   ├── IMPROVEMENTS_2026-02.md
 │   │   ├── INDEX.md
+│   │   ├── QUICKSTART_2026-01-08.md
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── repository-cleanup-action-plan.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── ROADMAP_UPDATE_SUMMARY.md
 │   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
+│   │   ├── TEST_MATRIX_FIX_SUMMARY.md
 │   │   ├── uwp-development-roadmap.md
 │   │   ├── uwp-release-checklist.md
 │   │   ├── uwp-to-wpf-migration.md
-│   │   └── UWP_COMPREHENSIVE_AUDIT.md
+│   │   ├── UWP_COMPREHENSIVE_AUDIT.md
+│   │   └── WORKFLOW_IMPROVEMENTS_2026-01-08.md
 │   ├── audits/
 │   │   ├── FURTHER_SIMPLIFICATION_OPPORTUNITIES.md
 │   │   └── README.md

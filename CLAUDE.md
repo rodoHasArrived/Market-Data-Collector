@@ -418,23 +418,23 @@ Market-Data-Collector/
 │   │   ├── _template.md
 │   │   └── README.md
 │   ├── ai/
-│   │   ├── claude/                  # Claude Code specialized guides
+│   │   ├── agents/
+│   │   │   └── README.md
+│   │   ├── claude/
 │   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
 │   │   │   ├── CLAUDE.providers.md
 │   │   │   ├── CLAUDE.repo-updater.md
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
-│   │   ├── copilot/                 # GitHub Copilot resources
-│   │   │   ├── instructions.md
-│   │   │   └── ai-sync-workflow.md
-│   │   ├── agents/                  # Navigation index → .github/agents/
+│   │   ├── copilot/
+│   │   │   ├── ai-sync-workflow.md
+│   │   │   └── instructions.md
+│   │   ├── instructions/
 │   │   │   └── README.md
-│   │   ├── skills/                  # Navigation index → .claude/skills/
+│   │   ├── prompts/
 │   │   │   └── README.md
-│   │   ├── instructions/            # Navigation index → .github/instructions/
-│   │   │   └── README.md
-│   │   ├── prompts/                 # Navigation index → .github/prompts/
+│   │   ├── skills/
 │   │   │   └── README.md
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
@@ -463,6 +463,7 @@ Market-Data-Collector/
 │   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── CONFIG_CONSOLIDATION_REPORT.md
 │   │   ├── consolidation.md
+│   │   ├── CS0101_FIX_SUMMARY.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── desktop-devex-high-value-improvements.md
 │   │   ├── desktop-end-user-improvements-shortlist.md
@@ -471,16 +472,19 @@ Market-Data-Collector/
 │   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   ├── IMPROVEMENTS_2026-02.md
 │   │   ├── INDEX.md
+│   │   ├── QUICKSTART_2026-01-08.md
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── repository-cleanup-action-plan.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── ROADMAP_UPDATE_SUMMARY.md
 │   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
+│   │   ├── TEST_MATRIX_FIX_SUMMARY.md
 │   │   ├── uwp-development-roadmap.md
 │   │   ├── uwp-release-checklist.md
 │   │   ├── uwp-to-wpf-migration.md
-│   │   └── UWP_COMPREHENSIVE_AUDIT.md
+│   │   ├── UWP_COMPREHENSIVE_AUDIT.md
+│   │   └── WORKFLOW_IMPROVEMENTS_2026-01-08.md
 │   ├── audits/
 │   │   ├── FURTHER_SIMPLIFICATION_OPPORTUNITIES.md
 │   │   └── README.md
