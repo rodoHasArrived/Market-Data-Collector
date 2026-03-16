@@ -1,36 +1,20 @@
 {
-  "generated_at": "2026-03-15T09:24:11.849778+00:00",
-  "workflow": "test-matrix.yml",
-  "run_id": 23107441071,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23107441071",
+  "generated_at": "2026-03-15T23:42:03.880805+00:00",
+  "workflow": "code-quality.yml",
+  "run_id": 23122010259,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23122010259",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Test (macOS)"
+    "Code Quality Checks"
   ],
   "findings_by_category": {
-    "test": 2,
     "code-quality": 10
   },
-  "total_error_codes": 3,
-  "total_failed_tests": 2,
+  "total_error_codes": 1,
+  "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
-    {
-      "file": "fix-test-failures.prompt.yml",
-      "category": "test",
-      "action": "update",
-      "findings_count": 2,
-      "error_codes": [
-        "CS1573",
-        "CS1734",
-        "CS1998"
-      ],
-      "failed_tests": [
-        "2026-03-15T09:18:47.5050440Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [59 ms]",
-        "MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse"
-      ]
-    },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
@@ -40,20 +24,15 @@
       "failed_tests": []
     },
     {
-      "file": "workflow-results-test-matrix.prompt.yml",
+      "file": "workflow-results-code-quality.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 12,
+      "findings_count": 10,
       "error_codes": [
-        "CS1573",
-        "CS1734",
-        "CS1998"
+        "CS1591"
       ],
-      "failed_tests": [
-        "2026-03-15T09:18:47.5050440Z   Failed MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse [59 ms]",
-        "MarketDataCollector.Tests.Pipeline.DualPathEventPipelineTests.TryPublishTrade_WhenBufferFull_ReturnsFalse"
-      ]
+      "failed_tests": []
     }
   ],
-  "total_generated": 3
+  "total_generated": 2
 }
