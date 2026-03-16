@@ -698,7 +698,7 @@ def _timed_call(
     instead of propagating to the caller.
     """
     t0 = _time.monotonic()
-    started_at = _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    started_at = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
     error: str | None = None
     output = ""
     try:
