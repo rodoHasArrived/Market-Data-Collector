@@ -68,20 +68,6 @@ except ImportError as exc:
     # agent_framework being installed.
     _HAS_AGENT_FRAMEWORK = False
 
-    # When imported programmatically (not via CLI), warn the caller that the
-    # skill provider API (load_skill, read_skill_resource, …) will silently
-    # no-op because agent_framework is absent.  The standalone CLI suppresses
-    # this warning because it never calls the framework API.
-    if __name__ != "__main__":
-        _warnings.warn(
-            "agent_framework is not installed; skills_provider API methods "
-            "(load_skill, read_skill_resource, …) will not function correctly. "
-            "The standalone CLI (list, run-script, chain, …) is still fully "
-            "available. Install agent_framework to use the full provider API.",
-            ImportWarning,
-            stacklevel=2,
-        )
-
     class _Stub:  # type: ignore[no-redef]
         """No-op stub used when agent_framework is absent (standalone CLI mode)."""
 
@@ -1154,7 +1140,11 @@ class SkillsProviderCli:
         result: dict[str, Any] = {}
         for item in raw or []:
             if "=" not in item:
-                continue
+                print(
+                    f"Invalid --param value {item!r}: expected KEY=VALUE format.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
             k, _, v = item.partition("=")
             k = k.strip()
             if v.lower() == "true":
@@ -1176,7 +1166,11 @@ class SkillsProviderCli:
         result: dict[str, dict[str, Any]] = {}
         for item in raw or []:
             if ":" not in item or "=" not in item:
-                continue
+                print(
+                    f"Invalid --param value {item!r}: expected SCRIPT:KEY=VALUE format.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
             script, _, rest = item.partition(":")
             k, _, v = rest.partition("=")
             script, k = script.strip(), k.strip()
