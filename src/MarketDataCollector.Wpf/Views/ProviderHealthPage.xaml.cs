@@ -88,7 +88,7 @@ public partial class ProviderHealthPage : Page
 
     private void OnConnectionStateChanged(object? sender, ConnectionStateChangedEventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        _ = Dispatcher.InvokeAsync(() =>
         {
             AddConnectionEvent(
                 e.NewState == ConnectionState.Connected ? "Connected" :
@@ -104,7 +104,7 @@ public partial class ProviderHealthPage : Page
     {
         if (!e.IsHealthy)
         {
-            Dispatcher.Invoke(() =>
+            _ = Dispatcher.InvokeAsync(() =>
             {
                 AddConnectionEvent(
                     $"Health check failed: {e.ErrorMessage}",

@@ -78,7 +78,7 @@ public partial class NotificationCenterPage : Page
 
     private void OnNotificationReceived(object? sender, NotificationEventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        _ = Dispatcher.InvokeAsync(() =>
         {
             var item = CreateNotificationItem(
                 e.Title,

@@ -74,7 +74,7 @@ public partial class SymbolsPage : Page
 
     private void OnWatchlistsChanged(object? sender, WpfServices.WatchlistsChangedEventArgs e)
     {
-        Dispatcher.Invoke(() => LoadWatchlistsAsync());
+        _ = Dispatcher.InvokeAsync(LoadWatchlistsAsync);
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)

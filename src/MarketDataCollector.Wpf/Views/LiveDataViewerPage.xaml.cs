@@ -103,7 +103,7 @@ public partial class LiveDataViewerPage : Page
 
     private void OnConnectionStateChanged(object? sender, ConnectionStateChangedEventArgs e)
     {
-        Dispatcher.Invoke(UpdateConnectionStatus);
+        _ = Dispatcher.InvokeAsync(UpdateConnectionStatus);
     }
 
     private void UpdateConnectionStatus()

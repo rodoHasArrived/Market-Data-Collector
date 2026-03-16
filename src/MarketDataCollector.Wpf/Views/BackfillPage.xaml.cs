@@ -156,7 +156,7 @@ public partial class BackfillPage : Page
     {
         if (e.Progress == null) return;
 
-        Dispatcher.Invoke(() =>
+        _ = Dispatcher.InvokeAsync(() =>
         {
             UpdateProgressDisplay(e.Progress);
         });
@@ -227,6 +227,14 @@ public partial class BackfillPage : Page
 
             await _backfillService.ResumeBackfillAsync(job.JobId);
         }
+        catch (OperationCanceledException)
+        {
+            _progressPollTimer.Stop();
+            BackfillStatusText.Text = "Cancelled";
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
+        }
         catch (Exception ex)
         {
             _progressPollTimer.Stop();
@@ -258,7 +266,7 @@ public partial class BackfillPage : Page
 
     private void OnBackfillCompleted(object? sender, UiBackfillCompletedEventArgs e)
     {
-        Dispatcher.Invoke(async () =>
+        _ = Dispatcher.InvokeAsync(async () =>
         {
             _progressPollTimer.Stop();
 
@@ -662,6 +670,14 @@ public partial class BackfillPage : Page
                 fromDate,
                 toDate,
                 granularity);
+        }
+        catch (OperationCanceledException)
+        {
+            _progressPollTimer.Stop();
+            BackfillStatusText.Text = "Cancelled";
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
         }
         catch (Exception ex)
         {
