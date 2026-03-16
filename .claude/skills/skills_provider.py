@@ -1229,7 +1229,11 @@ class SkillsProviderCli:
         result: dict[str, Any] = {}
         for item in raw or []:
             if "=" not in item:
-                continue
+                print(
+                    f"Invalid --param value {item!r}: expected KEY=VALUE format.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
             k, _, v = item.partition("=")
             k = k.strip()
             if v.lower() == "true":
@@ -1251,7 +1255,11 @@ class SkillsProviderCli:
         result: dict[str, dict[str, Any]] = {}
         for item in raw or []:
             if ":" not in item or "=" not in item:
-                continue
+                print(
+                    f"Invalid --param value {item!r}: expected SCRIPT:KEY=VALUE format.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
             script, _, rest = item.partition(":")
             k, _, v = rest.partition("=")
             script, k = script.strip(), k.strip()
