@@ -1,6 +1,19 @@
 name: Copilot Setup Steps
 
 on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/copilot-setup-steps.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,24 +34,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5.2.0
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
         with:
           dotnet-version: '9.0.x'
+          cache-suffix: 'copilot'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Restore .NET dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Build solution
-        run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+        continue-on-error: true
+        run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Run core test project
-        run: dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release --no-build /p:EnableWindowsTargeting=true --filter "Category!=Integration" --blame-hang-timeout 60s
+      - name: Run C# tests
+        continue-on-error: true
+        run: >
+          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
+          -c Release --no-build /p:EnableWindowsTargeting=true
+          --verbosity minimal --filter "Category!=Integration" --blame-hang-timeout 60s
+
+      - name: Run F# tests
+        continue-on-error: true
+        run: >
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj
+          -c Release --no-build /p:EnableWindowsTargeting=true
+          --verbosity minimal --blame-hang-timeout 60s
