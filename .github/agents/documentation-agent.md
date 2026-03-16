@@ -1517,6 +1517,7 @@ Market-Data-Collector/
 ├── LICENSE
 ├── Makefile
 ├── MarketDataCollector.sln
+├── mdc-brainstorm.skill
 ├── package-lock.json
 ├── package.json
 ├── prompt-generation-results.json
