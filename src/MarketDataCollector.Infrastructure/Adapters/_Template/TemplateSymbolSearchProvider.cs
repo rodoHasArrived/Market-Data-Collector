@@ -118,7 +118,7 @@ public sealed class TemplateSymbolSearchProvider : BaseSymbolSearchProvider
             return [];
         if (Disposed) return [];
 
-        await RateLimiter.WaitAsync(ct).ConfigureAwait(false);
+        await RateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
 
         // TODO: Build the request URL from BaseUrl and query parameters.
         // TODO: Send the HTTP request and handle errors.

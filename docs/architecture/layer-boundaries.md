@@ -124,3 +124,9 @@ The four UI-facing projects follow the same dependency direction rules but are i
 * **`MarketDataCollector.Wpf`** – Windows desktop host with XAML views and WPF services; references `Ui.Services` and `Contracts`. Must not reference `Ui.Shared` or `Ui`.
 
 See [Desktop & UI Layer Architecture](desktop-layers.md) for a detailed diagram and communication flow.
+
+---
+
+**Version:** 1.6.2
+**Last Updated:** 2026-03-16
+**Audience:** Contributors and AI assistants working on project architecture and dependency management.

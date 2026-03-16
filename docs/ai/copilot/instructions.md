@@ -57,10 +57,10 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 
 ```bash
 # Restore dependencies (ALWAYS run first)
-dotnet restore /p:EnableWindowsTargeting=true
+dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
 # Build
-dotnet build -c Release --no-restore /p:EnableWindowsTargeting=true
+dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
 # Run core tests
 dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release /p:EnableWindowsTargeting=true

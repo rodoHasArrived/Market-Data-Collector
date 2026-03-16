@@ -4,7 +4,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ## Consolidation Summary
 
-Workflows have been consolidated from 25 to 20 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
+Workflows have been consolidated from 25 to 21 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|
@@ -224,7 +224,16 @@ Workflows have been consolidated from 25 to 20 files, reducing duplication and a
 
 ### Shared Workflows
 
-#### 20. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
+#### 20. **Copilot SWE Agent Visibility** (`copilot-swe-agent-copilot.yml`)
+- **Trigger**: Manual workflow dispatch, issue comments containing `@copilot` or `/copilot`
+- **Purpose**: Makes Copilot SWE requests easier to execute and easier for reviewers to discover
+- **Features**:
+  - Builds a standardized Copilot run brief with request context and target metadata
+  - Uploads a reusable markdown artifact for handoff and reproducibility
+  - Publishes a workflow summary with direct run/artifact guidance
+  - Posts an issue/PR comment linking to run results for improved visibility
+
+#### 21. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
 - **Trigger**: Reusable workflow (called by other workflows)
 - **Purpose**: Standardizes build/test steps for .NET jobs
 - **Called by**: `pr-checks.yml`, `dotnet-desktop.yml`, `nightly.yml`

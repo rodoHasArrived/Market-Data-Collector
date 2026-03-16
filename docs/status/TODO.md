@@ -1,87 +1,66 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-16T09:10:38.876458+00:00
+> Last updated: 2026-03-16T16:39:05.546270+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 82 |
+| **Total Items** | 61 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 82 |
+| **Untracked** | 61 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `TODO` | 63 | General tasks to complete |
+| `TODO` | 42 | General tasks to complete |
 | `NOTE` | 19 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 68 |
+| `src/` | 47 |
 | `tests/` | 12 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-82 items have no assignee and no issue tracking:
+61 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### TODO (63)
+### TODO (42)
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:10`
-  > Add your provider's base URL or WebSocket URI. Example for a REST API: public const string BaseUrl = "https://api.example.com/v1"; Example for a WebSocket API: public const string WssUri = "wss://stream.example.com/ws";
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:23`
-  > Set the maximum number of requests allowed per window.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:26`
-  > Set the rate-limit window duration.
+  > Add your provider's base URL or WebSocket URI. Examples:
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:29`
+  > Set the maximum number of requests allowed per window.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:32`
+  > Set the rate-limit window duration.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:35`
   > Set the recommended minimum delay between consecutive requests. MinRequestDelay = Window / MaxRequestsPerWindow
 
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:41`
-  > Add message type constants. Example: public const string Trade = "trade"; public const string Quote = "quote"; public const string Error = "error";
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:47`
+  > Add message type constants. Examples:
 
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:66`
-  > Resolve credentials — prefer the config value, then fall back to the env var. Follow the same pattern as EnvironmentCredentialResolver in ProviderFactory.cs.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:70`
-  > If the provider requires an API key, guard here and return null when missing. if (string.IsNullOrEmpty(apiKey)) return null;
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:74`
-  > Forward additional constructor arguments (log, priority, rateLimitPerMinute) as needed.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:92`
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:91`
   > Remove this method entirely if the provider does not support symbol search.
 
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:102`
-  > If credentials are required for symbol search, guard here. if (string.IsNullOrEmpty(apiKey)) return null;
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:123`
-  > Remove this method entirely if the provider supports historical data only.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:130`
-  > Resolve credentials — prefer options value, then fall back to the env var.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:135`
-  > Pass options to the constructor once the TemplateStreamingOptions parameter is added.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:158`
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:157`
   > Register a named HttpClient for this provider: services.AddHttpClient(HttpClientNames.TemplateHistorical, client => { client.BaseAddress = new Uri(TemplateEndpoints.BaseUrl); client.DefaultRequestHeaders.Add("Accept", "application/json"); });
 
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:165`
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:164`
   > Bind streaming options from configuration: services.AddOptions<TemplateStreamingOptions>() .BindConfiguration("Template");
 
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:169`
+- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:168`
   > Register data sources in the DataSourceRegistry if needed. registry.Register(new DataSourceConfiguration("template", ...));
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:29`
@@ -118,7 +97,7 @@ Consider assigning ownership or creating tracking issues for these items.
   > Build the request URL using TemplateEndpoints constants.
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:127`
-  > Apply rate limiting before each request: await RateLimiter.WaitAsync(ct).ConfigureAwait(false);
+  > Apply rate limiting before each request: await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:129`
   > Call Http.GetAsync(url, ct) with the resilience pipeline.
@@ -137,48 +116,6 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:40`
   > Replace TemplateOptions with the provider's configuration type. private readonly TemplateOptions _options;
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:48`
-  > Add the provider-specific options parameter and validate credentials.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:52`
-  > TemplateOptions options */)
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:55`
-  > Use ProviderSubscriptionRanges.TemplateStart once a range is allocated.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:68`
-  > Set to true when credentials are configured; false otherwise (stub mode).
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:85`
-  > Set an appropriate priority. Lower = tried first in failover chains.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:89`
-  > Adjust capability flags to match what the provider actually supports.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:98`
-  > Replace with the actual credential fields and environment variable names.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:113`
-  > Send the provider-specific subscribe message. _ = SendAsync(BuildSubscribeMessage(cfg.Symbol), CancellationToken.None);
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:124`
-  > Send the provider-specific unsubscribe message. _ = SendAsync(BuildUnsubscribeMessage(sub.Symbol), CancellationToken.None);
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:130`
-  > Implement if the provider supports market depth; otherwise return -1.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:143`
-  > Return the provider-specific WebSocket URI. Use constants from TemplateConstants.cs, e.g.: return TemplateEndpoints.WssUri(_options.Feed);
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:152`
-  > Send the provider-specific authentication message. Example: var auth = JsonSerializer.Serialize(new { action = "auth", key = _options.ApiKey }); await SendAsync(auth, ct).ConfigureAwait(false);
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:163`
-  > Parse the incoming JSON message and route to the appropriate collector. Example: using var doc = JsonDocument.Parse(message); var type = doc.RootElement.GetProperty("type").GetString(); if (type == TemplateMessageTypes.Trade) HandleTrade(doc.RootElement);
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:174`
-  > Re-subscribe to all active symbols after reconnection. Example: foreach (var sym in Subscriptions.GetActiveSymbols()) await SendAsync(BuildSubscribeMessage(sym), ct).ConfigureAwait(false);
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:28`
   > Replace "template" with the provider ID, display name, type, and category.

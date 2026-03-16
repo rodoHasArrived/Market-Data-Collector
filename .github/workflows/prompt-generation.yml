@@ -49,7 +49,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  actions: read
+  actions: write
 
 concurrency:
   group: prompt-generation-${{ github.workflow }}-${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.ref }}
@@ -198,13 +198,23 @@ jobs:
         run: |
           set -euo pipefail
 
+          mapfile -t CHANGED_FILES < <(git diff --name-only -- .github/prompts/ | grep '\.prompt\.yml$' || true)
+
+          {
+            echo "files<<EOF"
+            for f in "${CHANGED_FILES[@]}"; do
+              [ -n "$f" ] && echo "$f"
+            done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
           {
             echo "rows<<EOF"
 
             if [ -d .github/prompts ]; then
               shopt -s nullglob
               for f in .github/prompts/*.prompt.yml; do
-                if git diff --name-only -- "$f" | grep -q .; then
+                if printf '%s\n' "${CHANGED_FILES[@]}" | grep -Fxq "$f"; then
                   name=$(awk -F': ' '$1 == "name" {print $2; exit}' "$f")
                   echo "| \`$(basename "$f")\` | ${name:-unknown} |"
                 fi
@@ -259,9 +269,11 @@ jobs:
       - name: Note skipped AI review
         if: always() && steps.generate.outputs.total_generated > 0 && env.HAS_MODELS_TOKEN != 'true'
         run: |
-          echo "### AI Prompt Quality Review" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Skipped: set \`MODELS_GITHUB_TOKEN\` to enable \`actions/ai-inference\` prompt-quality analysis without using the default workflow token." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### AI Prompt Quality Review"
+            echo ""
+            echo "Skipped: set \`MODELS_GITHUB_TOKEN\` to enable \`actions/ai-inference\` prompt-quality analysis without using the default workflow token."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Append AI review to summary
         if: always() && steps.ai-refine.outputs.response != ''
@@ -308,11 +320,13 @@ jobs:
           github.event_name == 'workflow_dispatch' &&
           github.event.inputs.dry_run == 'true'
         run: |
-          echo "### Dry-Run Diff" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo '```diff' >> "$GITHUB_STEP_SUMMARY"
-          git diff --staged -- .github/prompts/ | head -200 >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Dry-Run Diff"
+            echo ""
+            echo '```diff'
+            git diff --staged -- .github/prompts/ | head -200
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create pull request
         id: create-pr
@@ -393,6 +407,84 @@ jobs:
           git commit -m "docs: auto-generate prompts from ${{ steps.resolve.outputs.workflow }} results [skip ci]"
           git pull --rebase origin ${{ github.ref_name }} || true
           git push
+
+      - name: Resolve Copilot dispatch ref
+        id: copilot-ref
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true')
+        run: |
+          set -euo pipefail
+
+          if [ "${{ steps.create-pr.outcome }}" = "success" ]; then
+            echo "dispatch_ref=automation/prompt-generation" >> "$GITHUB_OUTPUT"
+            echo "dispatch_mode=pull-request-branch" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.create-pr.outcome }}" = "failure" ] || \
+               { [ "${{ steps.create-pr.outcome }}" = "skipped" ] && [ "${{ github.event_name }}" = "workflow_run" ]; }; then
+            echo "dispatch_ref=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "dispatch_mode=current-branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "dispatch_ref=" >> "$GITHUB_OUTPUT"
+            echo "dispatch_mode=not-dispatched" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger Copilot workflow for generated prompts
+        id: trigger-copilot
+        if: steps.copilot-ref.outputs.dispatch_ref != ''
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const promptFiles = `${{ steps.changed-prompts.outputs.files }}`
+              .split('\n')
+              .map(x => x.trim())
+              .filter(Boolean);
+
+            const targetRef = '${{ steps.copilot-ref.outputs.dispatch_ref }}';
+            const workflowName = '${{ steps.resolve.outputs.workflow }}';
+            const runId = '${{ steps.resolve.outputs.run_id }}';
+            const totalGenerated = '${{ steps.generate.outputs.total_generated }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const prUrl = '${{ steps.create-pr.outputs.pull-request-url }}';
+
+            const requestContext = [
+              `Prompt generation workflow completed for ${workflowName}.`,
+              `Generated/updated prompts: ${totalGenerated}.`,
+              `Prompt files: ${promptFiles.length ? promptFiles.join(', ') : 'No changed files detected.'}`,
+              `Prompt generation run: ${runUrl}`,
+              prUrl ? `Prompt update PR: ${prUrl}` : 'Prompt update PR: not created.',
+              `Analyze these prompts and propose implementation-ready fixes for the failing workflow findings.`,
+              `Original analyzed run id: ${runId}`,
+            ].join('\n');
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'copilot-swe-agent-copilot.yml',
+              ref: targetRef,
+              inputs: {
+                request_context: requestContext,
+              },
+            });
+
+            core.setOutput('prompt_files', promptFiles.join(', '));
+            core.setOutput('triggered_ref', targetRef);
+
+      - name: Note Copilot trigger status
+        if: always() && steps.copilot-ref.outputs.dispatch_ref != ''
+        run: |
+          {
+            echo ""
+            echo "### Copilot Workflow Trigger"
+            echo ""
+            if [ "${{ steps.trigger-copilot.outcome }}" = "success" ]; then
+              echo "Triggered \\`copilot-swe-agent-copilot.yml\\` on ref \\`${{ steps.trigger-copilot.outputs.triggered_ref }}\\` (${{ steps.copilot-ref.outputs.dispatch_mode }})."
+              echo "Prompt files passed as context: ${{ steps.trigger-copilot.outputs.prompt_files }}"
+            else
+              echo "⚠️ Unable to trigger Copilot workflow automatically (outcome: ${{ steps.trigger-copilot.outcome }})."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
 
   # ─── Report ──────────────────────────────────────────────────────────
   report:

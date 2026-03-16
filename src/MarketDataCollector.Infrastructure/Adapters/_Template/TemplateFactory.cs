@@ -63,15 +63,14 @@ internal static class TemplateProviderFactory
         if (!(cfg?.Enabled ?? true))
             return null;
 
-        // TODO: Resolve credentials — prefer the config value, then fall back to the env var.
-        //   Follow the same pattern as EnvironmentCredentialResolver in ProviderFactory.cs.
+        // Resolve credentials — prefer the config value, then fall back to the env var.
         var apiKey = cfg?.ApiKey ?? Environment.GetEnvironmentVariable("TEMPLATE__APIKEY");
 
-        // TODO: If the provider requires an API key, guard here and return null when missing.
+        // If the provider requires an API key, guard here and return null when missing.
         // if (string.IsNullOrEmpty(apiKey))
         //     return null;
 
-        // TODO: Forward additional constructor arguments (log, priority, rateLimitPerMinute) as needed.
+        // Forward additional constructor arguments (log, priority, rateLimitPerMinute) as needed.
         return new TemplateHistoricalDataProvider(apiKey: apiKey);
     }
 
@@ -99,7 +98,7 @@ internal static class TemplateProviderFactory
 
         var apiKey = cfg?.ApiKey ?? Environment.GetEnvironmentVariable("TEMPLATE__APIKEY");
 
-        // TODO: If credentials are required for symbol search, guard here.
+        // If credentials are required for symbol search, guard here.
         // if (string.IsNullOrEmpty(apiKey))
         //     return null;
 
@@ -120,19 +119,19 @@ internal static class TemplateProviderFactory
     /// <param name="quoteCollector">Quote event collector (resolved from DI).</param>
     /// <param name="log">Optional logger.</param>
     /// <returns>A configured streaming client, or <see langword="null"/> if credentials are missing.</returns>
-    // TODO: Remove this method entirely if the provider supports historical data only.
+    // Remove this method entirely if the provider supports historical data only.
     internal static IMarketDataClient? CreateStreamingClient(
         TemplateStreamingOptions? options,
         TradeDataCollector tradeCollector,
         QuoteCollector quoteCollector,
         ILogger? log = null)
     {
-        // TODO: Resolve credentials — prefer options value, then fall back to the env var.
+        // Resolve credentials — prefer options value, then fall back to the env var.
         var apiKey = options?.ApiKey ?? Environment.GetEnvironmentVariable("TEMPLATE__APIKEY");
         if (string.IsNullOrEmpty(apiKey))
             return null;
 
-        // TODO: Pass options to the constructor once the TemplateStreamingOptions parameter is added.
+        // Pass options to the constructor once the TemplateStreamingOptions parameter is added.
         return new TemplateMarketDataClient(tradeCollector, quoteCollector);
     }
 }

@@ -1,7 +1,7 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-16T09:11:41.908282+00:00
+> Last updated: 2026-03-16T16:39:40.673634+00:00
 
 ## Overall Health Score
 
@@ -14,10 +14,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 184 |
-| Total lines | 74,547 |
-| Average file size (lines) | 405.1 |
-| Orphaned files | 32 |
+| Total documentation files | 188 |
+| Total lines | 75,289 |
+| Average file size (lines) | 400.5 |
+| Orphaned files | 33 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 159 |
@@ -45,15 +45,11 @@ These files lack a Markdown heading, making them harder to navigate:
 
 These files are not linked from any other Markdown file in the repository:
 
-- `.github/CS0101_FIX_SUMMARY.md`
+- `.claude/skills/mdc-code-review/agents/grader.md`
+- `.claude/skills/mdc-code-review/references/schemas.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
-- `.github/QUICKSTART.md`
-- `.github/TEST_MATRIX_FIX_SUMMARY.md`
-- `.github/WORKFLOW_IMPROVEMENTS.md`
 - `.github/pull_request_template_desktop.md`
-- `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
-- `.github/workflows/TESTING_AI_SYNC.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
 - `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
@@ -61,11 +57,15 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md`
 - `docs/archived/CHANGES_SUMMARY.md`
 - `docs/archived/CONFIG_CONSOLIDATION_REPORT.md`
+- `docs/archived/CS0101_FIX_SUMMARY.md`
 - `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
 - `docs/archived/IMPROVEMENTS_2026-02.md`
+- `docs/archived/QUICKSTART_2026-01-08.md`
 - `docs/archived/REDESIGN_IMPROVEMENTS.md`
 - `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
-- ... and 12 more
+- `docs/archived/ROADMAP_UPDATE_SUMMARY.md`
+- `docs/archived/STRUCTURAL_IMPROVEMENTS_2026-02.md`
+- ... and 13 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-16 | 91 | 184 | 32 | 0 |
+| 2026-03-16 | 91 | 188 | 33 | 0 |
 
 ---
 

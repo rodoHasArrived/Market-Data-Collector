@@ -50,45 +50,56 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-AI_DOC_PATHS: list[Path] = [
-    REPO_ROOT / "CLAUDE.md",
-    REPO_ROOT / "docs" / "ai" / "README.md",
-    REPO_ROOT / "docs" / "ai" / "ai-known-errors.md",
-    REPO_ROOT / "docs" / "ai" / "claude" / "CLAUDE.providers.md",
-    REPO_ROOT / "docs" / "ai" / "claude" / "CLAUDE.storage.md",
-    REPO_ROOT / "docs" / "ai" / "claude" / "CLAUDE.fsharp.md",
-    REPO_ROOT / "docs" / "ai" / "claude" / "CLAUDE.testing.md",
-    REPO_ROOT / "docs" / "ai" / "claude" / "CLAUDE.actions.md",
-    REPO_ROOT / "docs" / "ai" / "claude" / "CLAUDE.repo-updater.md",
-    REPO_ROOT / "docs" / "ai" / "copilot" / "instructions.md",
-    REPO_ROOT / ".github" / "copilot-instructions.md",
-    REPO_ROOT / ".github" / "agents" / "code-review-agent.md",
-    REPO_ROOT / ".github" / "agents" / "documentation-agent.md",
-    REPO_ROOT / ".claude" / "skills" / "mdc-code-review" / "SKILL.md",
-]
 
-INSTRUCTION_FILES: list[Path] = [
-    REPO_ROOT / ".github" / "instructions" / "csharp.instructions.md",
-    REPO_ROOT / ".github" / "instructions" / "wpf.instructions.md",
-    REPO_ROOT / ".github" / "instructions" / "dotnet-tests.instructions.md",
-    REPO_ROOT / ".github" / "instructions" / "docs.instructions.md",
-]
+def _build_path_lists(root: Path) -> tuple[list[Path], list[Path], list[Path]]:
+    """Build the three path lists relative to the given repository root.
 
-SKILL_RESOURCE_PATHS: list[Path] = [
-    REPO_ROOT / ".claude" / "skills" / "mdc-code-review" / "references" / "architecture.md",
-    REPO_ROOT / ".claude" / "skills" / "mdc-code-review" / "references" / "schemas.md",
-    REPO_ROOT / ".claude" / "skills" / "mdc-code-review" / "agents" / "grader.md",
-    REPO_ROOT / ".claude" / "skills" / "mdc-code-review" / "evals" / "evals.json",
-]
+    Factored out so that ``--root`` overrides can recompute all lists after
+    ``REPO_ROOT`` is updated, rather than keeping stale module-level values.
+    """
+    ai_doc_paths: list[Path] = [
+        root / "CLAUDE.md",
+        root / "docs" / "ai" / "README.md",
+        root / "docs" / "ai" / "ai-known-errors.md",
+        root / "docs" / "ai" / "claude" / "CLAUDE.providers.md",
+        root / "docs" / "ai" / "claude" / "CLAUDE.storage.md",
+        root / "docs" / "ai" / "claude" / "CLAUDE.fsharp.md",
+        root / "docs" / "ai" / "claude" / "CLAUDE.testing.md",
+        root / "docs" / "ai" / "claude" / "CLAUDE.actions.md",
+        root / "docs" / "ai" / "claude" / "CLAUDE.repo-updater.md",
+        root / "docs" / "ai" / "copilot" / "instructions.md",
+        root / ".github" / "copilot-instructions.md",
+        root / ".github" / "agents" / "code-review-agent.md",
+        root / ".github" / "agents" / "documentation-agent.md",
+        root / ".claude" / "skills" / "mdc-code-review" / "SKILL.md",
+    ]
+    instruction_files: list[Path] = [
+        root / ".github" / "instructions" / "csharp.instructions.md",
+        root / ".github" / "instructions" / "wpf.instructions.md",
+        root / ".github" / "instructions" / "dotnet-tests.instructions.md",
+        root / ".github" / "instructions" / "docs.instructions.md",
+    ]
+    skill_resource_paths: list[Path] = [
+        root / ".claude" / "skills" / "mdc-code-review" / "references" / "architecture.md",
+        root / ".claude" / "skills" / "mdc-code-review" / "references" / "schemas.md",
+        root / ".claude" / "skills" / "mdc-code-review" / "agents" / "grader.md",
+        root / ".claude" / "skills" / "mdc-code-review" / "evals" / "evals.json",
+    ]
+    return ai_doc_paths, instruction_files, skill_resource_paths
+
+
+AI_DOC_PATHS, INSTRUCTION_FILES, SKILL_RESOURCE_PATHS = _build_path_lists(REPO_ROOT)
 
 # Staleness thresholds (days)
 STALE_WARNING_DAYS = 60
 STALE_CRITICAL_DAYS = 120
 ARCHIVE_CANDIDATE_DAYS = 180
 
-# Patterns for detecting timestamps in docs
+# Patterns for detecting timestamps in docs.
+# Matches both italic footer format  →  *Last Updated: YYYY-MM-DD*
+# and bold header format             →  **Last Updated:** YYYY-MM-DD
 LAST_UPDATED_PATTERN = re.compile(
-    r"\*Last Updated:\s*(\d{4}-\d{2}-\d{2})\*", re.IGNORECASE
+    r"\*{1,2}Last Updated:(?:\*{1,2})?\s*(\d{4}-\d{2}-\d{2})\*{0,2}", re.IGNORECASE
 )
 DATE_PATTERN = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
@@ -381,7 +392,7 @@ def cmd_freshness(report: Report) -> None:
             report.findings.append(Finding(
                 file=rel, category="no-timestamp", severity="info",
                 message="No 'Last Updated' timestamp found and no git history",
-                fix_hint="Add '*Last Updated: YYYY-MM-DD*' footer to the file",
+                fix_hint="Add '*Last Updated: YYYY-MM-DD*' footer or '**Last Updated:** YYYY-MM-DD' header",
             ))
 
         report.freshness.append(FreshnessEntry(
@@ -647,17 +658,25 @@ def main() -> int:
     parser.add_argument("--root", "-r", type=Path, help="Override repository root")
     parser.add_argument("--output", "-o", type=Path, help="Write markdown output to file")
     parser.add_argument("--json-output", "-j", type=Path, help="Write JSON output to file")
-    parser.add_argument("--dry-run", action="store_true", default=True,
-                       help="Preview changes without modifying files (default)")
-    parser.add_argument("--execute", action="store_true",
-                       help="Actually move/archive files (overrides --dry-run)")
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without modifying files (default when neither flag is given)",
+    )
+    mode_group.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually move/archive files; without this flag the command runs in dry-run mode",
+    )
     parser.add_argument("--summary", "-s", action="store_true", help="Print summary to stdout")
 
     args = parser.parse_args()
 
     if args.root:
-        global REPO_ROOT
+        global REPO_ROOT, AI_DOC_PATHS, INSTRUCTION_FILES, SKILL_RESOURCE_PATHS
         REPO_ROOT = args.root.resolve()
+        AI_DOC_PATHS, INSTRUCTION_FILES, SKILL_RESOURCE_PATHS = _build_path_lists(REPO_ROOT)
 
     report = Report(command=args.command)
     dry_run = not args.execute

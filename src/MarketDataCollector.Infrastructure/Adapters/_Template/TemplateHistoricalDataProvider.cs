@@ -125,7 +125,7 @@ public sealed class TemplateHistoricalDataProvider : BaseHistoricalDataProvider
 
         // TODO: Build the request URL using TemplateEndpoints constants.
         // TODO: Apply rate limiting before each request:
-        //   await RateLimiter.WaitAsync(ct).ConfigureAwait(false);
+        //   await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
         // TODO: Call Http.GetAsync(url, ct) with the resilience pipeline.
         // TODO: Deserialize the response and map to List<HistoricalBar>.
         // TODO: Normalize symbol, convert timestamps to UTC.

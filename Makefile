@@ -30,6 +30,7 @@
         skill-list skill-resources skill-scripts skill-chains skill-resource \
         skill-run skill-chain skill-run-chain skill-validate skill-run-eval \
         skill-benchmark skill-discover
+        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute
 
 # Default target
 .DEFAULT_GOAL := help

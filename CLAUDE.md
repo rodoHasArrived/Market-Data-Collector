@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.0.0 | **Status:** Development / Pilot Ready | **Files:** 704 source files
+**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 779 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,19 +22,19 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 704 |
-| C# Files | 692 |
-| F# Files | 12 |
-| Test Files | 241 |
-| Test Methods | ~3,739 |
-| Documentation Files | 148 |
+| Total Source Files | 779 |
+| C# Files | 769 |
+| F# Files | 14 |
+| Test Files | 266 |
+| Test Methods | ~4,135 |
+| Documentation Files | 163 |
 | Main Projects | 13 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
-| API Route Constants | 300 |
-| Endpoint Files | 38 |
-| CI/CD Workflows | 25 |
-| Makefile Targets | 90 |
+| API Route Constants | 309 |
+| Endpoint Files | 39 |
+| CI/CD Workflows | 27 |
+| Makefile Targets | 96 |
 
 ---
 
@@ -242,13 +242,14 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── bottleneck-detection.yml
 │   │   ├── build-observability.yml
 │   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
+│   │   ├── copilot-pull-request-reviewer.yml
 │   │   ├── copilot-setup-steps.yml
+│   │   ├── copilot-swe-agent-copilot.yml
 │   │   ├── desktop-builds.yml
 │   │   ├── docker.yml
 │   │   ├── docs-check.yml
@@ -267,23 +268,18 @@ Market-Data-Collector/
 │   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
-│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
 │   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── copilot-instructions.md
-│   ├── CS0101_FIX_SUMMARY.md
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml
 │   ├── markdown-link-check-config.json
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── pull_request_template_desktop.md
-│   ├── QUICKSTART.md
-│   ├── spellcheck-config.yml
-│   ├── TEST_MATRIX_FIX_SUMMARY.md
-│   └── WORKFLOW_IMPROVEMENTS.md
+│   └── spellcheck-config.yml
 ├── benchmarks/  # Performance benchmarks
 │   ├── MarketDataCollector.Benchmarks/
 │   │   ├── CollectorBenchmarks.cs
@@ -423,6 +419,8 @@ Market-Data-Collector/
 │   │   ├── _template.md
 │   │   └── README.md
 │   ├── ai/
+│   │   ├── agents/
+│   │   │   └── README.md
 │   │   ├── claude/
 │   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
@@ -431,7 +429,14 @@ Market-Data-Collector/
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
+│   │   │   ├── ai-sync-workflow.md
 │   │   │   └── instructions.md
+│   │   ├── instructions/
+│   │   │   └── README.md
+│   │   ├── prompts/
+│   │   │   └── README.md
+│   │   ├── skills/
+│   │   │   └── README.md
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
 │   ├── architecture/
@@ -459,6 +464,7 @@ Market-Data-Collector/
 │   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── CONFIG_CONSOLIDATION_REPORT.md
 │   │   ├── consolidation.md
+│   │   ├── CS0101_FIX_SUMMARY.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── desktop-devex-high-value-improvements.md
 │   │   ├── desktop-end-user-improvements-shortlist.md
@@ -467,17 +473,21 @@ Market-Data-Collector/
 │   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   ├── IMPROVEMENTS_2026-02.md
 │   │   ├── INDEX.md
+│   │   ├── QUICKSTART_2026-01-08.md
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── repository-cleanup-action-plan.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── ROADMAP_UPDATE_SUMMARY.md
 │   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
+│   │   ├── TEST_MATRIX_FIX_SUMMARY.md
 │   │   ├── uwp-development-roadmap.md
 │   │   ├── uwp-release-checklist.md
 │   │   ├── uwp-to-wpf-migration.md
-│   │   └── UWP_COMPREHENSIVE_AUDIT.md
+│   │   ├── UWP_COMPREHENSIVE_AUDIT.md
+│   │   └── WORKFLOW_IMPROVEMENTS_2026-01-08.md
 │   ├── audits/
+│   │   ├── CODE_REVIEW_2026-03-16.md
 │   │   ├── FURTHER_SIMPLIFICATION_OPPORTUNITIES.md
 │   │   └── README.md
 │   ├── development/
@@ -1321,6 +1331,7 @@ Market-Data-Collector/
 │       ├── Models/
 │       │   ├── AppConfig.cs
 │       │   ├── DashboardModels.cs
+│       │   ├── LeanModels.cs
 │       │   └── StorageDisplayModels.cs
 │       ├── Services/
 │       │   ├── AdminMaintenanceService.cs
@@ -1359,7 +1370,8 @@ Market-Data-Collector/
 │       │   └── IconResources.xaml
 │       ├── ViewModels/
 │       │   ├── BindableBase.cs
-│       │   └── DashboardViewModel.cs
+│       │   ├── DashboardViewModel.cs
+│       │   └── LeanIntegrationViewModel.cs
 │       ├── Views/
 │       │   ├── ActivityLogPage.xaml
 │       │   ├── ActivityLogPage.xaml.cs

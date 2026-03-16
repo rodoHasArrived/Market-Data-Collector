@@ -12,6 +12,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Security](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/security.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/security.yml)
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
+[![Copilot SWE Agent](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/copilot-swe-agent-copilot.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/copilot-swe-agent-copilot.yml)
 
 **Status**: Development / Pilot Ready (v1.7.x docs baseline)
 

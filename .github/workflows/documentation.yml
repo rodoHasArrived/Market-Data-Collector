@@ -146,7 +146,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve issue payload for workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -336,7 +336,7 @@ jobs:
       src_changed: ${{ steps.filter.outputs.src }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
@@ -408,7 +408,7 @@ jobs:
       needs.detect-changes.outputs.any_changed == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Markdown lint
         uses: DavidAnson/markdownlint-cli2-action@v22.0.0
@@ -479,7 +479,7 @@ jobs:
       changed_files: ${{ steps.changes.outputs.changed_files }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -898,7 +898,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -1161,10 +1161,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download scan results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: todo-scan-results
 
@@ -1210,7 +1210,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -1249,7 +1249,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -1284,7 +1284,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -1318,7 +1318,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -1358,7 +1358,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -1394,7 +1394,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -1431,7 +1431,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -1467,7 +1467,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -1499,9 +1499,11 @@ jobs:
     if: |
       github.event_name != 'issues' &&
       needs.detect-changes.outputs.any_changed == 'true'
+    outputs:
+      pages_configured: ${{ steps.configure-pages.outcome == 'success' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -1526,11 +1528,13 @@ jobs:
         run: docfx docs/docfx/docfx.json
 
       - name: Configure GitHub Pages
+        id: configure-pages
         uses: actions/configure-pages@v5
         continue-on-error: true
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        if: steps.configure-pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v4
         with:
           path: docs/docfx/_site
         continue-on-error: true
@@ -1543,6 +1547,7 @@ jobs:
     needs: build-docfx
     if: |
       needs.build-docfx.result == 'success' &&
+      needs.build-docfx.outputs.pages_configured == 'true' &&
       (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
         github.event_name == 'schedule' ||
@@ -1555,7 +1560,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        continue-on-error: true
 
   # ─── Report ──────────────────────────────────────────────────────────
   # ─── AI Documentation Maintenance ──────────────────────────────────

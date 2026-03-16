@@ -7,11 +7,17 @@ namespace MarketDataCollector.Infrastructure.Adapters.Template;
 /// </summary>
 internal static class TemplateEndpoints
 {
-    // TODO: Add your provider's base URL or WebSocket URI.
-    // Example for a REST API:
-    //   public const string BaseUrl = "https://api.example.com/v1";
-    // Example for a WebSocket API:
-    //   public const string WssUri = "wss://stream.example.com/ws";
+    // TODO: Add your provider's base URL or WebSocket URI. Examples:
+
+    // REST API base URL (used by TemplateHistoricalDataProvider and TemplateSymbolSearchProvider):
+    public const string BaseUrl = "https://api.example.com/v1";
+
+    // WebSocket streaming URI (used by TemplateMarketDataClient):
+    // public const string WssUri = "wss://stream.example.com/ws";
+
+    // Specific endpoint paths can also be defined here, e.g.:
+    // public const string HistoricalBars = "/bars";
+    // public const string SymbolSearch   = "/search";
 }
 
 /// <summary>
@@ -38,9 +44,12 @@ internal static class TemplateRateLimits
 /// </summary>
 internal static class TemplateMessageTypes
 {
-    // TODO: Add message type constants.
-    // Example:
-    //   public const string Trade = "trade";
-    //   public const string Quote = "quote";
-    //   public const string Error = "error";
+    // TODO: Add message type constants. Examples:
+    public const string Trade = "trade";
+    public const string Quote = "quote";
+    public const string Subscribe = "subscribe";
+    public const string Unsubscribe = "unsubscribe";
+    public const string Error = "error";
+    public const string Connected = "connected";
+    public const string Authenticated = "authenticated";
 }
