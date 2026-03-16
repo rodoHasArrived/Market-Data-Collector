@@ -149,43 +149,45 @@ public abstract class ConnectionServiceBase : IDisposable
 
     /// <summary>
     /// Initiates a connection to the provider.
-    /// Performs a health check against the configured endpoint and returns false if it fails.
+    /// Performs a health check first; returns false when the provider is unreachable or
+    /// the request is cancelled before the check completes.
     /// </summary>
     public async Task<bool> ConnectAsync(string provider, CancellationToken ct = default)
     {
         _currentProvider = provider;
-        SetState(ConnectionState.Connecting);
 
+        bool isHealthy;
         try
         {
-            var isHealthy = await PerformHealthCheckCoreAsync(ct).ConfigureAwait(false);
-
-            if (!isHealthy)
-            {
-                SetState(ConnectionState.Disconnected);
-                return false;
-            }
-
-            SetState(ConnectionState.Connected);
-            _connectedAt = DateTime.UtcNow;
-            _consecutiveFailures = 0;
-            _reconnectAttempts = 0;
-
-            if (!_isMonitoring)
-            {
-                StartMonitoring();
-            }
-
-            return true;
+            isHealthy = await PerformHealthCheckCoreAsync(ct).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            LogWarning("Connection attempt failed",
-                ("Provider", provider),
-                ("Error", ex.Message));
-            SetState(ConnectionState.Disconnected);
+            _connectedAt = null;
             return false;
         }
+        catch (Exception)
+        {
+            isHealthy = false;
+        }
+
+        if (!isHealthy)
+        {
+            _connectedAt = null;
+            return false;
+        }
+
+        SetState(ConnectionState.Connected);
+        _connectedAt = DateTime.UtcNow;
+        _consecutiveFailures = 0;
+        _reconnectAttempts = 0;
+
+        if (!_isMonitoring)
+        {
+            StartMonitoring();
+        }
+
+        return true;
     }
 
     /// <summary>

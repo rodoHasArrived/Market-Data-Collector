@@ -18,6 +18,7 @@ public sealed class ConnectionServiceBaseTests
     private sealed class TestConnectionService : ConnectionServiceBase
     {
         public bool HealthCheckResult { get; set; } = true;
+        public bool HealthCheckThrows { get; set; }
         public int MonitoringTimerStartCount { get; private set; }
         public int MonitoringTimerStopCount { get; private set; }
         public int ReconnectTimerStartCount { get; private set; }
@@ -27,7 +28,12 @@ public sealed class ConnectionServiceBaseTests
         public List<string> LogMessages { get; } = new();
 
         protected override Task<bool> PerformHealthCheckCoreAsync(CancellationToken ct)
-            => Task.FromResult(HealthCheckResult);
+        {
+            ct.ThrowIfCancellationRequested();
+            if (HealthCheckThrows)
+                throw new InvalidOperationException("Simulated health check failure");
+            return Task.FromResult(HealthCheckResult);
+        }
 
         protected override void StartMonitoringTimer(int intervalMs)
         {
@@ -113,6 +119,44 @@ public sealed class ConnectionServiceBaseTests
         received!.OldState.Should().Be(ConnectionState.Disconnected);
         received.NewState.Should().Be(ConnectionState.Connected);
         received.Provider.Should().Be("EventProv");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_WhenHealthCheckReturnsFalse_ShouldReturnFalseAndKeepDisconnected()
+    {
+        using var svc = new TestConnectionService { HealthCheckResult = false };
+
+        var result = await svc.ConnectAsync("FailProv");
+
+        result.Should().BeFalse("connection should fail when health check returns false");
+        svc.State.Should().Be(ConnectionState.Disconnected, "state should remain Disconnected on failed connect");
+        svc.Uptime.Should().BeNull("uptime must not be set when connection failed");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_WhenHealthCheckThrows_ShouldReturnFalse()
+    {
+        using var svc = new TestConnectionService { HealthCheckThrows = true };
+
+        var result = await svc.ConnectAsync("ThrowProv");
+
+        result.Should().BeFalse("an exception during health check should be treated as connection failure");
+        svc.State.Should().Be(ConnectionState.Disconnected);
+        svc.Uptime.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_WhenCancelled_ShouldReturnFalse()
+    {
+        using var svc = new TestConnectionService { HealthCheckResult = false };
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // OperationCanceledException must be caught and not propagated
+        var result = await svc.ConnectAsync("CancelProv", cts.Token);
+
+        result.Should().BeFalse("cancelled connect should return false gracefully");
+        svc.Uptime.Should().BeNull();
     }
 
     // ── DisconnectAsync ──────────────────────────────────────────────
