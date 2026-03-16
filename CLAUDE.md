@@ -341,6 +341,7 @@ Market-Data-Collector/
 │   └── scripts/  # Automation scripts
 │       ├── docs/  # Documentation
 │       │   ├── add-todos.py
+│       │   ├── ai-docs-maintenance.py
 │       │   ├── create-todo-issues.py
 │       │   ├── generate-changelog.py
 │       │   ├── generate-coverage.py

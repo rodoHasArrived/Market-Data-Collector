@@ -1,12 +1,12 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-16T08:12:08.914076+00:00
+> Last updated: 2026-03-16T09:11:41.908282+00:00
 
 ## Overall Health Score
 
 ```
-  [###########################---] 90/100
+  [###########################---] 91/100
   Rating: Excellent
 ```
 
@@ -15,13 +15,13 @@
 | Metric | Value |
 |--------|-------|
 | Total documentation files | 184 |
-| Total lines | 76,137 |
-| Average file size (lines) | 413.8 |
-| Orphaned files | 41 |
+| Total lines | 74,547 |
+| Average file size (lines) | 405.1 |
+| Orphaned files | 32 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
-| TODO/FIXME markers | 160 |
-| **Health score** | **90/100** |
+| TODO/FIXME markers | 159 |
+| **Health score** | **91/100** |
 
 ### Score Breakdown
 
@@ -45,27 +45,27 @@ These files lack a Markdown heading, making them harder to navigate:
 
 These files are not linked from any other Markdown file in the repository:
 
-- `.claude/skills/mdc-code-review/SKILL.md`
-- `.claude/skills/mdc-code-review/agents/grader.md`
-- `.claude/skills/mdc-code-review/references/architecture.md`
-- `.claude/skills/mdc-code-review/references/schemas.md`
 - `.github/CS0101_FIX_SUMMARY.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
 - `.github/QUICKSTART.md`
 - `.github/TEST_MATRIX_FIX_SUMMARY.md`
 - `.github/WORKFLOW_IMPROVEMENTS.md`
-- `.github/agents/code-review-agent.md`
-- `.github/instructions/csharp.instructions.md`
-- `.github/instructions/docs.instructions.md`
-- `.github/instructions/dotnet-tests.instructions.md`
-- `.github/instructions/wpf.instructions.md`
 - `.github/pull_request_template_desktop.md`
 - `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
 - `.github/workflows/TESTING_AI_SYNC.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
-- ... and 21 more
+- `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
+- `docs/archived/2026-02_VISUAL_CODE_EXAMPLES.md`
+- `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md`
+- `docs/archived/CHANGES_SUMMARY.md`
+- `docs/archived/CONFIG_CONSOLIDATION_REPORT.md`
+- `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
+- `docs/archived/IMPROVEMENTS_2026-02.md`
+- `docs/archived/REDESIGN_IMPROVEMENTS.md`
+- `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
+- ... and 12 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-16 | 90 | 184 | 41 | 0 |
+| 2026-03-16 | 91 | 184 | 32 | 0 |
 
 ---
 
