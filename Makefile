@@ -108,6 +108,9 @@ help: ## Show this help message
 	@echo "$(BLUE)Pre-PR & Quality:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify|ai-docs|ai-report' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-24s$(NC) %s\n", $$1, $$2}'
 	@echo ""
+	@echo "$(BLUE)Skills:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'skill-' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-24s$(NC) %s\n", $$1, $$2}'
+	@echo ""
 	@echo "$(BLUE)Diagnostics:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
