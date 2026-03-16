@@ -407,3 +407,9 @@ When adding or changing public APIs:
 ---
 
 **See also:** [Architecture Overview](../architecture/overview.md) · [Domain Model](../architecture/domains.md) · [Provider Comparison](../providers/provider-comparison.md)
+
+---
+
+**Version:** 1.6.2
+**Last Updated:** 2026-03-16
+**Audience:** Contributors maintaining the HTTP API surface and AI assistants working on endpoint documentation.

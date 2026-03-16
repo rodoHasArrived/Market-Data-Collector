@@ -975,3 +975,9 @@ public sealed class MockExampleClient : IMarketDataClient
 - **AI Guides:**
   - [CLAUDE.providers.md](../ai/claude/CLAUDE.providers.md) — AI-focused provider reference
   - [CLAUDE.testing.md](../ai/claude/CLAUDE.testing.md) — Testing patterns
+
+---
+
+**Version:** 1.6.2
+**Last Updated:** 2026-03-16
+**Audience:** Contributors implementing new data providers and AI assistants working on provider integration.
