@@ -49,7 +49,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  actions: read
+  actions: write
 
 concurrency:
   group: prompt-generation-${{ github.workflow }}-${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.ref }}
@@ -198,13 +198,23 @@ jobs:
         run: |
           set -euo pipefail
 
+          mapfile -t CHANGED_FILES < <(git diff --name-only -- .github/prompts/*.prompt.yml 2>/dev/null || true)
+
+          {
+            echo "files<<EOF"
+            for f in "${CHANGED_FILES[@]}"; do
+              [ -n "$f" ] && echo "$f"
+            done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
           {
             echo "rows<<EOF"
 
             if [ -d .github/prompts ]; then
               shopt -s nullglob
               for f in .github/prompts/*.prompt.yml; do
-                if git diff --name-only -- "$f" | grep -q .; then
+                if printf '%s\n' "${CHANGED_FILES[@]}" | grep -Fxq "$f"; then
                   name=$(awk -F': ' '$1 == "name" {print $2; exit}' "$f")
                   echo "| \`$(basename "$f")\` | ${name:-unknown} |"
                 fi
@@ -292,6 +302,63 @@ jobs:
               git diff --staged --name-only -- .github/prompts/
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Trigger Copilot workflow for generated prompts
+        id: trigger-copilot
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true')
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const promptFiles = `${{ steps.changed-prompts.outputs.files }}`
+              .split('\n')
+              .map(x => x.trim())
+              .filter(Boolean);
+
+            const targetRef = context.ref.replace('refs/heads/', '');
+            const workflowName = '${{ steps.resolve.outputs.workflow }}';
+            const runId = '${{ steps.resolve.outputs.run_id }}';
+            const totalGenerated = '${{ steps.generate.outputs.total_generated }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const requestContext = [
+              `Prompt generation workflow completed for ${workflowName}.`,
+              `Generated/updated prompts: ${totalGenerated}.`,
+              `Prompt files: ${promptFiles.length ? promptFiles.join(', ') : 'No changed files detected.'}`,
+              `Prompt generation run: ${runUrl}`,
+              `Analyze these prompts and propose implementation-ready fixes for the failing workflow findings.`,
+              `Original analyzed run id: ${runId}`,
+            ].join('\n');
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'copilot-swe-agent-copilot.yml',
+              ref: targetRef,
+              inputs: {
+                request_context: requestContext,
+              },
+            });
+
+            core.setOutput('prompt_files', promptFiles.join(', '));
+            core.setOutput('triggered_ref', targetRef);
+
+      - name: Note Copilot trigger status
+        if: always() && steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          {
+            echo ""
+            echo "### Copilot Workflow Trigger"
+            echo ""
+            if [ "${{ steps.trigger-copilot.outcome }}" = "success" ]; then
+              echo "Triggered \\`copilot-swe-agent-copilot.yml\\` on ref \\`${{ steps.trigger-copilot.outputs.triggered_ref }}\\`."
+              echo "Prompt files passed as context: ${{ steps.trigger-copilot.outputs.prompt_files }}"
+            else
+              echo "⚠️ Unable to trigger Copilot workflow automatically (outcome: ${{ steps.trigger-copilot.outcome }})."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload generation results
         if: always()
