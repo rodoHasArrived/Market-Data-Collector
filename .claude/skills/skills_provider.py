@@ -43,6 +43,7 @@ import logging as _logging
 import subprocess
 import sys
 import time as _time
+import warnings as _warnings
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
@@ -56,6 +57,20 @@ except ImportError:
     # decorator registrations and constructor calls succeed without
     # agent_framework being installed.
     _HAS_AGENT_FRAMEWORK = False
+
+    # When imported programmatically (not via CLI), warn the caller that the
+    # skill provider API (load_skill, read_skill_resource, …) will silently
+    # no-op because agent_framework is absent.  The standalone CLI suppresses
+    # this warning because it never calls the framework API.
+    if __name__ != "__main__":
+        _warnings.warn(
+            "agent_framework is not installed; skills_provider API methods "
+            "(load_skill, read_skill_resource, …) will not function correctly. "
+            "The standalone CLI (list, run-script, chain, …) is still fully "
+            "available. Install agent_framework to use the full provider API.",
+            ImportWarning,
+            stacklevel=2,
+        )
 
     class _Stub:  # type: ignore[no-redef]
         """No-op stub used when agent_framework is absent (standalone CLI mode)."""
@@ -750,6 +765,31 @@ _RESOURCE_REGISTRY: dict[tuple[str, str], Any] = {
 }
 
 
+def _scripts_from_registry() -> dict[str, list[str]]:
+    """Derive the per-skill script listing from :data:`_SCRIPT_REGISTRY`.
+
+    Using the registry as the single source of truth prevents the CLI's
+    ``list-scripts`` output from drifting out of sync when new
+    ``@*.script(…)`` entries are added.
+    """
+    result: dict[str, list[str]] = {}
+    for skill, script in _SCRIPT_REGISTRY:
+        result.setdefault(skill, []).append(script)
+    return result
+
+
+def _dynamic_resources_from_registry() -> dict[str, list[str]]:
+    """Derive the per-skill dynamic resource listing from :data:`_RESOURCE_REGISTRY`.
+
+    Static (file-based) resources are not tracked here; see
+    ``SkillsProviderCli._STATIC_RESOURCE_PATHS``.
+    """
+    result: dict[str, list[str]] = {}
+    for skill, resource in _RESOURCE_REGISTRY:
+        result.setdefault(skill, []).append(resource)
+    return result
+
+
 def run_skill_chain(
     skill_name: str,
     scripts: list[str],
@@ -880,18 +920,18 @@ class SkillsProviderCli:
     _RESOURCES: dict[str, dict[str, list[str]]] = {
         "mdc-code-review": {
             "static": ["architecture", "schemas", "grader", "evals"],
-            "dynamic": ["project-stats", "git-context"],
+            "dynamic": _dynamic_resources_from_registry().get("mdc-code-review", []),
         },
         "ai-docs-maintain": {
             "static": [],
-            "dynamic": ["doc-health-summary"],
+            "dynamic": _dynamic_resources_from_registry().get("ai-docs-maintain", []),
         },
     }
 
-    _SCRIPTS: dict[str, list[str]] = {
-        "mdc-code-review": ["validate-skill", "run-eval", "aggregate-benchmark"],
-        "ai-docs-maintain": ["run-freshness", "run-drift", "run-full", "run-archive"],
-    }
+    #: Derived from :data:`_SCRIPT_REGISTRY` — do not edit by hand.
+    #: Adding a new ``@*.script(…)`` to ``_SCRIPT_REGISTRY`` will automatically
+    #: appear in ``list-scripts`` output without any further change here.
+    _SCRIPTS: dict[str, list[str]] = _scripts_from_registry()
 
     # Static resource → file path (for read-resource fallback)
     _STATIC_RESOURCE_PATHS: dict[str, Path] = {
