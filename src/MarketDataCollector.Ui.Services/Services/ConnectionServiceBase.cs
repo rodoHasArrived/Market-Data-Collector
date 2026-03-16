@@ -149,10 +149,30 @@ public abstract class ConnectionServiceBase : IDisposable
 
     /// <summary>
     /// Initiates a connection to the provider.
+    /// Performs a health check first; returns false when the provider is unreachable or
+    /// the request is cancelled before the check completes.
     /// </summary>
-    public Task<bool> ConnectAsync(string provider, CancellationToken ct = default)
+    public async Task<bool> ConnectAsync(string provider, CancellationToken ct = default)
     {
         _currentProvider = provider;
+
+        bool isHealthy;
+        try
+        {
+            isHealthy = await PerformHealthCheckCoreAsync(ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception)
+        {
+            isHealthy = false;
+        }
+
+        if (!isHealthy)
+            return false;
+
         SetState(ConnectionState.Connected);
         _connectedAt = DateTime.UtcNow;
         _consecutiveFailures = 0;
@@ -163,7 +183,7 @@ public abstract class ConnectionServiceBase : IDisposable
             StartMonitoring();
         }
 
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <summary>

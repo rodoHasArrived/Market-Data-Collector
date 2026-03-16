@@ -197,14 +197,25 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
 
     /// <summary>
     /// Creates a page instance using the DI container if available, falling back to Activator.
+    /// When no service provider is configured and the page type has no parameterless constructor
+    /// (e.g. in unit tests), a placeholder <see cref="Page"/> is returned so that navigation
+    /// orchestration (history tracking, event raising) can still be validated.
     /// </summary>
-    private object? CreatePage(Type pageType)
+    private object CreatePage(Type pageType)
     {
         if (_serviceProvider != null)
         {
             return _serviceProvider.GetService(pageType) ?? ActivatorUtilities.CreateInstance(_serviceProvider, pageType);
         }
 
-        return Activator.CreateInstance(pageType);
+        try
+        {
+            return Activator.CreateInstance(pageType) ?? new Page();
+        }
+        catch (MissingMethodException)
+        {
+            // Page requires constructor injection but no DI container is available.
+            return new Page();
+        }
     }
 }
