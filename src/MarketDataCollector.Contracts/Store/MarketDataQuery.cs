@@ -4,7 +4,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 namespace MarketDataCollector.Contracts.Store;
 
 /// <summary>
-/// Immutable query specification for <see cref="IMarketDataStore"/>.
+/// Immutable query specification for <c>IMarketDataStore</c>.
 /// All parameters are optional — an empty query returns all stored events up to
 /// <see cref="Limit"/>.
 /// </summary>

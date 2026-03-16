@@ -1,5 +1,5 @@
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Core.Config;
 using MarketDataCollector.Storage.Archival;
 using Serilog;
 
