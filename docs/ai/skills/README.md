@@ -43,6 +43,28 @@ canonical 6-lens framework defined in
 
 ---
 
+### mdc-brainstorm
+
+**Directory:** [`.claude/skills/mdc-brainstorm/`](../../../.claude/skills/mdc-brainstorm/)
+**Entry point:** [`.claude/skills/mdc-brainstorm/SKILL.md`](../../../.claude/skills/mdc-brainstorm/SKILL.md)
+
+Brainstorming, ideation, and creative feature exploration skill for the MarketDataCollector project.
+
+**Trigger conditions** (from system prompt):
+- User wants to generate new ideas, features, or improvements for MarketDataCollector
+- User asks "what could we add", "how could we improve", "what features should we build"
+- Tasks involving architecture brainstorms, user growth strategy, or technical debt ideation
+- User describes a pain point or domain problem and wants ideas for solving it
+
+**Bundled resources:**
+
+| Resource | Purpose |
+|----------|---------|
+| `references/idea-dimensions.md` | Idea evaluation dimensions and scoring framework |
+| `references/competitive-landscape.md` | Competitive analysis and differentiation context |
+
+---
+
 ### ai-docs-maintain
 
 **Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
