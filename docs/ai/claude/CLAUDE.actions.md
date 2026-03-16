@@ -4,7 +4,7 @@ This guide covers the CI/CD pipeline for the Market Data Collector, including wo
 
 ## Workflow Inventory
 
-The project uses 22 GitHub Actions workflows in `.github/workflows/`:
+The project uses 26 GitHub Actions workflows in `.github/workflows/`:
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
@@ -18,10 +18,14 @@ The project uses 22 GitHub Actions workflows in `.github/workflows/`:
 | Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, GHCR push |
 | Release | `release.yml` | Manual dispatch | Semver validation, changelog, GitHub release |
 | Benchmark | `benchmark.yml` | Manual dispatch | BenchmarkDotNet performance tracking |
+| Bottleneck Detection | `bottleneck-detection.yml` | Manual dispatch | Performance bottleneck analysis |
+| Close Duplicates | `close-duplicate-issues.yml` | Issue opened | Auto-close duplicate issues |
 | Nightly | `nightly.yml` | Daily (1 AM UTC), manual | Full build + test + AI failure diagnosis |
 | Documentation | `documentation.yml` | Push/PRs (docs/source), weekly, issues, manual | Doc generation, structure sync, TODO scan |
 | Labeling | `labeling.yml` | PR opened/edited/reopened, manual | Auto-label based on paths and PR size |
 | Stale | `stale.yml` | Daily (midnight UTC), manual | Stale issue/PR management |
+| Docs Check | `docs-check.yml` | Push/PRs (docs paths) | Documentation link and format validation |
+| Export Project Artifact | `export-project-artifact.yml` | Manual dispatch | Project artifact export |
 | Build Observability | `build-observability.yml` | Manual dispatch | Build diagnostics, metrics, fingerprints |
 | Scheduled Maintenance | `scheduled-maintenance.yml` | Weekly (Sun), manual | Tests, cache cleanup, dependency health, AI recommendations |
 | Copilot Setup | `copilot-setup-steps.yml` | Called by Copilot | Copilot environment setup |
@@ -108,4 +112,12 @@ done
 
 ---
 
-*Last Updated: 2026-02-20*
+## Related Resources
+
+- **Master AI index:** [`docs/ai/README.md`](../README.md)
+- **Error prevention:** [`docs/ai/ai-known-errors.md`](../ai-known-errors.md)
+- **Root context:** [`CLAUDE.md`](../../../CLAUDE.md) § CI/CD Pipelines
+
+---
+
+*Last Updated: 2026-03-16*

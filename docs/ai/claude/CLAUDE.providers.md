@@ -785,6 +785,13 @@ See the [provider field audit](../../architecture/deterministic-canonicalization
 - [docs/architecture/provider-management.md](../../architecture/provider-management.md) - Provider architecture
 - [docs/architecture/deterministic-canonicalization.md](../../architecture/deterministic-canonicalization.md) - Canonicalization design
 
+## Related Resources
+
+- **Master AI index:** [`docs/ai/README.md`](../README.md)
+- **Root context:** [`CLAUDE.md`](../../../CLAUDE.md) § Data Providers
+- **Code review (Lens 5 - Provider Compliance):** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
+- **Development guide:** [`docs/development/provider-implementation.md`](../../development/provider-implementation.md)
+
 ---
 
-*Last Updated: 2026-02-24*
+*Last Updated: 2026-03-16*

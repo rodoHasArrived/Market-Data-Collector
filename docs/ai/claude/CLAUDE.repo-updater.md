@@ -189,6 +189,12 @@ make ai-verify           # Build + test + lint
 make ai-report           # Generate improvement report
 ```
 
+## Related Resources
+
+- **Master AI index:** [`docs/ai/README.md`](../README.md)
+- **Root context:** [`CLAUDE.md`](../../../CLAUDE.md) § AI Repository Updater
+- **Error prevention:** [`docs/ai/ai-known-errors.md`](../ai-known-errors.md)
+
 ---
 
-*Last Updated: 2026-02-20*
+*Last Updated: 2026-03-16*

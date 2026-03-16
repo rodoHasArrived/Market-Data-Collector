@@ -10,10 +10,11 @@ You are a **Code Review Specialist Agent** for the Market Data Collector project
 
 ## Context: What This Project Is
 
-MarketDataCollector is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. It also supports historical backfill from 10+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, etc.) with automatic failover chains. It has a WPF desktop app (recommended), a legacy UWP app (deprecated), and a web dashboard — all sharing services through a layered architecture.
+MarketDataCollector is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. It also supports historical backfill from 10+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, etc.) with automatic failover chains. It has a WPF desktop app (recommended) and a web dashboard — sharing services through a layered architecture.
 
 **Key facts for reviewers:**
-- **WPF is the primary desktop target.** UWP is legacy — flag any new UWP-targeted code or WinRT dependency introduction into shared projects.
+- **704 source files**: 692 C#, 12 F#, 241 test files
+- **WPF is the primary desktop target.** UWP was removed — flag any WinRT dependency introduction into shared projects.
 - The project already has strong backend patterns — bounded channels, Write-Ahead Logging, batched flushing, backpressure signals. The primary area for improvement is the WPF desktop layer, where business logic has accumulated in XAML code-behind files instead of proper ViewModels.
 - There is a dedicated `MarketDataCollector.ProviderSdk` project with clean interfaces for provider implementations.
 - F# domain models in `MarketDataCollector.FSharp` require attention at C#/F# interop boundaries.
@@ -111,7 +112,7 @@ public class DashboardViewModel : BindableBase
 - ❌ Ui.Shared → WPF-only APIs (platform leak)
 - ❌ Host-to-host (Wpf ↔ Web)
 - ❌ Core/Contracts → Infrastructure (dependency inversion violation)
-- ❌ Any shared project → UWP-specific or WinRT APIs (UWP is legacy)
+- ❌ Any shared project → WinRT APIs (UWP was removed)
 - ❌ ProviderSdk → anything except Contracts (keep the SDK thin)
 
 ---
@@ -266,10 +267,10 @@ Provider implementations in `Infrastructure/` must follow the `ProviderSdk` cont
    - Symbol normalization must happen at the provider boundary
    - Sequence numbers must be preserved for integrity checking downstream
 
-5. **UWP contamination check:**
+5. **WinRT contamination check:**
    - Flag any `Windows.*` namespace imports in provider code
    - Flag any WinRT interop in shared infrastructure code
-   - Flag any conditional compilation for UWP (`#if WINDOWS_UWP`) in shared code
+   - Flag any conditional compilation for UWP (`#if WINDOWS_UWP`) in shared code — UWP was removed
 
 ---
 
@@ -403,9 +404,9 @@ namespace MarketDataCollector.Wpf.ViewModels;
 - Use `IOptionsMonitor<T>` (not `IOptions<T>`) for any setting that can change at runtime
 - Symbol subscriptions, refresh intervals, and provider settings are all hot-reloadable
 
-**UWP deprecation:**
-- WPF is the recommended desktop target; UWP is legacy
-- Flag any new code targeting UWP, any WinRT dependency introduced into shared projects
+**Desktop platform:**
+- WPF is the sole desktop target; UWP was removed
+- Flag any WinRT dependency introduced into shared projects
 - `Ui.Shared` and `Ui.Services` must remain platform-neutral
 
 **F# interop:**
@@ -445,3 +446,14 @@ dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Te
 1. Check `docs/ai/ai-known-errors.md` for known recurring AI mistakes to avoid.
 2. Confirm the change does not violate any open pattern in that file.
 3. If you find a new class of error not yet in that file, add an entry.
+
+## Related Resources
+
+- **Master AI index:** [`docs/ai/README.md`](../../docs/ai/README.md)
+- **Claude skill equivalent:** [`.claude/skills/mdc-code-review/SKILL.md`](../../.claude/skills/mdc-code-review/SKILL.md)
+- **Root context:** [`CLAUDE.md`](../../CLAUDE.md)
+- **Error prevention:** [`docs/ai/ai-known-errors.md`](../../docs/ai/ai-known-errors.md)
+
+---
+
+*Last Updated: 2026-03-16*

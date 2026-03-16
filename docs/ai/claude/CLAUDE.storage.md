@@ -746,6 +746,12 @@ public async Task<HealthCheckResult> CheckStorageHealthAsync()
 - [docs/HELP.md#configuration](../../HELP.md#configuration) - Configuration guide
 - [docs/integrations/lean-integration.md](../../integrations/lean-integration.md) - Lean export integration
 
+## Related Resources
+
+- **Master AI index:** [`docs/ai/README.md`](../README.md)
+- **Root context:** [`CLAUDE.md`](../../../CLAUDE.md) § Storage Architecture
+- **Architecture docs:** [`docs/architecture/storage-design.md`](../../architecture/storage-design.md)
+
 ---
 
-*Last Updated: 2026-02-20*
+*Last Updated: 2026-03-16*
