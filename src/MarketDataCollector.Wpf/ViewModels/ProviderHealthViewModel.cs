@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using MarketDataCollector.Ui.Services;
@@ -13,7 +14,8 @@ namespace MarketDataCollector.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Provider Health page.
-/// Holds all state, timer management, and data loading so the code-behind is thin.
+/// All state, HTTP loading, timer management, and connection-event tracking live here
+/// so that the code-behind is thinned to lifecycle wiring only.
 /// </summary>
 public sealed class ProviderHealthViewModel : BindableBase, IDisposable
 {
@@ -27,12 +29,12 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
     private CancellationTokenSource? _cts;
     private DateTime? _lastRefreshTime;
 
-    // ── Public collections ────────────────────────────────────────────────────
+    // ── Public collections ──────────────────────────────────────────────────
     public ObservableCollection<ProviderStatusModel> StreamingProviders { get; } = new();
     public ObservableCollection<BackfillProviderModel> BackfillProviders { get; } = new();
     public ObservableCollection<ConnectionEventModel> ConnectionHistory { get; } = new();
 
-    // ── Bindable properties ───────────────────────────────────────────────────
+    // ── Bindable properties ─────────────────────────────────────────────────
     private string _connectedCount = "0";
     public string ConnectedCount { get => _connectedCount; private set => SetProperty(ref _connectedCount, value); }
 
@@ -90,6 +92,7 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         _refreshTimer.Stop();
         _staleCheckTimer.Stop();
         _cts?.Cancel();
+        _cts?.Dispose();
     }
 
     public async Task RefreshAsync()
@@ -110,13 +113,19 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         {
             await _connectionService.DisconnectAsync();
             AddConnectionEvent("Disconnected by user", provider.Name, EventType.Info);
-            _notificationService.ShowNotification("Disconnected", $"Disconnected from {provider.Name}.", NotificationType.Info);
+            _notificationService.ShowNotification(
+                "Disconnected",
+                $"Disconnected from {provider.Name}.",
+                NotificationType.Info);
         }
         else
         {
             await _connectionService.ConnectAsync(providerId);
             AddConnectionEvent("Connected by user", provider.Name, EventType.Success);
-            _notificationService.ShowNotification("Connected", $"Connected to {provider.Name}.", NotificationType.Success);
+            _notificationService.ShowNotification(
+                "Connected",
+                $"Connected to {provider.Name}.",
+                NotificationType.Success);
         }
 
         await RefreshDataAsync();
@@ -138,28 +147,37 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
     {
         ConnectionHistory.Clear();
         HasNoHistory = true;
-        _notificationService.ShowNotification("History Cleared", "Connection history has been cleared.", NotificationType.Info);
+        _notificationService.ShowNotification(
+            "History Cleared",
+            "Connection history has been cleared.",
+            NotificationType.Info);
     }
 
     private void OnConnectionStateChanged(object? sender, WpfServices.ConnectionStateChangedEventArgs e)
     {
-        AddConnectionEvent(
-            e.NewState == WpfServices.ConnectionState.Connected ? "Connected" :
-            e.NewState == WpfServices.ConnectionState.Disconnected ? "Disconnected" :
-            e.NewState == WpfServices.ConnectionState.Reconnecting ? "Reconnecting" : "Unknown",
-            e.Provider,
-            e.NewState == WpfServices.ConnectionState.Connected ? EventType.Success :
-            e.NewState == WpfServices.ConnectionState.Disconnected ? EventType.Error : EventType.Warning);
+        _ = System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            AddConnectionEvent(
+                e.NewState == WpfServices.ConnectionState.Connected ? "Connected" :
+                e.NewState == WpfServices.ConnectionState.Disconnected ? "Disconnected" :
+                e.NewState == WpfServices.ConnectionState.Reconnecting ? "Reconnecting" : "Unknown",
+                e.Provider,
+                e.NewState == WpfServices.ConnectionState.Connected ? EventType.Success :
+                e.NewState == WpfServices.ConnectionState.Disconnected ? EventType.Error : EventType.Warning);
+        });
     }
 
     private void OnConnectionHealthUpdated(object? sender, WpfServices.ConnectionHealthEventArgs e)
     {
         if (!e.IsHealthy)
         {
-            AddConnectionEvent(
-                $"Health check failed: {e.ErrorMessage}",
-                _connectionService.CurrentProvider,
-                EventType.Warning);
+            _ = System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                AddConnectionEvent(
+                    $"Health check failed: {e.ErrorMessage}",
+                    _connectionService.CurrentProvider,
+                    EventType.Warning);
+            });
         }
     }
 
@@ -176,7 +194,10 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
             _lastRefreshTime = DateTime.UtcNow;
             UpdateStaleIndicator();
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // Cancelled — ignore
+        }
         catch (Exception ex)
         {
             _loggingService.LogError("Failed to refresh provider health", ex);
@@ -188,7 +209,8 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         StreamingProviders.Clear();
 
         var providers = await _statusService.GetAvailableProvidersAsync(ct);
-        var streaming = providers.Where(p => p.ProviderType == "Streaming" || p.ProviderType == "Hybrid").ToList();
+        var streaming = providers.Where(p =>
+            p.ProviderType == "Streaming" || p.ProviderType == "Hybrid").ToList();
 
         var connectionState = _connectionService.State;
         var currentProvider = _connectionService.CurrentProvider;
@@ -205,10 +227,16 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
             {
                 ProviderId = provider.ProviderId,
                 Name = provider.DisplayName,
-                StatusText = isConnected ? "Connected" : isReconnecting ? "Reconnecting..." : isActive ? "Disconnected" : "Not Active",
-                StatusColor = new SolidColorBrush(isConnected ? Color.FromRgb(63, 185, 80) : isReconnecting ? Color.FromRgb(255, 193, 7) : Color.FromRgb(139, 148, 158)),
+                StatusText = isConnected ? "Connected" :
+                             isReconnecting ? "Reconnecting..." :
+                             isActive ? "Disconnected" : "Not Active",
+                StatusColor = new SolidColorBrush(
+                    isConnected ? Color.FromRgb(63, 185, 80) :
+                    isReconnecting ? Color.FromRgb(255, 193, 7) :
+                    Color.FromRgb(139, 148, 158)),
                 LatencyText = isConnected ? $"Latency: {latency:F0}ms" : "Latency: --",
-                UptimeText = isConnected && uptime.HasValue ? $"Uptime: {FormatUptime(uptime.Value)}" : "Uptime: --",
+                UptimeText = isConnected && uptime.HasValue ?
+                    $"Uptime: {FormatUptime(uptime.Value)}" : "Uptime: --",
                 ActionText = isConnected ? "Disconnect" : "Connect",
                 IsConnected = isConnected
             });
@@ -224,11 +252,14 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
 
     private static ProviderStatusModel CreateDefaultProvider(string id, string name) => new()
     {
-        ProviderId = id, Name = name,
+        ProviderId = id,
+        Name = name,
         StatusText = "Not Configured",
         StatusColor = new SolidColorBrush(Color.FromRgb(139, 148, 158)),
-        LatencyText = "Latency: --", UptimeText = "Uptime: --",
-        ActionText = "Configure", IsConnected = false
+        LatencyText = "Latency: --",
+        UptimeText = "Uptime: --",
+        ActionText = "Configure",
+        IsConnected = false
     };
 
     private async Task LoadBackfillProvidersAsync(CancellationToken ct)
@@ -236,17 +267,21 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         BackfillProviders.Clear();
 
         var providers = await _statusService.GetAvailableProvidersAsync(ct);
-        var backfill = providers.Where(p => p.ProviderType == "Backfill" || p.ProviderType == "Hybrid").ToList();
+        var backfill = providers.Where(p =>
+            p.ProviderType == "Backfill" || p.ProviderType == "Hybrid").ToList();
 
         foreach (var provider in backfill)
         {
-            var hasCredentials = !provider.RequiresCredentials || CheckCredentialsConfigured(provider.ProviderId);
+            var hasCredentials = !provider.RequiresCredentials ||
+                CheckCredentialsConfigured(provider.ProviderId);
+
             BackfillProviders.Add(new BackfillProviderModel
             {
                 ProviderId = provider.ProviderId,
                 Name = provider.DisplayName,
                 StatusText = hasCredentials ? "Available" : "Not Configured",
-                StatusColor = new SolidColorBrush(hasCredentials ? Color.FromRgb(63, 185, 80) : Color.FromRgb(139, 148, 158)),
+                StatusColor = new SolidColorBrush(
+                    hasCredentials ? Color.FromRgb(63, 185, 80) : Color.FromRgb(139, 148, 158)),
                 RateLimitText = GetRateLimitText(provider.ProviderId),
                 LastUsedText = "Last used: --"
             });
@@ -254,29 +289,47 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
 
         if (BackfillProviders.Count == 0)
         {
-            BackfillProviders.Add(new BackfillProviderModel { ProviderId = "stooq", Name = "Stooq", StatusText = "Available", StatusColor = new SolidColorBrush(Color.FromRgb(63, 185, 80)), RateLimitText = "30 req/min", LastUsedText = "Last used: --" });
-            BackfillProviders.Add(new BackfillProviderModel { ProviderId = "yahoo", Name = "Yahoo Finance", StatusText = "Available", StatusColor = new SolidColorBrush(Color.FromRgb(63, 185, 80)), RateLimitText = "100 req/min", LastUsedText = "Last used: --" });
+            BackfillProviders.Add(new BackfillProviderModel
+            {
+                ProviderId = "stooq", Name = "Stooq", StatusText = "Available",
+                StatusColor = new SolidColorBrush(Color.FromRgb(63, 185, 80)),
+                RateLimitText = "30 req/min", LastUsedText = "Last used: --"
+            });
+            BackfillProviders.Add(new BackfillProviderModel
+            {
+                ProviderId = "yahoo", Name = "Yahoo Finance", StatusText = "Available",
+                StatusColor = new SolidColorBrush(Color.FromRgb(63, 185, 80)),
+                RateLimitText = "100 req/min", LastUsedText = "Last used: --"
+            });
         }
     }
 
     private static bool CheckCredentialsConfigured(string providerId)
     {
-        var envVar = providerId.ToUpperInvariant() switch
+        var envVarName = providerId.ToUpperInvariant() switch
         {
-            "ALPACA" => "ALPACA__KEYID", "POLYGON" => "POLYGON__APIKEY",
-            "TIINGO" => "TIINGO__TOKEN", "FINNHUB" => "FINNHUB__APIKEY",
-            "ALPHAVANTAGE" => "ALPHAVANTAGE__APIKEY", _ => null
+            "ALPACA" => "ALPACA__KEYID",
+            "POLYGON" => "POLYGON__APIKEY",
+            "TIINGO" => "TIINGO__TOKEN",
+            "FINNHUB" => "FINNHUB__APIKEY",
+            "ALPHAVANTAGE" => "ALPHAVANTAGE__APIKEY",
+            _ => null
         };
-        return envVar == null || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(envVar));
+        if (envVarName == null) return true;
+        return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(envVarName));
     }
 
     private static string GetRateLimitText(string providerId) =>
         providerId.ToLowerInvariant() switch
         {
-            "alpaca" => "200 req/min", "polygon" => "5 req/min (free)",
-            "tiingo" => "500 req/hour", "finnhub" => "60 req/min",
-            "alphavantage" => "5 req/min", "stooq" => "30 req/min",
-            "yahoo" => "100 req/min", _ => "Unknown"
+            "alpaca" => "200 req/min",
+            "polygon" => "5 req/min (free)",
+            "tiingo" => "500 req/hour",
+            "finnhub" => "60 req/min",
+            "alphavantage" => "5 req/min",
+            "stooq" => "30 req/min",
+            "yahoo" => "100 req/min",
+            _ => "Unknown"
         };
 
     private void UpdateStaleIndicator()
@@ -297,7 +350,6 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         ConnectedCount = connected.ToString();
         DisconnectedCount = disconnected.ToString();
         TotalProviders = (StreamingProviders.Count + BackfillProviders.Count).ToString();
-
         AvgLatency = _connectionService.State == WpfServices.ConnectionState.Connected
             ? $"{_connectionService.LastLatencyMs:F0}"
             : "--";
@@ -349,6 +401,5 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
     public void Dispose()
     {
         Stop();
-        _cts?.Dispose();
     }
 }
