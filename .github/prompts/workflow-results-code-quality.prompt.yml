@@ -2,7 +2,7 @@ name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-16
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23140865826
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23141707943
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -26,6 +26,9 @@ messages:
       - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/SymbolSearchServiceTests.cs(568,17): warn...`
 
 
+      ## Failed Tests
+      - `2026-03-16T11:39:49.5034659Z`
+
       ## Error Codes
       - `CS1591`
 
@@ -40,7 +43,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23140865826
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23141707943
 
       Additional context:
       {{additional_context}}
