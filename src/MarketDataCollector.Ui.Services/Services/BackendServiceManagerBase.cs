@@ -136,8 +136,18 @@ public abstract class BackendServiceManagerBase
         await _operationLock.WaitAsync(ct);
         try
         {
-            var status = await GetStatusCoreAsync(ct);
-            if (status.IsRunning)
+            // Only block startup when a tracked process is actively running.
+            // Reachability of the health endpoint alone is not sufficient — the backend
+            // may be externally managed, and we should still honour an explicit Start.
+            var runtime = await ReadRuntimeInfoAsync(ct);
+            var processRunning = runtime is not null && IsProcessRunning(runtime.ProcessId);
+
+            if (runtime is not null && !processRunning)
+            {
+                DeleteFileIfExists(_runtimeFilePath);
+            }
+
+            if (processRunning)
             {
                 return BackendServiceOperationResult.SuccessResult("Backend is already running.");
             }
@@ -169,13 +179,13 @@ public abstract class BackendServiceManagerBase
                 return BackendServiceOperationResult.Failed("Failed to start backend process.");
             }
 
-            var runtime = new BackendRuntimeInfo
+            var runtimeInfo = new BackendRuntimeInfo
             {
                 ProcessId = processId.Value,
                 StartedAtUtc = DateTime.UtcNow
             };
 
-            await File.WriteAllTextAsync(_runtimeFilePath, JsonSerializer.Serialize(runtime, SerializerOptions), ct);
+            await File.WriteAllTextAsync(_runtimeFilePath, JsonSerializer.Serialize(runtimeInfo, SerializerOptions), ct);
 
             var becameHealthy = await WaitForHealthyAsync(TimeSpan.FromSeconds(15), ct);
             var message = becameHealthy
