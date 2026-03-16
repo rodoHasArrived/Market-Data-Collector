@@ -823,25 +823,30 @@ def _resources_from_registries() -> dict[str, _SkillResources]:
     result: dict[str, _SkillResources] = {}
     # Static (file-based) resources are all owned by _STATIC_RESOURCE_SKILL
     if _STATIC_RESOURCE_PATHS:
-        entry = result.setdefault(_STATIC_RESOURCE_SKILL, {"static": [], "dynamic": []})
+        entry = result.setdefault(
+            _STATIC_RESOURCE_SKILL, _SkillResources(static=[], dynamic=[])
+        )
         entry["static"] = list(_STATIC_RESOURCE_PATHS)
     # Dynamic resources from the registry
     for skill, resource in _RESOURCE_REGISTRY:
-        entry = result.setdefault(skill, {"static": [], "dynamic": []})
+        entry = result.setdefault(skill, _SkillResources(static=[], dynamic=[]))
         entry["dynamic"].append(resource)
     return result
 
 
 def _all_skill_names() -> list[str]:
-    """Return the sorted union of skill names from both registries.
+    """Return the sorted union of skill names from all registries.
 
-    Used by the CLI's list-* commands so that all skill names are always
-    derived from a single source of truth rather than being repeated in
-    every error-message path.
+    Includes skills from :data:`_SCRIPT_REGISTRY`, :data:`_RESOURCE_REGISTRY`,
+    and :data:`_STATIC_RESOURCE_SKILL` so that a skill whose only entries are
+    static file resources still appears in list-* output.  Used by the CLI's
+    list-* commands so that the skill set is always derived from a single source
+    of truth rather than being repeated in every error-message path.
     """
     return sorted(
         {skill for skill, _ in _SCRIPT_REGISTRY}
         | {skill for skill, _ in _RESOURCE_REGISTRY}
+        | {_STATIC_RESOURCE_SKILL}
     )
 
 
