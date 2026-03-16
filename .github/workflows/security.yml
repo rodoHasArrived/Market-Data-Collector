@@ -123,13 +123,15 @@ jobs:
           fetch-depth: 0
 
       - name: Log PR context
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           echo "=== Pull Request Context ==="
           echo "PR Number: ${{ github.event.pull_request.number }}"
           echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
           echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
           echo "Base Ref: ${{ github.base_ref }}"
-          echo "Head Ref: ${{ github.head_ref }}"
+          echo "Head Ref: $HEAD_REF"
           echo ""
           echo "=== Changed Files ==="
           git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} || echo "Could not get diff"
