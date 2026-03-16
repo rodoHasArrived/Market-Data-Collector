@@ -4,7 +4,7 @@
 
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-16 11:51:42 UTC
+> Auto-generated on 2026-03-16 15:37:29 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -18,6 +18,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Build and Release | `dotnet-desktop.yml` | push, PR, manual |
 | Close Duplicate and Stale Auto-Generated Issues | `close-duplicate-issues.yml` | manual, scheduled |
 | Code Quality | `code-quality.yml` | push, PR, manual |
+| Copilot Pull Request Reviewer | `copilot-pull-request-reviewer.yml` | PR |
 | Copilot SWE Agent / Copilot | `copilot-swe-agent-copilot.yml` | manual |
 | Copilot Setup Steps | `copilot-setup-steps.yml` | push, manual |
 | Desktop Builds | `desktop-builds.yml` | push, PR, manual |
@@ -61,7 +62,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 27
+- **Total workflows:** 28
 
 ---
 

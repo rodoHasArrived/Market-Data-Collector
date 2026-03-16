@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-16 11:51:42 UTC
+> Auto-generated on 2026-03-16 15:37:29 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -71,6 +71,7 @@ Market-Data-Collector/
 │   │   ├── build-observability.yml
 │   │   ├── close-duplicate-issues.yml
 │   │   ├── code-quality.yml
+│   │   ├── copilot-pull-request-reviewer.yml
 │   │   ├── copilot-setup-steps.yml
 │   │   ├── copilot-swe-agent-copilot.yml
 │   │   ├── desktop-builds.yml
