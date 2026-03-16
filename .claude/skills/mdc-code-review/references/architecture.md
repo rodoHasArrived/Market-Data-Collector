@@ -1,6 +1,8 @@
 # MarketDataCollector — Architecture Reference
 
-> Read this file when you need deep context on project structure, dependency rules, or specific subsystem design to give accurate review feedback.
+> **Last verified:** 2026-03-16 | **Refresh:** `python3 build/scripts/ai-repo-updater.py audit`
+>
+> Read this file when you need deep context on project structure, dependency rules, or specific subsystem design to give accurate review feedback. For current statistics, provider list, and key abstraction file paths, see [`../_shared/project-context.md`](../_shared/project-context.md) which is the single authoritative source.
 
 ## Table of Contents
 
@@ -15,16 +17,17 @@
 9. [Testing Architecture](#9-testing-architecture)
 10. [Naming & Coding Conventions](#10-naming--coding-conventions)
 11. [ADR Quick Reference](#11-adr-quick-reference)
+12. [Storage & Pipeline Integrity Rules](#12-storage--pipeline-integrity-rules)
 
 ---
 
 ## 1. Project Overview
 
-MarketDataCollector is a .NET 9 / C# 13 application (with F# 8.0 domain models) for capturing real-time market microstructure data (trades, quotes, L2 order books) from multiple providers. It also supports historical backfill from 10+ providers with automatic failover. It persists data via a backpressured pipeline to JSONL/Parquet storage with WAL durability. There are three UI surfaces: a WPF desktop app (recommended), a legacy UWP app, and a web dashboard; the WPF and web apps share services through a layered architecture.
+MarketDataCollector is a .NET 9 / C# 13 application (with F# 8.0 domain models) for capturing real-time market microstructure data (trades, quotes, L2 order books) from multiple providers. It also supports historical backfill from 10+ providers with automatic failover. It persists data via a backpressured pipeline to JSONL/Parquet storage with WAL durability. Two UI surfaces: a WPF desktop app (recommended) and a web dashboard; they share services through a layered architecture. **UWP was fully removed.**
 
 **Performance contract**: millisecond-accurate timestamping of market events. UI work must never starve the data pipeline.
 
-**Scale**: 734 source files (717 C#, 17 F#), 85 test files, 104 documentation files, 1,850+ commits.
+**Scale**: 779 source files (769 C#, 14 F#), 266 test files (~4,135 test methods across 4 test projects), 163 documentation files.
 
 ---
 
@@ -97,18 +100,17 @@ MarketDataCollector.sln
 │   │   │   └── [Domain]ViewModel.cs
 │   │   └── Services/                    # WPF-specific service wrappers
 │   │
-│   └── MarketDataCollector.Uwp/         # UWP desktop app (LEGACY — Windows 10+ only)
-│                                        # MSIX packaging, WinUI 3
-│                                        # DO NOT add new features here
 │
-├── tests/                               # 85 test files
-│   ├── Unit/                            # xUnit unit tests
-│   └── Integration/                     # Integration tests (provider, pipeline)
+├── tests/                               # 266 test files, ~4,135 test methods
+│   ├── MarketDataCollector.Tests/       # Main test project (unit + integration)
+│   ├── MarketDataCollector.FSharp.Tests/# F# domain tests
+│   ├── MarketDataCollector.Wpf.Tests/   # WPF service tests (Windows only, 324 tests)
+│   └── MarketDataCollector.Ui.Tests/    # UI service tests (Windows only, 927 tests)
 │
 ├── CLAUDE.md                            # Main AI assistant guide
 ├── Directory.Build.props                # Shared build properties
 ├── Directory.Packages.props             # Central package management
-├── Makefile                             # Build automation (66 targets)
+├── Makefile                             # Build automation (96 targets)
 ├── global.json                          # SDK version pinning
 └── MarketDataCollector.sln
 ```
@@ -422,8 +424,89 @@ tests/
 
 | ADR | Decision |
 |---|---|
+| ADR-001 | Provider abstraction via `IMarketDataClient` and `IHistoricalDataProvider` interfaces |
 | ADR-004 | Async streaming via `IAsyncEnumerable<T>` for all market data feeds |
-| ADR-013 | All internal queues must use `BoundedChannel` with `DropOldest` policy |
-| ADR-014 | JSON serialization uses source generators (`[JsonSerializable]`) — no reflection |
+| ADR-006 | Domain events: sealed record wrapper with static factories |
+| ADR-007 | WAL + pipeline durability: write WAL before in-memory enqueue; `AtomicFileWriter` for all sink writes |
+| ADR-008 | JSONL + Parquet simultaneous writes via `CompositeSink` |
+| ADR-009 | F# type-safe domain with C# interop via `FSharpOption<T>` and generated interop layer |
+| ADR-013 | All internal queues must use `BoundedChannel` with `DropOldest` policy via `EventPipelinePolicy.*.CreateChannel<T>()` |
+| ADR-014 | JSON serialization uses source generators (`[JsonSerializable]` on `MarketDataJsonContext`) — no reflection |
 | ADR-017 | WPF layer must not contain business logic; all logic goes in `Ui.Services` or `Core` |
 | ADR-021 | UI refresh interval is configurable via `IOptions<UiSettings>` — no hardcoded timers |
+
+---
+
+## 12. Storage & Pipeline Integrity Rules
+
+This section covers correctness invariants that the Storage & Pipeline Integrity lens (Lens 7) enforces.
+
+### Write Safety — AtomicFileWriter
+
+All `IStorageSink` implementations MUST route file writes through `AtomicFileWriter`:
+
+```csharp
+// WRONG — direct write produces partial JSONL on crash
+await using var fs = new FileStream(path, FileMode.Append);
+await JsonSerializer.SerializeAsync(fs, evt, ctx);
+
+// CORRECT — AtomicFileWriter writes to temp then renames
+await _atomicWriter.WriteAsync(path, async stream =>
+    await JsonSerializer.SerializeAsync(stream, evt, MarketDataJsonContext.Default.MarketEvent, ct));
+```
+
+### WAL Write Ordering
+
+The WAL entry MUST be written (and flushed) BEFORE the event is enqueued into the bounded channel:
+
+```csharp
+// CORRECT order — WAL first, then channel
+await _wal.WriteAsync(evt, ct);          // step 1: durable
+await _wal.FlushAsync(ct);               // step 2: fsync
+await _channel.Writer.WriteAsync(evt, ct); // step 3: in-memory
+```
+
+Reversing steps 1 and 3 means events are lost on crash between enqueue and WAL write.
+
+### Shutdown Flush Ordering
+
+On `DisposeAsync`, the correct order is:
+
+```csharp
+public async ValueTask DisposeAsync()
+{
+    _cts.Cancel();                          // 1. signal stop
+    _channel.Writer.Complete();             // 2. no more writes
+    await _flushLoop;                       // 3. drain remaining events
+    await _sink.FlushAsync(CancellationToken.None); // 4. flush sink
+    await _wal.FlushAsync(CancellationToken.None);  // 5. flush WAL
+    await _wal.DisposeAsync();              // 6. close WAL
+    await _sink.DisposeAsync();             // 7. close sink
+}
+```
+
+Skipping step 4 or 5 causes in-flight event loss on graceful shutdown.
+
+### IFlushable Contract
+
+All `IStorageSink` implementations must implement `IFlushable` (from `Core/Services/IFlushable.cs`):
+
+```csharp
+public interface IFlushable
+{
+    Task FlushAsync(CancellationToken ct = default);
+}
+```
+
+This allows the shutdown coordinator (`GracefulShutdownService`) to call `FlushAsync` in the correct order on all sinks.
+
+### Storage Sink Registration
+
+Sinks must be decorated with `[StorageSink]` for auto-discovery:
+
+```csharp
+[StorageSink("jsonl", description: "JSONL line-per-event storage")]
+public sealed class JsonlStorageSink : IStorageSink, IFlushable { ... }
+```
+
+Without this attribute, `StorageSinkRegistry` will not discover the sink in DI.

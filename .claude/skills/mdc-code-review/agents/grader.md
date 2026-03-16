@@ -52,13 +52,29 @@ Beyond the predefined expectations, verify these implicit quality claims:
 - Are allocation concerns in actual hot paths, or in one-time setup code?
 - Are structured logging suggestions correctly formatted (semantic parameters, not string interpolation)?
 
+**Storage & Pipeline findings accuracy (Lens 7):**
+- If a storage sink was reviewed: Did the reviewer flag direct `FileStream`/`File.WriteAllText` writes (should use `AtomicFileWriter`)?
+- If WAL code was reviewed: Did the reviewer check WAL flush ordering (WAL before channel enqueue)?
+- If a shutdown path was reviewed: Did the reviewer verify `FlushAsync` is called before `DisposeAsync`?
+- Are `[S1]`, `[S2]` etc. finding codes used for storage/pipeline integrity issues?
+
+**Multi-file review checks:**
+- If 2+ files were provided: Did the reviewer declare the file relationship map explicitly?
+- Did the output include a `## Cross-File Dependencies` section?
+- Were cross-file contract violations found (e.g., View accessing ViewModel private fields, consumer not calling FlushAsync on sink)?
+
+**Dual output compliance:**
+- For review-only requests: Does each CRITICAL or WARNING finding include a diff snippet showing the fix?
+- For refactoring requests: Do changed lines include inline `// [Mx]`/`// [Px]`/`// [Sx]` comments at the point of change?
+- Does the `// REVIEW SUMMARY` block enumerate ALL finding codes used in the body?
+
 **Conventions:**
 - Do suggested async methods have the `Async` suffix?
 - Are private fields prefixed with `_`?
 - Is `CancellationToken` parameter named `ct` or `cancellationToken`?
 
 **Output format:**
-- Does refactoring output include the `// REVIEW SUMMARY` block with finding codes (`[M1]`, `[P1]`, `[C1]`)?
+- Does refactoring output include the `// REVIEW SUMMARY` block with finding codes (`[M1]`, `[P1]`, `[S1]`, `[C1]`)?
 - Are severity levels (CRITICAL / WARNING / INFO) assigned correctly?
 - Is the namespace correct (`MarketDataCollector.Wpf.ViewModels` etc.)?
 

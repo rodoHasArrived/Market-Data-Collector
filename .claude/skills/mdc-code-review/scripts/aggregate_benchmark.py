@@ -335,6 +335,90 @@ def generate_markdown(benchmark: dict) -> str:
     return "\n".join(lines)
 
 
+def load_baseline(baseline_path: Path) -> dict:
+    """
+    Load benchmark_baseline.json and return a dict keyed by eval_id.
+
+    Returns empty dict if the file does not exist (baseline comparison skipped).
+    """
+    if not baseline_path.exists():
+        return {}
+
+    try:
+        with open(baseline_path) as f:
+            data = json.load(f)
+        baselines = {b["eval_id"]: b for b in data.get("baselines", [])}
+        baselines["_threshold_pp"] = data.get("regression_threshold_pp", 10)
+        baselines["_overall_minimum"] = data.get("overall_minimum_pass_rate", 0.75)
+        return baselines
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"Warning: Could not load baseline from {baseline_path}: {e}")
+        return {}
+
+
+def check_regressions(results: dict, baselines: dict) -> list[str]:
+    """
+    Compare per-eval pass rates against baselines.
+
+    Returns a list of warning strings for any eval that drops more than
+    regression_threshold_pp percentage points below its accepted baseline.
+    Also warns if the overall mean pass rate is below overall_minimum_pass_rate.
+    """
+    if not baselines:
+        return []
+
+    warnings = []
+    threshold_pp = baselines.get("_threshold_pp", 10)
+    overall_minimum = baselines.get("_overall_minimum", 0.75)
+
+    # Collect pass rates per eval across all configurations (use primary/with_skill if present)
+    primary_config = None
+    for config in results:
+        if "with_skill" in config or config == list(results.keys())[0]:
+            primary_config = config
+            break
+
+    if primary_config is None:
+        return []
+
+    eval_pass_rates: dict[int, list[float]] = {}
+    for run in results.get(primary_config, []):
+        eval_id = run.get("eval_id")
+        if eval_id is not None:
+            eval_pass_rates.setdefault(eval_id, []).append(run.get("pass_rate", 0.0))
+
+    all_rates = []
+    for eval_id, rates in eval_pass_rates.items():
+        if not rates:
+            continue
+        mean_rate = sum(rates) / len(rates)
+        all_rates.append(mean_rate)
+        baseline = baselines.get(eval_id)
+        if baseline is None:
+            continue
+
+        accepted = baseline["accepted_pass_rate"]
+        floor = accepted - (threshold_pp / 100.0)
+        if mean_rate < floor:
+            desc = baseline.get("description", f"eval-{eval_id}")
+            warnings.append(
+                f"REGRESSION eval-{eval_id} ({desc}): "
+                f"mean pass rate {mean_rate*100:.0f}% is more than {threshold_pp}pp below "
+                f"accepted baseline {accepted*100:.0f}% (floor: {floor*100:.0f}%)"
+            )
+
+    # Overall minimum check
+    if all_rates:
+        overall_mean = sum(all_rates) / len(all_rates)
+        if overall_mean < overall_minimum:
+            warnings.append(
+                f"OVERALL QUALITY: mean pass rate across all evals {overall_mean*100:.0f}% "
+                f"is below minimum threshold {overall_minimum*100:.0f}%"
+            )
+
+    return warnings
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Aggregate benchmark run results into summary statistics"
@@ -358,6 +442,21 @@ def main():
         "--output", "-o",
         type=Path,
         help="Output path for benchmark.json (default: <benchmark_dir>/benchmark.json)"
+    )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=None,
+        help=(
+            "Path to benchmark_baseline.json for regression checking. "
+            "Defaults to <skill_path>/evals/benchmark_baseline.json if --skill-path is set, "
+            "or auto-detected alongside evals.json."
+        )
+    )
+    parser.add_argument(
+        "--no-baseline",
+        action="store_true",
+        help="Skip baseline regression check even if a baseline file is found"
     )
 
     args = parser.parse_args()
@@ -395,6 +494,39 @@ def main():
         label = config.replace("_", " ").title()
         print(f"  {label}: {pr*100:.1f}% pass rate")
     print(f"  Delta:         {delta.get('pass_rate', '—')}")
+
+    # Baseline regression check
+    if not args.no_baseline:
+        baseline_path = args.baseline
+        if baseline_path is None:
+            # Auto-detect: prefer alongside skill evals.json
+            if args.skill_path:
+                candidate = Path(args.skill_path) / "evals" / "benchmark_baseline.json"
+                if candidate.exists():
+                    baseline_path = candidate
+            # Fall back to benchmark_dir parent's evals dir
+            if baseline_path is None:
+                for candidate in [
+                    args.benchmark_dir.parent / "evals" / "benchmark_baseline.json",
+                    args.benchmark_dir / "benchmark_baseline.json",
+                ]:
+                    if candidate.exists():
+                        baseline_path = candidate
+                        break
+
+        if baseline_path and baseline_path.exists():
+            baselines = load_baseline(baseline_path)
+            results = load_run_results(args.benchmark_dir)
+            regression_warnings = check_regressions(results, baselines)
+            if regression_warnings:
+                print(f"\n⚠️  BASELINE REGRESSIONS DETECTED ({len(regression_warnings)}):")
+                for w in regression_warnings:
+                    print(f"  {w}")
+                sys.exit(1)
+            else:
+                print(f"\n✓ All evals within baseline thresholds (baseline: {baseline_path.name})")
+        else:
+            print("\n(No baseline file found — skipping regression check)")
 
 
 if __name__ == "__main__":

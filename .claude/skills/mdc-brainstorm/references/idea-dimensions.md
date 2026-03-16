@@ -2,6 +2,53 @@
 
 Seeded concept bank organized by category. Use these as inspiration prompts, not final ideas — the goal is to develop them into full Idea Cards grounded in the MDC codebase.
 
+> **See also:** [`../../_shared/project-context.md`](../../_shared/project-context.md) for authoritative project stats, ADR table, and key abstraction file paths.
+
+---
+
+## 🗺️ Codebase Anchor Table
+
+Use these when referencing specific abstractions in ideas. File paths are relative to the repository root.
+
+| Concept | Interface / Class | File Path |
+|---------|-------------------|-----------|
+| Streaming provider contract | `IMarketDataClient` | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` |
+| Historical provider contract | `IHistoricalDataProvider` | `src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` |
+| Storage sink contract | `IStorageSink` | `src/MarketDataCollector.Storage/Interfaces/IStorageSink.cs` |
+| Event pipeline coordinator | `EventPipeline` | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` |
+| Write-ahead log | `WriteAheadLog` | `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs` |
+| Crash-safe file writes | `AtomicFileWriter` | `src/MarketDataCollector.Storage/Archival/AtomicFileWriter.cs` |
+| JSONL sink | `JsonlStorageSink` | `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs` |
+| Parquet sink | `ParquetStorageSink` | `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` |
+| MVVM base class | `BindableBase` | `src/MarketDataCollector.Wpf/ViewModels/BindableBase.cs` |
+| ICommand implementation | `RelayCommand` | `src/MarketDataCollector.Wpf/ViewModels/` |
+| JSON source-gen context | `MarketDataJsonContext` | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs` |
+| Multi-provider historical routing | `CompositeHistoricalDataProvider` | `src/MarketDataCollector.Infrastructure/Adapters/Core/` |
+| Backfill orchestration | `HistoricalBackfillService` | `src/MarketDataCollector.Application/Backfill/HistoricalBackfillService.cs` |
+| Gap detection | `GapBackfillService` | `src/MarketDataCollector.Application/Backfill/GapBackfillService.cs` |
+| Data quality orchestrator | `DataQualityMonitoringService` | `src/MarketDataCollector.Application/Monitoring/DataQuality/` |
+| Data completeness scoring | `CompletenessScoreCalculator` | `src/MarketDataCollector.Application/Monitoring/DataQuality/` |
+| Prometheus metrics | `PrometheusMetrics` | `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` |
+| Storage catalog | `StorageCatalogService` | `src/MarketDataCollector.Storage/Services/StorageCatalogService.cs` |
+| Tiered storage migration | `TierMigrationService` | `src/MarketDataCollector.Storage/Services/TierMigrationService.cs` |
+| Parquet conversion | `ParquetConversionService` | `src/MarketDataCollector.Storage/Services/ParquetConversionService.cs` |
+| F# validation pipeline | `ValidationPipeline` | `src/MarketDataCollector.FSharp/Validation/ValidationPipeline.fs` |
+| F# quote validator | `QuoteValidator` | `src/MarketDataCollector.FSharp/Validation/QuoteValidator.fs` |
+| F# trade validator | `TradeValidator` | `src/MarketDataCollector.FSharp/Validation/TradeValidator.fs` |
+| Provider SDK attribute | `DataSourceAttribute` | `src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs` |
+| Provider SDK discovery | `DataSourceRegistry` | `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs` |
+| Graceful shutdown | `GracefulShutdownService` | `src/MarketDataCollector.Application/Services/GracefulShutdownService.cs` |
+| Storage sink discovery | `StorageSinkRegistry` | `src/MarketDataCollector.Storage/StorageSinkRegistry.cs` |
+| Subscription orchestration | `SubscriptionOrchestrator` | `src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs` |
+| Failover provider | `FailoverAwareMarketDataClient` | `src/MarketDataCollector.Infrastructure/Adapters/Failover/` |
+| Alpaca streaming | `AlpacaMarketDataClient` | `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/` |
+| IB streaming | `IBMarketDataClient` | `src/MarketDataCollector.Infrastructure/Adapters/InteractiveBrokers/` |
+| WPF Dashboard page | `DashboardPage` | `src/MarketDataCollector.Wpf/Views/DashboardPage.xaml(.cs)` |
+| WPF Dashboard ViewModel | `DashboardViewModel` | `src/MarketDataCollector.Wpf/ViewModels/DashboardViewModel.cs` |
+| Configuration pipeline | `ConfigurationPipeline` | `src/MarketDataCollector.Application/Config/ConfigurationPipeline.cs` |
+| Hot-path batch serializer | `HotPathBatchSerializer` | `src/MarketDataCollector.Application/Pipeline/HotPathBatchSerializer.cs` |
+| Portable data packaging | `PortableDataPackager` | `src/MarketDataCollector.Storage/Packaging/PortableDataPackager.cs` |
+
 ---
 
 ## 🔌 Data Access & APIs
