@@ -15,6 +15,9 @@ description: >
 
 # MarketDataCollector Code Review
 
+> **GitHub Copilot / Actions equivalent:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md) — same 6-lens framework as a GitHub agent definition.
+> **Navigation index:** [`docs/ai/skills/README.md`](../../../docs/ai/skills/README.md)
+
 ## Bundled Resources
 
 ```

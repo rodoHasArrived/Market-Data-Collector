@@ -49,11 +49,11 @@ These files are not linked from any other Markdown file in the repository:
 - `.claude/skills/mdc-code-review/agents/grader.md`
 - `.claude/skills/mdc-code-review/references/architecture.md`
 - `.claude/skills/mdc-code-review/references/schemas.md`
-- `.github/CS0101_FIX_SUMMARY.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
-- `.github/QUICKSTART.md`
-- `.github/TEST_MATRIX_FIX_SUMMARY.md`
-- `.github/WORKFLOW_IMPROVEMENTS.md`
+- `docs/archived/CS0101_FIX_SUMMARY.md`
+- `docs/archived/QUICKSTART_2026-01-08.md`
+- `docs/archived/TEST_MATRIX_FIX_SUMMARY.md`
+- `docs/archived/WORKFLOW_IMPROVEMENTS_2026-01-08.md`
 - `.github/agents/code-review-agent.md`
 - `.github/instructions/csharp.instructions.md`
 - `.github/instructions/docs.instructions.md`

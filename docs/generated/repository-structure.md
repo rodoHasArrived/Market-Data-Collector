@@ -95,17 +95,13 @@ Market-Data-Collector/
 │   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── copilot-instructions.md
-│   ├── CS0101_FIX_SUMMARY.md
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml
 │   ├── markdown-link-check-config.json
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── pull_request_template_desktop.md
-│   ├── QUICKSTART.md
-│   ├── spellcheck-config.yml
-│   ├── TEST_MATRIX_FIX_SUMMARY.md
-│   └── WORKFLOW_IMPROVEMENTS.md
+│   └── spellcheck-config.yml
 ├── benchmarks/  # Performance benchmarks
 │   ├── MarketDataCollector.Benchmarks/
 │   │   ├── CollectorBenchmarks.cs
