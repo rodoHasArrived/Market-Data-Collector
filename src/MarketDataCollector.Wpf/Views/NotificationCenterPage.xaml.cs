@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using MarketDataCollector.Ui.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
@@ -22,7 +23,7 @@ public partial class NotificationCenterPage : Page
     private readonly ObservableCollection<NotificationItem> _allNotifications = new();
     private readonly ObservableCollection<NotificationItem> _filteredNotifications = new();
     private bool _suppressFilterEvents;
-    private System.Timers.Timer? _alertRefreshTimer;
+    private DispatcherTimer? _alertRefreshTimer;
 
     public NotificationCenterPage(WpfServices.NotificationService notificationService)
     {
@@ -49,12 +50,12 @@ public partial class NotificationCenterPage : Page
         RefreshAlertSummary();
 
         // Refresh alert display periodically to update snooze expiry
-        _alertRefreshTimer = new System.Timers.Timer(10000);
-        _alertRefreshTimer.Elapsed += (_, _) => Dispatcher.InvokeAsync(() =>
+        _alertRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+        _alertRefreshTimer.Tick += (_, _) =>
         {
             RefreshGroupedAlerts();
             RefreshAlertSummary();
-        });
+        };
         _alertRefreshTimer.Start();
     }
 
@@ -64,7 +65,6 @@ public partial class NotificationCenterPage : Page
         _alertService.AlertRaised -= OnAlertChanged;
         _alertService.AlertResolved -= OnAlertChanged;
         _alertRefreshTimer?.Stop();
-        _alertRefreshTimer?.Dispose();
     }
 
     private void OnAlertChanged(object? sender, AlertEventArgs e)

@@ -6,14 +6,13 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
-using Timer = System.Timers.Timer;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -27,7 +26,7 @@ public partial class OrderBookPage : Page
     private readonly ObservableCollection<OrderBookDisplayLevel> _asks = new();
     private readonly ObservableCollection<RecentTradeModel> _recentTrades = new();
     private readonly List<string> _availableSymbols = new();
-    private Timer? _refreshTimer;
+    private DispatcherTimer? _refreshTimer;
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
     private string _selectedSymbol = string.Empty;
@@ -65,7 +64,6 @@ public partial class OrderBookPage : Page
     {
         _connectionService.StateChanged -= OnConnectionStateChanged;
         _refreshTimer?.Stop();
-        _refreshTimer?.Dispose();
         _cts?.Cancel();
         _cts?.Dispose();
     }
@@ -76,8 +74,8 @@ public partial class OrderBookPage : Page
         await LoadSymbolsAsync();
 
         // Start refresh timer (every 250ms for order book updates)
-        _refreshTimer = new Timer(250);
-        _refreshTimer.Elapsed += async (_, _) => await Dispatcher.InvokeAsync(RefreshOrderBookAsync);
+        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        _refreshTimer.Tick += async (_, _) => await RefreshOrderBookAsync();
         _refreshTimer.Start();
     }
 

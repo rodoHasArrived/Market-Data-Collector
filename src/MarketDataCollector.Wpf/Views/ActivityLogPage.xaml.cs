@@ -8,13 +8,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using WpfServices = MarketDataCollector.Wpf.Services;
 using Microsoft.Win32;
-using Timer = System.Timers.Timer;
 
 using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
@@ -27,7 +26,7 @@ public partial class ActivityLogPage : Page
     private readonly HttpClient _httpClient = new();
     private readonly ObservableCollection<LogEntryModel> _allLogs = new();
     private readonly ObservableCollection<LogEntryModel> _filteredLogs = new();
-    private Timer? _refreshTimer;
+    private DispatcherTimer? _refreshTimer;
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
     private string _levelFilter = "All";
@@ -64,7 +63,6 @@ public partial class ActivityLogPage : Page
     {
         _loggingService.LogWritten -= OnLogEntryAdded;
         _refreshTimer?.Stop();
-        _refreshTimer?.Dispose();
         _cts?.Cancel();
         _cts?.Dispose();
     }
@@ -74,8 +72,8 @@ public partial class ActivityLogPage : Page
         await LoadLogsAsync();
 
         // Start refresh timer (every 5 seconds to check for new logs from API)
-        _refreshTimer = new Timer(5000);
-        _refreshTimer.Elapsed += async (_, _) => await Dispatcher.InvokeAsync(LoadLogsAsync);
+        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _refreshTimer.Tick += async (_, _) => await LoadLogsAsync();
         _refreshTimer.Start();
     }
 

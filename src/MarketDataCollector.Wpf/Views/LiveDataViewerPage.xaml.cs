@@ -6,15 +6,14 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
-using Timer = System.Timers.Timer;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -26,8 +25,8 @@ public partial class LiveDataViewerPage : Page
     private readonly HttpClient _httpClient = new();
     private readonly ObservableCollection<LiveDataEventModel> _liveEvents = new();
     private readonly List<string> _availableSymbols = new();
-    private Timer? _refreshTimer;
-    private Timer? _statsTimer;
+    private DispatcherTimer? _refreshTimer;
+    private DispatcherTimer? _statsTimer;
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
     private string _selectedSymbol = string.Empty;
@@ -81,9 +80,7 @@ public partial class LiveDataViewerPage : Page
     {
         _connectionService.StateChanged -= OnConnectionStateChanged;
         _refreshTimer?.Stop();
-        _refreshTimer?.Dispose();
         _statsTimer?.Stop();
-        _statsTimer?.Dispose();
         _cts?.Cancel();
         _cts?.Dispose();
     }
@@ -94,13 +91,13 @@ public partial class LiveDataViewerPage : Page
         await LoadSymbolsAsync();
 
         // Start data refresh timer (every 500ms for live data)
-        _refreshTimer = new Timer(500);
-        _refreshTimer.Elapsed += async (_, _) => await Dispatcher.InvokeAsync(RefreshLiveDataAsync);
+        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _refreshTimer.Tick += async (_, _) => await RefreshLiveDataAsync();
         _refreshTimer.Start();
 
         // Start stats update timer (every second)
-        _statsTimer = new Timer(1000);
-        _statsTimer.Elapsed += (_, _) => Dispatcher.Invoke(UpdateStats);
+        _statsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _statsTimer.Tick += (_, _) => UpdateStats();
         _statsTimer.Start();
     }
 
