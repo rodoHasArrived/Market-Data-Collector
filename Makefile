@@ -712,6 +712,7 @@ skill-run-eval: ## Run the eval suite  (RUNS=3 to set runs_per_query)
 	@$(SKILLS_CLI) run-script mdc-code-review run-eval --param runs_per_query=$(RUNS)
 
 skill-benchmark: ## Aggregate benchmark results  (WORKSPACE=<dir> required)
+	@[ -n "$(WORKSPACE)" ] || { echo "$(YELLOW)ERROR: WORKSPACE is required. Usage: make skill-benchmark WORKSPACE=<dir>$(NC)"; exit 1; }
 	@echo "$(BLUE)Aggregating benchmark results from '$(WORKSPACE)'...$(NC)"
 	@$(SKILLS_CLI) run-script mdc-code-review aggregate-benchmark \
 		--param workspace=$(WORKSPACE)
