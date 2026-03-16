@@ -90,7 +90,6 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── bottleneck-detection.yml
 │   │   ├── build-observability.yml
@@ -116,23 +115,18 @@ Market-Data-Collector/
 │   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
-│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
 │   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── copilot-instructions.md
-│   ├── CS0101_FIX_SUMMARY.md
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml
 │   ├── markdown-link-check-config.json
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── pull_request_template_desktop.md
-│   ├── QUICKSTART.md
-│   ├── spellcheck-config.yml
-│   ├── TEST_MATRIX_FIX_SUMMARY.md
-│   └── WORKFLOW_IMPROVEMENTS.md
+│   └── spellcheck-config.yml
 ├── benchmarks/  # Performance benchmarks
 │   ├── MarketDataCollector.Benchmarks/
 │   │   ├── CollectorBenchmarks.cs

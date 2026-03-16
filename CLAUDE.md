@@ -242,7 +242,6 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── bottleneck-detection.yml
 │   │   ├── build-observability.yml
@@ -268,23 +267,18 @@ Market-Data-Collector/
 │   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
-│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
 │   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── copilot-instructions.md
-│   ├── CS0101_FIX_SUMMARY.md
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml
 │   ├── markdown-link-check-config.json
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── pull_request_template_desktop.md
-│   ├── QUICKSTART.md
-│   ├── spellcheck-config.yml
-│   ├── TEST_MATRIX_FIX_SUMMARY.md
-│   └── WORKFLOW_IMPROVEMENTS.md
+│   └── spellcheck-config.yml
 ├── benchmarks/  # Performance benchmarks
 │   ├── MarketDataCollector.Benchmarks/
 │   │   ├── CollectorBenchmarks.cs
@@ -424,15 +418,24 @@ Market-Data-Collector/
 │   │   ├── _template.md
 │   │   └── README.md
 │   ├── ai/
-│   │   ├── claude/
+│   │   ├── claude/                  # Claude Code specialized guides
 │   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
 │   │   │   ├── CLAUDE.providers.md
 │   │   │   ├── CLAUDE.repo-updater.md
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
-│   │   ├── copilot/
-│   │   │   └── instructions.md
+│   │   ├── copilot/                 # GitHub Copilot resources
+│   │   │   ├── instructions.md
+│   │   │   └── ai-sync-workflow.md
+│   │   ├── agents/                  # Navigation index → .github/agents/
+│   │   │   └── README.md
+│   │   ├── skills/                  # Navigation index → .claude/skills/
+│   │   │   └── README.md
+│   │   ├── instructions/            # Navigation index → .github/instructions/
+│   │   │   └── README.md
+│   │   ├── prompts/                 # Navigation index → .github/prompts/
+│   │   │   └── README.md
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
 │   ├── architecture/

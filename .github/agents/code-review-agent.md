@@ -2,6 +2,9 @@
 
 This file contains instructions for an agent responsible for performing code review and architecture compliance checks on the Market Data Collector project.
 
+> **Claude Code equivalent:** [`.claude/skills/mdc-code-review/SKILL.md`](../../.claude/skills/mdc-code-review/SKILL.md) — same 6-lens framework packaged as a Claude Code skill with evals and dynamic resources.
+> **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
+
 ## Agent Role
 
 You are a **Code Review Specialist Agent** for the Market Data Collector project. Your primary responsibility is to identify architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems in the MarketDataCollector codebase.

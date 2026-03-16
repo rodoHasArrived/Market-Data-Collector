@@ -46,6 +46,15 @@ Documents are archived when:
 | **desktop-devex-high-value-improvements.md** | 2026-02-20 | Superseded by implementation guide and executive summary | [Desktop Platform Improvements](../development/desktop-platform-improvements-implementation-guide.md) |
 | **ROADMAP_UPDATE_SUMMARY.md** | 2026-02-20 | PR summary artifact, content in ROADMAP.md | [ROADMAP.md](../status/ROADMAP.md) |
 
+### CI/CD & Build Fix Summaries (moved from `.github/`)
+
+| Document | Date Archived | Reason | Current Reference |
+|----------|---------------|--------|-------------------|
+| **QUICKSTART_2026-01-08.md** | 2026-03-16 | Historical snapshot of CI/CD additions (Jan 2026); superseded by `.github/workflows/README.md` | [workflows/README.md](../../.github/workflows/README.md) |
+| **WORKFLOW_IMPROVEMENTS_2026-01-08.md** | 2026-03-16 | Explicitly self-marked DEPRECATED; workflows since consolidated from 25→17; superseded by `workflows/README.md` | [workflows/README.md](../../.github/workflows/README.md) |
+| **CS0101_FIX_SUMMARY.md** | 2026-03-16 | Specific bug fix record (duplicate type CS0101, Feb 2026); build issue resolved | — |
+| **TEST_MATRIX_FIX_SUMMARY.md** | 2026-03-16 | Test infrastructure fix record (missing Integration trait, Feb 2026); issue resolved | — |
+
 ### PR and Change Summaries
 
 | Document | Date Archived | Reason | Current Reference |
