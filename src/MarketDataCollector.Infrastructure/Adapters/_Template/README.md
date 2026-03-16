@@ -61,7 +61,7 @@ Implement only the file(s) relevant to your provider — not every provider need
 - `*MarketDataClient.cs` — implement `IMarketDataClient`; prefer `WebSocketProviderBase`
   for WebSocket-based providers.
 - `*HistoricalDataProvider.cs` — extend `BaseHistoricalDataProvider`; use
-  `RateLimiter.WaitAsync()` (built into the base class) for rate limiting.
+  `WaitForRateLimitSlotAsync(ct)` (built into the base class) for rate limiting.
 - `*SymbolSearchProvider.cs` — extend `BaseSymbolSearchProvider`.
 - `*Factory.cs` — static creation helpers and optional `IProviderModule` for DI registration.
 - Apply `[DataSource]` and `[ImplementsAdr]` attributes as shown in the templates.

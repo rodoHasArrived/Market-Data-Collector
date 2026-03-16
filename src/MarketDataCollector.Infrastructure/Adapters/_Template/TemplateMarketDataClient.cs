@@ -45,15 +45,19 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     /// </summary>
     /// <param name="tradeCollector">Collector for incoming trade events.</param>
     /// <param name="quoteCollector">Collector for incoming quote events.</param>
-    // TODO: Add the provider-specific options parameter and validate credentials.
+    // Add the provider-specific options parameter and validate credentials, e.g.:
+    //   public TemplateMarketDataClient(
+    //       TradeDataCollector tradeCollector,
+    //       QuoteCollector quoteCollector,
+    //       TemplateStreamingOptions options)
     public TemplateMarketDataClient(
         TradeDataCollector tradeCollector,
         QuoteCollector quoteCollector
-        /* TODO: TemplateOptions options */)
+        /* TemplateStreamingOptions options */)
         : base(
             providerName: "Template",
-            // TODO: Use ProviderSubscriptionRanges.TemplateStart once a range is allocated.
-            subscriptionStartId: 10000)
+            // Allocate a range in ProviderSubscriptionRanges.cs (600,000+ are reserved for future providers).
+            subscriptionStartId: ProviderSubscriptionRanges.ReservedStart)
     {
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
@@ -65,7 +69,7 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     // ------------------------------------------------------------------ //
 
     /// <inheritdoc/>
-    // TODO: Set to true when credentials are configured; false otherwise (stub mode).
+    // Set to true when credentials are configured; false otherwise (stub mode).
     public override bool IsEnabled => false;
 
     // ------------------------------------------------------------------ //
@@ -82,11 +86,11 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     public override string ProviderDescription => "TODO: Add a description of the provider.";
 
     /// <inheritdoc/>
-    // TODO: Set an appropriate priority. Lower = tried first in failover chains.
+    // Set an appropriate priority. Lower = tried first in failover chains.
     public override int ProviderPriority => 50;
 
     /// <inheritdoc/>
-    // TODO: Adjust capability flags to match what the provider actually supports.
+    // Adjust capability flags to match what the provider actually supports.
     public override ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.Streaming(
         trades: true,
         quotes: false,
@@ -95,7 +99,7 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     public override ProviderCredentialField[] ProviderCredentialFields =>
     [
-        // TODO: Replace with the actual credential fields and environment variable names.
+        // Replace with the actual credential fields and environment variable names.
         new ProviderCredentialField("ApiKey", "TEMPLATE__APIKEY", "API Key", Required: true)
     ];
 
@@ -110,7 +114,7 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
         var id = Subscriptions.Subscribe(cfg.Symbol, "trades");
         if (id == -1) return -1;
 
-        // TODO: Send the provider-specific subscribe message.
+        // Send the provider-specific subscribe message, e.g.:
         // _ = SendAsync(BuildSubscribeMessage(cfg.Symbol), CancellationToken.None);
         return id;
     }
@@ -121,13 +125,13 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
         var sub = Subscriptions.Unsubscribe(subscriptionId);
         if (sub is not null)
         {
-            // TODO: Send the provider-specific unsubscribe message.
+            // Send the provider-specific unsubscribe message, e.g.:
             // _ = SendAsync(BuildUnsubscribeMessage(sub.Symbol), CancellationToken.None);
         }
     }
 
     /// <inheritdoc/>
-    // TODO: Implement if the provider supports market depth; otherwise return -1.
+    // Implement if the provider supports market depth; otherwise return -1.
     public override int SubscribeMarketDepth(SymbolConfig cfg) => -1;
 
     /// <inheritdoc/>
@@ -140,17 +144,16 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     protected override Uri BuildWebSocketUri()
     {
-        // TODO: Return the provider-specific WebSocket URI.
-        // Use constants from TemplateConstants.cs, e.g.:
-        //   return TemplateEndpoints.WssUri(_options.Feed);
+        // Return the provider-specific WebSocket URI using constants from TemplateConstants.cs, e.g.:
+        //   return new Uri(TemplateEndpoints.WssUri);
+        //   return new Uri($"{TemplateEndpoints.WssUri}/{_options.Feed}");
         throw new NotImplementedException("TODO: Implement BuildWebSocketUri");
     }
 
     /// <inheritdoc/>
     protected override async Task AuthenticateAsync(CancellationToken ct)
     {
-        // TODO: Send the provider-specific authentication message.
-        // Example:
+        // Send the provider-specific authentication message, e.g.:
         //   var auth = JsonSerializer.Serialize(new { action = "auth", key = _options.ApiKey });
         //   await SendAsync(auth, ct).ConfigureAwait(false);
         await Task.CompletedTask.ConfigureAwait(false);
@@ -160,8 +163,7 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     protected override Task HandleMessageAsync(string message)
     {
-        // TODO: Parse the incoming JSON message and route to the appropriate collector.
-        // Example:
+        // Parse the incoming JSON message and route to the appropriate collector, e.g.:
         //   using var doc = JsonDocument.Parse(message);
         //   var type = doc.RootElement.GetProperty("type").GetString();
         //   if (type == TemplateMessageTypes.Trade) HandleTrade(doc.RootElement);
@@ -171,8 +173,7 @@ public sealed class TemplateMarketDataClient : WebSocketProviderBase
     /// <inheritdoc/>
     protected override async Task ResubscribeAsync(CancellationToken ct)
     {
-        // TODO: Re-subscribe to all active symbols after reconnection.
-        // Example:
+        // Re-subscribe to all active symbols after reconnection, e.g.:
         //   foreach (var sym in Subscriptions.GetActiveSymbols())
         //       await SendAsync(BuildSubscribeMessage(sym), ct).ConfigureAwait(false);
         await Task.CompletedTask.ConfigureAwait(false);
