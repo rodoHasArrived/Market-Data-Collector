@@ -116,7 +116,7 @@ jobs:
         EXIT_CODE=0
         
         # Check for deprecated actions
-        if grep -r "actions/checkout@v[1-5]" .github/workflows/; then
+        if grep -r "actions/checkout@v[1-3]" .github/workflows/; then
           echo "⚠️  Warning: Found deprecated checkout action versions"
           echo "   Consider upgrading to actions/checkout@v4"
         fi
@@ -133,12 +133,18 @@ jobs:
         
         # Check for potentially insecure patterns
         EXPR_OPEN='${''{' # avoid GitHub Actions expression parsing
-        if grep -r "${EXPR_OPEN}.*github.event.issue.title" .github/workflows/; then
+        UNSAFE_TITLE=$(grep -rh "${EXPR_OPEN}.*github.event.issue.title" .github/workflows/ 2>/dev/null | \
+          grep -Ev '[[:space:]]*[A-Z_][A-Z0-9_]*:[[:space:]]*\$\{' 2>/dev/null || true)
+        if [ -n "$UNSAFE_TITLE" ]; then
+          echo "$UNSAFE_TITLE"
           echo "❌ Error: Potential script injection via issue title"
           EXIT_CODE=1
         fi
 
-        if grep -r "${EXPR_OPEN}.*github.event.comment.body" .github/workflows/; then
+        UNSAFE_COMMENT=$(grep -rh "${EXPR_OPEN}.*github.event.comment.body" .github/workflows/ 2>/dev/null | \
+          grep -Ev '[[:space:]]*[A-Z_][A-Z0-9_]*:[[:space:]]*\$\{' 2>/dev/null || true)
+        if [ -n "$UNSAFE_COMMENT" ]; then
+          echo "$UNSAFE_COMMENT"
           echo "❌ Error: Potential script injection via comment body"
           EXIT_CODE=1
         fi
