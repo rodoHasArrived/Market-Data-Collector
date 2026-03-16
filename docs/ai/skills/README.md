@@ -19,6 +19,7 @@ canonical 6-lens framework defined in
 [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md).
 
 **Trigger conditions** (from system prompt):
+
 - User asks to review, audit, refactor, or improve C#/F# code
 - Code references `MarketDataCollector` namespaces, `BindableBase`, `EventPipeline`,
   `IMarketDataClient`, `IStorageSink`, or `ProviderSdk` types
@@ -27,7 +28,7 @@ canonical 6-lens framework defined in
 **Bundled resources:**
 
 | Resource | Purpose |
-|----------|---------|
+| ---------- | ------- |
 | `references/architecture.md` | Deep solution layout, dependency graph, F# interop rules |
 | `references/schemas.md` | JSON schemas for eval artifacts |
 | `agents/grader.md` | Assertions grader for skill evaluation |
@@ -38,32 +39,58 @@ canonical 6-lens framework defined in
 | `scripts/package_skill.py` | Package skill into `.skill` file |
 
 **Dynamic resources** (refreshed on every read):
+
 - `project-stats` — Live source/test file counts from the filesystem
 - `git-context` — Current branch, last relevant commit, changed files
+
+---
+
+### mdc-brainstorm
+
+**Directory:** [`.claude/skills/mdc-brainstorm/`](../../../.claude/skills/mdc-brainstorm/)
+**Entry point:** [`.claude/skills/mdc-brainstorm/SKILL.md`](../../../.claude/skills/mdc-brainstorm/SKILL.md)
+
+Brainstorming, ideation, and creative feature exploration skill for the MarketDataCollector project.
+
+**Trigger conditions** (from system prompt):
+
+- User wants to generate new ideas, features, or improvements for MarketDataCollector
+- User asks "what could we add", "how could we improve", "what features should we build"
+- Tasks involving architecture brainstorms, user growth strategy, or technical debt ideation
+- User describes a pain point or domain problem and wants ideas for solving it
+
+**Bundled resources:**
+
+| Resource | Purpose |
+| ---------- | ------- |
+| `references/idea-dimensions.md` | Idea evaluation dimensions and scoring framework |
+| `references/competitive-landscape.md` | Competitive analysis and differentiation context |
 
 ---
 
 ### ai-docs-maintain
 
 **Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
-*(code-defined only — no separate directory)*
+_(code-defined only — no separate directory)_
 
 AI documentation maintenance skill. Delegates to `build/scripts/docs/ai-docs-maintenance.py`.
 
 **Trigger conditions:**
+
 - User asks to check AI doc freshness, detect drift, archive stale docs, or validate cross-references
 - Tasks involving "update AI docs", "check doc staleness", or "sync AI instructions"
 
 **Available scripts:**
 
 | Script | Purpose |
-|--------|---------|
+| -------- | ------- |
 | `run-freshness` | Check staleness of all AI docs (60-day warning, 120-day critical) |
 | `run-drift` | Detect divergence between docs and code reality |
 | `run-full` | Run all checks (freshness + drift + refs + archive) |
 | `run-archive` | Preview (or execute) stale doc archiving |
 
 **Available resource:**
+
 - `doc-health-summary` — Live health summary (stale count, drift items, broken refs)
 
 ---
@@ -100,11 +127,11 @@ python3 .claude/skills/mdc-code-review/eval-viewer/generate_review.py
 ## Related Resources
 
 | Resource | Purpose |
-|----------|---------|
+| ---------- | ------- |
 | [`docs/ai/agents/README.md`](../agents/README.md) | GitHub agent equivalents (Copilot) |
 | [`docs/ai/README.md`](../README.md) | Master AI resource index |
 | [`CLAUDE.md`](../../../CLAUDE.md) | Root project context |
 
 ---
 
-*Last Updated: 2026-03-16*
+_Last Updated: 2026-03-16_
