@@ -26,6 +26,8 @@ using MarketDataCollector.Storage.Maintenance;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Services;
 using MarketDataCollector.Storage.Sinks;
+using MarketDataCollector.Contracts.Store;
+using MarketDataCollector.Storage.Store;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -404,6 +406,16 @@ public static class ServiceCompositionRoot
             var configStore = sp.GetRequiredService<ConfigStore>();
             var config = configStore.Load();
             return new HistoricalDataQueryService(config.DataRoot);
+        });
+
+        // Unified market data read abstraction (IMarketDataStore)
+        // Backed by JSONL storage; extend by replacing with CompositeMarketDataStore
+        // when additional tiers (Parquet, object store) are available.
+        services.AddSingleton<IMarketDataStore>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            return new JsonlMarketDataStore(config.DataRoot);
         });
 
         // Diagnostic bundle generator
