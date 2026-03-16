@@ -66,7 +66,6 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── bottleneck-detection.yml
 │   │   ├── build-observability.yml
@@ -91,7 +90,6 @@ Market-Data-Collector/
 │   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
-│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
 │   │   ├── update-uml-diagrams.yml
@@ -254,7 +252,16 @@ Market-Data-Collector/
 │   │   │   ├── CLAUDE.storage.md
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
-│   │   │   └── instructions.md
+│   │   │   ├── instructions.md
+│   │   │   └── ai-sync-workflow.md
+│   │   ├── agents/
+│   │   │   └── README.md
+│   │   ├── skills/
+│   │   │   └── README.md
+│   │   ├── instructions/
+│   │   │   └── README.md
+│   │   ├── prompts/
+│   │   │   └── README.md
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
 │   ├── architecture/

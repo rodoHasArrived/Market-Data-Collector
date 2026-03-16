@@ -60,9 +60,8 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/instructions/dotnet-tests.instructions.md`
 - `.github/instructions/wpf.instructions.md`
 - `.github/pull_request_template_desktop.md`
-- `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
-- `.github/workflows/TESTING_AI_SYNC.md`
+- `docs/ai/copilot/ai-sync-workflow.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
 - ... and 21 more
