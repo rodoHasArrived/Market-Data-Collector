@@ -784,7 +784,7 @@ jobs:
           steps.changes.outputs.has_changes == 'true' &&
           github.event_name == 'workflow_dispatch' &&
           github.event.inputs.dry_run == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs-automation-diff
           path: docs-automation.patch
@@ -1115,7 +1115,7 @@ jobs:
           fi
 
       - name: Upload scan results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: todo-scan-results
           path: |
