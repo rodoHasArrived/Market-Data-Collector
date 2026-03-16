@@ -26,7 +26,7 @@
         icons desktop desktop-publish install-hooks \
         build-wpf test-desktop-services desktop-dev-bootstrap \
         ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-audit-ai-docs ai-verify ai-report \
-        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive
+        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute
 
 # Default target
 .DEFAULT_GOAL := help
