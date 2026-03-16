@@ -1,14 +1,12 @@
 name: Copilot Pull Request Reviewer
 
+# Runs on every PR so all changes receive a review comment.
+# The analysis step filters to .cs/.fs files internally; PRs with
+# no code changes receive an "APPROVED – no findings" comment.
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - 'src/**/*.cs'
-      - 'src/**/*.fs'
-      - 'tests/**/*.cs'
-      - 'tests/**/*.fs'
-      - 'benchmarks/**/*.cs'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -296,7 +294,7 @@ jobs:
           fi
 
       - name: Post PR review comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs   = require('fs');
