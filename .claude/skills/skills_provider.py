@@ -1,13 +1,17 @@
 """Code-defined skills provider for MarketDataCollector.
 
-Creates a :class:`SkillsProvider` that exposes the ``mdc-code-review``
-skill both as a file-based skill (discovered from the ``mdc-code-review/``
-directory) and as a code-defined skill.
+Creates a :class:`SkillsProvider` that exposes two skills:
 
-When both exist with the same name the file-based version takes precedence,
-so the code-defined definition acts as a documented fallback and as the host
-for **dynamic resources** and **in-process scripts** that cannot be expressed
-as static files.
+1. ``mdc-code-review`` — Code review and architecture compliance, available
+   both as a file-based skill (discovered from the ``mdc-code-review/``
+   directory) and as a code-defined skill.  When both exist the file-based
+   version takes precedence; the code-defined definition acts as a fallback
+   and hosts **dynamic resources** and **in-process scripts**.
+
+2. ``ai-docs-maintain`` — AI documentation maintenance (freshness checks,
+   drift detection, cross-reference validation, stale doc archiving).
+   Purely code-defined with scripts that delegate to
+   ``build/scripts/docs/ai-docs-maintenance.py``.
 
 Usage (from a custom agent or MCP server)::
 
@@ -24,6 +28,9 @@ Usage (from a custom agent or MCP server)::
 
     # Execute a code-defined script
     result = skills_provider.run_skill_script("mdc-code-review", "validate-skill")
+
+    # AI docs maintenance
+    report = skills_provider.run_skill_script("ai-docs-maintain", "run-full")
 """
 
 from __future__ import annotations
@@ -195,21 +202,58 @@ ai_docs_maintain_skill = Skill(
 )
 
 
+_AI_DOCS_SCRIPT = _REPO_ROOT / "build" / "scripts" / "docs" / "ai-docs-maintenance.py"
+
+
+def _run_ai_docs_cmd(command: str, extra_args: list[str] | None = None,
+                     timeout: int = 30) -> str:
+    """Run an ai-docs-maintenance.py command and return output."""
+    cmd = [sys.executable, str(_AI_DOCS_SCRIPT), command]
+    if extra_args:
+        cmd.extend(extra_args)
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True,
+            cwd=str(_REPO_ROOT), timeout=timeout,
+        )
+        return result.stdout.strip() or result.stderr.strip()
+    except (subprocess.SubprocessError, OSError) as exc:
+        return f"Error: {exc}"
+
+
+@ai_docs_maintain_skill.resource(
+    name="doc-health-summary",
+    description=(
+        "Live AI documentation health summary: stale doc count, drift items, "
+        "and broken references. Refreshed on every read."
+    ),
+)
+def doc_health_summary() -> Any:
+    """Return current AI doc health status from the maintenance script."""
+    import json as _json
+    raw = _run_ai_docs_cmd("full", timeout=60)
+    try:
+        data = _json.loads(raw)
+        s = data.get("summary", {})
+        lines = [
+            f"Stale docs    : {s.get('stale_docs', 0)}",
+            f"Critical      : {s.get('critical', 0)}",
+            f"Warnings      : {s.get('warning', 0)}",
+            f"Drift items   : {s.get('drift_items', 0)}",
+            f"Info          : {s.get('info', 0)}",
+        ]
+        return "\n".join(lines)
+    except (_json.JSONDecodeError, KeyError):
+        return raw
+
+
 @ai_docs_maintain_skill.script(
     name="run-freshness",
     description="Check staleness of all AI documentation files. Returns JSON report.",
 )
 def run_freshness_script() -> str:
     """Execute ai-docs-maintenance.py freshness check."""
-    script = _REPO_ROOT / "build" / "scripts" / "docs" / "ai-docs-maintenance.py"
-    try:
-        result = subprocess.run(
-            [sys.executable, str(script), "freshness"],
-            capture_output=True, text=True, cwd=str(_REPO_ROOT), timeout=30,
-        )
-        return result.stdout.strip() or result.stderr.strip()
-    except (subprocess.SubprocessError, OSError) as exc:
-        return f"Error: {exc}"
+    return _run_ai_docs_cmd("freshness")
 
 
 @ai_docs_maintain_skill.script(
@@ -218,15 +262,7 @@ def run_freshness_script() -> str:
 )
 def run_drift_script() -> str:
     """Execute ai-docs-maintenance.py drift check."""
-    script = _REPO_ROOT / "build" / "scripts" / "docs" / "ai-docs-maintenance.py"
-    try:
-        result = subprocess.run(
-            [sys.executable, str(script), "drift"],
-            capture_output=True, text=True, cwd=str(_REPO_ROOT), timeout=30,
-        )
-        return result.stdout.strip() or result.stderr.strip()
-    except (subprocess.SubprocessError, OSError) as exc:
-        return f"Error: {exc}"
+    return _run_ai_docs_cmd("drift")
 
 
 @ai_docs_maintain_skill.script(
@@ -235,15 +271,20 @@ def run_drift_script() -> str:
 )
 def run_full_script() -> str:
     """Execute ai-docs-maintenance.py full check."""
-    script = _REPO_ROOT / "build" / "scripts" / "docs" / "ai-docs-maintenance.py"
-    try:
-        result = subprocess.run(
-            [sys.executable, str(script), "full"],
-            capture_output=True, text=True, cwd=str(_REPO_ROOT), timeout=60,
-        )
-        return result.stdout.strip() or result.stderr.strip()
-    except (subprocess.SubprocessError, OSError) as exc:
-        return f"Error: {exc}"
+    return _run_ai_docs_cmd("full", timeout=60)
+
+
+@ai_docs_maintain_skill.script(
+    name="run-archive",
+    description=(
+        "Find deprecated docs that should be archived. "
+        "Set execute=True to actually move files (default: dry-run preview only)."
+    ),
+)
+def run_archive_script(execute: bool = False) -> str:
+    """Execute ai-docs-maintenance.py archive-stale with optional execution."""
+    extra = ["--execute"] if execute else []
+    return _run_ai_docs_cmd("archive-stale", extra_args=extra)
 
 
 # ---------------------------------------------------------------------------
@@ -260,7 +301,7 @@ def run_full_script() -> str:
 )
 def project_stats() -> Any:
     """Return current source-file and test-file statistics for the repository."""
-    repo_root = _SKILL_DIR.parent.parent.parent  # .claude/skills/ → repo root
+    repo_root = _REPO_ROOT
 
     def _count(directory: str, pattern: str) -> int:
         try:
@@ -310,7 +351,7 @@ def project_stats() -> Any:
 )
 def git_context() -> Any:
     """Return current git context: branch, last relevant commit, changed files."""
-    repo_root = _SKILL_DIR.parent.parent.parent
+    repo_root = _REPO_ROOT
 
     def _git(*args: str) -> str:
         try:
@@ -515,6 +556,7 @@ def _skill_script_runner(
         cmd,
         capture_output=True,
         text=True,
+        cwd=str(_REPO_ROOT),
         timeout=300,
     )
 
