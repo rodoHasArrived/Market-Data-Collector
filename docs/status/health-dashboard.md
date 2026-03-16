@@ -1,12 +1,12 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-16T08:12:08.914076+00:00
+> Last updated: 2026-03-16T09:55:36.828768+00:00
 
 ## Overall Health Score
 
 ```
-  [###########################---] 90/100
+  [###########################---] 91/100
   Rating: Excellent
 ```
 
@@ -15,13 +15,13 @@
 | Metric | Value |
 |--------|-------|
 | Total documentation files | 184 |
-| Total lines | 76,137 |
-| Average file size (lines) | 413.8 |
-| Orphaned files | 41 |
+| Total lines | 74,553 |
+| Average file size (lines) | 405.2 |
+| Orphaned files | 32 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
-| TODO/FIXME markers | 160 |
-| **Health score** | **90/100** |
+| TODO/FIXME markers | 159 |
+| **Health score** | **91/100** |
 
 ### Score Breakdown
 
@@ -64,7 +64,16 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/ai/copilot/ai-sync-workflow.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
-- ... and 21 more
+- `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
+- `docs/archived/2026-02_VISUAL_CODE_EXAMPLES.md`
+- `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md`
+- `docs/archived/CHANGES_SUMMARY.md`
+- `docs/archived/CONFIG_CONSOLIDATION_REPORT.md`
+- `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
+- `docs/archived/IMPROVEMENTS_2026-02.md`
+- `docs/archived/REDESIGN_IMPROVEMENTS.md`
+- `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
+- ... and 12 more
 
 ## Trend
 
@@ -72,7 +81,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-16 | 90 | 184 | 41 | 0 |
+| 2026-03-16 | 91 | 184 | 32 | 0 |
 
 ---
 
