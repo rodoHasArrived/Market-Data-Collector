@@ -77,6 +77,14 @@ public sealed class StorageOptions
     public bool EmbedChecksum { get; init; } = false;
 
     /// <summary>
+    /// Whether to verify per-record checksums when reading data files.
+    /// When <c>true</c>, each record read from JSONL/WAL storage is validated against
+    /// its stored checksum; corrupted records are skipped and logged.
+    /// Incurs a small CPU overhead on read paths. Default is <c>false</c>.
+    /// </summary>
+    public bool VerifyOnRead { get; init; } = false;
+
+    /// <summary>
     /// Whether to enable Parquet storage as an additional sink alongside JSONL.
     /// When enabled, events are written to both JSONL and Parquet via CompositeSink.
     /// </summary>

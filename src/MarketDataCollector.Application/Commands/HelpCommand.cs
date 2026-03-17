@@ -77,6 +77,8 @@ OPTIONS:
     --backfill-symbols <list>       Comma-separated symbols (e.g., AAPL,MSFT)
     --backfill-from <date>          Start date (YYYY-MM-DD)
     --backfill-to <date>            End date (YYYY-MM-DD)
+    --resume                        Resume an interrupted backfill from the last
+                                    saved checkpoint (skips already-completed symbols)
 
 EXAMPLES:
     # Basic backfill using free provider
@@ -272,8 +274,10 @@ COMMANDS:
     --simulate-feed         Emit a synthetic event for smoke testing
     --selftest              Run comprehensive system self-tests
     --dry-run               Full validation without starting collection
+    --check-config          Config-only validation (alias for --dry-run --offline)
     --dry-run --offline     Validation without network connectivity checks
     --validate-credentials  Validate all configured API credentials
+    --recommend-providers   Scored provider recommendation report
 
 SCHEMA VALIDATION:
     --validate-schemas      Run schema check during startup
@@ -372,6 +376,7 @@ MODES:
     --selftest              Run system self-tests
     --validate-config       Validate configuration without starting
     --dry-run               Comprehensive validation without starting (QW-93)
+    --check-config          Alias for --dry-run --offline (config validation only, no network)
     --help, -h              Show this help message
 
 AUTO-CONFIGURATION (First-time setup):
@@ -389,6 +394,7 @@ DIAGNOSTICS & TROUBLESHOOTING:
     --error-codes           Show error code reference guide
     --check-schemas         Check stored data schema compatibility
     --simulate-feed         Emit a synthetic depth/trade event for smoke testing
+    --recommend-providers   Print a scored provider recommendation report and exit
 
 SCHEMA VALIDATION OPTIONS:
     --validate-schemas      Run schema check during startup
@@ -426,6 +432,7 @@ BACKFILL OPTIONS:
     --backfill-symbols <list>       Comma-separated symbols (e.g., AAPL,MSFT)
     --backfill-from <date>          Start date (YYYY-MM-DD)
     --backfill-to <date>            End date (YYYY-MM-DD)
+    --resume                        Resume interrupted backfill from last checkpoint
 
 PACKAGING OPTIONS:
     --package-name <name>           Package name (default: market-data-YYYYMMDD)
