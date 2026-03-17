@@ -1,6 +1,6 @@
 """Code-defined skills provider for MarketDataCollector.
 
-Creates a :class:`SkillsProvider` that exposes two skills:
+Creates a :class:`SkillsProvider` that exposes three skills:
 
 1. ``mdc-code-review`` — Code review and architecture compliance, available
    both as a file-based skill (discovered from the ``mdc-code-review/``
@@ -12,6 +12,12 @@ Creates a :class:`SkillsProvider` that exposes two skills:
    drift detection, cross-reference validation, stale doc archiving).
    Purely code-defined with scripts that delegate to
    ``build/scripts/docs/ai-docs-maintenance.py``.
+
+3. ``mdc-blueprint`` — Blueprint Mode for translating a single prioritized
+   idea into a complete, code-ready technical design document.  Available
+   both as a file-based skill (discovered from the ``mdc-blueprint/``
+   directory) and as a code-defined skill with a dynamic git-context
+   resource and a validate-skill script.
 
 Usage (from a custom agent or MCP server)::
 
@@ -31,6 +37,11 @@ Usage (from a custom agent or MCP server)::
 
     # AI docs maintenance
     report = skills_provider.run_skill_script("ai-docs-maintain", "run-full")
+
+    # Blueprint Mode
+    blueprint_instructions = skills_provider.load_skill("mdc-blueprint")
+    patterns = skills_provider.read_skill_resource("mdc-blueprint", "blueprint-patterns")
+    pipeline = skills_provider.read_skill_resource("mdc-blueprint", "pipeline-position")
 """
 
 from __future__ import annotations
@@ -675,14 +686,147 @@ def _skill_script_runner(
 # Skills provider
 # ---------------------------------------------------------------------------
 
+_BLUEPRINT_SKILL_DIR = _SKILLS_DIR / "mdc-blueprint"
+_BLUEPRINT_REFS_DIR = _BLUEPRINT_SKILL_DIR / "references"
+
+mdc_blueprint_skill = Skill(
+    name="mdc-blueprint",
+    description=(
+        "Blueprint Mode skill for the MarketDataCollector project. "
+        "Translates a single prioritized idea into a complete, code-ready technical "
+        "design document — interfaces, component designs, data flows, XAML sketches, "
+        "test plans, and implementation checklists — grounded in MDC's actual stack: "
+        "C# 13, F# 8, .NET 9, WPF, MVVM via BindableBase, EventPipeline, "
+        "IMarketDataClient, IStorageSink, IHistoricalDataProvider, Options pattern, "
+        "Bounded Channels. "
+        "Trigger on: \"blueprint\", \"design document\", \"technical spec\", "
+        "\"design the\", \"architect the\", \"what interfaces do we need for\", "
+        "\"spike plan for\", \"interface-only design for\", or when a Roadmap/"
+        "Brainstorm output needs to be turned into something a developer can implement "
+        "tomorrow. Also trigger when the user says \"blueprint mode\" or provides an "
+        "idea card from the Brainstorm or Idea Evaluator pipeline stage."
+    ),
+    # Full skill instructions — identical to SKILL.md so the code-defined version
+    # is self-contained when the file-based version is absent.
+    content=_read(_BLUEPRINT_SKILL_DIR / "SKILL.md"),
+    resources=[
+        SkillResource(
+            name="blueprint-patterns",
+            description=(
+                "MDC interface patterns, naming conventions, ADR contract reference, "
+                "DI registration patterns, Options pattern, Channel/pipeline pattern, "
+                "WPF/MVVM patterns, F# domain type patterns, error handling and "
+                "structured logging patterns, storage sink pattern, historical provider "
+                "pattern, and breaking change checklist. "
+                "Read when naming interfaces, designing components, or checking ADR compliance."
+            ),
+            content=_read(_BLUEPRINT_REFS_DIR / "blueprint-patterns.md"),
+        ),
+        SkillResource(
+            name="pipeline-position",
+            description=(
+                "Full pipeline diagram (Brainstorm → Evaluator → Roadmap → Blueprint → "
+                "Implementation → Code Review → Test Writing), stage input/output contracts, "
+                "handoff contracts between stages, and stage bypass rules. "
+                "Read when determining where a blueprint request fits in the pipeline or "
+                "when handing off to another skill."
+            ),
+            content=_read(_BLUEPRINT_REFS_DIR / "pipeline-position.md"),
+        ),
+    ],
+)
+
+
+@mdc_blueprint_skill.resource(
+    name="blueprint-git-context",
+    description=(
+        "Current git branch, the latest commit touching .claude/skills/mdc-blueprint/ "
+        "or .github/agents/mdc-blueprint-agent.md, and any pending changes to those "
+        "paths. Refreshed on every read."
+    ),
+)
+def blueprint_git_context() -> Any:
+    """Return current git context scoped to the blueprint skill files."""
+    repo_root = _REPO_ROOT
+
+    def _git(*args: str) -> str:
+        try:
+            result = subprocess.run(
+                ["git", *args],
+                capture_output=True,
+                text=True,
+                cwd=str(repo_root),
+                timeout=10,
+            )
+            return result.stdout.strip()
+        except (subprocess.SubprocessError, subprocess.TimeoutExpired, OSError):
+            return "(unavailable)"
+
+    branch = _git("rev-parse", "--abbrev-ref", "HEAD")
+    last_commit = _git(
+        "log",
+        "-1",
+        "--pretty=format:%h %s (%cr)",
+        "--",
+        ".claude/skills/mdc-blueprint/",
+        ".github/agents/mdc-blueprint-agent.md",
+        ".claude/agents/mdc-blueprint.md",
+    )
+    pending = _git(
+        "diff",
+        "--name-only",
+        "--",
+        ".claude/skills/mdc-blueprint/",
+        ".github/agents/mdc-blueprint-agent.md",
+        ".claude/agents/mdc-blueprint.md",
+    )
+
+    lines = [
+        f"Branch              : {branch}",
+        f"Last blueprint commit: {last_commit or '(none yet)'}",
+    ]
+    if pending:
+        lines.append("Pending changes:")
+        for f in pending.splitlines():
+            lines.append(f"  {f}")
+
+    return "\n".join(lines)
+
+
+@mdc_blueprint_skill.script(
+    name="validate-skill",
+    description=(
+        "Validate the mdc-blueprint SKILL.md frontmatter and directory structure. "
+        "Returns 'OK' on success or a failure message."
+    ),
+)
+def blueprint_validate_skill_script() -> str:
+    """Validate the blueprint skill definition with a minimal structural check."""
+    skill_md = _BLUEPRINT_SKILL_DIR / "SKILL.md"
+    if not skill_md.exists():
+        return "FAIL: SKILL.md not found"
+    content = skill_md.read_text(encoding="utf-8")
+    if not content.startswith("---"):
+        return "FAIL: SKILL.md is missing YAML frontmatter"
+
+    missing_refs = []
+    for ref_file in ("blueprint-patterns.md", "pipeline-position.md"):
+        if not (_BLUEPRINT_REFS_DIR / ref_file).exists():
+            missing_refs.append(ref_file)
+    if missing_refs:
+        return f"FAIL: Missing reference files: {', '.join(missing_refs)}"
+
+    return "OK: mdc-blueprint SKILL.md exists, has frontmatter, and all reference files present"
+
+
 skills_provider = SkillsProvider(
-    # Discover file-based skills from the mdc-code-review/ directory.
+    # Discover file-based skills from the skills/ directory.
     # File-based skills take precedence over code-defined ones with the
-    # same name, so the Skill instance above serves as a self-contained
-    # fallback and as the host for dynamic resources and in-process scripts.
+    # same name, so the Skill instances above serve as self-contained
+    # fallbacks and as hosts for dynamic resources and in-process scripts.
     skill_paths=_SKILLS_DIR,
-    # Register the code-defined skill.
-    skills=[mdc_code_review_skill, ai_docs_maintain_skill],
+    # Register the code-defined skills.
+    skills=[mdc_code_review_skill, ai_docs_maintain_skill, mdc_blueprint_skill],
     # Provide a runner for any file-based .py scripts that may be added to
     # skill directories in the future.
     script_runner=_skill_script_runner,
