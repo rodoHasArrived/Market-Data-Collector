@@ -2,7 +2,7 @@ name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-17
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23177871361
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23191125232
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,15 +19,14 @@ messages:
 
       ## Findings from Workflow Run
       ### Code Quality
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/SymbolSearchServiceTests.cs(80,23): warni...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/SymbolSearchServiceTests.cs(620,17): warn...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/SymbolSearchServiceTests.cs(610,17): warn...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/SymbolSearchServiceTests.cs(595,17): warn...`
-      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/SymbolSearchServiceTests.cs(568,17): warn...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Backtesting.Sdk/CashFlowEntry.cs(22,13): warning CS1573: Param...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Backtesting.Sdk/CashFlowEntry.cs(21,20): warning CS1573: Param...`
+      - `2 /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Backtesting.Sdk/BacktestProgressEvent.cs(3,58): warning CS1574...`
 
 
       ## Error Codes
-      - `CS1591`
+      - `CS1573`
+      - `CS1574`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -40,7 +39,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23177871361
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23191125232
 
       Additional context:
       {{additional_context}}
