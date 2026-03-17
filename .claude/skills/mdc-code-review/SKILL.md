@@ -21,6 +21,32 @@ description: >
 > **Navigation index:** [`docs/ai/skills/README.md`](../../../docs/ai/skills/README.md)
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md) — authoritative stats, file paths, provider list, ADR table.
 
+## Integration Pattern
+
+Every code review task follows this 4-step workflow:
+
+### 1 — GATHER CONTEXT (MCP)
+- Fetch the GitHub issue or PR to understand what changed and why
+- Read the relevant `.cs` / `.fs` / `.xaml` files that are in scope
+- Check `docs/ai/ai-known-errors.md` for recurring agent mistakes that apply
+
+### 2 — ANALYZE & PLAN (Agents)
+- Identify which of the 7 lenses apply to the files under review
+- For multi-file reviews, map cross-file relationships before running any lens
+- Plan the findings structure: which files get refactored vs. review-only output
+
+### 3 — EXECUTE (Skills + Manual)
+- Run applicable lenses and produce the review output (refactored code or categorized findings)
+- Embed inline `[Mx]`/`[Px]`/`[Sx]` justification comments for every significant change
+- For CRITICAL findings, include diff snippets showing before/after
+
+### 4 — COMPLETE (MCP)
+- Commit the refactored files (if in refactor mode)
+- Create a PR via GitHub with a summary of findings and changes
+- Request review from the appropriate team members
+
+---
+
 ## Bundled Resources
 
 ```

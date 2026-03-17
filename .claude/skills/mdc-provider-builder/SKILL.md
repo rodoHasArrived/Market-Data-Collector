@@ -26,6 +26,32 @@ without warnings.
 
 ---
 
+## Integration Pattern
+
+Every provider build task follows this 4-step workflow:
+
+### 1 — GATHER CONTEXT (MCP)
+- Fetch the GitHub issue or feature request describing the new provider
+- Read the relevant template file (`_Template/TemplateMarketDataClient.cs` or `TemplateHistoricalDataProvider.cs`)
+- Check `docs/ai/ai-known-errors.md` for known provider implementation mistakes
+
+### 2 — ANALYZE & PLAN (Agents)
+- Identify the correct provider type using the decision tree below
+- Map which compliance checklist items apply to this provider type
+- Plan the file set: options, models, implementation, module, tests
+
+### 3 — EXECUTE (Skills + Manual)
+- Build files in the prescribed order (Steps 1–12)
+- Apply all required attributes, patterns, and conventions
+- Write the matching test scaffold
+
+### 4 — COMPLETE (MCP)
+- Commit the new provider files and test scaffold
+- Create a PR via GitHub summarizing the provider, its capabilities, and the compliance checklist status
+- Request review; the `mdc-code-review` skill's Lens 5 checklist is the acceptance gate
+
+---
+
 ## When to Use This Skill
 
 Use `mdc-provider-builder` when the task is one of:

@@ -21,6 +21,32 @@ Generate high-value, implementable ideas for the MarketDataCollector platform. E
 
 ---
 
+## Integration Pattern
+
+Every brainstorming task follows this 4-step workflow:
+
+### 1 — GATHER CONTEXT (MCP)
+- Fetch the GitHub issue, discussion, or feature request that prompted the brainstorm
+- Read `../_shared/project-context.md` for authoritative project stats and abstraction paths
+- Review `references/competitive-landscape.md` for competitive signals relevant to the request
+
+### 2 — ANALYZE & PLAN (Agents)
+- Detect the brainstorm mode (Open Exploration, Problem-Focused, Persona-Focused, etc.) using the mode table
+- Check the `brainstorm-history.jsonl` ledger to avoid repeating previously covered themes
+- Plan the idea set: quantity targets, audience personas, and effort tiers to cover
+
+### 3 — EXECUTE (Skills + Manual)
+- Emit the mode declaration and summary table before writing any ideas
+- Write each idea as a natural narrative with anchor, user moment, implementation shape, and tradeoffs
+- Synthesize: call out the highest-leverage idea, platform bets, and sequencing recommendation
+
+### 4 — COMPLETE (MCP)
+- Append a new entry to `brainstorm-history.jsonl` recording today's session themes
+- If the session produced actionable proposals, create GitHub issues for the top 1-3 ideas
+- Create a PR or discussion thread via GitHub to share the brainstorm output with stakeholders
+
+---
+
 ## Core Philosophy: Complementary Extension
 
 The best ideas for MDC aren't isolated features. They're extensions that **amplify what already exists**. Before generating any idea, ask:

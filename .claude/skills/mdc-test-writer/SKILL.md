@@ -24,6 +24,32 @@ warnings.
 
 ---
 
+## Integration Pattern
+
+Every test-writing task follows this 4-step workflow:
+
+### 1 — GATHER CONTEXT (MCP)
+- Fetch the GitHub issue, PR, or code review output that identified the test gap
+- Read the source file(s) under test to understand the component's contract and dependencies
+- Check the target test project's `.csproj` to confirm which mock library is in use (Moq vs. NSubstitute)
+
+### 2 — ANALYZE & PLAN (Agents)
+- Detect the component type using the Step 0 decision tree
+- Select the correct pattern (A–H) and target test project
+- Plan the minimum required test cases: happy path, error path, cancellation path, boundary, disposal
+
+### 3 — EXECUTE (Skills + Manual)
+- Apply all 7 universal quality rules and the selected pattern
+- Write the complete, compilable test file with `CreateSut()`, proper `await using`, and timeout tokens
+- Run through the Lens 4 validation checklist before finalizing
+
+### 4 — COMPLETE (MCP)
+- Commit the test file to the appropriate test project subdirectory
+- Create a PR via GitHub referencing the issue or code review finding that prompted the tests
+- Request review; confirm the new tests pass in CI before marking complete
+
+---
+
 ## Test Framework Stack
 
 | Tool | Purpose |
