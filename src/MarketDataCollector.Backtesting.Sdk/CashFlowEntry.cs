@@ -15,6 +15,8 @@ public sealed record TradeCashFlow(
     decimal Price) : CashFlowEntry(Timestamp, Amount);
 
 /// <summary>Daily margin interest charge on a debit balance (negative amount = cash outflow).</summary>
+/// <param name="Timestamp">Date and time the interest was charged.</param>
+/// <param name="Amount">Net cash-flow amount (negative = outflow).</param>
 /// <param name="MarginBalance">Balance on which interest was charged.</param>
 /// <param name="AnnualRate">Annual rate (e.g. 0.05 for 5%).</param>
 public sealed record MarginInterestCashFlow(

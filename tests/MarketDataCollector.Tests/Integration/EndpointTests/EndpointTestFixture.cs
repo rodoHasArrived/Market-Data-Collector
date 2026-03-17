@@ -23,6 +23,17 @@ public sealed class EndpointTestFixture : IAsyncLifetime
 
     public HttpClient Client { get; private set; } = null!;
 
+    /// <summary>
+    /// Creates an <see cref="HttpClient"/> backed by the in-memory TestServer that does NOT
+    /// automatically follow redirects. Use this to inspect 3xx responses directly.
+    /// The caller is responsible for disposing the returned client.
+    /// </summary>
+    public HttpClient CreateNoRedirectClient()
+    {
+        var testServer = _app!.GetTestServer();
+        return new HttpClient(testServer.CreateHandler()) { BaseAddress = new Uri("http://localhost/") };
+    }
+
     public async Task InitializeAsync()
     {
         _tempConfigDir = Path.Combine(Path.GetTempPath(), $"mdc-endpoint-tests-{Guid.NewGuid():N}");

@@ -65,7 +65,7 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
         var response = await GetAsync("/login");
         var html = await response.Content.ReadAsStringAsync();
 
-        html.Should().NotContain("login-error");
+        html.Should().NotContain("class=\"login-error\"");
     }
 
     // ================================================================
@@ -132,12 +132,7 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
     public async Task LoginForm_WithEmptyCredentials_RedirectsToLoginWithError()
     {
         // Use a client that does NOT follow redirects so we can inspect the Location header
-        using var noRedirectClient = new HttpClient(
-            new HttpClientHandler { AllowAutoRedirect = false },
-            disposeHandler: true)
-        {
-            BaseAddress = Client.BaseAddress
-        };
+        using var noRedirectClient = Fixture.CreateNoRedirectClient();
 
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -155,12 +150,7 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
     [Fact]
     public async Task LoginForm_WithCredentials_NoEnvVarsConfigured_RedirectsToLoginWithError()
     {
-        using var noRedirectClient = new HttpClient(
-            new HttpClientHandler { AllowAutoRedirect = false },
-            disposeHandler: true)
-        {
-            BaseAddress = Client.BaseAddress
-        };
+        using var noRedirectClient = Fixture.CreateNoRedirectClient();
 
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -181,12 +171,7 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
     [Fact]
     public async Task Logout_WithoutSession_RedirectsToLoginPage()
     {
-        using var noRedirectClient = new HttpClient(
-            new HttpClientHandler { AllowAutoRedirect = false },
-            disposeHandler: true)
-        {
-            BaseAddress = Client.BaseAddress
-        };
+        using var noRedirectClient = Fixture.CreateNoRedirectClient();
 
         var response = await noRedirectClient.PostAsync("/api/auth/logout", content: null);
 
@@ -197,12 +182,7 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
     [Fact]
     public async Task Logout_ClearsCookie()
     {
-        using var noRedirectClient = new HttpClient(
-            new HttpClientHandler { AllowAutoRedirect = false },
-            disposeHandler: true)
-        {
-            BaseAddress = Client.BaseAddress
-        };
+        using var noRedirectClient = Fixture.CreateNoRedirectClient();
 
         var response = await noRedirectClient.PostAsync("/api/auth/logout", content: null);
 
