@@ -239,7 +239,7 @@ public abstract class StatusServiceBase
                 }
             }
             catch (OperationCanceledException) { break; }
-            catch { SetBackendReachable(false); }
+            catch (Exception ex) { SetBackendReachable(false); LogInfo("Live monitoring error", ("error", ex.Message)); }
 
             try { await Task.Delay(TimeSpan.FromSeconds(intervalSeconds), ct); }
             catch (OperationCanceledException) { break; }
@@ -302,10 +302,10 @@ public abstract class StatusServiceBase
             }
         }
         catch (OperationCanceledException) { }
-        catch (HttpRequestException) { }
-        catch (JsonException) { }
-        catch (UriFormatException) { }
-        catch (InvalidOperationException) { }
+        catch (HttpRequestException ex) { LogInfo("Status endpoint unreachable", ("error", ex.Message)); }
+        catch (JsonException ex) { LogInfo("Status response parse failed", ("error", ex.Message)); }
+        catch (UriFormatException ex) { LogInfo("Status request URI invalid", ("error", ex.Message)); }
+        catch (InvalidOperationException ex) { LogInfo("Status request failed", ("error", ex.Message)); }
 
         return null;
     }
@@ -335,10 +335,10 @@ public abstract class StatusServiceBase
             }
         }
         catch (OperationCanceledException) { }
-        catch (HttpRequestException) { }
-        catch (JsonException) { }
-        catch (UriFormatException) { }
-        catch (InvalidOperationException) { }
+        catch (HttpRequestException ex) { LogInfo("Provider status endpoint unreachable", ("error", ex.Message)); }
+        catch (JsonException ex) { LogInfo("Provider status response parse failed", ("error", ex.Message)); }
+        catch (UriFormatException ex) { LogInfo("Provider status request URI invalid", ("error", ex.Message)); }
+        catch (InvalidOperationException ex) { LogInfo("Provider status request failed", ("error", ex.Message)); }
 
         return null;
     }
@@ -357,8 +357,8 @@ public abstract class StatusServiceBase
             }
         }
         catch (OperationCanceledException) { }
-        catch (HttpRequestException) { }
-        catch (JsonException) { }
+        catch (HttpRequestException ex) { LogInfo("Providers catalog endpoint unreachable", ("error", ex.Message)); }
+        catch (JsonException ex) { LogInfo("Providers catalog response parse failed", ("error", ex.Message)); }
 
         return new List<ProviderInfo>();
     }

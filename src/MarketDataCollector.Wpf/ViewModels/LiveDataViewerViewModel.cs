@@ -326,7 +326,9 @@ public sealed class LiveDataViewerViewModel : BindableBase, IDisposable
                 UpdateQuoteDisplay();
             }
         }
-        catch { }
+        catch (OperationCanceledException) { }
+        catch (HttpRequestException) { }
+        catch (JsonException) { }
     }
 
     private LiveDataEventModel? ParseLiveEvent(JsonElement item)

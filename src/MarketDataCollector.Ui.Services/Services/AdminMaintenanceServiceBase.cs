@@ -11,6 +11,11 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public class AdminMaintenanceServiceBase : IAdminMaintenanceService
 {
+    private static readonly Lazy<AdminMaintenanceServiceBase> _instance = new(() => new AdminMaintenanceServiceBase());
+
+    /// <summary>Shared singleton instance for use in DI registrations and direct access.</summary>
+    public static AdminMaintenanceServiceBase Instance => _instance.Value;
+
     #region Archive Maintenance
 
     /// <inheritdoc />
