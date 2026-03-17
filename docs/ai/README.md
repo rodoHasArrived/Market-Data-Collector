@@ -64,8 +64,10 @@ docs/ai/
 ```
 .github/
 ├── agents/                          ← GitHub Copilot agent definitions (auto-discovered)
+│   ├── adr-generator.agent.md
 │   ├── code-review-agent.md
 │   ├── documentation-agent.md
+│   ├── mdc-blueprint-agent.md
 │   ├── mdc-brainstorm-agent.md
 │   ├── mdc-provider-builder-agent.md
 │   └── mdc-test-writer-agent.md
@@ -80,18 +82,33 @@ docs/ai/
 
 .claude/
 ├── agents/                          ← Claude Code agent definitions (auto-discovered)
+│   ├── mdc-blueprint.md
 │   ├── mdc-cleanup.md
 │   └── mdc-docs.md
 ├── settings.local.json              ← Claude Code permissions
 └── skills/                          ← Claude Code skill definitions (auto-discovered)
-    ├── skills_provider.py
-    └── mdc-code-review/
-        ├── SKILL.md
-        ├── references/
-        ├── evals/
-        ├── eval-viewer/
-        ├── scripts/
-        └── agents/
+    ├── _shared/
+    │   └── project-context.md
+    ├── mdc-blueprint/
+    │   ├── SKILL.md
+    │   └── references/
+    ├── mdc-brainstorm/
+    │   ├── SKILL.md
+    │   └── references/
+    ├── mdc-code-review/
+    │   ├── SKILL.md
+    │   ├── references/
+    │   ├── evals/
+    │   ├── eval-viewer/
+    │   ├── scripts/
+    │   └── agents/
+    ├── mdc-provider-builder/
+    │   ├── SKILL.md
+    │   └── references/
+    ├── mdc-test-writer/
+    │   ├── SKILL.md
+    │   └── references/
+    └── skills_provider.py
 
 CLAUDE.md                            ← Root AI context (always read first)
 build/scripts/ai-repo-updater.py     ← Repository audit tool
@@ -131,15 +148,22 @@ See [`agents/README.md`](agents/README.md) and [`skills/README.md`](skills/READM
 
 | File | Used By | Purpose |
 |------|---------|---------|
+| [`.github/agents/adr-generator.agent.md`](../../.github/agents/adr-generator.agent.md) | Copilot | ADR creation agent with structured formatting |
 | [`.github/agents/code-review-agent.md`](../../.github/agents/code-review-agent.md) | Copilot, Claude skill | **Canonical** 7-lens code review framework |
 | [`.github/agents/documentation-agent.md`](../../.github/agents/documentation-agent.md) | Copilot | Documentation maintenance agent |
+| [`.github/agents/mdc-blueprint-agent.md`](../../.github/agents/mdc-blueprint-agent.md) | Copilot, Claude agent | Technical design (blueprint) agent |
 | [`.github/agents/mdc-brainstorm-agent.md`](../../.github/agents/mdc-brainstorm-agent.md) | Copilot | Brainstorming & ideation agent |
 | [`.github/agents/mdc-provider-builder-agent.md`](../../.github/agents/mdc-provider-builder-agent.md) | Copilot | Provider implementation agent |
 | [`.github/agents/mdc-test-writer-agent.md`](../../.github/agents/mdc-test-writer-agent.md) | Copilot | Test generation agent |
+| [`.claude/agents/mdc-blueprint.md`](../../.claude/agents/mdc-blueprint.md) | Claude Code | Blueprint mode agent (wraps `mdc-blueprint-agent.md`) |
 | [`.claude/agents/mdc-cleanup.md`](../../.claude/agents/mdc-cleanup.md) | Claude Code | Code cleanup and anti-pattern correction agent |
 | [`.claude/agents/mdc-docs.md`](../../.claude/agents/mdc-docs.md) | Claude Code | Documentation maintenance agent |
+| [`.claude/skills/mdc-blueprint/SKILL.md`](../../.claude/skills/mdc-blueprint/SKILL.md) | Claude Code | Blueprint mode skill |
+| [`.claude/skills/mdc-brainstorm/SKILL.md`](../../.claude/skills/mdc-brainstorm/SKILL.md) | Claude Code | Brainstorming & ideation skill |
 | [`.claude/skills/mdc-code-review/SKILL.md`](../../.claude/skills/mdc-code-review/SKILL.md) | Claude Code | Code review skill (wraps `code-review-agent.md`) |
 | [`.claude/skills/mdc-code-review/references/architecture.md`](../../.claude/skills/mdc-code-review/references/architecture.md) | Claude Code | Deep project context, dependency graph |
+| [`.claude/skills/mdc-provider-builder/SKILL.md`](../../.claude/skills/mdc-provider-builder/SKILL.md) | Claude Code | Provider implementation skill |
+| [`.claude/skills/mdc-test-writer/SKILL.md`](../../.claude/skills/mdc-test-writer/SKILL.md) | Claude Code | Test generation skill |
 | [`.claude/skills/skills_provider.py`](../../.claude/skills/skills_provider.py) | Claude Code | Skill registration and dynamic resources |
 
 ### Tier 4: Path-Specific Instructions (auto-applied by Copilot)
