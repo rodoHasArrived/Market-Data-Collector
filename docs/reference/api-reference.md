@@ -388,6 +388,65 @@ Checkpoint endpoints expose the persisted job state that enables backfill operat
 | GET | `/api/data/orderflow/{symbol}` | Order flow statistics |
 | GET | `/api/data/health` | Live data health overview |
 
+### Historical Data (`/api/historical/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/historical` | Query stored historical bars for a symbol |
+| GET | `/api/historical/symbols` | List symbols that have stored historical data |
+| GET | `/api/historical/{symbol}/daterange` | Date range of available data for a symbol |
+
+### Ingestion Jobs (`/api/ingestion/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/ingestion/jobs` | List all ingestion jobs |
+| POST | `/api/ingestion/jobs` | Create a new ingestion job (Draft state) |
+| GET | `/api/ingestion/jobs/{jobId}` | Get a specific ingestion job |
+| DELETE | `/api/ingestion/jobs/{jobId}` | Delete a terminal ingestion job |
+| POST | `/api/ingestion/jobs/{jobId}/transition` | Transition job state |
+| GET | `/api/ingestion/jobs/resumable` | List jobs eligible for resume (failed or paused with checkpoint) |
+| GET | `/api/ingestion/summary` | Summary of all jobs by state and workload type |
+
+### Packaging (`/api/packaging/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/packaging/create` | Create a portable data package |
+| POST | `/api/packaging/import` | Import a package into storage |
+| POST | `/api/packaging/validate` | Validate a package's integrity |
+| GET | `/api/packaging/list` | List available packages |
+| GET | `/api/packaging/contents` | List contents of a specific package (`?path=`) |
+| GET | `/api/packaging/download/{fileName}` | Download a package file |
+| DELETE | `/api/packaging/{fileName}` | Delete a package file |
+
+### Maintenance (`/api/maintenance/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/maintenance/schedules` | List all maintenance schedules |
+| POST | `/api/maintenance/schedules` | Create a maintenance schedule |
+| GET | `/api/maintenance/schedules/{scheduleId}` | Get a specific schedule |
+| PUT | `/api/maintenance/schedules/{scheduleId}` | Update a schedule |
+| DELETE | `/api/maintenance/schedules/{scheduleId}` | Delete a schedule |
+| POST | `/api/maintenance/schedules/{scheduleId}/enable` | Enable a schedule |
+| POST | `/api/maintenance/schedules/{scheduleId}/disable` | Disable a schedule |
+| POST | `/api/maintenance/schedules/{scheduleId}/trigger` | Trigger a schedule immediately |
+| GET | `/api/maintenance/schedules/{scheduleId}/executions` | Execution history for a schedule |
+| GET | `/api/maintenance/schedules/{scheduleId}/summary` | Summary for a specific schedule |
+| GET | `/api/maintenance/schedules/summary` | Summary across all schedules |
+| POST | `/api/maintenance/execute` | Run a maintenance task immediately |
+| POST | `/api/maintenance/executions/{executionId}/cancel` | Cancel a running execution |
+| GET | `/api/maintenance/executions` | List all executions |
+| GET | `/api/maintenance/executions/{executionId}` | Get a specific execution |
+| GET | `/api/maintenance/executions/failed` | List failed executions |
+| POST | `/api/maintenance/executions/cleanup` | Clean up old execution records |
+| GET | `/api/maintenance/statistics` | Overall maintenance statistics |
+| GET | `/api/maintenance/status` | Current maintenance service status |
+| POST | `/api/maintenance/validate-cron` | Validate a cron expression |
+| GET | `/api/maintenance/presets` | List available maintenance task presets |
+| GET | `/api/maintenance/task-types` | List available task type identifiers |
+
 ### Quality Drops (`/api/quality/drops/*`)
 
 | Method | Route | Description |
