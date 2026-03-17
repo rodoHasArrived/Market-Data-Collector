@@ -88,7 +88,7 @@ internal static class TemplateProviderFactory
     /// </param>
     /// <param name="log">Optional logger.</param>
     /// <returns>A configured search provider, or <see langword="null"/>.</returns>
-    // TODO: Remove this method entirely if the provider does not support symbol search.
+    // Remove this method entirely if the provider does not support symbol search.
     internal static ISymbolSearchProvider? CreateSearchProvider(
         TemplateBackfillConfig? cfg,
         ILogger? log = null)
