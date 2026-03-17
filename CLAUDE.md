@@ -655,6 +655,7 @@ Market-Data-Collector/
 │   │   ├── README.md
 │   │   └── service-level-objectives.md
 │   ├── plans/
+│   │   ├── assembly-performance-roadmap.md
 │   │   └── l3-inference-implementation-plan.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
