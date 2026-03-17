@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-17 02:48:53 UTC
+> Auto-generated on 2026-03-17 03:11:12 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -919,6 +919,19 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.Infrastructure.csproj
 │   │   └── NoOpMarketDataClient.cs
+│   ├── MarketDataCollector.McpServer/
+│   │   ├── Prompts/
+│   │   │   └── MarketDataPrompts.cs
+│   │   ├── Resources/
+│   │   │   └── MarketDataResources.cs
+│   │   ├── Tools/
+│   │   │   ├── BackfillTools.cs
+│   │   │   ├── ProviderTools.cs
+│   │   │   ├── StorageTools.cs
+│   │   │   └── SymbolTools.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── MarketDataCollector.McpServer.csproj
+│   │   └── Program.cs
 │   ├── MarketDataCollector.ProviderSdk/
 │   │   ├── CredentialValidator.cs
 │   │   ├── DataSourceAttribute.cs
@@ -1359,6 +1372,12 @@ Market-Data-Collector/
 │   │   ├── MarketDataCollector.FSharp.Tests.fsproj
 │   │   ├── PipelineTests.fs
 │   │   └── ValidationTests.fs
+│   ├── MarketDataCollector.McpServer.Tests/
+│   │   ├── Tools/
+│   │   │   ├── BackfillToolsTests.cs
+│   │   │   └── StorageToolsTests.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.McpServer.Tests.csproj
 │   ├── MarketDataCollector.Tests/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
