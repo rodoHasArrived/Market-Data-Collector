@@ -109,9 +109,11 @@ internal sealed class SimulatedPortfolio
         // Short rebate (we receive; positive cash flow)
         foreach (var (symbol, qty) in _positions)
         {
-            if (qty >= 0) continue;
+            if (qty >= 0)
+                continue;
             var lastPrice = _lastPrices.GetValueOrDefault(symbol, 0m);
-            if (lastPrice <= 0) continue;
+            if (lastPrice <= 0)
+                continue;
             var shortNotional = Math.Abs(qty) * lastPrice;
             var rebate = shortNotional * (decimal)(_annualShortRebateRate / 252.0);
             Cash += rebate;
@@ -152,7 +154,8 @@ internal sealed class SimulatedPortfolio
         var result = new Dictionary<string, Position>(StringComparer.OrdinalIgnoreCase);
         foreach (var (symbol, qty) in _positions)
         {
-            if (qty == 0) continue;
+            if (qty == 0)
+                continue;
             var lastPrice = _lastPrices.GetValueOrDefault(symbol, _avgCost.GetValueOrDefault(symbol, 0m));
             var avgCost = _avgCost.GetValueOrDefault(symbol, 0m);
             var unrealised = (lastPrice - avgCost) * qty;
@@ -164,16 +167,19 @@ internal sealed class SimulatedPortfolio
 
     private decimal ComputeAvgCost(string symbol)
     {
-        if (!_lots.TryGetValue(symbol, out var queue) || queue.Count == 0) return 0m;
+        if (!_lots.TryGetValue(symbol, out var queue) || queue.Count == 0)
+            return 0m;
         var totalQty = 0L;
         var totalCost = 0m;
-        foreach (var (q, p) in queue) { totalQty += q; totalCost += q * p; }
+        foreach (var (q, p) in queue)
+        { totalQty += q; totalCost += q * p; }
         return totalQty == 0 ? 0m : totalCost / totalQty;
     }
 
     private decimal RealiseFifo(string symbol, long closeQty, decimal sellPrice)
     {
-        if (!_lots.TryGetValue(symbol, out var queue)) return 0m;
+        if (!_lots.TryGetValue(symbol, out var queue))
+            return 0m;
         var realised = 0m;
         var remaining = closeQty;
         while (remaining > 0 && queue.Count > 0)

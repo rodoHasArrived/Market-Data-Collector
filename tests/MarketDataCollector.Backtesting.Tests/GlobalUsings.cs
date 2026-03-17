@@ -3,5 +3,5 @@ global using System.Collections.Generic;
 global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
-global using Xunit;
 global using MarketDataCollector.Backtesting.Sdk;
+global using Xunit;

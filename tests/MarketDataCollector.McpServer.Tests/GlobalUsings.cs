@@ -1,7 +1,5 @@
 global using System.Text.Json;
 global using FluentAssertions;
-global using Moq;
-global using Xunit;
 global using MarketDataCollector.Application.Backfill;
 global using MarketDataCollector.Application.Config;
 global using MarketDataCollector.Application.UI;
@@ -10,3 +8,5 @@ global using MarketDataCollector.McpServer.Tools;
 global using MarketDataCollector.Storage.Interfaces;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Logging.Abstractions;
+global using Moq;
+global using Xunit;

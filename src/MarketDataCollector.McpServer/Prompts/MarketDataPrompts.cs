@@ -31,9 +31,9 @@ public sealed class MarketDataPrompts
         var dateRange = (from, to) switch
         {
             (not null, not null) => $"from {from} to {to}",
-            (not null, null)     => $"from {from} to today",
-            (null, not null)     => $"up to {to}",
-            _                    => "for all available history"
+            (not null, null) => $"from {from} to today",
+            (null, not null) => $"up to {to}",
+            _ => "for all available history"
         };
 
         yield return new ChatMessage(ChatRole.User,
@@ -51,7 +51,7 @@ public sealed class MarketDataPrompts
             - `symbols`: `{symbols}`
             - `provider`: `{provider}`
             {(from is not null ? $"- `from`: `{from}`" : "- `from`: _(omit for provider default)_")}
-            {(to   is not null ? $"- `to`: `{to}`"     : "- `to`:   _(omit for today)_")}
+            {(to is not null ? $"- `to`: `{to}`" : "- `to`:   _(omit for today)_")}
 
             ## Step 3 — Review the result
             The tool returns a JSON object with:
