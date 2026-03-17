@@ -8,6 +8,51 @@ Both sets are kept in sync so that Claude and Copilot have access to equivalent 
 
 ## GitHub Copilot Agents (`.github/agents/`)
 
+### ADR Generator Agent
+
+**File:** [`.github/agents/adr-generator.agent.md`](../../../.github/agents/adr-generator.agent.md)
+**Used by:** GitHub Copilot agents
+
+Creates well-structured, comprehensive Architectural Decision Records (ADRs) for the
+`/docs/adr/` directory. Follows a standardised format with YAML front matter, coded bullet
+points (POS-NNN, NEG-NNN, ALT-NNN, IMP-NNN, REF-NNN), and a 15-item quality checklist.
+
+**Workflow:**
+1. Gather required information (title, context, decision, alternatives, stakeholders)
+2. Determine the next sequential 4-digit ADR number from `/docs/adr/`
+3. Generate the markdown document following the required structure
+4. Save to `/docs/adr/adr-NNNN-[title-slug].md`
+
+---
+
+### Blueprint Mode Agent
+
+**File:** [`.github/agents/mdc-blueprint-agent.md`](../../../.github/agents/mdc-blueprint-agent.md)
+**Used by:** GitHub Copilot agents
+**Claude Code equivalent:** [`.claude/agents/mdc-blueprint.md`](../../../.claude/agents/mdc-blueprint.md) and [`mdc-blueprint`](../skills/README.md#mdc-blueprint) skill
+
+Translates a single prioritised idea into a complete, code-ready technical design document.
+Supports three depth modes (`full`, `spike`, `interface-only`) and produces a 9-step blueprint:
+
+| Step | Section |
+|------|---------|
+| 1 | Scope (in/out/assumptions/depth) |
+| 2 | Architectural Overview (context diagram + design decisions) |
+| 3 | Interface & API Contracts (C# 13, F# 8, REST/WebSocket) |
+| 4 | Component Design (namespace, type, lifetime, concurrency) |
+| 5 | Data Flow (happy path + error path) |
+| 6 | XAML & UI Design (UI features only) |
+| 7 | Test Plan (unit, integration, infrastructure) |
+| 8 | Implementation Checklist (phased, effort estimate) |
+| 9 | Open Questions & Risks |
+
+**Pipeline position:**
+```
+Brainstorm → Roadmap → Blueprint (this agent) → Implementation → Code Review → Testing
+```
+
+---
+
 ### Code Review Agent
 
 **File:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
@@ -84,6 +129,19 @@ and selects from 8 named patterns (A–H) based on the component type.
 
 ## Claude Code Agents (`.claude/agents/`)
 
+### mdc-blueprint
+
+**File:** [`.claude/agents/mdc-blueprint.md`](../../../.claude/agents/mdc-blueprint.md)
+**Used by:** Claude Code
+**Copilot equivalent:** [`.github/agents/mdc-blueprint-agent.md`](../../../.github/agents/mdc-blueprint-agent.md)
+**Skill equivalent:** [`mdc-blueprint`](../skills/README.md#mdc-blueprint)
+
+Blueprint Mode specialist. Translates a single prioritised idea into a complete, code-ready
+technical design document — interfaces, component designs, data flows, XAML sketches, test plans,
+and implementation checklists — grounded in MDC's actual stack.
+
+---
+
 ### mdc-cleanup
 
 **File:** [`.claude/agents/mdc-cleanup.md`](../../../.claude/agents/mdc-cleanup.md)
@@ -113,6 +171,8 @@ provider docs, developer guides, `CLAUDE.md`, and the `ai-known-errors.md` regis
 
 | Capability | Copilot Agent | Claude Agent / Skill |
 |-----------|--------------|---------------------|
+| ADR creation | `adr-generator.agent.md` | *(Copilot-only)* |
+| Blueprint / technical design | `mdc-blueprint-agent.md` | `mdc-blueprint` agent + `mdc-blueprint` skill |
 | Code review (7 lenses) | `code-review-agent.md` | `mdc-code-review` skill |
 | Brainstorming & ideation | `mdc-brainstorm-agent.md` | `mdc-brainstorm` skill |
 | Provider implementation | `mdc-provider-builder-agent.md` | `mdc-provider-builder` skill |

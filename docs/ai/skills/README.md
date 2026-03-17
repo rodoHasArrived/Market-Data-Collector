@@ -8,6 +8,44 @@ automatically.
 
 ## Available Skills
 
+### mdc-blueprint
+
+**Directory:** [`.claude/skills/mdc-blueprint/`](../../../.claude/skills/mdc-blueprint/)
+**Entry point:** [`.claude/skills/mdc-blueprint/SKILL.md`](../../../.claude/skills/mdc-blueprint/SKILL.md)
+**Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
+**Copilot equivalent:** [`.github/agents/mdc-blueprint-agent.md`](../../../.github/agents/mdc-blueprint-agent.md)
+**Claude agent:** [`.claude/agents/mdc-blueprint.md`](../../../.claude/agents/mdc-blueprint.md)
+
+Blueprint Mode skill for the MarketDataCollector project. Translates a single prioritised idea
+into a complete, code-ready technical design document — interfaces, component designs, data flows,
+XAML sketches, test plans, and implementation checklists — grounded in MDC's actual stack
+(C# 13, F# 8, .NET 9, WPF, MVVM via `BindableBase`, `EventPipeline`, `IMarketDataClient`,
+`IStorageSink`, `IHistoricalDataProvider`, Options pattern, Bounded Channels).
+
+**Trigger conditions** (from system prompt):
+
+- User says "blueprint", "design document", "technical spec", "design the", "architect the"
+- User asks "what interfaces do we need for" or "spike plan for"
+- A Roadmap/Brainstorm output needs to be turned into something a developer can implement
+- User says "blueprint mode" or provides an idea card from the Brainstorm pipeline stage
+
+**Depth modes:**
+
+| Mode | When to use | Sections produced |
+|------|-------------|-------------------|
+| `full` | Default — complete feature blueprint | Steps 1–9 |
+| `spike` | Riskiest unknowns first; internal design deferred | Steps 1–3 + spike plan |
+| `interface-only` | Contracts need alignment before internals | Steps 1–3 only |
+
+**Bundled resources:**
+
+| Resource | Purpose |
+| ---------- | ------- |
+| `references/blueprint-patterns.md` | Copy-ready section templates for all 9 blueprint steps |
+| `references/pipeline-position.md` | Diagrams showing blueprint's position in the Brainstorm → Code Review pipeline |
+
+---
+
 ### mdc-code-review
 
 **Directory:** [`.claude/skills/mdc-code-review/`](../../../.claude/skills/mdc-code-review/)
