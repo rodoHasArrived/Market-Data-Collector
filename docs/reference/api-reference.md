@@ -219,6 +219,11 @@ All endpoints return errors in a consistent format:
 |-----|-------|-------------|
 | Configuration | 14 | Config CRUD, data source management, derivatives |
 | Backfill | 5 | Historical data backfill execution, preview, progress |
+| Backfill Checkpoints | 3 | Job checkpoint retrieval and resume |
+| Historical Data | 2 | Stored historical data query and date-range lookup |
+| Ingestion Jobs | 2 | Resumable ingestion job listing and summary |
+| Packaging | 6 | Portable data package creation, import, validation, listing |
+| Maintenance | 18 | Archive maintenance schedules, executions, status, presets |
 | Providers | 8 | Provider status, metrics, catalog, comparison, latency |
 | Failover | 7 | Failover rules, health, force failover |
 | Interactive Brokers | 3 | IB-specific status, error codes, API limits |
@@ -316,6 +321,18 @@ All endpoints return errors in a consistent format:
 | POST | `/api/backfill/run` | Execute backfill |
 | POST | `/api/backfill/run/preview` | Preview backfill (dry run) |
 | GET | `/api/backfill/progress` | Current operation progress |
+
+### Backfill Checkpoints (`/api/backfill/checkpoints/*`)
+
+Checkpoint endpoints expose the persisted job state that enables backfill operations to be paused and resumed after a restart or failure.
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/backfill/checkpoints` | List all available checkpoints |
+| GET | `/api/backfill/checkpoints/resumable` | List checkpoints for jobs that can be resumed |
+| GET | `/api/backfill/checkpoints/{jobId}` | Checkpoint details for a specific job |
+| GET | `/api/backfill/checkpoints/{jobId}/pending` | Symbols still pending for a resumable checkpoint |
+| POST | `/api/backfill/checkpoints/{jobId}/resume` | Resume a failed or incomplete backfill job |
 
 ### Providers (`/api/providers/*`)
 
