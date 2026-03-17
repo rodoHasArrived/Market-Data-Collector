@@ -1,20 +1,42 @@
 {
-  "generated_at": "2026-03-17T04:07:51.572124+00:00",
-  "workflow": "code-quality.yml",
-  "run_id": 23177871361,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23177871361",
+  "generated_at": "2026-03-17T10:47:24.975480+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 23190377990,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23190377990",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Code Quality Checks"
+    "Test (Linux)"
   ],
   "findings_by_category": {
+    "test": 5,
     "code-quality": 10
   },
-  "total_error_codes": 1,
-  "total_failed_tests": 0,
+  "total_error_codes": 3,
+  "total_failed_tests": 8,
   "existing_prompts": 16,
   "generated_prompts": [
+    {
+      "file": "fix-test-failures.prompt.yml",
+      "category": "test",
+      "action": "update",
+      "findings_count": 5,
+      "error_codes": [
+        "CS1573",
+        "CS1734",
+        "CS1998"
+      ],
+      "failed_tests": [
+        "2026-03-17T10:46:48.8950887Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [53 ms]",
+        "2026-03-17T10:46:48.9503825Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [43 ms]",
+        "2026-03-17T10:46:49.1388113Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [183 ms]",
+        "2026-03-17T10:46:49.1515524Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [11 ms]",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords"
+      ]
+    },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
@@ -24,15 +46,26 @@
       "failed_tests": []
     },
     {
-      "file": "workflow-results-code-quality.prompt.yml",
+      "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 10,
+      "findings_count": 15,
       "error_codes": [
-        "CS1591"
+        "CS1573",
+        "CS1734",
+        "CS1998"
       ],
-      "failed_tests": []
+      "failed_tests": [
+        "2026-03-17T10:46:48.8950887Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [53 ms]",
+        "2026-03-17T10:46:48.9503825Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [43 ms]",
+        "2026-03-17T10:46:49.1388113Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [183 ms]",
+        "2026-03-17T10:46:49.1515524Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [11 ms]",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords",
+        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords"
+      ]
     }
   ],
-  "total_generated": 2
+  "total_generated": 3
 }
