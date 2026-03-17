@@ -574,6 +574,77 @@ Both workstreams are additive and low-to-medium risk. Phase 3 coverage expansion
 
 ---
 
+## Quick Reference
+
+### State at a Glance
+
+```
+✅ Already Excellent
+├── Build infrastructure (Makefile, scripts)
+├── Developer tooling (bootstrap, diagnostics)
+├── Documentation (workflows, policies)
+├── PR templates
+├── Test infrastructure (1200+ tests, 70 services)
+├── DI modernization (73 registrations)
+├── Architecture documentation (desktop-layers.md)
+└── Fixture mode (--fixture / MDC_FIXTURE_MODE)
+
+🔶 Remaining Gaps
+├── ~22% of desktop services still lack tests
+├── No service extraction to shared layer (Phase 2)
+└── Target 80%+ coverage (Phase 3 continued)
+```
+
+### Impact Ranking
+
+| Improvement | Impact | Effort | Priority |
+|------------|--------|--------|----------|
+| Test Infrastructure | 🔴 High | 🟡 Medium | P0 ⚡ |
+| UI Fixture Mode | 🔴 High | 🟢 Low | P1 |
+| Code Deduplication | 🔴 High | 🔴 High | P1 |
+| Architecture Docs | 🟡 Medium | 🟢 Low | P2 |
+| DI Modernization | 🟡 Medium | 🟡 Medium | P2 |
+
+### Expected Outcomes
+
+```
+Developer Velocity — Before → After (6 months)
+├── Time to test service:   ∞ → <5 seconds
+├── Time to add service:    2 hrs → 30 min
+├── Time to fix bug:        4 hrs → 1 hr
+└── Onboarding time:        2 days → 4 hrs
+
+Code Quality — Before → After (6 months)
+├── Test coverage:          0% → 80%+
+├── Duplicate code:         100% → <30%
+├── Bugs caught pre-merge:  0% → 80%+
+└── "Cannot reproduce":     50% → <10%
+```
+
+### Success Criteria
+
+- [x] Test infrastructure established (1200+ tests complete)
+- [x] 150+ unit tests for desktop services (1200+ achieved)
+- [x] 40%+ test coverage on desktop services (78% achieved)
+- [x] UI fixture mode implemented (`--fixture` / `MDC_FIXTURE_MODE`)
+- [x] Architecture diagram in docs (`desktop-layers.md`)
+- [ ] <30% code duplication (from 100%)
+- [ ] 80%+ bugs caught by tests pre-merge
+
+### Quick Links
+
+| Resource | Path |
+|----------|------|
+| Implementation Guide | [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md) |
+| Desktop Testing Guide | [desktop-testing-guide.md](../development/desktop-testing-guide.md) |
+| Fixture Mode Guide | [ui-fixture-mode-guide.md](../development/ui-fixture-mode-guide.md) |
+| Support Policy | [policies/desktop-support-policy.md](../development/policies/desktop-support-policy.md) |
+| Ui.Tests project | `tests/MarketDataCollector.Ui.Tests/` (~800 tests, 52 files) |
+| Wpf.Tests project | `tests/MarketDataCollector.Wpf.Tests/` (~400 tests, 20 files) |
+| Run all tests | `make test-desktop-services` |
+
+---
+
 ## References
 
 - **Full Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)

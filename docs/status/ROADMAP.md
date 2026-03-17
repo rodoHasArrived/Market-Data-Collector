@@ -1,7 +1,7 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.2
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-17
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
 **Repository Snapshot:** `src/` files: **779** | `tests/` files: **266** | HTTP route constants: **309** | Remaining stub routes: **0** | Test methods: **~4,135**
 
@@ -67,6 +67,7 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
 | Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
 | Phase 16: Assembly-Level Performance | 📝 Planned | Byte-level SIMD, algorithmic, and allocation improvements from `docs/evaluations/assembly-performance-opportunities.md`. |
+| Phase 16: Assembly-Level Performance Optimizations | 📝 Planned | SIMD hot-path and algorithmic improvements — guided by BenchmarkDotNet evidence. See detailed roadmap section. |
 
 ---
 
@@ -302,40 +303,63 @@ These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md
 
 ---
 
-### Phase 16: Assembly-Level Performance
+### Phase 16: Assembly-Level Performance Optimizations
 
-**Goal:** Reduce CPU time and GC allocation on the five highest-value hot paths identified in
-[`docs/evaluations/assembly-performance-opportunities.md`](../evaluations/assembly-performance-opportunities.md).
-Full implementation details and per-item checklists are in
-[`docs/plans/assembly-performance-roadmap.md`](../plans/assembly-performance-roadmap.md).
+**Goal:** Apply the highest-ROI performance improvements from
+[`docs/evaluations/assembly-performance-opportunities.md`](../evaluations/assembly-performance-opportunities.md)
+to CPU-bound hot paths, guided by `BenchmarkDotNet` evidence. All changes must include
+before/after benchmark results and must keep scalar fallback paths that produce identical output.
 
-#### Phase 16-A: Algorithmic Improvements (Low Risk)
+#### Viability Assessment
 
-| Item | Source File | Work |
-|------|------------|------|
-| P16-A-1 | `LatencyHistogram.cs` L255-265 | Replace linear bucket scan with binary search; replace `List<LatencySample>` overflow with fixed-size circular buffer |
-| P16-A-2 | `MemoryMappedJsonlReader.cs` L237-275 | Defer `Encoding.UTF8.GetString` per-line allocation; hold lines as `ReadOnlyMemory<byte>` until after downstream filtering |
-| P16-A-3 | `EventBuffer.cs` L228-257 | `DrainBySymbol` in-place partition + `SymbolTable` integer interning; eliminate two-list allocation and `AddRange` copy |
+The evaluation document identifies 7 candidates. The table below scores each against delivery
+risk and expected impact to inform prioritization.
 
-**Exit criteria (Phase A):** All existing tests pass; BenchmarkDotNet results in PR show measurable allocation reduction on at least two candidates.
+| # | Candidate | Viability | Risk | Expected Gain | Priority |
+|---|-----------|-----------|------|---------------|----------|
+| P16-1 | Vectorized `\n` scan — `MemoryMappedJsonlReader` | **High** | Low — `SearchValues<byte>` portable fallback available | 1.5–4× scan throughput on large replay files | 1 |
+| P16-2 | Deferred UTF-16 decode — `MemoryMappedJsonlReader` | **Medium** | Medium — requires caller API change to pass `ReadOnlyMemory<byte>` | Eliminates millions of per-line `string` allocations for 1 GB+ uncompressed replays | 2 |
+| P16-3 | UTF-8 sequence extraction — `DataQualityScoringService` | **High** | Low — change isolated to one method | Eliminates 10 000 `string` allocations per scored file; removes double `OrdinalIgnoreCase` scan | 3 |
+| P16-4 | Binary-search buckets + circular sample ring — `LatencyHistogram` | **High** | Low — pure algorithmic drop-in, no SIMD required | Removes hidden O(n) copy under lock on every event; reduces GC pressure | 4 |
+| P16-5 | Ring-buffer `EventBuffer.Drain(maxCount)` | **Medium** | Medium — data-structure replacement required | Eliminates `GetRange` + front-shift cost during per-symbol sink flushes | 5 |
+| P16-6 | `DrainBySymbol` symbol-interning + in-place partition | **High** | Low — `SymbolTable` already exists in `Core/Performance/` | Eliminates two list allocations and a full-buffer copy per drain call | 6 |
+| P16-7 | SIMD rolling statistics — `AnomalyDetector.SymbolStatistics` | **Low–Medium** | High — only profitable if the path is CPU-hot (unconfirmed) | Modest gain in high-symbol-count configs; profile-first rule applies | 7 |
 
-#### Phase 16-B: Hot-Path Byte-Level Rewrites (Medium Risk)
+**Key viability principle:** P16-1 through P16-6 are independently deliverable — each is
+localized to a single class or method and validated by the existing test suite without
+modification. P16-7 must be deferred until profiling confirms it is a hot path under a
+realistic workload.
 
-| Item | Source File | Work |
-|------|------------|------|
-| P16-B-1 | `MemoryMappedJsonlReader.cs` L237-269 | Vectorized newline scanner using `SearchValues<byte>` (portable) with AVX2 optional path; feature-gated dispatch via `NewlineScanner` static class |
-| P16-B-2 | `DataQualityScoringService.cs` L252-265 | Replace `File.ReadLinesAsync` + `string.IndexOf` + `char.IsDigit` with `FileStream` + `ArrayPool<byte>` + `TryExtractSequenceUtf8(ReadOnlySpan<byte>)` |
-| P16-B-3 | `EventBuffer.cs` L151-167 | `EventBuffer.Drain(int maxCount)` ring-buffer variant (opt-in constructor flag); eliminate `GetRange + RemoveRange` allocation |
+#### Implementation Items
 
-**Exit criteria (Phase B):** All existing tests pass; BenchmarkDotNet `[MemoryDiagnoser]` shows reduced GC-allocated bytes; scalar fallback path tested explicitly.
+| Item | File(s) | Work |
+|------|---------|------|
+| P16-1 | `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` | Replace scalar `buffer[i] == '\n'` loop with `ReadOnlySpan<byte>.IndexOf` backed by `SearchValues<byte>`; add AVX2 fast path gated by `Avx2.IsSupported` with a static readonly dispatch delegate |
+| P16-2 | `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` | Defer `Encoding.UTF8.GetString` — pass `ReadOnlyMemory<byte>` slices to `DeserializeLines`; decode only after a line passes downstream filters. Deliver after P16-1 is merged and benchmarked |
+| P16-3 | `src/MarketDataCollector.Storage/Services/DataQualityScoringService.cs` | Replace `File.ReadLinesAsync` + `string.IndexOf` + `char.IsDigit` with a `PipeReader` / `ArrayPool<byte>` reader and a `TryExtractSequenceUtf8(ReadOnlySpan<byte>, out long)` helper; use `u8` string literals for key probes |
+| P16-4a | `src/MarketDataCollector.Application/Monitoring/LatencyHistogram.cs` | Replace linear `for` bucket scan with `Array.BinarySearch`; add `[MethodImpl(AggressiveInlining)]` |
+| P16-4b | `src/MarketDataCollector.Application/Monitoring/LatencyHistogram.cs` | Replace `List<LatencySample>` + `RemoveAt(0)` overflow with a fixed-size `LatencySample[]` circular ring indexed by `_sampleHead % MaxSamples` |
+| P16-5 | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Introduce a ring-buffer backed `Drain(int maxCount)` overload using a power-of-two array with `_head`/`_tail` indices; retain existing path for callers that pass no pooled buffer |
+| P16-6 | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Replace `DrainBySymbol` two-list reconstruction with an in-place partition using `SymbolTable.GetOrAdd` for integer symbol comparison; expose `DrainBySymbolId(int)` as the preferred API |
+| P16-7 | `src/MarketDataCollector.Application/Monitoring/DataQuality/AnomalyDetector.cs` | **Profile first.** If `SymbolStatistics.RecordTrade` is confirmed CPU-hot, apply `Vector<double>` horizontal-add for rolling mean/stddev and switch price window to struct-of-arrays layout |
+| P16-8 | `benchmarks/MarketDataCollector.Benchmarks/` | Add benchmark cases: newline scan (1 KB / 64 KB / 4 MB), sequence parse (1 K / 10 K lines), bucket selection (8 / 16 / 32 boundaries), `Drain` ring vs `GetRange`, `DrainBySymbol` two-list vs in-place partition |
 
-#### Phase 16-C: Profile-Gated SIMD Kernel (Profile First)
+#### Delivery Notes
 
-| Item | Source File | Work |
-|------|------------|------|
-| P16-C-1 | `AnomalyDetector.cs` L61-85 | `SymbolStatistics.RecordTrade` SIMD accumulate using `Vector<double>` horizontal-add — **only after profiling confirms > 5% CPU contribution** |
+- **P16-1 and P16-3** are the recommended starting points: both are fully localized, have
+  complete implementation sketches in the evaluation document, and carry the lowest rollback risk.
+- **P16-4** (binary search + circular ring) should be a single PR — both sub-items are in the
+  same class and complement each other.
+- **P16-2** (deferred UTF-16) should follow P16-1: extend the same method once the scan
+  refactor is merged and its benchmark improvement is confirmed.
+- Every optimization PR description must include `BenchmarkDotNet` before/after results (P16-8
+  additions serve as the benchmark harness for all other items).
+- P16-7 is gated on profiling evidence and should not be started without it.
 
-**Exit criteria (Phase C):** Profiling evidence attached to PR; `Vector<double>` and scalar paths produce identical results.
+**Exit criteria:** `BenchmarkDotNet` before/after results attached to each PR show a measurable
+improvement on representative datasets. All existing tests pass with every optimized path
+active. Scalar fallback paths produce bit-identical results to SIMD paths. GC-allocated bytes
+per operation do not regress relative to the pre-optimization baseline.
 
 ---
 

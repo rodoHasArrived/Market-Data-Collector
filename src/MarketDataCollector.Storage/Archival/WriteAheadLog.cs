@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Serialization;
+using Prometheus;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Archival;
@@ -21,6 +22,19 @@ public sealed class WriteAheadLog : IAsyncDisposable
     private readonly string _walDirectory;
     private readonly WalOptions _options;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
+
+    // Prometheus counters for WAL recovery observability (2.3)
+    private static readonly Counter WalRecoveryEventsTotal = Metrics.CreateCounter(
+        "mdc_wal_recovery_events_total",
+        "Total number of valid events recovered from WAL on startup");
+
+    private static readonly Counter WalRecoveryCorruptedTotal = Metrics.CreateCounter(
+        "mdc_wal_recovery_corrupted_records_total",
+        "Total number of corrupted WAL records encountered during recovery");
+
+    private static readonly Gauge WalRecoveryDurationSeconds = Metrics.CreateGauge(
+        "mdc_wal_recovery_duration_seconds",
+        "Duration of the most recent WAL recovery pass in seconds");
 
     private FileStream? _currentWalFile;
     private StreamWriter? _currentWriter;
@@ -101,11 +115,19 @@ public sealed class WriteAheadLog : IAsyncDisposable
         LastRecoveryEventCount = totalRecoveredEvents;
         LastRecoveryDurationMs = recoveryStopwatch.Elapsed.TotalMilliseconds;
 
-        if (totalRecoveredEvents > 0)
+        var totalCorrupted = CorruptedRecordCount;
+
+        // Emit Prometheus recovery metrics (2.3)
+        WalRecoveryEventsTotal.IncTo(totalRecoveredEvents);
+        WalRecoveryCorruptedTotal.IncTo(totalCorrupted);
+        WalRecoveryDurationSeconds.Set(recoveryStopwatch.Elapsed.TotalSeconds);
+
+        if (totalRecoveredEvents > 0 || totalCorrupted > 0)
         {
             _log.Information(
-                "WAL recovery complete: {RecoveredCount} events in {DurationMs}ms",
+                "WAL recovery complete: {RecoveredCount} valid events, {CorruptedCount} corrupted records, {DurationMs:F1}ms elapsed",
                 totalRecoveredEvents,
+                totalCorrupted,
                 LastRecoveryDurationMs);
         }
 

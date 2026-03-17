@@ -1,12 +1,53 @@
 # High-Impact Repository Improvements Brainstorm
 
-**Date:** 2026-03-02
+**Date:** 2026-03-02 (Part 1) / 2026-03-03 (Part 2)
 **Status:** Active — Improvements Identified
 **Author:** Architecture Review
 
-> Generated from deep codebase analysis on 2026-03-02.
-> Focus: code generalization, program output quality, architectural soundness.
-> Scope: ideas ranked purely by impact — effort is intentionally not considered.
+> This document contains two separate deep-analysis sessions.  
+> **Part 1** (2026-03-02) focuses on code generalization, architectural soundness, and extensibility.  
+> **Part 2** (2026-03-03) focuses on output quality, correctness, and production robustness.
+
+---
+
+## Table of Contents
+
+### Part 1 — Code Generalization & Architecture (2026-03-02)
+1. [Replace Stringly-Typed Identifiers with Strong Domain Types](#1-replace-stringly-typed-identifiers-with-strong-domain-types)
+2. [Make the Event Pipeline Generic and Composable](#2-make-the-event-pipeline-generic-and-composable-middleware-pipeline)
+3. [Unify the Dual Domain Model](#3-unify-the-dual-domain-model-c-records--f-types)
+4. [Introduce a Proper Event Sourcing / CQRS Backbone](#4-introduce-a-proper-event-sourcing--cqrs-backbone)
+5. [Extract a Provider Contract Test Suite](#5-extract-a-provider-contract-test-suite-consumer-driven-contracts)
+6. [Implement Structural Typing for MarketEventPayload](#6-implement-structural-typing-for-marketeventpayload-eliminate-polymorphic-null)
+7. [Implement Backpressure Propagation Across the Stack](#7-implement-backpressure-propagation-across-provider--collector--pipeline)
+8. [Implement a Plugin Architecture for Storage Sinks](#8-implement-a-plugin-architecture-for-storage-sinks)
+9. [Introduce Deterministic Replay Testing](#9-introduce-deterministic-replay-testing-golden-master-tests)
+10. [Implement Zero-Allocation Hot Path](#10-implement-zero-allocation-hot-path-struct-based-event-pipeline)
+11. [Implement a Formal State Machine for Provider Connection Lifecycle](#11-implement-a-formal-state-machine-for-provider-connection-lifecycle)
+12. [Compile-Time Architectural Boundary Enforcement](#12-compile-time-architectural-boundary-enforcement)
+13. [Implement Data Lineage as a First-Class Pipeline Concept](#13-implement-data-lineage-as-a-first-class-pipeline-concept)
+14. [Replace Runtime Provider Discovery with Source-Generated Registration](#14-replace-runtime-provider-discovery-with-source-generated-registration)
+15. [Implement Comprehensive Schema Evolution for Stored Data](#15-implement-comprehensive-schema-evolution-for-stored-data)
+- [Part 1 Summary: Impact Ranking](#summary-impact-ranking)
+
+### Part 2 — Output Quality & Correctness (2026-03-03)
+1. [Unified Event Schema Evolution & Versioning](#1-unified-event-schema-evolution--versioning)
+2. [Replace Stringly-Typed Provider/Symbol/Venue Identifiers with Strong Types](#2-replace-stringly-typed-providersymbolvenueidentifiers-with-strong-types)
+3. [Make the F# Validation Pipeline a First-Class Citizen](#3-make-the-f-validation-pipeline-a-first-class-citizen-in-the-event-flow)
+4. [Implement Proper WAL Corruption Recovery](#4-implement-proper-wal-corruption-recovery)
+5. [Introduce a Query/Replay Abstraction Over Stored Data](#5-introduce-a-queryreplay-abstraction-over-stored-data)
+6. [End-to-End Contract Testing for the Provider → Storage Round-Trip](#6-end-to-end-contract-testing-for-the-provider--storage-round-trip)
+7. [Make the Composite Sink Failure Model Explicit and Configurable](#7-make-the-composite-sink-failure-model-explicit-and-configurable)
+8. [Formalize the Provider Capability Model for Smarter Orchestration](#8-formalize-the-provider-capability-model-for-smarter-orchestration)
+9. [Enforce Structural Consistency via Roslyn Analyzers](#9-enforce-structural-consistency-via-roslyn-analyzers)
+10. [Build a Deterministic Data Replay System](#10-build-a-deterministic-data-replay-system)
+11. [Eliminate the Endpoint Stub Problem](#11-eliminate-the-endpoint-stub-problem)
+12. [Unify and Harden the Reconnection Model](#12-unify-and-harden-the-reconnection-model)
+13. [Add Property-Based / Fuzz Testing for the Data Path](#13-add-property-based--fuzz-testing-for-the-data-path)
+14. [Implement Cross-Provider Data Reconciliation](#14-implement-cross-provider-data-reconciliation)
+15. [Decouple the HTTP API from the Collection Engine](#15-decouple-the-http-api-from-the-collection-engine)
+16. [Implement Structured Concurrency for Provider Lifecycle](#16-implement-structured-concurrency-for-provider-lifecycle)
+- [Part 2 Summary: Impact vs. Risk Matrix](#summary-impact-vs-risk-matrix)
 
 ---
 
@@ -520,12 +561,15 @@ public interface IEventUpcaster
 | 13 | First-class data lineage | Observability, debugging |
 | 14 | Source-generated provider registry | Correctness, AOT compat |
 | 15 | Schema evolution for storage | Data longevity |
-> **Date:** 2026-03-03
-> **Scope:** Code generalization and output program quality — effort is not a factor.
 
 ---
 
-## Executive Summary
+## Part 2 — Output Quality & Correctness (2026-03-03)
+
+> **Date:** 2026-03-03
+> **Scope:** Code generalization and output program quality — effort is not a factor.
+
+### Executive Summary
 
 After a deep analysis of the entire codebase — domain modeling, provider infrastructure, event pipeline, storage, testing, CI/CD, and F# integration — the following are the highest-impact improvements ranked by how much they would improve the **generality**, **correctness**, **robustness**, and **output quality** of the system.
 

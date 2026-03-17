@@ -18,33 +18,32 @@ This directory contains in-depth evaluations of architecture components, provide
 
 | Document | Description |
 |----------|-------------|
-| [Storage Architecture](storage-architecture-evaluation.md) | Tiered storage design assessment |
-| [Realtime Streaming Architecture](realtime-streaming-architecture-evaluation.md) | Streaming pipeline evaluation |
-| [Data Quality Monitoring](data-quality-monitoring-evaluation.md) | Quality monitoring assessment |
-| [Ingestion Orchestration](ingestion-orchestration-evaluation.md) | Ingestion pipeline evaluation |
-| [Operational Readiness](operational-readiness-evaluation.md) | Production readiness assessment |
-| [Historical Data Providers](historical-data-providers-evaluation.md) | Provider comparison and evaluation |
+| [Storage Architecture](storage-architecture-evaluation.md) | Tiered storage design: JSONL + Parquet dual-format, WAL durability, tiered storage |
+| [Realtime Streaming Architecture](realtime-streaming-architecture-evaluation.md) | Event pipeline, provider connectivity, and WebSocket resilience evaluation |
+| [Data Quality Monitoring](data-quality-monitoring-evaluation.md) | 12+ quality services: gap detection, anomaly detection, SLA monitoring |
+| [Ingestion Orchestration](ingestion-orchestration-evaluation.md) | Scheduler and backfill control: job state machine, policy-driven scheduling |
+| [Operational Readiness](operational-readiness-evaluation.md) | Production readiness: SLOs, alerting, incident response |
+| [Historical Data Providers](historical-data-providers-evaluation.md) | Provider comparison across 10 backfill sources with recommended fallback chain |
 
 ## Desktop Evaluations
 
 | Document | Description |
 |----------|-------------|
-| [Desktop End-User Improvements](desktop-end-user-improvements.md) | Comprehensive desktop UX assessment |
-| [Windows Desktop Provider Configurability](windows-desktop-provider-configurability-assessment.md) | Provider configuration in desktop app |
-| [Desktop Platform Improvements Guide](desktop-platform-improvements-implementation-guide.md) | Implementation guide for desktop dev improvements (moved from development/) |
-| [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) | Executive summary of desktop platform improvements |
-| [Desktop Improvements Quick Reference](desktop-improvements-quick-reference.md) | Quick reference card for desktop improvements |
+| [Desktop End-User Improvements](desktop-end-user-improvements.md) | Comprehensive desktop UX assessment: 49 pages, 104 services, gap analysis |
+| [Windows Desktop Provider Configurability](windows-desktop-provider-configurability-assessment.md) | Provider configuration assessment and phased improvement roadmap |
+| [Desktop Platform Improvements Guide](desktop-platform-improvements-implementation-guide.md) | Implementation guide: test infrastructure, fixture mode, DI modernization |
+| [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) | Impact analysis, phase status, quick reference, and success criteria |
 
 ## Improvement Proposals & Brainstorms
 
 | Document | Description |
 |----------|-------------|
-| [High-Impact Improvements (Mar 2026)](high-impact-improvement-brainstorm-2026-03.md) | Critical defects and high-impact improvements identified in the codebase |
-| [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md) | Code quality and architecture improvements |
-| [High-Value Low-Cost Improvements](high-value-low-cost-improvements-brainstorm.md) | Quick-win improvements |
-| [Next Frontier Brainstorm](2026-03-brainstorm-next-frontier.md) | New capabilities and systemic improvements |
-| [Nautilus-Inspired Restructuring](nautilus-inspired-restructuring-proposal.md) | Structural improvements inspired by nautilus_trader |
-| [Assembly-Level Performance Opportunities](assembly-performance-opportunities.md) | SIMD/.NET hardware intrinsics optimization candidates |
+| [High-Impact Improvements (Mar 2026)](high-impact-improvement-brainstorm-2026-03.md) | Critical defects and high-impact improvements: data integrity, stability, architecture (31 items with status) |
+| [High-Impact Improvements Brainstorm](high-impact-improvements-brainstorm.md) | Two-part analysis: Part 1 — code generalization & architecture (2026-03-02); Part 2 — output quality & correctness (2026-03-03) |
+| [High-Value Low-Cost Improvements](high-value-low-cost-improvements-brainstorm.md) | Quick-win improvements across startup, observability, developer experience, and data integrity (47 items) |
+| [Next Frontier Brainstorm](2026-03-brainstorm-next-frontier.md) | Future capabilities: correlation engine, ML anomaly detection, cloud sinks, governance (Mar 2026) |
+| [Nautilus-Inspired Restructuring](nautilus-inspired-restructuring-proposal.md) | Structural improvements inspired by nautilus_trader: co-located configs, parsing layer, FSM lifecycle |
+| [Assembly-Level Performance Opportunities](assembly-performance-opportunities.md) | SIMD/.NET hardware intrinsics optimization candidates for hot paths |
 
 ## Related
 
