@@ -66,6 +66,7 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 13: Observability Completion | 📝 Planned | End-to-end OTel trace propagation; correlation IDs. |
 | Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
 | Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
+| Phase 16: Assembly-Level Performance | 📝 Planned | Byte-level SIMD, algorithmic, and allocation improvements from `docs/evaluations/assembly-performance-opportunities.md`. |
 
 ---
 
@@ -301,6 +302,43 @@ These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md
 
 ---
 
+### Phase 16: Assembly-Level Performance
+
+**Goal:** Reduce CPU time and GC allocation on the five highest-value hot paths identified in
+[`docs/evaluations/assembly-performance-opportunities.md`](../evaluations/assembly-performance-opportunities.md).
+Full implementation details and per-item checklists are in
+[`docs/plans/assembly-performance-roadmap.md`](../plans/assembly-performance-roadmap.md).
+
+#### Phase 16-A: Algorithmic Improvements (Low Risk)
+
+| Item | Source File | Work |
+|------|------------|------|
+| P16-A-1 | `LatencyHistogram.cs` L255-265 | Replace linear bucket scan with binary search; replace `List<LatencySample>` overflow with fixed-size circular buffer |
+| P16-A-2 | `MemoryMappedJsonlReader.cs` L237-275 | Defer `Encoding.UTF8.GetString` per-line allocation; hold lines as `ReadOnlyMemory<byte>` until after downstream filtering |
+| P16-A-3 | `EventBuffer.cs` L228-257 | `DrainBySymbol` in-place partition + `SymbolTable` integer interning; eliminate two-list allocation and `AddRange` copy |
+
+**Exit criteria (Phase A):** All existing tests pass; BenchmarkDotNet results in PR show measurable allocation reduction on at least two candidates.
+
+#### Phase 16-B: Hot-Path Byte-Level Rewrites (Medium Risk)
+
+| Item | Source File | Work |
+|------|------------|------|
+| P16-B-1 | `MemoryMappedJsonlReader.cs` L237-269 | Vectorized newline scanner using `SearchValues<byte>` (portable) with AVX2 optional path; feature-gated dispatch via `NewlineScanner` static class |
+| P16-B-2 | `DataQualityScoringService.cs` L252-265 | Replace `File.ReadLinesAsync` + `string.IndexOf` + `char.IsDigit` with `FileStream` + `ArrayPool<byte>` + `TryExtractSequenceUtf8(ReadOnlySpan<byte>)` |
+| P16-B-3 | `EventBuffer.cs` L151-167 | `EventBuffer.Drain(int maxCount)` ring-buffer variant (opt-in constructor flag); eliminate `GetRange + RemoveRange` allocation |
+
+**Exit criteria (Phase B):** All existing tests pass; BenchmarkDotNet `[MemoryDiagnoser]` shows reduced GC-allocated bytes; scalar fallback path tested explicitly.
+
+#### Phase 16-C: Profile-Gated SIMD Kernel (Profile First)
+
+| Item | Source File | Work |
+|------|------------|------|
+| P16-C-1 | `AnomalyDetector.cs` L61-85 | `SymbolStatistics.RecordTrade` SIMD accumulate using `Vector<double>` horizontal-add — **only after profiling confirms > 5% CPU contribution** |
+
+**Exit criteria (Phase C):** Profiling evidence attached to PR; `Vector<double>` and scalar paths produce identical results.
+
+---
+
 ## Reference Documents
 
 - `docs/status/FEATURE_INVENTORY.md` — **new** comprehensive feature inventory with per-area status.
@@ -312,7 +350,8 @@ These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md
 - `docs/evaluations/` — detailed evaluation source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/audits/` — detailed audit source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/architecture/deterministic-canonicalization.md` — cross-provider canonicalization design.
+- `docs/plans/assembly-performance-roadmap.md` — detailed Phase 16 viability assessments and per-item implementation checklists.
 
 ---
 
-*Last Updated: 2026-02-26*
+*Last Updated: 2026-03-17*
