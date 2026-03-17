@@ -1,5 +1,11 @@
 # L3 Inference & Queue-Aware Execution Backtesting: Implementation Plan
 
+**Version:** 1.1
+**Last Updated:** 2026-03-17
+**Audience:** Quantitative researchers, execution analysts, core contributors
+
+---
+
 ## 1) Objective
 
 Implement a queue-aware execution simulation layer that infers **L3-like queue dynamics** from existing stored data:
@@ -112,15 +118,50 @@ dotnet run --project src/MarketDataCollector -- \
 
 The dry-run reports per-day data coverage, sequence gap rates, and an estimated confidence floor before any computation is done.
 
+#### Workflow E — Strategy parameter sensitivity analysis
+
+A quant developer wants to find the optimal limit price aggression level for AAPL passive orders without manually creating multiple order-intent files. The `--sim-grid-search` mode parameterises a template order over a configurable grid and runs all variants in a single reconstruction pass.
+
+```bash
+dotnet run --project src/MarketDataCollector -- \
+  --simulate-execution \
+  --symbols AAPL \
+  --sim-from 2026-01-01 \
+  --sim-to 2026-01-31 \
+  --sim-orders ./template-orders.jsonl \
+  --sim-grid-search \
+  --sim-grid-param "limitOffsetTicks=-2,-1,0,1,2" \
+  --sim-grid-param "cancelAfterMinutes=5,10,20" \
+  --sim-output ./results/aapl-grid
+```
+
+The reconstruction timeline is built **once** and reused across all 15 parameter combinations. Output includes the standard per-run artifacts plus a `sensitivity-report.json` ranking each combination by fill rate, slippage, and implementation shortfall:
+
+```json
+// sensitivity-report.json (excerpt)
+{
+  "gridDimensions": {"limitOffsetTicks": [-2,-1,0,1,2], "cancelAfterMinutes": [5,10,20]},
+  "ranked": [
+    {"limitOffsetTicks": -1, "cancelAfterMinutes": 10, "fillRate": 0.87, "avgSlippageBps": 0.01, "rank": 1},
+    {"limitOffsetTicks":  0, "cancelAfterMinutes": 10, "fillRate": 0.83, "avgSlippageBps": 0.02, "rank": 2}
+  ],
+  "isInferred": true
+}
+```
+
+> **CLI flag reference:** `--sim-grid-search` activates grid mode; `--sim-grid-param` accepts `"paramName=v1,v2,..."` and may be repeated; `--sim-grid-max N` sets a safety limit (default: 50 combinations) requiring explicit override above that count.
+
 ### 2.3 Key User-Facing Outputs
 
 | Output | Format | Purpose |
 |--------|--------|---------|
 | Fill tape | `.jsonl` / `.parquet` | Each simulated fill event with timestamp, price, qty, reason |
 | Order lifecycle log | `.jsonl` | Open, partial fill, full fill, cancelled states per order |
-| Summary report | `.json` | Aggregate slippage, fill rate, confidence score, warnings |
+| Summary report | `.json` | Aggregate slippage, fill rate, confidence score, IS decomposition, warnings |
 | Queue diagnostics | `.jsonl` | Per-order queue-ahead trajectory over time |
 | Calibration report | `.json` | Model parameters and calibration quality per symbol/session |
+| Sensitivity report | `.json` | Ranked parameter grid results (fill rate, IS) when `--sim-grid-search` is used |
+| Comparison report | `.json` | Statistical A/B comparison of two simulation runs (bootstrap CIs, p-value) |
 
 ---
 
@@ -336,14 +377,31 @@ Use a tractable state-space/EM style model:
 4. **Output**
    - Expected queue-ahead progression + variance/confidence.
 
-## 9.3 Heuristic Fallback Model
+## 9.3 Iceberg / Hidden-Order Detection (Phase 1.5)
+
+When a price level's displayed size repeatedly drops to near-zero and immediately refills to a nearly identical quantity, this is a strong iceberg fingerprint. Treating these replenishments as ordinary new-order arrivals inflates cancel rate estimates and causes passive fills to be modelled as arriving faster than they will in reality.
+
+A lightweight iceberg detector watches for sawtooth patterns (peak → depletion → same-size peak) in each level's displayed-size history. When detected:
+- `InferredQueueState` gains `IsLikelyIceberg = true` and `EstimatedHiddenReserve` at that level.
+- Queue-ahead for passive orders resting at or behind an iceberg level is adjusted upward.
+- `queue-diagnostics.jsonl` gains `icebergLevelsDetected` per order.
+
+Gate behind `InferenceModelConfig.EnableIcebergDetection: false` (opt-in) to preserve Phase 1 behaviour. The heuristic requires confirmation from at least two trade-consumption cycles to suppress false positives in illiquid markets.
+
+## 9.4 Regime-Aware Calibration (Phase 2)
+
+Session buckets (open / mid / close) are the Phase 1 calibration segments. Phase 2 extends this to **intraday regime segments** — calm, moderate, stress — by clustering calibration-window observations on bid-ask spread, book imbalance, and 1-minute trade arrival rate. Each calibration session produces N regime-specific parameter sets. During simulation, the active regime is inferred from a rolling 15-minute window and the matching parameter set is loaded dynamically.
+
+CLI: `--calibrate-regimes 3`. The `calibration-report.json` gains a `regimeBreakdown` array. Minimum recommended calibration history increases from 10 to 30 trading days when this option is active.
+
+## 9.5 Heuristic Fallback Model
 
 When data quality is weak:
 
 - Conservative assumptions (slower fills, more adverse queue insertion ahead).
 - Deterministic lower-bound and upper-bound fill envelopes.
 
-## 9.4 Confidence Scoring
+## 9.6 Confidence Scoring
 
 Compute confidence from:
 
@@ -557,8 +615,15 @@ Results written to: ./results/aapl-jan/
   "avgTimeToFillMinutes": 4.2,
   "avgSlippageBps": 0.02,
   "implementationShortfallBps": 0.04,
+  "slippageDecomposition": {              // IS split into four standard components
+    "timingCostBps": 0.01,               // price drift while waiting (arrival → fill)
+    "spreadCostBps": 0.01,               // half-spread paid on aggressive fills
+    "opportunityCostBps": 0.02,          // missed alpha from unfilled / expired orders
+    "marketImpactBps": 0.00,             // non-zero only when EnableMarketImpact is true
+    "decompositionMethod": "Approximate" // "Approximate" | "Almgren-Chriss" (Phase 2)
+  },
   "overallConfidenceScore": 0.86,
-  "confidenceGrade": "HIGH",           // "HIGH" (≥0.7), "MEDIUM" (0.4–0.7), "LOW" (<0.4)
+  "confidenceGrade": "HIGH",             // "HIGH" (≥0.7), "MEDIUM" (0.4–0.7), "LOW" (<0.4)
   "lowConfidenceDaysSkipped": 0,
   "heuristicFallbackDays": 0,
   "warnings": [],
