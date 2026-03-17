@@ -26,11 +26,11 @@
         icons desktop desktop-publish install-hooks \
         build-wpf test-desktop-services desktop-dev-bootstrap \
         ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-audit-ai-docs ai-verify ai-report \
+        ai-arch-check ai-arch-check-summary ai-arch-check-json \
         ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute \
         skill-list skill-resources skill-scripts skill-chains skill-resource \
         skill-run skill-chain skill-run-chain skill-validate skill-run-eval \
         skill-benchmark skill-discover
-        ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute
 
 # Default target
 .DEFAULT_GOAL := help
@@ -107,7 +107,7 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'icons|desktop' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Pre-PR & Quality:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify|ai-docs|ai-report' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-24s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify|ai-docs|ai-report|ai-arch' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-28s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Skills:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'skill-' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-24s$(NC) %s\n", $$1, $$2}'
@@ -633,6 +633,19 @@ ai-report: ## Generate AI improvement report
 	@echo "$(BLUE)Generating improvement report...$(NC)"
 	@$(AI_UPDATER) report --output docs/generated/improvement-report.md
 	@echo "$(GREEN)Report written to docs/generated/improvement-report.md$(NC)"
+
+AI_ARCH_CHECK := python3 build/scripts/ai-architecture-check.py
+
+ai-arch-check: ## Run AI architecture compliance checker (CPM, deps, ADRs, channels, sinks, JSON)
+	@echo "$(BLUE)Running architecture compliance checks...$(NC)"
+	@$(AI_ARCH_CHECK) --src src/ check
+	@echo "$(GREEN)Architecture check complete$(NC)"
+
+ai-arch-check-summary: ## One-line architecture compliance summary (clean / violations)
+	@-$(AI_ARCH_CHECK) --src src/ summary
+
+ai-arch-check-json: ## Architecture compliance check with JSON output (for CI / tooling)
+	@$(AI_ARCH_CHECK) --src src/ --json check
 
 # =============================================================================
 # AI Documentation Maintenance

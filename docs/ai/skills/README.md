@@ -68,6 +68,55 @@ Brainstorming, ideation, and creative feature exploration skill for the MarketDa
 
 ---
 
+### mdc-provider-builder
+
+**Directory:** [`.claude/skills/mdc-provider-builder/`](../../../.claude/skills/mdc-provider-builder/)
+**Entry point:** [`.claude/skills/mdc-provider-builder/SKILL.md`](../../../.claude/skills/mdc-provider-builder/SKILL.md)
+
+Step-by-step guided skill for building new data provider adapters for MarketDataCollector.
+Covers all three provider types (`IMarketDataClient`, `IHistoricalDataProvider`,
+`ISymbolSearchProvider`) with a 12-step build process, compliance checklist, and known AI
+error table.
+
+**Trigger conditions:**
+
+- User asks to add a new data provider, exchange, or data source
+- Tasks involving `IMarketDataClient`, `IHistoricalDataProvider`, `DataSourceAttribute`, or `ProviderSdk`
+- Implementing rate limiting, WebSocket reconnection, or DI registration for a provider
+- Code review identifies missing `[ImplementsAdr]` attribute or `WaitAsync()` error
+
+**Bundled resources:**
+
+| Resource | Purpose |
+| ---------- | ------- |
+| `references/provider-patterns.md` | 7 copy-ready patterns: historical skeleton, streaming skeleton, options, DI module, JsonContext diff, test scaffolds, appsettings template |
+
+---
+
+### mdc-test-writer
+
+**Directory:** [`.claude/skills/mdc-test-writer/`](../../../.claude/skills/mdc-test-writer/)
+**Entry point:** [`.claude/skills/mdc-test-writer/SKILL.md`](../../../.claude/skills/mdc-test-writer/SKILL.md)
+
+Test generation skill for any MarketDataCollector component. Produces idiomatic xUnit +
+FluentAssertions tests with correct async patterns, isolation, naming conventions, and mock
+setup for all major component types.
+
+**Trigger conditions:**
+
+- User asks to write, add, or expand tests for any MDC component
+- Code review (mdc-code-review Lens 4) identified test quality issues or gaps
+- New provider, service, or storage component needs a test scaffold
+- Tasks involving `async void`, missing `CancellationToken`, or `Task.Delay` in tests
+
+**Bundled resources:**
+
+| Resource | Purpose |
+| ---------- | ------- |
+| `references/test-patterns.md` | 8 named patterns (A–H) with full compilable scaffolding for providers, sinks, pipelines, WPF services, F# interop, and endpoint integration tests |
+
+---
+
 ### ai-docs-maintain
 
 **Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
@@ -104,6 +153,45 @@ The skills provider [`skills_provider.py`](../../../.claude/skills/skills_provid
 - Dynamic resource evaluation (live project stats, git context)
 - In-process script execution (validate-skill, run-eval, aggregate-benchmark)
 - File-based script subprocess execution
+
+---
+
+## Architecture Guard Tool
+
+The `mdc-architecture-guard` tool is a standalone Python compliance checker at
+[`build/scripts/ai-architecture-check.py`](../../../build/scripts/ai-architecture-check.py).
+It is not a skill invoked via the Claude skill system — it is a command-line tool that AI agents
+run before submitting a PR to catch architecture violations.
+
+**What it checks:**
+
+| Check ID | Rule |
+| -------- | ---- |
+| `CPM-001` | No `Version=` on `<PackageReference>` items (NU1008 guard) |
+| `DEP-001` – `DEP-006` | Forbidden dependency directions (Ui.Services→Wpf, ProviderSdk→Infrastructure, UWP refs, FSharp→non-Contracts) |
+| `ADR-001` / `ADR-005` | Missing `[ImplementsAdr]` and `[DataSource]` on provider classes |
+| `CHAN-001` | Raw `Channel.CreateBounded/CreateUnbounded` calls (must use `EventPipelinePolicy`) |
+| `SINK-001` | Direct `FileStream` / `File.Write*` in storage sinks (must use `AtomicFileWriter`) |
+| `JSON-001` | Reflection-based `JsonSerializer` calls without source-gen context |
+| `LOG-001` | String interpolation (`$"..."`) in structured log calls |
+
+**Usage:**
+
+```bash
+# Full check (human-readable)
+make ai-arch-check
+
+# One-line summary (useful in pre-PR scripts)
+make ai-arch-check-summary
+
+# JSON output (for CI or tooling)
+make ai-arch-check-json
+
+# Targeted checks
+python3 build/scripts/ai-architecture-check.py --src src/ check-cpm
+python3 build/scripts/ai-architecture-check.py --src src/ check-adrs
+python3 build/scripts/ai-architecture-check.py --src src/ check-channels
+```
 
 ---
 
