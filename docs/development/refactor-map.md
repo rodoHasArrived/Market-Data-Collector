@@ -258,7 +258,7 @@
 
 - **Implementation Guides:**
   - [Provider Implementation Guide](./provider-implementation.md) - Adding new data providers
-  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Desktop development
+  - [Desktop Platform Improvements](../evaluations/desktop-platform-improvements-implementation-guide.md) - Desktop development
   - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture
 
 - **Status and Tracking:**

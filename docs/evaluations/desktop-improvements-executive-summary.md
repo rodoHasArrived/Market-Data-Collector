@@ -577,12 +577,12 @@ Both workstreams are additive and low-to-medium risk. Phase 3 coverage expansion
 ## References
 
 - **Full Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)
-- **Desktop Testing Guide**: [desktop-testing-guide.md](./desktop-testing-guide.md)
+- **Desktop Testing Guide**: [desktop-testing-guide.md](../development/desktop-testing-guide.md)
 - **Architecture Layers**: [desktop-layers.md](../architecture/desktop-layers.md)
 - **Original Plan**: [desktop-devex-high-value-improvements.md](../archived/desktop-devex-high-value-improvements.md) (archived)
-- **WPF Notes**: [wpf-implementation-notes.md](./wpf-implementation-notes.md)
-- **UI Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
-- **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
+- **WPF Notes**: [wpf-implementation-notes.md](../development/wpf-implementation-notes.md)
+- **UI Fixture Mode**: [ui-fixture-mode-guide.md](../development/ui-fixture-mode-guide.md)
+- **Support Policy**: [policies/desktop-support-policy.md](../development/policies/desktop-support-policy.md)
 - **Test Projects**:
   - `tests/MarketDataCollector.Ui.Tests/` (~800 tests, 52 files)
   - `tests/MarketDataCollector.Wpf.Tests/` (~400 tests, 20 files)
@@ -590,9 +590,9 @@ Both workstreams are additive and low-to-medium risk. Phase 3 coverage expansion
 ## Related Documentation
 
 - **Development Guides:**
-  - [Desktop Testing Guide](./desktop-testing-guide.md)
-  - [Repository Organization Guide](./repository-organization-guide.md)
-  - [Provider Implementation Guide](./provider-implementation.md)
+  - [Desktop Testing Guide](../development/desktop-testing-guide.md)
+  - [Repository Organization Guide](../development/repository-organization-guide.md)
+  - [Provider Implementation Guide](../development/provider-implementation.md)
 
 - **Status and Planning:**
   - [Project Roadmap](../status/ROADMAP.md)
