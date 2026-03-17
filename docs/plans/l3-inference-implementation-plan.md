@@ -712,14 +712,57 @@ Request body for `POST /api/sim/execution/run`:
 }
 ```
 
-## 11.6 UI Integration (later)
+## 11.6 UI Integration — WPF Simulation Explorer
 
-- Dedicated **Simulation** page in the WPF desktop app showing:
-  - Wizard to set symbol, date range, and order intent source
-  - Real-time progress during long simulations
-  - Summary card with fill rate, slippage, and confidence badge
-  - Queue trajectory chart per order with confidence overlay
-  - Link to open results directory or export to Parquet
+A dedicated `SimulationPage.xaml` / `SimulationViewModel.cs` (extending `BindableBase` at
+`src/MarketDataCollector.Wpf/ViewModels/BindableBase.cs`) is added to the WPF desktop app. The page
+has three panels arranged in a horizontal split layout:
+
+### Left panel — Configuration wizard
+
+A step-by-step form that mirrors the CLI flags so users never need to compose long shell commands:
+
+| Step | Control | Maps to CLI flag |
+|------|---------|-----------------|
+| 1 | Multi-select symbol picker (from `ICanonicalSymbolRegistry`) | `--symbols` |
+| 2 | Date range pickers (From / To) | `--sim-from` / `--sim-to` |
+| 3 | Model selector: `baseline` \| `heuristic` | `--sim-model` |
+| 4 | Order intent JSONL upload (drag-and-drop) | `--sim-orders` |
+| 5 | Export format radio: `jsonl` \| `parquet` \| `both` | `--sim-export-format` |
+
+A **Validate & Estimate** button runs the dry-run check inline (calls `ISimulationService.DryRunAsync`)
+and shows a compact quality card: trading-day coverage, gap rate, trade alignment rate, and estimated
+confidence grade (GREEN / AMBER / RED badge). This feedback appears before the user commits to a
+full run.
+
+### Center panel — Simulation progress
+
+A progress indicator with four sequential steps (Reconstruction → Inference → Simulation → Export),
+each showing elapsed time and event/order counts. Below the steps, a scrollable log shows warnings
+as they emerge in real time (e.g., "Day 2026-01-15: heuristic fallback applied"). A **Cancel**
+button triggers graceful shutdown via `CancellationToken`.
+
+### Right panel — Results summary card
+
+Displayed after a completed run:
+
+- **Fill rate** — large numeric, color-coded (≥ 80% green, 60–79% amber, < 60% red)
+- **Avg slippage** — in bps alongside IS decomposition breakdown (timing / spread / opportunity)
+- **Confidence badge** — HIGH / MEDIUM / LOW with tooltip explaining the score
+- **Fill-time histogram** — mini bar chart of fill-time distribution (binned by minute)
+- **Compare with…** button — opens a second completed run's summary side-by-side, implementing
+  the A/B comparison (see Workflow C) without leaving the app
+- **Open results folder** / **Export to Parquet** quick-action buttons
+
+### Implementation notes
+
+- `SimulationViewModel` injects `ISimulationService` (thin wrapper around the CLI simulation
+  pipeline) via the WPF DI container — the page has no direct business logic.
+- All long-running operations use `async`/`await` with `CancellationToken`; progress is reported
+  via `IProgress<SimulationProgressEvent>` bound to the center panel.
+- The page is registered in `Pages.cs` and added to the navigation menu after the Backfill page.
+- Tests live in `tests/MarketDataCollector.Wpf.Tests/Services/` following the existing pattern for
+  WPF service tests.
 
 ---
 
@@ -737,6 +780,15 @@ Request body for `POST /api/sim/execution/run`:
 - Non-negative queue sizes
 - Conservation constraints in decomposition
 - Fill quantity never exceeds available/inferred executable quantity
+
+**F# type-encoded invariants:** The core queue decomposition is expressed as an F# discriminated
+union in `src/MarketDataCollector.FSharp/` following the pattern established by `QuoteValidator.fs`
+and `TradeValidator.fs`. Using a `NonNegativeQty` single-case DU, the type
+`QueueDecomposition = { TradeConsumed: NonNegativeQty; CancelVolume: NonNegativeQty; RefillVolume: NonNegativeQty }`
+makes negative queue sizes unrepresentable at compile time. The conservation identity
+`netChange = refill − cancel − trade` is enforced by the smart constructor rather than a runtime
+assertion. C# consumers access the validated values through the existing
+`MarketDataCollector.FSharp.Interop.g.cs` generated surface.
 
 ## 12.3 Scenario/Golden Tests
 
@@ -865,3 +917,71 @@ Request body for `POST /api/sim/execution/run`:
 5. PR5: Calibration + confidence scoring + docs.
 
 This keeps risk isolated and reviewable while producing usable intermediate milestones.
+
+---
+
+## 18) Phase 2+ Extension Roadmap
+
+The ideas below are **out of scope for Phase 1** but are direct extensions of the core
+inference engine. They are documented here so architectural decisions in Phase 1 can
+accommodate them without requiring rework.
+
+### 18.1 Implementation Shortfall Decomposition (Phase 1.5 — effort S)
+
+Post-process the fill tape to decompose aggregate IS into four standard components already
+present in `summary.json` as `slippageDecomposition` (added in v1.1). In Phase 1.5, the
+`decompositionMethod` field transitions from `"Approximate"` to `"Almgren-Chriss"` once the
+market impact model (§18.4) is available.
+
+### 18.2 Formal A/B Comparison Framework (Phase 2 — effort M)
+
+Promote Workflow C from manual JSON comparison to a first-class CLI mode:
+
+```bash
+dotnet run --project src/MarketDataCollector -- \
+  --compare-simulations \
+  --sim-results ./results/passive,./results/aggressive
+```
+
+Outputs `comparison.json` with per-order matched slippage deltas, bootstrap confidence
+intervals (1 000 resamples), a Mann-Whitney U test p-value, and a plain-English verdict.
+Implementation lives in `src/MarketDataCollector.Backtesting/Metrics/` alongside
+`BacktestMetricsEngine.cs`.
+
+### 18.3 Regime-Aware Auto-Calibration Scheduling (Phase 2 — effort M)
+
+Extend `OperationalScheduler` (`src/MarketDataCollector.Application/Scheduling/`) with a
+`CalibrationSchedule` block that triggers weekly rolling re-calibration. Pair with a drift
+detector: when any key parameter shifts more than a configurable threshold between runs, a
+`DataQualityMonitoringService` alert fires — "Queue model parameters for AAPL shifted
+significantly — market microstructure change detected." This surfaces in the WPF dashboard
+alongside existing quality alerts.
+
+### 18.4 Market Impact Feedback Model (Phase 2 — effort L)
+
+For institutional-sized orders the price-taking assumption in §10.3 becomes unrealistic.
+Add an optional Almgren-Chriss linear-temporary-impact model gated behind
+`EnableMarketImpact: false` (default off). Parameters `impactCoefficient` and
+`decayHalfLifeSeconds` live in `InferenceModelConfig`. The fill tape gains
+`estimatedImpactBps` per fill. Requires its own calibration against ADV data.
+
+### 18.5 Cross-Symbol Portfolio Execution Mode (Phase 3 — effort L)
+
+Add `--sim-portfolio-mode` to share a single event timeline across all symbols in a batch
+run (preventing causal violations across correlated fills). Phase 3a: shared clock only.
+Phase 3b: correlated taker-flow model driven by `--sim-correlation-matrix` or built-in ETF
+basket templates (SPY components, Russell 2000).
+
+### 18.6 WPF Simulation Explorer (Phase 3 — effort L)
+
+Full implementation of the three-panel page described in §11.6, including the inline
+dry-run quality card, live progress display, fill-time histogram, and A/B comparison
+side-by-side view.
+
+### 18.7 Live Queue Position Monitor (Phase 4 — effort XL)
+
+Apply the calibrated inference model to the **real-time** event pipeline
+(`EventPipeline` at `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`)
+to estimate current queue position for live limit orders. Exposed via
+`/api/queue/{symbol}` and a WPF dashboard widget. Requires the F# type-safe queue state
+(§12.2) to operate safely on the hot path at sub-millisecond per book-update latency.
