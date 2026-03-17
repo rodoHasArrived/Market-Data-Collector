@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-17
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23176598032
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23210091105
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,23 +23,19 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `CS0104`
+      - `CS0117`
       - `CS0219`
-      - `CS1573`
-      - `CS1734`
-      - `CS1998`
 
       ## Failure Patterns
-      - `2026-03-17T03:13:04.4653516Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\FillModels\BarMidpointFillModel.cs(16,58): error CS0104: 'MarketEvent' is an ...`
-      - `2026-03-17T03:13:04.4663649Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\MultiSymbolMergeEnumerator.cs(14,40): error CS0104: 'MarketEvent' is a...`
-      - `2026-03-17T03:13:04.4675216Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\MultiSymbolMergeEnumerator.cs(13,42): error CS0104: 'MarketEvent' is a...`
-      - `2026-03-17T03:13:04.4684135Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(135,51): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4694046Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\FillModels\IFillModel.cs(15,51): error CS0104: 'MarketEvent' is an ambiguous ...`
-      - `2026-03-17T03:13:04.4703577Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(153,26): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4712869Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(152,43): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4722547Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(168,71): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4733212Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(181,88): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4744209Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(194,9): error CS0104: 'MarketEvent' is an ambiguous ...`
+      - `2026-03-17T18:30:33.9880135Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Infrastructure\Adapters\TwelveData\TwelveDataHistoricalDataProvider.cs(37,65): error CS01...`
+      - `2026-03-17T18:30:41.1854348Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Infrastructure\Adapters\TwelveData\TwelveDataHistoricalDataProvider.cs(37,65): error CS01...`
+      - `2026-03-17T18:28:54.0279913Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,65...`
+      - `2026-03-17T18:28:56.6896204Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,65...`
+      - `2026-03-17T18:29:13.0366460Z ##[error]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,6...`
+      - `2026-03-17T18:29:16.8457320Z ##[error]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,6...`
+      - `2026-03-17T18:30:41.1757323Z Build FAILED.`
+      - `2026-03-17T18:28:56.6850187Z Build FAILED.`
+      - `2026-03-17T18:29:16.8229460Z Build FAILED.`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

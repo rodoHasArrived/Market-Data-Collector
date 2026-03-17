@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-17
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23190377990
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23210091105
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,35 +18,21 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      ### Test
-      - `2026-03-17T10:47:01.8358207Z Failed!  - Failed:     4, Passed:  2842, Skipped:     0, Total:  2846, Duration: 12 s - MarketDataCollector.Tests.dll (ne...`
-      - `2026-03-17T10:46:48.8894263Z [xUnit.net 00:00:03.76]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords...`
-      - `2026-03-17T10:46:48.9470928Z [xUnit.net 00:00:03.82]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_Subsequ...`
-      - `2026-03-17T10:46:49.1340534Z [xUnit.net 00:00:04.01]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_Rewr...`
-      - `2026-03-17T10:46:49.1445011Z [xUnit.net 00:00:04.02]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_Recover...`
+      ### Build
+      - `2026-03-17T18:30:33.9880135Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Infrastructure\Adapters\TwelveData\Twel...`
+      - `2026-03-17T18:30:41.1854348Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Infrastructure\Adapters\TwelveData\Twel...`
+      - `2026-03-17T18:28:54.0279913Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/Tw...`
+      - `2026-03-17T18:28:56.6896204Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/Tw...`
+      - `2026-03-17T18:29:13.0366460Z ##[error]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/T...`
 
       ### Code Quality
-      - `2026-03-17T10:46:22.4926251Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Subscription...`
-      - `2026-03-17T10:46:22.4944369Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Canonicaliza...`
-      - `2026-03-17T10:46:22.4956519Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-17T10:46:22.4968754Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
-      - `2026-03-17T10:46:22.4981103Z ##[warning]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Application/Pipeline/Eve...`
+      - `2026-03-17T18:30:27.9818906Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ApiClientServiceT...`
+      - `2026-03-17T18:30:41.1765683Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ApiClientServiceT...`
 
-
-      ## Failed Tests
-      - `2026-03-17T10:46:48.8950887Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [53 ms]`
-      - `2026-03-17T10:46:48.9503825Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [43 ms]`
-      - `2026-03-17T10:46:49.1388113Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [183 ms]`
-      - `2026-03-17T10:46:49.1515524Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [11 ms]`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords`
 
       ## Error Codes
-      - `CS1573`
-      - `CS1734`
-      - `CS1998`
+      - `CS0117`
+      - `CS0219`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -59,7 +45,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23190377990
+      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23210091105
 
       Additional context:
       {{additional_context}}
