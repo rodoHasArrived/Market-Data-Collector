@@ -37,6 +37,8 @@ MarketDataCollector/docs/
 ```
 Market-Data-Collector/
 ├── .claude/
+│   ├── agents/
+│   │   └── mdc-cleanup.md
 │   ├── skills/
 │   │   ├── _shared/
 │   │   │   └── project-context.md
@@ -575,7 +577,8 @@ Market-Data-Collector/
 │   │   │   ├── SchemaCheckCommand.cs
 │   │   │   ├── SelfTestCommand.cs
 │   │   │   ├── SymbolCommands.cs
-│   │   │   └── ValidateConfigCommand.cs
+│   │   │   ├── ValidateConfigCommand.cs
+│   │   │   └── WalRepairCommand.cs
 │   │   ├── Composition/
 │   │   │   ├── CircuitBreakerCallbackRouter.cs
 │   │   │   ├── HostAdapters.cs
@@ -787,6 +790,8 @@ Market-Data-Collector/
 │   │   │   └── ISchemaUpcaster.cs
 │   │   ├── Session/
 │   │   │   └── CollectionSession.cs
+│   │   ├── Store/
+│   │   │   └── MarketDataQuery.cs
 │   │   └── MarketDataCollector.Contracts.csproj
 │   ├── MarketDataCollector.Core/
 │   │   ├── Config/
@@ -976,6 +981,7 @@ Market-Data-Collector/
 │   │   │   ├── ExportValidator.cs
 │   │   │   └── ExportVerificationReport.cs
 │   │   ├── Interfaces/
+│   │   │   ├── IMarketDataStore.cs
 │   │   │   ├── ISourceRegistry.cs
 │   │   │   ├── IStorageCatalogService.cs
 │   │   │   ├── IStoragePolicy.cs
@@ -1027,6 +1033,9 @@ Market-Data-Collector/
 │   │   │   ├── CompositeSink.cs
 │   │   │   ├── JsonlStorageSink.cs
 │   │   │   └── ParquetStorageSink.cs
+│   │   ├── Store/
+│   │   │   ├── CompositeMarketDataStore.cs
+│   │   │   └── JsonlMarketDataStore.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.Storage.csproj
 │   │   ├── StorageOptions.cs
@@ -1451,6 +1460,7 @@ Market-Data-Collector/
 │   │   │   ├── StorageSinkRegistryTests.cs
 │   │   │   ├── SymbolRegistryServiceTests.cs
 │   │   │   ├── WriteAheadLogCorruptionModeTests.cs
+│   │   │   ├── WriteAheadLogFuzzTests.cs
 │   │   │   └── WriteAheadLogTests.cs
 │   │   ├── SymbolSearch/
 │   │   │   ├── OpenFigiClientTests.cs
