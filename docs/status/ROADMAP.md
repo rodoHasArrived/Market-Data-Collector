@@ -3,7 +3,7 @@
 **Version:** 1.6.2
 **Last Updated:** 2026-03-17
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
-**Repository Snapshot:** `src/` files: **779** | `tests/` files: **266** | HTTP route constants: **309** | Remaining stub routes: **0** | Test methods: **~4,135**
+**Repository Snapshot:** `src/` files: **832** | `tests/` files: **273** | HTTP route constants: **309** | Remaining stub routes: **0** | Test methods: **~4,093**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 

@@ -1,7 +1,7 @@
 # Market Data Collector — Feature Inventory
 
 **Version:** 1.6.2
-**Date:** 2026-03-11
+**Date:** 2026-03-17
 **Purpose:** Comprehensive inventory of every functional area, its current implementation status, and the remaining work required to reach full implementation.
 
 Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`IMPROVEMENTS.md`](IMPROVEMENTS.md) (per-item tracking).
@@ -387,11 +387,11 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 | Test Project | Test Files | Methods | Focus |
 |---|---|---|---|
-| `MarketDataCollector.Tests` | 161 | ~2,507 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain, integration endpoints |
-| `MarketDataCollector.FSharp.Tests` | 4 | ~99 | F# domain validation, calculations, transforms |
+| `MarketDataCollector.Tests` | 185 | ~2,663 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain, integration endpoints |
+| `MarketDataCollector.FSharp.Tests` | 6 | ~99 | F# domain validation, calculations, transforms, validation pipeline |
 | `MarketDataCollector.Wpf.Tests` | 19 | ~324 | WPF desktop services (navigation, config, status, connection) |
-| `MarketDataCollector.Ui.Tests` | 52 | ~927 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
-| **Total** | **236** | **~3,857** | |
+| `MarketDataCollector.Ui.Tests` | 63 | ~1,007 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
+| **Total** | **273** | **~4,093** | |
 
 ### Key test infrastructure
 
@@ -402,7 +402,8 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Response schema validation tests (15+) | ✅ |
 | `FixtureMarketDataClient` integration harness | ✅ |
 | `InMemoryStorageSink` for pipeline integration | ✅ |
-| Provider-specific test files (17 files, all providers + streaming failover) | ✅ |
+| Provider-specific test files (18 files, all providers + streaming failover) | ✅ |
+| **IB order fixture tests** (`IBOrderSampleTests`, 5 JSON fixtures) | ✅ |
 | Canonicalization golden fixtures (8 curated files) | ✅ |
 | Priority backfill queue tests (`PriorityBackfillQueueTests`) | ✅ |
 | Rate limiter tests (`RateLimiterTests`) | ✅ |
