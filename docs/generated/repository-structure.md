@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-17 00:29:35 UTC
+> Auto-generated on 2026-03-17 00:41:34 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -700,6 +700,40 @@ Market-Data-Collector/
 │   │   │   └── TracedEventMetrics.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Application.csproj
+│   ├── MarketDataCollector.Backtesting/
+│   │   ├── Engine/
+│   │   │   ├── BacktestContext.cs
+│   │   │   ├── BacktestEngine.cs
+│   │   │   ├── MultiSymbolMergeEnumerator.cs
+│   │   │   └── UniverseDiscovery.cs
+│   │   ├── FillModels/
+│   │   │   ├── BarMidpointFillModel.cs
+│   │   │   ├── IFillModel.cs
+│   │   │   └── OrderBookFillModel.cs
+│   │   ├── Metrics/
+│   │   │   ├── BacktestMetricsEngine.cs
+│   │   │   └── XirrCalculator.cs
+│   │   ├── Plugins/
+│   │   │   └── StrategyPluginLoader.cs
+│   │   ├── Portfolio/
+│   │   │   ├── ICommissionModel.cs
+│   │   │   └── SimulatedPortfolio.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Backtesting.csproj
+│   ├── MarketDataCollector.Backtesting.Sdk/
+│   │   ├── BacktestProgressEvent.cs
+│   │   ├── BacktestRequest.cs
+│   │   ├── BacktestResult.cs
+│   │   ├── CashFlowEntry.cs
+│   │   ├── FillEvent.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── IBacktestContext.cs
+│   │   ├── IBacktestStrategy.cs
+│   │   ├── MarketDataCollector.Backtesting.Sdk.csproj
+│   │   ├── Order.cs
+│   │   ├── PortfolioSnapshot.cs
+│   │   ├── Position.cs
+│   │   └── StrategyParameterAttribute.cs
 │   ├── MarketDataCollector.Contracts/
 │   │   ├── Api/
 │   │   │   ├── BackfillApiModels.cs
@@ -1182,6 +1216,7 @@ Market-Data-Collector/
 │       │   ├── ArchiveHealthService.cs
 │       │   ├── BackendServiceManager.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
+│       │   ├── BacktestService.cs
 │       │   ├── BrushRegistry.cs
 │       │   ├── ConfigService.cs
 │       │   ├── ConnectionService.cs
@@ -1213,6 +1248,7 @@ Market-Data-Collector/
 │       │   ├── AppStyles.xaml
 │       │   └── IconResources.xaml
 │       ├── ViewModels/
+│       │   ├── BacktestViewModel.cs
 │       │   ├── BindableBase.cs
 │       │   ├── DashboardViewModel.cs
 │       │   └── LeanIntegrationViewModel.cs
@@ -1233,6 +1269,8 @@ Market-Data-Collector/
 │       │   ├── ArchiveHealthPage.xaml.cs
 │       │   ├── BackfillPage.xaml
 │       │   ├── BackfillPage.xaml.cs
+│       │   ├── BacktestPage.xaml
+│       │   ├── BacktestPage.xaml.cs
 │       │   ├── ChartingPage.xaml
 │       │   ├── ChartingPage.xaml.cs
 │       │   ├── CollectionSessionPage.xaml
@@ -1328,6 +1366,12 @@ Market-Data-Collector/
 │       ├── MarketDataCollector.Wpf.csproj
 │       └── README.md
 ├── tests/  # Test projects
+│   ├── MarketDataCollector.Backtesting.Tests/
+│   │   ├── FillModelTests.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── MarketDataCollector.Backtesting.Tests.csproj
+│   │   ├── SimulatedPortfolioTests.cs
+│   │   └── XirrCalculatorTests.cs
 │   ├── MarketDataCollector.FSharp.Tests/
 │   │   ├── CalculationTests.fs
 │   │   ├── DomainTests.fs
