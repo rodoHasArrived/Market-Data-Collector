@@ -1,7 +1,10 @@
 using System.Text.Json;
 using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Contracts.Domain;
+using MarketDataCollector.Contracts.Store;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Replay;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -189,14 +192,51 @@ public static class ReplayEndpoints
         .Produces(200)
         .Produces(404);
 
-        // Preview replay events - uses JsonlReplayer to read actual events
-        group.MapGet(UiApiRoutes.ReplayPreview, async (string? filePath, int? limit, CancellationToken ct) =>
+        // Preview replay events - uses IMarketDataStore to read actual events
+        group.MapGet(UiApiRoutes.ReplayPreview, async (
+            string? filePath,
+            string? symbol,
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            int? limit,
+            [FromServices] IMarketDataStore? store,
+            CancellationToken ct) =>
         {
-            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-                return Results.Json(new { events = Array.Empty<object>(), total = 0, error = "File not found or path not provided" }, jsonOptions);
-
             var events = new List<object>();
             var maxEvents = Math.Min(limit ?? 10, 100);
+
+            // Prefer the unified IMarketDataStore when symbol/time filters are supplied
+            // (or when no specific file path is given).
+            if (store is not null && (symbol is not null || from.HasValue || to.HasValue || filePath is null))
+            {
+                try
+                {
+                    var query = new MarketDataQuery(
+                        Symbol: symbol is not null ? new SymbolId(symbol) : null,
+                        From: from,
+                        To: to,
+                        Limit: maxEvents);
+
+                    await foreach (var evt in store.QueryAsync(query, ct))
+                    {
+                        events.Add(new
+                        {
+                            eventType = evt.Type,
+                            symbol = evt.EffectiveSymbol,
+                            timestamp = evt.Timestamp,
+                            sequence = evt.Sequence,
+                            source = evt.Source
+                        });
+                    }
+                }
+                catch (OperationCanceledException) { /* request cancelled */ }
+
+                return Results.Json(new { events, total = events.Count, source = "store" }, jsonOptions);
+            }
+
+            // Fallback: single-file preview via path (legacy behaviour)
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                return Results.Json(new { events = Array.Empty<object>(), total = 0, error = "File not found or path not provided" }, jsonOptions);
 
             try
             {

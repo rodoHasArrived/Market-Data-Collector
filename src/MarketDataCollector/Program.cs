@@ -106,7 +106,8 @@ public partial class Program
             new ConfigPresetCommand(new AutoConfigurationService(), log),
             new QueryCommand(new HistoricalDataQueryService(cfg.DataRoot), log),
             new CatalogCommand(storageSearchService, log),
-            new GenerateLoaderCommand(cfg.DataRoot, log)
+            new GenerateLoaderCommand(cfg.DataRoot, log),
+            new WalRepairCommand(cfg, log)
         );
 
         var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);

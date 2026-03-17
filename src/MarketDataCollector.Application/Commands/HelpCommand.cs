@@ -268,6 +268,7 @@ COMMANDS:
     --show-config           Display current configuration summary
     --error-codes           Show error code reference guide
     --check-schemas         Check stored data schema compatibility
+    --wal-repair            Scan WAL files for corruption and rewrite only valid records
     --simulate-feed         Emit a synthetic event for smoke testing
     --selftest              Run comprehensive system self-tests
     --dry-run               Full validation without starting collection
