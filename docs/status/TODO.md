@@ -1,34 +1,34 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-17T08:22:55.318244+00:00
+> Last updated: 2026-03-17T08:33:03.797620+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 53 |
+| **Total Items** | 52 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 53 |
+| **Untracked** | 52 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `TODO` | 36 | General tasks to complete |
-| `NOTE` | 17 | Important notes and documentation |
+| `NOTE` | 16 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 40 |
+| `src/` | 39 |
 | `tests/` | 10 |
 | `.github/` | 3 |
 
 ## Unassigned & Untracked
 
-53 items have no assignee and no issue tracking:
+52 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
@@ -144,7 +144,7 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:147`
   > If the provider supports server-side filtering, implement it here. Otherwise, keep this call to the base class which filters client-side.
 
-### NOTE (17)
+### NOTE (16)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -160,9 +160,6 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:516`
   > ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison ProviderHealthComparison below is for overall provider ranking
-
-- [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:214`
-  > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
 
 - [ ] `src/MarketDataCollector.Wpf/GlobalUsings.cs:7`
   > Type aliases and Contracts namespaces are NOT re-defined here because they are already provided by the referenced MarketDataCollector.Ui.Services project (via its GlobalUsings.cs). Re-defining them would cause CS0101 duplicate type definition errors.
