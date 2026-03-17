@@ -66,6 +66,7 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 13: Observability Completion | 📝 Planned | End-to-end OTel trace propagation; correlation IDs. |
 | Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
 | Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
+| Phase 16: Assembly-Level Performance | 📝 Planned | Byte-level SIMD, algorithmic, and allocation improvements from `docs/evaluations/assembly-performance-opportunities.md`. |
 | Phase 16: Assembly-Level Performance Optimizations | 📝 Planned | SIMD hot-path and algorithmic improvements — guided by BenchmarkDotNet evidence. See detailed roadmap section. |
 
 ---
@@ -373,6 +374,7 @@ per operation do not regress relative to the pre-optimization baseline.
 - `docs/evaluations/` — detailed evaluation source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/audits/` — detailed audit source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/architecture/deterministic-canonicalization.md` — cross-provider canonicalization design.
+- `docs/plans/assembly-performance-roadmap.md` — detailed Phase 16 viability assessments and per-item implementation checklists.
 
 ---
 
