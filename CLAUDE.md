@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 732 source files
+**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 773 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,8 +22,8 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 732 |
-| C# Files | 732 |
+| Total Source Files | 773 |
+| C# Files | 773 |
 | F# Files | 14 |
 | Test Files | 252 |
 | Test Methods | ~4,135 |

@@ -764,7 +764,7 @@ public partial class SymbolsPage : Page
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Backend sync failed for add {symbol}", ex);
+            _loggingService.LogError("Backend sync failed for add", ex, ("Symbol", symbol));
         }
     }
 
@@ -776,7 +776,7 @@ public partial class SymbolsPage : Page
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Backend sync failed for remove {symbol}", ex);
+            _loggingService.LogError("Backend sync failed for remove", ex, ("Symbol", symbol));
         }
     }
 

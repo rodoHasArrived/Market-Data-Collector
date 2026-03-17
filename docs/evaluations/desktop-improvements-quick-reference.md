@@ -294,15 +294,15 @@ Track these to measure progress:
 - **Run Tests**: `make test-desktop-services`
 - **Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)
 - **Executive Summary**: [desktop-improvements-executive-summary.md](./desktop-improvements-executive-summary.md)
-- **Testing Guide**: [desktop-testing-guide.md](./desktop-testing-guide.md)
-- **Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
-- **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
+- **Testing Guide**: [desktop-testing-guide.md](../development/desktop-testing-guide.md)
+- **Fixture Mode**: [ui-fixture-mode-guide.md](../development/ui-fixture-mode-guide.md)
+- **Support Policy**: [policies/desktop-support-policy.md](../development/policies/desktop-support-policy.md)
 
 ## Related Documentation
 
 - **Development Workflow:**
-  - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture details
-  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure
+  - [WPF Implementation Notes](../development/wpf-implementation-notes.md) - WPF architecture details
+  - [Repository Organization Guide](../development/repository-organization-guide.md) - Code structure
   
 - **Planning and Roadmap:**
   - [Project Roadmap](../status/ROADMAP.md) - Overall project timeline
