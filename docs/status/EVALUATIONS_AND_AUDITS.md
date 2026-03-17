@@ -1,7 +1,7 @@
 # Market Data Collector - Consolidated Evaluations & Audits
 
 **Version:** 1.6.2
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-17
 **Status:** Consolidated reference document
 
 This document consolidates all architecture evaluations, code audits, desktop assessments, improvement brainstorms, and architecture proposals into a single navigable reference. It replaces the need to read 20+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
@@ -576,20 +576,28 @@ This document consolidates all architecture evaluations, code audits, desktop as
 ### Assembly-Level Performance Opportunities
 
 > Source: `docs/evaluations/assembly-performance-opportunities.md`
-> Date: 2026-03-01 | Status: Proposal
+> Date: 2026-03-01 (viability assessment added 2026-03-17) | Status: **Roadmapped — Phase 16**
 
-**Scope:** Identifies where .NET hardware intrinsics / SIMD can materially improve hot-path performance. Assembly is **not** recommended for orchestration, I/O-bound, or framework-heavy paths.
+**Scope:** Identifies where .NET hardware intrinsics / SIMD can materially improve hot-path
+performance. Assembly is **not** recommended for orchestration, I/O-bound, or framework-heavy
+paths.
 
-**Highest-potential candidates:**
+**Implementation roadmap:** See [Phase 16 in `ROADMAP.md`](ROADMAP.md#phase-16-assembly-level-performance-optimizations) for the full viability assessment, per-item delivery tasks, and exit criteria.
 
-| # | Area | Opportunity | Expected Gain |
-|---|------|-------------|---------------|
-| 1 | `MemoryMappedJsonlReader` — newline scanning & UTF-8 | Vectorized `\n` delimiter search (`Vector128/256<byte>`) | 1.5–4× scan throughput for large replay files |
-| 2 | `DataQualityScoringService.ComputeSequenceScoreAsync` — digit parsing | SIMD-assisted key search & numeric span extraction | Reduced GC and branch mispredicts |
-| 3 | Bulk event-buffer copy/drain | `Unsafe.CopyBlock` or `MemoryMarshal.Cast` over raw event structs | Reduced per-event overhead at high throughput |
-| 4 | Checksum / compression fast paths | CPU-bound profiling may reveal SIMD checksum candidates | Only if profiling confirms CPU-bound |
+**Highest-potential candidates (7 evaluated; 6 viable for immediate delivery):**
 
-> For the full analysis see `docs/evaluations/assembly-performance-opportunities.md`.
+| # | Area | Opportunity | Viability | Priority |
+|---|------|-------------|-----------|----------|
+| 1 | `MemoryMappedJsonlReader` — newline scan | `SearchValues<byte>` / AVX2 vectorized `\n` search | High | 1 |
+| 2 | `MemoryMappedJsonlReader` — UTF-16 deferral | Pass `ReadOnlyMemory<byte>` slices; defer `GetString` | Medium | 2 |
+| 3 | `DataQualityScoringService` — sequence extraction | `TryExtractSequenceUtf8` byte-span helper; `PipeReader` input | High | 3 |
+| 4 | `LatencyHistogram` — bucket scan + sample ring | Binary search + fixed-size circular `LatencySample[]` | High | 4 |
+| 5 | `EventBuffer.Drain(maxCount)` | Ring-buffer with head/tail indices replacing `GetRange+RemoveRange` | Medium | 5 |
+| 6 | `DrainBySymbol` in-place partition | Symbol-interning via `SymbolTable`; int comparison; single-pass partition | High | 6 |
+| 7 | `AnomalyDetector.SymbolStatistics` rolling stats | `Vector<double>` SIMD accumulation — **profile first** | Low–Medium | 7 |
+
+> For the full analysis, implementation sketches, and correctness guidance see
+> `docs/evaluations/assembly-performance-opportunities.md`.
 
 ---
 
