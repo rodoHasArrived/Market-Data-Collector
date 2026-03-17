@@ -224,6 +224,10 @@ public partial class App : Application
         services.AddTransient<AddProviderWizardPage>();
         services.AddTransient<ActivityLogPage>();
         services.AddTransient<DataBrowserPage>();
+        services.AddTransient<BacktestPage>();
+
+        // ── Backtesting service ──────────────────────────────────────────────
+        services.AddSingleton(_ => WpfServices.BacktestService.Instance);
     }
 
     /// <summary>

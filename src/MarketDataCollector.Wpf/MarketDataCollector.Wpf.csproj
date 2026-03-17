@@ -93,6 +93,7 @@
   -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <ProjectReference Include="..\MarketDataCollector.Ui.Services\MarketDataCollector.Ui.Services.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Backtesting\MarketDataCollector.Backtesting.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">

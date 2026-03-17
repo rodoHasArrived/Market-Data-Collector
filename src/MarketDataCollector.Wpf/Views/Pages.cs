@@ -57,6 +57,9 @@ public partial class AdminMaintenancePage : Page { }
 public partial class LeanIntegrationPage : Page { }
 public partial class MessagingHubPage : Page { }
 
+// Backtesting pages
+public partial class BacktestPage : Page { }
+
 // Workspaces & Notifications pages
 public partial class WorkspacePage : Page { }
 public partial class NotificationCenterPage : Page { }
