@@ -1,37 +1,20 @@
 {
-  "generated_at": "2026-03-17T03:13:38.701074+00:00",
-  "workflow": "test-matrix.yml",
-  "run_id": 23176598032,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23176598032",
+  "generated_at": "2026-03-17T03:49:00.758712+00:00",
+  "workflow": "code-quality.yml",
+  "run_id": 23177419058,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23177419058",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Market-Data-Collector",
   "failed_jobs": [
-    "Test (Windows)",
-    "Test (macOS)",
-    "Test (Linux)"
+    "Code Quality Checks"
   ],
   "findings_by_category": {
-    "build": 10,
     "code-quality": 10
   },
-  "total_error_codes": 5,
+  "total_error_codes": 1,
   "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
-    {
-      "file": "fix-build-errors.prompt.yml",
-      "category": "build",
-      "action": "update",
-      "findings_count": 10,
-      "error_codes": [
-        "CS0104",
-        "CS0219",
-        "CS1573",
-        "CS1734",
-        "CS1998"
-      ],
-      "failed_tests": []
-    },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
@@ -41,19 +24,15 @@
       "failed_tests": []
     },
     {
-      "file": "workflow-results-test-matrix.prompt.yml",
+      "file": "workflow-results-code-quality.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 20,
+      "findings_count": 10,
       "error_codes": [
-        "CS0104",
-        "CS0219",
-        "CS1573",
-        "CS1734",
-        "CS1998"
+        "CS1591"
       ],
       "failed_tests": []
     }
   ],
-  "total_generated": 3
+  "total_generated": 2
 }
