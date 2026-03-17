@@ -516,8 +516,6 @@ All visual assets live under `docs/diagrams/`:
 
 Both source and rendered files should be committed.
 
-> **Note:** The legacy `docs/uml/` directory is kept for backwards compatibility. All new UML diagrams go in `docs/diagrams/uml/`.
-
 ### Example Mermaid Diagram
 
 ````markdown

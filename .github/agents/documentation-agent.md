@@ -308,8 +308,6 @@ Market-Data-Collector/
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
 │   ├── architecture/
-│   │   ├── c4-context.png
-│   │   ├── c4-context.puml
 │   │   ├── c4-diagrams.md
 │   │   ├── crystallized-storage-format.md
 │   │   ├── desktop-layers.md
@@ -520,34 +518,6 @@ Market-Data-Collector/
 │   │   ├── README.md
 │   │   ├── ROADMAP.md
 │   │   └── TODO.md
-│   ├── uml/
-│   │   ├── activity-diagram-backfill.png
-│   │   ├── activity-diagram-backfill.puml
-│   │   ├── activity-diagram.png
-│   │   ├── activity-diagram.puml
-│   │   ├── communication-diagram.png
-│   │   ├── communication-diagram.puml
-│   │   ├── interaction-overview-diagram.png
-│   │   ├── interaction-overview-diagram.puml
-│   │   ├── README.md
-│   │   ├── sequence-diagram-backfill.png
-│   │   ├── sequence-diagram-backfill.puml
-│   │   ├── sequence-diagram.png
-│   │   ├── sequence-diagram.puml
-│   │   ├── state-diagram-backfill.png
-│   │   ├── state-diagram-backfill.puml
-│   │   ├── state-diagram-orderbook.png
-│   │   ├── state-diagram-orderbook.puml
-│   │   ├── state-diagram-trade-sequence.png
-│   │   ├── state-diagram-trade-sequence.puml
-│   │   ├── state-diagram.png
-│   │   ├── state-diagram.puml
-│   │   ├── timing-diagram-backfill.png
-│   │   ├── timing-diagram-backfill.puml
-│   │   ├── timing-diagram.png
-│   │   ├── timing-diagram.puml
-│   │   ├── use-case-diagram.png
-│   │   └── use-case-diagram.puml
 │   ├── DEPENDENCIES.md
 │   ├── HELP.md
 │   ├── README.md
@@ -1903,8 +1873,8 @@ dot -Tsvg c4-level1-context.dot -o c4-level1-context.svg
 **PlantUML:**
 
 ```bash
-cd MarketDataCollector/docs/architecture
-plantuml c4-context.puml
+cd MarketDataCollector
+plantuml -tpng docs/diagrams/uml/*.puml
 ```
 
 **Always regenerate diagrams from source files, not manually edit rendered images.**

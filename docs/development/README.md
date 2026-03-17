@@ -69,10 +69,9 @@ This directory contains guides for developers contributing to or extending the M
 | Document | Description |
 |----------|-------------|
 | [WPF Implementation Notes](wpf-implementation-notes.md) | WPF desktop app development |
-| [Desktop Platform Improvements Guide](desktop-platform-improvements-implementation-guide.md) | Platform improvements roadmap |
-| [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) | Executive summary of improvements |
-| [Desktop Improvements Quick Reference](desktop-improvements-quick-reference.md) | Quick reference card |
 | [UI Fixture Mode Guide](ui-fixture-mode-guide.md) | Offline development with mock data |
+
+> **Desktop improvement evaluations** (executive summary, quick reference, implementation guide) have been moved to [`evaluations/`](../evaluations/README.md) where strategic assessments are maintained.
 
 ### Documentation Automation
 

@@ -31,6 +31,9 @@ This directory contains in-depth evaluations of architecture components, provide
 |----------|-------------|
 | [Desktop End-User Improvements](desktop-end-user-improvements.md) | Comprehensive desktop UX assessment |
 | [Windows Desktop Provider Configurability](windows-desktop-provider-configurability-assessment.md) | Provider configuration in desktop app |
+| [Desktop Platform Improvements Guide](desktop-platform-improvements-implementation-guide.md) | Implementation guide for desktop dev improvements (moved from development/) |
+| [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) | Executive summary of desktop platform improvements |
+| [Desktop Improvements Quick Reference](desktop-improvements-quick-reference.md) | Quick reference card for desktop improvements |
 
 ## Improvement Proposals & Brainstorms
 

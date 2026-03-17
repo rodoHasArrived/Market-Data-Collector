@@ -67,7 +67,7 @@ Building, extending, and testing the system.
 
 - [WPF Implementation Notes](development/wpf-implementation-notes.md) — WPF desktop app development
 - [Desktop Testing Guide](development/desktop-testing-guide.md) — Testing desktop services
-- [Desktop Improvements Guide](development/desktop-platform-improvements-implementation-guide.md) — Platform improvements
+- [Desktop Improvements Guide](evaluations/desktop-platform-improvements-implementation-guide.md) — Platform improvements
 - [Desktop Support Policy](development/policies/desktop-support-policy.md) — Support and maintenance policy
 - [UI Fixture Mode Guide](development/ui-fixture-mode-guide.md) — Offline development with mock data
 
@@ -233,7 +233,7 @@ docs/
 ├── integrations/           # Integration guides (QuantConnect Lean, F#)
 ├── reference/              # API docs, data dictionary, env variables
 ├── diagrams/               # All visual assets
-│   └── uml/                # UML diagrams (PlantUML sources + PNGs)
+│   └── uml/                # UML diagrams (PlantUML sources + PNGs; canonical location)
 │
 │  ── GOVERNANCE ZONE (status, reviews, security) ────────────────────
 ├── status/                 # Active project tracking (roadmap, changelog)
@@ -249,8 +249,6 @@ docs/
 └── README.md               # This file
 ```
 
-> **Note on `docs/uml/`:** The `uml/` directory is kept as a redirect for backwards compatibility. The canonical location for UML diagrams is now `docs/diagrams/uml/`.
-
 ---
 
-*Documentation maintained by core team. Last update: 2026-03-04*
+*Documentation maintained by core team. Last update: 2026-03-17*

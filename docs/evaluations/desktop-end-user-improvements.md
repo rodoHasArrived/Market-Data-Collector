@@ -3014,8 +3014,8 @@ The WPF desktop application has a comprehensive feature surface with 51 pages an
 ### Internal Documentation
 
 - **[Desktop Testing Guide](../development/desktop-testing-guide.md)** - Comprehensive testing and build procedures
-- **[Desktop Improvements Executive Summary](../development/desktop-improvements-executive-summary.md)** - Phase 1 implementation summary
-- **[Desktop Platform Improvements Implementation Guide](../development/desktop-platform-improvements-implementation-guide.md)** - Detailed implementation patterns
+- **[Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md)** - Phase 1 implementation summary
+- **[Desktop Platform Improvements Implementation Guide](desktop-platform-improvements-implementation-guide.md)** - Detailed implementation patterns
 - **[WPF Implementation Notes](../development/wpf-implementation-notes.md)** - WPF-specific guidance
 - **[Desktop Support Policy](../development/policies/desktop-support-policy.md)** - Platform support matrix
 
