@@ -1,3 +1,8 @@
+---
+name: Documentation Agent
+description: Documentation specialist for the MarketDataCollector project, ensuring documentation is accurate, comprehensive, up-to-date, and follows established conventions.
+---
+
 # Documentation Agent Instructions
 
 This file contains instructions for an agent responsible for updating and maintaining the project's documentation.

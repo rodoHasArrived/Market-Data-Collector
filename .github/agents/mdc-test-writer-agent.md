@@ -1,3 +1,8 @@
+---
+name: Test Writer Agent
+description: Test writer specialist for the MarketDataCollector project, generating idiomatic xUnit and FluentAssertions tests with correct async patterns and isolation for all major MDC component types.
+---
+
 # Test Writer Agent Instructions
 
 This file contains instructions for an agent responsible for generating high-quality xUnit tests

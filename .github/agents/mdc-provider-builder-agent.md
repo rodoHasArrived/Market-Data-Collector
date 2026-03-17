@@ -1,3 +1,8 @@
+---
+name: Provider Builder Agent
+description: Provider builder specialist for the MarketDataCollector project, producing complete and architecturally compliant data provider adapters with rate limiting, reconnection logic, attribute decoration, and DI registration.
+---
+
 # Provider Builder Agent Instructions
 
 This file contains instructions for an agent responsible for implementing new data provider adapters

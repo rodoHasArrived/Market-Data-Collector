@@ -1,3 +1,8 @@
+---
+name: Code Review Agent
+description: Code review specialist for the MarketDataCollector project, identifying architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems.
+---
+
 # Code Review Agent Instructions
 
 This file contains instructions for an agent responsible for performing code review and architecture compliance checks on the Market Data Collector project.
