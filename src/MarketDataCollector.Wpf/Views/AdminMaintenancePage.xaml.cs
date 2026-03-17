@@ -7,7 +7,6 @@ using System.Windows.Media;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
@@ -16,10 +15,10 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class AdminMaintenancePage : Page
 {
-    private readonly AdminMaintenanceService _adminService;
+    private readonly AdminMaintenanceServiceBase _adminService;
     private bool _isLoaded;
 
-    public AdminMaintenancePage(AdminMaintenanceService adminService)
+    public AdminMaintenancePage(AdminMaintenanceServiceBase adminService)
     {
         InitializeComponent();
         _adminService = adminService;
