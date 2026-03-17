@@ -22,18 +22,17 @@ internal static class TemplateEndpoints
 
 /// <summary>
 /// Rate limit constants for the Template provider.
-/// TODO: Fill in the values from the provider's API documentation.
+/// Replace these values with the actual limits from the provider's API documentation.
 /// </summary>
 internal static class TemplateRateLimits
 {
-    // TODO: Set the maximum number of requests allowed per window.
+    /// <summary>Maximum requests per rate-limit window.</summary>
     public const int MaxRequestsPerWindow = 60;
 
-    // TODO: Set the rate-limit window duration.
+    /// <summary>Rate-limit window duration.</summary>
     public static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
 
-    // TODO: Set the recommended minimum delay between consecutive requests.
-    //   MinRequestDelay = Window / MaxRequestsPerWindow
+    /// <summary>Recommended minimum delay between consecutive requests (Window / MaxRequestsPerWindow).</summary>
     public static readonly TimeSpan MinRequestDelay = TimeSpan.FromSeconds(1);
 }
 
