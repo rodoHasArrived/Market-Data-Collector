@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-17 03:54:28 UTC
+> Auto-generated on 2026-03-17 03:59:00 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1206,10 +1206,18 @@ Market-Data-Collector/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
 │       ├── Models/
+│       │   ├── ActivityLogModels.cs
 │       │   ├── AppConfig.cs
+│       │   ├── BackfillModels.cs
 │       │   ├── DashboardModels.cs
+│       │   ├── DataQualityModels.cs
 │       │   ├── LeanModels.cs
-│       │   └── StorageDisplayModels.cs
+│       │   ├── LiveDataModels.cs
+│       │   ├── NotificationModels.cs
+│       │   ├── OrderBookModels.cs
+│       │   ├── ProviderHealthModels.cs
+│       │   ├── StorageDisplayModels.cs
+│       │   └── SymbolsModels.cs
 │       ├── Services/
 │       │   ├── AdminMaintenanceService.cs
 │       │   ├── ArchiveHealthService.cs
@@ -1247,10 +1255,18 @@ Market-Data-Collector/
 │       │   ├── AppStyles.xaml
 │       │   └── IconResources.xaml
 │       ├── ViewModels/
+│       │   ├── ActivityLogViewModel.cs
+│       │   ├── BackfillViewModel.cs
 │       │   ├── BacktestViewModel.cs
 │       │   ├── BindableBase.cs
 │       │   ├── DashboardViewModel.cs
-│       │   └── LeanIntegrationViewModel.cs
+│       │   ├── DataQualityViewModel.cs
+│       │   ├── LeanIntegrationViewModel.cs
+│       │   ├── LiveDataViewerViewModel.cs
+│       │   ├── NotificationCenterViewModel.cs
+│       │   ├── OrderBookViewModel.cs
+│       │   ├── ProviderHealthViewModel.cs
+│       │   └── SymbolsPageViewModel.cs
 │       ├── Views/
 │       │   ├── ActivityLogPage.xaml
 │       │   ├── ActivityLogPage.xaml.cs
