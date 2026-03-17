@@ -1,6 +1,6 @@
 # L3 Inference & Queue-Aware Execution Backtesting: Implementation Plan
 
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** 2026-03-17
 **Audience:** Quantitative researchers, execution analysts, core contributors
 
@@ -985,3 +985,106 @@ Apply the calibrated inference model to the **real-time** event pipeline
 to estimate current queue position for live limit orders. Exposed via
 `/api/queue/{symbol}` and a WPF dashboard widget. Requires the F# type-safe queue state
 (§12.2) to operate safely on the hot path at sub-millisecond per book-update latency.
+
+### 18.8 VWAP / TWAP / POV Algorithm Templates (Phase 2 — effort M)
+
+Constructing an order-intent JSONL file by hand (Workflow A/B) is a barrier for the most
+common benchmarking question: "Would a VWAP algorithm have done better than my passive limit
+strategy?" Add a `--sim-algo` flag that auto-generates child orders from a parent order and
+an algorithm template:
+
+```bash
+# VWAP: slice 10,000 shares proportional to historical intraday volume profile
+dotnet run --project src/MarketDataCollector -- \
+  --simulate-execution --symbols AAPL \
+  --sim-from 2026-01-02 --sim-to 2026-01-31 \
+  --sim-algo vwap --sim-algo-qty 10000 --sim-algo-side Buy \
+  --sim-output ./results/aapl-vwap
+
+# TWAP: 10,000 shares evenly sliced in 5-minute intervals
+dotnet run --project src/MarketDataCollector -- \
+  --simulate-execution --symbols AAPL \
+  --sim-algo twap --sim-algo-qty 10000 --sim-algo-interval-minutes 5 \
+  --sim-output ./results/aapl-twap
+
+# POV: participate at 10% of observed market volume
+dotnet run --project src/MarketDataCollector -- \
+  --simulate-execution --symbols AAPL \
+  --sim-algo pov --sim-algo-pov-rate 0.10 \
+  --sim-output ./results/aapl-pov
+```
+
+Templates are thin child-order generators (`IAlgorithmTemplate → IEnumerable<OrderIntent>`)
+that run before the normal simulation pipeline. VWAP uses the symbol's stored intraday volume
+profile (cached in the calibration store). The grid-search from Workflow E composes naturally:
+`--sim-algo vwap --sim-grid-param "simAlgoPovRate=0.05,0.10,0.15,0.20"` sweeps participation
+rates and ranks by IS. `summary.json` gains an `algoMetadata` block with participation rate
+achieved and slippage vs. arrival mid. Rollout order: TWAP (trivial) → VWAP (requires volume
+profile pass) → POV (stateful, requires trade-count injection per simulation step).
+
+### 18.9 Simulation Reproducibility Manifest (Phase 1.5 — effort S)
+
+Add a `sim-manifest.json` output alongside every simulation run, recording the exact MDC
+version, Git hash, calibration parameter hash, model config hash, and SHA-256 of the input
+data (via the existing `StorageChecksumService` at
+`src/MarketDataCollector.Storage/Services/StorageChecksumService.cs`):
+
+```jsonc
+{
+  "mdcVersion": "1.6.2",
+  "mdcGitHash": "a3f2c91b",
+  "runId": "sim-20260317-141022-a7f3",
+  "symbols": ["AAPL"],
+  "simFrom": "2026-01-01",
+  "simTo": "2026-01-31",
+  "modelProfile": "baseline",
+  "inferenceConfigHash": "sha256:b2c9...a14e",
+  "calibrationParamsHash": "sha256:d9f1...7c03",
+  "inputDataHash": "sha256:f3a8...2b91",
+  "citationKey": "mdc:AAPL:2026-01:a7f3"
+}
+```
+
+The `citationKey` allows academic papers to reference a simulation by a stable short identifier.
+In the WPF Simulation Explorer right panel (§11.6), the key is shown with a copy-to-clipboard
+button. The `inputDataHash` computation runs lazily after the simulation completes and caches
+per-day hashes in the storage catalog to avoid full recomputation on subsequent runs.
+
+### 18.10 Backtesting.Sdk Fill Tape Bridge (Phase 2 — effort S)
+
+A `SimulationFillTapeBridge` adapter in `src/MarketDataCollector.Backtesting/` converts a
+`fill-tape.jsonl` from §11.2 into a sequence of `FillEvent` objects that the existing
+`SimulatedPortfolio` (`src/MarketDataCollector.Backtesting/Portfolio/SimulatedPortfolio.cs`)
+can process. This enables a two-phase workflow:
+
+1. L3 simulation → determines *when* and *at what price* fills occur (realistic execution layer)
+2. Backtesting.Sdk → computes *portfolio P&L* given those fills (strategy evaluation layer)
+
+CLI: `--backtest-from-simulation --sim-results ./results/aapl-jan --strategy ./my-strategy.dll`.
+The bridge maps `inferredQueueAheadAtFill` and `confidenceScore` to optional metadata fields in
+`FillEvent` — additive, not breaking for existing strategies that ignore them. This makes MDC the
+natural answer to "where do I get realistic execution simulations *and* portfolio P&L in a single
+tool" — a gap no open-source competitor currently fills.
+
+### 18.11 Live vs. Simulated Fill Reconciliation (Phase 3 — effort M)
+
+After trading, compare broker fill reports against what the simulation would have predicted for
+the same period. This is the calibration feedback loop that institutional execution desks run
+daily: simulate → trade → reconcile → recalibrate → simulate more accurately.
+
+```bash
+dotnet run --project src/MarketDataCollector -- \
+  --reconcile-fills \
+  --live-fills ./broker-fill-report.csv \
+  --symbols AAPL \
+  --date 2026-01-15 \
+  --reconcile-output ./reconciliation/2026-01-15
+```
+
+Output `reconciliation-report.json` includes per-order fill-time and price deltas, a composite
+`modelAccuracyScore`, and a `calibrationRecommendation` field (e.g., "Reduce
+`cancelRefillPriorAlpha` for AAPL from 0.50 to 0.35") that auto-feeds `--calibrate-queue-model`.
+A `ReconciliationPage` in the WPF app shows a scatter plot of `(model fill time, actual fill time)`
+per order, with outliers highlighted and linked to the recalibration command. Initial support
+targets Interactive Brokers Flex Query CSV format, since IB is already an MDC streaming provider.
+Additional broker formats can be contributed via a thin `IBrokerFillReader` interface.
