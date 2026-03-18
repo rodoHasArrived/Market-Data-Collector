@@ -4,7 +4,7 @@
 
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-18 07:57:40 UTC
+> Auto-generated on 2026-03-18 08:22:37 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -23,14 +23,17 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Copilot Setup Steps | `copilot-setup-steps.yml` | push, manual |
 | Desktop Builds | `desktop-builds.yml` | push, PR, manual |
 | Docker | `docker.yml` | push, PR, manual |
+| Docker Image CI | `docker-image.yml` | push, PR |
 | Documentation Automation | `documentation.yml` | push, PR, manual, scheduled |
 | Documentation Checks | `docs-check.yml` | push, PR, manual |
 | Export Project Artifact | `export-project-artifact.yml` | manual |
 | Labeling | `labeling.yml` | PR, manual |
+| Makefile CI | `makefile.yml` | push, PR |
 | Mark Stale Issues and PRs | `stale.yml` | manual, scheduled |
 | Nightly Testing | `nightly.yml` | manual, scheduled |
 | Prompt Generation | `prompt-generation.yml` | manual |
 | Pull Request Checks | `pr-checks.yml` | PR, manual |
+| Python Package using Conda | `python-package-conda.yml` | unknown |
 | Release Management | `release.yml` | manual |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | unknown |
 | Scheduled Maintenance | `scheduled-maintenance.yml` | manual, scheduled |
@@ -63,7 +66,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 29
+- **Total workflows:** 32
 
 ---
 

@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-18 07:57:40 UTC
+> Auto-generated on 2026-03-18 08:22:36 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -108,15 +108,18 @@ Market-Data-Collector/
 │   │   ├── copilot-setup-steps.yml
 │   │   ├── copilot-swe-agent-copilot.yml
 │   │   ├── desktop-builds.yml
+│   │   ├── docker-image.yml
 │   │   ├── docker.yml
 │   │   ├── docs-check.yml
 │   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── export-project-artifact.yml
 │   │   ├── labeling.yml
+│   │   ├── makefile.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
 │   │   ├── prompt-generation.yml
+│   │   ├── python-package-conda.yml
 │   │   ├── README.md
 │   │   ├── release.yml
 │   │   ├── reusable-dotnet-build.yml
