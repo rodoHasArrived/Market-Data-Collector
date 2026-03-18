@@ -63,8 +63,15 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     public bool IsBackfillActive
     {
         get => _isBackfillActive;
-        private set => SetProperty(ref _isBackfillActive, value);
+        private set
+        {
+            if (SetProperty(ref _isBackfillActive, value))
+                RaisePropertyChanged(nameof(IsStartButtonVisible));
+        }
     }
+
+    /// <summary>Inverse of IsBackfillActive — bound to StartBackfillButton.Visibility.</summary>
+    public bool IsStartButtonVisible => !_isBackfillActive;
 
     private bool _isProgressVisible;
     public bool IsProgressVisible

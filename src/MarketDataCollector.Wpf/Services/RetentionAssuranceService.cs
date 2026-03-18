@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Wpf.Serialization;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -72,7 +73,7 @@ public sealed class RetentionAssuranceService
             if (File.Exists(settingsPath))
             {
                 var fileJson = await File.ReadAllTextAsync(settingsPath);
-                var settingsData = JsonSerializer.Deserialize<RetentionSettingsData>(fileJson);
+                var settingsData = JsonSerializer.Deserialize(fileJson, WpfJsonContext.Default.RetentionSettingsData);
                 if (settingsData != null)
                 {
                     if (settingsData.Config != null)
@@ -113,7 +114,7 @@ public sealed class RetentionAssuranceService
                 Config = _config,
                 LegalHolds = _legalHolds.ToList()
             };
-            var json = JsonSerializer.Serialize(settingsData, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(settingsData, WpfJsonContext.PrettyPrintOptions);
             await File.WriteAllTextAsync(settingsPath, json);
         }
         catch (Exception ex)
@@ -672,12 +673,7 @@ public sealed class RetentionAssuranceService
     /// </summary>
     public Task<string> ExportAuditReportAsync(RetentionAuditReport report, string format = "json")
     {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-        };
-        var json = JsonSerializer.Serialize(report, options);
+        var json = JsonSerializer.Serialize(report, WpfJsonContext.PrettyPrintOptions);
         return Task.FromResult(json);
     }
 
@@ -690,7 +686,7 @@ public sealed class RetentionAssuranceService
             Directory.CreateDirectory(auditFolderPath);
             var fileName = $"retention_audit_{report.ExecutedAt:yyyyMMdd_HHmmss}.json";
             var filePath = Path.Combine(auditFolderPath, fileName);
-            var json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(report, WpfJsonContext.PrettyPrintOptions);
             await File.WriteAllTextAsync(filePath, json);
         }
         catch (Exception ex)

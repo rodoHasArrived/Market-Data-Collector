@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Archive;
 using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Wpf.Serialization;
 using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.HttpClientFactoryProvider;
 using HttpClientNames = MarketDataCollector.Ui.Services.HttpClientNames;
 
@@ -454,11 +455,7 @@ public sealed class ArchiveHealthService
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(status, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var json = JsonSerializer.Serialize(status, WpfJsonContext.PrettyPrintOptions);
 
             await File.WriteAllTextAsync(_healthStatusPath, json);
         }

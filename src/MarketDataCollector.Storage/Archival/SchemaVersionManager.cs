@@ -373,9 +373,59 @@ public sealed class SchemaVersionManager
             }
         }
 
-        // Convert back to JsonDocument
-        var json = JsonSerializer.Serialize(dict);
-        return JsonDocument.Parse(json);
+        // Convert back to JsonDocument using Utf8JsonWriter — no reflection, AOT-safe (ADR-014)
+        using var stream = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            WriteDictToJson(writer, dict);
+        }
+        return JsonDocument.Parse(stream.ToArray());
+    }
+
+    /// <summary>
+    /// Writes a migration dictionary (string/double/bool/null/array/nested dict) to a Utf8JsonWriter
+    /// without reflection, keeping the serialization path AOT-safe per ADR-014.
+    /// </summary>
+    private static void WriteDictToJson(Utf8JsonWriter writer, Dictionary<string, object?> dict)
+    {
+        writer.WriteStartObject();
+        foreach (var (key, value) in dict)
+        {
+            writer.WritePropertyName(key);
+            WriteValueToJson(writer, value);
+        }
+        writer.WriteEndObject();
+    }
+
+    private static void WriteValueToJson(Utf8JsonWriter writer, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                writer.WriteNullValue();
+                break;
+            case string s:
+                writer.WriteStringValue(s);
+                break;
+            case double d:
+                writer.WriteNumberValue(d);
+                break;
+            case bool b:
+                writer.WriteBooleanValue(b);
+                break;
+            case object?[] arr:
+                writer.WriteStartArray();
+                foreach (var item in arr)
+                    WriteValueToJson(writer, item);
+                writer.WriteEndArray();
+                break;
+            case Dictionary<string, object?> nested:
+                WriteDictToJson(writer, nested);
+                break;
+            default:
+                writer.WriteStringValue(value.ToString());
+                break;
+        }
     }
 
     private static object? JsonElementToObject(JsonElement element) => element.ValueKind switch

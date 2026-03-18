@@ -9,6 +9,10 @@
       Loaded="OnPageLoaded"
       Unloaded="OnPageUnloaded">
 
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -268,7 +272,7 @@
                         </Grid>
 
                         <TextBlock x:Name="ProviderPrioritySummaryText"
-                                   Text="Priority: Yahoo Finance → Stooq → Nasdaq Data Link"
+                                   Text="{Binding ProviderPrioritySummaryText}"
                                    Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                    FontSize="12" />
 
@@ -285,7 +289,7 @@
                             <ComboBoxItem Content="1 Minute" Tag="1Min" />
                         </ComboBox>
                         <TextBlock x:Name="GranularityHintText"
-                                   Text="Daily is recommended for broad symbol lists and long history windows."
+                                   Text="{Binding GranularityHintText}"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    FontSize="12" />
                     </StackPanel>
@@ -382,7 +386,7 @@
                         </Grid>
 
                         <TextBlock x:Name="GapAnalysisSummaryText"
-                                   Text="Click 'Scan for Gaps' to check your selected symbols for missing data."
+                                   Text="{Binding GapAnalysisSummaryText}"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    Margin="0,0,0,12" TextWrapping="Wrap" />
 
@@ -390,7 +394,7 @@
                                   Background="Transparent"
                                   BorderThickness="0"
                                   MaxHeight="220"
-                                  Visibility="Collapsed">
+                                  Visibility="{Binding IsGapListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,4" MinHeight="28">
@@ -435,7 +439,8 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <Border x:Name="GapActionPanel" Visibility="Collapsed"
+                        <Border x:Name="GapActionPanel"
+                                Visibility="{Binding IsGapActionPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                 Background="{StaticResource ConsoleBackgroundLightBrush}"
                                 CornerRadius="6" Padding="12,10" Margin="0,12,0,0">
                             <Grid>
@@ -447,7 +452,7 @@
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         Click="AutoFillGaps_Click" />
                                 <TextBlock x:Name="GapActionHintText" Grid.Column="1"
-                                           Text=""
+                                           Text="{Binding GapActionHintText}"
                                            Foreground="{StaticResource ConsoleTextMutedBrush}"
                                            FontSize="12" Margin="12,0,0,0"
                                            VerticalAlignment="Center" TextWrapping="Wrap" />
@@ -457,7 +462,8 @@
                 </Border>
 
                 <!-- Per-Symbol Progress -->
-                <Border x:Name="SymbolProgressCard" Style="{StaticResource CardStyle}" Margin="0,0,0,24" Visibility="Collapsed">
+                <Border x:Name="SymbolProgressCard" Style="{StaticResource CardStyle}" Margin="0,0,0,24"
+                        Visibility="{Binding IsProgressVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                             <TextBlock Text="{StaticResource IconChart}"
@@ -475,7 +481,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="OverallProgressText" Text="Overall: 0 / 0 symbols complete"
+                            <TextBlock x:Name="OverallProgressText" Text="{Binding OverallProgressText}"
                                        Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                             <TextBlock x:Name="OverallTimeText" Grid.Column="1" Text="Elapsed: 0:00"
                                        Foreground="{StaticResource ConsoleTextMutedBrush}" />
@@ -537,27 +543,31 @@
                             <Button x:Name="StartBackfillButton"
                                     Content="Start Backfill"
                                     Style="{StaticResource PrimaryButtonStyle}"
+                                    Visibility="{Binding IsStartButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                     Click="StartBackfill_Click"
                                     Margin="0,0,12,0" />
                             <Button x:Name="PauseBackfillButton"
-                                    Content="Pause"
+                                    Content="{Binding PauseButtonContent}"
                                     Style="{StaticResource SecondaryButtonStyle}"
-                                    Visibility="Collapsed"
+                                    Visibility="{Binding IsBackfillActive, Converter={StaticResource BoolToVisibilityConverter}}"
                                     Click="PauseBackfill_Click"
                                     Margin="0,0,12,0" />
                             <Button x:Name="CancelBackfillButton"
                                     Content="Cancel"
                                     Style="{StaticResource GhostButtonStyle}"
-                                    Visibility="Collapsed"
+                                    Visibility="{Binding IsBackfillActive, Converter={StaticResource BoolToVisibilityConverter}}"
                                     Click="CancelBackfill_Click"
                                     Margin="0,0,12,0" />
                             <TextBlock x:Name="BackfillStatusText"
+                                       Text="{Binding BackfillStatusText}"
                                        VerticalAlignment="Center"
                                        Foreground="{StaticResource ConsoleTextMutedBrush}" />
                         </StackPanel>
 
                         <!-- Progress Bar -->
-                        <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,16,0,0">
+                        <StackPanel x:Name="ProgressPanel"
+                                    Visibility="{Binding IsProgressVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Margin="0,16,0,0">
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -702,7 +712,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                                         <TextBlock x:Name="NasdaqKeyStatusText"
-                                                   Text="No API key stored"
+                                                   Text="{Binding NasdaqKeyStatusText}"
                                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
                                                    FontSize="12" />
                                     </StackPanel>
@@ -716,7 +726,7 @@
                                         <Button x:Name="ClearNasdaqKeyButton"
                                                 Content="Clear"
                                                 Style="{StaticResource GhostButtonStyle}"
-                                                Visibility="Collapsed"
+                                                Visibility="{Binding IsNasdaqKeyClearVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                                 Click="ClearNasdaqApiKey_Click" />
                                     </StackPanel>
                                 </Grid>
@@ -737,7 +747,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
                                         <TextBlock x:Name="OpenFigiKeyStatusText"
-                                                   Text="No API key stored (optional)"
+                                                   Text="{Binding OpenFigiKeyStatusText}"
                                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
                                                    FontSize="12" />
                                     </StackPanel>
@@ -751,7 +761,7 @@
                                         <Button x:Name="ClearOpenFigiKeyButton"
                                                 Content="Clear"
                                                 Style="{StaticResource GhostButtonStyle}"
-                                                Visibility="Collapsed"
+                                                Visibility="{Binding IsOpenFigiKeyClearVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                                 Click="ClearOpenFigiApiKey_Click" />
                                     </StackPanel>
                                 </Grid>
@@ -903,6 +913,7 @@
 
                         <TextBlock x:Name="NoResumableJobsText"
                                    Text="No interrupted jobs to resume"
+                                   Visibility="{Binding HasNoResumableJobs, Converter={StaticResource BoolToVisibilityConverter}}"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    FontSize="12" />
                     </StackPanel>
@@ -957,6 +968,7 @@
 
                         <TextBlock x:Name="NoScheduledJobsText"
                                    Text="No scheduled jobs configured"
+                                   Visibility="{Binding HasNoScheduledJobs, Converter={StaticResource BoolToVisibilityConverter}}"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    FontSize="12" />
                     </StackPanel>
