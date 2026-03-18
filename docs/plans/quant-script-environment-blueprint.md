@@ -106,7 +106,7 @@
 | Separate `MarketDataCollector.QuantScript` project | Keeps Roslyn dependency out of the main app; only WPF references it |
 | Roslyn `CSharpScript.Create` (not `CSharpCompilation`) | Simpler API for scripting; supports globals object; handles `#r` directives |
 | `PlotQueue` capture pattern | Script calls `Plot.Line(...)` which enqueues a `PlotRequest`; ViewModel drains queue after execution and renders via ScottPlot — decouples script from WPF |
-| `DataProxy` / `BacktestProxy` wrappers | Provide a clean DSL (`Data.Prices("SPY")`) while hiding async complexity from synchronous script code |
+| `DataProxy` / `BacktestProxy` wrappers | Provide a clean DSL (`Data.Prices("SPY")`) as async methods; Roslyn scripting supports `await` at the top level, so scripts use idiomatic `async/await` rather than blocking |
 | `[ScriptParam]` attribute on globals fields | Enables auto-generated parameter UI without custom parsing |
 | `InternalsVisibleTo` attribute on Backtesting project | Required to access `BacktestMetricsEngine` (internal static); alternative is making it public |
 
@@ -440,9 +440,9 @@ public sealed class QuantScriptGlobals
 }
 
 /// <summary>
-/// Synchronous-looking wrapper over IQuantDataContext for use inside scripts.
-/// Uses .GetAwaiter().GetResult() internally — acceptable because scripts
-/// run on a background thread, not the UI thread.
+/// Async data access proxy over IQuantDataContext for use inside scripts.
+/// Roslyn CSharpScript fully supports async/await at the top level, so
+/// scripts call these methods with await directly.
 /// </summary>
 public sealed class DataProxy
 {
@@ -452,16 +452,16 @@ public sealed class DataProxy
     public DataProxy(IQuantDataContext ctx, CancellationToken ct);
 
     /// <summary>Load daily OHLCV bars.</summary>
-    public PriceSeries Prices(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetPricesAsync(symbol, from, to, _ct).GetAwaiter().GetResult();
+    public Task<PriceSeries> PricesAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
+        => _ctx.GetPricesAsync(symbol, from, to, _ct);
 
     /// <summary>Load simple return series.</summary>
-    public ReturnSeries Returns(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetReturnsAsync(symbol, from, to, _ct).GetAwaiter().GetResult();
+    public Task<ReturnSeries> ReturnsAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
+        => _ctx.GetReturnsAsync(symbol, from, to, _ct);
 
     /// <summary>List available symbols.</summary>
-    public IReadOnlyList<string> Symbols()
-        => _ctx.GetAvailableSymbolsAsync(_ct).GetAwaiter().GetResult();
+    public Task<IReadOnlyList<string>> SymbolsAsync()
+        => _ctx.GetAvailableSymbolsAsync(_ct);
 }
 
 /// <summary>
@@ -478,8 +478,8 @@ public sealed class BacktestProxy
     /// Run a backtest with the given strategy.
     /// Scripts implement IBacktestStrategy directly in their code.
     /// </summary>
-    public BacktestResult Run(BacktestRequest request, IBacktestStrategy strategy)
-        => _engine.RunAsync(request, strategy, progress: null, _ct).GetAwaiter().GetResult();
+    public Task<BacktestResult> RunAsync(BacktestRequest request, IBacktestStrategy strategy)
+        => _engine.RunAsync(request, strategy, progress: null, _ct);
 }
 ```
 
@@ -545,6 +545,7 @@ public sealed class QuantScriptOptions
         "System",
         "System.Linq",
         "System.Collections.Generic",
+        "System.Threading.Tasks",
         "MarketDataCollector.QuantScript.Series",
         "MarketDataCollector.QuantScript.Statistics",
         "MarketDataCollector.QuantScript.Plotting",
@@ -714,7 +715,7 @@ Already fully specified in §3.10. Pure static extension methods, no state.
 ### Path 1: Data Analysis Script
 
 ```
-User writes:  var spy = Data.Prices("SPY");
+User writes:  var spy = await Data.PricesAsync("SPY");
               var sma = spy.SMA(20);
               var stats = Stats.Compute(spy.Returns());
               Plot.Line(
@@ -732,7 +733,7 @@ Execution:
                      ▼ Script<object>
                ScriptRunner.RunAsync(script, globals)
                      │
-                     ├─► globals.Data.Prices("SPY")
+                     ├─► await globals.Data.PricesAsync("SPY")
                      │       └─► QuantDataContext.GetPricesAsync
                      │               └─► HistoricalDataQueryService
                      │                       └─► JsonlMarketDataStore.QueryAsync
@@ -765,7 +766,7 @@ Execution:
 ```
 User writes:  class MyStrategy : IBacktestStrategy { ... OnBar(...) { ... } }
               var req = new BacktestRequest { ... };
-              var result = Test.Run(req, new MyStrategy());
+              var result = await Test.RunAsync(req, new MyStrategy());
               var stats = Stats.Compute(result.Returns);
               Plot.Line("Equity", result.EquityCurve);
 
@@ -777,8 +778,8 @@ Execution:
                      │
                      ├─► new MyStrategy()     [compiled in-script]
                      │
-                     ├─► globals.Test.Run(req, strategy)
-                     │       └─► BacktestProxy.Run
+                     ├─► await globals.Test.RunAsync(req, strategy)
+                     │       └─► BacktestProxy.RunAsync
                      │               └─► BacktestEngine.RunAsync(req, strategy, null, ct)
                      │                       ├─► MultiSymbolMergeEnumerator
                      │                       ├─► strategy.OnBar() [called per bar]
@@ -1101,7 +1102,7 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 | 5 | **`BacktestMetricsEngine` is internal** | Medium — compile error if not addressed | Add `[InternalsVisibleTo]` attribute to Backtesting project in Phase 1. Alternatively, make the class public. |
 | 6 | **Roslyn cold-start latency** | Medium — first compilation may take 2–5 seconds | Show a "Compiling..." spinner. Consider pre-warming the Roslyn workspace on page load. |
 | 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | For daily OHLCV bars, cap cache at ~50 symbols × 10 years ≈ ~2,500 bars per symbol × 50 ≈ ~125K bars total. Reduce the cap further for intraday data. Add `GC.Collect` after script completion if needed. |
-| 8 | **Thread safety of `DataProxy.GetAwaiter().GetResult()`** | Low — runs on `Task.Run` background thread | Acceptable pattern for scripting contexts where async syntax is impractical. Document that scripts are synchronous by design. |
+| 8 | **Roslyn cold-start and async script entry point** | Low | Roslyn `CSharpScript` natively supports `await` at top-level in scripts; `RunAsync` on the `Script` object drives the `async` state machine. No wrapper or workaround needed. |
 
 ---
 
