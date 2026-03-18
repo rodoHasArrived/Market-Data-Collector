@@ -452,16 +452,16 @@ public sealed class DataProxy
     public DataProxy(IQuantDataContext ctx, CancellationToken ct);
 
     /// <summary>Load daily OHLCV bars.</summary>
-    public PriceSeries Prices(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetPricesAsync(symbol, from, to, _ct).GetAwaiter().GetResult();
+    public Task<PriceSeries> PricesAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
+        => _ctx.GetPricesAsync(symbol, from, to, _ct);
 
     /// <summary>Load simple return series.</summary>
-    public ReturnSeries Returns(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetReturnsAsync(symbol, from, to, _ct).GetAwaiter().GetResult();
+    public Task<ReturnSeries> ReturnsAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
+        => _ctx.GetReturnsAsync(symbol, from, to, _ct);
 
     /// <summary>List available symbols.</summary>
-    public IReadOnlyList<string> Symbols()
-        => _ctx.GetAvailableSymbolsAsync(_ct).GetAwaiter().GetResult();
+    public Task<IReadOnlyList<string>> SymbolsAsync()
+        => _ctx.GetAvailableSymbolsAsync(_ct);
 }
 
 /// <summary>
