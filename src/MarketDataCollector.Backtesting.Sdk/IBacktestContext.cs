@@ -36,4 +36,10 @@ public interface IBacktestContext
 
     /// <summary>Cancel a pending order.</summary>
     void CancelOrder(Guid orderId);
+
+    /// <summary>
+    /// The double-entry accounting ledger for this backtest run.
+    /// Strategies can query account balances and journal entries to audit or report on costs.
+    /// </summary>
+    BacktestLedger Ledger { get; }
 }

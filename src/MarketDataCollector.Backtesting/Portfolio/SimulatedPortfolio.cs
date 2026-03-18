@@ -9,6 +9,7 @@ internal sealed class SimulatedPortfolio
     private readonly ICommissionModel _commission;
     private readonly double _annualMarginRate;
     private readonly double _annualShortRebateRate;
+    private readonly BacktestLedger? _ledger;
 
     // FIFO cost-basis lots: symbol → queue of (quantity, avgPrice)
     private readonly Dictionary<string, Queue<(long qty, decimal price)>> _lots = new(StringComparer.OrdinalIgnoreCase);
@@ -28,13 +29,27 @@ internal sealed class SimulatedPortfolio
         decimal initialCash,
         ICommissionModel commission,
         double annualMarginRate,
-        double annualShortRebateRate)
+        double annualShortRebateRate,
+        BacktestLedger? ledger = null)
     {
         Cash = initialCash;
         _prevEquity = initialCash;
         _commission = commission;
         _annualMarginRate = annualMarginRate;
         _annualShortRebateRate = annualShortRebateRate;
+        _ledger = ledger;
+
+        // Post initial capital deposit: DR Cash / CR Capital Account
+        if (_ledger is not null && initialCash > 0)
+        {
+            _ledger.PostLines(
+                DateTimeOffset.UtcNow,
+                "Initial capital deposit",
+                [
+                    (LedgerAccounts.Cash, initialCash, 0m),
+                    (LedgerAccounts.CapitalAccount, 0m, initialCash),
+                ]);
+        }
     }
 
     // ── Price updates ────────────────────────────────────────────────────────
@@ -65,6 +80,9 @@ internal sealed class SimulatedPortfolio
         var newQty = existingQty + qty;
         _positions[symbol] = newQty;
 
+        decimal? realised = null;
+        decimal costBasisRemoved = 0m;
+
         // Update average cost basis
         if (qty > 0)  // buying
         {
@@ -80,8 +98,10 @@ internal sealed class SimulatedPortfolio
         else if (qty < 0 && existingQty > 0)  // closing long
         {
             var closeQty = Math.Min(-qty, existingQty);
-            var realised = RealiseFifo(symbol, closeQty, price);
-            _realizedPnl[symbol] = (_realizedPnl.GetValueOrDefault(symbol)) + realised;
+            realised = RealiseFifo(symbol, closeQty, price);
+            _realizedPnl[symbol] = (_realizedPnl.GetValueOrDefault(symbol)) + realised.Value;
+            // Cost basis removed = proceeds - realised P&L
+            costBasisRemoved = closeQty * price - realised.Value;
         }
 
         // Record trade cash flow
@@ -89,6 +109,9 @@ internal sealed class SimulatedPortfolio
 
         if (commission > 0)
             _cashFlows.Add(new CommissionCashFlow(fill.FilledAt, -commission, symbol, fill.OrderId));
+
+        // Post double-entry journal entries to ledger
+        PostFillLedgerEntries(fill, qty, price, commission, existingQty, realised, costBasisRemoved);
     }
 
     // ── Day-end accruals ─────────────────────────────────────────────────────
@@ -104,6 +127,16 @@ internal sealed class SimulatedPortfolio
             Cash += interest;  // deduct from cash
             MarginBalance += interest;
             _cashFlows.Add(new MarginInterestCashFlow(ts, interest, MarginBalance, _annualMarginRate));
+
+            // DR Margin Interest Expense / CR Cash
+            var charge = Math.Abs(interest);
+            _ledger?.PostLines(
+                ts,
+                $"Margin interest accrual ({_annualMarginRate:P2} p.a.)",
+                [
+                    (LedgerAccounts.MarginInterestExpense, charge, 0m),
+                    (LedgerAccounts.Cash, 0m, charge),
+                ]);
         }
 
         // Short rebate (we receive; positive cash flow)
@@ -118,6 +151,15 @@ internal sealed class SimulatedPortfolio
             var rebate = shortNotional * (decimal)(_annualShortRebateRate / 252.0);
             Cash += rebate;
             _cashFlows.Add(new ShortRebateCashFlow(ts, rebate, symbol, Math.Abs(qty), _annualShortRebateRate));
+
+            // DR Cash / CR Short Rebate Income
+            _ledger?.PostLines(
+                ts,
+                $"Short rebate – {symbol} ({_annualShortRebateRate:P2} p.a.)",
+                [
+                    (LedgerAccounts.Cash, rebate, 0m),
+                    (LedgerAccounts.ShortRebateIncome, 0m, rebate),
+                ]);
         }
     }
 
@@ -148,6 +190,82 @@ internal sealed class SimulatedPortfolio
     public IReadOnlyDictionary<string, Position> GetCurrentPositions() => BuildPositions();
 
     // ── Private helpers ──────────────────────────────────────────────────────
+
+    private void PostFillLedgerEntries(
+        FillEvent fill,
+        long qty,
+        decimal price,
+        decimal commission,
+        long existingQty,
+        decimal? realised,
+        decimal costBasisRemoved)
+    {
+        if (_ledger is null)
+            return;
+
+        var ts = fill.FilledAt;
+        var symbol = fill.Symbol;
+        var securitiesAccount = LedgerAccounts.Securities(symbol);
+
+        if (qty > 0)
+        {
+            // Buying: DR Securities / CR Cash
+            var cost = qty * price;
+            _ledger.PostLines(
+                ts,
+                $"Buy {qty} {symbol} @ {price:F4}",
+                [
+                    (securitiesAccount, cost, 0m),
+                    (LedgerAccounts.Cash, 0m, cost),
+                ]);
+        }
+        else if (qty < 0 && existingQty > 0 && realised.HasValue)
+        {
+            // Selling (closing long): DR Cash / CR Securities + realized P&L
+            var closeQty = Math.Min(-qty, existingQty);
+            var proceeds = closeQty * price;
+            var gain = realised.Value;
+
+            List<(LedgerAccount account, decimal debit, decimal credit)> lines;
+
+            if (gain >= 0)
+            {
+                // Proceeds = cost basis + gain
+                // DR Cash / CR Securities (cost basis) / CR Realized Gain
+                lines =
+                [
+                    (LedgerAccounts.Cash, proceeds, 0m),
+                    (securitiesAccount, 0m, costBasisRemoved),
+                    (LedgerAccounts.RealizedGain, 0m, gain),
+                ];
+            }
+            else
+            {
+                // Proceeds + loss = cost basis
+                // DR Cash / DR Realized Loss / CR Securities (cost basis)
+                lines =
+                [
+                    (LedgerAccounts.Cash, proceeds, 0m),
+                    (LedgerAccounts.RealizedLoss, Math.Abs(gain), 0m),
+                    (securitiesAccount, 0m, costBasisRemoved),
+                ];
+            }
+
+            _ledger.PostLines(ts, $"Sell {closeQty} {symbol} @ {price:F4}", lines);
+        }
+
+        // Commission: DR Commission Expense / CR Cash
+        if (commission > 0)
+        {
+            _ledger.PostLines(
+                ts,
+                $"Commission – {symbol} order {fill.OrderId}",
+                [
+                    (LedgerAccounts.CommissionExpense, commission, 0m),
+                    (LedgerAccounts.Cash, 0m, commission),
+                ]);
+        }
+    }
 
     private IReadOnlyDictionary<string, Position> BuildPositions()
     {
