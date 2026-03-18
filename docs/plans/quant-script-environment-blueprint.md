@@ -1,7 +1,7 @@
 # QuantScriptEnvironment Blueprint
 
 **Status:** Draft | **Author:** Claude (AI) | **Date:** 2026-03-18
-**Effort:** XL (~3–4 weeks) | **Priority:** Medium-High
+**Effort:** XL (~3–4 weeks, 6 phases) | **Priority:** Medium-High
 **ADR References:** ADR-004 (Async Streaming), ADR-006 (Domain Events), ADR-009 (F# Interop)
 
 ---
@@ -13,7 +13,7 @@
 | Capability | Description |
 |---|---|
 | C# scripting | Edit and execute C# scripts against historical market data via Roslyn `CSharpScript` |
-| Data access DSL | `Prices("SPY")`, `Returns("AAPL")`, `Indicator.SMA(prices, 20)` — thin wrappers over existing storage + Skender |
+| Data access DSL | `Prices("SPY")`, `Returns("AAPL")`, `prices.Sma(20)` — thin wrappers over existing storage + Skender |
 | Backtest bridge | One-click "Run Backtest" that compiles an `IBacktestStrategy` from the script and delegates to `BacktestEngine.RunAsync` |
 | Statistics engine | Sharpe, Sortino, max drawdown, CAGR, Calmar, annualised vol, rolling beta, correlation matrix |
 | Result plotting | Equity curve, drawdown chart, histogram of returns, overlay indicators — rendered via ScottPlot in the WPF page |
@@ -87,7 +87,7 @@
 │  └──────────────────┘  └──────────────────┘  └──────────────────┘  │
 │                                                                     │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │ TechnicalSeriesExtensions  (SMA, EMA, RSI, MACD, Bollinger) │  │
+│  │ TechnicalSeriesExtensions  (Sma, Ema, Rsi, Macd, Bollinger) │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
              │                     │                      │
@@ -108,7 +108,7 @@
 | `PlotQueue` capture pattern | Script calls `Plot.Line(...)` which enqueues a `PlotRequest`; ViewModel drains queue after execution and renders via ScottPlot — decouples script from WPF |
 | `DataProxy` / `BacktestProxy` wrappers | Provide a clean DSL (`Data.Prices("SPY")`) while hiding async complexity from synchronous script code |
 | `[ScriptParam]` attribute on globals fields | Enables auto-generated parameter UI without custom parsing |
-| `IInternalsVisibleTo` on Backtesting project | Required to access `BacktestMetricsEngine` (internal static); alternative is making it public |
+| `[InternalsVisibleTo]` on Backtesting project | Required to access `BacktestMetricsEngine` (internal static); add `<InternalsVisibleTo Include="MarketDataCollector.QuantScript" />` to `Backtesting.csproj`, or make the class public |
 
 ---
 
@@ -314,7 +314,8 @@ public sealed record PlotRequest(
     IReadOnlyList<double> XValues,
     IReadOnlyList<double> YValues,
     string? SeriesLabel = null,
-    string? Color = null);
+    string? Color = null,
+    int Bins = 0);
 
 /// <summary>
 /// Accumulates plot requests from script code.
@@ -330,17 +331,37 @@ public sealed class PlotQueue
         _queue.Enqueue(new PlotRequest(title, PlotType.Line, null, null, x, y, label, color));
     }
 
+    /// <summary>Overload accepting date x-axis and decimal prices (common in scripts).</summary>
+    public void Line(string title, IReadOnlyList<DateOnly> x, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        Line(title,
+            x.Select(d => (double)d.DayNumber).ToList(),
+            y.Select(v => (double)v).ToList(),
+            label, color);
+    }
+
     public void Scatter(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
         string? label = null, string? color = null)
     {
         _queue.Enqueue(new PlotRequest(title, PlotType.Scatter, null, null, x, y, label, color));
     }
 
+    /// <summary>Overload accepting date x-axis and decimal prices.</summary>
+    public void Scatter(string title, IReadOnlyList<DateOnly> x, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        Scatter(title,
+            x.Select(d => (double)d.DayNumber).ToList(),
+            y.Select(v => (double)v).ToList(),
+            label, color);
+    }
+
     public void Histogram(string title, IReadOnlyList<double> values, int bins = 50,
         string? label = null)
     {
         _queue.Enqueue(new PlotRequest(title, PlotType.Histogram, null, null,
-            values, [], label));
+            values, [], label, null, bins));
     }
 
     public void Bar(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
@@ -349,10 +370,30 @@ public sealed class PlotQueue
         _queue.Enqueue(new PlotRequest(title, PlotType.Bar, null, null, x, y, label, color));
     }
 
+    /// <summary>Overload accepting date x-axis and decimal values.</summary>
+    public void Bar(string title, IReadOnlyList<DateOnly> x, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        Bar(title,
+            x.Select(d => (double)d.DayNumber).ToList(),
+            y.Select(v => (double)v).ToList(),
+            label, color);
+    }
+
     public void Area(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
         string? label = null, string? color = null)
     {
         _queue.Enqueue(new PlotRequest(title, PlotType.Area, null, null, x, y, label, color));
+    }
+
+    /// <summary>Overload accepting date x-axis and decimal values.</summary>
+    public void Area(string title, IReadOnlyList<DateOnly> x, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        Area(title,
+            x.Select(d => (double)d.DayNumber).ToList(),
+            y.Select(v => (double)v).ToList(),
+            label, color);
     }
 
     /// <summary>Drain all queued requests.</summary>
@@ -564,17 +605,17 @@ namespace MarketDataCollector.QuantScript.Indicators;
 /// </summary>
 public static class TechnicalSeriesExtensions
 {
-    public static IReadOnlyList<double?> SMA(this PriceSeries series, int periods)
+    public static IReadOnlyList<double?> Sma(this PriceSeries series, int periods)
         => series.ToQuotes().GetSma(periods).Select(r => r.Sma).ToList();
 
-    public static IReadOnlyList<double?> EMA(this PriceSeries series, int periods)
+    public static IReadOnlyList<double?> Ema(this PriceSeries series, int periods)
         => series.ToQuotes().GetEma(periods).Select(r => r.Ema).ToList();
 
-    public static IReadOnlyList<double?> RSI(this PriceSeries series, int periods = 14)
+    public static IReadOnlyList<double?> Rsi(this PriceSeries series, int periods = 14)
         => series.ToQuotes().GetRsi(periods).Select(r => r.Rsi).ToList();
 
     public static IReadOnlyList<(double? Macd, double? Signal, double? Histogram)>
-        MACD(this PriceSeries series, int fast = 12, int slow = 26, int signal = 9)
+        Macd(this PriceSeries series, int fast = 12, int slow = 26, int signal = 9)
         => series.ToQuotes().GetMacd(fast, slow, signal)
             .Select(r => (r.Macd, r.Signal, r.Histogram)).ToList();
 
@@ -583,7 +624,7 @@ public static class TechnicalSeriesExtensions
         => series.ToQuotes().GetBollingerBands(periods, stdDevs)
             .Select(r => (r.UpperBand, r.Sma, r.LowerBand)).ToList();
 
-    public static IReadOnlyList<double?> ATR(this PriceSeries series, int periods = 14)
+    public static IReadOnlyList<double?> Atr(this PriceSeries series, int periods = 14)
         => series.ToQuotes().GetAtr(periods).Select(r => r.Atr).ToList();
 }
 ```
@@ -715,10 +756,10 @@ Already fully specified in §3.10. Pure static extension methods, no state.
 
 ```
 User writes:  var spy = Data.Prices("SPY");
-              var sma = spy.SMA(20);
+              var sma = spy.Sma(20);
               var stats = Stats.Compute(spy.Returns());
-              Plot.Line("SPY Close", spy.Dates, spy.Close);
-              Plot.Line("SMA 20", spy.Dates, sma);
+              Plot.Line("SPY Close", spy.Dates, spy.Close); // DateOnly/decimal overload
+              Plot.Line("SMA 20", spy.Dates, sma.Select(v => v ?? 0).ToList());
 
 Execution:
   ScriptText ──► RoslynScriptCompiler.Compile()
@@ -733,15 +774,16 @@ Execution:
                      │                               └─► returns IReadOnlyList<HistoricalBar>
                      │               └─► new PriceSeries("SPY", bars)
                      │
-                     ├─► spy.SMA(20)
-                     │       └─► TechnicalSeriesExtensions.SMA
+                     ├─► spy.Sma(20)
+                     │       └─► TechnicalSeriesExtensions.Sma
                      │               └─► Skender GetSma(20)
                      │
                      ├─► Stats.Compute(spy.Returns())
                      │       └─► ReturnSeries.Returns() → StatisticsEngine.Compute
                      │
-                     ├─► Plot.Line("SPY Close", ...)
-                     │       └─► PlotQueue.Enqueue(PlotRequest)
+                     ├─► Plot.Line("SPY Close", spy.Dates, spy.Close)
+                     │       └─► PlotQueue.Line(DateOnly[], decimal[]) overload
+                     │               └─► PlotQueue.Enqueue(PlotRequest with double[] x/y)
                      │
                      └─► Plot.Line("SMA 20", ...)
                              └─► PlotQueue.Enqueue(PlotRequest)
@@ -999,8 +1041,8 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 
 | # | Test Name | What It Verifies |
 |---|---|---|
-| 33 | `SMA_KnownData_MatchesExpected` | SMA(3) on [1,2,3,4,5] → [null, null, 2, 3, 4] |
-| 34 | `RSI_ReturnsCorrectCount` | Output length == input length |
+| 33 | `Sma_KnownData_MatchesExpected` | Sma(3) on [1,2,3,4,5] → [null, null, 2, 3, 4] |
+| 34 | `Rsi_ReturnsCorrectCount` | Output length == input length |
 | 35 | `BollingerBands_ReturnsTriple` | Upper > Middle > Lower for positive data |
 
 #### 7.8 QuantDataContext Tests
@@ -1094,7 +1136,7 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 | 4 | **Efficient Frontier / Portfolio Optimisation** | Low — complex maths, limited audience | Defer entirely. If needed later, add `MathNet.Numerics` for matrix operations and a `PortfolioOptimiser` class. |
 | 5 | **`BacktestMetricsEngine` is internal** | Medium — compile error if not addressed | Add `[InternalsVisibleTo]` attribute to Backtesting project in Phase 1. Alternatively, make the class public. |
 | 6 | **Roslyn cold-start latency** | Medium — first compilation may take 2–5 seconds | Show a "Compiling..." spinner. Consider pre-warming the Roslyn workspace on page load. |
-| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | Cap cache at ~50 symbols × 10 years ≈ ~250K bars per symbol × 50 ≈ manageable. Add `GC.Collect` after script completion if needed. |
+| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | Cap cache at ~50 symbols × 10 years ≈ ~2,500 bars/symbol (daily, ~252 trading days/year) × 50 ≈ 125,000 bars total — manageable. Add `GC.Collect` after script completion if needed. |
 | 8 | **Thread safety of `DataProxy.GetAwaiter().GetResult()`** | Low — runs on `Task.Run` background thread | Acceptable pattern for scripting contexts where async syntax is impractical. Document that scripts are synchronous by design. |
 
 ---
