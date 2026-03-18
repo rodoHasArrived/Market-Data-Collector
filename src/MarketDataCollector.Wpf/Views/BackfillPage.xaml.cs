@@ -45,6 +45,7 @@ public partial class BackfillPage : Page
         GapAnalysisList.ItemsSource = _viewModel.GapItems;
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        DataContext = _viewModel;
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -59,11 +60,8 @@ public partial class BackfillPage : Page
 
         await _viewModel.StartAsync();
 
-        // Sync initial UI state from ViewModel
+        // Sync initial status display (color + text logic not handled by bindings)
         SyncStatusDisplay();
-        NoScheduledJobsText.Visibility = _viewModel.HasNoScheduledJobs ? Visibility.Visible : Visibility.Collapsed;
-        NoResumableJobsText.Visibility = _viewModel.HasNoResumableJobs ? Visibility.Visible : Visibility.Collapsed;
-        ResumableJobsCard.Visibility = Visibility.Visible;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -76,78 +74,8 @@ public partial class BackfillPage : Page
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        switch (e.PropertyName)
-        {
-            case nameof(BackfillViewModel.IsBackfillActive):
-                var isActive = _viewModel.IsBackfillActive;
-                StartBackfillButton.Visibility = isActive ? Visibility.Collapsed : Visibility.Visible;
-                PauseBackfillButton.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
-                CancelBackfillButton.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
-                ProgressPanel.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
-                SymbolProgressCard.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
-                break;
-
-            case nameof(BackfillViewModel.BackfillStatusText):
-                BackfillStatusText.Text = _viewModel.BackfillStatusText;
-                break;
-
-            case nameof(BackfillViewModel.OverallProgressText):
-                OverallProgressText.Text = _viewModel.OverallProgressText;
-                break;
-
-            case nameof(BackfillViewModel.PauseButtonContent):
-                PauseBackfillButton.Content = _viewModel.PauseButtonContent;
-                break;
-
-            case nameof(BackfillViewModel.HasApiStatus):
-                _ = Dispatcher.InvokeAsync(SyncStatusDisplay);
-                break;
-
-            case nameof(BackfillViewModel.HasNoScheduledJobs):
-                NoScheduledJobsText.Visibility = _viewModel.HasNoScheduledJobs ? Visibility.Visible : Visibility.Collapsed;
-                break;
-
-            case nameof(BackfillViewModel.HasNoResumableJobs):
-                NoResumableJobsText.Visibility = _viewModel.HasNoResumableJobs ? Visibility.Visible : Visibility.Collapsed;
-                ResumableJobsCard.Visibility = Visibility.Visible;
-                break;
-
-            case nameof(BackfillViewModel.GapAnalysisSummaryText):
-                GapAnalysisSummaryText.Text = _viewModel.GapAnalysisSummaryText;
-                break;
-
-            case nameof(BackfillViewModel.IsGapAnalysisCardVisible):
-                GapAnalysisCard.Visibility = _viewModel.IsGapAnalysisCardVisible ? Visibility.Visible : Visibility.Collapsed;
-                break;
-
-            case nameof(BackfillViewModel.IsGapListVisible):
-                GapAnalysisList.Visibility = _viewModel.IsGapListVisible ? Visibility.Visible : Visibility.Collapsed;
-                break;
-
-            case nameof(BackfillViewModel.IsGapActionPanelVisible):
-                GapActionPanel.Visibility = _viewModel.IsGapActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-                break;
-
-            case nameof(BackfillViewModel.GapActionHintText):
-                GapActionHintText.Text = _viewModel.GapActionHintText;
-                break;
-
-            case nameof(BackfillViewModel.NasdaqKeyStatusText):
-                NasdaqKeyStatusText.Text = _viewModel.NasdaqKeyStatusText;
-                break;
-
-            case nameof(BackfillViewModel.IsNasdaqKeyClearVisible):
-                ClearNasdaqKeyButton.Visibility = _viewModel.IsNasdaqKeyClearVisible ? Visibility.Visible : Visibility.Collapsed;
-                break;
-
-            case nameof(BackfillViewModel.OpenFigiKeyStatusText):
-                OpenFigiKeyStatusText.Text = _viewModel.OpenFigiKeyStatusText;
-                break;
-
-            case nameof(BackfillViewModel.IsOpenFigiKeyClearVisible):
-                ClearOpenFigiKeyButton.Visibility = _viewModel.IsOpenFigiKeyClearVisible ? Visibility.Visible : Visibility.Collapsed;
-                break;
-        }
+        if (e.PropertyName == nameof(BackfillViewModel.HasApiStatus))
+            _ = Dispatcher.InvokeAsync(SyncStatusDisplay);
     }
 
     private void SyncStatusDisplay()
@@ -183,14 +111,11 @@ public partial class BackfillPage : Page
     private async Task LoadScheduledJobsAsync()
     {
         await _viewModel.LoadScheduledJobsAsync();
-        NoScheduledJobsText.Visibility = _viewModel.HasNoScheduledJobs ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async Task LoadResumableJobsAsync()
     {
         await _viewModel.LoadResumableJobsAsync();
-        NoResumableJobsText.Visibility = _viewModel.HasNoResumableJobs ? Visibility.Visible : Visibility.Collapsed;
-        ResumableJobsCard.Visibility = Visibility.Visible;
     }
 
     private async Task RefreshStatusFromApiAsync()
@@ -256,14 +181,12 @@ public partial class BackfillPage : Page
         var secondary = GetProviderName(SecondaryProviderCombo);
         var tertiary = GetProviderName(TertiaryProviderCombo);
         _viewModel.UpdateProviderPrioritySummary(primary, secondary, tertiary);
-        ProviderPrioritySummaryText.Text = _viewModel.ProviderPrioritySummaryText;
     }
 
     private void UpdateGranularityHint()
     {
         var granularity = (GranularityCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Daily";
         _viewModel.UpdateGranularityHint(granularity);
-        GranularityHintText.Text = _viewModel.GranularityHintText;
     }
 
     private static string GetProviderName(ComboBox combo)
@@ -551,12 +474,6 @@ public partial class BackfillPage : Page
     private async void ScanGaps_Click(object sender, RoutedEventArgs e)
     {
         var symbolsText = SymbolsBox.Text?.Trim() ?? "";
-        if (string.IsNullOrWhiteSpace(symbolsText))
-        {
-            GapAnalysisSummaryText.Text = "Enter symbols above before scanning for gaps.";
-            return;
-        }
-
         var symbols = symbolsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddDays(-30);
         var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
@@ -618,10 +535,7 @@ public partial class BackfillPage : Page
             {
                 if (dialog.ShouldDelete)
                 {
-                    _viewModel.ScheduledJobs.Remove(job);
-                    NoScheduledJobsText.Visibility = _viewModel.ScheduledJobs.Count == 0
-                        ? Visibility.Visible
-                        : Visibility.Collapsed;
+                    _viewModel.DeleteScheduledJob(job);
 
                     _notificationService.ShowNotification(
                         "Job Deleted",

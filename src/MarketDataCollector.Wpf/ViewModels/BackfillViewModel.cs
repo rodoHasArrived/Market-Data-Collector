@@ -427,6 +427,12 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
             NotificationType.Info);
     }
 
+    public void DeleteScheduledJob(ScheduledJobInfo job)
+    {
+        ScheduledJobs.Remove(job);
+        HasNoScheduledJobs = ScheduledJobs.Count == 0;
+    }
+
     // ── Progress event handlers ─────────────────────────────────────────────
     private void OnBackfillProgressUpdated(object? sender, UiBackfillProgressEventArgs e)
     {
@@ -504,6 +510,13 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     // ── Gap scanning ────────────────────────────────────────────────────────
     public async Task ScanGapsAsync(string[] symbols, DateTime fromDate, DateTime toDate)
     {
+        if (symbols.Length == 0)
+        {
+            IsGapAnalysisCardVisible = true;
+            GapAnalysisSummaryText = "Enter symbols above before scanning for gaps.";
+            return;
+        }
+
         var totalDays = Math.Max(1, (int)(toDate - fromDate).TotalDays);
 
         GapItems.Clear();
