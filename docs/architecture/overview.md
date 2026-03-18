@@ -111,6 +111,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
   - `NasdaqDataLinkHistoricalDataProvider` – Alternative datasets via Quandl API
   - `IBHistoricalDataProvider` – Historical data via Interactive Brokers API
   - `StockSharpHistoricalDataProvider` – Historical data via StockSharp connectors
+  - `TwelveDataHistoricalDataProvider` – OHLCV bars for US equities, ETFs, international stocks, forex, and crypto via Twelve Data API
   - `CompositeHistoricalDataProvider` – Automatic failover with rate-limit rotation
   - `BaseHistoricalDataProvider` – Shared base class with common HTTP handling
 * **Symbol Search Providers** for symbol resolution:
@@ -588,5 +589,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.7.0
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-18
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [deterministic-canonicalization.md](deterministic-canonicalization.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)

@@ -35,6 +35,9 @@ Meridian (Host/Exe)   →  Application (+ transitive)
                          ↑                                ↑
           Meridian.Ui                  Meridian.Wpf
             →  Ui.Shared                            →  Ui.Services, Contracts
+                         ↑
+          MarketDataCollector.McpServer
+            →  Application, Core, Storage, Contracts
 ```
 
 ## Forbidden Dependencies
@@ -49,6 +52,7 @@ Meridian (Host/Exe)   →  Application (+ transitive)
 | **Ui.Services**     | Wpf host types                             | Must stay platform-neutral            |
 | **Ui.Shared**       | WPF-only APIs, Ui.Services                 | Must stay web-host-agnostic           |
 | **Ui / Wpf hosts**  | Each other                                 | No host-to-host references            |
+| **McpServer**       | Ui.Shared, Ui.Services, Wpf                | Tool host only; no UI-layer deps      |
 | **Contracts**       | UI or application hosts                    | Pure contract layer                   |
 
 ## Enforcement Mechanisms
@@ -128,5 +132,5 @@ See [Desktop & UI Layer Architecture](desktop-layers.md) for a detailed diagram 
 ---
 
 **Version:** 1.6.2
-**Last Updated:** 2026-03-16
+**Last Updated:** 2026-03-18
 **Audience:** Contributors and AI assistants working on project architecture and dependency management.
