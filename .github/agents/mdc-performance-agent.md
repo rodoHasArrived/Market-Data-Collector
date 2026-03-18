@@ -1,6 +1,6 @@
 ---
 name: Performance Agent
-description: Hot-path profiling and optimisation specialist for the MarketDataCollector project.
+description: Hot-path profiling and optimisation specialist for the Meridian project.
   Identifies and eliminates per-tick allocations, blocking I/O, excessive channel pressure, and
   ADR-014 / ADR-013 violations across C# 13, F# 8, streaming pipelines, and storage sinks.
 ---
@@ -8,7 +8,7 @@ description: Hot-path profiling and optimisation specialist for the MarketDataCo
 # Performance Agent Instructions
 
 This file contains instructions for an agent responsible for identifying and eliminating
-performance bottlenecks in the MarketDataCollector project.
+performance bottlenecks in the Meridian project.
 
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
 
@@ -59,7 +59,7 @@ dotnet run --project benchmarks/ -c Release -- \
   --filter "*" --runtimes net9.0 --exporters json
 
 # Build with diagnostics for dotnet-trace / dotnet-counters
-dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true
 
 # Collect GC allocation trace (requires .NET diagnostics tools)
 dotnet-counters monitor --process-id <PID> \
@@ -86,8 +86,8 @@ Work through categories in order of severity. Each fix must:
 
 ### Step 4 — Verify
 ```bash
-dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
-dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true
 dotnet run --project benchmarks/ -c Release -- --filter "<BenchmarkName>"
 ```
 
@@ -166,7 +166,7 @@ var obj  = JsonSerializer.Deserialize(json, MarketDataJsonContext.Default.Trade)
 
 If the type is not yet registered, add it to `MarketDataJsonContext`:
 ```csharp
-// src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs
+// src/Meridian.Core/Serialization/MarketDataJsonContext.cs
 [JsonSerializable(typeof(Trade))]
 [JsonSerializable(typeof(LOBSnapshot))]
 public partial class MarketDataJsonContext : JsonSerializerContext { }
@@ -234,7 +234,7 @@ For string keys used repeatedly in dictionaries (symbol names), use the project'
 `SymbolTable` to avoid duplicate string allocations:
 
 ```csharp
-// src/MarketDataCollector.Core/Performance/Performance/SymbolTable.cs
+// src/Meridian.Core/Performance/SymbolTable.cs
 var interned = SymbolTable.Intern(rawSymbol);
 ```
 

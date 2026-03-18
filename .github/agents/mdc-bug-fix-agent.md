@@ -1,6 +1,6 @@
 ---
 name: Bug Fix Agent
-description: Systematic bug diagnosis and fix specialist for the MarketDataCollector project.
+description: Systematic bug diagnosis and fix specialist for the Meridian project.
   Traces failures from symptoms to root cause across C# 13, F# 8, WPF, streaming pipelines,
   storage sinks, and provider adapters — then applies the minimal correct fix with a regression
   test.
@@ -9,7 +9,7 @@ description: Systematic bug diagnosis and fix specialist for the MarketDataColle
 # Bug Fix Agent Instructions
 
 This file contains instructions for an agent responsible for systematically diagnosing and
-fixing bugs in the MarketDataCollector project.
+fixing bugs in the Meridian project.
 
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
 
@@ -40,7 +40,7 @@ Every bug fix follows this 5-step cycle. Do not skip steps.
 
 ```bash
 # Confirm the failing test or command
-dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true \
+dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true \
   --filter "FullyQualifiedName~<FailingTest>"
 ```
 
@@ -79,7 +79,7 @@ For each layer, apply the relevant diagnostic lens:
 - Ensure the fix follows all rules in `CLAUDE.md`:
   - `CancellationToken` propagated on every async call.
   - Structured logging with semantic parameters (no string interpolation).
-  - Domain exceptions derive from `MarketDataCollectorException`.
+  - Domain exceptions derive from `MeridianException`.
   - `sealed` on new/modified concrete classes.
   - No `Version=` on `<PackageReference>` (CPM rule).
 
@@ -90,7 +90,7 @@ For each layer, apply the relevant diagnostic lens:
 - [ ] No `.Result` / `.Wait()` introduced.
 - [ ] No reflection-based JSON introduced.
 - [ ] `[ImplementsAdr]` attributes preserved if touching a provider class.
-- [ ] Build passes: `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true`.
+- [ ] Build passes: `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true`.
 
 ### Step 5 — Add Regression Test
 Every bug fix **must** include at least one new test that:
@@ -102,7 +102,7 @@ Use the `mdc-test-writer-agent` if you need help scaffolding the test.
 
 ```bash
 # Verify new test is green
-dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true \
+dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true \
   --filter "FullyQualifiedName~<NewRegressionTest>"
 ```
 
@@ -208,21 +208,21 @@ var obj = JsonSerializer.Deserialize(json, MarketDataJsonContext.Default.MyDto);
 
 ```bash
 # Restore (required on non-Windows for WPF projects)
-dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
 
 # Build
-dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
 # Run core tests
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
   -c Release /p:EnableWindowsTargeting=true
 
 # Run F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj \
   -c Release /p:EnableWindowsTargeting=true
 
 # Run a single named test
-dotnet test tests/MarketDataCollector.Tests \
+dotnet test tests/Meridian.Tests \
   -c Release /p:EnableWindowsTargeting=true \
   --filter "FullyQualifiedName~<TestName>"
 
@@ -245,7 +245,7 @@ When reporting a bug fix, produce a brief structured summary:
 **Fix:** [What was changed and why it is correct]
 **Regression Test:** `[TestClassName.TestMethodName]`
 **Verification:**
-  dotnet test tests/MarketDataCollector.Tests --filter "FullyQualifiedName~<TestName>"
+  dotnet test tests/Meridian.Tests --filter "FullyQualifiedName~<TestName>"
   Result: ✅ Green
 ```
 

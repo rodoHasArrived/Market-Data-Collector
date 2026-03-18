@@ -811,7 +811,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigurationException.cs
 │   │   │   ├── ConnectionException.cs
 │   │   │   ├── DataProviderException.cs
-│   │   │   ├── MarketDataCollectorException.cs
+│   │   │   ├── MeridianException.cs
 │   │   │   ├── OperationTimeoutException.cs
 │   │   │   ├── RateLimitException.cs
 │   │   │   ├── SequenceValidationException.cs
@@ -887,7 +887,6 @@ Market-Data-Collector/
 │   │   │   ├── MarketEvents.fs
 │   │   │   └── Sides.fs
 │   │   ├── Generated/
-│   │   │   ├── MarketDataCollector.FSharp.Interop.g.cs
 │   │   │   └── Meridian.FSharp.Interop.g.cs
 │   │   ├── Pipeline/
 │   │   │   └── Transforms.fs

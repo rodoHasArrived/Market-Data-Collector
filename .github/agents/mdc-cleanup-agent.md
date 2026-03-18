@@ -1,13 +1,13 @@
 ---
 name: Cleanup Agent
-description: Code cleanup specialist for the MarketDataCollector project, removing dead code,
+description: Code cleanup specialist for the Meridian project, removing dead code,
   duplication, anti-patterns, and stale documentation across C# 13, F# 8, WPF, and .NET 9
   source files — without changing observable behaviour or altering ADR contracts.
 ---
 
 # Cleanup Agent Instructions
 
-This file contains instructions for an agent responsible for keeping the MarketDataCollector
+This file contains instructions for an agent responsible for keeping the Meridian
 codebase clean and maintainable.
 
 > **Claude Code equivalent:** [`.claude/agents/mdc-cleanup.md`](../../.claude/agents/mdc-cleanup.md) — same 7-category framework packaged as a Claude Code agent.
@@ -62,8 +62,8 @@ Every cleanup task follows this 4-step cycle:
 - Apply changes one category at a time.
 - After each category verify the build still passes:
   ```bash
-  dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
-  dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true
+  dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true
+  dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true
   ```
 
 ### 4 — Complete
@@ -93,7 +93,7 @@ Remove code that is never reachable or referenced.
   `[Benchmark]`, or `[JsonSerializable]`.
 - Members that appear in XAML data bindings (search `.xaml` files for the name).
 - Members on `public` interfaces or classes that may be consumed outside the solution.
-- F# members exported via `MarketDataCollector.FSharp.Interop.g.cs`.
+- F# members exported via `Meridian.FSharp.Interop.g.cs`.
 
 **F#-specific:**
 - Remove unused `let` bindings in modules that are not exported.
@@ -174,7 +174,7 @@ Lens 1 territory).
 ### 5. Documentation Cleanup
 
 **Stale content to remove:**
-- References to UWP (`MarketDataCollector.Uwp`, WinRT APIs) — UWP was fully removed.
+- References to UWP (WinRT APIs) — UWP was fully removed.
 - File paths that no longer exist in the repository.
 - Duplicate "## Overview" sections when the same content appears in a parent document.
 
@@ -239,13 +239,13 @@ Before marking any cleanup complete, verify all of the following:
 
 ```bash
 # 1. Build succeeds
-dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true
 
 # 2. Cross-platform tests pass
-dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true
 
 # 3. F# tests pass
-dotnet test tests/MarketDataCollector.FSharp.Tests -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.FSharp.Tests -c Release /p:EnableWindowsTargeting=true
 
 # 4. Audit is cleaner than before
 python3 build/scripts/ai-repo-updater.py audit --summary
@@ -282,7 +282,7 @@ For each cleanup pass, produce a short plan before editing:
 3. Add `sealed` modifier to class (line 18)
 
 **Risk:** Low — no public API changes, no logic changes
-**Verification:** dotnet test tests/MarketDataCollector.Tests
+**Verification:** dotnet test tests/Meridian.Tests
 ```
 
 After completing each change, append:
