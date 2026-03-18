@@ -224,5 +224,5 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 ---
 
 **Version:** 1.7.0
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-18
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [ADR Index](../adr/README.md)
