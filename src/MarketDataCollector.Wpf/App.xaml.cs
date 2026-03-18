@@ -228,6 +228,13 @@ public partial class App : Application
 
         // ── Backtesting service ──────────────────────────────────────────────
         services.AddSingleton(_ => WpfServices.BacktestService.Instance);
+
+        // ── Ui.Services singletons accessed via DI (no static .Instance in pages) ──
+        services.AddSingleton(_ => BackfillProviderConfigService.Instance);
+        services.AddSingleton(_ => BackfillCheckpointService.Instance);
+
+        // ── ViewModels (transient — new instance per page navigation) ────────
+        services.AddTransient<MarketDataCollector.Wpf.ViewModels.BackfillViewModel>();
     }
 
     /// <summary>

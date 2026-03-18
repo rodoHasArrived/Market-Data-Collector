@@ -1,18 +1,13 @@
 using System;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Threading;
-using MarketDataCollector.Contracts.Backfill;
 using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Models;
-using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
-using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
-using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
+using MarketDataCollector.Wpf.ViewModels;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -21,49 +16,35 @@ namespace MarketDataCollector.Wpf.Views;
 /// Historical data backfill page with provider selection, date ranges, and scheduling.
 /// Wired to real BackfillApiService for live execution and progress tracking.
 /// Supports job resumability via BackfillCheckpointService.
+/// Timer management and service orchestration are delegated to BackfillViewModel.
 /// </summary>
 public partial class BackfillPage : Page
 {
     private readonly WpfServices.NotificationService _notificationService;
-    private readonly WpfServices.NavigationService _navigationService;
-    private readonly WpfServices.LoggingService _loggingService;
-    private readonly BackfillApiService _backfillApiService;
-    private readonly UiBackfillService _backfillService;
-    private readonly BackfillCheckpointService _checkpointService;
-    private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
-    private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
-    private readonly ObservableCollection<ResumableJobInfo> _resumableJobs = new();
-    private readonly ObservableCollection<GapAnalysisItem> _gapItems = new();
-    private readonly DispatcherTimer _progressPollTimer;
-    private CancellationTokenSource? _backfillCts;
+    private readonly WpfServices.WorkspaceService _workspaceService;
+    private readonly WpfServices.ConfigService _configService;
+    private readonly BackfillViewModel _viewModel;
 
     public BackfillPage(
         WpfServices.NotificationService notificationService,
-        WpfServices.NavigationService navigationService,
-        WpfServices.LoggingService loggingService)
+        WpfServices.WorkspaceService workspaceService,
+        WpfServices.ConfigService configService,
+        BackfillViewModel viewModel)
     {
         InitializeComponent();
 
         _notificationService = notificationService;
-        _navigationService = navigationService;
-        _loggingService = loggingService;
-        _backfillApiService = new BackfillApiService();
-        _backfillService = UiBackfillService.Instance;
-        _checkpointService = BackfillCheckpointService.Instance;
+        _workspaceService = workspaceService;
+        _configService = configService;
+        _viewModel = viewModel;
 
-        SymbolProgressList.ItemsSource = _symbolProgress;
-        ScheduledJobsList.ItemsSource = _scheduledJobs;
-        ResumableJobsList.ItemsSource = _resumableJobs;
-        GapAnalysisList.ItemsSource = _gapItems;
+        // Bind lists to ViewModel collections so UI updates automatically
+        SymbolProgressList.ItemsSource = _viewModel.SymbolProgress;
+        ScheduledJobsList.ItemsSource = _viewModel.ScheduledJobs;
+        ResumableJobsList.ItemsSource = _viewModel.ResumableJobs;
+        GapAnalysisList.ItemsSource = _viewModel.GapItems;
 
-        _progressPollTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(5)
-        };
-        _progressPollTimer.Tick += OnProgressPollTimerTick;
-
-        _backfillService.ProgressUpdated += OnBackfillProgressUpdated;
-        _backfillService.BackfillCompleted += OnBackfillCompleted;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -76,264 +57,167 @@ public partial class BackfillPage : Page
         UpdateProviderPrioritySummary();
         UpdateGranularityHint();
 
-        await LoadScheduledJobsAsync();
-        await LoadResumableJobsAsync();
-        await RefreshStatusFromApiAsync();
+        await _viewModel.StartAsync();
+
+        // Sync initial UI state from ViewModel
+        SyncStatusDisplay();
+        NoScheduledJobsText.Visibility = _viewModel.HasNoScheduledJobs ? Visibility.Visible : Visibility.Collapsed;
+        NoResumableJobsText.Visibility = _viewModel.HasNoResumableJobs ? Visibility.Visible : Visibility.Collapsed;
+        ResumableJobsCard.Visibility = Visibility.Visible;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        _progressPollTimer.Stop();
-        _backfillCts?.Cancel();
-        _backfillService.ProgressUpdated -= OnBackfillProgressUpdated;
-        _backfillService.BackfillCompleted -= OnBackfillCompleted;
-
+        _viewModel.Stop();
         SavePageFilterState();
     }
 
-    private async Task LoadScheduledJobsAsync()
+    // ── ViewModel property sync ──────────────────────────────────────────────
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        _scheduledJobs.Clear();
-
-        try
+        switch (e.PropertyName)
         {
-            var executions = await _backfillApiService.GetExecutionHistoryAsync(limit: 10);
-            foreach (var exec in executions)
-            {
-                _scheduledJobs.Add(new ScheduledJobInfo
-                {
-                    Name = $"{exec.Status}: {exec.SymbolsProcessed} symbols",
-                    NextRun = exec.CompletedAt?.ToString("g") ?? exec.StartedAt.ToString("g")
-                });
-            }
-        }
-        catch
-        {
-            // Fallback if API unavailable
-        }
+            case nameof(BackfillViewModel.IsBackfillActive):
+                var isActive = _viewModel.IsBackfillActive;
+                StartBackfillButton.Visibility = isActive ? Visibility.Collapsed : Visibility.Visible;
+                PauseBackfillButton.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+                CancelBackfillButton.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+                ProgressPanel.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+                SymbolProgressCard.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+                break;
 
-        NoScheduledJobsText.Visibility = _scheduledJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            case nameof(BackfillViewModel.BackfillStatusText):
+                BackfillStatusText.Text = _viewModel.BackfillStatusText;
+                break;
+
+            case nameof(BackfillViewModel.OverallProgressText):
+                OverallProgressText.Text = _viewModel.OverallProgressText;
+                break;
+
+            case nameof(BackfillViewModel.PauseButtonContent):
+                PauseBackfillButton.Content = _viewModel.PauseButtonContent;
+                break;
+
+            case nameof(BackfillViewModel.HasApiStatus):
+                _ = Dispatcher.InvokeAsync(SyncStatusDisplay);
+                break;
+
+            case nameof(BackfillViewModel.HasNoScheduledJobs):
+                NoScheduledJobsText.Visibility = _viewModel.HasNoScheduledJobs ? Visibility.Visible : Visibility.Collapsed;
+                break;
+
+            case nameof(BackfillViewModel.HasNoResumableJobs):
+                NoResumableJobsText.Visibility = _viewModel.HasNoResumableJobs ? Visibility.Visible : Visibility.Collapsed;
+                ResumableJobsCard.Visibility = Visibility.Visible;
+                break;
+
+            case nameof(BackfillViewModel.GapAnalysisSummaryText):
+                GapAnalysisSummaryText.Text = _viewModel.GapAnalysisSummaryText;
+                break;
+
+            case nameof(BackfillViewModel.IsGapAnalysisCardVisible):
+                GapAnalysisCard.Visibility = _viewModel.IsGapAnalysisCardVisible ? Visibility.Visible : Visibility.Collapsed;
+                break;
+
+            case nameof(BackfillViewModel.IsGapListVisible):
+                GapAnalysisList.Visibility = _viewModel.IsGapListVisible ? Visibility.Visible : Visibility.Collapsed;
+                break;
+
+            case nameof(BackfillViewModel.IsGapActionPanelVisible):
+                GapActionPanel.Visibility = _viewModel.IsGapActionPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+                break;
+
+            case nameof(BackfillViewModel.GapActionHintText):
+                GapActionHintText.Text = _viewModel.GapActionHintText;
+                break;
+
+            case nameof(BackfillViewModel.NasdaqKeyStatusText):
+                NasdaqKeyStatusText.Text = _viewModel.NasdaqKeyStatusText;
+                break;
+
+            case nameof(BackfillViewModel.IsNasdaqKeyClearVisible):
+                ClearNasdaqKeyButton.Visibility = _viewModel.IsNasdaqKeyClearVisible ? Visibility.Visible : Visibility.Collapsed;
+                break;
+
+            case nameof(BackfillViewModel.OpenFigiKeyStatusText):
+                OpenFigiKeyStatusText.Text = _viewModel.OpenFigiKeyStatusText;
+                break;
+
+            case nameof(BackfillViewModel.IsOpenFigiKeyClearVisible):
+                ClearOpenFigiKeyButton.Visibility = _viewModel.IsOpenFigiKeyClearVisible ? Visibility.Visible : Visibility.Collapsed;
+                break;
+        }
     }
 
-    private async Task RefreshStatusFromApiAsync()
+    private void SyncStatusDisplay()
     {
-        try
+        if (_viewModel.LastApiStatus != null)
         {
-            var lastStatus = await _backfillApiService.GetLastStatusAsync();
+            StatusGrid.Visibility = Visibility.Visible;
+            NoStatusText.Visibility = Visibility.Collapsed;
 
-            if (lastStatus != null)
-            {
-                StatusGrid.Visibility = Visibility.Visible;
-                NoStatusText.Visibility = Visibility.Collapsed;
-
-                var isSuccess = lastStatus.Success;
-                StatusText.Text = isSuccess ? "Completed" : "Failed";
-                StatusText.Foreground = isSuccess
-                    ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
-                    : new SolidColorBrush(Color.FromRgb(244, 67, 54));
-                ProviderText.Text = lastStatus.Provider ?? "Unknown";
-                SymbolsText.Text = lastStatus.Symbols != null
-                    ? string.Join(", ", lastStatus.Symbols)
-                    : "N/A";
-                BarsWrittenText.Text = lastStatus.BarsWritten.ToString("N0");
-                StartedText.Text = lastStatus.StartedUtc?.LocalDateTime.ToString("g") ?? "Unknown";
-                CompletedText.Text = lastStatus.CompletedUtc?.LocalDateTime.ToString("g") ?? "N/A";
-            }
-            else
-            {
-                StatusGrid.Visibility = Visibility.Collapsed;
-                NoStatusText.Visibility = Visibility.Visible;
-            }
+            var lastStatus = _viewModel.LastApiStatus;
+            var isSuccess = lastStatus.Success;
+            StatusText.Text = isSuccess ? "Completed" : "Failed";
+            StatusText.Foreground = isSuccess
+                ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
+                : new SolidColorBrush(Color.FromRgb(244, 67, 54));
+            ProviderText.Text = lastStatus.Provider ?? "Unknown";
+            SymbolsText.Text = lastStatus.Symbols != null
+                ? string.Join(", ", lastStatus.Symbols)
+                : "N/A";
+            BarsWrittenText.Text = lastStatus.BarsWritten.ToString("N0");
+            StartedText.Text = lastStatus.StartedUtc?.LocalDateTime.ToString("g") ?? "Unknown";
+            CompletedText.Text = lastStatus.CompletedUtc?.LocalDateTime.ToString("g") ?? "N/A";
         }
-        catch
+        else
         {
             StatusGrid.Visibility = Visibility.Collapsed;
             NoStatusText.Visibility = Visibility.Visible;
         }
     }
 
-    private void OnBackfillProgressUpdated(object? sender, UiBackfillProgressEventArgs e)
-    {
-        if (e.Progress == null) return;
+    // ── Data loading helpers ─────────────────────────────────────────────────
 
-        _ = Dispatcher.InvokeAsync(() =>
-        {
-            UpdateProgressDisplay(e.Progress);
-        });
+    private async Task LoadScheduledJobsAsync()
+    {
+        await _viewModel.LoadScheduledJobsAsync();
+        NoScheduledJobsText.Visibility = _viewModel.HasNoScheduledJobs ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async Task LoadResumableJobsAsync()
     {
-        _resumableJobs.Clear();
-
-        try
-        {
-            var resumable = await _checkpointService.GetResumableJobsAsync();
-            foreach (var job in resumable)
-            {
-                var pendingSymbols = await _checkpointService.GetPendingSymbolsAsync(job.JobId);
-                _resumableJobs.Add(new ResumableJobInfo
-                {
-                    JobId = job.JobId,
-                    Provider = job.Provider,
-                    Status = job.Status.ToString(),
-                    CreatedAt = job.CreatedAt.ToLocalTime().ToString("g"),
-                    SymbolsSummary = $"{job.CompletedCount}/{job.SymbolCheckpoints.Count} symbols done, {pendingSymbols.Length} remaining",
-                    PendingCount = pendingSymbols.Length,
-                    TotalBarsDownloaded = job.TotalBarsDownloaded,
-                    DateRange = $"{job.FromDate:d} — {job.ToDate:d}"
-                });
-            }
-        }
-        catch
-        {
-            // Checkpoint storage unavailable
-        }
-
-        NoResumableJobsText.Visibility = _resumableJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        await _viewModel.LoadResumableJobsAsync();
+        NoResumableJobsText.Visibility = _viewModel.HasNoResumableJobs ? Visibility.Visible : Visibility.Collapsed;
         ResumableJobsCard.Visibility = Visibility.Visible;
     }
+
+    private async Task RefreshStatusFromApiAsync()
+    {
+        await _viewModel.RefreshStatusFromApiAsync();
+        SyncStatusDisplay();
+    }
+
+    // ── Resume / dismiss ─────────────────────────────────────────────────────
 
     private async void ResumeJob_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not ResumableJobInfo job)
             return;
 
-        if (_backfillService.IsRunning)
-        {
-            _notificationService.ShowNotification(
-                "Cannot Resume",
-                "A backfill operation is already running. Cancel or wait for it to finish.",
-                NotificationType.Warning);
-            return;
-        }
-
-        try
-        {
-            StartBackfillButton.Visibility = Visibility.Collapsed;
-            PauseBackfillButton.Visibility = Visibility.Visible;
-            CancelBackfillButton.Visibility = Visibility.Visible;
-            ProgressPanel.Visibility = Visibility.Visible;
-            SymbolProgressCard.Visibility = Visibility.Visible;
-
-            BackfillStatusText.Text = $"Resuming ({job.PendingCount} symbols remaining)...";
-
-            _notificationService.ShowNotification(
-                "Resuming Backfill",
-                $"Resuming job from checkpoint: {job.PendingCount} symbols remaining.",
-                NotificationType.Info);
-
-            _progressPollTimer.Start();
-
-            await _backfillService.ResumeBackfillAsync(job.JobId);
-        }
-        catch (OperationCanceledException)
-        {
-            _progressPollTimer.Stop();
-            BackfillStatusText.Text = "Cancelled";
-            StartBackfillButton.Visibility = Visibility.Visible;
-            PauseBackfillButton.Visibility = Visibility.Collapsed;
-            CancelBackfillButton.Visibility = Visibility.Collapsed;
-        }
-        catch (Exception ex)
-        {
-            _progressPollTimer.Stop();
-            BackfillStatusText.Text = "Resume Failed";
-            StartBackfillButton.Visibility = Visibility.Visible;
-            PauseBackfillButton.Visibility = Visibility.Collapsed;
-            CancelBackfillButton.Visibility = Visibility.Collapsed;
-
-            _notificationService.ShowNotification(
-                "Resume Failed",
-                ex.Message,
-                NotificationType.Error);
-        }
+        await _viewModel.ResumeJobAsync(job);
     }
 
-    private async void DismissJob_Click(object sender, RoutedEventArgs e)
+    private void DismissJob_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not ResumableJobInfo job)
             return;
 
-        _resumableJobs.Remove(job);
-        NoResumableJobsText.Visibility = _resumableJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        _notificationService.ShowNotification(
-            "Job Dismissed",
-            "Resumable job has been dismissed from the list.",
-            NotificationType.Info);
+        _viewModel.DismissJob(job);
     }
 
-    private void OnBackfillCompleted(object? sender, UiBackfillCompletedEventArgs e)
-    {
-        _ = Dispatcher.InvokeAsync(async () =>
-        {
-            _progressPollTimer.Stop();
-
-            StartBackfillButton.Visibility = Visibility.Visible;
-            PauseBackfillButton.Visibility = Visibility.Collapsed;
-            CancelBackfillButton.Visibility = Visibility.Collapsed;
-
-            if (e.Success)
-            {
-                BackfillStatusText.Text = "Completed";
-                _notificationService.ShowNotification(
-                    "Backfill Complete",
-                    $"Successfully downloaded data for {e.Progress?.CompletedSymbols ?? 0} symbols.",
-                    NotificationType.Success);
-            }
-            else if (e.WasCancelled)
-            {
-                BackfillStatusText.Text = "Cancelled";
-            }
-            else
-            {
-                BackfillStatusText.Text = "Failed";
-                _notificationService.ShowNotification(
-                    "Backfill Failed",
-                    e.Error?.Message ?? "Unknown error occurred.",
-                    NotificationType.Error);
-            }
-
-            await RefreshStatusFromApiAsync();
-            await LoadResumableJobsAsync();
-        });
-    }
-
-    private void UpdateProgressDisplay(MarketDataCollector.Contracts.Backfill.BackfillProgress progress)
-    {
-        BackfillStatusText.Text = progress.Status;
-
-        var completedCount = progress.CompletedSymbols;
-        OverallProgressText.Text = $"Overall: {completedCount} / {progress.TotalSymbols} symbols complete";
-
-        if (progress.SymbolProgress != null)
-        {
-            for (var i = 0; i < progress.SymbolProgress.Length && i < _symbolProgress.Count; i++)
-            {
-                var sp = progress.SymbolProgress[i];
-                var item = _symbolProgress[i];
-                item.Progress = sp.CalculatedProgress;
-                item.BarsText = $"{sp.BarsDownloaded:N0} bars";
-                item.StatusText = sp.Status;
-                item.TimeText = sp.Duration?.ToString(@"mm\:ss") ?? "--";
-                item.StatusBackground = sp.Status switch
-                {
-                    "Completed" => new SolidColorBrush(Color.FromArgb(40, 63, 185, 80)),
-                    "Failed" => new SolidColorBrush(Color.FromArgb(40, 244, 67, 54)),
-                    "Downloading" => new SolidColorBrush(Color.FromArgb(40, 33, 150, 243)),
-                    _ => new SolidColorBrush(Color.FromArgb(40, 139, 148, 158))
-                };
-            }
-        }
-    }
-
-    private async void OnProgressPollTimerTick(object? sender, EventArgs e)
-    {
-        // Poll the backend for real-time backfill progress updates
-        await _backfillService.PollBackendStatusAsync();
-        await RefreshStatusFromApiAsync();
-    }
+    // ── Symbol helpers ───────────────────────────────────────────────────────
 
     private void SymbolsBox_TextChanged(object sender, TextChangedEventArgs e)
     {
@@ -358,18 +242,12 @@ public partial class BackfillPage : Page
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Length ?? 0;
 
-        var lookbackDays = granularity switch
-        {
-            "1Min" => symbolCount > 20 ? 3 : symbolCount > 5 ? 7 : 14,
-            "15Min" => symbolCount > 20 ? 14 : symbolCount > 5 ? 30 : 60,
-            "Hourly" => symbolCount > 50 ? 30 : symbolCount > 10 ? 90 : 180,
-            _ => symbolCount > 100 ? 365 : symbolCount > 30 ? 365 * 2 : 365 * 5
-        };
+        var (fromDate, toDate) = BackfillViewModel.ComputeSmartRange(granularity, symbolCount);
+        ToDatePicker.SelectedDate = toDate;
+        FromDatePicker.SelectedDate = fromDate;
 
-        ToDatePicker.SelectedDate = DateTime.Today;
-        FromDatePicker.SelectedDate = DateTime.Today.AddDays(-lookbackDays);
-
-        DateRangeHintText.Text = $"Smart range applied: last {lookbackDays} days for {Math.Max(symbolCount, 1)} symbol(s) at {GetGranularityDisplay(granularity)} granularity.";
+        var lookbackDays = (int)(toDate - fromDate).TotalDays;
+        DateRangeHintText.Text = $"Smart range applied: last {lookbackDays} days for {Math.Max(symbolCount, 1)} symbol(s) at {BackfillViewModel.GetGranularityDisplay(granularity)} granularity.";
     }
 
     private void UpdateProviderPrioritySummary()
@@ -377,27 +255,15 @@ public partial class BackfillPage : Page
         var primary = GetProviderName(PrimaryProviderCombo);
         var secondary = GetProviderName(SecondaryProviderCombo);
         var tertiary = GetProviderName(TertiaryProviderCombo);
-
-        var sequence = new[] { primary, secondary, tertiary }
-            .Where(v => !string.IsNullOrWhiteSpace(v) && v != "No fallback")
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        ProviderPrioritySummaryText.Text = sequence.Length > 0
-            ? $"Priority: {string.Join(" → ", sequence)}"
-            : "Priority: No providers selected";
+        _viewModel.UpdateProviderPrioritySummary(primary, secondary, tertiary);
+        ProviderPrioritySummaryText.Text = _viewModel.ProviderPrioritySummaryText;
     }
 
     private void UpdateGranularityHint()
     {
         var granularity = (GranularityCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Daily";
-        GranularityHintText.Text = granularity switch
-        {
-            "1Min" => "1-minute data is best for short tactical windows (typically days to a few weeks).",
-            "15Min" => "15-minute data balances detail and request size for multi-week to multi-month backfills.",
-            "Hourly" => "Hourly data is well-suited for trend/rotation systems over months.",
-            _ => "Daily is recommended for broad symbol lists and long history windows."
-        };
+        _viewModel.UpdateGranularityHint(granularity);
+        GranularityHintText.Text = _viewModel.GranularityHintText;
     }
 
     private static string GetProviderName(ComboBox combo)
@@ -422,149 +288,61 @@ public partial class BackfillPage : Page
         }
     }
 
+    // ── Filter state persistence ─────────────────────────────────────────────
+
     private const string PageTag = "Backfill";
 
     private void SavePageFilterState()
     {
-        var ws = WpfServices.WorkspaceService.Instance;
-        ws.UpdatePageFilterState(PageTag, "Symbols", SymbolsBox.Text);
-        ws.UpdatePageFilterState(PageTag, "ProviderCombo", GetComboSelectedTag(ProviderCombo) ?? "composite");
-        ws.UpdatePageFilterState(PageTag, "PrimaryProvider", GetComboSelectedTag(PrimaryProviderCombo) ?? "yahoo");
-        ws.UpdatePageFilterState(PageTag, "SecondaryProvider", GetComboSelectedTag(SecondaryProviderCombo) ?? "stooq");
-        ws.UpdatePageFilterState(PageTag, "TertiaryProvider", GetComboSelectedTag(TertiaryProviderCombo) ?? "nasdaq");
-        ws.UpdatePageFilterState(PageTag, "Granularity", GetComboSelectedTag(GranularityCombo) ?? "Daily");
-        ws.UpdatePageFilterState(PageTag, "FromDate", FromDatePicker.SelectedDate?.ToString("yyyy-MM-dd"));
-        ws.UpdatePageFilterState(PageTag, "ToDate", ToDatePicker.SelectedDate?.ToString("yyyy-MM-dd"));
+        _workspaceService.UpdatePageFilterState(PageTag, "Symbols", SymbolsBox.Text);
+        _workspaceService.UpdatePageFilterState(PageTag, "ProviderCombo", GetComboSelectedTag(ProviderCombo) ?? "composite");
+        _workspaceService.UpdatePageFilterState(PageTag, "PrimaryProvider", GetComboSelectedTag(PrimaryProviderCombo) ?? "yahoo");
+        _workspaceService.UpdatePageFilterState(PageTag, "SecondaryProvider", GetComboSelectedTag(SecondaryProviderCombo) ?? "stooq");
+        _workspaceService.UpdatePageFilterState(PageTag, "TertiaryProvider", GetComboSelectedTag(TertiaryProviderCombo) ?? "nasdaq");
+        _workspaceService.UpdatePageFilterState(PageTag, "Granularity", GetComboSelectedTag(GranularityCombo) ?? "Daily");
+        _workspaceService.UpdatePageFilterState(PageTag, "FromDate", FromDatePicker.SelectedDate?.ToString("yyyy-MM-dd"));
+        _workspaceService.UpdatePageFilterState(PageTag, "ToDate", ToDatePicker.SelectedDate?.ToString("yyyy-MM-dd"));
     }
 
     private void RestorePageFilterState()
     {
-        var ws = WpfServices.WorkspaceService.Instance;
-
-        var symbols = ws.GetPageFilterState(PageTag, "Symbols");
+        var symbols = _workspaceService.GetPageFilterState(PageTag, "Symbols");
         if (symbols is not null)
             SymbolsBox.Text = symbols;
 
-        var provider = ws.GetPageFilterState(PageTag, "ProviderCombo");
+        var provider = _workspaceService.GetPageFilterState(PageTag, "ProviderCombo");
         if (provider is not null)
             SelectComboItemByTag(ProviderCombo, provider);
 
-        var primary = ws.GetPageFilterState(PageTag, "PrimaryProvider");
+        var primary = _workspaceService.GetPageFilterState(PageTag, "PrimaryProvider");
         if (primary is not null)
             SelectComboItemByTag(PrimaryProviderCombo, primary);
 
-        var secondary = ws.GetPageFilterState(PageTag, "SecondaryProvider");
+        var secondary = _workspaceService.GetPageFilterState(PageTag, "SecondaryProvider");
         if (secondary is not null)
             SelectComboItemByTag(SecondaryProviderCombo, secondary);
 
-        var tertiary = ws.GetPageFilterState(PageTag, "TertiaryProvider");
+        var tertiary = _workspaceService.GetPageFilterState(PageTag, "TertiaryProvider");
         if (tertiary is not null)
             SelectComboItemByTag(TertiaryProviderCombo, tertiary);
 
-        var granularity = ws.GetPageFilterState(PageTag, "Granularity");
+        var granularity = _workspaceService.GetPageFilterState(PageTag, "Granularity");
         if (granularity is not null)
             SelectComboItemByTag(GranularityCombo, granularity);
 
-        if (DateTime.TryParse(ws.GetPageFilterState(PageTag, "FromDate"), out var fromDate))
+        if (DateTime.TryParse(_workspaceService.GetPageFilterState(PageTag, "FromDate"), out var fromDate))
             FromDatePicker.SelectedDate = fromDate;
 
-        if (DateTime.TryParse(ws.GetPageFilterState(PageTag, "ToDate"), out var toDate))
+        if (DateTime.TryParse(_workspaceService.GetPageFilterState(PageTag, "ToDate"), out var toDate))
             ToDatePicker.SelectedDate = toDate;
     }
 
-    private static string GetGranularityDisplay(string granularity)
-    {
-        return granularity switch
-        {
-            "1Min" => "1-minute",
-            "15Min" => "15-minute",
-            "Hourly" => "hourly",
-            "Daily" => "daily",
-            _ => granularity.ToLowerInvariant()
-        };
-    }
+    // ── Date helpers ─────────────────────────────────────────────────────────
 
     private void DatePicker_SelectedDateChanged(object? sender, SelectionChangedEventArgs e)
     {
         FromDateValidationError.Visibility = Visibility.Collapsed;
         ToDateValidationError.Visibility = Visibility.Collapsed;
-    }
-
-    private void ValidateData_Click(object sender, RoutedEventArgs e)
-    {
-        _notificationService.ShowNotification(
-            "Data Validation",
-            "Starting data validation...",
-            NotificationType.Info);
-    }
-
-    private void RepairGaps_Click(object sender, RoutedEventArgs e)
-    {
-        _notificationService.ShowNotification(
-            "Gap Repair",
-            "Checking for data gaps...",
-            NotificationType.Info);
-    }
-
-    private void OpenWizard_Click(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("AnalysisExportWizard");
-    }
-
-    private void FillAllGaps_Click(object sender, RoutedEventArgs e)
-    {
-        _notificationService.ShowNotification(
-            "Fill Gaps",
-            "Analyzing all symbols for gaps...",
-            NotificationType.Info);
-    }
-
-    private void UpdateLatest_Click(object sender, RoutedEventArgs e)
-    {
-        // Set dates to update to latest
-        FromDatePicker.SelectedDate = DateTime.Today.AddDays(-5);
-        ToDatePicker.SelectedDate = DateTime.Today;
-        AddAllSubscribed_Click(sender, e);
-
-        _notificationService.ShowNotification(
-            "Update to Latest",
-            "Configured to update all subscribed symbols to latest data.",
-            NotificationType.Info);
-    }
-
-    private void BrowseData_Click(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("DataBrowser");
-    }
-
-    private async void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            // Load configured symbols from config service instead of hardcoded list
-            var configSymbols = await WpfServices.ConfigService.Instance.GetConfiguredSymbolsAsync();
-            if (configSymbols.Length > 0)
-            {
-                SymbolsBox.Text = string.Join(", ", configSymbols.Select(s => s.Symbol));
-            }
-            else
-            {
-                // Fallback to common symbols when no config exists yet
-                SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
-            }
-        }
-        catch
-        {
-            // Fallback on error
-            SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
-        }
-    }
-
-    private void AddMajorETFs_Click(object sender, RoutedEventArgs e)
-    {
-        var current = SymbolsBox.Text?.Trim() ?? "";
-        var etfs = "SPY, QQQ, IWM";
-        SymbolsBox.Text = string.IsNullOrEmpty(current) ? etfs : $"{current}, {etfs}";
     }
 
     private void Last30Days_Click(object sender, RoutedEventArgs e)
@@ -597,6 +375,49 @@ public partial class BackfillPage : Page
         ToDatePicker.SelectedDate = DateTime.Today;
     }
 
+    // ── Symbol quick-add ─────────────────────────────────────────────────────
+
+    private async void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var configSymbols = await _configService.GetConfiguredSymbolsAsync();
+            if (configSymbols.Length > 0)
+            {
+                SymbolsBox.Text = string.Join(", ", configSymbols.Select(s => s.Symbol));
+            }
+            else
+            {
+                SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
+            }
+        }
+        catch
+        {
+            SymbolsBox.Text = "SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA";
+        }
+    }
+
+    private void AddMajorETFs_Click(object sender, RoutedEventArgs e)
+    {
+        var current = SymbolsBox.Text?.Trim() ?? "";
+        var etfs = "SPY, QQQ, IWM";
+        SymbolsBox.Text = string.IsNullOrEmpty(current) ? etfs : $"{current}, {etfs}";
+    }
+
+    private void UpdateLatest_Click(object sender, RoutedEventArgs e)
+    {
+        FromDatePicker.SelectedDate = DateTime.Today.AddDays(-5);
+        ToDatePicker.SelectedDate = DateTime.Today;
+        AddAllSubscribed_Click(sender, e);
+
+        _notificationService.ShowNotification(
+            "Update to Latest",
+            "Configured to update all subscribed symbols to latest data.",
+            NotificationType.Info);
+    }
+
+    // ── Backfill control ─────────────────────────────────────────────────────
+
     private async void StartBackfill_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(SymbolsBox.Text))
@@ -623,99 +444,16 @@ public partial class BackfillPage : Page
         FromDateValidationError.Visibility = Visibility.Collapsed;
         ToDateValidationError.Visibility = Visibility.Collapsed;
 
-        StartBackfillButton.Visibility = Visibility.Collapsed;
-        PauseBackfillButton.Visibility = Visibility.Visible;
-        CancelBackfillButton.Visibility = Visibility.Visible;
-        ProgressPanel.Visibility = Visibility.Visible;
-        SymbolProgressCard.Visibility = Visibility.Visible;
-
-        BackfillStatusText.Text = "Running...";
-
         var symbols = SymbolsBox.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        _symbolProgress.Clear();
-        foreach (var symbol in symbols)
-        {
-            _symbolProgress.Add(new SymbolProgressInfo
-            {
-                Symbol = symbol.Trim().ToUpper(),
-                Progress = 0,
-                BarsText = "0 bars",
-                StatusText = "Pending",
-                TimeText = "--",
-                StatusBackground = new SolidColorBrush(Color.FromArgb(40, 139, 148, 158))
-            });
-        }
-
-        OverallProgressText.Text = $"Overall: 0 / {symbols.Length} symbols complete";
-
-        _notificationService.ShowNotification(
-            "Backfill Started",
-            $"Downloading data for {symbols.Length} symbols...",
-            NotificationType.Info);
-
-        // Get provider from combo or default to "composite"
         var provider = (ProviderCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "composite";
         var granularity = (GranularityCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Daily";
 
-        // Start progress polling
-        _progressPollTimer.Start();
-
-        // Execute backfill via real API
-        _backfillCts = new CancellationTokenSource();
-        try
-        {
-            await _backfillService.StartBackfillAsync(
-                symbols.Select(s => s.Trim().ToUpper()).ToArray(),
-                provider,
-                fromDate,
-                toDate,
-                granularity);
-        }
-        catch (OperationCanceledException)
-        {
-            _progressPollTimer.Stop();
-            BackfillStatusText.Text = "Cancelled";
-            StartBackfillButton.Visibility = Visibility.Visible;
-            PauseBackfillButton.Visibility = Visibility.Collapsed;
-            CancelBackfillButton.Visibility = Visibility.Collapsed;
-        }
-        catch (Exception ex)
-        {
-            _progressPollTimer.Stop();
-            BackfillStatusText.Text = "Failed";
-            StartBackfillButton.Visibility = Visibility.Visible;
-            PauseBackfillButton.Visibility = Visibility.Collapsed;
-            CancelBackfillButton.Visibility = Visibility.Collapsed;
-
-            _notificationService.ShowNotification(
-                "Backfill Failed",
-                ex.Message,
-                NotificationType.Error);
-        }
+        await _viewModel.StartBackfillAsync(symbols, provider, fromDate, toDate, granularity);
     }
 
     private void PauseBackfill_Click(object sender, RoutedEventArgs e)
     {
-        if (_backfillService.IsPaused)
-        {
-            _backfillService.Resume();
-            BackfillStatusText.Text = "Running...";
-            PauseBackfillButton.Content = "Pause";
-            _notificationService.ShowNotification(
-                "Backfill Resumed",
-                "Backfill operation has been resumed.",
-                NotificationType.Info);
-        }
-        else
-        {
-            _backfillService.Pause();
-            BackfillStatusText.Text = "Paused";
-            PauseBackfillButton.Content = "Resume";
-            _notificationService.ShowNotification(
-                "Backfill Paused",
-                "Backfill operation has been paused.",
-                NotificationType.Warning);
-        }
+        _viewModel.PauseOrResumeBackfill();
     }
 
     private void CancelBackfill_Click(object sender, RoutedEventArgs e)
@@ -728,21 +466,7 @@ public partial class BackfillPage : Page
 
         if (result == MessageBoxResult.Yes)
         {
-            _backfillService.Cancel();
-            _backfillCts?.Cancel();
-            _progressPollTimer.Stop();
-
-            StartBackfillButton.Visibility = Visibility.Visible;
-            PauseBackfillButton.Visibility = Visibility.Collapsed;
-            CancelBackfillButton.Visibility = Visibility.Collapsed;
-            ProgressPanel.Visibility = Visibility.Collapsed;
-
-            BackfillStatusText.Text = "Cancelled";
-
-            _notificationService.ShowNotification(
-                "Backfill Cancelled",
-                "The backfill operation was cancelled.",
-                NotificationType.Warning);
+            _viewModel.CancelBackfill();
         }
     }
 
@@ -756,28 +480,56 @@ public partial class BackfillPage : Page
             NotificationType.Info);
     }
 
+    // ── Validation / data ops ────────────────────────────────────────────────
+
+    private void ValidateData_Click(object sender, RoutedEventArgs e)
+    {
+        _notificationService.ShowNotification(
+            "Data Validation",
+            "Starting data validation...",
+            NotificationType.Info);
+    }
+
+    private void RepairGaps_Click(object sender, RoutedEventArgs e)
+    {
+        _notificationService.ShowNotification(
+            "Gap Repair",
+            "Checking for data gaps...",
+            NotificationType.Info);
+    }
+
+    private void OpenWizard_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.NavigateToWizard();
+    }
+
+    private void FillAllGaps_Click(object sender, RoutedEventArgs e)
+    {
+        _notificationService.ShowNotification(
+            "Fill Gaps",
+            "Analyzing all symbols for gaps...",
+            NotificationType.Info);
+    }
+
+    private void BrowseData_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.NavigateToBrowser();
+    }
+
+    // ── API key management ───────────────────────────────────────────────────
+
     private void SetNasdaqApiKey_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new ApiKeyDialog("Nasdaq Data Link", "NASDAQDATALINK__APIKEY");
         if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.ApiKey))
         {
-            // Store the API key (in a real implementation, this would go to secure storage)
-            Environment.SetEnvironmentVariable("NASDAQDATALINK__APIKEY", dialog.ApiKey, EnvironmentVariableTarget.User);
-
-            NasdaqKeyStatusText.Text = "API key configured";
-            ClearNasdaqKeyButton.Visibility = Visibility.Visible;
-
-            _notificationService.ShowNotification(
-                "API Key Saved",
-                "Nasdaq Data Link API key has been configured.",
-                NotificationType.Success);
+            _viewModel.SetNasdaqApiKey(dialog.ApiKey);
         }
     }
 
     private void ClearNasdaqApiKey_Click(object sender, RoutedEventArgs e)
     {
-        NasdaqKeyStatusText.Text = "No API key stored";
-        ClearNasdaqKeyButton.Visibility = Visibility.Collapsed;
+        _viewModel.ClearNasdaqApiKey();
     }
 
     private void SetOpenFigiApiKey_Click(object sender, RoutedEventArgs e)
@@ -785,24 +537,16 @@ public partial class BackfillPage : Page
         var dialog = new ApiKeyDialog("OpenFIGI", "OPENFIGI__APIKEY", isOptional: true);
         if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.ApiKey))
         {
-            // Store the API key (in a real implementation, this would go to secure storage)
-            Environment.SetEnvironmentVariable("OPENFIGI__APIKEY", dialog.ApiKey, EnvironmentVariableTarget.User);
-
-            OpenFigiKeyStatusText.Text = "API key configured (optional)";
-            ClearOpenFigiKeyButton.Visibility = Visibility.Visible;
-
-            _notificationService.ShowNotification(
-                "API Key Saved",
-                "OpenFIGI API key has been configured.",
-                NotificationType.Success);
+            _viewModel.SetOpenFigiApiKey(dialog.ApiKey);
         }
     }
 
     private void ClearOpenFigiApiKey_Click(object sender, RoutedEventArgs e)
     {
-        OpenFigiKeyStatusText.Text = "No API key stored (optional)";
-        ClearOpenFigiKeyButton.Visibility = Visibility.Collapsed;
+        _viewModel.ClearOpenFigiApiKey();
     }
+
+    // ── Gap analysis ─────────────────────────────────────────────────────────
 
     private async void ScanGaps_Click(object sender, RoutedEventArgs e)
     {
@@ -816,84 +560,13 @@ public partial class BackfillPage : Page
         var symbols = symbolsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddDays(-30);
         var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
-        var totalDays = Math.Max(1, (int)(toDate - fromDate).TotalDays);
 
-        _gapItems.Clear();
-        GapAnalysisCard.Visibility = Visibility.Visible;
-        GapAnalysisList.Visibility = Visibility.Collapsed;
-        GapActionPanel.Visibility = Visibility.Collapsed;
-        GapAnalysisSummaryText.Text = "Scanning for data gaps\u2026";
-
-        var totalGapDays = 0;
-        var apiReachable = false;
-
-        foreach (var symbol in symbols)
-        {
-            var sym = symbol.Trim().ToUpper();
-
-            try
-            {
-                var result = await _backfillApiService.GetSymbolGapAnalysisAsync(sym);
-                apiReachable = true;
-
-                int coveragePct;
-                int gapDays;
-                if (result != null)
-                {
-                    coveragePct = Math.Max(0, Math.Min(100, (int)Math.Round(result.DataAvailabilityPercent)));
-                    gapDays = totalDays - (int)Math.Round(totalDays * coveragePct / 100.0);
-                }
-                else
-                {
-                    // Symbol not yet tracked by quality monitoring — treat as no data recorded
-                    coveragePct = 0;
-                    gapDays = totalDays;
-                }
-
-                totalGapDays += gapDays;
-
-                var coverageBrush = coveragePct >= 95
-                    ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
-                    : coveragePct >= 70
-                        ? new SolidColorBrush(Color.FromRgb(227, 179, 65))
-                        : new SolidColorBrush(Color.FromRgb(244, 67, 54));
-
-                _gapItems.Add(new GapAnalysisItem
-                {
-                    Symbol = sym,
-                    CoveragePercent = coveragePct,
-                    CoverageText = $"{coveragePct}%",
-                    GapDays = gapDays,
-                    GapDaysText = gapDays == 0 ? "Complete" : $"{gapDays}d gaps",
-                    CoverageBrush = coverageBrush,
-                    CoverageWidth = Math.Max(4, coveragePct * 3.5) // scale to fit the grid column
-                });
-            }
-            catch (Exception ex)
-            {
-                _loggingService.LogError("Gap scan failed for symbol", ex, ("symbol", sym));
-            }
-        }
-
-        if (!apiReachable)
-        {
-            GapAnalysisSummaryText.Text = "Service unavailable. Ensure the backend is running to scan for gaps.";
-            return;
-        }
-
-        GapAnalysisList.Visibility = Visibility.Visible;
-        GapActionPanel.Visibility = totalGapDays > 0 ? Visibility.Visible : Visibility.Collapsed;
-        GapActionHintText.Text = totalGapDays > 0
-            ? $"{totalGapDays} total gap days across {symbols.Length} symbols"
-            : "";
-        GapAnalysisSummaryText.Text = totalGapDays == 0
-            ? "All symbols have complete coverage for the selected date range."
-            : $"Found gaps in {_gapItems.Count(g => g.GapDays > 0)} of {symbols.Length} symbols.";
+        await _viewModel.ScanGapsAsync(symbols, fromDate, toDate);
     }
 
     private void AutoFillGaps_Click(object sender, RoutedEventArgs e)
     {
-        var symbolsWithGaps = _gapItems.Where(g => g.GapDays > 0).Select(g => g.Symbol).ToArray();
+        var symbolsWithGaps = _viewModel.GetSymbolsWithGaps();
         if (symbolsWithGaps.Length == 0)
         {
             _notificationService.ShowNotification("No Gaps", "No gaps detected to fill.", NotificationType.Info);
@@ -906,6 +579,8 @@ public partial class BackfillPage : Page
             $"Configured to fill gaps for {symbolsWithGaps.Length} symbols. Press Start Backfill to begin.",
             NotificationType.Info);
     }
+
+    // ── Schedule management ──────────────────────────────────────────────────
 
     private void ScheduledBackfill_Toggled(object sender, RoutedEventArgs e)
     {
@@ -943,8 +618,10 @@ public partial class BackfillPage : Page
             {
                 if (dialog.ShouldDelete)
                 {
-                    _scheduledJobs.Remove(job);
-                    NoScheduledJobsText.Visibility = _scheduledJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                    _viewModel.ScheduledJobs.Remove(job);
+                    NoScheduledJobsText.Visibility = _viewModel.ScheduledJobs.Count == 0
+                        ? Visibility.Visible
+                        : Visibility.Collapsed;
 
                     _notificationService.ShowNotification(
                         "Job Deleted",
@@ -953,11 +630,10 @@ public partial class BackfillPage : Page
                 }
                 else
                 {
-                    // Update job properties
-                    var index = _scheduledJobs.IndexOf(job);
+                    var index = _viewModel.ScheduledJobs.IndexOf(job);
                     if (index >= 0)
                     {
-                        _scheduledJobs[index] = new ScheduledJobInfo
+                        _viewModel.ScheduledJobs[index] = new ScheduledJobInfo
                         {
                             Name = dialog.JobName,
                             NextRun = dialog.NextRunText

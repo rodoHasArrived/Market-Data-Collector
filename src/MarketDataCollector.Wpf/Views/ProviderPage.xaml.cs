@@ -29,14 +29,16 @@ public partial class ProviderPage : Page
 
     public ProviderPage(
         WpfServices.NavigationService navigationService,
-        WpfServices.NotificationService notificationService)
+        WpfServices.NotificationService notificationService,
+        WpfServices.ConfigService configService,
+        BackfillProviderConfigService providerConfigService)
     {
         InitializeComponent();
 
         _navigationService = navigationService;
         _notificationService = notificationService;
-        _configService = WpfServices.ConfigService.Instance;
-        _providerConfigService = BackfillProviderConfigService.Instance;
+        _configService = configService;
+        _providerConfigService = providerConfigService;
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
