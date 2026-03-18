@@ -6,8 +6,9 @@ namespace MarketDataCollector.Strategies.Interfaces;
 /// <see cref="IStrategyLifecycle"/> live-mode management contract.
 /// </summary>
 /// <remarks>
-/// Not all strategies need live execution capability. Mark live-capable strategies
-/// with <c>[LiveCapable]</c> to signal intent; strategies that only implement
-/// <see cref="IBacktestStrategy"/> remain backtest-only.
+/// Not all strategies need live execution capability. Strategies that implement
+/// this interface are intended to support both backtesting and live execution,
+/// while strategies that only implement <see cref="IBacktestStrategy"/> remain
+/// backtest-only.
 /// </remarks>
 public interface ILiveStrategy : IBacktestStrategy, IStrategyLifecycle { }
