@@ -250,7 +250,7 @@ public sealed class SchemaVersionManager
         };
 
         var json = JsonSerializer.Serialize(jsonSchema, MarketDataJsonContext.PrettyPrintOptions);
-        await File.WriteAllTextAsync(outputPath, json, ct);
+        await AtomicFileWriter.WriteAsync(outputPath, json, ct);
 
         _log.Information("Exported schema {EventType} v{Version} to {Path}",
             schema.EventType, schema.Version, outputPath);
@@ -285,7 +285,7 @@ public sealed class SchemaVersionManager
 
         var registryPath = Path.Combine(_schemaDirectory, "registry.json");
         var registryJson = JsonSerializer.Serialize(registry, MarketDataJsonContext.PrettyPrintOptions);
-        await File.WriteAllTextAsync(registryPath, registryJson, ct);
+        await AtomicFileWriter.WriteAsync(registryPath, registryJson, ct);
 
         _log.Information("Exported {Count} schemas to {Directory}", _schemas.Count, _schemaDirectory);
     }

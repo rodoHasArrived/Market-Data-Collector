@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using Meridian.Application.Logging;
 using Meridian.Application.Subscriptions.Models;
+using Meridian.Storage.Archival;
 using Serilog;
 
 namespace Meridian.Application.Subscriptions.Services;
@@ -288,7 +289,7 @@ public sealed class MetadataEnrichmentService
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
-            await File.WriteAllTextAsync(_cachePath, json, ct);
+            await AtomicFileWriter.WriteAsync(_cachePath, json, ct);
         }
         catch (Exception ex)
         {

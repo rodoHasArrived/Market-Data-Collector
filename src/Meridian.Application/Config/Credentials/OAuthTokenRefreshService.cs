@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Meridian.Application.Logging;
 using Meridian.Infrastructure.Http;
+using Meridian.Storage.Archival;
 using Serilog;
 
 namespace Meridian.Application.Config.Credentials;
@@ -361,7 +362,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
             var tokens = _tokens.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             var json = JsonSerializer.Serialize(tokens, new JsonSerializerOptions { WriteIndented = true });
 
-            await File.WriteAllTextAsync(_tokenPersistencePath, json, ct);
+            await AtomicFileWriter.WriteAsync(_tokenPersistencePath, json, ct);
             _log.Debug("Persisted OAuth tokens for {Count} providers", tokens.Count);
         }
         catch (Exception ex)

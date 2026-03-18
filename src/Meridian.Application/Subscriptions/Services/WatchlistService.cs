@@ -2,6 +2,7 @@ using System.Text.Json;
 using Meridian.Application.Config;
 using Meridian.Application.Subscriptions.Models;
 using Meridian.Application.UI;
+using Meridian.Storage.Archival;
 
 namespace Meridian.Application.Subscriptions.Services;
 
@@ -378,7 +379,7 @@ public sealed class WatchlistService
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
-        await File.WriteAllTextAsync(_watchlistsPath, json, ct);
+        await AtomicFileWriter.WriteAsync(_watchlistsPath, json, ct);
     }
 
     private async Task SubscribeSymbolsAsync(string[] symbols, WatchlistDefaults defaults, CancellationToken ct)
