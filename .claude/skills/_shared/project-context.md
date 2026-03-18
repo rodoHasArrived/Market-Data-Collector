@@ -91,7 +91,7 @@ FSharp          → anything except Contracts
 Contracts       → Infrastructure           (dependency inversion)
 Core/Domain     → Infrastructure           (dependency inversion)
 Backtesting.*   → Execution.*              (backtesting is simulation-only; no live concepts)
-Execution.*     → Backtesting.*            (execution must not depend on simulation infra)
+Execution.*     → Backtesting.* (except Backtesting.Sdk)  (execution must not depend on simulation infra; Backtesting.Sdk is the allowed adapter per ADR-016)
 Strategies.*    → any concrete Execution.* type  (strategies depend only on IOrderGateway/IExecutionContext)
 DataCollection  → Strategies.* or Execution.*   (data layer is infrastructure, not strategy-aware)
 ```
