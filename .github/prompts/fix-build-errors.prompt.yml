@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23226734109
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23234439005
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,19 +23,25 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `NU1109`
+      - `CS0118`
+      - `CS0219`
+      - `CS0234`
+      - `CS0246`
+      - `CS0433`
+      - `CS0534`
+      - `CS0535`
 
       ## Failure Patterns
-      - `2026-03-18T02:49:22.0762862Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109: Detected package downgrade: Micros...`
-      - `2026-03-18T02:49:22.0771809Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109:  mdc-mcp -> Microsoft.Extensions.H...`
-      - `2026-03-18T02:49:22.0778413Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109:  mdc-mcp -> Microsoft.Extensions.D...`
-      - `2026-03-18T02:49:22.0784366Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109: Detected package downgrade: Micros...`
-      - `2026-03-18T02:49:22.0791134Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109:  mdc-mcp -> Microsoft.Extensions.H...`
-      - `2026-03-18T02:49:22.0798257Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109:  mdc-mcp -> Microsoft.Extensions.L...`
-      - `2026-03-18T02:49:22.0803459Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109: Detected package downgrade: System...`
-      - `2026-03-18T02:49:22.0809081Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109:  mdc-mcp -> ModelContextProtocol 1...`
-      - `2026-03-18T02:49:22.0813616Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj : error NU1109:  mdc-mcp -> System.Text.Json (>= 1...`
-      - `2026-03-18T02:50:42.3148678Z D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Mcp\MarketDataCollector.Mcp.csproj : error NU1109: Detected package downgrade: Microsoft.Extension...`
+      - `2026-03-18T07:52:08.8789886Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(93,17): error CS0433: The type 'DataSourcesConfigDto' exist...`
+      - `2026-03-18T07:52:08.8820777Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(99,17): error CS0433: The type 'SymbolConfigDto' exists in ...`
+      - `2026-03-18T07:52:08.8845235Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(105,44): error CS0433: The type 'DataSourcesConfigDto' exis...`
+      - `2026-03-18T07:52:08.8872981Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(138,9): error CS0433: The type 'BackfillProviderOptionsDto'...`
+      - `2026-03-18T07:52:08.8890600Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(186,74): error CS0433: The type 'BackfillProviderOptionsDto...`
+      - `2026-03-18T07:52:08.8927139Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(220,35): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T07:52:08.8970518Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(244,55): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T07:52:08.8980753Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T07:52:08.9023436Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement in...`
+      - `2026-03-18T07:52:08.9048521Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(303,79): error CS0433: The type 'BackfillProgress' exists ...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
