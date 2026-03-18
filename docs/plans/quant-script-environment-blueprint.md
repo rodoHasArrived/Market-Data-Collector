@@ -1,1180 +1,1267 @@
-# QuantScriptEnvironment Blueprint
+# Blueprint: QuantScriptEnvironment
 
-**Status:** Draft | **Author:** Claude (AI) | **Date:** 2026-03-18
-**Effort:** XL (~3–4 weeks) | **Priority:** Medium-High
-**ADR References:** ADR-004 (Async Streaming), ADR-006 (Domain Events), ADR-009 (F# Interop)
-
----
-
-## 1. Scope
-
-### In Scope
-
-| Capability | Description |
-|---|---|
-| C# scripting | Edit and execute C# scripts against historical market data via Roslyn `CSharpScript` |
-| Data access DSL | `Prices("SPY")`, `Returns("AAPL")`, `Indicator.SMA(prices, 20)` — thin wrappers over existing storage + Skender |
-| Backtest bridge | One-click "Run Backtest" that compiles an `IBacktestStrategy` from the script and delegates to `BacktestEngine.RunAsync` |
-| Statistics engine | Sharpe, Sortino, max drawdown, CAGR, Calmar, annualised vol, rolling beta, correlation matrix |
-| Result plotting | Equity curve, drawdown chart, histogram of returns, overlay indicators — rendered via ScottPlot in the WPF page |
-| Parameter sweep | `[ScriptParam]` attribute on globals → auto-generated UI form; optional grid-search over param ranges |
-| WPF page | `QuantScriptPage` with AvalonEdit editor, tabbed results pane, parameter sidebar |
-| Persistence | Save/load scripts to `data/_scripts/{name}.csx`; recent-scripts list |
-
-### Out of Scope
-
-| Item | Rationale |
-|---|---|
-| Live paper trading | Requires order routing; future feature |
-| Multi-asset class (options, futures) | Equity-only first; extend via `IQuantDataContext` later |
-| Cloud execution | Desktop-only; no remote compilation |
-| IntelliSense / auto-complete | AvalonEdit does not ship a Roslyn completion provider; punt to v2 |
-| Efficient frontier / portfolio optimisation | Listed as open question; defer unless trivial |
-
-### Assumptions
-
-1. The existing `BacktestEngine`, `IBacktestStrategy`, and `BacktestMetricsEngine` are stable and can be wrapped without modification.
-2. `Microsoft.CodeAnalysis.CSharp` v5.0.0 is already in CPM; we add `Microsoft.CodeAnalysis.CSharp.Scripting` at the same version.
-3. `Skender.Stock.Indicators` v2.7.1 is already in CPM and provides SMA, EMA, RSI, MACD, Bollinger, ATR, and 100+ others.
-4. AvalonEdit and ScottPlot.WPF are not yet in CPM and must be added.
-5. `BacktestMetricsEngine` is `internal static` inside `MarketDataCollector.Backtesting` — the new project must reference Backtesting (not just Sdk) or we add `[InternalsVisibleTo]`.
+**Date:** 2026-03-18
+**Depth:** Full
+**Branch:** `feature/quant-script-environment`
 
 ---
 
-## 2. Architectural Overview
+## Step 1: Scope
 
-### Component Diagram (ASCII)
+**In Scope:**
+- New library project `MarketDataCollector.QuantScript` containing the scripting engine, data API, returns vocabulary, statistical functions, portfolio tools, plotting queue, and Roslyn compilation pipeline
+- New WPF page `QuantScriptPage` with AvalonEdit editor, tabbed results panel (Console / Charts / Metrics / Trades), script browser, and dynamic parameter form
+- `QuantScriptViewModel` wired into the existing `MainPage` navigation
+- Two new packages added to `Directory.Packages.props`: `AvalonEditB` (WPF code editor) and `ScottPlot.WPF` (charting)
+- New test project `MarketDataCollector.QuantScript.Tests`
+
+**Out of Scope:**
+- Live/streaming data in scripts (scripts operate on locally-stored historical data only)
+- Python or F# script execution (C# `.csx` only)
+- Remote script execution or multi-user collaboration
+- Full Roslyn IntelliSense / completion (deferred; basic keyword list only in v1)
+- `Portfolio.EfficientFrontier` full implementation (interface defined, body deferred — see Open Questions)
+- Persisting script run results to storage
+
+**Assumptions:**
+- Locally collected JSONL data exists under the configured `DataRoot` path; scripts that request data for dates with no local data will receive empty series with a console warning
+- `BacktestMetricsEngine` remains `internal` — `MarketDataCollector.QuantScript` references the `MarketDataCollector.Backtesting` project (not only the SDK) to access metrics
+- `Skender.Stock.Indicators` v2.7.1 already in CPM — reused for SMA/EMA/RSI/MACD/Bollinger
+- `Microsoft.CodeAnalysis.CSharp` v5.0.0 already in CPM — `Microsoft.CodeAnalysis.CSharp.Scripting` added at the same version
+- Scripts run in-process; isolation is achieved via `CancellationToken` + timeout, not AppDomain (not available in .NET Core)
+
+---
+
+## Step 2: Architectural Overview
+
+### Context Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        MarketDataCollector.Wpf                      │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │ QuantScriptPage.xaml                                         │   │
-│  │  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐  │   │
-│  │  │ AvalonEdit   │  │ Results Tabs │  │ Parameter Sidebar  │  │   │
-│  │  │ (Editor)     │  │ (ScottPlot)  │  │ (Auto-generated)   │  │   │
-│  │  └──────┬──────┘  └──────▲───────┘  └────────▲───────────┘  │   │
-│  └─────────┼────────────────┼───────────────────┼───────────────┘   │
-│            │                │                   │                    │
-│  ┌─────────▼────────────────┼───────────────────┼───────────────┐   │
-│  │ QuantScriptViewModel : BindableBase                           │   │
-│  │   • ScriptText, IsRunning, OutputLog, PlotModels              │   │
-│  │   • RunCommand, StopCommand, SaveCommand, LoadCommand         │   │
-│  └─────────┬────────────────┼───────────────────┼───────────────┘   │
-└────────────┼────────────────┼───────────────────┼───────────────────┘
-             │                │                   │
-┌────────────▼────────────────┴───────────────────┴───────────────────┐
-│                  MarketDataCollector.QuantScript                     │
-│                                                                     │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │
-│  │ RoslynScript      │  │ ScriptRunner     │  │ QuantDataContext │  │
-│  │ Compiler          │  │                  │  │                  │  │
-│  │ (IQuantScript     │  │ (IScriptRunner)  │  │ (IQuantData      │  │
-│  │  Compiler)        │  │                  │  │  Context)        │  │
-│  └────────┬─────────┘  └────────┬─────────┘  └────────┬────────┘  │
-│           │                     │                      │           │
-│  ┌────────▼─────────────────────▼──────────────────────▼────────┐  │
-│  │ QuantScriptGlobals                                            │  │
-│  │  .Data   → DataProxy   (wraps IQuantDataContext)              │  │
-│  │  .Test   → BacktestProxy (wraps BacktestEngine)               │  │
-│  │  .Plot   → PlotQueue   (captures plot requests)               │  │
-│  │  .Stats  → StatisticsEngine                                   │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │
-│  │ PriceSeries /     │  │ PlotQueue /      │  │ Statistics       │  │
-│  │ ReturnSeries      │  │ PlotRequest      │  │ Engine           │  │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘  │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │ TechnicalSeriesExtensions  (SMA, EMA, RSI, MACD, Bollinger) │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-             │                     │                      │
-             ▼                     ▼                      ▼
-  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────────┐
-  │ .Backtesting    │  │ .Application    │  │ .Storage             │
-  │ BacktestEngine  │  │ HistoricalData  │  │ JsonlMarketDataStore │
-  │ BacktestMetrics │  │ QueryService    │  │                      │
-  └─────────────────┘  └─────────────────┘  └──────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  MarketDataCollector.Wpf                                                    │
+│                                                                             │
+│  ┌──────────────────────┐      commands/bindings      ┌─────────────────┐  │
+│  │  QuantScriptPage.xaml│ ◄──────────────────────────►│QuantScriptVM    │  │
+│  │  AvalonEdit editor   │                             │(BindableBase)   │  │
+│  │  TabControl results  │                             └────────┬────────┘  │
+│  │  Script browser      │                                      │ uses      │
+│  └──────────────────────┘                                      │           │
+└───────────────────────────────────────────────────────────────┼───────────┘
+                                                                 │
+                              ┌──────────────────────────────────▼───────────┐
+                              │  MarketDataCollector.QuantScript              │
+                              │                                               │
+                              │  ┌─────────────┐   ┌──────────────────────┐ │
+                              │  │ScriptRunner  │──►│QuantScriptGlobals    │ │
+                              │  │(IScriptRunner│   │  .Data (DataProxy)   │ │
+                              │  │)             │   │  .Portfolio          │ │
+                              │  └──────┬───────┘   │  .Backtest           │ │
+                              │         │            │  .Print()            │ │
+                              │  ┌──────▼───────┐   └──────────────────────┘ │
+                              │  │RoslynScript  │                             │
+                              │  │Compiler      │   ┌──────────────────────┐ │
+                              │  └──────────────┘   │  StatisticsEngine    │ │
+                              │                     │  (static)            │ │
+                              │  ┌───────────────┐  └──────────────────────┘ │
+                              │  │  PlotQueue    │                            │
+                              │  │(Channel<Plot  │  ┌──────────────────────┐ │
+                              │  │ Request>)     │  │TechnicalSeries       │ │
+                              │  └───────────────┘  │Extensions (static)   │ │
+                              │                     └──────────────────────┘ │
+                              │  ┌───────────────────────────────────────┐   │
+                              │  │  QuantDataContext (IQuantDataContext)  │   │
+                              │  └──────────────────┬────────────────────┘   │
+                              └─────────────────────┼──────────────────────-─┘
+                                                    │ reads
+              ┌─────────────────────────────────────┼────────────────────────┐
+              │  MarketDataCollector.Application /   │                        │
+              │  MarketDataCollector.Storage         │                        │
+              │                                      │                        │
+              │  HistoricalDataQueryService ◄────────┘                        │
+              │  JsonlMarketDataStore                                         │
+              └───────────────────────────────────────────────────────────────┘
+              ┌───────────────────────────────────────────────────────────────┐
+              │  MarketDataCollector.Backtesting                              │
+              │                                                               │
+              │  BacktestEngine.RunAsync(...)                                 │
+              │  BacktestMetricsEngine.Compute(...)                           │
+              │  SimulatedPortfolio / IFillModel                              │
+              └───────────────────────────────────────────────────────────────┘
 ```
 
 ### Design Decisions
 
-| Decision | Rationale |
-|---|---|
-| Separate `MarketDataCollector.QuantScript` project | Keeps Roslyn dependency out of the main app; only WPF references it |
-| Roslyn `CSharpScript.Create` (not `CSharpCompilation`) | Simpler API for scripting; supports globals object; handles `#r` directives |
-| `PlotQueue` capture pattern | Script calls `Plot.Line(...)` which enqueues a `PlotRequest`; ViewModel drains queue after execution and renders via ScottPlot — decouples script from WPF |
-| `DataProxy` / `BacktestProxy` wrappers | Provide a clean DSL (`Data.Prices("SPY")`) while hiding async complexity from synchronous script code |
-| `[ScriptParam]` attribute on globals fields | Enables auto-generated parameter UI without custom parsing |
-| `InternalsVisibleTo` attribute on Backtesting project | Required to access `BacktestMetricsEngine` (internal static); alternative is making it public |
+**Decision:** Roslyn in-process scripting via `Microsoft.CodeAnalysis.CSharp.Scripting`
+**Alternatives Considered:** Separate process with stdin/stdout; Lua/Python embedded interpreter
+**Rationale:** In-process gives scripts direct access to MDC types without serialization; `CancellationToken` handles runaway scripts; already have `Microsoft.CodeAnalysis.CSharp` in CPM
+**Consequences:** A buggy script can corrupt process state; mitigated by timeout + CT + documented restrictions in `QuantScriptOptions.EnableUnsafeScripts`
+
+**Decision:** `DataProxy` exposes a synchronous API (`.Prices(...)`) over an async `IQuantDataContext`
+**Alternatives Considered:** Expose `async Task<PriceSeries>` and require `await` in scripts
+**Rationale:** R/Python quant workflows are imperative and synchronous-feeling; requiring `await` at every data call makes scripts verbose; `DataProxy` calls `.GetAwaiter().GetResult()` while respecting the `CancellationToken`
+**Consequences:** Scripts block the Roslyn execution thread (which is already a background `Task`); this is acceptable since scripts are single-threaded analysis workflows
+
+**Decision:** `PlotQueue` backed by `Channel<PlotRequest>` (unbounded)
+**Alternatives Considered:** `IObservable<PlotRequest>`; callback delegate
+**Rationale:** Matches MDC's bounded-channel pattern (ADR-013); unbounded because a script producing 1000 charts is a user error, not a production throughput concern
+**Consequences:** Memory spike if a script enqueues thousands of plots; document 100-plot soft limit in `QuantScriptOptions`
+
+**Decision:** `BacktestProxy` is a fluent builder that wraps `IBacktestStrategy` via an anonymous inline adapter
+**Alternatives Considered:** Require scripts to implement `IBacktestStrategy` directly (forces class declaration)
+**Rationale:** Scripts must remain class-free; the proxy captures lambda callbacks and adapts them to `IBacktestStrategy` callbacks internally
+**Consequences:** Only one `OnBar`/`OnQuote`/`OnTrade` handler per proxy instance; strategy composition not supported in v1
+
+**Decision:** ScottPlot.WPF for charting
+**Alternatives Considered:** OxyPlot (older API), LiveCharts2 (GPL concerns on commercial use)
+**Rationale:** ScottPlot 5.x is MIT, .NET 9 compatible, ships a native `WpfPlot` control, and renders efficiently for time-series data
+**Consequences:** New package not yet in CPM — must add `ScottPlot.WPF` to `Directory.Packages.props`
+
+**Decision:** AvalonEdit (ICSharpCode.AvalonEdit) for the code editor
+**Alternatives Considered:** `RichTextBox`, `FastColoredTextBox`
+**Rationale:** AvalonEdit is the de-facto WPF C# editor used by SharpDevelop/ILSpy; has syntax highlighting for C#, folding, and a clean API
+**Consequences:** New package not yet in CPM — must add `AvalonEdit` to `Directory.Packages.props`
 
 ---
 
-## 3. Interface & API Contracts
+## Step 3: Interface & API Contracts
 
-All interfaces and types below belong to `MarketDataCollector.QuantScript` namespace unless noted.
-
-### 3.1 Data Series Types
+### 3.1 Core Series Types
 
 ```csharp
-namespace MarketDataCollector.QuantScript.Series;
+// File: src/MarketDataCollector.QuantScript/Api/PriceSeries.cs
+namespace MarketDataCollector.QuantScript.Api;
 
 /// <summary>
-/// Immutable time-indexed price series for a single symbol.
-/// Wraps IReadOnlyList<HistoricalBar> with convenience accessors.
+/// An ordered, immutable OHLCV price series for a single symbol.
+/// Produced by <see cref="DataProxy.Prices"/> and consumed by returns/indicator extensions.
 /// </summary>
 public sealed class PriceSeries
 {
     public string Symbol { get; }
-    public IReadOnlyList<DateOnly> Dates { get; }
-    public IReadOnlyList<decimal> Open { get; }
-    public IReadOnlyList<decimal> High { get; }
-    public IReadOnlyList<decimal> Low { get; }
-    public IReadOnlyList<decimal> Close { get; }
-    public IReadOnlyList<long> Volume { get; }
-    public int Count { get; }
+    public IReadOnlyList<PriceBar> Bars { get; }
+    public int Count => Bars.Count;
+    public DateOnly From => Bars.Count > 0 ? Bars[0].Date : default;
+    public DateOnly To => Bars.Count > 0 ? Bars[^1].Date : default;
 
-    public PriceSeries(string symbol, IReadOnlyList<HistoricalBar> bars);
-
-    /// <summary>Slice by date range (inclusive).</summary>
-    public PriceSeries Slice(DateOnly from, DateOnly to);
-
-    /// <summary>Convert to Skender IQuote list for indicator calculation.</summary>
-    public IReadOnlyList<IQuote> ToQuotes();
-
-    /// <summary>Compute simple return series: (Close[i] - Close[i-1]) / Close[i-1].</summary>
-    public ReturnSeries Returns();
-
-    /// <summary>Compute log return series: ln(Close[i] / Close[i-1]).</summary>
-    public ReturnSeries LogReturns();
+    public PriceSeries(string symbol, IReadOnlyList<PriceBar> bars);
 }
 
+/// <summary>Single OHLCV bar.</summary>
+public sealed record PriceBar(
+    DateOnly Date,
+    decimal Open,
+    decimal High,
+    decimal Low,
+    decimal Close,
+    long Volume);
+```
+
+```csharp
+// File: src/MarketDataCollector.QuantScript/Api/ReturnSeries.cs
+namespace MarketDataCollector.QuantScript.Api;
+
 /// <summary>
-/// Immutable time-indexed return series.
+/// An ordered series of per-period returns (arithmetic or log).
+/// Produced by PriceSeries extension methods; all statistical methods are instance methods here.
 /// </summary>
 public sealed class ReturnSeries
 {
     public string Symbol { get; }
-    public IReadOnlyList<DateOnly> Dates { get; }
-    public IReadOnlyList<double> Values { get; }
-    public int Count { get; }
+    public ReturnKind Kind { get; }
+    public IReadOnlyList<ReturnPoint> Points { get; }
+    public int Count => Points.Count;
 
-    public ReturnSeries(string symbol, IReadOnlyList<DateOnly> dates, IReadOnlyList<double> values);
+    public ReturnSeries(string symbol, ReturnKind kind, IReadOnlyList<ReturnPoint> points);
 
-    /// <summary>Annualised mean return (252 trading days).</summary>
-    public double AnnualisedReturn();
+    // ── Statistics ───────────────────────────────────────────────────────────
 
-    /// <summary>Annualised standard deviation.</summary>
-    public double AnnualisedVolatility();
+    /// <summary>Annualised Sharpe ratio (252 trading days). Risk-free rate in decimal (e.g. 0.04).</summary>
+    public double SharpeRatio(double riskFreeRate = 0.04);
 
-    /// <summary>Sharpe ratio (risk-free rate parameter, default 0).</summary>
-    public double SharpeRatio(double riskFreeRate = 0.0);
+    /// <summary>Annualised Sortino ratio using downside deviation.</summary>
+    public double SortinoRatio(double riskFreeRate = 0.04);
 
-    /// <summary>Maximum drawdown as a positive fraction.</summary>
+    /// <summary>Annualised volatility (std dev of daily returns × √252).</summary>
+    public double AnnualizedVolatility();
+
+    /// <summary>Maximum peak-to-trough drawdown as a fraction (e.g. 0.25 = 25%).</summary>
     public double MaxDrawdown();
+
+    /// <summary>Full drawdown series for every period.</summary>
+    public IReadOnlyList<ReturnPoint> DrawdownSeries();
+
+    /// <summary>Beta relative to a benchmark return series.</summary>
+    public double Beta(ReturnSeries benchmark);
+
+    /// <summary>Jensen's Alpha relative to a benchmark return series (annualised).</summary>
+    public double Alpha(ReturnSeries benchmark, double riskFreeRate = 0.04);
+
+    /// <summary>Pearson correlation with another return series (aligned by date).</summary>
+    public double Correlation(ReturnSeries other);
+
+    /// <summary>Sample skewness.</summary>
+    public double Skewness();
+
+    /// <summary>Excess kurtosis (normal = 0).</summary>
+    public double Kurtosis();
+
+    /// <summary>Rolling arithmetic mean over <paramref name="window"/> periods.</summary>
+    public ReturnSeries RollingMean(int window);
+
+    /// <summary>Rolling sample standard deviation over <paramref name="window"/> periods.</summary>
+    public ReturnSeries RollingSd(int window);
+
+    /// <summary>Cumulative return series (compounded).</summary>
+    public ReturnSeries Cumulative();
+
+    // ── Plot terminals ───────────────────────────────────────────────────────
+
+    /// <summary>Enqueues a line chart of this return series to the results panel.</summary>
+    public void Plot(string? title = null);
+
+    /// <summary>Enqueues a cumulative return chart.</summary>
+    public void PlotCumulative(string? title = null);
+
+    /// <summary>Enqueues an underwater (drawdown) chart.</summary>
+    public void PlotDrawdown(string? title = null);
 }
 
-/// <summary>
-/// Immutable time-indexed numeric series for derived calculations (indicators, spreads, etc.).
-/// Pairs each value with its date so callers never lose temporal context.
-/// Supports operator chaining and rolling statistics to enable a pandas-like scripting style.
-/// </summary>
-/// <remarks>
-/// Precondition: <paramref name="dates"/> and <paramref name="values"/> must have equal length;
-/// the constructor throws <see cref="ArgumentException"/> otherwise.
-/// </remarks>
-public sealed class NumericSeries
+public sealed record ReturnPoint(DateOnly Date, double Value);
+
+public enum ReturnKind { Arithmetic, Log, Cumulative, Rolling, DrawdownSeries, RollingStat }
+```
+
+```csharp
+// File: src/MarketDataCollector.QuantScript/Api/PriceSeriesExtensions.cs
+namespace MarketDataCollector.QuantScript.Api;
+
+public static class PriceSeriesExtensions
 {
-    public string Label { get; }
-    public IReadOnlyList<DateOnly> Dates { get; }
-    public IReadOnlyList<double?> Values { get; }
-    public int Count { get; }
+    /// <summary>Day-over-day arithmetic returns: (Close[t] - Close[t-1]) / Close[t-1].</summary>
+    public static ReturnSeries DailyReturns(this PriceSeries series);
 
-    /// <exception cref="ArgumentException">Thrown when <paramref name="dates"/> and <paramref name="values"/> differ in length.</exception>
-    public NumericSeries(string label, IReadOnlyList<DateOnly> dates, IReadOnlyList<double?> values);
+    /// <summary>Day-over-day log returns: ln(Close[t] / Close[t-1]).</summary>
+    public static ReturnSeries LogReturns(this PriceSeries series);
 
-    // --- Arithmetic operators (inner-join on dates) ---
-    // Binary operators align on the shared date set (inner join); dates present in only one
-    // operand are dropped from the result. Null values in either operand propagate as null.
-    // Division by zero or a null denominator produces null (not an exception).
-    public static NumericSeries operator +(NumericSeries a, NumericSeries b);
-    public static NumericSeries operator -(NumericSeries a, NumericSeries b);
-    public static NumericSeries operator *(NumericSeries a, double scalar);
-    public static NumericSeries operator *(double scalar, NumericSeries a);
-    public static NumericSeries operator /(NumericSeries a, NumericSeries b);
+    /// <summary>Compounded cumulative return starting from 1.0.</summary>
+    public static ReturnSeries CumulativeReturns(this PriceSeries series);
 
-    // --- Rolling statistics ---
-    /// <summary>Rolling arithmetic mean over <paramref name="window"/> observations.</summary>
-    public NumericSeries RollingMean(int window);
-
-    /// <summary>Rolling sample standard deviation over <paramref name="window"/> observations.</summary>
-    public NumericSeries RollingStd(int window);
-
-    /// <summary>Cumulative sum of values.</summary>
-    public NumericSeries Cumulative();
-
-    // --- Filtering ---
-    /// <summary>
-    /// Masks entries where the predicate returns false to null.
-    /// <see cref="Dates"/> length is preserved; non-matching entries become null in <see cref="Values"/>.
-    /// </summary>
-    public NumericSeries Where(Func<double?, bool> predicate);
-
-    // --- Conversion ---
-    /// <summary>Returns the raw value list without date context (for downstream consumers).</summary>
-    public IReadOnlyList<double?> ToList();
+    /// <summary>Non-overlapping rolling returns over <paramref name="window"/> days.</summary>
+    public static ReturnSeries RollingReturns(this PriceSeries series, int window);
 }
 ```
 
-### 3.2 Data Context
+### 3.2 Technical Indicator Extensions
 
 ```csharp
-namespace MarketDataCollector.QuantScript.Data;
+// File: src/MarketDataCollector.QuantScript/Api/TechnicalSeriesExtensions.cs
+namespace MarketDataCollector.QuantScript.Api;
 
 /// <summary>
-/// Provides access to historical market data for scripts.
-/// Implementations load data from IMarketDataStore / IHistoricalDataProvider.
+/// Technical indicator extension methods on PriceSeries.
+/// Delegates to Skender.Stock.Indicators where available; pure math otherwise.
 /// </summary>
-[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
+public static class TechnicalSeriesExtensions
+{
+    public static IReadOnlyList<(DateOnly Date, double? Sma)> Sma(this PriceSeries series, int period);
+    public static IReadOnlyList<(DateOnly Date, double? Ema)> Ema(this PriceSeries series, int period);
+    public static IReadOnlyList<(DateOnly Date, double? Rsi)> Rsi(this PriceSeries series, int period = 14);
+    public static IReadOnlyList<(DateOnly Date, double? Macd, double? Signal, double? Histogram)>
+        Macd(this PriceSeries series, int fastPeriod = 12, int slowPeriod = 26, int signalPeriod = 9);
+    public static IReadOnlyList<(DateOnly Date, double? Upper, double? Mid, double? Lower)>
+        BollingerBands(this PriceSeries series, int period = 20, double stdDevMultiplier = 2.0);
+
+    /// <summary>Plots a single named indicator line to the results panel.</summary>
+    public static void Plot<T>(this IReadOnlyList<(DateOnly Date, T Value)> series, string title);
+}
+```
+
+### 3.3 Data Access
+
+```csharp
+// File: src/MarketDataCollector.QuantScript/Api/IQuantDataContext.cs
+namespace MarketDataCollector.QuantScript.Api;
+
+/// <summary>
+/// Async data access contract; implemented by QuantDataContext which delegates to
+/// HistoricalDataQueryService and JsonlMarketDataStore.
+/// </summary>
 public interface IQuantDataContext
 {
-    /// <summary>Load daily OHLCV bars as a PriceSeries.</summary>
-    Task<PriceSeries> GetPricesAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default);
+    Task<PriceSeries> PricesAsync(
+        string symbol, DateOnly from, DateOnly to, CancellationToken ct = default);
 
-    /// <summary>Load return series (simple returns).</summary>
-    Task<ReturnSeries> GetReturnsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default);
+    Task<PriceSeries> PricesAsync(
+        string symbol, DateOnly from, DateOnly to, string provider, CancellationToken ct = default);
 
-    /// <summary>List symbols with available historical data.</summary>
-    Task<IReadOnlyList<string>> GetAvailableSymbolsAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ScriptTrade>> TradesAsync(
+        string symbol, DateOnly date, CancellationToken ct = default);
+
+    Task<ScriptOrderBook?> OrderBookAsync(
+        string symbol, DateTimeOffset timestamp, CancellationToken ct = default);
+}
+
+/// <summary>Lightweight trade tick for script consumption.</summary>
+public sealed record ScriptTrade(DateTimeOffset Timestamp, decimal Price, long Size, string Side);
+
+/// <summary>Lightweight order book snapshot for script consumption.</summary>
+public sealed record ScriptOrderBook(
+    DateTimeOffset Timestamp,
+    IReadOnlyList<(decimal Price, long Size)> Bids,
+    IReadOnlyList<(decimal Price, long Size)> Asks);
+```
+
+```csharp
+// File: src/MarketDataCollector.QuantScript/Api/DataProxy.cs
+namespace MarketDataCollector.QuantScript.Api;
+
+/// <summary>
+/// Synchronous façade over IQuantDataContext for ergonomic script use.
+/// Internally calls GetAwaiter().GetResult() on the background script thread.
+/// </summary>
+public sealed class DataProxy(IQuantDataContext context, Func<CancellationToken> ctProvider)
+{
+    public PriceSeries Prices(string symbol, DateOnly from, DateOnly to)
+        => context.PricesAsync(symbol, from, to, ctProvider()).GetAwaiter().GetResult();
+
+    public PriceSeries Prices(string symbol, DateOnly from, DateOnly to, string provider)
+        => context.PricesAsync(symbol, from, to, provider, ctProvider()).GetAwaiter().GetResult();
+
+    public IReadOnlyList<ScriptTrade> Trades(string symbol, DateOnly date)
+        => context.TradesAsync(symbol, date, ctProvider()).GetAwaiter().GetResult();
+
+    public ScriptOrderBook? OrderBook(string symbol, DateTimeOffset timestamp)
+        => context.OrderBookAsync(symbol, timestamp, ctProvider()).GetAwaiter().GetResult();
 }
 ```
 
-### 3.3 Script Compiler
+### 3.4 Portfolio Tools
 
 ```csharp
-namespace MarketDataCollector.QuantScript.Compilation;
+// File: src/MarketDataCollector.QuantScript/Api/PortfolioBuilder.cs
+namespace MarketDataCollector.QuantScript.Api;
 
-/// <summary>
-/// Result of script compilation.
-/// </summary>
-public sealed class CompilationResult
+public static class PortfolioBuilder
 {
-    public bool Success { get; init; }
-    public IReadOnlyList<CompilationDiagnostic> Diagnostics { get; init; } = [];
-    public Script<object>? CompiledScript { get; init; }
+    /// <summary>Equal-weight portfolio across all provided series.</summary>
+    public static PortfolioResult EqualWeight(params PriceSeries[] series);
+
+    /// <summary>Custom weight portfolio. Weights must sum to ~1.0; keys are symbols.</summary>
+    public static PortfolioResult CustomWeight(
+        IReadOnlyDictionary<string, double> weights, params PriceSeries[] series);
+
+    /// <summary>
+    /// Efficient frontier stub — returns equal-weight in v1.
+    /// Full quadratic optimisation deferred (see Open Questions).
+    /// </summary>
+    public static PortfolioResult EfficientFrontier(
+        EfficientFrontierConstraints constraints, params PriceSeries[] series);
 }
 
-public sealed record CompilationDiagnostic(
-    string Id,
-    string Message,
-    int Line,
-    int Column,
-    DiagnosticSeverityLevel Severity);
-
-public enum DiagnosticSeverityLevel { Info, Warning, Error }
-
-/// <summary>
-/// Compiles C# script text into an executable script.
-/// </summary>
-public interface IQuantScriptCompiler
+public sealed class EfficientFrontierConstraints
 {
-    /// <summary>
-    /// Compile script source code. Returns diagnostics on failure.
-    /// The compiled script is bound to QuantScriptGlobals.
-    /// </summary>
-    CompilationResult Compile(string sourceCode);
+    public double TargetReturn { get; init; }
+    public double? MinWeight { get; init; } = 0.0;
+    public double? MaxWeight { get; init; } = 1.0;
+}
 
-    /// <summary>
-    /// Detect [ScriptParam] attributes in the source to build parameter UI.
-    /// </summary>
-    IReadOnlyList<ScriptParameterInfo> ExtractParameters(string sourceCode);
+public sealed class PortfolioResult
+{
+    public IReadOnlyDictionary<string, double> Weights { get; }
+    public IReadOnlyList<string> Symbols { get; }
+
+    public ReturnSeries Returns();
+    public double[,] CorrelationMatrix();
+    public double[,] CovarianceMatrix();
+    public double SharpeRatio(double riskFreeRate = 0.04);
+    public IReadOnlyList<ReturnPoint> Drawdowns();
+
+    /// <summary>Enqueues a correlation heatmap chart.</summary>
+    public void PlotHeatmap(string? title = null);
+
+    /// <summary>Enqueues a cumulative return overlay for all constituent series.</summary>
+    public void PlotCumulative(string? title = null);
 }
 ```
 
-### 3.4 Script Runner
+### 3.5 Backtesting Proxy
 
 ```csharp
-namespace MarketDataCollector.QuantScript.Execution;
+// File: src/MarketDataCollector.QuantScript/Api/BacktestProxy.cs
+namespace MarketDataCollector.QuantScript.Api;
 
 /// <summary>
-/// Result of a script execution.
+/// Fluent backtest builder for use inside scripts. Adapts lambda callbacks to
+/// IBacktestStrategy and delegates execution to the existing BacktestEngine.
+/// Usage: Backtest.WithSymbols("SPY").From(d1).To(d2).OnBar((bar, ctx) => { ... }).Run()
 /// </summary>
-public sealed class ScriptExecutionResult
+public sealed class BacktestProxy(BacktestEngine engine, QuantScriptOptions options)
 {
-    public bool Success { get; init; }
-    public object? ReturnValue { get; init; }
-    public string? ErrorMessage { get; init; }
-    public string? StackTrace { get; init; }
-    public TimeSpan Elapsed { get; init; }
-    public IReadOnlyList<PlotRequest> Plots { get; init; } = [];
-    public IReadOnlyList<string> LogMessages { get; init; } = [];
-}
+    public BacktestProxy WithSymbols(params string[] symbols);
+    public BacktestProxy From(DateOnly from);
+    public BacktestProxy To(DateOnly to);
+    public BacktestProxy WithInitialCash(decimal cash);
+    public BacktestProxy WithFillModel(string model);  // "midpoint" | "orderbook"
+    public BacktestProxy WithDataRoot(string path);
 
-/// <summary>
-/// Executes compiled scripts with a globals object and cancellation support.
-/// </summary>
-[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public interface IScriptRunner
-{
-    /// <summary>
-    /// Execute a compiled script.
-    /// </summary>
-    /// <param name="compiledScript">Output of IQuantScriptCompiler.Compile</param>
-    /// <param name="globals">The globals instance (QuantScriptGlobals)</param>
-    /// <param name="ct">Cancellation token for long-running scripts</param>
-    Task<ScriptExecutionResult> RunAsync(
-        Script<object> compiledScript,
-        QuantScriptGlobals globals,
-        CancellationToken ct = default);
+    public BacktestProxy OnInitialize(Action<IBacktestContext> handler);
+    public BacktestProxy OnBar(Action<HistoricalBar, IBacktestContext> handler);
+    public BacktestProxy OnTrade(Action<Trade, IBacktestContext> handler);
+    public BacktestProxy OnQuote(Action<BboQuotePayload, IBacktestContext> handler);
+    public BacktestProxy OnOrderBook(Action<LOBSnapshot, IBacktestContext> handler);
+    public BacktestProxy OnFill(Action<FillEvent, IBacktestContext> handler);
+    public BacktestProxy OnDayEnd(Action<DateOnly, IBacktestContext> handler);
+    public BacktestProxy OnFinished(Action<IBacktestContext, BacktestResult> handler);
+
+    /// <summary>Runs the backtest synchronously on the calling (script) thread.</summary>
+    public BacktestResult Run();
+
+    /// <summary>Runs with a progress callback (forwards BacktestProgressEvent to console).</summary>
+    public BacktestResult Run(Action<BacktestProgressEvent> onProgress);
 }
 ```
 
-### 3.5 Plotting
+### 3.6 Plotting
 
 ```csharp
+// File: src/MarketDataCollector.QuantScript/Plotting/PlotQueue.cs
 namespace MarketDataCollector.QuantScript.Plotting;
+
+/// <summary>
+/// Thread-safe unbounded queue of plot requests produced by scripts and
+/// consumed by the WPF results panel. Backed by Channel{PlotRequest}.
+/// </summary>
+public sealed class PlotQueue : IDisposable
+{
+    public void Enqueue(PlotRequest request);
+    public IAsyncEnumerable<PlotRequest> ReadAllAsync(CancellationToken ct = default);
+    public void Complete();
+    public void Dispose();
+}
+
+public sealed record PlotRequest(
+    string Title,
+    PlotType Type,
+    /// <summary>Primary data series (used for Line, CumulativeReturn, Drawdown, Bar, Scatter, Histogram).</summary>
+    IReadOnlyList<(DateOnly Date, double Value)>? Series = null,
+    /// <summary>Multiple named series for overlay line charts.</summary>
+    IReadOnlyList<(string Label, IReadOnlyList<(DateOnly Date, double Value)> Values)>? MultiSeries = null,
+    /// <summary>OHLCV data for Candlestick charts.</summary>
+    IReadOnlyList<PriceBar>? Candlestick = null,
+    /// <summary>Row-major 2D data for Heatmap.</summary>
+    double[][]? HeatmapData = null,
+    string[]? HeatmapLabels = null);
 
 public enum PlotType
 {
     Line,
-    Scatter,
+    MultiLine,
+    CumulativeReturn,
+    Drawdown,
+    Heatmap,
+    Candlestick,
     Bar,
-    Histogram,
-    Area,
-    Candlestick
-}
-
-/// <summary>
-/// A single plot request captured during script execution.
-/// </summary>
-public sealed record PlotRequest(
-    string Title,
-    PlotType Type,
-    string? XLabel,
-    string? YLabel,
-    IReadOnlyList<double> XValues,
-    IReadOnlyList<double> YValues,
-    string? SeriesLabel = null,
-    string? Color = null);
-
-/// <summary>
-/// Accumulates plot requests from script code.
-/// Thread-safe; scripts call Plot.Line(...) etc.
-/// </summary>
-public sealed class PlotQueue
-{
-    private readonly ConcurrentQueue<PlotRequest> _queue = new();
-
-    public void Line(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
-        string? label = null, string? color = null)
-    {
-        _queue.Enqueue(new PlotRequest(title, PlotType.Line, null, null, x, y, label, color));
-    }
-
-    public void Scatter(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
-        string? label = null, string? color = null)
-    {
-        _queue.Enqueue(new PlotRequest(title, PlotType.Scatter, null, null, x, y, label, color));
-    }
-
-    public void Histogram(string title, IReadOnlyList<double> values,
-        string? label = null)
-    {
-        _queue.Enqueue(new PlotRequest(title, PlotType.Histogram, null, null,
-            values, [], label));
-    }
-
-    public void Bar(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
-        string? label = null, string? color = null)
-    {
-        _queue.Enqueue(new PlotRequest(title, PlotType.Bar, null, null, x, y, label, color));
-    }
-
-    public void Area(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
-        string? label = null, string? color = null)
-    {
-        _queue.Enqueue(new PlotRequest(title, PlotType.Area, null, null, x, y, label, color));
-    }
-
-    /// <summary>Drain all queued requests.</summary>
-    public IReadOnlyList<PlotRequest> DrainAll();
-
-    /// <summary>Clear all queued requests.</summary>
-    public void Clear();
+    Scatter,
+    Histogram
 }
 ```
 
-### 3.6 Statistics Engine
+### 3.7 Compilation Pipeline
 
 ```csharp
-namespace MarketDataCollector.QuantScript.Statistics;
-
-/// <summary>
-/// Portfolio-level statistics computed from return series or backtest results.
-/// </summary>
-public sealed record PortfolioStatistics
-{
-    public double AnnualisedReturn { get; init; }
-    public double AnnualisedVolatility { get; init; }
-    public double SharpeRatio { get; init; }
-    public double SortinoRatio { get; init; }
-    public double MaxDrawdown { get; init; }
-    public double MaxDrawdownDuration { get; init; } // trading days
-    public double Cagr { get; init; }
-    public double CalmarRatio { get; init; }
-    public double Skewness { get; init; }
-    public double Kurtosis { get; init; }
-    public double WinRate { get; init; }
-    public double ProfitFactor { get; init; }
-    public int TotalTrades { get; init; }
-}
-
-/// <summary>
-/// Correlation matrix for multiple return series.
-/// </summary>
-public sealed class CorrelationMatrix
-{
-    public IReadOnlyList<string> Symbols { get; }
-    public double[,] Values { get; }
-
-    public CorrelationMatrix(IReadOnlyList<string> symbols, double[,] values);
-
-    public double this[string a, string b] { get; }
-}
-
-/// <summary>
-/// Computes portfolio and series statistics.
-/// </summary>
-public sealed class StatisticsEngine
-{
-    /// <summary>Compute full statistics from a return series.</summary>
-    public PortfolioStatistics Compute(ReturnSeries returns, double riskFreeRate = 0.0);
-
-    /// <summary>Compute correlation matrix across multiple series.</summary>
-    public CorrelationMatrix Correlation(IReadOnlyList<ReturnSeries> series);
-
-    /// <summary>Compute rolling beta vs a benchmark.</summary>
-    public IReadOnlyList<double> RollingBeta(
-        ReturnSeries asset,
-        ReturnSeries benchmark,
-        int windowDays = 60);
-}
-```
-
-### 3.7 Script Globals & Proxies
-
-```csharp
-namespace MarketDataCollector.QuantScript.Execution;
-
-/// <summary>
-/// The globals object injected into every script.
-/// Scripts access these as top-level variables: Data.Prices("SPY"), Plot.Line(...), etc.
-/// </summary>
-public sealed class QuantScriptGlobals
-{
-    public required DataProxy Data { get; init; }
-    public required BacktestProxy Test { get; init; }
-    public required PlotQueue Plot { get; init; }
-    public required StatisticsEngine Stats { get; init; }
-    public required Action<string> Log { get; init; }
-    public required CancellationToken CancellationToken { get; init; }
-}
-
-/// <summary>
-/// Synchronous-looking wrapper over IQuantDataContext for use inside scripts.
-/// Uses .GetAwaiter().GetResult() internally — acceptable because scripts
-/// run on a background thread, not the UI thread.
-/// </summary>
-public sealed class DataProxy
-{
-    private readonly IQuantDataContext _ctx;
-    private readonly CancellationToken _ct;
-
-    public DataProxy(IQuantDataContext ctx, CancellationToken ct);
-
-    /// <summary>Load daily OHLCV bars.</summary>
-    public Task<PriceSeries> PricesAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetPricesAsync(symbol, from, to, _ct);
-
-    /// <summary>Load simple return series.</summary>
-    public Task<ReturnSeries> ReturnsAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetReturnsAsync(symbol, from, to, _ct);
-
-    /// <summary>List available symbols.</summary>
-    public Task<IReadOnlyList<string>> SymbolsAsync()
-        => _ctx.GetAvailableSymbolsAsync(_ct);
-}
-
-/// <summary>
-/// Wraps BacktestEngine for script-friendly backtest execution.
-/// </summary>
-public sealed class BacktestProxy
-{
-    private readonly BacktestEngine _engine;
-    private readonly CancellationToken _ct;
-
-    public BacktestProxy(BacktestEngine engine, CancellationToken ct);
-
-    /// <summary>
-    /// Run a backtest with the given strategy.
-    /// Scripts implement IBacktestStrategy directly in their code.
-    /// </summary>
-    public Task<BacktestResult> RunAsync(BacktestRequest request, IBacktestStrategy strategy)
-        => _engine.RunAsync(request, strategy, progress: null, _ct);
-}
-```
-
-### 3.8 Script Parameter Discovery
-
-```csharp
+// File: src/MarketDataCollector.QuantScript/Compilation/IQuantScriptCompiler.cs
 namespace MarketDataCollector.QuantScript.Compilation;
 
-/// <summary>
-/// Attribute scripts place on global fields to declare tuneable parameters.
-/// </summary>
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-public sealed class ScriptParamAttribute : Attribute
+public interface IQuantScriptCompiler
 {
-    public string? DisplayName { get; init; }
-    public string? Description { get; init; }
-    public double Min { get; init; } = double.MinValue;
-    public double Max { get; init; } = double.MaxValue;
-    public double Step { get; init; } = 1.0;
+    /// <summary>Compiles script source and returns diagnostics. Does not execute.</summary>
+    Task<ScriptCompilationResult> CompileAsync(string source, CancellationToken ct = default);
+
+    /// <summary>Reflects [ScriptParam] attributes from top-level variable declarations.</summary>
+    IReadOnlyList<ParameterDescriptor> ExtractParameters(string source);
 }
 
-/// <summary>
-/// Metadata extracted from a [ScriptParam]-annotated field.
-/// </summary>
-public sealed record ScriptParameterInfo(
+public sealed record ScriptCompilationResult(
+    bool Success,
+    IReadOnlyList<ScriptDiagnostic> Diagnostics);
+
+public sealed record ScriptDiagnostic(
+    string Severity,   // "Error" | "Warning"
+    string Message,
+    int Line,
+    int Column);
+
+public sealed record ParameterDescriptor(
     string Name,
-    string DisplayName,
-    string? Description,
-    Type ParameterType,
+    string TypeName,
+    string Label,
     object? DefaultValue,
     double Min,
     double Max,
-    double Step);
+    string? Description);
 ```
 
-### 3.9 Configuration Options
+```csharp
+// File: src/MarketDataCollector.QuantScript/Compilation/IScriptRunner.cs
+namespace MarketDataCollector.QuantScript.Compilation;
+
+public interface IScriptRunner
+{
+    /// <summary>
+    /// Compiles and executes a script, injecting QuantScriptGlobals.
+    /// Console output, plots, and metrics are forwarded via the globals' internal channels.
+    /// </summary>
+    Task<ScriptRunResult> RunAsync(
+        string source,
+        IReadOnlyDictionary<string, object?> parameters,
+        CancellationToken ct = default);
+}
+
+public sealed record ScriptRunResult(
+    bool Success,
+    TimeSpan Elapsed,
+    IReadOnlyList<ScriptDiagnostic> CompilationErrors,
+    string? RuntimeError);
+```
+
+### 3.8 Script Globals
 
 ```csharp
-namespace MarketDataCollector.QuantScript;
+// File: src/MarketDataCollector.QuantScript/Compilation/QuantScriptGlobals.cs
+namespace MarketDataCollector.QuantScript.Compilation;
 
 /// <summary>
-/// Options bound from appsettings.json section "QuantScript".
+/// Injected as the Roslyn script globals object. All members are visible as top-level
+/// identifiers inside .csx scripts. CancellationToken is exposed for scripts that loop.
 /// </summary>
+public sealed class QuantScriptGlobals
+{
+    // ── Primary APIs ─────────────────────────────────────────────────────────
+    public DataProxy Data { get; }
+    public BacktestProxy Backtest { get; }
+    public PlotQueue PlotQueue { get; }   // internal plumbing; scripts use .Plot() on series
+
+    // ── Portfolio factory ────────────────────────────────────────────────────
+    // Scripts call: var p = EqualWeight(spy, qqq)  or  CustomWeight(weights, spy, qqq)
+    public PortfolioResult EqualWeight(params PriceSeries[] series)
+        => PortfolioBuilder.EqualWeight(series);
+    public PortfolioResult CustomWeight(
+        IReadOnlyDictionary<string, double> weights, params PriceSeries[] series)
+        => PortfolioBuilder.CustomWeight(weights, series);
+
+    // ── Standalone statistical helpers (mirror ReturnSeries instance methods) ─
+    public double SharpeRatio(ReturnSeries r, double riskFreeRate = 0.04) => r.SharpeRatio(riskFreeRate);
+    public double SortinoRatio(ReturnSeries r, double riskFreeRate = 0.04) => r.SortinoRatio(riskFreeRate);
+    public double AnnualizedVolatility(ReturnSeries r) => r.AnnualizedVolatility();
+    public double MaxDrawdown(ReturnSeries r) => r.MaxDrawdown();
+    public double Beta(ReturnSeries r, ReturnSeries benchmark) => r.Beta(benchmark);
+    public double Alpha(ReturnSeries r, ReturnSeries benchmark, double rfr = 0.04) => r.Alpha(benchmark, rfr);
+    public double Correlation(ReturnSeries a, ReturnSeries b) => a.Correlation(b);
+
+    // ── Output ───────────────────────────────────────────────────────────────
+    public void Print(object? value);
+    public void PrintTable<T>(IEnumerable<T> rows);
+    public void PrintMetric(string label, object value);
+
+    // ── Cancellation ─────────────────────────────────────────────────────────
+    public CancellationToken CancellationToken { get; }
+}
+```
+
+### 3.9 Script Parameter Attribute
+
+```csharp
+// File: src/MarketDataCollector.QuantScript/Api/ScriptParamAttribute.cs
+namespace MarketDataCollector.QuantScript.Api;
+
+/// <summary>
+/// Marks a top-level variable declaration in a .csx script as a user-configurable parameter.
+/// The UI reflects these to render a dynamic parameter form before execution.
+/// </summary>
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
+public sealed class ScriptParamAttribute(string label) : Attribute
+{
+    public string Label { get; } = label;
+    public object? Default { get; init; }
+    public double Min { get; init; } = double.MinValue;
+    public double Max { get; init; } = double.MaxValue;
+    public string? Description { get; init; }
+}
+```
+
+### 3.10 Configuration
+
+```csharp
+// File: src/MarketDataCollector.QuantScript/QuantScriptOptions.cs
+namespace MarketDataCollector.QuantScript;
+
 public sealed class QuantScriptOptions
 {
     public const string SectionName = "QuantScript";
 
-    /// <summary>Max script execution time before auto-cancel.</summary>
-    public TimeSpan ExecutionTimeout { get; set; } = TimeSpan.FromMinutes(5);
+    /// <summary>Directory to scan for .csx script files.</summary>
+    public string ScriptsDirectory { get; init; } = "scripts";
 
-    /// <summary>Directory for saved scripts.</summary>
-    public string ScriptsDirectory { get; set; } = "data/_scripts";
+    /// <summary>Maximum wall-clock seconds a script may run before cancellation.</summary>
+    public int RunTimeoutSeconds { get; init; } = 300;
 
-    /// <summary>Maximum number of recent scripts to track.</summary>
-    public int MaxRecentScripts { get; set; } = 20;
+    /// <summary>Maximum seconds allowed for Roslyn compilation.</summary>
+    public int CompilationTimeoutSeconds { get; init; } = 15;
 
-    /// <summary>Default risk-free rate for Sharpe calculations.</summary>
-    public double DefaultRiskFreeRate { get; set; } = 0.0;
+    /// <summary>
+    /// When false (default), scripts are denied File/Network/Process access via
+    /// Roslyn's MetadataReferenceResolver restriction list.
+    /// </summary>
+    public bool EnableUnsafeScripts { get; init; } = false;
 
-    /// <summary>Assemblies to auto-import in scripts.</summary>
-    public IReadOnlyList<string> DefaultImports { get; set; } =
-    [
-        "System",
-        "System.Linq",
-        "System.Collections.Generic",
-        "MarketDataCollector.QuantScript.Series",
-        "MarketDataCollector.QuantScript.Statistics",
-        "MarketDataCollector.QuantScript.Plotting",
-        "MarketDataCollector.Backtesting.Sdk",
-        "Skender.Stock.Indicators"
-    ];
+    /// <summary>Soft limit on plot requests per run. Excess plots are silently dropped.</summary>
+    public int MaxPlotsPerRun { get; init; } = 100;
+
+    /// <summary>Default data root passed to BacktestProxy when not overridden in script.</summary>
+    public string DefaultDataRoot { get; init; } = "./data";
 }
 ```
 
-### 3.10 Technical Indicator Extensions
-
-```csharp
-namespace MarketDataCollector.QuantScript.Indicators;
-
-/// <summary>
-/// Fluent extension methods bridging PriceSeries → Skender indicators → NumericSeries.
-/// Every method preserves the date index from the source series so callers retain
-/// temporal context for plotting, alignment, and further chaining.
-/// </summary>
-public static class TechnicalSeriesExtensions
+```json
+// appsettings.json addition:
 {
-    public static NumericSeries Sma(this PriceSeries series, int periods)
-        => new($"SMA({periods})", series.Dates,
-            series.ToQuotes().GetSma(periods).Select(r => r.Sma).ToList());
-
-    public static NumericSeries Ema(this PriceSeries series, int periods)
-        => new($"EMA({periods})", series.Dates,
-            series.ToQuotes().GetEma(periods).Select(r => r.Ema).ToList());
-
-    public static NumericSeries Rsi(this PriceSeries series, int periods = 14)
-        => new($"RSI({periods})", series.Dates,
-            series.ToQuotes().GetRsi(periods).Select(r => r.Rsi).ToList());
-
-    public static (NumericSeries Macd, NumericSeries Signal, NumericSeries Histogram)
-        Macd(this PriceSeries series, int fast = 12, int slow = 26, int signal = 9)
-    {
-        var results = series.ToQuotes().GetMacd(fast, slow, signal).ToList();
-        return (
-            new NumericSeries($"MACD({fast},{slow})", series.Dates, results.Select(r => r.Macd).ToList()),
-            new NumericSeries($"Signal({signal})",    series.Dates, results.Select(r => r.Signal).ToList()),
-            new NumericSeries("Histogram",             series.Dates, results.Select(r => r.Histogram).ToList())
-        );
-    }
-
-    public static (NumericSeries Upper, NumericSeries Middle, NumericSeries Lower)
-        BollingerBands(this PriceSeries series, int periods = 20, double stdDevs = 2.0)
-    {
-        var results = series.ToQuotes().GetBollingerBands(periods, stdDevs).ToList();
-        return (
-            new NumericSeries($"BB_Upper({periods})",  series.Dates, results.Select(r => r.UpperBand).ToList()),
-            new NumericSeries($"BB_Middle({periods})", series.Dates, results.Select(r => r.Sma).ToList()),
-            new NumericSeries($"BB_Lower({periods})",  series.Dates, results.Select(r => r.LowerBand).ToList())
-        );
-    }
-
-    public static NumericSeries Atr(this PriceSeries series, int periods = 14)
-        => new($"ATR({periods})", series.Dates,
-            series.ToQuotes().GetAtr(periods).Select(r => r.Atr).ToList());
+  "QuantScript": {
+    "ScriptsDirectory": "scripts",
+    "RunTimeoutSeconds": 300,
+    "CompilationTimeoutSeconds": 15,
+    "EnableUnsafeScripts": false,
+    "MaxPlotsPerRun": 100,
+    "DefaultDataRoot": "./data"
+  }
 }
 ```
 
 ---
 
-## 4. Component Design
+## Step 4: Component Design
 
 ### 4.1 QuantDataContext
 
-**Class:** `MarketDataCollector.QuantScript.Data.QuantDataContext : IQuantDataContext`
+**Namespace:** `MarketDataCollector.QuantScript.Api`
+**Type:** `sealed class QuantDataContext : IQuantDataContext`
+**Lifetime:** Singleton
 
-**Dependencies:** `HistoricalDataQueryService`, `IMarketDataStore`
+**Responsibilities:**
+- Bridges `IQuantDataContext` to `HistoricalDataQueryService` and `JsonlMarketDataStore`
+- Translates `HistoricalBar` records to `PriceBar` for `PriceSeries`
+- Translates `Trade` events to `ScriptTrade`; `LOBSnapshot` to `ScriptOrderBook`
+- Logs a console warning (not exception) when no data is found for a symbol/date range
 
-**Behaviour:**
-- `GetPricesAsync` delegates to `HistoricalDataQueryService` (which queries `JsonlMarketDataStore` or triggers backfill).
-- Caches loaded bars in a `ConcurrentDictionary<(string, DateOnly?, DateOnly?), PriceSeries>` to avoid repeated I/O within the same script execution.
-- Cache is scoped to a single script run; a new `QuantDataContext` is created per execution.
+**Dependencies:**
+```csharp
+public QuantDataContext(
+    HistoricalDataQueryService queryService,
+    ILogger<QuantDataContext> logger)
+```
+
+**Key Internal State:** None — stateless pass-through.
+
+**Error Handling:** If no bars found, returns `PriceSeries` with empty `Bars` list; does not throw. Logs `LogWarning`.
+
+---
 
 ### 4.2 RoslynScriptCompiler
 
-**Class:** `MarketDataCollector.QuantScript.Compilation.RoslynScriptCompiler : IQuantScriptCompiler`
+**Namespace:** `MarketDataCollector.QuantScript.Compilation`
+**Type:** `sealed class RoslynScriptCompiler : IQuantScriptCompiler`
+**Lifetime:** Singleton
 
-**Dependencies:** `IOptions<QuantScriptOptions>`
+**Responsibilities:**
+- Compiles `.csx` source via `CSharpScript.Create<object>(source, options, globalsType: typeof(QuantScriptGlobals))`
+- Builds `ScriptOptions` with references to all MDC assemblies needed by scripts
+- Caches compiled `Script<object>` by `SHA256(source)` to avoid recompilation on identical re-runs
+- Extracts `[ScriptParam]` metadata via Roslyn `SyntaxTree` — walks `LocalDeclarationStatementSyntax` nodes looking for `ScriptParamAttribute` on trivia/comments pattern OR uses a convention: variables declared at top level with a `// [Param]` comment (simplified v1 approach — see Open Questions)
+- Produces `IReadOnlyList<ScriptDiagnostic>` from `Diagnostic[]`
 
-**Behaviour:**
-- Uses `CSharpScript.Create<object>(source, options, globalsType: typeof(QuantScriptGlobals))`.
-- `ScriptOptions` configured with:
-  - References: all assemblies from `QuantScriptGlobals`' transitive closure plus `Skender.Stock.Indicators`.
-  - Imports: from `QuantScriptOptions.DefaultImports`.
-  - `WithEmitDebugInformation(true)` for stack traces with line numbers.
-- `ExtractParameters` uses Roslyn syntax tree parsing:
-  1. Parse source with `CSharpSyntaxTree.ParseText`.
-  2. Walk field declarations looking for `[ScriptParam]` attribute.
-  3. Extract name, type, default value, and attribute properties.
+**Dependencies:**
+```csharp
+public RoslynScriptCompiler(
+    IOptions<QuantScriptOptions> options,
+    ILogger<RoslynScriptCompiler> logger)
+```
+
+**Key Internal State:**
+```csharp
+private readonly ConcurrentDictionary<string, Script<object>> _cache = new();
+```
+
+**Concurrency Model:** `ConcurrentDictionary` for cache; compilation itself is `await`ed on the caller's thread.
+
+**Script References added to ScriptOptions:**
+- `MarketDataCollector.QuantScript`
+- `MarketDataCollector.Backtesting`
+- `MarketDataCollector.Backtesting.Sdk`
+- `MarketDataCollector.Contracts`
+- `Skender.Stock.Indicators`
+
+---
 
 ### 4.3 ScriptRunner
 
-**Class:** `MarketDataCollector.QuantScript.Execution.ScriptRunner : IScriptRunner`
+**Namespace:** `MarketDataCollector.QuantScript.Compilation`
+**Type:** `sealed class ScriptRunner : IScriptRunner`
+**Lifetime:** Scoped (one per UI session is acceptable; Singleton also works since state is per-run)
 
-**Dependencies:** `ILogger<ScriptRunner>`, `IOptions<QuantScriptOptions>`
+**Responsibilities:**
+- Holds references to `IQuantScriptCompiler`, `IQuantDataContext`, `PlotQueue`, `BacktestEngine`
+- For each `RunAsync` call: constructs `QuantScriptGlobals` with a fresh `CancellationTokenSource` linked to the caller's `ct` and the configured timeout
+- Calls `compiler.CompileAsync` then `script.RunAsync(globals, ct)`
+- Captures `Console.Out` via `StringWriter` redirect to collect `Print()` output
+- Catches `OperationCanceledException` and `Exception`, populates `ScriptRunResult`
+- Completes the `PlotQueue` after execution so the UI drain loop terminates cleanly
 
-**Behaviour:**
-- Runs the compiled script on `Task.Run` (background thread) to avoid blocking the UI.
-- Creates a `CancellationTokenSource` linked to both the caller's token and `ExecutionTimeout`.
-- Wraps execution in try/catch; captures `CompilationErrorException` and general `Exception`.
-- After execution, drains `PlotQueue` and collects log messages into `ScriptExecutionResult`.
-- Disposes the linked `CancellationTokenSource` in a finally block.
+**Dependencies:**
+```csharp
+public ScriptRunner(
+    IQuantScriptCompiler compiler,
+    IQuantDataContext dataContext,
+    PlotQueue plotQueue,
+    BacktestEngine backtestEngine,
+    IOptions<QuantScriptOptions> options,
+    ILogger<ScriptRunner> logger)
+```
+
+**Key Internal State:** None persisted between runs.
+
+**Concurrency Model:** `CancellationTokenSource` with `TimeSpan` from `options.RunTimeoutSeconds` is created per `RunAsync` call. Only one concurrent run per `ScriptRunner` instance is guaranteed by the `QuantScriptViewModel` setting `IsRunning = true`.
+
+---
 
 ### 4.4 PlotQueue
 
-Already fully specified in §3.5. Implementation uses `ConcurrentQueue<PlotRequest>` and `DrainAll()` dequeues all items into a list.
+**Namespace:** `MarketDataCollector.QuantScript.Plotting`
+**Type:** `sealed class PlotQueue : IDisposable`
+**Lifetime:** Singleton (shared between `ScriptRunner` producer and `QuantScriptViewModel` consumer)
+
+**Key Internal State:**
+```csharp
+private readonly Channel<PlotRequest> _channel =
+    Channel.CreateUnbounded<PlotRequest>(new UnboundedChannelOptions { SingleReader = true });
+```
+
+**Concurrency Model:** `Channel<T>` is thread-safe. `Enqueue` called from script (background thread); `ReadAllAsync` drained by `QuantScriptViewModel` on the UI thread via `await foreach`.
+
+---
 
 ### 4.5 StatisticsEngine
 
-**Class:** `MarketDataCollector.QuantScript.Statistics.StatisticsEngine`
+**Namespace:** `MarketDataCollector.QuantScript.Api`
+**Type:** `internal static class StatisticsEngine`
 
-**Key formulas (252 trading days/year):**
+**Responsibilities:** Pure math. All statistical calculations used by `ReturnSeries` instance methods delegate here. No DI, no I/O.
 
-| Metric | Formula |
-|---|---|
-| Annualised Return | `mean(r) × 252` |
-| Annualised Vol | `stddev(r) × √252` |
-| Sharpe | `(annRet - rf) / annVol` |
-| Sortino | `(annRet - rf) / (downsideDev × √252)` |
-| Max Drawdown | `max(peak - trough) / peak` over cumulative returns |
-| CAGR | `(endValue / startValue)^(252/N) - 1` |
-| Calmar | `CAGR / maxDrawdown` |
-| Skewness / Kurtosis | Standard statistical moments |
-| Win Rate | `countPositive / total` |
-| Profit Factor | `sumPositive / abs(sumNegative)` |
-| Correlation | Pearson correlation coefficient |
-| Rolling Beta | `cov(asset, bench, window) / var(bench, window)` |
+**Key methods:**
+```csharp
+internal static double Sharpe(IReadOnlyList<double> dailyReturns, double annualRfr);
+internal static double Sortino(IReadOnlyList<double> dailyReturns, double annualRfr);
+internal static double AnnualizedVolatility(IReadOnlyList<double> dailyReturns);
+internal static double MaxDrawdown(IReadOnlyList<double> dailyReturns);
+internal static IReadOnlyList<double> DrawdownSeries(IReadOnlyList<double> dailyReturns);
+internal static double Beta(IReadOnlyList<double> returns, IReadOnlyList<double> benchmarkReturns);
+internal static double Alpha(IReadOnlyList<double> returns, IReadOnlyList<double> benchmarkReturns, double annualRfr);
+internal static double Correlation(IReadOnlyList<double> a, IReadOnlyList<double> b);
+internal static double Skewness(IReadOnlyList<double> values);
+internal static double Kurtosis(IReadOnlyList<double> values);
+internal static IReadOnlyList<double> RollingMean(IReadOnlyList<double> values, int window);
+internal static IReadOnlyList<double> RollingSd(IReadOnlyList<double> values, int window);
+internal static double[,] CorrelationMatrix(IReadOnlyList<IReadOnlyList<double>> returnStreams);
+internal static double[,] CovarianceMatrix(IReadOnlyList<IReadOnlyList<double>> returnStreams);
+// Aligns two series by DateOnly, returns matched pairs:
+internal static (IReadOnlyList<double> a, IReadOnlyList<double> b)
+    AlignByDate(ReturnSeries a, ReturnSeries b);
+```
 
-### 4.6 TechnicalSeriesExtensions
+---
 
-Already fully specified in §3.10. Pure static extension methods, no state.
+### 4.6 LambdaBacktestStrategy (internal adapter)
+
+**Namespace:** `MarketDataCollector.QuantScript.Api`
+**Type:** `internal sealed class LambdaBacktestStrategy : IBacktestStrategy`
+
+Bridges `BacktestProxy`'s captured lambdas to `IBacktestStrategy`. Each optional callback defaults to a no-op. `Name` property returns `"ScriptStrategy"`.
+
+---
 
 ### 4.7 QuantScriptViewModel
 
-**Class:** `MarketDataCollector.Wpf.ViewModels.QuantScriptViewModel : BindableBase`
+**Namespace:** `MarketDataCollector.Wpf.ViewModels`
+**Type:** `sealed class QuantScriptViewModel : BindableBase`
+**Lifetime:** Singleton (registered in WPF DI)
 
-**Dependencies (injected):** `IQuantScriptCompiler`, `IScriptRunner`, `IQuantDataContext`, `BacktestEngine`, `IOptions<QuantScriptOptions>`, `ILogger<QuantScriptViewModel>`
+**Responsibilities:**
+- Loads `.csx` file list from `ScriptsDirectory` on construction
+- Reflects `[ScriptParam]` metadata from selected script to populate `Parameters` collection
+- On `RunCommand`: collects parameter values → calls `IScriptRunner.RunAsync` on `Task.Run` → drains `PlotQueue` via `await foreach` on UI thread → populates `Charts`, `ConsoleOutput`, `Metrics`, `Trades`
+- On `StopCommand`: cancels the `CancellationTokenSource`
+- Marshals all `ObservableCollection` mutations via `Application.Current.Dispatcher`
 
-**Properties:**
-
-| Property | Type | Binding |
-|---|---|---|
-| `ScriptText` | `string` | TwoWay to AvalonEdit |
-| `IsRunning` | `bool` | OneWay, controls Run/Stop button state |
-| `OutputLog` | `ObservableCollection<string>` | OneWay to log ListBox |
-| `Diagnostics` | `ObservableCollection<CompilationDiagnostic>` | OneWay to errors DataGrid |
-| `PlotRequests` | `ObservableCollection<PlotRequest>` | OneWay, drives ScottPlot rendering |
-| `Statistics` | `PortfolioStatistics?` | OneWay to stats panel |
-| `Parameters` | `ObservableCollection<ScriptParameterViewModel>` | TwoWay for parameter sidebar |
-| `SelectedScriptPath` | `string?` | OneWay, current file path |
-| `RecentScripts` | `ObservableCollection<string>` | OneWay to recent scripts dropdown |
-| `StatusMessage` | `string` | OneWay to status bar |
-
-**Commands:**
-
-| Command | Behaviour |
-|---|---|
-| `RunCommand` | Compile → extract params → build globals → run → drain plots → update UI |
-| `StopCommand` | Cancel the `CancellationTokenSource` |
-| `SaveCommand` | Write `ScriptText` to `ScriptsDirectory/{name}.csx` |
-| `LoadCommand` | Read `.csx` file into `ScriptText` |
-| `NewCommand` | Reset `ScriptText` to template |
-
-**Run flow (on `RunCommand`):**
-
-1. Set `IsRunning = true`, clear outputs.
-2. Call `_compiler.Compile(ScriptText)`.
-3. If compilation fails, populate `Diagnostics`, set `IsRunning = false`, return.
-4. Extract parameters; merge with user-supplied values from `Parameters` collection.
-5. Create `QuantScriptGlobals` with `DataProxy`, `BacktestProxy`, `PlotQueue`, `StatisticsEngine`.
-6. Call `_runner.RunAsync(compiled, globals, cts.Token)` on background.
-7. On completion, marshal to UI thread:
-   - Populate `PlotRequests` from result.
-   - Populate `OutputLog` from result.
-   - If backtest ran, populate `Statistics`.
-8. Set `IsRunning = false`.
-
----
-
-## 5. Data Flow
-
-### Path 1: Data Analysis Script
-
-```
-User writes:  var spy = Data.Prices("SPY");
-              var sma = spy.SMA(20);
-              var stats = Stats.Compute(spy.Returns());
-              Plot.Line(
-                  "SPY Close",
-                  spy.Dates.Select(d => d.ToOADate()).ToArray(),
-                  spy.Close.Select(c => (double)c).ToArray());
-              Plot.Line(
-                  "SMA 20",
-                  spy.Dates.Select(d => d.ToOADate()).ToArray(),
-                  sma.Select(x => (double)x).ToArray());
-
-Execution:
-  ScriptText ──► RoslynScriptCompiler.Compile()
-                     │
-                     ▼ Script<object>
-               ScriptRunner.RunAsync(script, globals)
-                     │
-                     ├─► globals.Data.Prices("SPY")
-                     │       └─► QuantDataContext.GetPricesAsync
-                     │               └─► HistoricalDataQueryService
-                     │                       └─► JsonlMarketDataStore.QueryAsync
-                     │                               └─► returns IReadOnlyList<HistoricalBar>
-                     │               └─► new PriceSeries("SPY", bars)
-                     │
-                     ├─► spy.SMA(20)
-                     │       └─► TechnicalSeriesExtensions.SMA
-                     │               └─► Skender GetSma(20)
-                     │
-                     ├─► Stats.Compute(spy.Returns())
-                     │       └─► ReturnSeries.Returns() → StatisticsEngine.Compute
-                     │
-                     ├─► Plot.Line("SPY Close", ...)
-                     │       └─► PlotQueue.Enqueue(PlotRequest)
-                     │
-                     └─► Plot.Line("SMA 20", ...)
-                             └─► PlotQueue.Enqueue(PlotRequest)
-
-  ScriptRunner returns ScriptExecutionResult { Plots: [2 items] }
-
-  QuantScriptViewModel:
-    ├─► PlotRequests.AddRange(result.Plots)
-    ├─► Statistics = stats  (if returned)
-    └─► ScottPlot renders Line plots in WPF
+**Dependencies:**
+```csharp
+public QuantScriptViewModel(
+    IScriptRunner runner,
+    IQuantScriptCompiler compiler,
+    IOptions<QuantScriptOptions> options,
+    ILogger<QuantScriptViewModel> logger)
 ```
 
-### Path 2: Backtest Script
-
+**Key Properties:**
+```csharp
+public string ScriptSource { get => _scriptSource; set => SetProperty(ref _scriptSource, value); }
+public ObservableCollection<ScriptFileEntry> ScriptFiles { get; } = [];
+public ScriptFileEntry? SelectedScript { get => _selected; set { SetProperty(ref _selected, value); LoadScript(value); } }
+public ObservableCollection<ParameterViewModel> Parameters { get; } = [];
+public ObservableCollection<ConsoleEntry> ConsoleOutput { get; } = [];
+public ObservableCollection<PlotViewModel> Charts { get; } = [];
+public ObservableCollection<MetricEntry> Metrics { get; } = [];
+public ObservableCollection<FillEvent> Trades { get; } = [];
+public bool IsRunning { get => _isRunning; private set => SetProperty(ref _isRunning, value); }
+public string StatusText { get => _statusText; private set => SetProperty(ref _statusText, value); }
+public ICommand RunCommand { get; }
+public ICommand StopCommand { get; }
+public ICommand NewScriptCommand { get; }
+public ICommand SaveScriptCommand { get; }
+public ICommand RefreshScriptsCommand { get; }
 ```
-User writes:  class MyStrategy : IBacktestStrategy { ... OnBar(...) { ... } }
-              var req = new BacktestRequest { ... };
-              var result = Test.Run(req, new MyStrategy());
-              var stats = Stats.Compute(result.Returns);
-              Plot.Line("Equity", result.EquityCurve);
 
-Execution:
-  ScriptText ──► RoslynScriptCompiler.Compile()
-                     │
-                     ▼ Script<object>
-               ScriptRunner.RunAsync(script, globals)
-                     │
-                     ├─► new MyStrategy()     [compiled in-script]
-                     │
-                     ├─► globals.Test.Run(req, strategy)
-                     │       └─► BacktestProxy.Run
-                     │               └─► BacktestEngine.RunAsync(req, strategy, null, ct)
-                     │                       ├─► MultiSymbolMergeEnumerator
-                     │                       ├─► strategy.OnBar() [called per bar]
-                     │                       ├─► SimulatedPortfolio fills
-                     │                       └─► BacktestMetricsEngine.Calculate
-                     │               └─► returns BacktestResult
-                     │
-                     ├─► Stats.Compute(result.Returns)
-                     │
-                     └─► Plot.Line("Equity", ...)
-                             └─► PlotQueue.Enqueue(PlotRequest)
-
-  QuantScriptViewModel renders equity curve + stats table
+**Supporting model types:**
+```csharp
+public sealed record ScriptFileEntry(string Name, string FullPath);
+public sealed record ConsoleEntry(DateTimeOffset Timestamp, string Text, ConsoleEntryKind Kind);
+public enum ConsoleEntryKind { Output, Warning, Error }
+public sealed record MetricEntry(string Label, string Value);
+public sealed class ParameterViewModel : BindableBase
+{
+    public ParameterDescriptor Descriptor { get; }
+    public string RawValue { get => _raw; set => SetProperty(ref _raw, value); }
+    public object? ParsedValue { get; }
+}
+public sealed record PlotViewModel(string Title, PlotRequest Request);
 ```
 
 ---
 
-## 6. XAML Design
+## Step 5: Data Flow
 
-### Layout: 3-Column with Splitters
+### Path 1: Analytical Script (Data → Stats → Plot)
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ Toolbar: [New] [Open ▼] [Save] [Save As]  ║  [▶ Run] [■ Stop]  ║ Status   │
-├───────────────────────┬──────────────────────────────┬───────────────────────┤
-│                       │                              │                       │
-│  AvalonEdit           │  Results TabControl          │  Parameters           │
-│  (C# syntax           │  ┌────┬────┬────┬────┐      │                       │
-│   highlighting)       │  │Plot│Log │Err │Stats│     │  [ScriptParam] fields  │
-│                       │  ├────┴────┴────┴────┤      │  auto-generated:       │
-│  Width: 2*            │  │                    │      │                       │
-│                       │  │ ScottPlot chart    │      │  LookbackPeriod: [20] │
-│                       │  │ or DataGrid        │      │  StopLoss%:    [0.02] │
-│                       │  │ or TextBlock log   │      │  TakeProfit%:  [0.05] │
-│                       │  │                    │      │                       │
-│                       │  │ Width: 3*          │      │  Width: 1*            │
-│                       │  │                    │      │                       │
-│                       │  │                    │      │  ─────────────────── │
-│                       │  │                    │      │  Backtest Result:     │
-│                       │  │                    │      │  Sharpe: 1.42         │
-│                       │  │                    │      │  MaxDD: -12.3%        │
-│                       │  │                    │      │  CAGR: 15.2%          │
-│                       │  │                    │      │  Trades: 147          │
-│                       │  │                    │      │                       │
-├───────────────────────┴──────────────────────────────┴───────────────────────┤
-│ StatusBar: Ready │ Last run: 2.3s │ SPY: 1,258 bars loaded                  │
-└──────────────────────────────────────────────────────────────────────────────┘
+Script source:
+  var spy = Data.Prices("SPY", new DateOnly(2023,1,1), new DateOnly(2024,1,1));
+  var ret = spy.DailyReturns();
+  PrintMetric("Sharpe", ret.SharpeRatio());
+  ret.PlotCumulative("SPY 2023");
 ```
 
-### Key XAML Elements
+1. **User clicks Run** → `QuantScriptViewModel.RunCommand` executes
+2. `IsRunning = true`; `CancellationTokenSource` created with 300s timeout
+3. Parameter values collected from `Parameters` → `IReadOnlyDictionary<string,object?>`
+4. `IScriptRunner.RunAsync(source, parameters, ct)` called on `Task.Run` (background thread)
+5. `ScriptRunner` constructs `QuantScriptGlobals` — injects `DataProxy`, `PlotQueue`, `BacktestProxy`
+6. Roslyn `script.RunAsync(globals, ct)` begins executing script body
+7. **`Data.Prices("SPY", ...)`** → `DataProxy.Prices` → `IQuantDataContext.PricesAsync(...).GetAwaiter().GetResult()`
+8. `QuantDataContext.PricesAsync` → `HistoricalDataQueryService.QueryBarsAsync("SPY", from, to)`
+9. `HistoricalDataQueryService` → `JsonlMarketDataStore` → reads `data/SPY/bars/*.jsonl`
+10. `IReadOnlyList<HistoricalBar>` returned → mapped to `IReadOnlyList<PriceBar>` → `new PriceSeries("SPY", bars)`
+11. `spy.DailyReturns()` → `PriceSeriesExtensions.DailyReturns` → computes `(Close[t]-Close[t-1])/Close[t-1]` for each bar → `new ReturnSeries(...)`
+12. `ret.SharpeRatio()` → `StatisticsEngine.Sharpe(points, 0.04)` → `double` returned
+13. `globals.PrintMetric("Sharpe", 2.31)` → enqueues `MetricEntry` on internal `Channel<MetricEntry>`
+14. `ret.PlotCumulative("SPY 2023")` → `PlotQueue.Enqueue(new PlotRequest("SPY 2023", PlotType.CumulativeReturn, cumulativeSeries))`
+15. Script returns normally → `ScriptRunner` calls `PlotQueue.Complete()`
+16. **Back on UI thread**: `QuantScriptViewModel` drains `PlotQueue` via `await foreach`
+17. For each `PlotRequest` → creates `PlotViewModel` → appends to `Charts` collection
+18. `QuantScriptPage` TabControl switches to Charts tab; `WpfPlot` control renders via ScottPlot
+19. `IsRunning = false`; `StatusText = "Completed in 1.4s"`
+
+### Path 2: Backtest Script (OnBar → Engine → Metrics)
+
+```
+Script source:
+  Backtest
+    .WithSymbols("SPY")
+    .From(new DateOnly(2022,1,1))
+    .To(new DateOnly(2023,12,31))
+    .OnBar((bar, ctx) => {
+        if (ctx.GetLastPrice("SPY") is null) return;
+        ctx.PlaceMarketOrder("SPY", 10);
+    })
+    .Run();
+```
+
+1–6. Same as Path 1 up to Roslyn execution start
+7. `Backtest.WithSymbols("SPY").From(...).To(...).OnBar(...).Run()` called
+8. `BacktestProxy.Run()` → builds `BacktestRequest(From, To, ["SPY"], InitialCash=100_000, DataRoot=options.DefaultDataRoot)`
+9. `BacktestProxy` instantiates `LambdaBacktestStrategy` (wraps captured `onBar` lambda)
+10. `BacktestEngine.RunAsync(request, strategy, progress, ct)` called synchronously via `.GetAwaiter().GetResult()`
+11. `BacktestEngine` → `UniverseDiscovery.DiscoverAsync` → scans catalog
+12. `MultiSymbolMergeEnumerator.MergeAsync` replays `HistoricalBar` events chronologically
+13. For each `HistoricalBar` event → `strategy.OnBar(bar, ctx)` → `LambdaBacktestStrategy` calls captured lambda
+14. Lambda calls `ctx.PlaceMarketOrder("SPY", 10)` → `BacktestContext.DrainPendingOrders()` → `BarMidpointFillModel.TryFill`
+15. Fills accumulated in `allFills`; day snapshots in `allSnapshots`
+16. `BacktestMetricsEngine.Compute(snapshots, cashFlows, fills, request)` → `BacktestMetrics`
+17. `BacktestResult` returned to `BacktestProxy.Run()`
+18. Script body ends → `ScriptRunner` reads `BacktestResult` from globals → dispatches fills to `Trades` channel, metrics to `Metrics` channel
+19. **UI thread**: `QuantScriptViewModel` populates `Trades` (DataGrid) and `Metrics` (key/value table)
+20. TabControl shows Trades tab automatically if fills > 0
+
+### Error Path: Compilation Failure
+
+1. User types invalid C# → clicks Run
+2. `RoslynScriptCompiler.CompileAsync` returns `ScriptCompilationResult(Success: false, Diagnostics: [...])`
+3. `ScriptRunner` returns `ScriptRunResult(Success: false, CompilationErrors: [...], RuntimeError: null)`
+4. `QuantScriptViewModel` maps `CompilationErrors` to `ConsoleEntry` items with `Kind = Error`
+5. ConsoleOutput tab shows red error lines with line/column info
+6. `IsRunning = false`; `StatusText = "Compilation failed (2 errors)"`
+
+---
+
+## Step 6: XAML Design
+
+### QuantScriptPage.xaml
+
+**Layout:** Three-column `Grid` with `GridSplitter` separators
+
+```
+┌────────────────┬──────────────────────────────────┬───────────────────────┐
+│ Col 0 (220px)  │ Col 2 (*)                         │ Col 4 (380px)         │
+│                │                                   │                       │
+│ Script Browser │  AvalonEdit TextEditor            │ TabControl            │
+│ (ListBox)      │  (syntax: C#)                     │  ┌─Console──────────┐ │
+│                │                                   │  │ ConsoleOutput     │ │
+│ scripts/       │                                   │  │ (ItemsControl)    │ │
+│ ├ momentum.csx │                                   │  └──────────────────┘ │
+│ ├ mean-rev.csx │                                   │  ┌─Charts───────────┐ │
+│ └ sharpe.csx   │                                   │  │ WpfPlot items     │ │
+│                │                                   │  └──────────────────┘ │
+│ ──────────────  │                                   │  ┌─Metrics──────────┐ │
+│ Parameters     │                                   │  │ DataGrid          │ │
+│                │  ─────────────────────────────── │  └──────────────────┘ │
+│ [Label] [Input]│  [▶ Run] [■ Stop] [New] [Save]   │  ┌─Trades───────────┐ │
+│ [Label] [Input]│  Status: Ready                   │  │ DataGrid fills    │ │
+└────────────────┴──────────────────────────────────┴───────────────────────┘
+```
+
+**Key XAML structure:**
 
 ```xml
-<!-- QuantScriptPage.xaml (conceptual) -->
-<Page x:Class="MarketDataCollector.Wpf.Views.QuantScriptPage">
-  <DockPanel>
-    <!-- Toolbar -->
-    <ToolBarTray DockPanel.Dock="Top">
-      <ToolBar>
-        <Button Content="New" Command="{Binding NewCommand}" />
-        <ComboBox ItemsSource="{Binding RecentScripts}"
-                  SelectedItem="{Binding SelectedScriptPath}" />
-        <Button Content="Save" Command="{Binding SaveCommand}" />
-        <Separator />
+<Page x:Class="MarketDataCollector.Wpf.Views.QuantScriptPage"
+      xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
+      xmlns:scottplot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="220" MinWidth="150"/>
+      <ColumnDefinition Width="4"/>   <!-- GridSplitter -->
+      <ColumnDefinition Width="*" MinWidth="300"/>
+      <ColumnDefinition Width="4"/>   <!-- GridSplitter -->
+      <ColumnDefinition Width="380" MinWidth="250"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Col 0: Script browser + parameters -->
+    <DockPanel Grid.Column="0">
+      <TextBlock DockPanel.Dock="Top" Text="Scripts" Style="{StaticResource SectionHeader}"/>
+      <ListBox ItemsSource="{Binding ScriptFiles}"
+               SelectedItem="{Binding SelectedScript}"
+               DisplayMemberPath="Name"/>
+      <Separator/>
+      <TextBlock Text="Parameters" Style="{StaticResource SectionHeader}"/>
+      <ItemsControl ItemsSource="{Binding Parameters}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <StackPanel Orientation="Horizontal" Margin="0,2">
+              <TextBlock Text="{Binding Descriptor.Label}" Width="90" VerticalAlignment="Center"/>
+              <TextBox Text="{Binding RawValue, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </DockPanel>
+
+    <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+
+    <!-- Col 2: Editor + toolbar -->
+    <DockPanel Grid.Column="2">
+      <!-- Toolbar -->
+      <ToolBar DockPanel.Dock="Bottom">
         <Button Content="▶ Run" Command="{Binding RunCommand}"
-                IsEnabled="{Binding IsRunning, Converter={StaticResource InvertBool}}" />
+                IsEnabled="{Binding IsRunning, Converter={StaticResource NotBool}}"/>
         <Button Content="■ Stop" Command="{Binding StopCommand}"
-                IsEnabled="{Binding IsRunning}" />
+                IsEnabled="{Binding IsRunning}"/>
+        <Separator/>
+        <Button Content="New" Command="{Binding NewScriptCommand}"/>
+        <Button Content="Save" Command="{Binding SaveScriptCommand}"/>
+        <Separator/>
+        <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="4,0"/>
       </ToolBar>
-    </ToolBarTray>
-
-    <!-- StatusBar -->
-    <StatusBar DockPanel.Dock="Bottom">
-      <TextBlock Text="{Binding StatusMessage}" />
-    </StatusBar>
-
-    <!-- 3-column grid -->
-    <Grid>
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="2*" MinWidth="200" />
-        <ColumnDefinition Width="Auto" /> <!-- GridSplitter -->
-        <ColumnDefinition Width="3*" MinWidth="300" />
-        <ColumnDefinition Width="Auto" /> <!-- GridSplitter -->
-        <ColumnDefinition Width="1*" MinWidth="150" />
-      </Grid.ColumnDefinitions>
-
-      <!-- Editor: AvalonEdit -->
-      <avalonEdit:TextEditor Grid.Column="0"
+      <!-- AvalonEdit -->
+      <avalonedit:TextEditor x:Name="ScriptEditor"
                              SyntaxHighlighting="C#"
                              ShowLineNumbers="True"
-                             FontFamily="Cascadia Code"
-                             FontSize="13" />
+                             FontFamily="Cascadia Code, Consolas, Monospace"
+                             FontSize="13"
+                             Document="{Binding ScriptDocument, Mode=TwoWay}"/>
+    </DockPanel>
 
-      <GridSplitter Grid.Column="1" Width="5" />
+    <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"/>
 
-      <!-- Results: TabControl -->
-      <TabControl Grid.Column="2">
-        <TabItem Header="Plot">
-          <scottPlot:WpfPlot x:Name="ResultPlot" />
-        </TabItem>
-        <TabItem Header="Log">
-          <ListBox ItemsSource="{Binding OutputLog}" />
-        </TabItem>
-        <TabItem Header="Errors">
-          <DataGrid ItemsSource="{Binding Diagnostics}" IsReadOnly="True"
-                    AutoGenerateColumns="False">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Line" Binding="{Binding Line}" Width="50" />
-              <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="60" />
-              <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
-            </DataGrid.Columns>
-          </DataGrid>
-        </TabItem>
-        <TabItem Header="Stats">
-          <ScrollViewer>
-            <ItemsControl ItemsSource="{Binding StatisticsItems}" />
-          </ScrollViewer>
-        </TabItem>
-      </TabControl>
+    <!-- Col 4: Results TabControl -->
+    <TabControl Grid.Column="4">
 
-      <GridSplitter Grid.Column="3" Width="5" />
+      <TabItem Header="Console">
+        <ItemsControl ItemsSource="{Binding ConsoleOutput}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding Text}"
+                         Foreground="{Binding Kind, Converter={StaticResource ConsoleColorConverter}}"
+                         FontFamily="Cascadia Code, Consolas" FontSize="11"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </TabItem>
 
-      <!-- Parameters sidebar -->
-      <ScrollViewer Grid.Column="4">
-        <StackPanel>
-          <TextBlock Text="Parameters" FontWeight="Bold" Margin="5" />
-          <ItemsControl ItemsSource="{Binding Parameters}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <StackPanel Margin="5">
-                  <TextBlock Text="{Binding DisplayName}" />
-                  <TextBox Text="{Binding Value, Mode=TwoWay}" />
-                </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-          <Separator Margin="5,10" />
-          <TextBlock Text="Statistics" FontWeight="Bold" Margin="5" />
-          <!-- Quick stats readout -->
-        </StackPanel>
-      </ScrollViewer>
-    </Grid>
-  </DockPanel>
+      <TabItem Header="Charts">
+        <ItemsControl ItemsSource="{Binding Charts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel>
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="0,4,0,2"/>
+                <scottplot:WpfPlot x:Name="PlotControl" Height="220"
+                                   DataContext="{Binding Request}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </TabItem>
+
+      <TabItem Header="Metrics">
+        <DataGrid ItemsSource="{Binding Metrics}" AutoGenerateColumns="False"
+                  IsReadOnly="True" HeadersVisibility="Column">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Metric" Binding="{Binding Label}" Width="160"/>
+            <DataGridTextColumn Header="Value"  Binding="{Binding Value}" Width="*"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </TabItem>
+
+      <TabItem Header="Trades">
+        <DataGrid ItemsSource="{Binding Trades}" AutoGenerateColumns="False"
+                  IsReadOnly="True" HeadersVisibility="Column">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Time"   Binding="{Binding FilledAt, StringFormat='HH:mm:ss'}" Width="80"/>
+            <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}"     Width="70"/>
+            <DataGridTextColumn Header="Qty"    Binding="{Binding FilledQuantity}" Width="60"/>
+            <DataGridTextColumn Header="Price"  Binding="{Binding FillPrice, StringFormat='N2'}" Width="80"/>
+            <DataGridTextColumn Header="Comm."  Binding="{Binding Commission, StringFormat='N2'}" Width="70"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </TabItem>
+
+    </TabControl>
+  </Grid>
 </Page>
 ```
 
-### Style Alignment
+**QuantScriptPage.xaml.cs** — wires AvalonEdit `TextChanged` to `ViewModel.ScriptSource` (AvalonEdit doesn't support standard `Binding` on its text; use `TextChanged` event or attached property).
 
-- Uses existing `AppStyles.xaml` for button, textbox, and DataGrid styles.
-- AvalonEdit themed via `ICSharpCode.AvalonEdit.Highlighting` — dark theme if `ThemeService.IsDarkMode`.
-- ScottPlot uses `ScottPlot.Style.Seaborn` for clean chart aesthetics.
-- Parameter sidebar uses the same form layout pattern as `SettingsPage.xaml`.
+**Navigation registration** — add `QuantScriptPage` to `Pages.cs` enum and `NavigationService` mapping in `MainPage.xaml` sidebar.
 
 ---
 
-## 7. Test Plan
+## Step 7: Test Plan
 
-### Project: `MarketDataCollector.QuantScript.Tests`
+**Principle:** Mock at the interface boundary. `StatisticsEngine` and series extension methods tested with known numeric fixtures. Roslyn tests use real in-process compilation against a minimal script string.
 
-All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
+### Unit Tests — PriceSeries / ReturnSeries (`PriceSeriesTests.cs`)
 
-#### 7.1 PriceSeries Tests
+| Test Name | What It Verifies |
+|-----------|-----------------|
+| `DailyReturns_TwoBars_ReturnsSingleReturn` | `(Close[1]-Close[0])/Close[0]` correct |
+| `DailyReturns_SingleBar_ReturnsEmptySeries` | No return for 1 bar |
+| `LogReturns_TwoBars_ReturnsLnRatio` | `ln(C1/C0)` correct |
+| `CumulativeReturns_ThreeBars_CompoundsCorrectly` | `(1+r1)(1+r2)-1` correct |
+| `RollingReturns_Window3_Returns5Bar_ProducesCorrectCount` | count = floor(n/window) |
+| `DailyReturns_NegativeReturn_HandledCorrectly` | price decline produces negative return |
 
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 1 | `Ctor_FromBars_MapsAllFields` | Close, Open, High, Low, Volume, Dates populated correctly |
-| 2 | `Ctor_EmptyBars_CreatesEmptySeries` | Count == 0, no exceptions |
-| 3 | `Slice_ValidRange_ReturnsSubset` | Only bars within date range |
-| 4 | `Slice_OutOfRange_ReturnsEmpty` | Dates beyond series range → empty |
-| 5 | `Returns_ComputesSimpleReturns` | `(C[i]-C[i-1])/C[i-1]` for known data |
-| 6 | `LogReturns_ComputesCorrectly` | `ln(C[i]/C[i-1])` for known data |
-| 7 | `ToQuotes_ProducesSkenderCompatible` | Result type is `IReadOnlyList<IQuote>`, count matches |
+### Unit Tests — StatisticsEngine (`StatisticsEngineTests.cs`)
 
-#### 7.2 ReturnSeries Tests
+| Test Name | What It Verifies |
+|-----------|-----------------|
+| `Sharpe_KnownReturns_MatchesManualCalculation` | against hand-computed value |
+| `Sharpe_ZeroVolatility_ReturnsZero` | guards against divide-by-zero |
+| `Sortino_AllPositiveReturns_ReturnsPositiveInfinity` | no downside deviation |
+| `Sortino_KnownReturns_MatchesManualCalculation` | against hand-computed value |
+| `MaxDrawdown_FlatSeries_ReturnsZero` | no drawdown |
+| `MaxDrawdown_KnownDip_ReturnsCorrectFraction` | peak-to-trough fraction |
+| `Beta_PerfectlyCorrelated_ReturnsOne` | spy vs spy → β=1 |
+| `Beta_Uncorrelated_ReturnsNearZero` | random vs market |
+| `Alpha_BenchmarkEqualsAsset_ReturnsNearZero` | no excess return |
+| `Correlation_PerfectPositive_ReturnsOne` | r=1 |
+| `Correlation_PerfectNegative_ReturnsNegativeOne` | r=-1 |
+| `Correlation_MismatchedLengths_AlignsToShorter` | date alignment |
+| `Skewness_SymmetricData_ReturnsNearZero` | |
+| `Kurtosis_NormalData_ReturnsNearZero` | excess kurtosis |
+| `RollingMean_Window3_FirstTwoNaN` | insufficient window |
+| `RollingSd_Window3_KnownSeries_MatchesManual` | |
+| `AnnualizedVolatility_KnownDailyVol_Annualizes` | × √252 |
 
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 8 | `AnnualisedReturn_KnownValues` | Manual calculation matches |
-| 9 | `AnnualisedVolatility_KnownValues` | Manual calculation matches |
-| 10 | `SharpeRatio_ZeroVol_ReturnsZero` | Edge case: no variance |
-| 11 | `MaxDrawdown_MonotonicallyIncreasing_ReturnsZero` | No drawdown in rising series |
-| 12 | `MaxDrawdown_KnownDrawdown_Correct` | Known peak-to-trough scenario |
+### Unit Tests — RoslynScriptCompiler (`RoslynScriptCompilerTests.cs`)
 
-#### 7.3 StatisticsEngine Tests
+| Test Name | What It Verifies |
+|-----------|-----------------|
+| `CompileAsync_ValidScript_ReturnsSuccess` | no diagnostics |
+| `CompileAsync_SyntaxError_ReturnsDiagnosticsWithLineInfo` | error on correct line |
+| `CompileAsync_SameSourceTwice_ReturnsCachedResult` | cache hit (same object reference) |
+| `CompileAsync_DifferentSource_ReturnsDifferentCompilation` | cache miss |
+| `ExtractParameters_NoAttributes_ReturnsEmptyList` | |
+| `ExtractParameters_OneScriptParam_ReturnsDescriptor` | label, default, min, max |
+| `CompileAsync_CancellationRequested_ThrowsOperationCanceledException` | |
 
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 13 | `Compute_FullStatistics_AllFieldsPopulated` | No NaN, no default values |
-| 14 | `SortinoRatio_NoDownside_ReturnsPositiveInfinity` | Edge case |
-| 15 | `CalmarRatio_ZeroDrawdown_Clamped` | Does not divide by zero |
-| 16 | `Correlation_PerfectPositive_ReturnsOne` | Two identical series → 1.0 |
-| 17 | `Correlation_PerfectNegative_ReturnsMinusOne` | Negated series → -1.0 |
-| 18 | `RollingBeta_MarketVsItself_ReturnsOne` | Beta of market to itself = 1.0 |
+### Unit Tests — ScriptRunner (`ScriptRunnerTests.cs`)
 
-#### 7.4 RoslynScriptCompiler Tests
+| Test Name | What It Verifies |
+|-----------|-----------------|
+| `RunAsync_HelloWorldScript_ReturnSuccess` | basic execution |
+| `RunAsync_PrintCall_OutputCapturedInConsole` | `Print("hello")` captured |
+| `RunAsync_CancellationMidRun_ReturnsRuntimeError` | CT propagated |
+| `RunAsync_CompilationError_ReturnsFailureWithDiagnostics` | surfaced without throw |
+| `RunAsync_ScriptThrowsException_ReturnsRuntimeError` | uncaught exception in script |
+| `RunAsync_ParameterInjected_ScriptUsesValue` | parameter dict → globals |
 
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 19 | `Compile_ValidScript_ReturnsSuccess` | `CompilationResult.Success == true` |
-| 20 | `Compile_SyntaxError_ReturnsDiagnostics` | Error message, line number present |
-| 21 | `Compile_AccessGlobals_BindsCorrectly` | Script can reference `Data`, `Plot`, `Stats` |
-| 22 | `ExtractParameters_SingleParam_Extracted` | Name, type, default, min/max parsed |
-| 23 | `ExtractParameters_NoParams_EmptyList` | No crash on plain scripts |
-| 24 | `Compile_WithSkenderImport_Resolves` | Script using `GetSma` compiles without errors |
+### Unit Tests — PlotQueue (`PlotQueueTests.cs`)
 
-#### 7.5 ScriptRunner Tests
+| Test Name | What It Verifies |
+|-----------|-----------------|
+| `Enqueue_SingleRequest_CanBeReadAsync` | basic producer-consumer |
+| `Enqueue_MultipleRequests_ReadInOrder` | FIFO ordering |
+| `Complete_AfterEnqueue_DrainTerminates` | `ReadAllAsync` completes |
+| `ReadAllAsync_CancellationBeforeComplete_StopsIteration` | CT respected |
 
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 25 | `RunAsync_SimpleScript_ReturnsResult` | Return value captured |
-| 26 | `RunAsync_Exception_CapturedInResult` | `Success == false`, error message present |
-| 27 | `RunAsync_Cancellation_ThrowsOperationCanceled` | Token respected |
-| 28 | `RunAsync_Timeout_CancelsExecution` | Long-running script cancelled after timeout |
-| 29 | `RunAsync_PlotCalls_DrainedInResult` | `result.Plots.Count > 0` |
+### Unit Tests — QuantScriptViewModel (`QuantScriptViewModelTests.cs`)
 
-#### 7.6 PlotQueue Tests
+| Test Name | What It Verifies |
+|-----------|-----------------|
+| `RunCommand_WhenNotRunning_CanExecute` | `IsRunning=false` → enabled |
+| `RunCommand_WhenRunning_CannotExecute` | `IsRunning=true` → disabled |
+| `StopCommand_WhenRunning_CanExecute` | |
+| `StopCommand_WhenNotRunning_CannotExecute` | |
+| `SelectedScript_Changed_LoadsScriptSource` | file content loaded into `ScriptSource` |
+| `RunAsync_CompletesSuccessfully_IsRunningSetFalse` | state reset after run |
 
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 30 | `Line_EnqueuesRequest` | Queue count increments |
-| 31 | `DrainAll_ReturnsAllAndClears` | All items returned, queue empty after |
-| 32 | `ConcurrentEnqueue_ThreadSafe` | Parallel writes, all items present in drain |
-
-#### 7.7 TechnicalSeriesExtensions Tests
-
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 33 | `SMA_KnownData_ReturnsDatesAligned` | SMA(3) returns `NumericSeries` with same `Dates` as input |
-| 34 | `SMA_KnownData_ValuesMatchExpected` | SMA(3) on [1,2,3,4,5] → values [null, null, 2, 3, 4] |
-| 35 | `RSI_ReturnsCorrectCount` | Output `NumericSeries.Count` == input length |
-| 36 | `BollingerBands_ReturnsTriple_DatesAligned` | Upper/Middle/Lower each carry matching `Dates` |
-| 37 | `BollingerBands_UpperGreaterThanLower` | Upper > Lower for positive data |
-| 38 | `Macd_ReturnsThreeAlignedSeries` | MACD/Signal/Histogram share same `Dates` |
-
-#### 7.8 QuantDataContext Tests
-
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 36 | `GetPricesAsync_DelegatesToStore` | Mock `HistoricalDataQueryService` called once |
-| 37 | `GetPricesAsync_CachesResult` | Second call same params → no store call |
-| 38 | `GetReturnsAsync_ComputesFromPrices` | Return series computed from fetched prices |
-
-#### 7.9 Integration-Level Tests
-
-| # | Test Name | What It Verifies |
-|---|---|---|
-| 39 | `EndToEnd_DataAnalysisScript_Succeeds` | Full compile → run → plot results pipeline |
-| 40 | `EndToEnd_BacktestScript_ProducesMetrics` | Strategy compiled in-script, backtest executes |
+**Test Infrastructure Needed:**
+- `FakeQuantDataContext` — returns deterministic `PriceSeries` for test symbols
+- `FakeScriptRunner` — returns configurable `ScriptRunResult`
+- `TestPriceSeriesBuilder` — fluent helper to construct `PriceSeries` from decimal arrays
 
 ---
 
-## 8. Implementation Checklist
+## Step 8: Implementation Checklist
 
-### Phase 1: Foundation (3–4 days)
+**Estimated effort:** XL (3–4 weeks solo)
+**Suggested branch:** `feature/quant-script-environment`
+**Suggested PR sequence:** PR1 (QuantScript library + tests), PR2 (WPF integration)
+
+### Phase 1: Foundation
 
 - [ ] Create `src/MarketDataCollector.QuantScript/MarketDataCollector.QuantScript.csproj`
-  - Target: `net9.0`
-  - References: `Backtesting`, `Backtesting.Sdk`, `Application`, `Storage`, `Contracts`, `ProviderSdk`
-- [ ] Add `Microsoft.CodeAnalysis.CSharp.Scripting` v5.0.0 to `Directory.Packages.props`
-- [ ] Add `AvalonEditHighlightingThemes` or `AvalonEdit` (latest stable) to `Directory.Packages.props`
-- [ ] Add `ScottPlot.WPF` (latest v5.x) to `Directory.Packages.props`
-- [ ] Implement `PriceSeries`, `ReturnSeries`, and `NumericSeries` (§3.1)
-- [ ] Implement `ScriptParamAttribute` and `ScriptParameterInfo` (§3.8)
-- [ ] Implement `QuantScriptOptions` (§3.9)
-- [ ] Add `[InternalsVisibleTo("MarketDataCollector.QuantScript")]` to `Backtesting.csproj` (for `BacktestMetricsEngine`)
-- [ ] Create test project `tests/MarketDataCollector.QuantScript.Tests/`
-- [ ] Write PriceSeries + ReturnSeries + NumericSeries tests (tests 1–12)
+  - Target `net9.0-windows`; reference `MarketDataCollector.Backtesting`, `MarketDataCollector.Backtesting.Sdk`, `MarketDataCollector.Application`, `MarketDataCollector.Storage`, `MarketDataCollector.Contracts`
+  - PackageReference (no version): `Microsoft.CodeAnalysis.CSharp.Scripting`, `Skender.Stock.Indicators`
+- [ ] Add `Microsoft.CodeAnalysis.CSharp.Scripting` version `5.0.0` to `Directory.Packages.props` (same version as existing `Microsoft.CodeAnalysis.CSharp`)
+- [ ] Add `AvalonEdit` version `6.3.0.90` to `Directory.Packages.props`
+- [ ] Add `ScottPlot.WPF` version `5.0.55` to `Directory.Packages.props`
+- [ ] Add `QuantScript` project to `MarketDataCollector.sln`
+- [ ] Add `QuantScriptOptions` class and register `services.Configure<QuantScriptOptions>` in `ServiceCompositionRoot` or WPF DI setup
+- [ ] Add `QuantScript` section to `config/appsettings.json` with defaults
+- [ ] Create test project `tests/MarketDataCollector.QuantScript.Tests/`; add to solution
 
-### Phase 2: Compilation & Execution (3–4 days)
+### Phase 2: Core API (QuantScript library)
 
-- [ ] Implement `IQuantScriptCompiler` and `RoslynScriptCompiler` (§3.3, §4.2)
-- [ ] Implement `IScriptRunner` and `ScriptRunner` (§3.4, §4.3)
-- [ ] Implement `PlotQueue` and `PlotRequest` (§3.5)
-- [ ] Implement `QuantScriptGlobals`, `DataProxy`, `BacktestProxy` (§3.7)
-- [ ] Write compiler + runner + PlotQueue tests (tests 19–32)
+- [ ] `Api/PriceBar.cs` — `sealed record PriceBar(...)`
+- [ ] `Api/PriceSeries.cs` — `sealed class PriceSeries`
+- [ ] `Api/ReturnSeries.cs` — `sealed class ReturnSeries` with all stat instance methods delegating to `StatisticsEngine`
+- [ ] `Api/StatisticsEngine.cs` — `internal static class` with all math (no external deps)
+- [ ] `Api/PriceSeriesExtensions.cs` — `DailyReturns`, `LogReturns`, `CumulativeReturns`, `RollingReturns`
+- [ ] `Api/TechnicalSeriesExtensions.cs` — `Sma`, `Ema`, `Rsi`, `Macd`, `BollingerBands` via `Skender.Stock.Indicators`
+- [ ] `Api/ScriptTrade.cs`, `Api/ScriptOrderBook.cs`
+- [ ] `Api/IQuantDataContext.cs`
+- [ ] `Api/QuantDataContext.cs` — implement `IQuantDataContext` wrapping `HistoricalDataQueryService`
+- [ ] `Api/DataProxy.cs`
+- [ ] `Api/ScriptParamAttribute.cs`
+- [ ] `Api/PortfolioBuilder.cs` + `PortfolioResult.cs` (`EfficientFrontier` returns equal-weight stub + `// TODO` comment)
+- [ ] `Api/EfficientFrontierConstraints.cs`
+- [ ] `Api/LambdaBacktestStrategy.cs` — `internal sealed class` implementing `IBacktestStrategy`
+- [ ] `Api/BacktestProxy.cs`
+- [ ] `Plotting/PlotRequest.cs` + `PlotType.cs`
+- [ ] `Plotting/PlotQueue.cs`
+- [ ] `QuantScriptOptions.cs`
 
-### Phase 3: Data & Statistics (2–3 days)
+### Phase 3: Compilation Pipeline
 
-- [ ] Implement `IQuantDataContext` and `QuantDataContext` (§3.2, §4.1)
-- [ ] Implement `StatisticsEngine`, `PortfolioStatistics`, `CorrelationMatrix` (§3.6, §4.5)
-- [ ] Implement `TechnicalSeriesExtensions` (§3.10)
-- [ ] Write statistics + data context + indicator tests (tests 13–18, 33–38)
+- [ ] `Compilation/IQuantScriptCompiler.cs` + supporting records
+- [ ] `Compilation/IScriptRunner.cs` + supporting records
+- [ ] `Compilation/QuantScriptGlobals.cs`
+- [ ] `Compilation/RoslynScriptCompiler.cs` — compile, cache, extract parameters
+- [ ] `Compilation/ScriptRunner.cs` — run, capture output, handle cancellation, collect results
+- [ ] Register `IQuantDataContext → QuantDataContext`, `IQuantScriptCompiler → RoslynScriptCompiler`, `IScriptRunner → ScriptRunner`, `PlotQueue` as Singleton in DI
+- [ ] Wire `PlotRequest.Plot()` calls in `ReturnSeries` and `PortfolioResult` to inject `PlotQueue` via a thread-static or `AsyncLocal<PlotQueue>` set by `ScriptRunner` before execution
 
-### Phase 4: WPF Integration (3–4 days)
+### Phase 4: WPF Integration
 
-- [ ] Add `AvalonEdit` and `ScottPlot.WPF` `<PackageReference>` to `MarketDataCollector.Wpf.csproj`
-- [ ] Add `MarketDataCollector.QuantScript` project reference to `MarketDataCollector.Wpf.csproj`
-- [ ] Create `QuantScriptModels.cs` in `Models/` (ScriptParameterViewModel, etc.)
-- [ ] Create `QuantScriptViewModel.cs` in `ViewModels/` (§4.7)
-- [ ] Create `QuantScriptPage.xaml` + `.xaml.cs` in `Views/` (§6)
-- [ ] Register page in `Pages.cs` navigation enum
-- [ ] Register page in `NavigationService` and `MainPage.xaml` sidebar
-- [ ] Register DI services in WPF `App.xaml.cs`
-- [ ] Add default script template (momentum crossover example)
+- [ ] `Models/QuantScriptModels.cs` — `ScriptFileEntry`, `ConsoleEntry`, `ConsoleEntryKind`, `MetricEntry`, `ParameterViewModel`, `PlotViewModel`
+- [ ] `ViewModels/QuantScriptViewModel.cs`
+- [ ] `Views/QuantScriptPage.xaml` + `QuantScriptPage.xaml.cs` — full XAML as designed above
+- [ ] Add `QuantScriptPage` entry to `Views/Pages.cs` enum
+- [ ] Register `QuantScriptPage` in `NavigationService` mapping
+- [ ] Add navigation item to `MainWindow.xaml` or `MainPage.xaml` sidebar
+- [ ] Add `AvalonEdit` and `ScottPlot.WPF` PackageReferences to `MarketDataCollector.Wpf.csproj`
+- [ ] Implement `PlotViewModel → WpfPlot` rendering in `QuantScriptPage.xaml.cs` code-behind (ScottPlot WpfPlot requires imperative API calls; use `Loaded` event on each plot control)
+- [ ] Implement `ConsoleColorConverter` (value converter: `ConsoleEntryKind → Brush`)
 
-### Phase 5: Script Persistence & Polish (1–2 days)
+### Phase 5: Tests
 
-- [ ] Implement save/load `.csx` files to `ScriptsDirectory`
-- [ ] Implement recent scripts tracking
-- [ ] Add "New Script" template with commented example
-- [ ] Dark theme support for AvalonEdit (detect from `ThemeService`)
-- [ ] Add `QuantScript` section to `config/appsettings.sample.json`
+- [ ] `PriceSeriesTests.cs` — 6 tests
+- [ ] `StatisticsEngineTests.cs` — 17 tests
+- [ ] `RoslynScriptCompilerTests.cs` — 7 tests (real in-process Roslyn compilation)
+- [ ] `ScriptRunnerTests.cs` — 6 tests
+- [ ] `PlotQueueTests.cs` — 4 tests
+- [ ] `QuantScriptViewModelTests.cs` — 6 tests
+- [ ] Add `FakeQuantDataContext`, `FakeScriptRunner`, `TestPriceSeriesBuilder` to test helpers
+- [ ] All 46 tests green
 
-### Phase 6: End-to-End Testing & Docs (1–2 days)
+### Phase 6: Wrap-up
 
-- [ ] Write end-to-end integration tests (tests 39–40)
-- [ ] Add page to WPF README
-- [ ] Update `CLAUDE.md` with new project entry
-- [ ] Add navigation menu icon and tooltip
-- [ ] Smoke test: load SPY data, compute SMA, plot, run simple backtest
-
-### Total Estimated Effort: ~15–19 working days (XL)
+- [ ] Verify `appsettings.json` and `appsettings.sample.json` have `QuantScript` section
+- [ ] Add `MarketDataCollector.QuantScript` and its test project to `MarketDataCollector.sln`
+- [ ] Check ADR compliance: `QuantDataContext` wraps async storage correctly per ADR-004; `PlotQueue` uses bounded channel pattern per ADR-013 (unbounded is justified — document exception)
+- [ ] Add `[ImplementsAdr("ADR-004", "All async data access methods support CancellationToken")]` to `IQuantDataContext`
+- [ ] Add XML doc comments to all public interfaces and classes
+- [ ] Write a sample script `scripts/example-sharpe.csx` demonstrating the full API
+- [ ] PR checklist: no `.Result`/`.Wait()` except in `DataProxy` (intentional, documented); MVVM compliance in ViewModel; constructor injection only
 
 ---
 
-## 9. Open Questions & Risks
+## Step 9: Open Questions & Risks
 
-| # | Question / Risk | Impact | Mitigation |
-|---|---|---|---|
-| 1 | **Roslyn sandboxing** — user scripts can call `System.IO.File.Delete`, `Process.Start`, etc. | High — security risk for local data | Phase 1: document trust model (scripts are user-authored, like Excel macros). Phase 2+: investigate `AppDomain` isolation or assembly-level deny lists via Roslyn `MetadataReferenceResolver` filtering. |
-| 2 | **ScottPlot v5 WPF control stability** | Medium — ScottPlot 5 is relatively new | Pin to a known-good version; fallback to OxyPlot.Wpf if ScottPlot proves problematic. Both are MIT-licensed. |
-| 3 | **AvalonEdit C# IntelliSense** | Low — nice-to-have, not required for v1 | AvalonEdit has no built-in Roslyn completion. Defer to v2; could use `RoslynPad.Editor` if demand is high. |
-| 4 | **Efficient Frontier / Portfolio Optimisation** | Low — complex maths, limited audience | Defer entirely. If needed later, add `MathNet.Numerics` for matrix operations and a `PortfolioOptimiser` class. |
-| 5 | **`BacktestMetricsEngine` is internal** | Medium — compile error if not addressed | Add `[InternalsVisibleTo]` attribute to Backtesting project in Phase 1. Alternatively, make the class public. |
-| 6 | **Roslyn cold-start latency** | Medium — first compilation may take 2–5 seconds | Show a "Compiling..." spinner. Consider pre-warming the Roslyn workspace on page load. |
-| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | For daily OHLCV bars, cap cache at ~50 symbols × 10 years ≈ ~2,500 bars per symbol × 50 ≈ ~125K bars total. Reduce the cap further for intraday data. Add `GC.Collect` after script completion if needed. |
-| 8 | **Thread safety of `DataProxy.GetAwaiter().GetResult()`** | Low — runs on `Task.Run` background thread | Acceptable pattern for scripting contexts where async syntax is impractical. Document that scripts are synchronous by design. |
+### Open Questions
 
----
+| # | Question | Owner | Impact if Unresolved |
+|---|---------|-------|---------------------|
+| 1 | **EfficientFrontier implementation** — MathNet.Numerics has a quadratic programming solver but adds a new package dependency (~3MB). Alternatively, use a simple mean-variance gradient descent. Does the team want to ship EF in v1 or stub it permanently? | Product | Feature gap; stub returns equal-weight which is a safe default |
+| 2 | **`[ScriptParam]` extraction strategy** — Roslyn syntax tree walking for `ScriptParamAttribute` on top-level declarations is complex in script context (no class body). Simpler alternative: parse a `// @param label:default:min:max` comment convention at the top of the file. Which approach? | Implementer | Affects how parameters are declared in scripts |
+| 3 | **`PlotRequest` injection into `ReturnSeries.Plot()`** — `ReturnSeries` is a plain data object; injecting `PlotQueue` violates single-responsibility. Options: (a) `AsyncLocal<PlotQueue>` set by `ScriptRunner`; (b) `ReturnSeries` takes a `PlotQueue?` constructor arg; (c) extension method on `ReturnSeries` that requires caller to pass a `PlotQueue`. Recommend (a) — confirm. | Implementer | Core design decision; must resolve before Phase 2 |
+| 4 | **AvalonEdit IntelliSense** — v1 ships with C# syntax highlighting only. Roslyn-powered completion (hover types, member lists) is a significant undertaking. Defer to v2? | Product | UX quality; not a blocker |
+| 5 | **Script file watching** — should the script browser auto-refresh when `.csx` files are added/removed from disk? | Product | UX convenience |
 
-*Generated by mdc-blueprint skill. This document is code-ready: all interfaces can be copy-pasted into `.cs` files and will compile against the existing MDC dependency graph.*
+### Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| In-process script crashes the WPF host process | Low | High | Wrap `script.RunAsync` in `try/catch Exception`; document that scripts should not use `Environment.Exit` or `GC.Collect`. Add `EnableUnsafeScripts=false` to block file/process access |
+| Roslyn compilation of large scripts is slow (>2s) | Medium | Medium | SHA256 cache eliminates recompilation on re-run; show "Compiling…" status during first compile |
+| `BacktestMetricsEngine` is `internal` to `Backtesting` assembly | Low | High | `QuantScript` project references `Backtesting` project directly (not just SDK); already accounted for in csproj plan |
+| ScottPlot.WPF `WpfPlot` imperative API complicates MVVM | Medium | Low | Render in `PlotViewModel` binding via a thin `PlotViewModelToScottPlot` attached behavior or `Loaded` event in code-behind; this is an accepted WPF chart pattern |
+| `Channel<PlotRequest>` memory spike from runaway scripts | Low | Medium | `MaxPlotsPerRun` option (default 100); `PlotQueue.Enqueue` checks count and drops excess with a `LogWarning` |
+| `DataProxy` synchronous `.GetAwaiter().GetResult()` risks deadlock if called from UI thread | Low | Medium | `ScriptRunner` always runs scripts on `Task.Run` (background thread pool); `DataProxy` is never called from UI thread. Document restriction clearly |

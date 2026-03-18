@@ -86,7 +86,7 @@ jobs:
           fi
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: benchmark-results-${{ github.sha }}
           path: BenchmarkDotNet.Artifacts/
@@ -94,7 +94,7 @@ jobs:
 
       - name: Save baseline (main branch only)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: benchmark-baseline
           path: BenchmarkDotNet.Artifacts/results/
