@@ -1,12 +1,12 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-18T08:22:40.918619+00:00
+> Last updated: 2026-03-18T09:27:03.753963+00:00
 
 ## Overall Health Score
 
 ```
-  [############################--] 92/100
+  [###########################---] 91/100
   Rating: Excellent
 ```
 
@@ -14,14 +14,14 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 215 |
-| Total lines | 84,642 |
-| Average file size (lines) | 393.7 |
-| Orphaned files | 37 |
-| Files without headings | 1 |
+| Total documentation files | 216 |
+| Total lines | 84,693 |
+| Average file size (lines) | 392.1 |
+| Orphaned files | 38 |
+| Files without headings | 2 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 178 |
-| **Health score** | **92/100** |
+| **Health score** | **91/100** |
 
 ### Score Breakdown
 
@@ -40,6 +40,7 @@
 These files lack a Markdown heading, making them harder to navigate:
 
 - `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/agents/cleanup-specialist.agent.md`
 
 ### Orphaned Documentation
 
@@ -50,6 +51,7 @@ These files are not linked from any other Markdown file in the repository:
 - `.claude/skills/mdc-code-review/agents/grader.md`
 - `.claude/skills/mdc-code-review/references/schemas.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/agents/cleanup-specialist.agent.md`
 - `.github/pull_request_template_desktop.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
@@ -64,8 +66,7 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/IMPROVEMENTS_2026-02.md`
 - `docs/archived/QUICKSTART_2026-01-08.md`
 - `docs/archived/REDESIGN_IMPROVEMENTS.md`
-- `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
-- ... and 17 more
+- ... and 18 more
 
 ## Trend
 
@@ -73,7 +74,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-18 | 92 | 215 | 37 | 0 |
+| 2026-03-18 | 91 | 216 | 38 | 0 |
 
 ---
 

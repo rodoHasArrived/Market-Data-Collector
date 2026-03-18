@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-18 08:22:36 UTC
+> Auto-generated on 2026-03-18 09:26:59 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -64,6 +64,7 @@ Market-Data-Collector/
 │   │       └── action.yml
 │   ├── agents/
 │   │   ├── adr-generator.agent.md
+│   │   ├── cleanup-specialist.agent.md
 │   │   ├── code-review-agent.md
 │   │   ├── documentation-agent.md
 │   │   ├── mdc-blueprint-agent.md

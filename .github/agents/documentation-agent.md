@@ -93,6 +93,7 @@ Market-Data-Collector/
 │   │       └── action.yml
 │   ├── agents/
 │   │   ├── adr-generator.agent.md
+│   │   ├── cleanup-specialist.agent.md
 │   │   ├── code-review-agent.md
 │   │   ├── documentation-agent.md
 │   │   ├── mdc-blueprint-agent.md
