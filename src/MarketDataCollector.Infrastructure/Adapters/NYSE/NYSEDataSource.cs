@@ -229,6 +229,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
         _authLock.Dispose();
         _httpClient.Dispose();
+        _reconnectCts.Dispose();
     }
 
     #endregion
@@ -244,11 +245,6 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             Log.Debug("NYSE WebSocket already connected");
             return;
         }
-
-        // Refresh reconnect CTS for the new connection lifetime
-        _reconnectCts.Cancel();
-        _reconnectCts.Dispose();
-        _reconnectCts = new CancellationTokenSource();
 
         await EnsureAuthenticatedAsync(ct).ConfigureAwait(false);
 
@@ -729,6 +725,11 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     private async Task OnWsConnectionLostAsync()
     {
         Status = DataSourceStatus.Disconnected;
+
+        // Create a fresh CTS for this reconnect session so ConnectAsync calls
+        // during the loop do not cancel the token the loop itself is watching.
+        _reconnectCts.Dispose();
+        _reconnectCts = new CancellationTokenSource();
         var ct = _reconnectCts.Token;
 
         for (int attempt = 1; attempt <= _options.MaxReconnectAttempts; attempt++)
