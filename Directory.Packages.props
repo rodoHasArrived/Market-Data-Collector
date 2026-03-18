@@ -85,7 +85,7 @@
 
   <ItemGroup Label="JSON Serialization">
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="System.Text.Json" Version="10.0.3" />
+    <PackageVersion Include="System.Text.Json" Version="10.0.5" />
   </ItemGroup>
 
   <ItemGroup Label="System Libraries">
