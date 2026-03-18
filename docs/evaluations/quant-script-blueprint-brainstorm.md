@@ -250,12 +250,12 @@ Add a `NumericSeries` type for derived calculations:
 public sealed class NumericSeries
 {
     public IReadOnlyList<DateOnly> Dates { get; }
-    public IReadOnlyList<double> Values { get; }
+    public IReadOnlyList<decimal> Values { get; }
 
     // Operators
     public static NumericSeries operator +(NumericSeries a, NumericSeries b);
     public static NumericSeries operator -(NumericSeries a, NumericSeries b);
-    public static NumericSeries operator *(NumericSeries a, double scalar);
+    public static NumericSeries operator *(NumericSeries a, decimal scalar);
     public static NumericSeries operator /(NumericSeries a, NumericSeries b);
 
     // Rolling stats
@@ -264,13 +264,15 @@ public sealed class NumericSeries
     public NumericSeries Cumulative(); // cumulative sum
 
     // Filtering
-    public NumericSeries Where(Func<double, bool> predicate);
+    public NumericSeries Where(Func<decimal, bool> predicate);
 }
 ```
 
 `PriceSeries.Close`, `.Open`, etc. return `NumericSeries` instead of `IReadOnlyList<decimal>`, enabling operator chaining. This is the pandas `Series` pattern adapted to C#.
 
 **The tradeoff.** Significant API surface. Operator overloading in C# can produce confusing error messages. Date alignment logic is surprisingly tricky (holidays, half-days, different exchange calendars). Start with inner-join only; add outer-join in v2.
+
+**`decimal` vs `double` note.** `NumericSeries` uses `decimal` to preserve the precision of price data sourced from `PriceSeries` (which is already `decimal`). Libraries such as `Skender.Stock.Indicators` accept `double` inputs; callers that bridge to such libraries must explicitly cast (`(double)value`) at the adapter boundary rather than silently losing precision inside the core series type.
 
 **Effort:** L (2–3 weeks) | **Audience:** Q, I | **Impact:** High
 
