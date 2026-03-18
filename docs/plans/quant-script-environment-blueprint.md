@@ -58,7 +58,7 @@
 │            │                │                   │                    │
 │  ┌─────────▼────────────────┼───────────────────┼───────────────┐   │
 │  │ QuantScriptViewModel : BindableBase                           │   │
-│  │   • ScriptText, IsRunning, OutputLog, PlotModels              │   │
+│  │   • ScriptDocument, IsRunning, OutputLog, PlotModels           │   │
 │  │   • RunCommand, StopCommand, SaveCommand, LoadCommand         │   │
 │  └─────────┬────────────────┼───────────────────┼───────────────┘   │
 └────────────┼────────────────┼───────────────────┼───────────────────┘
@@ -704,7 +704,7 @@ Already fully specified in §3.10. Pure static extension methods, no state.
 
 | Property | Type | Binding |
 |---|---|---|
-| `ScriptText` | `string` | TwoWay to AvalonEdit |
+| `ScriptDocument` | `ICSharpCode.AvalonEdit.Document.TextDocument` | Bound to AvalonEdit `Document` property; initialized once, never replaced |
 | `IsRunning` | `bool` | OneWay, controls Run/Stop button state |
 | `OutputLog` | `ObservableCollection<string>` | OneWay to log ListBox |
 | `Diagnostics` | `ObservableCollection<CompilationDiagnostic>` | OneWay to errors DataGrid |
@@ -715,20 +715,22 @@ Already fully specified in §3.10. Pure static extension methods, no state.
 | `RecentScripts` | `ObservableCollection<string>` | OneWay to recent scripts dropdown |
 | `StatusMessage` | `string` | OneWay to status bar |
 
+> **Design note — `TextDocument` over `string`:** `ScriptDocument` is declared as a read-only `get`-only property and initialised once in the constructor (`public TextDocument ScriptDocument { get; } = new TextDocument();`). The AvalonEdit `TextEditor` binds its `Document` property directly to this object, so every keystroke goes through AvalonEdit's internal incremental-edit model (undo/redo, gap buffer, syntax-highlight token tracking) without ever reconstructing the full document. When content must be replaced programmatically (Save/Load/New), only `ScriptDocument.Text = newContent` is called, which AvalonEdit handles as a replaceAll operation on the existing document rather than a full teardown. This avoids the UI lag that would occur with a plain `string` binding backed by `SetProperty`, which would re-create the document model on every edit.
+
 **Commands:**
 
 | Command | Behaviour |
 |---|---|
 | `RunCommand` | Compile → extract params → build globals → run → drain plots → update UI |
 | `StopCommand` | Cancel the `CancellationTokenSource` |
-| `SaveCommand` | Write `ScriptText` to `ScriptsDirectory/{name}.csx` |
-| `LoadCommand` | Read `.csx` file into `ScriptText` |
-| `NewCommand` | Reset `ScriptText` to template |
+| `SaveCommand` | Write `ScriptDocument.Text` to `ScriptsDirectory/{name}.csx` |
+| `LoadCommand` | Read `.csx` file into `ScriptDocument.Text` |
+| `NewCommand` | Reset `ScriptDocument.Text` to template |
 
 **Run flow (on `RunCommand`):**
 
 1. Set `IsRunning = true`, clear outputs.
-2. Call `_compiler.Compile(ScriptText)`.
+2. Call `_compiler.Compile(ScriptDocument.Text)`.
 3. If compilation fails, populate `Diagnostics`, set `IsRunning = false`, return.
 4. Extract parameters; merge with user-supplied values from `Parameters` collection.
 5. Create `QuantScriptGlobals` with `DataProxy`, `BacktestProxy`, `PlotQueue`, `StatisticsEngine`.
@@ -759,7 +761,7 @@ User writes:  var spy = Data.Prices("SPY");
                   sma.Select(x => (double)x).ToArray());
 
 Execution:
-  ScriptText ──► RoslynScriptCompiler.Compile()
+  ScriptDocument.Text ──► RoslynScriptCompiler.Compile()
                      │
                      ▼ Script<object>
                ScriptRunner.RunAsync(script, globals)
@@ -803,7 +805,7 @@ User writes:  class MyStrategy : IBacktestStrategy { ... OnBar(...) { ... } }
               Plot.Line("Equity", result.EquityCurve);
 
 Execution:
-  ScriptText ──► RoslynScriptCompiler.Compile()
+  ScriptDocument.Text ──► RoslynScriptCompiler.Compile()
                      │
                      ▼ Script<object>
                ScriptRunner.RunAsync(script, globals)
@@ -897,12 +899,13 @@ Execution:
         <ColumnDefinition Width="1*" MinWidth="150" />
       </Grid.ColumnDefinitions>
 
-      <!-- Editor: AvalonEdit -->
+      <!-- Editor: AvalonEdit — bound to TextDocument for incremental edits -->
       <avalonEdit:TextEditor Grid.Column="0"
                              SyntaxHighlighting="C#"
                              ShowLineNumbers="True"
                              FontFamily="Cascadia Code"
-                             FontSize="13" />
+                             FontSize="13"
+                             Document="{Binding ScriptDocument}" />
 
       <GridSplitter Grid.Column="1" Width="5" />
 
