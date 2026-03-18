@@ -22,7 +22,7 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 789 |
+| Total Source Files | 803 |
 | C# Files | 789 |
 | F# Files | 14 |
 | Test Files | 252 |
