@@ -108,7 +108,7 @@
 | `PlotQueue` capture pattern | Script calls `Plot.Line(...)` which enqueues a `PlotRequest`; ViewModel drains queue after execution and renders via ScottPlot — decouples script from WPF |
 | `DataProxy` / `BacktestProxy` wrappers | Provide a clean DSL (`Data.Prices("SPY")`) while hiding async complexity from synchronous script code |
 | `[ScriptParam]` attribute on globals fields | Enables auto-generated parameter UI without custom parsing |
-| `IInternalsVisibleTo` on Backtesting project | Required to access `BacktestMetricsEngine` (internal static); alternative is making it public |
+| `InternalsVisibleTo` attribute on Backtesting project | Required to access `BacktestMetricsEngine` (internal static); alternative is making it public |
 
 ---
 
