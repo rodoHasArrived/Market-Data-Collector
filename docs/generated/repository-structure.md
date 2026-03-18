@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-18 07:50:33 UTC
+> Auto-generated on 2026-03-18 07:57:40 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1239,6 +1239,8 @@ Market-Data-Collector/
 │       ├── Contracts/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
+│       ├── Converters/
+│       │   └── BoolToVisibilityConverter.cs
 │       ├── Models/
 │       │   ├── ActivityLogModels.cs
 │       │   ├── AppConfig.cs

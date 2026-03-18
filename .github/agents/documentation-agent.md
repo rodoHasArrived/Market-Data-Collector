@@ -1268,6 +1268,8 @@ Market-Data-Collector/
 │       ├── Contracts/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
+│       ├── Converters/
+│       │   └── BoolToVisibilityConverter.cs
 │       ├── Models/
 │       │   ├── ActivityLogModels.cs
 │       │   ├── AppConfig.cs
