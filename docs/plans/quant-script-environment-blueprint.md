@@ -1094,7 +1094,7 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 | 4 | **Efficient Frontier / Portfolio Optimisation** | Low — complex maths, limited audience | Defer entirely. If needed later, add `MathNet.Numerics` for matrix operations and a `PortfolioOptimiser` class. |
 | 5 | **`BacktestMetricsEngine` is internal** | Medium — compile error if not addressed | Add `[InternalsVisibleTo]` attribute to Backtesting project in Phase 1. Alternatively, make the class public. |
 | 6 | **Roslyn cold-start latency** | Medium — first compilation may take 2–5 seconds | Show a "Compiling..." spinner. Consider pre-warming the Roslyn workspace on page load. |
-| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | Cap cache at ~50 symbols × 10 years ≈ ~250K bars per symbol × 50 ≈ manageable. Add `GC.Collect` after script completion if needed. |
+| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | For daily OHLCV bars, cap cache at ~50 symbols × 10 years ≈ ~2,500 bars per symbol × 50 ≈ ~125K bars total. Reduce the cap further for intraday data. Add `GC.Collect` after script completion if needed. |
 | 8 | **Thread safety of `DataProxy.GetAwaiter().GetResult()`** | Low — runs on `Task.Run` background thread | Acceptable pattern for scripting contexts where async syntax is impractical. Document that scripts are synchronous by design. |
 
 ---
