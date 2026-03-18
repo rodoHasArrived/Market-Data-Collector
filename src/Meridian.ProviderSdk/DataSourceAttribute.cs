@@ -1,5 +1,3 @@
-using Meridian.Infrastructure.Contracts;
-
 namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>

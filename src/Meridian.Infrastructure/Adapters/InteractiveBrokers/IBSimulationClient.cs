@@ -15,6 +15,8 @@ namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 /// Generates synthetic market data that mimics IB's data patterns.
 /// Activated when DataSource is "IB" and IBAPI is not compiled in.
 /// </summary>
+[ImplementsAdr("ADR-001", "IMarketDataClient provider contract for streaming data")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class IBSimulationClient : IMarketDataClient
 {
     private static readonly ILogger _log = LoggingSetup.ForContext<IBSimulationClient>();

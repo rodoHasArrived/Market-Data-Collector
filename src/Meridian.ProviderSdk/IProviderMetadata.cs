@@ -1,5 +1,3 @@
-using Meridian.Infrastructure.Adapters.Core;
-using Meridian.Infrastructure.Contracts;
 
 namespace Meridian.Infrastructure.Adapters.Core;
 
