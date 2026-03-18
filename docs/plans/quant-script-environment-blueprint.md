@@ -564,17 +564,17 @@ namespace MarketDataCollector.QuantScript.Indicators;
 /// </summary>
 public static class TechnicalSeriesExtensions
 {
-    public static IReadOnlyList<double?> SMA(this PriceSeries series, int periods)
+    public static IReadOnlyList<double?> Sma(this PriceSeries series, int periods)
         => series.ToQuotes().GetSma(periods).Select(r => r.Sma).ToList();
 
-    public static IReadOnlyList<double?> EMA(this PriceSeries series, int periods)
+    public static IReadOnlyList<double?> Ema(this PriceSeries series, int periods)
         => series.ToQuotes().GetEma(periods).Select(r => r.Ema).ToList();
 
-    public static IReadOnlyList<double?> RSI(this PriceSeries series, int periods = 14)
+    public static IReadOnlyList<double?> Rsi(this PriceSeries series, int periods = 14)
         => series.ToQuotes().GetRsi(periods).Select(r => r.Rsi).ToList();
 
     public static IReadOnlyList<(double? Macd, double? Signal, double? Histogram)>
-        MACD(this PriceSeries series, int fast = 12, int slow = 26, int signal = 9)
+        Macd(this PriceSeries series, int fast = 12, int slow = 26, int signal = 9)
         => series.ToQuotes().GetMacd(fast, slow, signal)
             .Select(r => (r.Macd, r.Signal, r.Histogram)).ToList();
 
@@ -583,7 +583,7 @@ public static class TechnicalSeriesExtensions
         => series.ToQuotes().GetBollingerBands(periods, stdDevs)
             .Select(r => (r.UpperBand, r.Sma, r.LowerBand)).ToList();
 
-    public static IReadOnlyList<double?> ATR(this PriceSeries series, int periods = 14)
+    public static IReadOnlyList<double?> Atr(this PriceSeries series, int periods = 14)
         => series.ToQuotes().GetAtr(periods).Select(r => r.Atr).ToList();
 }
 ```
