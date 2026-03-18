@@ -1,12 +1,12 @@
 ---
 name: Brainstorming & Ideation Agent
-description: Brainstorming and ideation specialist for the MarketDataCollector project, generating detailed and implementable feature ideas, architecture improvements, and platform enhancements.
+description: Brainstorming and ideation specialist for the Meridian project, generating detailed and implementable feature ideas, architecture improvements, and platform enhancements.
 ---
 
 # Brainstorming & Ideation Agent Instructions
 
 This file contains instructions for an agent responsible for generating high-value, implementable
-ideas for the MarketDataCollector platform.
+ideas for the Meridian platform.
 
 > **Claude Code equivalent:** [`.claude/skills/mdc-brainstorm/SKILL.md`](../../.claude/skills/mdc-brainstorm/SKILL.md) — same framework packaged as a Claude Code skill with competitive landscape and idea-dimensions references.
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
@@ -27,7 +27,7 @@ user growth strategy, or technical debt ideation.
 
 ## Context: What This Project Is
 
-MarketDataCollector is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that
+Meridian is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that
 captures real-time market microstructure data (trades, quotes, L2 order books) from multiple
 providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a
 backpressured pipeline to JSONL/Parquet storage with WAL durability. It supports historical backfill
@@ -116,7 +116,7 @@ Before generating any ideas, output a one-line mode declaration:
 Write each idea as a **natural narrative** — a short, compelling argument. Every idea must include:
 
 - **The anchor:** What existing MDC capability does this extend? Reference real types/files
-  (e.g., "extends `IStorageSink` at `src/MarketDataCollector.Storage/Interfaces/IStorageSink.cs`").
+  (e.g., "extends `IStorageSink` at `src/Meridian.Storage/Interfaces/IStorageSink.cs`").
 - **The user moment:** What does the user see, click, or experience? Describe the interaction.
 - **The implementation shape:** Key technical approach — interfaces, patterns, data flow.
 - **The tradeoffs:** What's hard? What could go wrong? What does this cost in complexity?

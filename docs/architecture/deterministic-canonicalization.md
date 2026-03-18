@@ -512,7 +512,7 @@ public static class CanonicalizationMetrics
 
 ### Golden fixtures
 
-Eight parameterized fixtures are in `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/`, one per provider-event-type combination:
+Eight parameterized fixtures are in `tests/Meridian.Tests/Application/Canonicalization/Fixtures/`, one per provider-event-type combination:
 
 | Fixture | Provider | Event | Venue | Expected MIC | Condition |
 |---------|----------|-------|-------|-------------|-----------|
@@ -575,7 +575,7 @@ These integrate with the existing monitoring dashboard and `CrossProviderCompari
 
 ## REST API
 
-`CanonicalizationEndpoints` in `src/MarketDataCollector.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs` exposes four read-only routes:
+`CanonicalizationEndpoints` in `src/Meridian.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs` exposes four read-only routes:
 
 | Route | Purpose |
 |-------|---------|
@@ -653,30 +653,30 @@ All items listed below were delivered as part of Phases 1–3.
 
 | File | Change |
 |------|--------|
-| `src/MarketDataCollector.Domain/Events/MarketEvent.cs` | Added `CanonicalSymbol`, `CanonicalizationVersion` (`byte`), `CanonicalVenue`, `EffectiveSymbol` |
-| `src/MarketDataCollector.Contracts/Domain/Events/MarketEvent.cs` | Mirrored new fields and `EffectiveSymbol` in contract record |
-| `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs` | Registered `CanonicalTradeCondition` enum and new types for source generation |
-| `src/MarketDataCollector.Application/Canonicalization/IEventCanonicalizer.cs` | New interface |
-| `src/MarketDataCollector.Application/Canonicalization/EventCanonicalizer.cs` | New implementation: symbol, venue, condition code enrichment |
-| `src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs` | New decorator with dual-write, pilot filtering, quarantine, and metrics |
-| `src/MarketDataCollector.Application/Canonicalization/ConditionCodeMapper.cs` | New: `FrozenDictionary`-based mapper with halt/resume helpers |
-| `src/MarketDataCollector.Application/Canonicalization/VenueMicMapper.cs` | New: `FrozenDictionary`-based mapper with case-insensitive fallback |
-| `src/MarketDataCollector.Application/Canonicalization/CanonicalizationMetrics.cs` | New: static thread-safe counters with per-provider parity tracking |
-| `src/MarketDataCollector.Application/Services/CanonicalSymbolRegistry.cs` | Updated `ResolveToCanonical()` to accept aliases, ISIN, FIGI, provider symbols |
-| `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs` | Added `AddCanonicalizationServices()` and `EnableCanonicalizationServices` option |
-| `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` | Added `mdc_canonicalization_*` counters and histogram |
-| `src/MarketDataCollector.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs` | New: status, parity, and config endpoints |
-| `src/MarketDataCollector.Core/Config/AppConfig.cs` | Added `CanonicalizationConfig` record with `Enabled`, `PilotSymbols`, `DualWriteRawAndCanonical`, etc. |
-| `src/MarketDataCollector.Storage/Policies/JsonlStoragePolicy.cs` | Uses `EffectiveSymbol` for path generation |
-| `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` | Uses `EffectiveSymbol` for buffer keys, paths, and column writes |
-| `src/MarketDataCollector.Storage/Sinks/CatalogSyncSink.cs` | Uses `EffectiveSymbol` for catalog metadata |
-| `src/MarketDataCollector.Application/Pipeline/PersistentDedupLedger.cs` | Uses `EffectiveSymbol` for dedup key |
-| `src/MarketDataCollector.Application/Pipeline/DroppedEventAuditTrail.cs` | Uses `EffectiveSymbol` for audit trail grouping |
+| `src/Meridian.Domain/Events/MarketEvent.cs` | Added `CanonicalSymbol`, `CanonicalizationVersion` (`byte`), `CanonicalVenue`, `EffectiveSymbol` |
+| `src/Meridian.Contracts/Domain/Events/MarketEvent.cs` | Mirrored new fields and `EffectiveSymbol` in contract record |
+| `src/Meridian.Core/Serialization/MarketDataJsonContext.cs` | Registered `CanonicalTradeCondition` enum and new types for source generation |
+| `src/Meridian.Application/Canonicalization/IEventCanonicalizer.cs` | New interface |
+| `src/Meridian.Application/Canonicalization/EventCanonicalizer.cs` | New implementation: symbol, venue, condition code enrichment |
+| `src/Meridian.Application/Canonicalization/CanonicalizingPublisher.cs` | New decorator with dual-write, pilot filtering, quarantine, and metrics |
+| `src/Meridian.Application/Canonicalization/ConditionCodeMapper.cs` | New: `FrozenDictionary`-based mapper with halt/resume helpers |
+| `src/Meridian.Application/Canonicalization/VenueMicMapper.cs` | New: `FrozenDictionary`-based mapper with case-insensitive fallback |
+| `src/Meridian.Application/Canonicalization/CanonicalizationMetrics.cs` | New: static thread-safe counters with per-provider parity tracking |
+| `src/Meridian.Application/Services/CanonicalSymbolRegistry.cs` | Updated `ResolveToCanonical()` to accept aliases, ISIN, FIGI, provider symbols |
+| `src/Meridian.Application/Composition/ServiceCompositionRoot.cs` | Added `AddCanonicalizationServices()` and `EnableCanonicalizationServices` option |
+| `src/Meridian.Application/Monitoring/PrometheusMetrics.cs` | Added `mdc_canonicalization_*` counters and histogram |
+| `src/Meridian.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs` | New: status, parity, and config endpoints |
+| `src/Meridian.Core/Config/AppConfig.cs` | Added `CanonicalizationConfig` record with `Enabled`, `PilotSymbols`, `DualWriteRawAndCanonical`, etc. |
+| `src/Meridian.Storage/Policies/JsonlStoragePolicy.cs` | Uses `EffectiveSymbol` for path generation |
+| `src/Meridian.Storage/Sinks/ParquetStorageSink.cs` | Uses `EffectiveSymbol` for buffer keys, paths, and column writes |
+| `src/Meridian.Storage/Sinks/CatalogSyncSink.cs` | Uses `EffectiveSymbol` for catalog metadata |
+| `src/Meridian.Application/Pipeline/PersistentDedupLedger.cs` | Uses `EffectiveSymbol` for dedup key |
+| `src/Meridian.Application/Pipeline/DroppedEventAuditTrail.cs` | Uses `EffectiveSymbol` for audit trail grouping |
 | `config/condition-codes.json` | Provider condition code mapping table (version 1) |
 | `config/venue-mapping.json` | Raw venue to ISO 10383 MIC mapping (version 1) |
 | `config/appsettings.sample.json` | Added `Canonicalization` section |
-| `tests/MarketDataCollector.Tests/Application/Services/EventCanonicalizerTests.cs` | 27 tests |
-| `tests/MarketDataCollector.Tests/Application/Services/CanonicalizingPublisherTests.cs` | Dual-write, pilot filtering, backpressure, quarantine, and metrics tests |
-| `tests/MarketDataCollector.Tests/Application/Canonicalization/CanonicalizationGoldenFixtureTests.cs` | 8 golden fixture regression tests |
-| `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/*.json` | 8 fixture files (Alpaca + Polygon trades) |
-| `tests/MarketDataCollector.Tests/Domain/Models/EffectiveSymbolTests.cs` | `EffectiveSymbol` property tests |
+| `tests/Meridian.Tests/Application/Services/EventCanonicalizerTests.cs` | 27 tests |
+| `tests/Meridian.Tests/Application/Services/CanonicalizingPublisherTests.cs` | Dual-write, pilot filtering, backpressure, quarantine, and metrics tests |
+| `tests/Meridian.Tests/Application/Canonicalization/CanonicalizationGoldenFixtureTests.cs` | 8 golden fixture regression tests |
+| `tests/Meridian.Tests/Application/Canonicalization/Fixtures/*.json` | 8 fixture files (Alpaca + Polygon trades) |
+| `tests/Meridian.Tests/Domain/Models/EffectiveSymbolTests.cs` | `EffectiveSymbol` property tests |

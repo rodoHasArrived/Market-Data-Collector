@@ -11,7 +11,7 @@ This document lists the primary dependencies used by the Market Data Collector s
 
 ---
 
-## MarketDataCollector (Main Project)
+## Meridian (Main Project)
 
 ### Configuration & Hosting
 

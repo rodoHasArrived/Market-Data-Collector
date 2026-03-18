@@ -25,8 +25,8 @@ The focus is to make each cleanup item directly actionable by naming **where** t
 | **Architecture Debt (A1-A2)** | ✅ Complete | DataGapRepair DI resolved; SubscriptionManager renamed to SubscriptionOrchestrator |
 
 **Key Achievements Since Last Update:**
-- UWP project (`src/MarketDataCollector.Uwp/`) fully deleted
-- UWP removed from `MarketDataCollector.sln`
+- UWP project (`src/Meridian.Uwp/`) fully deleted
+- UWP removed from `Meridian.sln`
 - UWP integration tests removed
 - UWP workflow references removed from `.github/workflows/desktop-builds.yml`
 - `SubscriptionManager` renamed to `SubscriptionOrchestrator` in Application layer
@@ -46,7 +46,7 @@ The focus is to make each cleanup item directly actionable by naming **where** t
 
 1. `rg --files` for broad inventory.
 2. `rg -n "TODO|FIXME|HACK" src --glob '!**/bin/**' --glob '!**/obj/**'` for technical-debt markers.
-3. `rg -n "MarketDataCollector\.Uwp|Uwp|UWP" ...` across solution, workflows, tests, docs for platform coupling.
+3. `rg -n "Meridian\.Uwp|Uwp|UWP" ...` across solution, workflows, tests, docs for platform coupling.
 4. `git ls-files | xargs -I{} du -k "{}" | sort -nr` to spot large tracked artifacts.
 5. Python line-count scan to identify monolith files.
 6. Python similarity scan for UWP/WPF same-name services.
@@ -95,25 +95,25 @@ UWP has been fully removed from the codebase. The project directory, solution re
 ### P1. Solution and project graph cleanup — ✅ DONE
 
 - **Status:** ✅ **COMPLETED**
-- **Evidence:** `grep -i "uwp" MarketDataCollector.sln` returns no matches.
-- **Verification:** `dotnet sln MarketDataCollector.sln list` shows no UWP project. Solution builds cleanly.
+- **Evidence:** `grep -i "uwp" Meridian.sln` returns no matches.
+- **Verification:** `dotnet sln Meridian.sln list` shows no UWP project. Solution builds cleanly.
 
 ### P2. CI/CD workflow cleanup — ✅ MOSTLY DONE
 
 - **Status:** ✅ **COMPLETED** for workflow files
-- **Evidence:** `grep -rn "MarketDataCollector\.Uwp\|UWP_PROJECT\|uwp-generate-assets" .github/workflows` returns no matches.
+- **Evidence:** `grep -rn "Meridian\.Uwp\|UWP_PROJECT\|uwp-generate-assets" .github/workflows` returns no matches.
 - **Note:** `desktop-builds.yml` correctly includes a clarification comment: `# NOTE: UWP/WinUI 3 application has been removed. WPF is the sole desktop client.`
 
 ### P3. Source tree cleanup — ✅ DONE
 
 - **Status:** ✅ **COMPLETED**
-- **Evidence:** `src/MarketDataCollector.Uwp/` directory no longer exists.
+- **Evidence:** `src/Meridian.Uwp/` directory no longer exists.
 - **Verification:** `find src -type d -name "*Uwp*"` returns no results.
 
 ### P4. Tests and coverage cleanup — ✅ DONE
 
 - **Status:** ✅ **COMPLETED**
-- **Evidence:** `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` no longer exists.
+- **Evidence:** `tests/Meridian.Tests/Integration/UwpCoreIntegrationTests.cs` no longer exists.
 - **Verification:** No UWP-specific test files remain in the test suite.
 
 ### P5-R. Residual UWP reference cleanup — ✅ COMPLETE
@@ -122,11 +122,11 @@ All stale UWP references in configuration files, documentation, and code comment
 
 #### R1. `.github/labeler.yml` — ✅ DONE
 
-- **Fix:** Replaced `src/MarketDataCollector.Uwp/**/*` with `src/MarketDataCollector.Wpf/**/*` in the `ui` label.
+- **Fix:** Replaced `src/Meridian.Uwp/**/*` with `src/Meridian.Wpf/**/*` in the `ui` label.
 
 #### R2. `.github/pull_request_template_desktop.md` — ✅ DONE
 
-- **Fix:** Removed `src/MarketDataCollector.Uwp/**` path and UWP build checklist items (`make build-uwp`, `make uwp-xaml-diagnose`).
+- **Fix:** Removed `src/Meridian.Uwp/**` path and UWP build checklist items (`make build-uwp`, `make uwp-xaml-diagnose`).
 
 #### R3. `.github/QUICKSTART.md` — ✅ DONE
 
@@ -146,11 +146,11 @@ All stale UWP references in configuration files, documentation, and code comment
 
 #### R7. `docs/ai/copilot/instructions.md` — ✅ DONE
 
-- **Fix:** Removed `MarketDataCollector.Uwp/` from directory tree; updated desktop apps description to WPF-only.
+- **Fix:** Removed `Meridian.Uwp/` from directory tree; updated desktop apps description to WPF-only.
 
 #### R8. `docs/operations/msix-packaging.md` — ✅ DONE
 
-- **Fix:** Updated `MarketDataCollector.Uwp.csproj` reference to `MarketDataCollector.Wpf.csproj`.
+- **Fix:** Updated `Meridian.Uwp.csproj` reference to `Meridian.Wpf.csproj`.
 
 #### R9. WPF code comments referencing UWP — ✅ DONE
 
@@ -159,9 +159,9 @@ All stale UWP references in configuration files, documentation, and code comment
 ### P6. Service migration — ✅ COMPLETE
 
 - **Status:** ✅ **COMPLETED** — UWP project deleted; all services now exist only in WPF and/or shared projects.
-- **Evidence:** `find src/MarketDataCollector.Uwp -name "*.cs" 2>/dev/null` returns no results (directory does not exist).
-- **Current state:** 51 service files in `src/MarketDataCollector.Wpf/Services/`. No duplicate UWP counterparts remain.
-- **Shared service layer:** `src/MarketDataCollector.Ui.Services/Services/` contains platform-agnostic base classes and implementations.
+- **Evidence:** `find src/Meridian.Uwp -name "*.cs" 2>/dev/null` returns no results (directory does not exist).
+- **Current state:** 51 service files in `src/Meridian.Wpf/Services/`. No duplicate UWP counterparts remain.
+- **Shared service layer:** `src/Meridian.Ui.Services/Services/` contains platform-agnostic base classes and implementations.
 
 ---
 
@@ -169,9 +169,9 @@ All stale UWP references in configuration files, documentation, and code comment
 
 ### S1. Decompose `UiServer` endpoint monolith — ✅ DONE
 
-- **File:** `src/MarketDataCollector/UiServer.cs` (was ~3030 LOC, now **260 LOC** — 91.4% reduction).
+- **File:** `src/Meridian/UiServer.cs` (was ~3030 LOC, now **260 LOC** — 91.4% reduction).
 - **Status:** ✅ **COMPLETED** in commit 540f5bd
-- **Achievement:** All endpoint logic extracted to 32 dedicated endpoint modules in `src/MarketDataCollector.Ui.Shared/Endpoints/`:
+- **Achievement:** All endpoint logic extracted to 32 dedicated endpoint modules in `src/Meridian.Ui.Shared/Endpoints/`:
   - `AdminEndpoints`, `AlignmentEndpoints`, `AnalyticsEndpoints`, `ApiKeyMiddleware`
   - `BackfillEndpoints`, `BackfillScheduleEndpoints`, `ConfigEndpoints`, `CronEndpoints`
   - `DiagnosticsEndpoints`, `ExportEndpoints`, `FailoverEndpoints`, `HealthEndpoints`
@@ -187,9 +187,9 @@ All stale UWP references in configuration files, documentation, and code comment
 
 - **Original file:** `HtmlTemplates.cs` (2511 LOC monolith)
 - **Current state:** Renamed and split into 3 partial class files:
-  - `src/MarketDataCollector.Ui.Shared/HtmlTemplateGenerator.cs` — **670 LOC** (core template logic)
-  - `src/MarketDataCollector.Ui.Shared/HtmlTemplateGenerator.Scripts.cs` — **997 LOC** (JavaScript generation)
-  - `src/MarketDataCollector.Ui.Shared/HtmlTemplateGenerator.Styles.cs` — **866 LOC** (CSS generation)
+  - `src/Meridian.Ui.Shared/HtmlTemplateGenerator.cs` — **670 LOC** (core template logic)
+  - `src/Meridian.Ui.Shared/HtmlTemplateGenerator.Scripts.cs` — **997 LOC** (JavaScript generation)
+  - `src/Meridian.Ui.Shared/HtmlTemplateGenerator.Styles.cs` — **866 LOC** (CSS generation)
   - **Total:** 2,533 LOC across 3 files
 - **Status:** ✅ **SPLIT COMPLETED** — monolith broken into logical partitions
 - **Remaining opportunity:** Static CSS/JS could still be moved to versioned files under `wwwroot/` for better cacheability and separation of concerns, but the file is no longer a single monolith.
@@ -221,18 +221,18 @@ All stale UWP references in configuration files, documentation, and code comment
 
 ### A1. Resolve DI boundary TODO in gap repair — ✅ DONE
 
-- **File:** `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs`
+- **File:** `src/Meridian.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs`
 - **Previous issue:** `TODO: Implement via dependency injection - Infrastructure cannot reference Storage`
 - **Status:** ✅ **COMPLETED** — no TODO markers remain in the file.
-- **Verification:** `grep -rn "TODO.*dependency injection\|TODO.*Infrastructure cannot reference" src/MarketDataCollector.Infrastructure/Providers/Historical/` returns no matches.
+- **Verification:** `grep -rn "TODO.*dependency injection\|TODO.*Infrastructure cannot reference" src/Meridian.Infrastructure/Providers/Historical/` returns no matches.
 
 ### A2. Clarify `SubscriptionManager` role boundaries — ✅ DONE
 
 - **Previous issue:** Same class name (`SubscriptionManager`) in both Application and Infrastructure layers.
 - **Status:** ✅ **COMPLETED** — Application layer class renamed to `SubscriptionOrchestrator`.
 - **Current state:**
-  - `src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs` — high-level orchestration
-  - `src/MarketDataCollector.Infrastructure/Shared/SubscriptionManager.cs` — low-level subscription lifecycle
+  - `src/Meridian.Application/Subscriptions/SubscriptionOrchestrator.cs` — high-level orchestration
+  - `src/Meridian.Infrastructure/Shared/SubscriptionManager.cs` — low-level subscription lifecycle
 - **Verification:** No naming collision between layers. Each class name reflects its architectural role.
 
 ---
@@ -260,7 +260,7 @@ All stale UWP references in configuration files, documentation, and code comment
 
 3. **PR-3 Service migration:** ✅ **COMPLETED** — UWP project fully deleted; WPF is sole desktop client. All services consolidated in WPF and shared projects.
 
-4. **PR-4 UWP deletion:** ✅ **COMPLETED** — `src/MarketDataCollector.Uwp/` deleted. UWP integration tests removed.
+4. **PR-4 UWP deletion:** ✅ **COMPLETED** — `src/Meridian.Uwp/` deleted. UWP integration tests removed.
 
 5. **PR-5 Structural refactors:** ✅ **COMPLETED**
    - ✅ UiServer endpoint extraction (91.4% reduction, 260 LOC remaining)

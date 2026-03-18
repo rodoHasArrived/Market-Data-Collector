@@ -33,11 +33,11 @@ production files they touch.
 
 ### 1a — JSONL Newline Scan (SIMD)
 
-**Files:** `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` (lines 237-275)
+**Files:** `src/Meridian.Storage/Replay/MemoryMappedJsonlReader.cs` (lines 237-275)
 
 **Viability:** ✅ Viable — Low Risk
 
-The existing benchmark harness (`benchmarks/MarketDataCollector.Benchmarks/`) already includes
+The existing benchmark harness (`benchmarks/Meridian.Benchmarks/`) already includes
 `WalChecksumBenchmarks`, confirming the team can integrate new `BenchmarkDotNet` cases quickly.
 The `.NET 8+ SearchValues<byte>` portable path (`MemoryExtensions.IndexOf`) is a JIT-selected
 SIMD path and requires no `#if` guards. The AVX2 manual path (`Vector256<byte>` + `Avx2.MoveMask`)
@@ -50,7 +50,7 @@ low because the optimization is isolated to a private helper method.
 
 ### 1b — Defer UTF-16 Materialization
 
-**Files:** `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` (lines 237-275)
+**Files:** `src/Meridian.Storage/Replay/MemoryMappedJsonlReader.cs` (lines 237-275)
 
 **Viability:** ✅ Viable — Medium Risk
 
@@ -67,7 +67,7 @@ paths. Deferring UTF-16 decode can be developed independently of 1a.
 
 ### 2 — UTF-8 Sequence Extraction
 
-**Files:** `src/MarketDataCollector.Storage/Services/DataQualityScoringService.cs` (lines 252-265)
+**Files:** `src/Meridian.Storage/Services/DataQualityScoringService.cs` (lines 252-265)
 
 **Viability:** ✅ Viable — Low Risk
 
@@ -83,7 +83,7 @@ The production evaluation document provides a complete, overflow-safe implementa
 
 ### 3a — `LatencyHistogram` Binary-Search Bucket
 
-**Files:** `src/MarketDataCollector.Application/Monitoring/DataQuality/LatencyHistogram.cs` (lines 255-265)
+**Files:** `src/Meridian.Application/Monitoring/DataQuality/LatencyHistogram.cs` (lines 255-265)
 
 **Viability:** ✅ Viable — Low Risk
 
@@ -98,7 +98,7 @@ under high-volume ingest because `Record()` executes under a `lock`. No external
 
 ### 3b — `LatencyHistogram` Circular Sample Buffer
 
-**Files:** `src/MarketDataCollector.Application/Monitoring/DataQuality/LatencyHistogram.cs` (lines 166-168)
+**Files:** `src/Meridian.Application/Monitoring/DataQuality/LatencyHistogram.cs` (lines 166-168)
 
 **Viability:** ✅ Viable — Low Risk
 
@@ -113,7 +113,7 @@ This is an internal-only change. Existing tests on percentile output serve as a 
 
 ### 4a — `EventBuffer.Drain` Ring-Buffer Variant
 
-**Files:** `src/MarketDataCollector.Application/Pipeline/EventBuffer.cs` (lines 151-167)
+**Files:** `src/Meridian.Application/Pipeline/EventBuffer.cs` (lines 151-167)
 
 **Viability:** ✅ Viable — Medium Risk
 
@@ -130,11 +130,11 @@ correctness and must be extended to cover the ring path.
 
 ### 4b — `DrainBySymbol` Symbol-Interning
 
-**Files:** `src/MarketDataCollector.Application/Pipeline/EventBuffer.cs` (lines 228-257)
+**Files:** `src/Meridian.Application/Pipeline/EventBuffer.cs` (lines 228-257)
 
 **Viability:** ✅ Viable — Low Risk
 
-`SymbolTable` already exists in `src/MarketDataCollector.Core/Performance/SymbolTable.cs`. The
+`SymbolTable` already exists in `src/Meridian.Core/Performance/SymbolTable.cs`. The
 evaluation sketch (Section D) replaces two `List<MarketEvent>` allocations and one `AddRange`
 copy per call with an in-place partition using integer symbol IDs. This is purely internal to
 `MarketEventBuffer`. `EventBufferTests` must be extended for the new in-place path.
@@ -145,7 +145,7 @@ copy per call with an in-place partition using integer symbol IDs. This is purel
 
 ### 5 — Anomaly Rolling Statistics (SIMD Accumulate)
 
-**Files:** `src/MarketDataCollector.Application/Monitoring/DataQuality/AnomalyDetector.cs` (lines 61-85)
+**Files:** `src/Meridian.Application/Monitoring/DataQuality/AnomalyDetector.cs` (lines 61-85)
 
 **Viability:** ⚠️ Profile-First — High Risk
 
@@ -171,14 +171,14 @@ confirms `RecordTrade` contributes > 5% of CPU time in a representative run.
 
 #### P-A-1: `LatencyHistogram` — Binary-Search Bucket + Circular Sample Buffer (items 3a, 3b)
 
-- [ ] Add benchmark case `LatencyHistogramBenchmarks` to `benchmarks/MarketDataCollector.Benchmarks/`
+- [ ] Add benchmark case `LatencyHistogramBenchmarks` to `benchmarks/Meridian.Benchmarks/`
       measuring `Record()` throughput with 8, 16, and 32 boundaries.
 - [ ] Replace linear bucket scan (lines 255-265 of `LatencyHistogram.cs`) with the `FindBucket`
       binary search (`Array.BinarySearch` or manual as in evaluation Section C).
 - [ ] Replace `List<LatencySample>` with a fixed-size `LatencySample[]` ring; update
       `_sampleHead` / `_sampleCount` fields; update percentile read path.
 - [ ] Run benchmarks; confirm ≥ 10% throughput improvement under lock on 8-bucket config.
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` and confirm all monitoring tests pass.
+- [ ] Run `dotnet test tests/Meridian.Tests` and confirm all monitoring tests pass.
 
 #### P-A-2: Defer UTF-16 Decode in `MemoryMappedJsonlReader` (item 1b)
 
@@ -190,11 +190,11 @@ confirms `RecordTrade` contributes > 5% of CPU time in a representative run.
 - [ ] Update `DeserializeLines` (or its callers) to accept `ReadOnlyMemory<byte>` instead of
       `string` (internal boundary).
 - [ ] Run benchmarks; confirm allocation reduction (GC-allocated bytes per operation).
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` and confirm all replay and reader tests pass.
+- [ ] Run `dotnet test tests/Meridian.Tests` and confirm all replay and reader tests pass.
 
 #### P-A-3: `DrainBySymbol` In-Place Partition + Symbol Interning (item 4b)
 
-- [ ] Verify `SymbolTable` (`src/MarketDataCollector.Core/Performance/SymbolTable.cs`) is
+- [ ] Verify `SymbolTable` (`src/Meridian.Core/Performance/SymbolTable.cs`) is
       accessible from `EventBuffer`'s assembly.
 - [ ] Add in-place partition method `DrainBySymbolId(int symbolId)` to `MarketEventBuffer`
       using the evaluation Section D sketch.
@@ -202,7 +202,7 @@ confirms `RecordTrade` contributes > 5% of CPU time in a representative run.
       calling the new int-keyed overload; preserve the old overload as a thin wrapper.
 - [ ] Add benchmark case for `DrainBySymbol` current vs in-place partition.
 - [ ] Extend `EventBufferTests` with in-place partition correctness tests.
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` to confirm no regression.
+- [ ] Run `dotnet test tests/Meridian.Tests` to confirm no regression.
 
 ---
 
@@ -227,7 +227,7 @@ allocation diagnostic shows reduction.
 - [ ] Write unit tests calling `FindNextNewlineScalar` directly to confirm boundary and
       wrap-around correctness.
 - [ ] Run benchmarks; confirm ≥ 1.5× speedup on 4 MB chunks.
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` and confirm all replay tests pass.
+- [ ] Run `dotnet test tests/Meridian.Tests` and confirm all replay tests pass.
 
 #### P-B-2: UTF-8 Byte Path for Sequence Scoring (item 2)
 
@@ -241,7 +241,7 @@ allocation diagnostic shows reduction.
 - [ ] Add benchmark case `SequenceScoringBenchmarks`: current `string` path vs UTF-8 byte path
       across 1 K / 10 K lines.
 - [ ] Run benchmarks; confirm ≥ 40% allocation reduction.
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` to confirm no regression.
+- [ ] Run `dotnet test tests/Meridian.Tests` to confirm no regression.
 
 #### P-B-3: `EventBuffer.Drain` Ring-Buffer Variant (item 4a)
 
@@ -256,7 +256,7 @@ allocation diagnostic shows reduction.
 - [ ] Add benchmark case: `GetRange+RemoveRange` vs ring drain across 100 / 1 000 / 10 000
       element buffers with partial drain ratios of 10%, 50%, 90%.
 - [ ] Run benchmarks; confirm allocation reduction and throughput improvement.
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` to confirm no regression.
+- [ ] Run `dotnet test tests/Meridian.Tests` to confirm no regression.
 
 ---
 
@@ -280,13 +280,13 @@ results as scalar path under forced-scalar mode.
 - [ ] Keep the scalar path and select via a compile-time constant or runtime feature flag for
       unit test determinism.
 - [ ] Run BenchmarkDotNet before/after; attach results to PR.
-- [ ] Run `dotnet test tests/MarketDataCollector.Tests` and confirm anomaly detection tests pass.
+- [ ] Run `dotnet test tests/Meridian.Tests` and confirm anomaly detection tests pass.
 
 ---
 
 ## Benchmark Harness Requirements
 
-Extend `benchmarks/MarketDataCollector.Benchmarks/` with the following new benchmark files:
+Extend `benchmarks/Meridian.Benchmarks/` with the following new benchmark files:
 
 | File | Covers |
 | ---- | ------ |
@@ -346,13 +346,13 @@ Before merging any optimized path:
 
 - **Source evaluation:** [`docs/evaluations/assembly-performance-opportunities.md`](../evaluations/assembly-performance-opportunities.md)
 - **Main roadmap:** [`docs/status/ROADMAP.md`](../status/ROADMAP.md) — Phase 16 entry
-- **Benchmark project:** [`benchmarks/MarketDataCollector.Benchmarks/`](../../benchmarks/MarketDataCollector.Benchmarks/)
-- **`SymbolTable`:** `src/MarketDataCollector.Core/Performance/SymbolTable.cs`
-- **`MemoryMappedJsonlReader`:** `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs`
-- **`DataQualityScoringService`:** `src/MarketDataCollector.Storage/Services/DataQualityScoringService.cs`
-- **`LatencyHistogram`:** `src/MarketDataCollector.Application/Monitoring/DataQuality/LatencyHistogram.cs`
-- **`EventBuffer`:** `src/MarketDataCollector.Application/Pipeline/EventBuffer.cs`
-- **`AnomalyDetector`:** `src/MarketDataCollector.Application/Monitoring/DataQuality/AnomalyDetector.cs`
+- **Benchmark project:** [`benchmarks/Meridian.Benchmarks/`](../../benchmarks/Meridian.Benchmarks/)
+- **`SymbolTable`:** `src/Meridian.Core/Performance/SymbolTable.cs`
+- **`MemoryMappedJsonlReader`:** `src/Meridian.Storage/Replay/MemoryMappedJsonlReader.cs`
+- **`DataQualityScoringService`:** `src/Meridian.Storage/Services/DataQualityScoringService.cs`
+- **`LatencyHistogram`:** `src/Meridian.Application/Monitoring/DataQuality/LatencyHistogram.cs`
+- **`EventBuffer`:** `src/Meridian.Application/Pipeline/EventBuffer.cs`
+- **`AnomalyDetector`:** `src/Meridian.Application/Monitoring/DataQuality/AnomalyDetector.cs`
 
 ---
 

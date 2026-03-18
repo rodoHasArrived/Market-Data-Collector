@@ -43,9 +43,9 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Web dashboard for status/metrics and API-backed backfill actions
 - WPF desktop application (Windows-only; workspace/navigation implemented; some pages remain placeholder-only)
 - UWP desktop application removed (WPF is the sole desktop client)
-- Shared UI services project (`MarketDataCollector.Ui.Services`)
+- Shared UI services project (`Meridian.Ui.Services`)
 - QuantConnect Lean integration types and data provider
-- MCP server (`MarketDataCollector.McpServer`) for AI agent tool integration
+- MCP server (`Meridian.McpServer`) for AI agent tool integration
 
 ### Data Quality & Monitoring
 - Comprehensive data quality monitoring with SLA enforcement
@@ -132,7 +132,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Web dashboard for status/metrics and API-backed backfill actions
 - WPF desktop application (recommended for Windows; workspace/navigation is implemented but some pages remain placeholder-only)
 - UWP desktop application removed (WPF is the sole desktop client)
-- Shared UI services project (`MarketDataCollector.Ui.Services`)
+- Shared UI services project (`Meridian.Ui.Services`)
 - QuantConnect Lean integration types and data provider
 
 ### Data Quality & Monitoring
@@ -211,6 +211,6 @@ This changelog summarizes the current repository snapshot. Historical release no
 
 ## Notes
 
-- Version numbers are defined in project files (e.g., `src/MarketDataCollector/MarketDataCollector.csproj`).
+- Version numbers are defined in project files (e.g., `src/Meridian/Meridian.csproj`).
 - Use `docs/status/production-status.md` for readiness and implementation status details.
 - Use `docs/status/IMPROVEMENTS.md` for detailed improvement item tracking.

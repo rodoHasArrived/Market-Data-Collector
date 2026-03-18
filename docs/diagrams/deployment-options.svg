@@ -109,7 +109,7 @@
 <g id="node2" class="node">
 <title>SA_CORE</title>
 <path fill="#9ae6b4" stroke="black" d="M875.5,-93.5C875.5,-93.5 782.5,-93.5 782.5,-93.5 776.5,-93.5 770.5,-87.5 770.5,-81.5 770.5,-81.5 770.5,-41.5 770.5,-41.5 770.5,-35.5 776.5,-29.5 782.5,-29.5 782.5,-29.5 875.5,-29.5 875.5,-29.5 881.5,-29.5 887.5,-35.5 887.5,-41.5 887.5,-41.5 887.5,-81.5 887.5,-81.5 887.5,-87.5 881.5,-93.5 875.5,-93.5"/>
-<text text-anchor="middle" x="829" y="-81.5" font-family="Helvetica,sans-Serif" font-size="10.00">MarketDataCollector</text>
+<text text-anchor="middle" x="829" y="-81.5" font-family="Helvetica,sans-Serif" font-size="10.00">Meridian</text>
 <text text-anchor="middle" x="829" y="-70.5" font-family="Helvetica,sans-Serif" font-size="10.00">[Console App]</text>
 <text text-anchor="middle" x="829" y="-47.5" font-family="Helvetica,sans-Serif" font-size="10.00">Core + Collectors</text>
 <text text-anchor="middle" x="829" y="-36.5" font-family="Helvetica,sans-Serif" font-size="10.00">Storage + HTTP</text>
@@ -151,7 +151,7 @@
 <polyline fill="none" stroke="black" points="242,-99.5 242,-93.5 "/>
 <polyline fill="none" stroke="black" points="248,-93.5 242,-93.5 "/>
 <text text-anchor="middle" x="132" y="-87.5" font-family="Helvetica,sans-Serif" font-size="10.00">Run Command:</text>
-<text text-anchor="middle" x="132" y="-64.5" font-family="Helvetica,sans-Serif" font-size="10.00">dotnet run &#45;&#45;project src/MarketDataCollector</text>
+<text text-anchor="middle" x="132" y="-64.5" font-family="Helvetica,sans-Serif" font-size="10.00">dotnet run &#45;&#45;project src/Meridian</text>
 <text text-anchor="middle" x="132" y="-41.5" font-family="Helvetica,sans-Serif" font-size="10.00">Or with UI:</text>
 <text text-anchor="middle" x="132" y="-30.5" font-family="Helvetica,sans-Serif" font-size="10.00">dotnet run &#45;&#45; &#45;&#45;ui &#45;&#45;http&#45;port 8080</text>
 </g>

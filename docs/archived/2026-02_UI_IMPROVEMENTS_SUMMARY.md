@@ -248,12 +248,12 @@ All improvements maintain responsive design principles:
 
 ## Files Modified
 
-1. **src/MarketDataCollector/wwwroot/templates/credentials.html**
+1. **src/Meridian/wwwroot/templates/credentials.html**
    - Added 342 lines
    - New features: Search, filters, stats, toast notifications
    - Enhanced styling and animations
 
-2. **src/MarketDataCollector/wwwroot/templates/index.html**
+2. **src/Meridian/wwwroot/templates/index.html**
    - Added 188 lines
    - Enhanced cards, buttons, metrics, tables
    - Added fade-in animations

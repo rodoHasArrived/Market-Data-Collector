@@ -8,12 +8,12 @@
 
 ## Overview
 
-The `MarketDataCollector.FSharp` library provides type-safe domain models, validation logic, and pure functional calculations for market data processing. It leverages F#'s discriminated unions, pattern matching, and Railway-Oriented Programming to eliminate entire categories of bugs while maintaining seamless C# interoperability.
+The `Meridian.FSharp` library provides type-safe domain models, validation logic, and pure functional calculations for market data processing. It leverages F#'s discriminated unions, pattern matching, and Railway-Oriented Programming to eliminate entire categories of bugs while maintaining seamless C# interoperability.
 
 ## Project Structure
 
 ```
-src/MarketDataCollector.FSharp/
+src/Meridian.FSharp/
 ├── Domain/
 │   ├── Sides.fs          # Side and AggressorSide types
 │   ├── Integrity.fs      # Integrity event types
@@ -39,7 +39,7 @@ src/MarketDataCollector.FSharp/
 ### Side and AggressorSide
 
 ```fsharp
-open MarketDataCollector.FSharp.Domain.Sides
+open Meridian.FSharp.Domain.Sides
 
 // Order book side
 type Side = Buy | Sell
@@ -60,7 +60,7 @@ let inferAggressor tradePrice bidPrice askPrice =
 All market events are modeled as discriminated unions, ensuring exhaustive pattern matching:
 
 ```fsharp
-open MarketDataCollector.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.MarketEvents
 
 type MarketEvent =
     | Trade of TradeEvent
@@ -88,7 +88,7 @@ let processEvent event =
 Integrity events capture data quality issues with full context:
 
 ```fsharp
-open MarketDataCollector.FSharp.Domain.Integrity
+open Meridian.FSharp.Domain.Integrity
 
 type IntegrityEventType =
     | SequenceGap of expected: int64 * received: int64
@@ -112,8 +112,8 @@ let event = IntegrityEvent.sequenceGap "AAPL" DateTimeOffset.UtcNow 100L 105L 10
 The validation system uses Result types to accumulate errors instead of throwing exceptions:
 
 ```fsharp
-open MarketDataCollector.FSharp.Validation.ValidationTypes
-open MarketDataCollector.FSharp.Validation.TradeValidator
+open Meridian.FSharp.Validation.ValidationTypes
+open Meridian.FSharp.Validation.TradeValidator
 
 // Validate a trade - accumulates all errors
 let result = validateTradeDefault trade
@@ -180,7 +180,7 @@ let result =
 ### Spread Calculations
 
 ```fsharp
-open MarketDataCollector.FSharp.Calculations.Spread
+open Meridian.FSharp.Calculations.Spread
 
 // Calculate absolute spread
 let spread = calculate bidPrice askPrice  // Option<decimal>
@@ -201,7 +201,7 @@ let effSpread = effectiveSpread tradePrice bidPrice askPrice
 ### Imbalance Calculations
 
 ```fsharp
-open MarketDataCollector.FSharp.Calculations.Imbalance
+open Meridian.FSharp.Calculations.Imbalance
 
 // Calculate order book imbalance (-1 to +1)
 let imbalance = calculate bidQty askQty  // Option<decimal>
@@ -219,7 +219,7 @@ let isSignificant = isSignificantImbalance 0.3m imbalance  // bool
 ### Aggregation Functions
 
 ```fsharp
-open MarketDataCollector.FSharp.Calculations.Aggregations
+open Meridian.FSharp.Calculations.Aggregations
 
 // Volume-Weighted Average Price
 let vwap = vwap trades  // Option<decimal>
@@ -245,7 +245,7 @@ let bars = createOhlcvBars 60 trades  // 60-second bars
 ### Filtering
 
 ```fsharp
-open MarketDataCollector.FSharp.Pipeline.Transforms
+open Meridian.FSharp.Pipeline.Transforms
 
 // Filter by symbol
 let aaplEvents = events |> filterBySymbol "AAPL"
@@ -332,8 +332,8 @@ The `Interop.fs` module provides C#-friendly wrappers and extension methods for 
 All F# types are designed for easy C# consumption:
 
 ```csharp
-using MarketDataCollector.FSharp.Domain.MarketEvents;
-using MarketDataCollector.FSharp.Domain.Sides;
+using Meridian.FSharp.Domain.MarketEvents;
+using Meridian.FSharp.Domain.Sides;
 
 // Create events using static methods
 var trade = MarketEvent.CreateTrade("AAPL", 150.00m, 100L,
@@ -354,7 +354,7 @@ var eventType = MarketEvent.GetEventType(event);  // MarketEventType
 For a more C#-idiomatic experience, use the Interop wrappers:
 
 ```csharp
-using MarketDataCollector.FSharp.Interop;
+using Meridian.FSharp.Interop;
 
 // Validation with C#-friendly result
 var result = TradeValidator.Validate(trade);
@@ -376,14 +376,14 @@ bool isValid = TradeValidator.IsValid(trade);
 
 ### Generated C# DTOs
 
-Build-time generation produces C# DTO wrappers in `src/MarketDataCollector.FSharp/Generated` for
+Build-time generation produces C# DTO wrappers in `src/Meridian.FSharp/Generated` for
 core market event records. These files are regenerated during builds via
 `tools/FSharpInteropGenerator` while preserving the existing public API.
 
 ### Calculation Helpers
 
 ```csharp
-using MarketDataCollector.FSharp.Interop;
+using Meridian.FSharp.Interop;
 
 // Spread calculations (return Nullable<decimal>)
 decimal? spread = SpreadCalculator.Calculate(bidPrice, askPrice);
@@ -408,7 +408,7 @@ int aggressorSide = AggressorInference.InferFromQuote(tradePrice, quote);
 F# `Option<T>` types are converted to `Nullable<T>` or null for reference types:
 
 ```csharp
-using MarketDataCollector.FSharp.Interop;
+using Meridian.FSharp.Interop;
 
 // Option extension methods
 var spread = SpreadCalculator.Calculate(bid, ask);
@@ -434,7 +434,7 @@ string? symbol = MarketEvent.GetSymbol(event).ToNullableRef();
 
 ```bash
 # Run all F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests
+dotnet test tests/Meridian.FSharp.Tests
 
 # Run specific test category
 dotnet test --filter "FullyQualifiedName~ValidationTests"

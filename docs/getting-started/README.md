@@ -16,7 +16,7 @@ cd Market-Data-Collector
 dotnet build
 
 # Run the interactive wizard
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+dotnet run --project src/Meridian/Meridian.csproj -- --wizard
 ```
 
 The wizard guides you through provider selection, symbol configuration, and storage setup.
@@ -59,23 +59,23 @@ Before starting data collection, validate that everything is configured correctl
 
 ```bash
 # Quick configuration health check
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --quick-check
+dotnet run --project src/Meridian/Meridian.csproj -- --quick-check
 
 # Test connectivity to all configured providers
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --test-connectivity
+dotnet run --project src/Meridian/Meridian.csproj -- --test-connectivity
 
 # Full validation without starting collection
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --dry-run
+dotnet run --project src/Meridian/Meridian.csproj -- --dry-run
 ```
 
 ## Start Collecting Data
 
 ```bash
 # Web dashboard mode (recommended — opens at http://localhost:8080)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mode web
+dotnet run --project src/Meridian/Meridian.csproj -- --mode web
 
 # Headless mode (no UI, for servers)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mode headless
+dotnet run --project src/Meridian/Meridian.csproj -- --mode headless
 ```
 
 ## Where Data Is Stored

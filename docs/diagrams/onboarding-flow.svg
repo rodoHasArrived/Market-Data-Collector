@@ -56,7 +56,7 @@
 <title>START</title>
 <ellipse fill="#38a169" stroke="black" cx="493" cy="-1973.71" rx="82.96" ry="21.43"/>
 <text text-anchor="middle" x="493" y="-1976.71" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">User Runs</text>
-<text text-anchor="middle" x="493" y="-1965.71" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">MarketDataCollector</text>
+<text text-anchor="middle" x="493" y="-1965.71" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Meridian</text>
 </g>
 <!-- FIRST_RUN -->
 <g id="node2" class="node">

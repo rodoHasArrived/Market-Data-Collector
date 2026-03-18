@@ -147,11 +147,11 @@ jobs:
           echo "output_format: $output_format"
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
 
       - name: Build
         run: |
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+          dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
       - name: Fetch ticker data
         env:
@@ -164,7 +164,7 @@ jobs:
           echo "Output format: $YAHOO_TICKER_OUTPUT_FORMAT"
           echo ""
 
-          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+          dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
             -c Release \
             --no-build \
             --verbosity normal \

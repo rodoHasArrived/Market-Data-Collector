@@ -369,7 +369,7 @@ services.AddSingleton<IRealtimeDataSource, MyProviderDataSource>();
 ### Step 5: Add Tests
 
 ```csharp
-// Location: tests/MarketDataCollector.Tests/Providers/MyProviderTests.cs
+// Location: tests/Meridian.Tests/Providers/MyProviderTests.cs
 
 public class MyProviderDataSourceTests
 {

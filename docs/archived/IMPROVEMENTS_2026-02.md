@@ -113,7 +113,7 @@ Both `JsonlStorageSink` and `ParquetStorageSink` now follow the correct disposal
 
 **Remaining work:** Add `[ProducesResponseType]` annotations to endpoint handlers for complete schema documentation in the generated spec.
 
-**Files:** `Ui.Shared/Endpoints/UiEndpoints.cs`, `MarketDataCollector.Ui.Shared.csproj`
+**Files:** `Ui.Shared/Endpoints/UiEndpoints.cs`, `Meridian.Ui.Shared.csproj`
 
 ---
 
@@ -176,7 +176,7 @@ StockSharp `MessageConverter` uses `ObjectPool<List<OrderBookLevel>>` with pre-s
 **Remaining work:**
 - Polygon WebSocket message handler still uses `JsonDocument.Parse()` per message without pooling, creates heap allocations via `Encoding.UTF8.GetString(messageBuilder.ToArray())` at ~100 Hz
 - Apply `ObjectPool<T>` and `Utf8JsonReader` / `Span<T>`-based parsing to `PolygonMarketDataClient`
-- Benchmark before/after with `MarketDataCollector.Benchmarks`
+- Benchmark before/after with `Meridian.Benchmarks`
 
 **Files:** `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
 
@@ -196,7 +196,7 @@ The HTTP API layer has no dedicated integration tests using `WebApplicationFacto
 - Assert response status codes, content types, and response schema shapes
 - Include negative cases (invalid input, missing config)
 
-**Files:** New `tests/MarketDataCollector.Tests/Integration/EndpointTests/`
+**Files:** New `tests/Meridian.Tests/Integration/EndpointTests/`
 
 ---
 
@@ -211,7 +211,7 @@ WPF has been consolidated into 5 workspaces (Monitor, Collect, Storage, Quality,
 - Reduce UWP navigation items to ~15 consolidated entries per workspace
 - Ensure command palette (Ctrl+K) surfaces the same grouped search experience
 
-**Files:** `MarketDataCollector.Uwp/Views/MainPage.xaml`, `MarketDataCollector.Uwp/Services/NavigationService.cs`
+**Files:** `Meridian.Uwp/Views/MainPage.xaml`, `Meridian.Uwp/Services/NavigationService.cs`
 
 ---
 
@@ -258,7 +258,7 @@ The Polygon WebSocket handler allocates per-message via `JsonDocument.Parse()`, 
 - Replace `JsonDocument.Parse()` with `Utf8JsonReader` for zero-copy parsing
 - Pool `List<OrderBookLevel>` using `ObjectPool<T>` (matching StockSharp pattern)
 - Eliminate `Encoding.UTF8.GetString(messageBuilder.ToArray())` by reading directly from `ReadOnlySpan<byte>`
-- Validate with `MarketDataCollector.Benchmarks` before/after
+- Validate with `Meridian.Benchmarks` before/after
 
 **Files:** `Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs`
 

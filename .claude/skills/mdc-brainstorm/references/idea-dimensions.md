@@ -12,42 +12,42 @@ Use these when referencing specific abstractions in ideas. File paths are relati
 
 | Concept | Interface / Class | File Path |
 |---------|-------------------|-----------|
-| Streaming provider contract | `IMarketDataClient` | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` |
-| Historical provider contract | `IHistoricalDataProvider` | `src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` |
-| Storage sink contract | `IStorageSink` | `src/MarketDataCollector.Storage/Interfaces/IStorageSink.cs` |
-| Event pipeline coordinator | `EventPipeline` | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` |
-| Write-ahead log | `WriteAheadLog` | `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs` |
-| Crash-safe file writes | `AtomicFileWriter` | `src/MarketDataCollector.Storage/Archival/AtomicFileWriter.cs` |
-| JSONL sink | `JsonlStorageSink` | `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs` |
-| Parquet sink | `ParquetStorageSink` | `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` |
-| MVVM base class | `BindableBase` | `src/MarketDataCollector.Wpf/ViewModels/BindableBase.cs` |
-| ICommand implementation | `RelayCommand` | `src/MarketDataCollector.Wpf/ViewModels/` |
-| JSON source-gen context | `MarketDataJsonContext` | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs` |
-| Multi-provider historical routing | `CompositeHistoricalDataProvider` | `src/MarketDataCollector.Infrastructure/Adapters/Core/` |
-| Backfill orchestration | `HistoricalBackfillService` | `src/MarketDataCollector.Application/Backfill/HistoricalBackfillService.cs` |
-| Gap detection | `GapBackfillService` | `src/MarketDataCollector.Application/Backfill/GapBackfillService.cs` |
-| Data quality orchestrator | `DataQualityMonitoringService` | `src/MarketDataCollector.Application/Monitoring/DataQuality/` |
-| Data completeness scoring | `CompletenessScoreCalculator` | `src/MarketDataCollector.Application/Monitoring/DataQuality/` |
-| Prometheus metrics | `PrometheusMetrics` | `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` |
-| Storage catalog | `StorageCatalogService` | `src/MarketDataCollector.Storage/Services/StorageCatalogService.cs` |
-| Tiered storage migration | `TierMigrationService` | `src/MarketDataCollector.Storage/Services/TierMigrationService.cs` |
-| Parquet conversion | `ParquetConversionService` | `src/MarketDataCollector.Storage/Services/ParquetConversionService.cs` |
-| F# validation pipeline | `ValidationPipeline` | `src/MarketDataCollector.FSharp/Validation/ValidationPipeline.fs` |
-| F# quote validator | `QuoteValidator` | `src/MarketDataCollector.FSharp/Validation/QuoteValidator.fs` |
-| F# trade validator | `TradeValidator` | `src/MarketDataCollector.FSharp/Validation/TradeValidator.fs` |
-| Provider SDK attribute | `DataSourceAttribute` | `src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs` |
-| Provider SDK discovery | `DataSourceRegistry` | `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs` |
-| Graceful shutdown | `GracefulShutdownService` | `src/MarketDataCollector.Application/Services/GracefulShutdownService.cs` |
-| Storage sink discovery | `StorageSinkRegistry` | `src/MarketDataCollector.Storage/StorageSinkRegistry.cs` |
-| Subscription orchestration | `SubscriptionOrchestrator` | `src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs` |
-| Failover provider | `FailoverAwareMarketDataClient` | `src/MarketDataCollector.Infrastructure/Adapters/Failover/` |
-| Alpaca streaming | `AlpacaMarketDataClient` | `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/` |
-| IB streaming | `IBMarketDataClient` | `src/MarketDataCollector.Infrastructure/Adapters/InteractiveBrokers/` |
-| WPF Dashboard page | `DashboardPage` | `src/MarketDataCollector.Wpf/Views/DashboardPage.xaml(.cs)` |
-| WPF Dashboard ViewModel | `DashboardViewModel` | `src/MarketDataCollector.Wpf/ViewModels/DashboardViewModel.cs` |
-| Configuration pipeline | `ConfigurationPipeline` | `src/MarketDataCollector.Application/Config/ConfigurationPipeline.cs` |
-| Hot-path batch serializer | `HotPathBatchSerializer` | `src/MarketDataCollector.Application/Pipeline/HotPathBatchSerializer.cs` |
-| Portable data packaging | `PortableDataPackager` | `src/MarketDataCollector.Storage/Packaging/PortableDataPackager.cs` |
+| Streaming provider contract | `IMarketDataClient` | `src/Meridian.ProviderSdk/IMarketDataClient.cs` |
+| Historical provider contract | `IHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` |
+| Storage sink contract | `IStorageSink` | `src/Meridian.Storage/Interfaces/IStorageSink.cs` |
+| Event pipeline coordinator | `EventPipeline` | `src/Meridian.Application/Pipeline/EventPipeline.cs` |
+| Write-ahead log | `WriteAheadLog` | `src/Meridian.Storage/Archival/WriteAheadLog.cs` |
+| Crash-safe file writes | `AtomicFileWriter` | `src/Meridian.Storage/Archival/AtomicFileWriter.cs` |
+| JSONL sink | `JsonlStorageSink` | `src/Meridian.Storage/Sinks/JsonlStorageSink.cs` |
+| Parquet sink | `ParquetStorageSink` | `src/Meridian.Storage/Sinks/ParquetStorageSink.cs` |
+| MVVM base class | `BindableBase` | `src/Meridian.Wpf/ViewModels/BindableBase.cs` |
+| ICommand implementation | `RelayCommand` | `src/Meridian.Wpf/ViewModels/` |
+| JSON source-gen context | `MarketDataJsonContext` | `src/Meridian.Core/Serialization/MarketDataJsonContext.cs` |
+| Multi-provider historical routing | `CompositeHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Core/` |
+| Backfill orchestration | `HistoricalBackfillService` | `src/Meridian.Application/Backfill/HistoricalBackfillService.cs` |
+| Gap detection | `GapBackfillService` | `src/Meridian.Application/Backfill/GapBackfillService.cs` |
+| Data quality orchestrator | `DataQualityMonitoringService` | `src/Meridian.Application/Monitoring/DataQuality/` |
+| Data completeness scoring | `CompletenessScoreCalculator` | `src/Meridian.Application/Monitoring/DataQuality/` |
+| Prometheus metrics | `PrometheusMetrics` | `src/Meridian.Application/Monitoring/PrometheusMetrics.cs` |
+| Storage catalog | `StorageCatalogService` | `src/Meridian.Storage/Services/StorageCatalogService.cs` |
+| Tiered storage migration | `TierMigrationService` | `src/Meridian.Storage/Services/TierMigrationService.cs` |
+| Parquet conversion | `ParquetConversionService` | `src/Meridian.Storage/Services/ParquetConversionService.cs` |
+| F# validation pipeline | `ValidationPipeline` | `src/Meridian.FSharp/Validation/ValidationPipeline.fs` |
+| F# quote validator | `QuoteValidator` | `src/Meridian.FSharp/Validation/QuoteValidator.fs` |
+| F# trade validator | `TradeValidator` | `src/Meridian.FSharp/Validation/TradeValidator.fs` |
+| Provider SDK attribute | `DataSourceAttribute` | `src/Meridian.ProviderSdk/DataSourceAttribute.cs` |
+| Provider SDK discovery | `DataSourceRegistry` | `src/Meridian.ProviderSdk/DataSourceRegistry.cs` |
+| Graceful shutdown | `GracefulShutdownService` | `src/Meridian.Application/Services/GracefulShutdownService.cs` |
+| Storage sink discovery | `StorageSinkRegistry` | `src/Meridian.Storage/StorageSinkRegistry.cs` |
+| Subscription orchestration | `SubscriptionOrchestrator` | `src/Meridian.Application/Subscriptions/SubscriptionOrchestrator.cs` |
+| Failover provider | `FailoverAwareMarketDataClient` | `src/Meridian.Infrastructure/Adapters/Failover/` |
+| Alpaca streaming | `AlpacaMarketDataClient` | `src/Meridian.Infrastructure/Adapters/Alpaca/` |
+| IB streaming | `IBMarketDataClient` | `src/Meridian.Infrastructure/Adapters/InteractiveBrokers/` |
+| WPF Dashboard page | `DashboardPage` | `src/Meridian.Wpf/Views/DashboardPage.xaml(.cs)` |
+| WPF Dashboard ViewModel | `DashboardViewModel` | `src/Meridian.Wpf/ViewModels/DashboardViewModel.cs` |
+| Configuration pipeline | `ConfigurationPipeline` | `src/Meridian.Application/Config/ConfigurationPipeline.cs` |
+| Hot-path batch serializer | `HotPathBatchSerializer` | `src/Meridian.Application/Pipeline/HotPathBatchSerializer.cs` |
+| Portable data packaging | `PortableDataPackager` | `src/Meridian.Storage/Packaging/PortableDataPackager.cs` |
 
 ---
 
@@ -188,7 +188,7 @@ Use these when referencing specific abstractions in ideas. File paths are relati
 - **Interface segregation pass** — audit `IMarketDataClient` and `IStorageSink` for ISP violations; split fat interfaces into focused contracts (e.g., `ITickReceiver`, `IOrderBookReceiver`, `IHistoricalFetcher`)
 - **Event pipeline modularization** — refactor `EventPipeline` into composable middleware stages (receive → normalize → validate → route → store); each stage independently testable and replaceable
 - **Configuration as strongly-typed objects** — replace raw `IConfiguration` indexing with Options pattern (`IOptions<ProviderSettings>`, `IOptions<StorageSettings>`) everywhere; compile-time safety + validation via `IValidateOptions<T>`
-- **Shared kernel extraction** — extract domain primitives (Symbol, Timestamp, Price, Quantity, MarketEvent) into a standalone `MarketDataCollector.Domain` assembly with zero infrastructure dependencies; consumed by all layers
+- **Shared kernel extraction** — extract domain primitives (Symbol, Timestamp, Price, Quantity, MarketEvent) into a standalone `Meridian.Domain` assembly with zero infrastructure dependencies; consumed by all layers
 - **Plugin architecture for sinks** — replace hardcoded storage sink registration with a MEF/plugin-style discovery system; third parties drop a DLL into a `/plugins` folder and it's auto-registered as an `IStorageSink`
 
 ---

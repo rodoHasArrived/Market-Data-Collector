@@ -46,7 +46,7 @@ export ALPHAVANTAGE__APIKEY=your-key
 
 ## Adding a New Provider
 
-1. Create provider class in `src/MarketDataCollector.Infrastructure/Adapters/{Name}/`
+1. Create provider class in `src/Meridian.Infrastructure/Adapters/{Name}/`
 2. Implement `IMarketDataClient` (streaming) or `IHistoricalDataProvider` (backfill)
 3. Add `[DataSource]` attribute with provider metadata
 4. Add `[ImplementsAdr]` attributes for ADR compliance

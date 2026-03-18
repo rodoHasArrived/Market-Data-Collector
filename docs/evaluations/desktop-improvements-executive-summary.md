@@ -43,8 +43,8 @@ These align with Priority 1-4 items from the original improvement plan (now [arc
 ### Phase 1: Test Infrastructure (Complete)
 
 Created test projects with comprehensive coverage:
-- **MarketDataCollector.Ui.Tests**: ~800 tests across 52 test files (50 services + 2 collections)
-- **MarketDataCollector.Wpf.Tests**: ~400 tests across 20 test files
+- **Meridian.Ui.Tests**: ~800 tests across 52 test files (50 services + 2 collections)
+- **Meridian.Wpf.Tests**: ~400 tests across 20 test files
 - **Total**: ~1200 tests with platform detection and CI integration
 - **Platform detection** (Windows-only, graceful skip on Linux/macOS)
 - **Test patterns** demonstrating best practices
@@ -205,7 +205,7 @@ Documentation
 
 ## Service Inventory
 
-### Ui.Services (`src/MarketDataCollector.Ui.Services/Services/`)
+### Ui.Services (`src/Meridian.Ui.Services/Services/`)
 
 59 main service files providing shared desktop logic. 50 have dedicated test files (85% coverage).
 
@@ -239,7 +239,7 @@ Documentation
 
 *Also untested: 5 model files (`*Models.cs`) and 9 utility/constant files (`ColorPalette`, `DesktopJsonOptions`, `ErrorMessages`, `FormatHelpers`, `FormValidationRules`, `HttpClientConfiguration`, `InfoBarConstants`, `OperationResult`, `TooltipContent`) — these are lower priority as they contain minimal logic.*
 
-### Wpf Services (`src/MarketDataCollector.Wpf/Services/`)
+### Wpf Services (`src/Meridian.Wpf/Services/`)
 
 32 service files providing WPF-specific logic. 20 have dedicated test files (63% coverage). Several untested WPF services now have indirect coverage through Ui.Services base class tests.
 
@@ -406,7 +406,7 @@ Eight base classes already exist (`ConnectionServiceBase`, `NavigationServiceBas
 #### Validation Gates
 
 Each week concludes with:
-1. `dotnet test tests/MarketDataCollector.Ui.Tests` passes on Linux and Windows
+1. `dotnet test tests/Meridian.Ui.Tests` passes on Linux and Windows
 2. New base class tests achieve >80% coverage
 3. WPF adapter classes remain <50 lines
 4. No new WPF-type references in `Ui.Services`
@@ -639,8 +639,8 @@ Code Quality — Before → After (6 months)
 | Desktop Testing Guide | [desktop-testing-guide.md](../development/desktop-testing-guide.md) |
 | Fixture Mode Guide | [ui-fixture-mode-guide.md](../development/ui-fixture-mode-guide.md) |
 | Support Policy | [policies/desktop-support-policy.md](../development/policies/desktop-support-policy.md) |
-| Ui.Tests project | `tests/MarketDataCollector.Ui.Tests/` (~800 tests, 52 files) |
-| Wpf.Tests project | `tests/MarketDataCollector.Wpf.Tests/` (~400 tests, 20 files) |
+| Ui.Tests project | `tests/Meridian.Ui.Tests/` (~800 tests, 52 files) |
+| Wpf.Tests project | `tests/Meridian.Wpf.Tests/` (~400 tests, 20 files) |
 | Run all tests | `make test-desktop-services` |
 
 ---
@@ -655,8 +655,8 @@ Code Quality — Before → After (6 months)
 - **UI Fixture Mode**: [ui-fixture-mode-guide.md](../development/ui-fixture-mode-guide.md)
 - **Support Policy**: [policies/desktop-support-policy.md](../development/policies/desktop-support-policy.md)
 - **Test Projects**:
-  - `tests/MarketDataCollector.Ui.Tests/` (~800 tests, 52 files)
-  - `tests/MarketDataCollector.Wpf.Tests/` (~400 tests, 20 files)
+  - `tests/Meridian.Ui.Tests/` (~800 tests, 52 files)
+  - `tests/Meridian.Wpf.Tests/` (~400 tests, 20 files)
 
 ## Related Documentation
 

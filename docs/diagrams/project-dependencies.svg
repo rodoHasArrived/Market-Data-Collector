@@ -290,7 +290,7 @@
 <g id="node13" class="node">
 <title>MainApp</title>
 <path fill="#ffebee" stroke="black" d="M417.5,-482C417.5,-482 328.5,-482 328.5,-482 322.5,-482 316.5,-476 316.5,-470 316.5,-470 316.5,-458 316.5,-458 316.5,-452 322.5,-446 328.5,-446 328.5,-446 417.5,-446 417.5,-446 423.5,-446 429.5,-452 429.5,-458 429.5,-458 429.5,-470 429.5,-470 429.5,-476 423.5,-482 417.5,-482"/>
-<text text-anchor="middle" x="373" y="-467" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">MarketDataCollector</text>
+<text text-anchor="middle" x="373" y="-467" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">Meridian</text>
 <text text-anchor="middle" x="373" y="-456" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">(entry point, CLI)</text>
 </g>
 <!-- MainApp&#45;&gt;Contracts -->

@@ -9,11 +9,11 @@
 ## Step 1: Scope
 
 **In Scope:**
-- New library project `MarketDataCollector.QuantScript` containing the scripting engine, data API, returns vocabulary, statistical functions, portfolio tools, plotting queue, and Roslyn compilation pipeline
+- New library project `Meridian.QuantScript` containing the scripting engine, data API, returns vocabulary, statistical functions, portfolio tools, plotting queue, and Roslyn compilation pipeline
 - New WPF page `QuantScriptPage` with AvalonEdit editor, tabbed results panel (Console / Charts / Metrics / Trades), script browser, and dynamic parameter form
 - `QuantScriptViewModel` wired into the existing `MainPage` navigation
 - Two new packages added to `Directory.Packages.props`: `AvalonEditB` (WPF code editor) and `ScottPlot.WPF` (charting)
-- New test project `MarketDataCollector.QuantScript.Tests`
+- New test project `Meridian.QuantScript.Tests`
 
 **Out of Scope:**
 - Live/streaming data in scripts (scripts operate on locally-stored historical data only)
@@ -25,7 +25,7 @@
 
 **Assumptions:**
 - Locally collected JSONL data exists under the configured `DataRoot` path; scripts that request data for dates with no local data will receive empty series with a console warning
-- `BacktestMetricsEngine` remains `internal` — `MarketDataCollector.QuantScript` references the `MarketDataCollector.Backtesting` project (not only the SDK) to access metrics
+- `BacktestMetricsEngine` remains `internal` — `Meridian.QuantScript` references the `Meridian.Backtesting` project (not only the SDK) to access metrics
 - `Skender.Stock.Indicators` v2.7.1 already in CPM — reused for SMA/EMA/RSI/MACD/Bollinger
 - `Microsoft.CodeAnalysis.CSharp` v5.0.0 already in CPM — `Microsoft.CodeAnalysis.CSharp.Scripting` added at the same version
 - Scripts run in-process; isolation is achieved via `CancellationToken` + timeout, not AppDomain (not available in .NET Core)
@@ -38,7 +38,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  MarketDataCollector.Wpf                                                    │
+│  Meridian.Wpf                                                    │
 │                                                                             │
 │  ┌──────────────────────┐      commands/bindings      ┌─────────────────┐  │
 │  │  QuantScriptPage.xaml│ ◄──────────────────────────►│QuantScriptVM    │  │
@@ -49,7 +49,7 @@
 └───────────────────────────────────────────────────────────────┼───────────┘
                                                                  │
                               ┌──────────────────────────────────▼───────────┐
-                              │  MarketDataCollector.QuantScript              │
+                              │  Meridian.QuantScript              │
                               │                                               │
                               │  ┌─────────────┐   ┌──────────────────────┐ │
                               │  │ScriptRunner  │──►│QuantScriptGlobals    │ │
@@ -74,14 +74,14 @@
                               └─────────────────────┼──────────────────────-─┘
                                                     │ reads
               ┌─────────────────────────────────────┼────────────────────────┐
-              │  MarketDataCollector.Application /   │                        │
-              │  MarketDataCollector.Storage         │                        │
+              │  Meridian.Application /   │                        │
+              │  Meridian.Storage         │                        │
               │                                      │                        │
               │  HistoricalDataQueryService ◄────────┘                        │
               │  JsonlMarketDataStore                                         │
               └───────────────────────────────────────────────────────────────┘
               ┌───────────────────────────────────────────────────────────────┐
-              │  MarketDataCollector.Backtesting                              │
+              │  Meridian.Backtesting                              │
               │                                                               │
               │  BacktestEngine.RunAsync(...)                                 │
               │  BacktestMetricsEngine.Compute(...)                           │
@@ -128,8 +128,8 @@
 ### 3.1 Core Series Types
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/PriceSeries.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/PriceSeries.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// An ordered, immutable OHLCV price series for a single symbol.
@@ -157,8 +157,8 @@ public sealed record PriceBar(
 ```
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/ReturnSeries.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/ReturnSeries.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// An ordered series of per-period returns (arithmetic or log).
@@ -232,8 +232,8 @@ public enum ReturnKind { Arithmetic, Log, Cumulative, Rolling, DrawdownSeries, R
 ```
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/PriceSeriesExtensions.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/PriceSeriesExtensions.cs
+namespace Meridian.QuantScript.Api;
 
 public static class PriceSeriesExtensions
 {
@@ -254,8 +254,8 @@ public static class PriceSeriesExtensions
 ### 3.2 Technical Indicator Extensions
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/TechnicalSeriesExtensions.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/TechnicalSeriesExtensions.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// Technical indicator extension methods on PriceSeries.
@@ -279,8 +279,8 @@ public static class TechnicalSeriesExtensions
 ### 3.3 Data Access
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/IQuantDataContext.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/IQuantDataContext.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// Async data access contract; implemented by QuantDataContext which delegates to
@@ -312,8 +312,8 @@ public sealed record ScriptOrderBook(
 ```
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/DataProxy.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/DataProxy.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// Synchronous façade over IQuantDataContext for ergonomic script use.
@@ -338,8 +338,8 @@ public sealed class DataProxy(IQuantDataContext context, Func<CancellationToken>
 ### 3.4 Portfolio Tools
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/PortfolioBuilder.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/PortfolioBuilder.cs
+namespace Meridian.QuantScript.Api;
 
 public static class PortfolioBuilder
 {
@@ -387,8 +387,8 @@ public sealed class PortfolioResult
 ### 3.5 Backtesting Proxy
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/BacktestProxy.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/BacktestProxy.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// Fluent backtest builder for use inside scripts. Adapts lambda callbacks to
@@ -424,8 +424,8 @@ public sealed class BacktestProxy(BacktestEngine engine, QuantScriptOptions opti
 ### 3.6 Plotting
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Plotting/PlotQueue.cs
-namespace MarketDataCollector.QuantScript.Plotting;
+// File: src/Meridian.QuantScript/Plotting/PlotQueue.cs
+namespace Meridian.QuantScript.Plotting;
 
 /// <summary>
 /// Thread-safe unbounded queue of plot requests produced by scripts and
@@ -469,8 +469,8 @@ public enum PlotType
 ### 3.7 Compilation Pipeline
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Compilation/IQuantScriptCompiler.cs
-namespace MarketDataCollector.QuantScript.Compilation;
+// File: src/Meridian.QuantScript/Compilation/IQuantScriptCompiler.cs
+namespace Meridian.QuantScript.Compilation;
 
 public interface IQuantScriptCompiler
 {
@@ -502,8 +502,8 @@ public sealed record ParameterDescriptor(
 ```
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Compilation/IScriptRunner.cs
-namespace MarketDataCollector.QuantScript.Compilation;
+// File: src/Meridian.QuantScript/Compilation/IScriptRunner.cs
+namespace Meridian.QuantScript.Compilation;
 
 public interface IScriptRunner
 {
@@ -527,8 +527,8 @@ public sealed record ScriptRunResult(
 ### 3.8 Script Globals
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Compilation/QuantScriptGlobals.cs
-namespace MarketDataCollector.QuantScript.Compilation;
+// File: src/Meridian.QuantScript/Compilation/QuantScriptGlobals.cs
+namespace Meridian.QuantScript.Compilation;
 
 /// <summary>
 /// Injected as the Roslyn script globals object. All members are visible as top-level
@@ -571,8 +571,8 @@ public sealed class QuantScriptGlobals
 ### 3.9 Script Parameter Attribute
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/Api/ScriptParamAttribute.cs
-namespace MarketDataCollector.QuantScript.Api;
+// File: src/Meridian.QuantScript/Api/ScriptParamAttribute.cs
+namespace Meridian.QuantScript.Api;
 
 /// <summary>
 /// Marks a top-level variable declaration in a .csx script as a user-configurable parameter.
@@ -592,8 +592,8 @@ public sealed class ScriptParamAttribute(string label) : Attribute
 ### 3.10 Configuration
 
 ```csharp
-// File: src/MarketDataCollector.QuantScript/QuantScriptOptions.cs
-namespace MarketDataCollector.QuantScript;
+// File: src/Meridian.QuantScript/QuantScriptOptions.cs
+namespace Meridian.QuantScript;
 
 public sealed class QuantScriptOptions
 {
@@ -642,7 +642,7 @@ public sealed class QuantScriptOptions
 
 ### 4.1 QuantDataContext
 
-**Namespace:** `MarketDataCollector.QuantScript.Api`
+**Namespace:** `Meridian.QuantScript.Api`
 **Type:** `sealed class QuantDataContext : IQuantDataContext`
 **Lifetime:** Singleton
 
@@ -667,7 +667,7 @@ public QuantDataContext(
 
 ### 4.2 RoslynScriptCompiler
 
-**Namespace:** `MarketDataCollector.QuantScript.Compilation`
+**Namespace:** `Meridian.QuantScript.Compilation`
 **Type:** `sealed class RoslynScriptCompiler : IQuantScriptCompiler`
 **Lifetime:** Singleton
 
@@ -693,17 +693,17 @@ private readonly ConcurrentDictionary<string, Script<object>> _cache = new();
 **Concurrency Model:** `ConcurrentDictionary` for cache; compilation itself is `await`ed on the caller's thread.
 
 **Script References added to ScriptOptions:**
-- `MarketDataCollector.QuantScript`
-- `MarketDataCollector.Backtesting`
-- `MarketDataCollector.Backtesting.Sdk`
-- `MarketDataCollector.Contracts`
+- `Meridian.QuantScript`
+- `Meridian.Backtesting`
+- `Meridian.Backtesting.Sdk`
+- `Meridian.Contracts`
 - `Skender.Stock.Indicators`
 
 ---
 
 ### 4.3 ScriptRunner
 
-**Namespace:** `MarketDataCollector.QuantScript.Compilation`
+**Namespace:** `Meridian.QuantScript.Compilation`
 **Type:** `sealed class ScriptRunner : IScriptRunner`
 **Lifetime:** Scoped (one per UI session is acceptable; Singleton also works since state is per-run)
 
@@ -734,7 +734,7 @@ public ScriptRunner(
 
 ### 4.4 PlotQueue
 
-**Namespace:** `MarketDataCollector.QuantScript.Plotting`
+**Namespace:** `Meridian.QuantScript.Plotting`
 **Type:** `sealed class PlotQueue : IDisposable`
 **Lifetime:** Singleton (shared between `ScriptRunner` producer and `QuantScriptViewModel` consumer)
 
@@ -750,7 +750,7 @@ private readonly Channel<PlotRequest> _channel =
 
 ### 4.5 StatisticsEngine
 
-**Namespace:** `MarketDataCollector.QuantScript.Api`
+**Namespace:** `Meridian.QuantScript.Api`
 **Type:** `internal static class StatisticsEngine`
 
 **Responsibilities:** Pure math. All statistical calculations used by `ReturnSeries` instance methods delegate here. No DI, no I/O.
@@ -780,7 +780,7 @@ internal static (IReadOnlyList<double> a, IReadOnlyList<double> b)
 
 ### 4.6 LambdaBacktestStrategy (internal adapter)
 
-**Namespace:** `MarketDataCollector.QuantScript.Api`
+**Namespace:** `Meridian.QuantScript.Api`
 **Type:** `internal sealed class LambdaBacktestStrategy : IBacktestStrategy`
 
 Bridges `BacktestProxy`'s captured lambdas to `IBacktestStrategy`. Each optional callback defaults to a no-op. `Name` property returns `"ScriptStrategy"`.
@@ -789,7 +789,7 @@ Bridges `BacktestProxy`'s captured lambdas to `IBacktestStrategy`. Each optional
 
 ### 4.7 QuantScriptViewModel
 
-**Namespace:** `MarketDataCollector.Wpf.ViewModels`
+**Namespace:** `Meridian.Wpf.ViewModels`
 **Type:** `sealed class QuantScriptViewModel : BindableBase`
 **Lifetime:** Singleton (registered in WPF DI)
 
@@ -948,7 +948,7 @@ Script source:
 **Key XAML structure:**
 
 ```xml
-<Page x:Class="MarketDataCollector.Wpf.Views.QuantScriptPage"
+<Page x:Class="Meridian.Wpf.Views.QuantScriptPage"
       xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
       xmlns:scottplot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
 
@@ -1166,16 +1166,16 @@ Script source:
 
 ### Phase 1: Foundation
 
-- [ ] Create `src/MarketDataCollector.QuantScript/MarketDataCollector.QuantScript.csproj`
-  - Target `net9.0-windows`; reference `MarketDataCollector.Backtesting`, `MarketDataCollector.Backtesting.Sdk`, `MarketDataCollector.Application`, `MarketDataCollector.Storage`, `MarketDataCollector.Contracts`
+- [ ] Create `src/Meridian.QuantScript/Meridian.QuantScript.csproj`
+  - Target `net9.0-windows`; reference `Meridian.Backtesting`, `Meridian.Backtesting.Sdk`, `Meridian.Application`, `Meridian.Storage`, `Meridian.Contracts`
   - PackageReference (no version): `Microsoft.CodeAnalysis.CSharp.Scripting`, `Skender.Stock.Indicators`
 - [ ] Add `Microsoft.CodeAnalysis.CSharp.Scripting` version `5.0.0` to `Directory.Packages.props` (same version as existing `Microsoft.CodeAnalysis.CSharp`)
 - [ ] Add `AvalonEdit` version `6.3.0.90` to `Directory.Packages.props`
 - [ ] Add `ScottPlot.WPF` version `5.0.55` to `Directory.Packages.props`
-- [ ] Add `QuantScript` project to `MarketDataCollector.sln`
+- [ ] Add `QuantScript` project to `Meridian.sln`
 - [ ] Add `QuantScriptOptions` class and register `services.Configure<QuantScriptOptions>` in `ServiceCompositionRoot` or WPF DI setup
 - [ ] Add `QuantScript` section to `config/appsettings.json` with defaults
-- [ ] Create test project `tests/MarketDataCollector.QuantScript.Tests/`; add to solution
+- [ ] Create test project `tests/Meridian.QuantScript.Tests/`; add to solution
 
 ### Phase 2: Core API (QuantScript library)
 
@@ -1216,7 +1216,7 @@ Script source:
 - [ ] Add `QuantScriptPage` entry to `Views/Pages.cs` enum
 - [ ] Register `QuantScriptPage` in `NavigationService` mapping
 - [ ] Add navigation item to `MainWindow.xaml` or `MainPage.xaml` sidebar
-- [ ] Add `AvalonEdit` and `ScottPlot.WPF` PackageReferences to `MarketDataCollector.Wpf.csproj`
+- [ ] Add `AvalonEdit` and `ScottPlot.WPF` PackageReferences to `Meridian.Wpf.csproj`
 - [ ] Implement `PlotViewModel → WpfPlot` rendering in `QuantScriptPage.xaml.cs` code-behind (ScottPlot WpfPlot requires imperative API calls; use `Loaded` event on each plot control)
 - [ ] Implement `ConsoleColorConverter` (value converter: `ConsoleEntryKind → Brush`)
 
@@ -1234,7 +1234,7 @@ Script source:
 ### Phase 6: Wrap-up
 
 - [ ] Verify `appsettings.json` and `appsettings.sample.json` have `QuantScript` section
-- [ ] Add `MarketDataCollector.QuantScript` and its test project to `MarketDataCollector.sln`
+- [ ] Add `Meridian.QuantScript` and its test project to `Meridian.sln`
 - [ ] Check ADR compliance: `QuantDataContext` wraps async storage correctly per ADR-004; `PlotQueue` uses bounded channel pattern per ADR-013 (unbounded is justified — document exception)
 - [ ] Add `[ImplementsAdr("ADR-004", "All async data access methods support CancellationToken")]` to `IQuantDataContext`
 - [ ] Add XML doc comments to all public interfaces and classes

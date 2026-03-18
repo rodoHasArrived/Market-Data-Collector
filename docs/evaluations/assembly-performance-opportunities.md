@@ -250,7 +250,7 @@ calls at most (wrap-around case). The result list can reuse a thread-local or po
 array passed in by the caller.
 
 **For `DrainBySymbol`**: pre-intern symbols using `SymbolTable` (already in
-`src/MarketDataCollector.Core/Performance/SymbolTable.cs`) so comparison becomes `int == int`.
+`src/Meridian.Core/Performance/SymbolTable.cs`) so comparison becomes `int == int`.
 Replace the two-list reconstruction pattern with an in-place partition using `List<T>.RemoveAll`
 or a single-copy write into a pooled array - eliminating one allocation and one full-list copy.
 
@@ -345,7 +345,7 @@ would come from reducing contention or lock granularity, not from SIMD.
 - Gate fast paths with runtime CPU feature detection (`Avx2.IsSupported`, `AdvSimd.IsSupported`)
   and always keep a scalar fallback.
 - Benchmark with realistic files and symbol mixes - use the existing `BenchmarkDotNet` harness
-  in `benchmarks/MarketDataCollector.Benchmarks/` - before and after each change.
+  in `benchmarks/Meridian.Benchmarks/` - before and after each change.
 - Adopt the profile-first rule: only optimize code confirmed hot by sampling/tracing. Most I/O
   paths in this repository are I/O-bound, not CPU-bound; measure before assuming otherwise.
 
@@ -552,7 +552,7 @@ instead of `_samples[i]`, which is slightly more complex but eliminates all
 
 ### D) `DrainBySymbol` with pre-interned symbols and single allocation
 
-This change uses `SymbolTable` (already in `src/MarketDataCollector.Core/Performance/`) to
+This change uses `SymbolTable` (already in `src/Meridian.Core/Performance/`) to
 replace string equality with integer equality on the hot path.
 
 ```csharp
@@ -620,7 +620,7 @@ calling `FindNextNewlineScalar` directly.
 
 ### F) Benchmark harness additions
 
-Extend the existing `BenchmarkDotNet` projects in `benchmarks/MarketDataCollector.Benchmarks/`
+Extend the existing `BenchmarkDotNet` projects in `benchmarks/Meridian.Benchmarks/`
 with:
 
 - `FindNextNewline`: scalar vs `SearchValues` vs SSE2 vs AVX2 across 1 KB / 64 KB / 4 MB chunks.

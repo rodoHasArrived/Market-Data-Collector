@@ -4,7 +4,7 @@
  *
  * Usage: node scripts/generate-icons.mjs
  *
- * Generates the following icons in src/MarketDataCollector.Uwp/Assets/:
+ * Generates the following icons in src/Meridian.Uwp/Assets/:
  * - Square44x44Logo.png (44x44)
  * - Square150x150Logo.png (150x150)
  * - StoreLogo.png (50x50)
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..', '..');
-const assetsDir = join(projectRoot, 'src', 'MarketDataCollector.Uwp', 'Assets');
+const assetsDir = join(projectRoot, 'src', 'Meridian.Uwp', 'Assets');
 const svgPath = join(assetsDir, 'AppIcon.svg');
 
 // Icon sizes required for UWP apps

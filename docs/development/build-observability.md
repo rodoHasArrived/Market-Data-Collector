@@ -79,7 +79,7 @@ Each event follows the schema below, stored in `build-events.jsonl`:
   "event_id": "uuid",
   "timestamp": "2026-01-08T12:34:56.789Z",
   "phase": "restore|build|test|custom",
-  "project": "src/MarketDataCollector/MarketDataCollector.csproj",
+  "project": "src/Meridian/Meridian.csproj",
   "event_type": "started|completed|failed|warning|skipped",
   "duration_ms": 1234,
   "context": {"key": "value"},

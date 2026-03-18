@@ -1,8 +1,8 @@
 ---
 name: mdc-brainstorm
 description: >
-  Brainstorming, ideation, and creative feature exploration skill for the MarketDataCollector project.
-  Use this skill whenever the user wants to generate new ideas, features, or improvements for MarketDataCollector,
+  Brainstorming, ideation, and creative feature exploration skill for the Meridian project.
+  Use this skill whenever the user wants to generate new ideas, features, or improvements for Meridian,
   or when they ask "what could we add", "how could we improve", "what would be valuable", "what features should we build",
   or any variant of creative/generative thinking about the project. Also trigger when the user describes a pain point,
   a user persona (hobbyist, academic, institutional), or a domain problem (latency, data quality, accessibility,
@@ -13,9 +13,9 @@ description: >
   next steps.
 ---
 
-# MarketDataCollector — Brainstorming & Ideation Skill
+# Meridian — Brainstorming & Ideation Skill
 
-Generate high-value, implementable ideas for the MarketDataCollector platform. Every idea should feel like a natural extension of the program — something that makes the existing experience richer, clearer, and more capable, not a bolt-on afterthought.
+Generate high-value, implementable ideas for the Meridian platform. Every idea should feel like a natural extension of the program — something that makes the existing experience richer, clearer, and more capable, not a bolt-on afterthought.
 
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md) — authoritative stats, provider list, key abstraction file paths, storage design, ADR table. Read this before generating ideas that reference specific classes, interfaces, or provider names.
 
@@ -60,7 +60,7 @@ The best ideas for MDC aren't isolated features. They're extensions that **ampli
 
 ## Project Context
 
-**What MarketDataCollector is:**
+**What Meridian is:**
 A provider-agnostic .NET 9 / C# 13 platform for real-time and historical market data collection. Streams from Interactive Brokers TWS, Alpaca Markets, and (planned) 90+ providers via StockSharp. Sub-2ms event pipeline, JSONL storage, WebSocket + REST APIs, OpenTelemetry observability, WPF desktop app + web dashboard.
 
 **Tech stack:** C# 13 (infrastructure), F# (domain models), planned C++ (ultra-low-latency hot paths), .NET 9, WPF (desktop UI, migrated from UWP), Docker, Prometheus/Grafana, OpenTelemetry, Bounded Channels, WAL storage, JSONL → Parquet (planned), GitHub Actions CI/CD.
@@ -158,7 +158,7 @@ Write each idea as a **natural narrative**, not a form to fill out. The reader s
 
 **What every idea must include** (woven into prose, not as labeled fields):
 
-- **The anchor:** What existing MDC capability does this extend or complement? Reference real file paths from `../_shared/project-context.md` where helpful (e.g., "extends `IStorageSink` at `src/MarketDataCollector.Storage/Interfaces/IStorageSink.cs`").
+- **The anchor:** What existing MDC capability does this extend or complement? Reference real file paths from `../_shared/project-context.md` where helpful (e.g., "extends `IStorageSink` at `src/Meridian.Storage/Interfaces/IStorageSink.cs`").
 - **The user moment:** What does the user see, click, or experience? Be specific — describe a screen, a notification, an interaction, not just a backend change.
 - **The implementation shape:** Key technical approach — interfaces, patterns, data flow. Enough that a developer could start scoping.
 - **The tradeoffs:** What's hard? What could go wrong? What does this cost in complexity?

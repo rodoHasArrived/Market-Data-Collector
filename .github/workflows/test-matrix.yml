@@ -65,17 +65,17 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
+        run: dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Build
         shell: bash
         run: |
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
+          dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Run C# unit tests
         shell: bash
         run: |
-          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+          dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
             -c Release \
             --no-build \
             --verbosity minimal \
@@ -88,7 +88,7 @@ jobs:
       - name: Run F# unit tests
         shell: bash
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+          dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj \
             -c Release \
             --no-build \
             --verbosity minimal \
@@ -142,19 +142,19 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
+        run: dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Build
         shell: bash
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
+          dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Run C# unit tests
         shell: bash
         run: |
-          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+          dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
             -c Release \
             --no-build \
             --verbosity minimal \
@@ -168,7 +168,7 @@ jobs:
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+          dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj \
             -c Release \
             --no-build \
             --verbosity minimal \

@@ -22,8 +22,8 @@ This analysis identified **significant duplicate code patterns** across the Mark
 ## 1. Domain Model Duplication (Critical)
 
 ### Location
-- `src/MarketDataCollector/Domain/Models/` (12 files)
-- `src/MarketDataCollector.Contracts/Domain/Models/` (12 files)
+- `src/Meridian/Domain/Models/` (12 files)
+- `src/Meridian.Contracts/Domain/Models/` (12 files)
 
 ### Affected Models
 | Model | Domain Version | Contracts Version | Differences |
@@ -64,9 +64,9 @@ public sealed record Trade : MarketEventPayload
 ```
 
 ### Recommendation
-**Consolidate to `MarketDataCollector.Contracts`** as the single source of truth:
+**Consolidate to `Meridian.Contracts`** as the single source of truth:
 1. Delete `Domain/Models/*.cs` duplicates
-2. Update imports throughout `MarketDataCollector` to use `Contracts.Domain.Models`
+2. Update imports throughout `Meridian` to use `Contracts.Domain.Models`
 3. Keep `Domain/` folder for domain-specific logic not shared externally
 
 ---
@@ -74,8 +74,8 @@ public sealed record Trade : MarketEventPayload
 ## 2. HTTP Client Configuration Duplication (High)
 
 ### Location
-- `src/MarketDataCollector/Infrastructure/Http/HttpClientConfiguration.cs` (403 lines)
-- `src/MarketDataCollector.Uwp/Services/HttpClientConfiguration.cs` (290 lines)
+- `src/Meridian/Infrastructure/Http/HttpClientConfiguration.cs` (403 lines)
+- `src/Meridian.Uwp/Services/HttpClientConfiguration.cs` (290 lines)
 
 ### Duplicate Components
 
@@ -88,9 +88,9 @@ public sealed record Trade : MarketEventPayload
 | `HttpClientFactoryProvider` | lines 357-402 | lines 226-289 | 80% identical |
 
 ### Recommendation
-Extract shared HTTP utilities to `MarketDataCollector.Contracts`:
+Extract shared HTTP utilities to `Meridian.Contracts`:
 ```
-MarketDataCollector.Contracts/
+Meridian.Contracts/
 ├── Http/
 │   ├── SharedHttpClientNames.cs    # Common constants
 │   ├── ResiliencePolicies.cs       # Retry, circuit breaker policies
@@ -207,7 +207,7 @@ Both implement identical lock-based buffer patterns.
 ## 5. UWP Service Wrapper Duplication (Medium)
 
 ### Scope
-59 service files in `src/MarketDataCollector.Uwp/Services/`
+59 service files in `src/Meridian.Uwp/Services/`
 
 ### Notable Duplications
 
@@ -276,8 +276,8 @@ Both implement identical lock-based buffer patterns.
 ## 8. Files Requiring Immediate Review
 
 **Critical Priority:**
-- [x] `src/MarketDataCollector/Domain/Models/*.cs` - ✅ Consolidated (only 4 unique models remain)
-- [ ] `src/MarketDataCollector.Uwp/Services/HttpClientConfiguration.cs` (consolidate)
+- [x] `src/Meridian/Domain/Models/*.cs` - ✅ Consolidated (only 4 unique models remain)
+- [ ] `src/Meridian.Uwp/Services/HttpClientConfiguration.cs` (consolidate)
 
 **High Priority:**
 - [x] All backfill providers in `Infrastructure/Providers/Backfill/` - ✅ Migrated to BaseHistoricalDataProvider
@@ -294,14 +294,14 @@ Both implement identical lock-based buffer patterns.
 
 ### Cross-Project Dependencies
 ```
-MarketDataCollector.Contracts  <- Primary domain models (should be single source)
+Meridian.Contracts  <- Primary domain models (should be single source)
     ↑
-MarketDataCollector           <- Main application
+Meridian           <- Main application
     ↑
-MarketDataCollector.Ui        <- Web dashboard
+Meridian.Ui        <- Web dashboard
 
-MarketDataCollector.Uwp       <- Desktop app (separate dependency graph)
-MarketDataCollector.FSharp    <- F# calculations
+Meridian.Uwp       <- Desktop app (separate dependency graph)
+Meridian.FSharp    <- F# calculations
 ```
 
 ### Issues Found
@@ -310,7 +310,7 @@ MarketDataCollector.FSharp    <- F# calculations
 3. **No shared base classes for providers** - repeated boilerplate
 
 ### Recommendation
-Establish `MarketDataCollector.Contracts` as the canonical source for:
+Establish `Meridian.Contracts` as the canonical source for:
 - All domain models
 - Shared HTTP utilities
 - Common interfaces
@@ -354,7 +354,7 @@ Establish `MarketDataCollector.Contracts` as the canonical source for:
 
 | Item | Solution | Files Changed |
 |------|----------|---------------|
-| UWP DTO duplication (~1,300 lines) | Shared source files from Contracts | `MarketDataCollector.Uwp.csproj`, `Models/SharedModelAliases.cs`, `Models/AppConfig.cs` |
+| UWP DTO duplication (~1,300 lines) | Shared source files from Contracts | `Meridian.Uwp.csproj`, `Models/SharedModelAliases.cs`, `Models/AppConfig.cs` |
 | UWP CredentialModels duplication | Deleted, now from Contracts | `Models/CredentialModels.cs` (deleted) |
 | DateRangeInfo conflict | Renamed to `TaskDateRange` | `Models/OfflineTrackingModels.cs` |
 

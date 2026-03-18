@@ -42,19 +42,19 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
-            artifact_name: MarketDataCollector
+            artifact_name: Meridian
             asset_extension: .tar.gz
           - os: windows-latest
             rid: win-x64
-            artifact_name: MarketDataCollector.exe
+            artifact_name: Meridian.exe
             asset_extension: .zip
           - os: macos-latest
             rid: osx-x64
-            artifact_name: MarketDataCollector
+            artifact_name: Meridian
             asset_extension: .tar.gz
           - os: macos-latest
             rid: osx-arm64
-            artifact_name: MarketDataCollector
+            artifact_name: Meridian
             asset_extension: .tar.gz
 
     steps:
@@ -69,7 +69,7 @@ jobs:
       - name: Publish Collector
         shell: bash
         run: |
-          dotnet publish src/MarketDataCollector/MarketDataCollector.csproj \
+          dotnet publish src/Meridian/Meridian.csproj \
             -c Release \
             -r ${{ matrix.rid }} \
             -o ./publish/collector \
@@ -82,7 +82,7 @@ jobs:
       - name: Publish UI
         shell: bash
         run: |
-          dotnet publish src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj \
+          dotnet publish src/Meridian.Ui/Meridian.Ui.csproj \
             -c Release \
             -r ${{ matrix.rid }} \
             -o ./publish/ui \
@@ -103,18 +103,18 @@ jobs:
         shell: bash
         run: |
           cd publish
-          tar -czvf ../MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }} .
+          tar -czvf ../Meridian-${{ matrix.rid }}${{ matrix.asset_extension }} .
 
       - name: Create archive (Windows)
         if: runner.os == 'Windows'
         run: |
-          Compress-Archive -Path publish/* -DestinationPath MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
+          Compress-Archive -Path publish/* -DestinationPath Meridian-${{ matrix.rid }}${{ matrix.asset_extension }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MarketDataCollector-${{ matrix.rid }}
-          path: MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
+          name: Meridian-${{ matrix.rid }}
+          path: Meridian-${{ matrix.rid }}${{ matrix.asset_extension }}
           retention-days: 30
 
   release:
@@ -140,10 +140,10 @@ jobs:
         uses: softprops/action-gh-release@v2.6.1
         with:
           files: |
-            artifacts/MarketDataCollector-linux-x64*
-            artifacts/MarketDataCollector-win-x64*
-            artifacts/MarketDataCollector-osx-x64*
-            artifacts/MarketDataCollector-osx-arm64*
+            artifacts/Meridian-linux-x64*
+            artifacts/Meridian-win-x64*
+            artifacts/Meridian-osx-x64*
+            artifacts/Meridian-osx-arm64*
           generate_release_notes: true
           draft: false
           prerelease: false

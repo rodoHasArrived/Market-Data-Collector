@@ -42,10 +42,10 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
+      run: dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
     - name: Check formatting
-      run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal
+      run: dotnet format Meridian.sln --verify-no-changes --verbosity normal
 
     - name: Formatting fix hint
       if: failure()

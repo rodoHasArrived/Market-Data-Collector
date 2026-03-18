@@ -1,5 +1,5 @@
 #!/bin/bash
-# MarketDataCollector - Cross-platform Single Executable Build Script
+# Meridian - Cross-platform Single Executable Build Script
 # Usage: ./publish.sh [platform] [project]
 # Examples:
 #   ./publish.sh                    # Build all platforms, all projects
@@ -21,8 +21,8 @@ OUTPUT_DIR="${OUTPUT_DIR:-./dist}"
 PLATFORMS=("win-x64" "win-arm64" "linux-x64" "linux-arm64" "osx-x64" "osx-arm64")
 
 # Projects
-COLLECTOR_PROJECT="src/MarketDataCollector/MarketDataCollector.csproj"
-UI_PROJECT="src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj"
+COLLECTOR_PROJECT="src/Meridian/Meridian.csproj"
+UI_PROJECT="src/Meridian.Ui/Meridian.Ui.csproj"
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,7 +48,7 @@ log_error() {
 }
 
 show_help() {
-    echo "MarketDataCollector - Single Executable Build Script"
+    echo "Meridian - Single Executable Build Script"
     echo ""
     echo "Usage: $0 [platform] [project]"
     echo ""
@@ -63,8 +63,8 @@ show_help() {
     echo ""
     echo "Projects:"
     echo "  all        Build both projects (default)"
-    echo "  collector  Build only MarketDataCollector"
-    echo "  ui         Build only MarketDataCollector.Ui"
+    echo "  collector  Build only Meridian"
+    echo "  ui         Build only Meridian.Ui"
     echo ""
     echo "Environment Variables:"
     echo "  VERSION        Version number (default: 1.0.0)"
@@ -111,7 +111,7 @@ publish_project() {
 create_package() {
     local rid="$1"
     local output_path="$OUTPUT_DIR/$rid"
-    local package_name="MarketDataCollector-$VERSION-$rid"
+    local package_name="Meridian-$VERSION-$rid"
 
     if [ -d "$output_path" ]; then
         log_info "Creating package for $rid..."
@@ -161,7 +161,7 @@ rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
 # Build projects
-log_info "Building MarketDataCollector v$VERSION ($CONFIGURATION)"
+log_info "Building Meridian v$VERSION ($CONFIGURATION)"
 log_info "Target platforms: ${PLATFORMS[*]}"
 log_info "Target projects: $TARGET_PROJECT"
 echo ""
@@ -170,11 +170,11 @@ for rid in "${PLATFORMS[@]}"; do
     log_info "=== Building for $rid ==="
 
     if [ "$TARGET_PROJECT" == "all" ] || [ "$TARGET_PROJECT" == "collector" ]; then
-        publish_project "$COLLECTOR_PROJECT" "$rid" "MarketDataCollector" "collector"
+        publish_project "$COLLECTOR_PROJECT" "$rid" "Meridian" "collector"
     fi
 
     if [ "$TARGET_PROJECT" == "all" ] || [ "$TARGET_PROJECT" == "ui" ]; then
-        publish_project "$UI_PROJECT" "$rid" "MarketDataCollector.Ui" "ui"
+        publish_project "$UI_PROJECT" "$rid" "Meridian.Ui" "ui"
     fi
 
     # Create package
@@ -193,15 +193,15 @@ echo ""
 if command -v tree &> /dev/null; then
     tree -L 3 "$OUTPUT_DIR"
 else
-    find "$OUTPUT_DIR" -type f -name "MarketDataCollector*" | head -20
+    find "$OUTPUT_DIR" -type f -name "Meridian*" | head -20
 fi
 
 echo ""
 log_info "To run the collector:"
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo "  $OUTPUT_DIR/linux-x64/collector/MarketDataCollector"
+    echo "  $OUTPUT_DIR/linux-x64/collector/Meridian"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "  $OUTPUT_DIR/osx-x64/collector/MarketDataCollector"
+    echo "  $OUTPUT_DIR/osx-x64/collector/Meridian"
 else
-    echo "  $OUTPUT_DIR/win-x64/collector/MarketDataCollector.exe"
+    echo "  $OUTPUT_DIR/win-x64/collector/Meridian.exe"
 fi

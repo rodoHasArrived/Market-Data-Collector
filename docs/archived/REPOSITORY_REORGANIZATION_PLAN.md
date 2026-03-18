@@ -30,9 +30,9 @@ The existing repository structure communicates a **layered architecture** (Appli
 | **Scheduling layer violation** | `Infrastructure/Providers/Backfill/Scheduling/` | Application-layer scheduling code resides in Infrastructure |
 | **StockSharp visibility** | `Infrastructure/Providers/StockSharp/` | 90+ data sources accessible via StockSharp, but only 5 files visible |
 | **AI assistant content scattered** | Root, `docs/`, `.github/` | CLAUDE.md, ai-assistants/, agents/, prompts/ are in 4 different locations |
-| **Test organization inconsistent** | `tests/MarketDataCollector.Tests/` | Some tests at root, some nested; no clear pattern |
+| **Test organization inconsistent** | `tests/Meridian.Tests/` | Some tests at root, some nested; no clear pattern |
 | **Build tooling fragmented** | `build-system/`, `scripts/`, `tools/`, root | Python, PowerShell, .NET, Node.js tooling scattered |
-| **UI concerns distributed** | Multiple locations | `Application/UI/`, `MarketDataCollector.Ui/`, `MarketDataCollector.Ui.Shared/` |
+| **UI concerns distributed** | Multiple locations | `Application/UI/`, `Meridian.Ui/`, `Meridian.Ui.Shared/` |
 | **wwwroot duplication** | Two locations | Both core project and UI project have `wwwroot/` |
 | **Documentation entropy** | `docs/` | Many placeholder folders (`uml/`, `diagrams/`, `docfx/`) with only README.md |
 
@@ -78,7 +78,7 @@ Market-Data-Collector/
 ├── global.json                       # (unchanged)
 ├── LICENSE                           # (unchanged)
 ├── Makefile                          # (unchanged)
-├── MarketDataCollector.sln           # (unchanged)
+├── Meridian.sln           # (unchanged)
 ├── package.json                      # (unchanged)
 ├── package-lock.json                 # (unchanged)
 └── README.md                         # (unchanged)
@@ -88,7 +88,7 @@ Market-Data-Collector/
 
 ```
 src/
-├── MarketDataCollector/                        # Core application
+├── Meridian/                        # Core application
 │   ├── Application/                            # Application layer
 │   │   ├── Backfill/                           # Backfill orchestration (unchanged)
 │   │   ├── Config/                             # Configuration (unchanged)
@@ -257,11 +257,11 @@ src/
 │   ├── wwwroot/                                # (unchanged - templates)
 │   └── Program.cs                              # Entry point (unchanged)
 │
-├── MarketDataCollector.Contracts/              # (unchanged)
-├── MarketDataCollector.FSharp/                 # (unchanged)
-├── MarketDataCollector.Ui/                     # (unchanged)
-├── MarketDataCollector.Ui.Shared/              # (unchanged)
-└── MarketDataCollector.Uwp/                    # (unchanged)
+├── Meridian.Contracts/              # (unchanged)
+├── Meridian.FSharp/                 # (unchanged)
+├── Meridian.Ui/                     # (unchanged)
+├── Meridian.Ui.Shared/              # (unchanged)
+└── Meridian.Uwp/                    # (unchanged)
 ```
 
 ### Build Tooling Structure (Proposed)
@@ -370,7 +370,7 @@ docs/
 
 ```
 tests/
-├── MarketDataCollector.Tests/
+├── Meridian.Tests/
 │   ├── Application/                            # NEW: Mirror Application layer
 │   │   ├── Backfill/                           # (MOVED from Backfill/)
 │   │   │   ├── ScheduledBackfillTests.cs
@@ -414,7 +414,7 @@ tests/
 │   │
 │   └── Serialization/                          # (unchanged)
 │
-└── MarketDataCollector.FSharp.Tests/           # (unchanged)
+└── Meridian.FSharp.Tests/           # (unchanged)
 ```
 
 ### GitHub Structure (Proposed)
@@ -449,7 +449,7 @@ tests/
 
 | Change | From | To |
 |--------|------|-----|
-| Create folder | - | `src/MarketDataCollector/Infrastructure/Providers/Streaming/` |
+| Create folder | - | `src/Meridian/Infrastructure/Providers/Streaming/` |
 | Move folder | `Infrastructure/Providers/Alpaca/` | `Infrastructure/Providers/Streaming/Alpaca/` |
 | Move folder | `Infrastructure/Providers/Polygon/` | `Infrastructure/Providers/Streaming/Polygon/` |
 | Move folder | `Infrastructure/Providers/NYSE/` | `Infrastructure/Providers/Streaming/NYSE/` |
@@ -469,7 +469,7 @@ tests/
 
 | Change | From | To |
 |--------|------|-----|
-| Create folder | - | `src/MarketDataCollector/Infrastructure/Providers/Historical/` |
+| Create folder | - | `src/Meridian/Infrastructure/Providers/Historical/` |
 | Move file | `Backfill/IHistoricalDataProvider.cs` | `Historical/IHistoricalDataProvider.cs` |
 | Move file | `Backfill/BaseHistoricalDataProvider.cs` | `Historical/BaseHistoricalDataProvider.cs` |
 | Move file | `Backfill/CompositeHistoricalDataProvider.cs` | `Historical/CompositeHistoricalDataProvider.cs` |
@@ -712,15 +712,15 @@ For each priority section:
 
 1. **Create destination folders first**
    ```bash
-   mkdir -p src/MarketDataCollector/Infrastructure/Providers/Streaming
-   mkdir -p src/MarketDataCollector/Infrastructure/Providers/Historical
+   mkdir -p src/Meridian/Infrastructure/Providers/Streaming
+   mkdir -p src/Meridian/Infrastructure/Providers/Historical
    # etc.
    ```
 
 2. **Use git mv for all moves** (preserves history)
    ```bash
-   git mv src/MarketDataCollector/Infrastructure/Providers/Alpaca \
-          src/MarketDataCollector/Infrastructure/Providers/Streaming/Alpaca
+   git mv src/Meridian/Infrastructure/Providers/Alpaca \
+          src/Meridian/Infrastructure/Providers/Streaming/Alpaca
    ```
 
 3. **Verify build after each priority**
@@ -762,12 +762,12 @@ The following files are correctly placed and should NOT be moved:
 | File/Folder | Reason |
 |-------------|--------|
 | `CLAUDE.md` (root) | Standard location for AI context |
-| `src/MarketDataCollector/Domain/` | Clean domain layer |
-| `src/MarketDataCollector/Storage/` | Well-organized storage layer |
-| `src/MarketDataCollector/Integrations/Lean/` | Appropriate location |
-| `src/MarketDataCollector.Contracts/` | Clean DTO project |
-| `src/MarketDataCollector.FSharp/` | Clean F# project |
-| `MarketDataCollector.sln` | Standard location |
+| `src/Meridian/Domain/` | Clean domain layer |
+| `src/Meridian/Storage/` | Well-organized storage layer |
+| `src/Meridian/Integrations/Lean/` | Appropriate location |
+| `src/Meridian.Contracts/` | Clean DTO project |
+| `src/Meridian.FSharp/` | Clean F# project |
+| `Meridian.sln` | Standard location |
 | `config/` | Standard location |
 | `deploy/` | Standard location |
 

@@ -58,7 +58,7 @@ Brainstorm → Roadmap → Blueprint (this agent) → Implementation → Code Re
 **File:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
 **Used by:** GitHub Copilot agents, Claude Code (`mdc-code-review` skill)
 
-Defines the canonical **7-lens code review framework** for the MarketDataCollector codebase:
+Defines the canonical **7-lens code review framework** for the Meridian codebase:
 
 | Lens | Focus Area | Key Checks |
 |------|-----------|------------|
@@ -95,7 +95,7 @@ Handles documentation maintenance and quality tasks:
 **Used by:** GitHub Copilot agents
 **Claude Code equivalent:** [`mdc-brainstorm`](../skills/README.md#mdc-brainstorm) skill
 
-Generates high-value, implementable ideas for the MarketDataCollector platform. Supports 11
+Generates high-value, implementable ideas for the Meridian platform. Supports 11
 brainstorm modes (Open Exploration, Problem-Focused, Persona-Focused, Domain-Focused, Competitive,
 Quick Wins, Architecture/Refactoring, User Growth/Adoption, Technical Debt, UX/Information Design,
 Skill Improvement). Produces a summary table + narrative ideas + synthesis with competitive signals.
@@ -206,7 +206,7 @@ and implementation checklists — grounded in MDC's actual stack.
 **Used by:** Claude Code
 **Copilot equivalent:** [`.github/agents/mdc-cleanup-agent.md`](../../../.github/agents/mdc-cleanup-agent.md)
 
-Cleanup specialist for the MarketDataCollector repository. Removes dead code, duplication,
+Cleanup specialist for the Meridian repository. Removes dead code, duplication,
 anti-patterns, and stale documentation across C# 13, F# 8, WPF, and .NET 9 source files —
 without changing observable behaviour. Covers 7 categories: dead code, anti-pattern correction,
 duplication consolidation, WPF code-behind cleanup, documentation cleanup, CPM compliance,
@@ -220,7 +220,7 @@ and ADR attribute cleanup.
 **Used by:** Claude Code
 **Copilot equivalent:** [`.github/agents/documentation-agent.md`](../../../.github/agents/documentation-agent.md)
 
-Documentation maintenance specialist for the MarketDataCollector repository. Keeps docs accurate,
+Documentation maintenance specialist for the Meridian repository. Keeps docs accurate,
 comprehensive, and up-to-date across the AI guidance system (`docs/ai/`), architecture docs,
 provider docs, developer guides, `CLAUDE.md`, and the `ai-known-errors.md` registry.
 

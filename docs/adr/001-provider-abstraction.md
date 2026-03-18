@@ -35,14 +35,14 @@ All providers must implement these interfaces, enabling provider-agnostic data c
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Streaming Interface | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` | Real-time data contract |
-| Historical Interface | `src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` | Historical data contract |
-| Alpaca Implementation | `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Streaming provider |
-| IB Implementation | `src/MarketDataCollector.Infrastructure/Adapters/InteractiveBrokers/IBMarketDataClient.cs` | Streaming provider |
-| Yahoo Finance | `src/MarketDataCollector.Infrastructure/Adapters/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | Historical provider |
-| Stooq | `src/MarketDataCollector.Infrastructure/Adapters/Stooq/StooqHistoricalDataProvider.cs` | Historical provider |
-| Composite Provider | `src/MarketDataCollector.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs` | Failover orchestration |
-| Interface Tests | `tests/MarketDataCollector.Tests/Infrastructure/` | Contract verification |
+| Streaming Interface | `src/Meridian.ProviderSdk/IMarketDataClient.cs` | Real-time data contract |
+| Historical Interface | `src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs` | Historical data contract |
+| Alpaca Implementation | `src/Meridian.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Streaming provider |
+| IB Implementation | `src/Meridian.Infrastructure/Adapters/InteractiveBrokers/IBMarketDataClient.cs` | Streaming provider |
+| Yahoo Finance | `src/Meridian.Infrastructure/Adapters/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | Historical provider |
+| Stooq | `src/Meridian.Infrastructure/Adapters/Stooq/StooqHistoricalDataProvider.cs` | Historical provider |
+| Composite Provider | `src/Meridian.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs` | Failover orchestration |
+| Interface Tests | `tests/Meridian.Tests/Infrastructure/` | Contract verification |
 
 ## Rationale
 

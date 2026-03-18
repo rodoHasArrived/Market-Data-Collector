@@ -173,7 +173,7 @@ See [`instructions/README.md`](instructions/README.md) for full rule details.
 | File | Applies To | Rules |
 |------|-----------|-------|
 | [`.github/instructions/csharp.instructions.md`](../../.github/instructions/csharp.instructions.md) | `src/**/*.cs` | 10 C# conventions |
-| [`.github/instructions/wpf.instructions.md`](../../.github/instructions/wpf.instructions.md) | `src/MarketDataCollector.Wpf/**` | 10 WPF/MVVM conventions |
+| [`.github/instructions/wpf.instructions.md`](../../.github/instructions/wpf.instructions.md) | `src/Meridian.Wpf/**` | 10 WPF/MVVM conventions |
 | [`.github/instructions/dotnet-tests.instructions.md`](../../.github/instructions/dotnet-tests.instructions.md) | `tests/**/*.cs` | 6 test conventions |
 | [`.github/instructions/docs.instructions.md`](../../.github/instructions/docs.instructions.md) | `**/*.md` | 5 documentation conventions |
 

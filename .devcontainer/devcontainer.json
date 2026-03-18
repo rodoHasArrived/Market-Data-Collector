@@ -18,9 +18,9 @@
     "DOTNET_GENERATE_ASPNET_CERTIFICATE": "false"
   },
 
-  "onCreateCommand": "dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal && npm ci --silent",
+  "onCreateCommand": "dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal && npm ci --silent",
 
-  "postCreateCommand": "cp -n config/appsettings.sample.json config/appsettings.json 2>/dev/null || true && ./build/scripts/hooks/install-hooks.sh && mkdir -p data logs && dotnet build MarketDataCollector.sln -c Debug --no-restore /p:EnableWindowsTargeting=true --verbosity quiet",
+  "postCreateCommand": "cp -n config/appsettings.sample.json config/appsettings.json 2>/dev/null || true && ./build/scripts/hooks/install-hooks.sh && mkdir -p data logs && dotnet build Meridian.sln -c Debug --no-restore /p:EnableWindowsTargeting=true --verbosity quiet",
 
   "forwardPorts": [8080],
   "portsAttributes": {
@@ -43,7 +43,7 @@
         "GitHub.copilot"
       ],
       "settings": {
-        "dotnet.defaultSolution": "MarketDataCollector.sln",
+        "dotnet.defaultSolution": "Meridian.sln",
         "omnisharp.enableRoslynAnalyzers": true,
         "editor.formatOnSave": true,
         "files.trimTrailingWhitespace": true,

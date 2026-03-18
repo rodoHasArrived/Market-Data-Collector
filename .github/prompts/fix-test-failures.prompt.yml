@@ -13,13 +13,13 @@ messages:
       - xUnit for test framework
       - FluentAssertions for assertions
       - Moq / NSubstitute for mocking
-      - Tests in tests/MarketDataCollector.Tests/ and tests/MarketDataCollector.FSharp.Tests/
+      - Tests in tests/Meridian.Tests/ and tests/Meridian.FSharp.Tests/
 
       ## Test Patterns
       - Arrange-Act-Assert structure
       - Mock external dependencies (providers, storage)
       - Test edge cases: null inputs, empty collections, boundary values
-      - Run tests: `dotnet test tests/MarketDataCollector.Tests`
+      - Run tests: `dotnet test tests/Meridian.Tests`
 
       ## Error Codes Found
       - `CS0118`
@@ -31,28 +31,28 @@ messages:
       - `CS0535`
 
       ## Failure Patterns
-      - `2026-03-18T07:51:02.8469865Z Failed!  - Failed:     5, Passed:  2841, Skipped:     0, Total:  2846, Duration: 12 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-18T07:50:40.4772560Z Failed!  - Failed:     4, Passed:  2842, Skipped:     0, Total:  2846, Duration: 21 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-18T07:50:49.1861437Z [xUnit.net 00:00:03.30]     MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [FAIL]`
-      - `2026-03-18T07:50:52.8685785Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
-      - `2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:52.8767803Z [xUnit.net 00:00:06.99]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
-      - `2026-03-18T07:50:52.8867031Z [xUnit.net 00:00:07.00]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [FAIL]`
-      - `2026-03-18T07:50:26.0226770Z [xUnit.net 00:00:07.55]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
-      - `2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:26.0593780Z [xUnit.net 00:00:07.59]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
+      - `2026-03-18T07:51:02.8469865Z Failed!  - Failed:     5, Passed:  2841, Skipped:     0, Total:  2846, Duration: 12 s - Meridian.Tests.dll (net9.0)`
+      - `2026-03-18T07:50:40.4772560Z Failed!  - Failed:     4, Passed:  2842, Skipped:     0, Total:  2846, Duration: 21 s - Meridian.Tests.dll (net9.0)`
+      - `2026-03-18T07:50:49.1861437Z [xUnit.net 00:00:03.30]     Meridian.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [FAIL]`
+      - `2026-03-18T07:50:52.8685785Z [xUnit.net 00:00:06.98]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
+      - `2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
+      - `2026-03-18T07:50:52.8767803Z [xUnit.net 00:00:06.99]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
+      - `2026-03-18T07:50:52.8867031Z [xUnit.net 00:00:07.00]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [FAIL]`
+      - `2026-03-18T07:50:26.0226770Z [xUnit.net 00:00:07.55]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
+      - `2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
+      - `2026-03-18T07:50:26.0593780Z [xUnit.net 00:00:07.59]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
 
       ## Failed Tests
-      - `2026-03-18T07:50:49.3521134Z   Failed MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [1 s]`
-      - `2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:52.8809429Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [10 ms]`
-      - `2026-03-18T07:50:52.8869656Z    at MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RotateWalAsync() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/WriteAheadLogFuzzTests.cs:line 319`
-      - `2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:26.0829760Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [17 ms]`
+      - `2026-03-18T07:50:49.3521134Z   Failed Meridian.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [1 s]`
+      - `2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
+      - `2026-03-18T07:50:52.8809429Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [10 ms]`
+      - `2026-03-18T07:50:52.8869656Z    at Meridian.Tests.Storage.WriteAheadLogFuzzTests.RotateWalAsync() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/Meridian.Tests/Storage/WriteAheadLogFuzzTests.cs:line 319`
+      - `2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
+      - `2026-03-18T07:50:26.0829760Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [17 ms]`
       - `2026-03-18T07:50:26.0932990Z   Error Message:`
-      - `MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed`
+      - `Meridian.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

@@ -109,15 +109,15 @@ make test-desktop-services   # Run desktop-focused tests (includes WPF service t
 - Works on Windows 7+
 - Simple .exe deployment
 - Direct assembly references (no WinRT limitations)
-- See [WPF README](src/MarketDataCollector.Wpf/README.md) for details
+- See [WPF README](src/Meridian.Wpf/README.md) for details
 
 **Installation:**
 ```bash
 # Build from source
-dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release
+dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release
 
 # Run
-dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+dotnet run --project src/Meridian.Wpf/Meridian.Wpf.csproj
 ```
 
 ---
@@ -158,12 +158,12 @@ make test-desktop-services
 ```
 
 **Test Projects:**
-- `tests/MarketDataCollector.Wpf.Tests` - 58 tests for WPF singleton services
+- `tests/Meridian.Wpf.Tests` - 58 tests for WPF singleton services
   - NavigationServiceTests (14 tests)
   - ConfigServiceTests (13 tests)
   - StatusServiceTests (13 tests)
   - ConnectionServiceTests (18 tests)
-- `tests/MarketDataCollector.Ui.Tests` - 71 tests for desktop UI services
+- `tests/Meridian.Ui.Tests` - 71 tests for desktop UI services
   - ApiClientServiceTests, BackfillServiceTests, FixtureDataServiceTests
   - FormValidationServiceTests, SystemHealthServiceTests, WatchlistServiceTests
   - BoundedObservableCollectionTests, CircularBufferTests
@@ -243,7 +243,7 @@ git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
 cd Market-Data-Collector
 
 # Run the interactive configuration wizard (recommended for new users)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+dotnet run --project src/Meridian/Meridian.csproj -- --wizard
 ```
 
 The wizard will:
@@ -258,13 +258,13 @@ If you have environment variables set, use quick auto-configuration:
 
 ```bash
 # Auto-detect providers from environment variables
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+dotnet run --project src/Meridian/Meridian.csproj -- --auto-config
 
 # Check what providers are available
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --detect-providers
+dotnet run --project src/Meridian/Meridian.csproj -- --detect-providers
 
 # Validate your API credentials
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --validate-credentials
+dotnet run --project src/Meridian/Meridian.csproj -- --validate-credentials
 ```
 
 ### Manual Setup
@@ -278,16 +278,16 @@ cd Market-Data-Collector
 cp config/appsettings.sample.json config/appsettings.json
 
 # Option 1: Launch the web dashboard (serves HTML + Prometheus + JSON status)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --ui --watch-config --http-port 8080
 
 # Run smoke test (no provider connectivity required)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 
 # Run self-tests
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
+dotnet run --project src/Meridian/Meridian.csproj -- --selftest
 
 # Historical backfill with overrides
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
+dotnet run --project src/Meridian/Meridian.csproj -- \
   --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL \
   --backfill-from 2024-01-01 --backfill-to 2024-01-05
 ```
@@ -355,7 +355,7 @@ Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabli
 - **Data Provider**: Custom `IDataProvider` implementation for JSONL files
 - **Sample Algorithms**: Ready-to-use examples for microstructure-aware trading
 
-See [`src/MarketDataCollector/Integrations/Lean/README.md`](src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
+See [`src/Meridian/Integrations/Lean/README.md`](src/Meridian/Integrations/Lean/README.md) for integration details and examples.
 
 ## Output Data
 
@@ -513,26 +513,26 @@ Market-Data-Collector/
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
 ├── src/
-│   ├── MarketDataCollector/             # Entry point, integrations, web UI server
-│   ├── MarketDataCollector.Application/ # Startup, config, services, pipeline, monitoring
-│   ├── MarketDataCollector.Core/        # Shared config models, exceptions, logging, serialization
-│   ├── MarketDataCollector.Domain/      # Business logic, collectors, events, models
-│   ├── MarketDataCollector.Infrastructure/ # Provider implementations, resilience, HTTP
-│   ├── MarketDataCollector.Storage/     # Data persistence, archival, export, packaging
-│   ├── MarketDataCollector.Contracts/   # Shared DTOs and API contracts
-│   ├── MarketDataCollector.ProviderSdk/ # Provider SDK interfaces and attributes
-│   ├── MarketDataCollector.FSharp/      # F# domain models and validation (12 files)
-│   ├── MarketDataCollector.Ui/          # Web dashboard
-│   ├── MarketDataCollector.Ui.Shared/   # Shared UI endpoint handlers
-│   ├── MarketDataCollector.Ui.Services/ # Shared UI service abstractions
-│   └── MarketDataCollector.Wpf/         # WPF desktop app (Windows)
+│   ├── Meridian/             # Entry point, integrations, web UI server
+│   ├── Meridian.Application/ # Startup, config, services, pipeline, monitoring
+│   ├── Meridian.Core/        # Shared config models, exceptions, logging, serialization
+│   ├── Meridian.Domain/      # Business logic, collectors, events, models
+│   ├── Meridian.Infrastructure/ # Provider implementations, resilience, HTTP
+│   ├── Meridian.Storage/     # Data persistence, archival, export, packaging
+│   ├── Meridian.Contracts/   # Shared DTOs and API contracts
+│   ├── Meridian.ProviderSdk/ # Provider SDK interfaces and attributes
+│   ├── Meridian.FSharp/      # F# domain models and validation (12 files)
+│   ├── Meridian.Ui/          # Web dashboard
+│   ├── Meridian.Ui.Shared/   # Shared UI endpoint handlers
+│   ├── Meridian.Ui.Services/ # Shared UI service abstractions
+│   └── Meridian.Wpf/         # WPF desktop app (Windows)
 ├── tests/                # C# and F# test projects (243 files)
-│   ├── MarketDataCollector.Tests/       # Core unit and integration tests
-│   ├── MarketDataCollector.FSharp.Tests/ # F# domain tests
-│   ├── MarketDataCollector.Wpf.Tests/   # WPF service tests (Windows)
-│   └── MarketDataCollector.Ui.Tests/    # Desktop UI service tests
+│   ├── Meridian.Tests/       # Core unit and integration tests
+│   ├── Meridian.FSharp.Tests/ # F# domain tests
+│   ├── Meridian.Wpf.Tests/   # WPF service tests (Windows)
+│   └── Meridian.Ui.Tests/    # Desktop UI service tests
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
-├── MarketDataCollector.sln
+├── Meridian.sln
 ├── Makefile              # Build automation (91 targets)
 └── CLAUDE.md             # AI assistant guide
 ```

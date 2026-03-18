@@ -25,8 +25,8 @@
   - `ResponseSchemaSnapshotTests` and `ResponseSchemaValidationTests` validate JSON schema structure (fields, types, required keys).
   - Provider message parsing tests for Polygon, NYSE, StockSharp.
 - **Key files:**
-  - `tests/MarketDataCollector.Tests/Integration/EndpointTests/*` (18 files)
-  - `tests/MarketDataCollector.Tests/Infrastructure/Adapters/*` (12 files)
+  - `tests/Meridian.Tests/Integration/EndpointTests/*` (18 files)
+  - `tests/Meridian.Tests/Infrastructure/Adapters/*` (12 files)
 
 ### Step 0.2 — Add temporary observability counters for migration ✅
 - **Status:** Complete.
@@ -34,7 +34,7 @@
   - `MigrationDiagnostics` static class with factory hit counts (streaming, backfill, symbol search), reconnect counters (attempts, successes, failures by provider), resubscribe counters, and registration counters.
   - `GetSnapshot()` returns immutable record for monitoring.
 - **Key files:**
-  - `src/MarketDataCollector.Core/Monitoring/MigrationDiagnostics.cs`
+  - `src/Meridian.Core/Monitoring/MigrationDiagnostics.cs`
 
 ---
 
@@ -48,7 +48,7 @@
   - Universal queries: `GetAllProviderMetadata()`, `GetProvider<T>()`, `GetProviders<T>()`, `GetBestAvailableProviderAsync<T>()`.
   - `IProviderMetadata` unified identity and capabilities contract.
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Adapters/Core/ProviderRegistry.cs`
+  - `src/Meridian.Infrastructure/Adapters/Core/ProviderRegistry.cs`
 
 ### Step 1.2 — Wire attribute-based discovery into registry (behind switch) ✅
 - **Status:** Complete.
@@ -59,8 +59,8 @@
   - `TryMapToDataSourceKind()` maps attribute IDs to `DataSourceKind` enum values.
   - Default: false (manual lambda registration preserved as fallback).
 - **Key files:**
-  - `src/MarketDataCollector.Core/Config/AppConfig.cs` (added `ProviderRegistryConfig`)
-  - `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs` (added discovery methods)
+  - `src/Meridian.Core/Config/AppConfig.cs` (added `ProviderRegistryConfig`)
+  - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs` (added discovery methods)
 
 ### Step 1.3 — Remove direct provider instantiation from host startup ✅
 - **Status:** Complete.
@@ -69,8 +69,8 @@
   - `ServiceCompositionRoot` is the single source of truth for DI registration.
   - `Program.cs` resolves providers through DI/registry, not `new` statements.
 - **Key files:**
-  - `src/MarketDataCollector.Application/Composition/HostStartup.cs`
-  - `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
+  - `src/Meridian.Application/Composition/HostStartup.cs`
+  - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
 ---
 
@@ -83,7 +83,7 @@
   - `IStorageSink` resolved as `CompositeSink` when Parquet enabled, otherwise `JsonlStorageSink`.
   - `IMarketEventPublisher` wraps `EventPipeline` via `PipelinePublisher`.
 - **Key files:**
-  - `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
+  - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
 ### Step 2.2 — Single config load path ✅
 - **Status:** Complete.
@@ -92,8 +92,8 @@
   - `Program.cs` uses `LoadConfigMinimal()` only for pre-DI logging initialization (justified).
   - All other config access goes through `ConfigStore.Load()` via DI.
 - **Key files:**
-  - `src/MarketDataCollector/Program.cs`
-  - `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
+  - `src/Meridian/Program.cs`
+  - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
 ---
 
@@ -108,7 +108,7 @@
   - Automatic reconnection with `MigrationDiagnostics` counter integration.
   - Clean `IAsyncDisposable` implementation.
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Adapters/Core/WebSocketProviderBase.cs` (new)
+  - `src/Meridian.Infrastructure/Adapters/Core/WebSocketProviderBase.cs` (new)
 
 ### Step 3.2 — Migrate Polygon reconnection to shared helper ✅
 - **Status:** Complete (partial migration).
@@ -117,7 +117,7 @@
   - Polygon still manages its own `ClientWebSocket` directly (required for protocol-specific handshake: sync message exchange for `WaitForConnectionMessage` and `Authenticate` before receive loop).
   - Full migration to `WebSocketProviderBase` deferred due to Polygon's sync handshake pattern (send auth → wait for response → then start receive loop).
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+  - `src/Meridian.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
 
 ### Step 3.3 — Migrate NYSE to base class ⏳ DEFERRED
 - **Status:** Deferred.
@@ -134,7 +134,7 @@
   - Removed `CalculateReconnectDelay()` method.
   - Reconnection now delegated to `WebSocketReconnectionHelper` which provides identical behavior (gated exponential backoff with jitter).
 - **Key files:**
-  - `src/MarketDataCollector.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+  - `src/Meridian.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
 
 ---
 
@@ -147,7 +147,7 @@
   - `DefaultEventMetrics` delegates to static `Metrics` class with `[MethodImpl(AggressiveInlining)]` for zero-allocation hot path.
   - `TracedEventMetrics` wraps `DefaultEventMetrics` for OpenTelemetry export.
 - **Key files:**
-  - `src/MarketDataCollector.Application/Monitoring/IEventMetrics.cs`
+  - `src/Meridian.Application/Monitoring/IEventMetrics.cs`
 
 ### Step 4.2 — Inject metrics into hot pipeline paths ✅
 - **Status:** Complete.
@@ -157,8 +157,8 @@
   - `DataQualityMonitoringService` accepts `IEventMetrics` via constructor.
   - DI registration in `ServiceCompositionRoot.AddPipelineServices()` with optional `TracedEventMetrics` wrapper.
 - **Key files:**
-  - `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`
-  - `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
+  - `src/Meridian.Application/Pipeline/EventPipeline.cs`
+  - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
 ---
 
@@ -172,7 +172,7 @@
   - 16 shared interfaces in `Ui.Services/Contracts/`: `IConfigService`, `IStatusService`, `IThemeService`, `IMessagingService`, `INotificationService`, `ILoggingService`, `ICredentialService`, `IAdminMaintenanceService`, `IArchiveHealthService`, `ISchemaService`, `IBackgroundTaskSchedulerService`, `IOfflineTrackingPersistenceService`, `IPendingOperationsQueueService`, `IWatchlistService`.
   - Shared types: `ConnectionState`, `ConnectionSettings`, `NavigationEntry`, `NavigationEventArgs`.
 - **Key files:**
-  - `src/MarketDataCollector.Ui.Services/Contracts/*`
+  - `src/Meridian.Ui.Services/Contracts/*`
 
 ### Step 5.2 — Move shared implementations where possible ✅
 - **Status:** Complete.
@@ -181,8 +181,8 @@
   - Template method pattern: base classes define algorithms, WPF overrides platform-specific methods.
   - WPF services delegate to base classes for state machines, polling loops, validation logic.
 - **Key files:**
-  - `src/MarketDataCollector.Ui.Services/Services/*Base.cs`
-  - `src/MarketDataCollector.Wpf/Services/*`
+  - `src/Meridian.Ui.Services/Services/*Base.cs`
+  - `src/Meridian.Wpf/Services/*`
 
 ---
 
@@ -196,8 +196,8 @@
   - `ConfigValidationHelper` deprecated static methods removed (Phase 7.1).
   - FluentValidation validators preserved: `AppConfigValidator`, `AlpacaOptionsValidator`, `StockSharpConfigValidator`, `StorageConfigValidator`, `SymbolConfigValidator`.
 - **Key files:**
-  - `src/MarketDataCollector.Application/Config/IConfigValidator.cs`
-  - `src/MarketDataCollector.Application/Config/ConfigValidationHelper.cs` (validators only)
+  - `src/Meridian.Application/Config/IConfigValidator.cs`
+  - `src/Meridian.Application/Config/ConfigValidationHelper.cs` (validators only)
 
 ---
 
@@ -210,7 +210,7 @@
   - Preserved all FluentValidation validator classes (`AppConfigValidator`, `AlpacaOptionsValidator`, etc.) as they're used by `ConfigValidationPipeline`.
   - Polygon reconnection logic consolidated to `WebSocketReconnectionHelper`.
 - **Key files:**
-  - `src/MarketDataCollector.Application/Config/ConfigValidationHelper.cs`
+  - `src/Meridian.Application/Config/ConfigValidationHelper.cs`
 
 ### Step 7.2 — Update architecture docs and ADRs ✅
 - **Status:** Complete.

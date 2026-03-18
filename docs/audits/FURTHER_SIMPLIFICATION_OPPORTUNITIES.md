@@ -60,8 +60,8 @@ For already-completed cleanup work, see [`CLEANUP_OPPORTUNITIES.md`](../archived
 
 | Service | File | Lines | Issue |
 |---------|------|-------|-------|
-| `StorageService` | `src/MarketDataCollector.Wpf/Services/StorageService.cs` | ~65 | Thin wrapper over `StorageServiceBase`; one added method is pure API mapping |
-| `SchemaService` | `src/MarketDataCollector.Wpf/Services/SchemaService.cs` | ~124 | Minimal override of `SchemaServiceBase`; only adds file path resolution |
+| `StorageService` | `src/Meridian.Wpf/Services/StorageService.cs` | ~65 | Thin wrapper over `StorageServiceBase`; one added method is pure API mapping |
+| `SchemaService` | `src/Meridian.Wpf/Services/SchemaService.cs` | ~124 | Minimal override of `SchemaServiceBase`; only adds file path resolution |
 
 ### Suggested Approach
 

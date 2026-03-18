@@ -83,5 +83,5 @@ This note expands on the data-quality goals for the collector so downstream user
 
 ## Governance and evolution
 * **Versioned schemas** ✅ — `SchemaVersionManager` tracks schema versions and coordinates migrations. `MarketEvent.SchemaVersion` tags every event.
-* **Contract tests** ✅ — `ContractVerificationService` validates provider implementations against canonical contracts. Integration endpoint tests in `tests/MarketDataCollector.Tests/Integration/` verify schema compliance.
+* **Contract tests** ✅ — `ContractVerificationService` validates provider implementations against canonical contracts. Integration endpoint tests in `tests/Meridian.Tests/Integration/` verify schema compliance.
 * **Config-driven rollout** ✅ — Canonicalization is enabled via `CanonicalizationConfig` with `PilotSymbols` list and `EnableDualWrite` flag. Operators can gradually roll out new normalization rules without disrupting existing pipelines.

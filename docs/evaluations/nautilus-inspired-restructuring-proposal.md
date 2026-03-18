@@ -133,9 +133,9 @@ Infrastructure/Adapters/
 **Remaining gaps vs. proposal:**
 - Per-provider `*Config.cs` and `*Factory.cs` files have **not** been created (see 1.3 and 1.5).
 - The `AlpacaSymbolSearchProviderRefactored.cs` and `FinnhubSymbolSearchProviderRefactored.cs` still carry the legacy `Refactored` suffix (see Section 5.1, Quick Win #1).
-- Namespaces now use `MarketDataCollector.Infrastructure.Adapters.<Vendor>` rather than the proposed `Providers.<Vendor>` — this is the canonical namespace going forward.
+- Namespaces now use `Meridian.Infrastructure.Adapters.<Vendor>` rather than the proposed `Providers.<Vendor>` — this is the canonical namespace going forward.
 
-**Namespace impact:** Internal references use `MarketDataCollector.Infrastructure.Adapters.*`. Public `IMarketDataClient` / `IHistoricalDataProvider` interfaces remain unchanged.
+**Namespace impact:** Internal references use `Meridian.Infrastructure.Adapters.*`. Public `IMarketDataClient` / `IHistoricalDataProvider` interfaces remain unchanged.
 
 ---
 
@@ -591,34 +591,34 @@ Keep a lightweight `ISecretProvider` interface for vault integration, but move t
 
 **nautilus_trader pattern:** While nautilus_trader doesn't use ArchUnit specifically, their strict module boundaries (no cross-adapter imports, no persistence importing from adapters) are enforced by Python's import system and CI checks.
 
-**Proposed enhancement:** Add an ArchUnitNET test class that enforces documented dependency rules. Update the `ProviderFactory` type reference in the loader to use `MarketDataCollector.Infrastructure.Adapters.Core.ProviderFactory` (reflecting the completed `Adapters/` migration from 1.1):
+**Proposed enhancement:** Add an ArchUnitNET test class that enforces documented dependency rules. Update the `ProviderFactory` type reference in the loader to use `Meridian.Infrastructure.Adapters.Core.ProviderFactory` (reflecting the completed `Adapters/` migration from 1.1):
 
 ```csharp
-// tests/MarketDataCollector.Tests/Architecture/LayerBoundaryTests.cs
+// tests/Meridian.Tests/Architecture/LayerBoundaryTests.cs
 public class LayerBoundaryTests
 {
     private static readonly Architecture Architecture =
         new ArchLoader().LoadAssemblies(
-            typeof(MarketDataCollector.Core.Config.AppConfig).Assembly,
-            typeof(MarketDataCollector.Domain.Collectors.TradeDataCollector).Assembly,
-            typeof(MarketDataCollector.Infrastructure.Adapters.Core.ProviderFactory).Assembly
+            typeof(Meridian.Core.Config.AppConfig).Assembly,
+            typeof(Meridian.Domain.Collectors.TradeDataCollector).Assembly,
+            typeof(Meridian.Infrastructure.Adapters.Core.ProviderFactory).Assembly
         ).Build();
 
     [Fact]
     public void Domain_Should_Not_Reference_Infrastructure()
     {
-        Types().That().ResideInNamespace("MarketDataCollector.Domain")
+        Types().That().ResideInNamespace("Meridian.Domain")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespace("MarketDataCollector.Infrastructure"))
+                Types().That().ResideInNamespace("Meridian.Infrastructure"))
             .Check(Architecture);
     }
 
     [Fact]
     public void Core_Should_Not_Reference_Application()
     {
-        Types().That().ResideInNamespace("MarketDataCollector.Core")
+        Types().That().ResideInNamespace("Meridian.Core")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespace("MarketDataCollector.Application"))
+                Types().That().ResideInNamespace("Meridian.Application"))
             .Check(Architecture);
     }
 
@@ -626,9 +626,9 @@ public class LayerBoundaryTests
     public void Providers_Should_Not_Cross_Reference()
     {
         // Alpaca should not reference Polygon internals, etc.
-        Types().That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Alpaca")
+        Types().That().ResideInNamespace("Meridian.Infrastructure.Adapters.Alpaca")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Polygon"))
+                Types().That().ResideInNamespace("Meridian.Infrastructure.Adapters.Polygon"))
             .Check(Architecture);
     }
 }
@@ -707,22 +707,22 @@ The phases below have been updated to reflect current implementation status as o
 
 **Before (4 separate locations):**
 ```
-src/MarketDataCollector.Application/Config/AlpacaOptions.cs            # config (still here)
-src/MarketDataCollector.Infrastructure/Providers/Streaming/Alpaca/     # streaming (old)
-src/MarketDataCollector.Infrastructure/Providers/Historical/Alpaca/    # backfill (old)
-src/MarketDataCollector.Infrastructure/Providers/SymbolSearch/Alpaca*  # search (old)
-src/MarketDataCollector.Infrastructure/Providers/Core/ProviderFactory.cs  # factory (old)
+src/Meridian.Application/Config/AlpacaOptions.cs            # config (still here)
+src/Meridian.Infrastructure/Providers/Streaming/Alpaca/     # streaming (old)
+src/Meridian.Infrastructure/Providers/Historical/Alpaca/    # backfill (old)
+src/Meridian.Infrastructure/Providers/SymbolSearch/Alpaca*  # search (old)
+src/Meridian.Infrastructure/Providers/Core/ProviderFactory.cs  # factory (old)
 ```
 
 **After (1 location for implementation, config still separate):**
 ```
-src/MarketDataCollector.Infrastructure/Adapters/Alpaca/
+src/Meridian.Infrastructure/Adapters/Alpaca/
 ├── AlpacaMarketDataClient.cs
 ├── AlpacaHistoricalDataProvider.cs
 └── AlpacaSymbolSearchProviderRefactored.cs   # rename pending (5.1)
 
-src/MarketDataCollector.Application/Config/AlpacaOptions.cs            # config (1.3 not yet done)
-src/MarketDataCollector.Infrastructure/Adapters/Core/ProviderFactory.cs # factory (1.5 not yet done)
+src/Meridian.Application/Config/AlpacaOptions.cs            # config (1.3 not yet done)
+src/Meridian.Infrastructure/Adapters/Core/ProviderFactory.cs # factory (1.5 not yet done)
 ```
 
 ### Before vs. After: Adding a New Provider
@@ -783,7 +783,7 @@ The following concrete issues were identified in the original analysis. Status r
 |-------|----------|--------|-------|
 | **Provider-specific options in `Core/Config/`** — `AlpacaOptions.cs`, `StockSharpConfig.cs` | Low | ❌ Open | See 1.3 |
 | **`ICredentialStore.cs` isolated** in `Application/Credentials/` | Low | ❌ Open | Separate from `Application/Config/Credentials/` |
-| **`Application/Http/` files still use `Application.UI` namespace** — directory renamed but namespaces not updated | Medium | ❌ Open | `ConfigStore.cs`, `BackfillCoordinator.cs`, `HtmlTemplates.cs`, etc. all declare `namespace MarketDataCollector.Application.UI` |
+| **`Application/Http/` files still use `Application.UI` namespace** — directory renamed but namespaces not updated | Medium | ❌ Open | `ConfigStore.cs`, `BackfillCoordinator.cs`, `HtmlTemplates.cs`, etc. all declare `namespace Meridian.Application.UI` |
 
 ### 5.3 Layer Boundary Violations
 
@@ -793,7 +793,7 @@ The following concrete issues were identified in the original analysis. Status r
 | **`IHistoricalDataProvider` and `ISymbolSearchProvider` defined in Infrastructure** instead of `ProviderSdk` | Medium | ❌ Open | In `Adapters/Core/` |
 | **`ImplementsAdrAttribute` in ProviderSdk** — used by all layers | Low | ❌ Open | |
 | **`Results/ErrorCode.cs` in Application** — lower layers can't use error codes without referencing Application | Medium | ❌ Open | |
-| **`MigrationDiagnostics.cs`** in `Core/Monitoring/` uses namespace `MarketDataCollector.Application.Monitoring` | Medium | ⚠️ Acknowledged | A comment in the file explains the namespace mismatch is intentional for consistency with other monitoring abstractions |
+| **`MigrationDiagnostics.cs`** in `Core/Monitoring/` uses namespace `Meridian.Application.Monitoring` | Medium | ⚠️ Acknowledged | A comment in the file explains the namespace mismatch is intentional for consistency with other monitoring abstractions |
 
 ### 5.4 Duplicate/Ambiguous Names
 
@@ -807,11 +807,11 @@ The following concrete issues were identified in the original analysis. Status r
 
 | Issue | Severity | Status | Notes |
 |-------|----------|--------|-------|
-| **Flat `namespace MarketDataCollector.Tests;`** in test files that live in subdirectories | Medium | ⚠️ Partial | Some files updated (e.g., `CompositeHistoricalDataProviderTests` uses `...Tests.Application.Backfill`); 5 backfill tests still use `MarketDataCollector.Tests.Backfill` |
+| **Flat `namespace Meridian.Tests;`** in test files that live in subdirectories | Medium | ⚠️ Partial | Some files updated (e.g., `CompositeHistoricalDataProviderTests` uses `...Tests.Application.Backfill`); 5 backfill tests still use `Meridian.Tests.Backfill` |
 | **`BackfillWorkerServiceTests.cs` tests Infrastructure code but lives in `Application/Backfill/`** | Medium | ❌ Open | |
 | **`BackfillProgressTrackerTests.cs` tests Infrastructure code but lives in `Application/Pipeline/`** | Medium | ❌ Open | |
 | **`CronExpressionParserTests.cs` tests `Core/Scheduling/` but lives in `Application/Services/`** | Low | ❌ Open | |
-| **5 backfill tests use old namespace `MarketDataCollector.Tests.Backfill`** | Low | ❌ Open | |
+| **5 backfill tests use old namespace `Meridian.Tests.Backfill`** | Low | ❌ Open | |
 | **`SymbolSearch/` tests not mirroring source path** | Low | ❌ Open | |
 
 ### 5.6 Other Structural Issues
@@ -830,10 +830,10 @@ The following concrete issues were identified in the original analysis. Status r
 Items still actionable with minimal risk, in priority order:
 
 1. **Rename `Refactored` suffix files** — `AlpacaSymbolSearchProviderRefactored.cs` → `AlpacaSymbolSearchProvider.cs`, same for Finnhub (2 files, zero API impact)
-2. **Fix namespace/folder mismatch in `Application/Http/`** — update `namespace MarketDataCollector.Application.UI` → `MarketDataCollector.Application.Http` across all files in that directory
+2. **Fix namespace/folder mismatch in `Application/Http/`** — update `namespace Meridian.Application.UI` → `Meridian.Application.Http` across all files in that directory
 3. **Fix double-nested `Core/Performance/Performance/`** — 1 `git mv`
 4. **Move orphaned `BackfillProgressTracker.cs`** — from `Adapters/Core/` root to `Adapters/Core/Backfill/`
-5. **Update 5 remaining backfill test namespaces** — `MarketDataCollector.Tests.Backfill` → `MarketDataCollector.Tests.Application.Backfill`
+5. **Update 5 remaining backfill test namespaces** — `Meridian.Tests.Backfill` → `Meridian.Tests.Application.Backfill`
 6. **Fix 3 test files testing wrong layer** — move to mirror source structure
 7. **Rename ambiguous `BackfillCoordinator`/`ConfigStore` duplicates**
 

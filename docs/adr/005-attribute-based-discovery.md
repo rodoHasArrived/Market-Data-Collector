@@ -30,14 +30,14 @@ Use custom attributes to mark provider classes for automatic discovery and regis
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| DataSourceAttribute | `src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs` | Provider metadata and discovery helpers |
-| DataSourceRegistry | `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs` | DI registration and runtime discovery |
-| IDataSource | `src/MarketDataCollector.ProviderSdk/IDataSource.cs` | Base interface |
-| IRealtimeDataSource | `src/MarketDataCollector.ProviderSdk/IRealtimeDataSource.cs` | Streaming marker |
-| IHistoricalDataSource | `src/MarketDataCollector.ProviderSdk/IHistoricalDataSource.cs` | Historical marker |
-| IProviderMetadata | `src/MarketDataCollector.ProviderSdk/IProviderMetadata.cs` | Provider metadata contract |
-| DataSourceConfiguration | `src/MarketDataCollector.Infrastructure/DataSources/DataSourceConfiguration.cs` | Runtime configuration |
-| Attribute Tests | `tests/MarketDataCollector.Tests/ProviderSdk/` | Discovery and attribute tests |
+| DataSourceAttribute | `src/Meridian.ProviderSdk/DataSourceAttribute.cs` | Provider metadata and discovery helpers |
+| DataSourceRegistry | `src/Meridian.ProviderSdk/DataSourceRegistry.cs` | DI registration and runtime discovery |
+| IDataSource | `src/Meridian.ProviderSdk/IDataSource.cs` | Base interface |
+| IRealtimeDataSource | `src/Meridian.ProviderSdk/IRealtimeDataSource.cs` | Streaming marker |
+| IHistoricalDataSource | `src/Meridian.ProviderSdk/IHistoricalDataSource.cs` | Historical marker |
+| IProviderMetadata | `src/Meridian.ProviderSdk/IProviderMetadata.cs` | Provider metadata contract |
+| DataSourceConfiguration | `src/Meridian.Infrastructure/DataSources/DataSourceConfiguration.cs` | Runtime configuration |
+| Attribute Tests | `tests/Meridian.Tests/ProviderSdk/` | Discovery and attribute tests |
 
 ## Rationale
 
@@ -189,7 +189,7 @@ public interface IDataSource { }
 
 ## References
 
-- [DataSourceAttribute Source](../../src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs)
+- [DataSourceAttribute Source](../../src/Meridian.ProviderSdk/DataSourceAttribute.cs)
 - [Provider Implementation Guide](../development/provider-implementation.md)
 - [Microsoft Attribute Guidelines](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/attributes)
 - [ADR-001: Provider Abstraction](001-provider-abstraction.md) - Defines the interfaces that discovered providers implement

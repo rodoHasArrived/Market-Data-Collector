@@ -4,14 +4,14 @@
 
 ### Headless / Test Mode
 ```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 ```
 
 This runs a smoke test with simulated data. Output is written to `./data/`.
 
 ### Self-Test Mode
 ```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
+dotnet run --project src/Meridian/Meridian.csproj -- --selftest
 ```
 
 Runs built-in self-tests (e.g., `DepthBufferSelfTests`) and exits.
@@ -19,7 +19,7 @@ Runs built-in self-tests (e.g., `DepthBufferSelfTests`) and exits.
 ### Production (with Live Data)
 ```bash
 dotnet build -p:DefineConstants=IBAPI  # Only needed if using IB provider
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --watch-config --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --watch-config --http-port 8080
 ```
 
 - `--watch-config`: Enables hot reload of `appsettings.json` (handled by `ConfigWatcher`)
@@ -27,7 +27,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wat
 
 ### UI
 ```bash
-dotnet run --project src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
+dotnet run --project src/Meridian.Ui/Meridian.Ui.csproj
 ```
 
 ---
@@ -396,7 +396,7 @@ Results in paths like: `data/IB/AAPL/Trade/2024-01-15.jsonl`
 Replay historical data for backtesting and analysis using `JsonlReplayer`:
 
 ```csharp
-using MarketDataCollector.Storage.Replay;
+using Meridian.Storage.Replay;
 
 var replayer = new JsonlReplayer("./data");
 await foreach (var evt in replayer.ReadEventsAsync(cancellationToken))
@@ -503,7 +503,7 @@ dotnet run -- --backfill --fill-gaps-only --symbols SPY,QQQ
 ### Starting the Desktop App
 
 ```bash
-dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+dotnet run --project src/Meridian.Wpf/Meridian.Wpf.csproj
 ```
 
 ### Desktop App Pages

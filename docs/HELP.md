@@ -110,10 +110,10 @@ The easiest way to get started is with the web dashboard:
 
 ```bash
 # Using the compiled executable
-./MarketDataCollector --ui
+./Meridian --ui
 
 # Or using dotnet run
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --ui --http-port 8080
 
 # Or using Make
 make run-ui
@@ -126,7 +126,7 @@ Then open your browser to `http://localhost:8080`
 For secure credential management on Windows:
 
 ```bash
-dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+dotnet run --project src/Meridian.Wpf/Meridian.Wpf.csproj
 ```
 
 ### 2. Configure Your Data Provider
@@ -151,7 +151,7 @@ Choose where and how you want data to be stored
 Run the collector in production mode:
 
 ```bash
-./MarketDataCollector --http-port 8080 --watch-config
+./Meridian --http-port 8080 --watch-config
 ```
 
 ---
@@ -165,7 +165,7 @@ Market Data Collector includes user-friendly auto-configuration features to help
 The interactive configuration wizard is the recommended way for new users to set up the application:
 
 ```bash
-./MarketDataCollector --wizard
+./Meridian --wizard
 ```
 
 The wizard guides you through a step-by-step process:
@@ -185,7 +185,7 @@ The wizard generates a complete `appsettings.json` file ready for use.
 If you prefer a non-interactive setup and have environment variables configured:
 
 ```bash
-./MarketDataCollector --auto-config
+./Meridian --auto-config
 ```
 
 Auto-configuration:
@@ -218,7 +218,7 @@ export ALPHA_VANTAGE_API_KEY=your-api-key
 Check which providers are available and their status:
 
 ```bash
-./MarketDataCollector --detect-providers
+./Meridian --detect-providers
 ```
 
 This shows:
@@ -233,7 +233,7 @@ This shows:
 Validate your API credentials without starting the collector:
 
 ```bash
-./MarketDataCollector --validate-credentials
+./Meridian --validate-credentials
 ```
 
 This:
@@ -247,7 +247,7 @@ This:
 Create a configuration template to customize manually:
 
 ```bash
-./MarketDataCollector --generate-config
+./Meridian --generate-config
 ```
 
 This creates a `config/appsettings.json` template with all available options commented and documented.
@@ -306,13 +306,13 @@ make doctor
 ### Download and Install (Manual)
 
 1. Download the appropriate executable for your platform:
-   - Windows: `MarketDataCollector-win-x64.exe`
-   - Linux: `MarketDataCollector-linux-x64`
-   - macOS: `MarketDataCollector-osx-x64`
+   - Windows: `Meridian-win-x64.exe`
+   - Linux: `Meridian-linux-x64`
+   - macOS: `Meridian-osx-x64`
 
 2. Make executable (Linux/macOS):
    ```bash
-   chmod +x MarketDataCollector-linux-x64
+   chmod +x Meridian-linux-x64
    ```
 
 3. Create configuration file:
@@ -616,16 +616,16 @@ export NYSE__APIKEY=your-api-key
 **Validation Checklist:**
 1. Validate config + credentials:
    ```bash
-   MarketDataCollector --validate-config
-   MarketDataCollector --validate-credentials
+   Meridian --validate-config
+   Meridian --validate-credentials
    ```
 2. Validate real-time flow:
    ```bash
-   MarketDataCollector --dry-run
+   Meridian --dry-run
    ```
 3. Validate backfill flow (independent of real-time provider):
    ```bash
-   MarketDataCollector --backfill
+   Meridian --backfill
    ```
 
 ---
@@ -798,7 +798,7 @@ Download historical data to fill gaps or get initial dataset.
 ### Using Command Line
 
 ```bash
-./MarketDataCollector --backfill \
+./Meridian --backfill \
   --backfill-provider stooq \
   --backfill-symbols AAPL,MSFT \
   --backfill-from 2024-01-01 \
@@ -1153,7 +1153,7 @@ Generate analysis-focused quality reports with each export:
 
 **Via Command Line:**
 ```bash
-./MarketDataCollector --export \
+./Meridian --export \
   --profile python-pandas \
   --symbols AAPL,MSFT \
   --from 2026-01-01 \
@@ -1185,7 +1185,7 @@ Market Data Collector integrates with the QuantConnect Lean Engine for backtesti
 ### Export to Lean Format
 
 ```bash
-./MarketDataCollector --export \
+./Meridian --export \
   --profile quantconnect-lean \
   --symbols SPY,AAPL \
   --from 2024-01-01 \
@@ -1342,7 +1342,7 @@ Automate recurring data exports:
 ### Starting the Dashboard
 
 ```bash
-./MarketDataCollector --ui
+./Meridian --ui
 ```
 
 Access at: `http://localhost:8080`
@@ -1350,7 +1350,7 @@ Access at: `http://localhost:8080`
 ### Custom Port
 
 ```bash
-./MarketDataCollector --ui --http-port 9000
+./Meridian --ui --http-port 9000
 ```
 
 ### Dashboard Features
@@ -1397,7 +1397,7 @@ The WPF desktop application provides a native Windows experience for configuring
 ### Starting the Desktop App
 
 ```bash
-dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+dotnet run --project src/Meridian.Wpf/Meridian.Wpf.csproj
 ```
 
 ### Desktop App Features
@@ -1491,21 +1491,21 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 
 #### First-Time Setup Mode (Recommended for New Users)
 ```bash
-./MarketDataCollector --wizard
+./Meridian --wizard
 ```
 
 Interactive wizard that guides you through configuration step by step.
 
 #### Quick Auto-Configuration Mode
 ```bash
-./MarketDataCollector --auto-config
+./Meridian --auto-config
 ```
 
 Automatically configures the application based on environment variables.
 
 #### Monitoring Mode (Recommended)
 ```bash
-./MarketDataCollector --http-port 8080 --watch-config
+./Meridian --http-port 8080 --watch-config
 ```
 
 - `--http-port 8080`: Enable HTTP monitoring endpoints
@@ -1513,17 +1513,17 @@ Automatically configures the application based on environment variables.
 
 #### Web Dashboard Mode
 ```bash
-./MarketDataCollector --ui
+./Meridian --ui
 ```
 
 #### Backfill Mode
 ```bash
-./MarketDataCollector --backfill
+./Meridian --backfill
 ```
 
 #### Replay Mode (Testing)
 ```bash
-./MarketDataCollector --replay /path/to/data.jsonl
+./Meridian --replay /path/to/data.jsonl
 ```
 
 ### All Command Line Options
@@ -1557,12 +1557,12 @@ Automatically configures the application based on environment variables.
 
 **Start with web UI:**
 ```bash
-./MarketDataCollector --ui
+./Meridian --ui
 ```
 
 **Run backfill for specific symbols:**
 ```bash
-./MarketDataCollector --backfill \
+./Meridian --backfill \
   --backfill-symbols AAPL,MSFT,GOOGL \
   --backfill-from 2024-01-01 \
   --backfill-to 2024-12-31
@@ -1570,12 +1570,12 @@ Automatically configures the application based on environment variables.
 
 **Deployment with custom port:**
 ```bash
-./MarketDataCollector --http-port 9090 --watch-config
+./Meridian --http-port 9090 --watch-config
 ```
 
 **Export to Python/Pandas format:**
 ```bash
-./MarketDataCollector --export \
+./Meridian --export \
   --profile python-pandas \
   --symbols SPY,AAPL \
   --output ./exports
@@ -1972,7 +1972,7 @@ grep ERROR data/_logs/*.log | cut -d: -f4 | sort | uniq -c
   "Logging": {
     "LogLevel": {
       "Default": "Information",
-      "MarketDataCollector": "Debug"
+      "Meridian": "Debug"
     }
   }
 }
@@ -2090,14 +2090,14 @@ Consider:
 
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/runtime:9.0
-COPY MarketDataCollector /app/MarketDataCollector
+COPY Meridian /app/Meridian
 COPY config/appsettings.json /app/appsettings.json
 WORKDIR /app
-RUN chmod +x MarketDataCollector
+RUN chmod +x Meridian
 EXPOSE 8080
 ENV ALPACA__KEYID=""
 ENV ALPACA__SECRETKEY=""
-CMD ["./MarketDataCollector", "--http-port", "8080", "--watch-config"]
+CMD ["./Meridian", "--http-port", "8080", "--watch-config"]
 ```
 
 Or use the provided docker-compose:

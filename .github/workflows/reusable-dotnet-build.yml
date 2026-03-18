@@ -99,13 +99,13 @@ jobs:
           cache-suffix: ${{ inputs.cache-suffix }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true --verbosity minimal
+        run: dotnet restore Meridian.sln -p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Build
         id: build
         shell: bash
         run: |
-          dotnet build MarketDataCollector.sln -c ${{ inputs.configuration }} --no-restore -p:EnableWindowsTargeting=true --verbosity minimal
+          dotnet build Meridian.sln -c ${{ inputs.configuration }} --no-restore -p:EnableWindowsTargeting=true --verbosity minimal
 
       - name: Run tests
         if: inputs.run-tests
@@ -113,7 +113,7 @@ jobs:
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet test MarketDataCollector.sln \
+          dotnet test Meridian.sln \
             -c ${{ inputs.configuration }} \
             --no-build \
             -p:EnableWindowsTargeting=true \

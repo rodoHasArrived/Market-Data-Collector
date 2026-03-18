@@ -14,7 +14,7 @@ messages:
       ## Project Context
       Market Data Collector is a .NET 9.0 C#/F# market data collection system.
       - Build: `dotnet build -c Release`
-      - Test: `dotnet test tests/MarketDataCollector.Tests`
+      - Test: `dotnet test tests/Meridian.Tests`
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run

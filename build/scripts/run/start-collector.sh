@@ -22,8 +22,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="$ROOT_DIR/src/MarketDataCollector"
-UI_DIR="$ROOT_DIR/src/MarketDataCollector.Ui"
+SRC_DIR="$ROOT_DIR/src/Meridian"
+UI_DIR="$ROOT_DIR/src/Meridian.Ui"
 DATA_DIR="$ROOT_DIR/data"
 LOG_DIR="$ROOT_DIR/logs"
 RUN_DIR="$ROOT_DIR/run"
@@ -248,7 +248,7 @@ if [[ "$USE_IBAPI" = true ]]; then
   export IB_HOST IB_PORT IB_CLIENT_ID
 fi
 
-dotnet run --project "$SRC_DIR/MarketDataCollector.csproj" --configuration "$DOTNET_CONFIGURATION" -- --watch-config --http-port 8080 > "$LOG_DIR/collector.log" 2>&1 &
+dotnet run --project "$SRC_DIR/Meridian.csproj" --configuration "$DOTNET_CONFIGURATION" -- --watch-config --http-port 8080 > "$LOG_DIR/collector.log" 2>&1 &
 
 COLLECTOR_PID=$!
 echo "$COLLECTOR_PID" > "$COLLECTOR_PID_FILE"
@@ -256,7 +256,7 @@ echo "[INFO] Collector PID: $COLLECTOR_PID"
 
 if [[ "$START_UI" = true ]]; then
   echo "[INFO] Starting UI..."
-  dotnet run --project "$UI_DIR/MarketDataCollector.Ui.csproj" --configuration "$DOTNET_CONFIGURATION"     > "$LOG_DIR/ui.log" 2>&1 &
+  dotnet run --project "$UI_DIR/Meridian.Ui.csproj" --configuration "$DOTNET_CONFIGURATION"     > "$LOG_DIR/ui.log" 2>&1 &
   UI_PID=$!
   echo "$UI_PID" > "$UI_PID_FILE"
   echo "[INFO] UI PID: $UI_PID"

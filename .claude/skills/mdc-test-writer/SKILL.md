@@ -1,7 +1,7 @@
 ---
 name: mdc-test-writer
 description: >
-  Test generation skill for the MarketDataCollector project. Use this skill whenever an agent
+  Test generation skill for the Meridian project. Use this skill whenever an agent
   needs to write new xUnit tests, expand coverage for existing components, or validate that
   test quality meets the project's standards. Triggers on: "write tests for", "add unit tests",
   "increase test coverage", "write a test for this class", "how do I test X", "the tests are
@@ -12,9 +12,9 @@ description: >
   pipeline components, WPF services, and F# interop boundaries.
 ---
 
-# MarketDataCollector — Test Writer Skill
+# Meridian — Test Writer Skill
 
-Generate high-quality, idiomatic xUnit tests for any MarketDataCollector component. Every test
+Generate high-quality, idiomatic xUnit tests for any Meridian component. Every test
 produced by this skill must pass the `mdc-code-review` Lens 4 (Test Code Quality) checks without
 warnings.
 
@@ -56,8 +56,8 @@ Every test-writing task follows this 4-step workflow:
 |------|---------|
 | **xUnit** | Test runner — all test projects |
 | **FluentAssertions** | Assertion library — preferred over `Assert.*` |
-| **Moq** | Mocking — `MarketDataCollector.Tests`, `MarketDataCollector.Wpf.Tests` |
-| **NSubstitute** | Mocking — `MarketDataCollector.Ui.Tests` (check `.csproj` first) |
+| **Moq** | Mocking — `Meridian.Tests`, `Meridian.Wpf.Tests` |
+| **NSubstitute** | Mocking — `Meridian.Ui.Tests` (check `.csproj` first) |
 | **coverlet** | Code coverage — collected via `dotnet test --collect:"XPlat Code Coverage"` |
 
 Always check the target test project's `.csproj` for the mock library in use before writing mocks.
@@ -130,7 +130,7 @@ For streaming providers additionally:
 
 Produce a complete, compilable test file with:
 
-1. Namespace matching the project convention (`MarketDataCollector.Tests.{Category}`)
+1. Namespace matching the project convention (`Meridian.Tests.{Category}`)
 2. `using` directives (xUnit, FluentAssertions, Moq or NSubstitute, and types under test)
 3. A `CreateSut()` factory method (not scattered construction in each test method)
 4. `IDisposable` or `IAsyncDisposable` implementation when temp resources are needed

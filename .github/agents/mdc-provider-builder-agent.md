@@ -1,12 +1,12 @@
 ---
 name: Provider Builder Agent
-description: Provider builder specialist for the MarketDataCollector project, producing complete and architecturally compliant data provider adapters with rate limiting, reconnection logic, attribute decoration, and DI registration.
+description: Provider builder specialist for the Meridian project, producing complete and architecturally compliant data provider adapters with rate limiting, reconnection logic, attribute decoration, and DI registration.
 ---
 
 # Provider Builder Agent Instructions
 
 This file contains instructions for an agent responsible for implementing new data provider adapters
-in the MarketDataCollector project.
+in the Meridian project.
 
 > **Claude Code equivalent:** [`.claude/skills/mdc-provider-builder/SKILL.md`](../../.claude/skills/mdc-provider-builder/SKILL.md) — same 12-step framework packaged as a Claude Code skill with copy-ready code patterns.
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
@@ -37,18 +37,18 @@ Before writing any code, identify the correct provider type:
 What does this provider supply?
 ├── Real-time streaming ticks / quotes / L2 order book
 │   └── Implement IMarketDataClient
-│       File: src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs
-│       Template: src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs
+│       File: src/Meridian.ProviderSdk/IMarketDataClient.cs
+│       Template: src/Meridian.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs
 │
 ├── Historical OHLCV / tick data (backfill use case)
 │   └── Implement IHistoricalDataProvider
-│       File: src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs
-│       Template: src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs
+│       File: src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs
+│       Template: src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs
 │       Base: BaseHistoricalDataProvider (handles rate limiting + retry automatically)
 │
 └── Symbol search / lookup (resolving tickers)
     └── Implement ISymbolSearchProvider
-        Template: src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs
+        Template: src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs
         Base: BaseSymbolSearchProvider
 ```
 
@@ -60,9 +60,9 @@ What does this provider supply?
 
 **Always** start from the template scaffolding, not from a blank file or from copying another provider.
 
-- Streaming: `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs`
-- Historical: `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs`
-- Symbol search: `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs`
+- Streaming: `src/Meridian.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs`
+- Historical: `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs`
+- Symbol search: `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs`
 
 Read the full template before writing any code. Templates contain inline comments explaining every
 required section.
@@ -70,7 +70,7 @@ required section.
 ### Step 2 — Create the Provider Directory
 
 ```
-src/MarketDataCollector.Infrastructure/Adapters/{ProviderName}/
+src/Meridian.Infrastructure/Adapters/{ProviderName}/
 ├── {ProviderName}MarketDataClient.cs       (streaming) OR
 │   {ProviderName}HistoricalDataProvider.cs (historical)
 ├── {ProviderName}Options.cs                (config)
@@ -149,7 +149,7 @@ var result = JsonSerializer.Deserialize<MyProviderResponse>(json);
 ```
 
 Register new DTOs in `MarketDataJsonContext` at
-`src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs`:
+`src/Meridian.Core/Serialization/MarketDataJsonContext.cs`:
 
 ```csharp
 [JsonSerializable(typeof(MyProviderResponse))]
@@ -315,13 +315,13 @@ For each file, add a header comment listing which compliance checklist items it 
 
 ```bash
 # Restore (required for Windows-targeted projects on Linux/macOS)
-dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
 
 # Build
-dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
 # Run provider tests
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj -c Release /p:EnableWindowsTargeting=true
 
 # Run architecture compliance check
 python3 build/scripts/ai-architecture-check.py --src src/ check-adrs

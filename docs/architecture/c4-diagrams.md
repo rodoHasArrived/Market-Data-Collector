@@ -79,8 +79,8 @@ flowchart TB
     ALP[Alpaca\nWebSocket + REST]:::ext
     HIST[Historical APIs\nYahoo/Stooq/Nasdaq]:::ext
     DISK[(Filesystem\n./data)]:::store
-    UI[Web Dashboard\nMarketDataCollector.Ui]:::container
-    WPF[Desktop App\nMarketDataCollector.Wpf]:::container
+    UI[Web Dashboard\nMeridian.Ui]:::container
+    WPF[Desktop App\nMeridian.Wpf]:::container
     OPR[Operator]:::person
 
     OPR --> UI

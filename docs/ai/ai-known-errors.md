@@ -65,8 +65,8 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - [ ] Search for `<Grid.*Padding=` pattern in WPF .xaml files before committing
   - [ ] Remember: Border, StackPanel, and DockPanel support Padding in WPF, but Grid does not
 - **Verification commands**:
-  - `grep -rn '<Grid.*Padding=' src/MarketDataCollector.Wpf --include="*.xaml"`
-  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
+  - `grep -rn '<Grid.*Padding=' src/Meridian.Wpf --include="*.xaml"`
+  - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707017569/job/62600607213
 - **Status**: fixed
 
@@ -81,8 +81,8 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - [ ] After adding package references, run `dotnet restore` to verify no NU1008 errors
   - [ ] Check existing packages in `Directory.Packages.props` for version compatibility before adding new ones
 - **Verification commands**:
-  - `dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true`
-  - `dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
+  - `dotnet restore Meridian.sln /p:EnableWindowsTargeting=true`
+  - `dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
   - `grep -r 'PackageReference Include=".*" Version=' --include="*.csproj" --include="*.fsproj" src/ | grep -v '<!--'` (should return no results)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707148084/job/62601061503
 - **Status**: fixed
@@ -90,47 +90,47 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 ### AI-20260206-provider-sdk-cross-file-type-resolution
 - **Area**: build/ProviderSdk
 - **Symptoms**: Build fails with CS0246 errors in `IProviderMetadata.cs`: "The type or namespace name 'ProviderType' could not be found" and "The type or namespace name 'Backfill' could not be found", even though the types exist in the same project and namespace.
-- **Root cause**: When `IProviderMetadata.cs` was moved from the main MarketDataCollector project to the ProviderSdk project, it lost access to `ProviderType` (previously in `ProviderRegistry.cs`) and `HistoricalDataCapabilities` (previously in `IHistoricalDataProvider.cs`). A prior fix moved those types into standalone files in ProviderSdk but the cross-file namespace resolution for the relative `Backfill.HistoricalDataCapabilities` reference failed. The fix is to co-locate the `ProviderType` enum in the same file as its consumer and use an explicit `using` directive for the Backfill namespace.
+- **Root cause**: When `IProviderMetadata.cs` was moved from the main Meridian project to the ProviderSdk project, it lost access to `ProviderType` (previously in `ProviderRegistry.cs`) and `HistoricalDataCapabilities` (previously in `IHistoricalDataProvider.cs`). A prior fix moved those types into standalone files in ProviderSdk but the cross-file namespace resolution for the relative `Backfill.HistoricalDataCapabilities` reference failed. The fix is to co-locate the `ProviderType` enum in the same file as its consumer and use an explicit `using` directive for the Backfill namespace.
 - **Prevention checklist**:
   - [ ] When moving types between projects, verify all type references in the destination project resolve correctly
   - [ ] Use explicit `using` directives for sibling namespaces instead of relative namespace prefixes (e.g., `using X.Y.Backfill;` + `HistoricalDataCapabilities` instead of `Backfill.HistoricalDataCapabilities`)
   - [ ] Co-locate small types (enums, records) with their primary consumer when they are tightly coupled
-  - [ ] After moving types, build the specific project in isolation: `dotnet build src/MarketDataCollector.ProviderSdk`
+  - [ ] After moving types, build the specific project in isolation: `dotnet build src/Meridian.ProviderSdk`
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.ProviderSdk/MarketDataCollector.ProviderSdk.csproj -c Release`
-  - `dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
+  - `dotnet build src/Meridian.ProviderSdk/Meridian.ProviderSdk.csproj -c Release`
+  - `dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
 - **Source issue**: PR #860 (incomplete fix)
 - **Status**: fixed
 
 ### AI-20260207-storage-namespace-circular-dependency
 - **Area**: build/Infrastructure
-- **Symptoms**: Build fails with CS0234: "The type or namespace name 'Storage' does not exist in the namespace 'MarketDataCollector'" in `DataGapRepair.cs`. Three errors on the `using MarketDataCollector.Storage` lines.
-- **Root cause**: During the layer assembly split (commit `ac7bd35`), `DataGapRepair.cs` was placed in the Infrastructure project but retained `using` statements for `MarketDataCollector.Storage`. The Infrastructure project does not (and should not) reference the Storage project to avoid circular dependencies. A prior fix only commented out the lines rather than removing them.
+- **Symptoms**: Build fails with CS0234: "The type or namespace name 'Storage' does not exist in the namespace 'Meridian'" in `DataGapRepair.cs`. Three errors on the `using Meridian.Storage` lines.
+- **Root cause**: During the layer assembly split (commit `ac7bd35`), `DataGapRepair.cs` was placed in the Infrastructure project but retained `using` statements for `Meridian.Storage`. The Infrastructure project does not (and should not) reference the Storage project to avoid circular dependencies. A prior fix only commented out the lines rather than removing them.
 - **Prevention checklist**:
   - [ ] When splitting code into separate assemblies, verify all `using` directives resolve against the project's actual references
   - [ ] Infrastructure layer must never reference Storage layer directly; use abstractions (e.g., `IStorageSink`) injected via DI
   - [ ] Remove dead commented-out code entirely rather than leaving `// using` statements that obscure the issue
-  - [ ] After moving files between projects, build the specific project: `dotnet build src/MarketDataCollector.Infrastructure`
+  - [ ] After moving files between projects, build the specific project: `dotnet build src/Meridian.Infrastructure`
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.Infrastructure/MarketDataCollector.Infrastructure.csproj -c Release`
-  - `grep -rn 'MarketDataCollector\.Storage' src/MarketDataCollector.Infrastructure --include="*.cs"` (should return no results)
+  - `dotnet build src/Meridian.Infrastructure/Meridian.Infrastructure.csproj -c Release`
+  - `grep -rn 'Meridian\.Storage' src/Meridian.Infrastructure --include="*.cs"` (should return no results)
 - **Source issue**: CI build failure on main branch
 - **Status**: fixed
 
 ### AI-20260210-cs0738-type-collision
 - **Area**: build/namespaces
 - **Symptoms**: Build fails with error CS0738: "'ConfigService' does not implement interface member 'IConfigService.ValidateConfigAsync(CancellationToken)' because it does not have the matching return type of 'Task<ConfigValidationResult>'". The interface method clearly returns `Task<ConfigValidationResult>` and the implementation returns the same type, yet the compiler rejects it.
-- **Root cause**: Two classes with the same name (`ConfigValidationResult`) exist in parent and child namespaces: `MarketDataCollector.Ui.Services.ConfigValidationResult` (in DiagnosticsService.cs) and `MarketDataCollector.Ui.Services.Contracts.ConfigValidationResult` (in IConfigService.cs). When `ConfigService` (in the parent namespace) implements `IConfigService`, the compiler cannot disambiguate which `ConfigValidationResult` to use, even though the interface requires the one from the child namespace.
+- **Root cause**: Two classes with the same name (`ConfigValidationResult`) exist in parent and child namespaces: `Meridian.Ui.Services.ConfigValidationResult` (in DiagnosticsService.cs) and `Meridian.Ui.Services.Contracts.ConfigValidationResult` (in IConfigService.cs). When `ConfigService` (in the parent namespace) implements `IConfigService`, the compiler cannot disambiguate which `ConfigValidationResult` to use, even though the interface requires the one from the child namespace.
 - **Prevention checklist**:
   - [ ] When creating new types, search for existing types with the same name in both parent and child namespaces
   - [ ] Use fully qualified type names in return types when ambiguity is possible: `Task<Contracts.ConfigValidationResult>`
   - [ ] When naming collision is detected, rename the type in the parent namespace with a descriptive prefix (e.g., `DiagnosticConfigValidationResult`)
-  - [ ] After refactoring, verify no CS0738 errors: `dotnet build src/MarketDataCollector.Ui.Services -c Release`
+  - [ ] After refactoring, verify no CS0738 errors: `dotnet build src/Meridian.Ui.Services -c Release`
   - [ ] Check for similar patterns: `grep -rn "class ConfigValidationResult" src --include="*.cs"` should show only one result per type
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj -c Release`
-  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
-  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
+  - `dotnet build src/Meridian.Ui.Services/Meridian.Ui.Services.csproj -c Release`
+  - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
+  - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21851485930/job/63058846153
 - **Status**: fixed (commit cec548e)
 
@@ -147,7 +147,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `grep -A10 "dotnet test" .github/workflows/pr-checks.yml | grep "results-directory"`
   - `grep -A3 "codecov-action" .github/workflows/pr-checks.yml | grep -E "(directory|files)"`
-  - `dotnet test MarketDataCollector.sln --collect:"XPlat Code Coverage" --results-directory ./test-results && ls -la ./test-results/**/coverage.cobertura.xml`
+  - `dotnet test Meridian.sln --collect:"XPlat Code Coverage" --results-directory ./test-results && ls -la ./test-results/**/coverage.cobertura.xml`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21938525658/job/63358083776#step:5:1
 - **Status**: fixed (commit ad97ee2)
 
@@ -173,19 +173,19 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 ### AI-20260212-wpf-globalusings-missing-directives
 - **Area**: build/desktop-ui
 - **Symptoms**: WPF project fails to compile with 80 CS0246 errors like "The type or namespace name 'ShortcutInvokedEventArgs' could not be found", "The type or namespace name 'ApiClientService' could not be found". NotificationService fails with CS0535 "does not implement interface member".
-- **Root cause**: GlobalUsings.cs was updated (commit d9b43dc) to remove `global using MarketDataCollector.Ui.Services.Services;` to avoid namespace conflicts with WPF-specific services. Files that reference types from this namespace now need explicit using directives.
+- **Root cause**: GlobalUsings.cs was updated (commit d9b43dc) to remove `global using Meridian.Ui.Services.Services;` to avoid namespace conflicts with WPF-specific services. Files that reference types from this namespace now need explicit using directives.
 - **Prevention checklist**:
   - [ ] After modifying GlobalUsings.cs, verify all files in the project still compile
   - [ ] When removing global usings, search for all usages of types from that namespace
   - [ ] Add explicit using directives to files that need removed global types
-  - [ ] For WPF files: add `using MarketDataCollector.Wpf.Services;` for WPF services
-  - [ ] For shared types: add `using UiServices = MarketDataCollector.Ui.Services.Services;` and type aliases
+  - [ ] For WPF files: add `using Meridian.Wpf.Services;` for WPF services
+  - [ ] For shared types: add `using UiServices = Meridian.Ui.Services.Services;` and type aliases
   - [ ] Handle type ambiguities (e.g., NotificationType) with explicit aliases
   - [ ] Test both local and CI builds after GlobalUsings changes
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj`
-  - `grep -r "using MarketDataCollector.Wpf.Services;" src/MarketDataCollector.Wpf/Views/`
-  - `grep -r "using UiServices" src/MarketDataCollector.Wpf/Services/`
+  - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj`
+  - `grep -r "using Meridian.Wpf.Services;" src/Meridian.Wpf/Views/`
+  - `grep -r "using UiServices" src/Meridian.Wpf/Services/`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21959216554/job/63431802067
 - **Status**: fixed (commit 5ea62c8)
 
@@ -226,9 +226,9 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   // fromValue is T (e.g., double), no nullable inference involved
   ```
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj -c Release`
-  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows`
-  - `grep -n 'out T? value' src/MarketDataCollector.Ui.Services/Collections/CircularBuffer.cs` (should return no matches after fix)
+  - `dotnet build src/Meridian.Ui.Services/Meridian.Ui.Services.csproj -c Release`
+  - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows`
+  - `grep -n 'out T? value' src/Meridian.Ui.Services/Collections/CircularBuffer.cs` (should return no matches after fix)
 - **Source issues**: 
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21988186038/job/63527798918#step:5:1 (original)
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21996212289/job/63556782046 (variant)
@@ -266,9 +266,9 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - [ ] Tighten endpoint test status code assertions: avoid accepting 4–5 different codes when only 1–2 are correct
   - [ ] Check that all CRUD endpoints consistently return 404 for non-existent entities
 - **Verification commands**:
-  - `dotnet test tests/MarketDataCollector.Tests --filter "FullyQualifiedName~MaintenanceEndpointTests"`
+  - `dotnet test tests/Meridian.Tests --filter "FullyQualifiedName~MaintenanceEndpointTests"`
 - **Status**: fixed
-- **Fixed in**: `src/MarketDataCollector.Ui.Shared/Endpoints/MaintenanceScheduleEndpoints.cs` — added `catch (KeyNotFoundException)` returning `Results.NotFound()`. Tests tightened to assert 404 instead of 500.
+- **Fixed in**: `src/Meridian.Ui.Shared/Endpoints/MaintenanceScheduleEndpoints.cs` — added `catch (KeyNotFoundException)` returning `Results.NotFound()`. Tests tightened to assert 404 instead of 500.
 
 ### AI-20260215-tautological-test-assertions
 - **ID**: AI-20260215-tautological-test-assertions
@@ -305,19 +305,19 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 ### AI-20260220-cs0104-backfill-result-ambiguity
 - **ID**: AI-20260220-cs0104-backfill-result-ambiguity
 - **Area**: build/namespaces
-- **Symptoms**: Build fails with CS0104: "'BackfillResult' is an ambiguous reference between 'MarketDataCollector.Contracts.Api.BackfillResult' and 'MarketDataCollector.Application.Backfill.BackfillResult'". Using alias directives (`using BackfillResult = ...`) fail to resolve the ambiguity when the conflicting namespace is also imported via a `using` namespace directive.
-- **Root cause**: Both `MarketDataCollector.Contracts.Api` and `MarketDataCollector.Application.Backfill` define types named `BackfillResult` and `BackfillRequest`. When both namespaces are imported via `using` directives alongside `using` alias directives for disambiguation, the compiler still reports CS0104. The fix is to remove the `using MarketDataCollector.Application.Backfill;` namespace directive entirely, keeping only the explicit aliases for the specific types needed.
+- **Symptoms**: Build fails with CS0104: "'BackfillResult' is an ambiguous reference between 'Meridian.Contracts.Api.BackfillResult' and 'Meridian.Application.Backfill.BackfillResult'". Using alias directives (`using BackfillResult = ...`) fail to resolve the ambiguity when the conflicting namespace is also imported via a `using` namespace directive.
+- **Root cause**: Both `Meridian.Contracts.Api` and `Meridian.Application.Backfill` define types named `BackfillResult` and `BackfillRequest`. When both namespaces are imported via `using` directives alongside `using` alias directives for disambiguation, the compiler still reports CS0104. The fix is to remove the `using Meridian.Application.Backfill;` namespace directive entirely, keeping only the explicit aliases for the specific types needed.
 - **Prevention checklist**:
   - [ ] When two imported namespaces contain types with the same name, do NOT import both namespaces — import only one and use aliases for types from the other
   - [ ] Search for duplicate type names across namespaces before adding new `using` directives: `grep -rn "class TypeName\|record TypeName" src/ --include="*.cs"`
   - [ ] When adding a new type to `Contracts.Api`, check if a type with the same name exists in `Application.Backfill` (or vice versa)
   - [ ] Prefer fully qualified names or using aliases over importing both conflicting namespaces
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.Ui.Shared/MarketDataCollector.Ui.Shared.csproj -c Release`
-  - `grep -rn "using MarketDataCollector.Application.Backfill;" src/MarketDataCollector.Ui.Shared --include="*.cs"` (should return no results after fix)
+  - `dotnet build src/Meridian.Ui.Shared/Meridian.Ui.Shared.csproj -c Release`
+  - `grep -rn "using Meridian.Application.Backfill;" src/Meridian.Ui.Shared --include="*.cs"` (should return no results after fix)
 - **Source issue**: CI build failure
 - **Status**: fixed
-- **Fixed in**: `BackfillEndpoints.cs` and `BackfillCoordinator.cs` — removed `using MarketDataCollector.Application.Backfill;` namespace directive, kept explicit `using` aliases for `BackfillRequest` and `BackfillResult`, and fully qualified `HistoricalBackfillService`
+- **Fixed in**: `BackfillEndpoints.cs` and `BackfillCoordinator.cs` — removed `using Meridian.Application.Backfill;` namespace directive, kept explicit `using` aliases for `BackfillRequest` and `BackfillResult`, and fully qualified `HistoricalBackfillService`
 
 ### AI-20260305-cs0266-narrowing-type-cast
 - **ID**: AI-20260305-cs0266-narrowing-type-cast
@@ -327,14 +327,14 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Prevention checklist**:
   - [ ] When decrementing (or performing arithmetic on) fields typed `ushort`, `short`, `byte`, or `sbyte`, always add an explicit narrowing cast: `(ushort)(value - 1)` or `(ushort)Math.Max(0, value - 1)`
   - [ ] When an enum backing type of `byte` is used and values exceed `byte.MaxValue` (255), change the backing type to `int` instead of keeping `byte`
-  - [ ] After changing field types to a narrower type, build immediately: `dotnet build src/MarketDataCollector.Domain -c Release /p:EnableWindowsTargeting=true`
+  - [ ] After changing field types to a narrower type, build immediately: `dotnet build src/Meridian.Domain -c Release /p:EnableWindowsTargeting=true`
   - [ ] Search for arithmetic expressions on narrow integer fields before committing: `grep -rn "ushort\|: byte" src/ --include="*.cs"`
 - **Verification commands**:
-  - `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true 2>&1 | grep -E "error CS0266|Error\(s\)"`
-  - `dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true --filter "Domain"`
+  - `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true 2>&1 | grep -E "error CS0266|Error\(s\)"`
+  - `dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true --filter "Domain"`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22709535738/job/65984383245#step:6:1
 - **Status**: fixed
-- **Fixed in**: `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` line 381 — added `(ushort)` cast: `state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);`. Also `src/MarketDataCollector.Application/Results/ErrorCode.cs` — changed backing from `byte` to `int` since error codes use values up to 8005, which exceeds `byte.MaxValue` (255).
+- **Fixed in**: `src/Meridian.Domain/Collectors/TradeDataCollector.cs` line 381 — added `(ushort)` cast: `state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);`. Also `src/Meridian.Application/Results/ErrorCode.cs` — changed backing from `byte` to `int` since error codes use values up to 8005, which exceeds `byte.MaxValue` (255).
 
 ### AI-20260220-regex-hyphen-character-class
 - **ID**: AI-20260220-regex-hyphen-character-class
@@ -361,31 +361,31 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Prevention checklist**:
   - [ ] Before narrowing any enum backing type, grep its values and confirm max value ≤ type max: `grep -E '= [0-9]+' src/.../ErrorCode.cs | awk -F'= ' '{print $2+0}' | sort -n | tail -1`
   - [ ] Never use `byte` as a backing type for category-ranged error/status enums; prefer `int` (default) unless values are explicitly documented to fit in the smaller type
-  - [ ] After changing an enum backing type, run a full build immediately: `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true`
+  - [ ] After changing an enum backing type, run a full build immediately: `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true`
   - [ ] Check all tests that cast integer literals to the enum (e.g., `(DataSourceKind)999`): literals must fit in the backing type
 - **Verification commands**:
-  - `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true`
-  - `grep -E ': byte' src/MarketDataCollector.Application/Results/ErrorCode.cs` (should return no results — backing type must be int)
+  - `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true`
+  - `grep -E ': byte' src/Meridian.Application/Results/ErrorCode.cs` (should return no results — backing type must be int)
   - `grep -E 'ErrorCode\.' src/ -r --include="*.cs" | grep -v '//\|\.cs:' | head -5`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710880501/job/65983564475#step:6:1
 - **Status**: fixed
-- **Fixed in**: `src/MarketDataCollector.Application/Results/ErrorCode.cs` — changed `: byte` to `: int`; `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` — added `(ushort)` cast on `Math.Max(0, TradeCount - 1)`; `tests/…/MarketDataClientFactoryTests.cs` — changed `(DataSourceKind)999` to `(DataSourceKind)200` (999 > 255); `tests/…/OptionContractSpecTests.cs` — removed `[InlineData(-1)]` (ushort cannot be negative); `tests/…/CanonicalizationGoldenFixtureTests.cs` — added `(byte)` cast for `canonicalizationVersion` comparison
+- **Fixed in**: `src/Meridian.Application/Results/ErrorCode.cs` — changed `: byte` to `: int`; `src/Meridian.Domain/Collectors/TradeDataCollector.cs` — added `(ushort)` cast on `Math.Max(0, TradeCount - 1)`; `tests/…/MarketDataClientFactoryTests.cs` — changed `(DataSourceKind)999` to `(DataSourceKind)200` (999 > 255); `tests/…/OptionContractSpecTests.cs` — removed `[InlineData(-1)]` (ushort cannot be negative); `tests/…/CanonicalizationGoldenFixtureTests.cs` — added `(byte)` cast for `canonicalizationVersion` comparison
 
 ### AI-20260317-cs0104-backtesting-marketevent-ambiguity
 - **ID**: AI-20260317-cs0104-backtesting-marketevent-ambiguity
 - **Area**: build/namespaces
-- **Symptoms**: Build fails with 11 CS0104 errors: "'MarketEvent' is an ambiguous reference between 'MarketDataCollector.Contracts.Domain.Events.MarketEvent' and 'MarketDataCollector.Domain.Events.MarketEvent'" across `BacktestEngine.cs`, `IFillModel.cs`, `BarMidpointFillModel.cs`, `OrderBookFillModel.cs`, and `MultiSymbolMergeEnumerator.cs`. The entire `MarketDataCollector.Backtesting` project fails to compile, causing CI test suite failure.
-- **Root cause**: `GlobalUsings.cs` in the Backtesting project imported `global using MarketDataCollector.Contracts.Domain.Events;`. Individual source files within the same project also imported `using MarketDataCollector.Domain.Events;`. Both namespaces define a `MarketEvent` type, producing an unresolvable ambiguity (CS0104) at every usage site. The Backtesting engine exclusively uses `Domain.Events.MarketEvent` (the richer type with `StampReceiveTime`, `EstimatedLatencyMs`, `EffectiveSymbol`, etc.), making the `Contracts.Domain.Events` global import redundant and harmful.
+- **Symptoms**: Build fails with 11 CS0104 errors: "'MarketEvent' is an ambiguous reference between 'Meridian.Contracts.Domain.Events.MarketEvent' and 'Meridian.Domain.Events.MarketEvent'" across `BacktestEngine.cs`, `IFillModel.cs`, `BarMidpointFillModel.cs`, `OrderBookFillModel.cs`, and `MultiSymbolMergeEnumerator.cs`. The entire `Meridian.Backtesting` project fails to compile, causing CI test suite failure.
+- **Root cause**: `GlobalUsings.cs` in the Backtesting project imported `global using Meridian.Contracts.Domain.Events;`. Individual source files within the same project also imported `using Meridian.Domain.Events;`. Both namespaces define a `MarketEvent` type, producing an unresolvable ambiguity (CS0104) at every usage site. The Backtesting engine exclusively uses `Domain.Events.MarketEvent` (the richer type with `StampReceiveTime`, `EstimatedLatencyMs`, `EffectiveSymbol`, etc.), making the `Contracts.Domain.Events` global import redundant and harmful.
 - **Prevention checklist**:
   - [ ] When editing `GlobalUsings.cs`, verify the namespace you are importing does not define types that already exist in other imported namespaces in the same project
   - [ ] When two namespaces define a type with the same name, import only one globally and use explicit `using` directives or fully qualified names for types from the other
-  - [ ] After modifying `GlobalUsings.cs`, build the affected project in isolation: `dotnet build src/MarketDataCollector.Backtesting/MarketDataCollector.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
+  - [ ] After modifying `GlobalUsings.cs`, build the affected project in isolation: `dotnet build src/Meridian.Backtesting/Meridian.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
   - [ ] Check for cross-namespace type name conflicts: `grep -rn "class MarketEvent\|record MarketEvent" src/ --include="*.cs"`
-  - [ ] The authoritative streaming type is `MarketDataCollector.Domain.Events.MarketEvent`; `Contracts.Domain.Events.MarketEvent` is a lighter DTO — never import both globally in the same project
+  - [ ] The authoritative streaming type is `Meridian.Domain.Events.MarketEvent`; `Contracts.Domain.Events.MarketEvent` is a lighter DTO — never import both globally in the same project
 - **Verification commands**:
-  - `dotnet build src/MarketDataCollector.Backtesting/MarketDataCollector.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
-  - `dotnet test tests/MarketDataCollector.Backtesting.Tests/MarketDataCollector.Backtesting.Tests.csproj -c Release /p:EnableWindowsTargeting=true`
-  - `grep "Contracts.Domain.Events" src/MarketDataCollector.Backtesting/GlobalUsings.cs` (should return no results after fix)
+  - `dotnet build src/Meridian.Backtesting/Meridian.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
+  - `dotnet test tests/Meridian.Backtesting.Tests/Meridian.Backtesting.Tests.csproj -c Release /p:EnableWindowsTargeting=true`
+  - `grep "Contracts.Domain.Events" src/Meridian.Backtesting/GlobalUsings.cs` (should return no results after fix)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23176103636, #2005
 - **Status**: fixed
-- **Fixed in**: `src/MarketDataCollector.Backtesting/GlobalUsings.cs` — removed `global using MarketDataCollector.Contracts.Domain.Events;`; also added `[assembly: InternalsVisibleTo("MarketDataCollector.Backtesting.Tests")]` following the pattern in `Application/GlobalUsings.cs`
+- **Fixed in**: `src/Meridian.Backtesting/GlobalUsings.cs` — removed `global using Meridian.Contracts.Domain.Events;`; also added `[assembly: InternalsVisibleTo("Meridian.Backtesting.Tests")]` following the pattern in `Application/GlobalUsings.cs`

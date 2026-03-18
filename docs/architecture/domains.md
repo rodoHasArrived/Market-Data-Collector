@@ -3,9 +3,9 @@
 This document describes the **runtime domain contracts** used by the collectors and event pipeline.
 Primary source of truth lives in:
 
-- `src/MarketDataCollector.Contracts/Domain/Events/`
-- `src/MarketDataCollector.Contracts/Domain/Models/`
-- `src/MarketDataCollector.Domain/Collectors/`
+- `src/Meridian.Contracts/Domain/Events/`
+- `src/Meridian.Contracts/Domain/Models/`
+- `src/Meridian.Domain/Collectors/`
 
 ## MarketEvent Envelope
 

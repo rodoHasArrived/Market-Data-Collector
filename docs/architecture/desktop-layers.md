@@ -4,8 +4,8 @@
 
 Market Data Collector now uses a **dual UI surface**:
 
-1. **WPF Desktop (`MarketDataCollector.Wpf`)** for rich Windows-first operator workflows.
-2. **Web Dashboard (`MarketDataCollector.Ui`)** for browser-based monitoring/configuration.
+1. **WPF Desktop (`Meridian.Wpf`)** for rich Windows-first operator workflows.
+2. **Web Dashboard (`Meridian.Ui`)** for browser-based monitoring/configuration.
 
 Both surfaces share contracts and application logic through shared libraries, with clear boundaries between platform host code and reusable UI functionality.
 
@@ -15,7 +15,7 @@ Both surfaces share contracts and application logic through shared libraries, wi
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                          UI Host Layer                                    │
 │  ┌────────────────────────────┐     ┌──────────────────────────────────┐  │
-│  │ MarketDataCollector.Wpf    │     │ MarketDataCollector.Ui           │  │
+│  │ Meridian.Wpf    │     │ Meridian.Ui           │  │
 │  │ (Windows desktop host)     │     │ (ASP.NET Core web host)          │  │
 │  │ - XAML views/viewmodels    │     │ - Thin Program.cs host           │  │
 │  │ - WPF-only services        │     │ - Serves dashboard/static assets │  │
@@ -24,7 +24,7 @@ Both surfaces share contracts and application logic through shared libraries, wi
                   │                                        │
                   │                                        ▼
                   │                    ┌──────────────────────────────────┐
-                  │                    │ MarketDataCollector.Ui.Shared    │
+                  │                    │ Meridian.Ui.Shared    │
                   │                    │ - Endpoint mapping               │
                   │                    │ - Shared web UI services         │
                   │                    │ - Host composition helpers       │
@@ -34,7 +34,7 @@ Both surfaces share contracts and application logic through shared libraries, wi
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                      Shared UI Services Layer                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │ MarketDataCollector.Ui.Services                                     │  │
+│  │ Meridian.Ui.Services                                     │  │
 │  │ - API/client orchestration                                          │  │
 │  │ - Validation, fixture mode, notifications, config helpers           │  │
 │  │ - Shared collections/contracts for desktop-facing features          │  │
@@ -44,39 +44,39 @@ Both surfaces share contracts and application logic through shared libraries, wi
                                           ▼
 ┌────────────────────────────────────────────────────────────────────────────┐
 │               Contracts + Backend Application Layers                      │
-│  MarketDataCollector.Contracts  +  Application/Core/Domain/...            │
+│  Meridian.Contracts  +  Application/Core/Domain/...            │
 │  (DTOs, API contracts, orchestration, pipelines, providers, storage)      │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Responsibilities
 
-### `src/MarketDataCollector.Wpf/` (Desktop host)
+### `src/Meridian.Wpf/` (Desktop host)
 
 - Owns XAML views, viewmodels, and WPF shell/navigation.
 - Registers DI container and composes page/service graph.
 - Contains truly platform-specific implementations (theme, keyboard shortcuts, windowing, etc.).
-- References `MarketDataCollector.Ui.Services` for shared UI/domain helpers.
+- References `Meridian.Ui.Services` for shared UI/domain helpers.
 
-### `src/MarketDataCollector.Ui/` (Web host)
+### `src/Meridian.Ui/` (Web host)
 
 - Intentionally thin host (`Program.cs`) that delegates setup to shared endpoint composition.
 - Serves browser dashboard and static assets.
-- References `MarketDataCollector.Ui.Shared`.
+- References `Meridian.Ui.Shared`.
 
-### `src/MarketDataCollector.Ui.Shared/` (Web shared module)
+### `src/Meridian.Ui.Shared/` (Web shared module)
 
 - Contains endpoint mapping and reusable web-host/service glue.
 - Bridges the web host to application/contract layers without duplicating wiring in each host.
-- References `MarketDataCollector.Application` and `MarketDataCollector.Contracts`.
+- References `Meridian.Application` and `Meridian.Contracts`.
 
-### `src/MarketDataCollector.Ui.Services/` (Cross-feature shared UI services)
+### `src/Meridian.Ui.Services/` (Cross-feature shared UI services)
 
 - Shared service logic used by desktop workflows (API, fixture data, validation/utilities, etc.).
 - Includes linked contract source files for desktop compatibility scenarios.
 - Keeps platform-neutral behavior out of WPF-specific code.
 
-### `src/MarketDataCollector.Contracts/` (Canonical contracts)
+### `src/Meridian.Contracts/` (Canonical contracts)
 
 - Request/response DTOs, domain event models, enums, config models, API routes.
 - Pure contract layer with no UI framework dependencies.

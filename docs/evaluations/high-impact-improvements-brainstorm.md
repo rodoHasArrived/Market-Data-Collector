@@ -118,7 +118,7 @@ pipeline.Use<MetricsMiddleware>()
 
 **Current state:** The domain is split across two type systems:
 - C# records in `Contracts/Domain/` and `Domain/Events/` (`Trade`, `BboQuotePayload`, `LOBSnapshot`, `MarketEvent`)
-- F# records in `MarketDataCollector.FSharp/Domain/` (`TradeEvent`, `QuoteEvent`, `OrderBookSnapshot`)
+- F# records in `Meridian.FSharp/Domain/` (`TradeEvent`, `QuoteEvent`, `OrderBookSnapshot`)
 - The `Interop.fs` file provides manual wrappers (`TradeEventWrapper`, `QuoteEventWrapper`) to bridge between them.
 
 **Problem:** There are two parallel representations of every core domain concept. A trade is both a C# `Trade` record and an F# `TradeEvent` record. Conversion between them is manual and fragile. The F# validation library (`TradeValidator`, `QuoteValidator`) operates on F# types, so C# code must convert to F# types, validate, then convert back. This dual model increases surface area for bugs and makes it unclear which representation is canonical.
@@ -436,7 +436,7 @@ public sealed class ConnectionStateMachine
 public void Domain_Should_Not_Reference_Infrastructure()
 {
     var result = Types.InAssembly(typeof(MarketEvent).Assembly)
-        .Should().NotHaveDependencyOn("MarketDataCollector.Infrastructure")
+        .Should().NotHaveDependencyOn("Meridian.Infrastructure")
         .GetResult();
     result.IsSuccessful.Should().BeTrue();
 }

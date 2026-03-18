@@ -60,7 +60,7 @@
 <g id="node1" class="node">
 <title>MDC</title>
 <path fill="#438dd5" stroke="black" d="M1638,-291C1638,-291 1446,-291 1446,-291 1440,-291 1434,-285 1434,-279 1434,-279 1434,-255 1434,-255 1434,-249 1440,-243 1446,-243 1446,-243 1638,-243 1638,-243 1644,-243 1650,-249 1650,-255 1650,-255 1650,-279 1650,-279 1650,-285 1644,-291 1638,-291"/>
-<text text-anchor="middle" x="1542" y="-279.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">dotnet run &#45;&#45;project src/MarketDataCollector</text>
+<text text-anchor="middle" x="1542" y="-279.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">dotnet run &#45;&#45;project src/Meridian</text>
 <text text-anchor="middle" x="1542" y="-259.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">Market Data Collector CLI</text>
 <text text-anchor="middle" x="1542" y="-249.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">.NET 9.0 | Cross&#45;Platform</text>
 </g>
