@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Meridian.Infrastructure.Contracts;
+using Meridian.Storage.Archival;
 using Microsoft.Extensions.Logging;
 
 namespace Meridian.Storage.Services;
@@ -154,7 +155,7 @@ public sealed class DataLineageService : IDataLineageService
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
-            await File.WriteAllTextAsync(_lineageStorePath, json, ct);
+            await AtomicFileWriter.WriteAsync(_lineageStorePath, json, ct);
         }
         finally
         {

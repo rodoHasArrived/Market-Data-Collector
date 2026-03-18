@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Meridian.Storage.Archival;
 
 namespace Meridian.Storage.Services;
 
@@ -198,7 +199,7 @@ public sealed class MetadataTagService : IMetadataTagService
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
-            await File.WriteAllTextAsync(_metadataStorePath, json, ct);
+            await AtomicFileWriter.WriteAsync(_metadataStorePath, json, ct);
             _lastSaveTime = DateTime.UtcNow;
         }
         finally

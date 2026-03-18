@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Meridian.Application.Logging;
+using Meridian.Storage.Archival;
 using Serilog;
 
 namespace Meridian.Application.Monitoring.DataQuality;
@@ -270,7 +271,7 @@ public sealed class DataQualityReportGenerator
             _ => ExportToJson(report)
         };
 
-        await File.WriteAllTextAsync(filePath, content, ct);
+        await AtomicFileWriter.WriteAsync(filePath, content, ct);
         _log.Information("Report exported to {FilePath}", filePath);
 
         return filePath;
@@ -295,7 +296,7 @@ public sealed class DataQualityReportGenerator
             _ => ExportWeeklyToJson(report)
         };
 
-        await File.WriteAllTextAsync(filePath, content, ct);
+        await AtomicFileWriter.WriteAsync(filePath, content, ct);
         _log.Information("Weekly report exported to {FilePath}", filePath);
 
         return filePath;

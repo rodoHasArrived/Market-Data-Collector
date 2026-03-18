@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Meridian.Application.Config;
+using Meridian.Storage.Archival;
 
 namespace Meridian.Application.Backfill;
 
@@ -25,13 +26,8 @@ public sealed class BackfillStatusStore
 
     public async Task WriteAsync(BackfillResult result, CancellationToken ct = default)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
         var json = JsonSerializer.Serialize(result, JsonOptions);
-        // Write to temp file then rename for atomicity — prevents TryRead() from
-        // seeing a partially written file if called concurrently.
-        var tempPath = _path + ".tmp";
-        await File.WriteAllTextAsync(tempPath, json, ct);
-        File.Move(tempPath, _path, overwrite: true);
+        await AtomicFileWriter.WriteAsync(_path, json, ct);
     }
 
     public BackfillResult? TryRead()

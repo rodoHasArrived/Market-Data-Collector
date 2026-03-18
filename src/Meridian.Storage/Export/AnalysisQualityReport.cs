@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using Meridian.Application.Logging;
 using Meridian.Application.Serialization;
+using Meridian.Storage.Archival;
 using Serilog;
 
 namespace Meridian.Storage.Export;
@@ -69,7 +70,7 @@ public sealed class AnalysisQualityReportGenerator
         if (format.HasFlag(ReportFormat.Markdown))
         {
             var mdPath = Path.Combine(outputDirectory, "quality_report.md");
-            await File.WriteAllTextAsync(mdPath, GenerateMarkdownReport(report), ct);
+            await AtomicFileWriter.WriteAsync(mdPath, GenerateMarkdownReport(report), ct);
             _log.Information("Quality report exported to {Path}", mdPath);
         }
 
@@ -77,7 +78,7 @@ public sealed class AnalysisQualityReportGenerator
         {
             var jsonPath = Path.Combine(outputDirectory, "quality_report.json");
             var json = JsonSerializer.Serialize(report, MarketDataJsonContext.PrettyPrintOptions);
-            await File.WriteAllTextAsync(jsonPath, json, ct);
+            await AtomicFileWriter.WriteAsync(jsonPath, json, ct);
             _log.Information("Quality report exported to {Path}", jsonPath);
         }
 
@@ -640,7 +641,7 @@ public sealed class AnalysisQualityReportGenerator
                          $"{EscapeCsv(issue.Description)},{EscapeCsv(issue.Impact)}," +
                          $"{EscapeCsv(issue.Resolution)}");
         }
-        await File.WriteAllTextAsync(path, sb.ToString(), ct);
+        await AtomicFileWriter.WriteAsync(path, sb.ToString(), ct);
     }
 
     private static async Task ExportOutliersToCsvAsync(
@@ -659,7 +660,7 @@ public sealed class AnalysisQualityReportGenerator
                              $"{outlier.ZScore:F2},{outlier.ExpectedRange}");
             }
         }
-        await File.WriteAllTextAsync(path, sb.ToString(), ct);
+        await AtomicFileWriter.WriteAsync(path, sb.ToString(), ct);
     }
 
     private static async Task ExportGapsToCsvAsync(
@@ -679,7 +680,7 @@ public sealed class AnalysisQualityReportGenerator
                              $"{gap.EstimatedMissingRecords}");
             }
         }
-        await File.WriteAllTextAsync(path, sb.ToString(), ct);
+        await AtomicFileWriter.WriteAsync(path, sb.ToString(), ct);
     }
 
     private static string EscapeCsv(string? value)

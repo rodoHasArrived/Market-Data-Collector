@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
+using Meridian.Storage.Archival;
 using Meridian.Storage.Interfaces;
 
 namespace Meridian.Storage.Services;
@@ -484,7 +485,7 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
 
         if (validLines.Count < lines.Length)
         {
-            await File.WriteAllLinesAsync(filePath, validLines, ct);
+            await AtomicFileWriter.WriteAsync(filePath, string.Join(Environment.NewLine, validLines) + Environment.NewLine, ct);
             return true;
         }
 
@@ -527,16 +528,16 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
         var extension = files[0].Extension;
         var mergedPath = Path.Combine(directory, $"merged_{DateTime.UtcNow:yyyyMMdd_HHmmss}{extension}");
 
-        await using var output = File.Create(mergedPath);
-        await using var writer = new StreamWriter(output);
-
-        foreach (var file in files)
+        await AtomicFileWriter.WriteAsync(mergedPath, async writer =>
         {
-            var content = await File.ReadAllTextAsync(file.FullName, ct);
-            await writer.WriteAsync(content);
-            if (!content.EndsWith('\n'))
-                await writer.WriteLineAsync();
-        }
+            foreach (var file in files)
+            {
+                var content = await File.ReadAllTextAsync(file.FullName, ct);
+                await writer.WriteAsync(content);
+                if (!content.EndsWith('\n'))
+                    await writer.WriteLineAsync();
+            }
+        }, ct);
 
         return mergedPath;
     }

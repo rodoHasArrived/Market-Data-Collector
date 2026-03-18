@@ -6,6 +6,7 @@ using System.Text.Json;
 using Meridian.Application.Logging;
 using Meridian.Application.Serialization;
 using Meridian.Contracts.Catalog;
+using Meridian.Storage.Archival;
 using Meridian.Storage.Interfaces;
 using Serilog;
 
@@ -645,7 +646,7 @@ public sealed class StorageCatalogService : IStorageCatalogService
         // Update the JSON with checksum
         json = JsonSerializer.Serialize(_catalog, MarketDataJsonContext.PrettyPrintOptions);
 
-        await File.WriteAllTextAsync(manifestPath, json, ct);
+        await AtomicFileWriter.WriteAsync(manifestPath, json, ct);
         _log.Debug("Saved catalog manifest to {Path}", manifestPath);
     }
 
@@ -658,7 +659,7 @@ public sealed class StorageCatalogService : IStorageCatalogService
         {
             case CatalogExportFormat.Json:
                 var json = JsonSerializer.Serialize(_catalog, MarketDataJsonContext.PrettyPrintOptions);
-                await File.WriteAllTextAsync(outputPath, json, ct);
+                await AtomicFileWriter.WriteAsync(outputPath, json, ct);
                 break;
 
             case CatalogExportFormat.Csv:
@@ -990,7 +991,7 @@ public sealed class StorageCatalogService : IStorageCatalogService
         }
 
         var json = JsonSerializer.Serialize(index, MarketDataJsonContext.PrettyPrintOptions);
-        await File.WriteAllTextAsync(path, json, ct);
+        await AtomicFileWriter.WriteAsync(path, json, ct);
     }
 
     private void BuildCatalogFromFileIndex()
