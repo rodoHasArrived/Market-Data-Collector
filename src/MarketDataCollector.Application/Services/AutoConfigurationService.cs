@@ -113,6 +113,13 @@ public sealed class AutoConfigurationService
             AlternativeEnvVars: new[] { "MDC_NASDAQ_API_KEY", "QUANDL_API_KEY" },
             Capabilities: new[] { "Historical", "Daily", "AdjustedPrices", "Dividends", "Splits" },
             Priority: 30
+        ),
+        ["TwelveData"] = new ProviderCredentialInfo(
+            DisplayName: "Twelve Data",
+            RequiredEnvVars: new[] { "TWELVEDATA_API_KEY" },
+            AlternativeEnvVars: new[] { "MDC_TWELVEDATA_API_KEY", "TWELVE_DATA_API_KEY" },
+            Capabilities: new[] { "Historical", "Daily", "Intraday", "International" },
+            Priority: 22
         )
     };
 
@@ -445,6 +452,19 @@ public sealed class AutoConfigurationService
                         )
                     };
                     priorityOrder.Add("nasdaq");
+                    break;
+
+                case "TwelveData":
+                    var twelveDataKey = GetEnvVar("TWELVEDATA_API_KEY", "MDC_TWELVEDATA_API_KEY", "TWELVE_DATA_API_KEY");
+                    providers = providers with
+                    {
+                        TwelveData = new TwelveDataConfig(
+                            Enabled: true,
+                            ApiKey: twelveDataKey,
+                            Priority: provider.SuggestedPriority
+                        )
+                    };
+                    priorityOrder.Add("twelvedata");
                     break;
             }
         }

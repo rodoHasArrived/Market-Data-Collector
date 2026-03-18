@@ -105,6 +105,11 @@ public sealed class CredentialValidationService : IAsyncDisposable
             {
                 tasks.Add(ValidateAlphaVantageAsync(providers.AlphaVantage, ct));
             }
+
+            if (providers.TwelveData?.Enabled == true && !string.IsNullOrEmpty(providers.TwelveData.ApiKey))
+            {
+                tasks.Add(ValidateTwelveDataAsync(providers.TwelveData, ct));
+            }
         }
 
         // Execute all validations in parallel
