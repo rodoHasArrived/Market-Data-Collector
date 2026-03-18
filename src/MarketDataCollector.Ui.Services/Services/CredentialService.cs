@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
-/// Default credential service for the shared UI services layer.
-/// Platform-specific projects (WPF) override this with their own implementations
-/// by setting the Instance property during app startup.
+/// Default no-op credential service for the shared UI services layer.
+/// This implementation is used in environments that do not require credential management.
+/// Platform-specific projects (e.g. WPF) register their own <see cref="ICredentialService"/>
+/// implementation via the DI container instead of relying on this fallback.
 /// </summary>
-public sealed class CredentialService
+public sealed class CredentialService : ICredentialService
 {
     private static readonly Lazy<CredentialService> _instance = new(() => new CredentialService());
 
@@ -34,7 +36,7 @@ public sealed class CredentialService
     public CredentialMetadataInfo? GetMetadata(string resource)
         => null;
 
-    protected void OnCredentialExpiring(CredentialExpirationEventArgs e)
+    private void OnCredentialExpiring(CredentialExpirationEventArgs e)
         => CredentialExpiring?.Invoke(this, e);
 }
 
