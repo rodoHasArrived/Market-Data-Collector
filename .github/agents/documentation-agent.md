@@ -481,6 +481,7 @@ Market-Data-Collector/
 │   │   ├── ingestion-orchestration-evaluation.md
 │   │   ├── nautilus-inspired-restructuring-proposal.md
 │   │   ├── operational-readiness-evaluation.md
+│   │   ├── quant-script-blueprint-brainstorm.md
 │   │   ├── README.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   ├── storage-architecture-evaluation.md
