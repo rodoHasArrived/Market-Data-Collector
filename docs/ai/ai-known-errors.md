@@ -370,3 +370,22 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710880501/job/65983564475#step:6:1
 - **Status**: fixed
 - **Fixed in**: `src/MarketDataCollector.Application/Results/ErrorCode.cs` — changed `: byte` to `: int`; `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` — added `(ushort)` cast on `Math.Max(0, TradeCount - 1)`; `tests/…/MarketDataClientFactoryTests.cs` — changed `(DataSourceKind)999` to `(DataSourceKind)200` (999 > 255); `tests/…/OptionContractSpecTests.cs` — removed `[InlineData(-1)]` (ushort cannot be negative); `tests/…/CanonicalizationGoldenFixtureTests.cs` — added `(byte)` cast for `canonicalizationVersion` comparison
+
+### AI-20260317-cs0104-backtesting-marketevent-ambiguity
+- **ID**: AI-20260317-cs0104-backtesting-marketevent-ambiguity
+- **Area**: build/namespaces
+- **Symptoms**: Build fails with 11 CS0104 errors: "'MarketEvent' is an ambiguous reference between 'MarketDataCollector.Contracts.Domain.Events.MarketEvent' and 'MarketDataCollector.Domain.Events.MarketEvent'" across `BacktestEngine.cs`, `IFillModel.cs`, `BarMidpointFillModel.cs`, `OrderBookFillModel.cs`, and `MultiSymbolMergeEnumerator.cs`. The entire `MarketDataCollector.Backtesting` project fails to compile, causing CI test suite failure.
+- **Root cause**: `GlobalUsings.cs` in the Backtesting project imported `global using MarketDataCollector.Contracts.Domain.Events;`. Individual source files within the same project also imported `using MarketDataCollector.Domain.Events;`. Both namespaces define a `MarketEvent` type, producing an unresolvable ambiguity (CS0104) at every usage site. The Backtesting engine exclusively uses `Domain.Events.MarketEvent` (the richer type with `StampReceiveTime`, `EstimatedLatencyMs`, `EffectiveSymbol`, etc.), making the `Contracts.Domain.Events` global import redundant and harmful.
+- **Prevention checklist**:
+  - [ ] When editing `GlobalUsings.cs`, verify the namespace you are importing does not define types that already exist in other imported namespaces in the same project
+  - [ ] When two namespaces define a type with the same name, import only one globally and use explicit `using` directives or fully qualified names for types from the other
+  - [ ] After modifying `GlobalUsings.cs`, build the affected project in isolation: `dotnet build src/MarketDataCollector.Backtesting/MarketDataCollector.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
+  - [ ] Check for cross-namespace type name conflicts: `grep -rn "class MarketEvent\|record MarketEvent" src/ --include="*.cs"`
+  - [ ] The authoritative streaming type is `MarketDataCollector.Domain.Events.MarketEvent`; `Contracts.Domain.Events.MarketEvent` is a lighter DTO — never import both globally in the same project
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Backtesting/MarketDataCollector.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
+  - `dotnet test tests/MarketDataCollector.Backtesting.Tests/MarketDataCollector.Backtesting.Tests.csproj -c Release /p:EnableWindowsTargeting=true`
+  - `grep "Contracts.Domain.Events" src/MarketDataCollector.Backtesting/GlobalUsings.cs` (should return no results after fix)
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23176103636, #2005
+- **Status**: fixed
+- **Fixed in**: `src/MarketDataCollector.Backtesting/GlobalUsings.cs` — removed `global using MarketDataCollector.Contracts.Domain.Events;`; also added `[assembly: InternalsVisibleTo("MarketDataCollector.Backtesting.Tests")]` following the pattern in `Application/GlobalUsings.cs`
