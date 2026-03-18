@@ -175,6 +175,25 @@ public sealed class ReturnSeries
     /// <summary>Maximum drawdown as a positive fraction.</summary>
     public double MaxDrawdown();
 }
+
+/// <summary>
+/// Immutable time-indexed numeric series for arbitrary named values
+/// (indicators, signals, computed metrics, etc.).
+/// Use this as the output type for custom indicator calculations and
+/// as a first-class input to <see cref="PlotQueue"/> plotting methods.
+/// </summary>
+public sealed class NumericSeries
+{
+    public string Label { get; }
+    public IReadOnlyList<DateOnly> Dates { get; }
+    public IReadOnlyList<double> Values { get; }
+    public int Count { get; }
+
+    public NumericSeries(string label, IReadOnlyList<DateOnly> dates, IReadOnlyList<double> values);
+
+    /// <summary>Slice by date range (inclusive).</summary>
+    public NumericSeries Slice(DateOnly from, DateOnly to);
+}
 ```
 
 ### 3.2 Data Context
@@ -305,6 +324,9 @@ public enum PlotType
 
 /// <summary>
 /// A single plot request captured during script execution.
+/// XValues are stored as <see cref="double"/>; when <see cref="XIsDate"/> is
+/// <see langword="true"/> each value is a <see cref="DateOnly.DayNumber"/> so
+/// renderers can re-hydrate the axis as a date axis.
 /// </summary>
 public sealed record PlotRequest(
     string Title,
@@ -314,15 +336,30 @@ public sealed record PlotRequest(
     IReadOnlyList<double> XValues,
     IReadOnlyList<double> YValues,
     string? SeriesLabel = null,
-    string? Color = null);
+    string? Color = null,
+    bool XIsDate = false);
 
 /// <summary>
 /// Accumulates plot requests from script code.
 /// Thread-safe; scripts call Plot.Line(...) etc.
 /// </summary>
+/// <remarks>
+/// All overloads ultimately store data as <c>IReadOnlyList&lt;double&gt;</c> inside
+/// <see cref="PlotRequest"/>.  Convenience overloads accept:
+/// <list type="bullet">
+///   <item><see cref="PriceSeries"/> — plots Close prices against Dates.</item>
+///   <item><see cref="NumericSeries"/> — plots Values against Dates.</item>
+///   <item><c>IReadOnlyList&lt;DateOnly&gt;</c> x-axis + <c>IReadOnlyList&lt;decimal&gt;</c> y-axis.</item>
+///   <item><c>IReadOnlyList&lt;DateOnly&gt;</c> x-axis + <c>IReadOnlyList&lt;double&gt;</c> y-axis.</item>
+/// </list>
+/// Date-bearing overloads set <see cref="PlotRequest.XIsDate"/> = <see langword="true"/>
+/// and encode each date as its <see cref="DateOnly.DayNumber"/>.
+/// </remarks>
 public sealed class PlotQueue
 {
     private readonly ConcurrentQueue<PlotRequest> _queue = new();
+
+    // ── double / double overloads (existing) ────────────────────────────────
 
     public void Line(string title, IReadOnlyList<double> x, IReadOnlyList<double> y,
         string? label = null, string? color = null)
@@ -355,11 +392,144 @@ public sealed class PlotQueue
         _queue.Enqueue(new PlotRequest(title, PlotType.Area, null, null, x, y, label, color));
     }
 
+    // ── PriceSeries overloads ────────────────────────────────────────────────
+
+    /// <summary>Plot the Close price of a <see cref="PriceSeries"/> against its dates.</summary>
+    public void Line(string title, PriceSeries series, string? label = null, string? color = null)
+        => EnqueuePriceSeries(title, PlotType.Line, series, label, color);
+
+    /// <summary>Plot the Close price of a <see cref="PriceSeries"/> as a scatter plot.</summary>
+    public void Scatter(string title, PriceSeries series, string? label = null, string? color = null)
+        => EnqueuePriceSeries(title, PlotType.Scatter, series, label, color);
+
+    /// <summary>Plot the Close price of a <see cref="PriceSeries"/> as a bar chart.</summary>
+    public void Bar(string title, PriceSeries series, string? label = null, string? color = null)
+        => EnqueuePriceSeries(title, PlotType.Bar, series, label, color);
+
+    /// <summary>Plot the Close price of a <see cref="PriceSeries"/> as an area chart.</summary>
+    public void Area(string title, PriceSeries series, string? label = null, string? color = null)
+        => EnqueuePriceSeries(title, PlotType.Area, series, label, color);
+
+    // ── NumericSeries overloads ──────────────────────────────────────────────
+
+    /// <summary>Plot a <see cref="NumericSeries"/> as a line chart.</summary>
+    public void Line(string title, NumericSeries series, string? label = null, string? color = null)
+        => EnqueueNumericSeries(title, PlotType.Line, series, label, color);
+
+    /// <summary>Plot a <see cref="NumericSeries"/> as a scatter plot.</summary>
+    public void Scatter(string title, NumericSeries series, string? label = null, string? color = null)
+        => EnqueueNumericSeries(title, PlotType.Scatter, series, label, color);
+
+    /// <summary>Plot a <see cref="NumericSeries"/> as a bar chart.</summary>
+    public void Bar(string title, NumericSeries series, string? label = null, string? color = null)
+        => EnqueueNumericSeries(title, PlotType.Bar, series, label, color);
+
+    /// <summary>Plot a <see cref="NumericSeries"/> as an area chart.</summary>
+    public void Area(string title, NumericSeries series, string? label = null, string? color = null)
+        => EnqueueNumericSeries(title, PlotType.Area, series, label, color);
+
+    // ── IReadOnlyList<DateOnly> + IReadOnlyList<decimal> overloads ───────────
+
+    /// <summary>
+    /// Plot decimal y-values (e.g. <c>PriceSeries.Close</c>) against a date x-axis.
+    /// </summary>
+    public void Line(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Line, null, null,
+            ToDoubleX(dates), ToDoubleY(y), label, color, XIsDate: true));
+    }
+
+    /// <inheritdoc cref="Line(string,IReadOnlyList{DateOnly},IReadOnlyList{decimal},string?,string?)"/>
+    public void Scatter(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Scatter, null, null,
+            ToDoubleX(dates), ToDoubleY(y), label, color, XIsDate: true));
+    }
+
+    /// <inheritdoc cref="Line(string,IReadOnlyList{DateOnly},IReadOnlyList{decimal},string?,string?)"/>
+    public void Bar(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Bar, null, null,
+            ToDoubleX(dates), ToDoubleY(y), label, color, XIsDate: true));
+    }
+
+    /// <inheritdoc cref="Line(string,IReadOnlyList{DateOnly},IReadOnlyList{decimal},string?,string?)"/>
+    public void Area(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<decimal> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Area, null, null,
+            ToDoubleX(dates), ToDoubleY(y), label, color, XIsDate: true));
+    }
+
+    // ── IReadOnlyList<DateOnly> + IReadOnlyList<double> overloads ───────────
+
+    /// <summary>
+    /// Plot double y-values (e.g. indicator output) against a date x-axis.
+    /// </summary>
+    public void Line(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<double> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Line, null, null,
+            ToDoubleX(dates), y, label, color, XIsDate: true));
+    }
+
+    /// <inheritdoc cref="Line(string,IReadOnlyList{DateOnly},IReadOnlyList{double},string?,string?)"/>
+    public void Scatter(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<double> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Scatter, null, null,
+            ToDoubleX(dates), y, label, color, XIsDate: true));
+    }
+
+    /// <inheritdoc cref="Line(string,IReadOnlyList{DateOnly},IReadOnlyList{double},string?,string?)"/>
+    public void Bar(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<double> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Bar, null, null,
+            ToDoubleX(dates), y, label, color, XIsDate: true));
+    }
+
+    /// <inheritdoc cref="Line(string,IReadOnlyList{DateOnly},IReadOnlyList{double},string?,string?)"/>
+    public void Area(string title, IReadOnlyList<DateOnly> dates, IReadOnlyList<double> y,
+        string? label = null, string? color = null)
+    {
+        _queue.Enqueue(new PlotRequest(title, PlotType.Area, null, null,
+            ToDoubleX(dates), y, label, color, XIsDate: true));
+    }
+
     /// <summary>Drain all queued requests.</summary>
     public IReadOnlyList<PlotRequest> DrainAll();
 
     /// <summary>Clear all queued requests.</summary>
     public void Clear();
+
+    // ── private helpers ──────────────────────────────────────────────────────
+
+    private static IReadOnlyList<double> ToDoubleX(IReadOnlyList<DateOnly> dates)
+        => dates.Select(d => (double)d.DayNumber).ToArray();
+
+    private static IReadOnlyList<double> ToDoubleY(IReadOnlyList<decimal> values)
+        => values.Select(v => (double)v).ToArray();
+
+    private void EnqueuePriceSeries(string title, PlotType type, PriceSeries series,
+        string? label, string? color)
+    {
+        var x = ToDoubleX(series.Dates);
+        var y = ToDoubleY(series.Close);
+        _queue.Enqueue(new PlotRequest(title, type, "Date", "Price",
+            x, y, label ?? series.Symbol, color, XIsDate: true));
+    }
+
+    private void EnqueueNumericSeries(string title, PlotType type, NumericSeries series,
+        string? label, string? color)
+    {
+        var x = ToDoubleX(series.Dates);
+        _queue.Enqueue(new PlotRequest(title, type, "Date", series.Label,
+            x, series.Values, label ?? series.Label, color, XIsDate: true));
+    }
 }
 ```
 
