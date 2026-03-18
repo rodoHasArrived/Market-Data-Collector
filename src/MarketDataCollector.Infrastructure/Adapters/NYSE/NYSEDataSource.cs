@@ -215,7 +215,6 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     protected override async ValueTask OnDisposeAsync()
     {
         await DisconnectAsync().ConfigureAwait(false);
-        _reconnectCts.Dispose();
 
         _wsManager.ConnectionLost -= OnWsConnectionLostAsync;
         await _wsManager.DisposeAsync().ConfigureAwait(false);
@@ -766,11 +765,10 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
             try
             {
-                // Do NOT pass ct here: ConnectAsync cancels and replaces _reconnectCts at its
-                // start, which would immediately invalidate ct (derived from the old CTS) and
-                // cause every reconnect attempt to fail with OperationCanceledException.
-                // Shutdown cancellation is handled by the ct checks above and in Task.Delay.
-                await ConnectAsync(CancellationToken.None).ConfigureAwait(false);
+                // Pass ct so that a shutdown signal also cancels the connect operation itself,
+                // not just the backoff delay.  ConnectAsync no longer resets _reconnectCts so
+                // ct remains valid for the duration of the connect call.
+                await ConnectAsync(ct).ConfigureAwait(false);
                 MigrationDiagnostics.IncReconnectSuccess("nyse");
                 return;
             }
