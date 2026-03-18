@@ -99,9 +99,10 @@ public sealed class ChartingPageViewModel : BindableBase
             foreach (var symbol in result.Symbols)
                 SymbolItems.Add(new SymbolItem(symbol.Symbol));
         }
-        catch
+        catch (Exception ex)
         {
             // Symbols not available
+            System.Diagnostics.Debug.WriteLine($"An exception occurred while loading symbols: {ex}");
         }
     }
 
