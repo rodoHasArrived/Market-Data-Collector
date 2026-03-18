@@ -1,8 +1,8 @@
 name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-17
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23210091105
+# Generated: 2026-03-18
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23222443454
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,19 +23,25 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `CS0117`
+      - `CS0118`
       - `CS0219`
+      - `CS0234`
+      - `CS0246`
+      - `CS0433`
+      - `CS0534`
+      - `CS0535`
 
       ## Failure Patterns
-      - `2026-03-17T18:30:33.9880135Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Infrastructure\Adapters\TwelveData\TwelveDataHistoricalDataProvider.cs(37,65): error CS01...`
-      - `2026-03-17T18:30:41.1854348Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Infrastructure\Adapters\TwelveData\TwelveDataHistoricalDataProvider.cs(37,65): error CS01...`
-      - `2026-03-17T18:28:54.0279913Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,65...`
-      - `2026-03-17T18:28:56.6896204Z ##[error]/home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,65...`
-      - `2026-03-17T18:29:13.0366460Z ##[error]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,6...`
-      - `2026-03-17T18:29:16.8457320Z ##[error]/Users/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs(37,6...`
-      - `2026-03-17T18:30:41.1757323Z Build FAILED.`
-      - `2026-03-17T18:28:56.6850187Z Build FAILED.`
-      - `2026-03-17T18:29:16.8229460Z Build FAILED.`
+      - `2026-03-18T00:10:47.9738927Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(138,9): error CS0433: The type 'BackfillProviderOptionsDto'...`
+      - `2026-03-18T00:10:47.9751046Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(186,74): error CS0433: The type 'BackfillProviderOptionsDto...`
+      - `2026-03-18T00:10:47.9764339Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(220,35): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T00:10:47.9775045Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(80,12): error CS0433: The type 'CredentialMetadata' exi...`
+      - `2026-03-18T00:10:47.9784399Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(244,55): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T00:10:47.9795956Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(82,57): error CS0433: The type 'CredentialMetadata' exi...`
+      - `2026-03-18T00:10:47.9805664Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T00:10:47.9813982Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement in...`
+      - `2026-03-18T00:10:47.9822967Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(484,12): error CS0433: The type 'CredentialMetadata' ex...`
+      - `2026-03-18T00:10:47.9832777Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(493,67): error CS0433: The type 'CredentialMetadata' ex...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
