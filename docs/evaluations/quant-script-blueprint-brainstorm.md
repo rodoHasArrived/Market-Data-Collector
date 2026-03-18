@@ -335,10 +335,105 @@ sealed record ScriptRunRecord(
     TimeSpan Elapsed,
     string SourceCodeHash,
     Dictionary<string, object> Parameters,
-    PortfolioStatistics? Statistics,
-    BacktestMetrics? BacktestMetrics,
+    ScriptRunMetrics? Metrics,
     IReadOnlyList<PlotRequest> Plots);
 ```
+
+`PortfolioStatistics` and the existing SDK `BacktestMetrics` overlap on Sharpe, Sortino, Calmar,
+MaxDrawdown, WinRate, ProfitFactor, and TotalTrades — carrying both would create duplicate fields
+with different nullability rules and confuse the comparison view.  Instead, a single unified record
+merges every field from both sources; backtest-only fields are nullable so a standalone series
+analysis can leave them unpopulated:
+
+```csharp
+/// <summary>
+/// Unified performance record for a QuantScript run.
+/// Populated from a backtest via <see cref="FromBacktest"/>,
+/// or from a standalone return-series analysis via <see cref="FromReturnSeries"/>.
+/// Backtest-specific fields are nullable and absent in series-only runs.
+/// </summary>
+sealed record ScriptRunMetrics
+{
+    // ── Core metrics — always populated ──────────────────────────────────
+    public required double SharpeRatio          { get; init; }
+    public required double SortinoRatio         { get; init; }
+    public required double CalmarRatio          { get; init; }
+    public required double AnnualisedReturn     { get; init; }
+    public          double? AnnualisedVolatility { get; init; }  // null when sourced from BacktestMetrics (not computed by BacktestMetricsEngine)
+    public required double MaxDrawdown          { get; init; }  // positive fraction, e.g. 0.123 = 12.3% peak-to-trough
+    public required double Cagr                 { get; init; }
+    public required double WinRate              { get; init; }
+    public required double ProfitFactor         { get; init; }
+    public required int    TotalTrades          { get; init; }
+
+    // ── Backtest-only fields — null for series-analysis runs ─────────────
+    public decimal? InitialCapital          { get; init; }
+    public decimal? FinalEquity             { get; init; }
+    public decimal? GrossPnl               { get; init; }
+    public decimal? NetPnl                 { get; init; }
+    public decimal? TotalReturn            { get; init; }
+    public decimal? MaxDrawdownAbsolute    { get; init; }  // dollar amount; MaxDrawdown holds the percentage form
+    public int?     MaxDrawdownRecoveryDays { get; init; }
+    public int?     WinningTrades          { get; init; }
+    public int?     LosingTrades           { get; init; }
+    public decimal? TotalCommissions       { get; init; }
+    public decimal? TotalMarginInterest    { get; init; }
+    public decimal? TotalShortRebates      { get; init; }
+    public double?  Xirr                   { get; init; }
+    public IReadOnlyDictionary<string, SymbolAttribution>? SymbolAttribution { get; init; }
+
+    // ── Factory methods ──────────────────────────────────────────────────
+
+    /// <summary>Build from an existing <see cref="BacktestMetrics"/> (all fields populated).</summary>
+    public static ScriptRunMetrics FromBacktest(BacktestMetrics m) => new()
+    {
+        SharpeRatio           = m.SharpeRatio,
+        SortinoRatio          = m.SortinoRatio,
+        CalmarRatio           = m.CalmarRatio,
+        AnnualisedReturn      = (double)m.AnnualizedReturn,
+        AnnualisedVolatility  = null,             // BacktestMetricsEngine does not compute return-series volatility
+        // BacktestMetrics.AnnualizedReturn is already CAGR: computed as (1 + totalReturn)^(1/years) − 1
+        MaxDrawdown           = (double)m.MaxDrawdownPercent,  // use the fractional field, not the absolute dollar amount
+        Cagr                  = (double)m.AnnualizedReturn,
+        WinRate               = m.WinRate,
+        ProfitFactor          = m.ProfitFactor,
+        TotalTrades           = m.TotalTrades,
+        InitialCapital        = m.InitialCapital,
+        FinalEquity           = m.FinalEquity,
+        GrossPnl              = m.GrossPnl,
+        NetPnl                = m.NetPnl,
+        TotalReturn           = m.TotalReturn,
+        MaxDrawdownAbsolute   = m.MaxDrawdown,
+        MaxDrawdownRecoveryDays = m.MaxDrawdownRecoveryDays,
+        WinningTrades         = m.WinningTrades,
+        LosingTrades          = m.LosingTrades,
+        TotalCommissions      = m.TotalCommissions,
+        TotalMarginInterest   = m.TotalMarginInterest,
+        TotalShortRebates     = m.TotalShortRebates,
+        Xirr                  = m.Xirr,
+        SymbolAttribution     = m.SymbolAttribution,
+    };
+
+    /// <summary>Build from a <see cref="ReturnSeries"/> (backtest-only fields remain null).</summary>
+    public static ScriptRunMetrics FromReturnSeries(PortfolioStatistics s) => new()
+    {
+        SharpeRatio           = s.SharpeRatio,
+        SortinoRatio          = s.SortinoRatio,
+        CalmarRatio           = s.CalmarRatio,
+        AnnualisedReturn      = s.AnnualisedReturn,
+        AnnualisedVolatility  = s.AnnualisedVolatility,
+        MaxDrawdown           = s.MaxDrawdown,    // PortfolioStatistics.MaxDrawdown is the fractional form
+        Cagr                  = s.Cagr,
+        WinRate               = s.WinRate,
+        ProfitFactor          = s.ProfitFactor,
+        TotalTrades           = s.TotalTrades,
+    };
+}
+```
+
+> **`PortfolioStatistics` is still used** — `StatisticsEngine.Compute` returns it, and `FromReturnSeries`
+> maps it into `ScriptRunMetrics`.  It remains the internal computation type; `ScriptRunMetrics` is
+> purely the persistence / comparison type.
 
 A `RunHistoryService` manages CRUD. The comparison view is a new tab in the results pane that accepts 2–4 run records and renders delta tables + overlaid plots.
 

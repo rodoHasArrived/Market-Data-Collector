@@ -709,7 +709,7 @@ Already fully specified in §3.10. Pure static extension methods, no state.
 | `OutputLog` | `ObservableCollection<string>` | OneWay to log ListBox |
 | `Diagnostics` | `ObservableCollection<CompilationDiagnostic>` | OneWay to errors DataGrid |
 | `PlotRequests` | `ObservableCollection<PlotRequest>` | OneWay, drives ScottPlot rendering |
-| `Statistics` | `PortfolioStatistics?` | OneWay to stats panel |
+| `Metrics` | `ScriptRunMetrics?` | OneWay to stats panel (unified — populated from backtest or series analysis) |
 | `Parameters` | `ObservableCollection<ScriptParameterViewModel>` | TwoWay for parameter sidebar |
 | `SelectedScriptPath` | `string?` | OneWay, current file path |
 | `RecentScripts` | `ObservableCollection<string>` | OneWay to recent scripts dropdown |
