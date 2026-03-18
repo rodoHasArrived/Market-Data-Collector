@@ -24,7 +24,8 @@ public partial class ServiceManagerPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        await RefreshStatusAsync();
+        try { await RefreshStatusAsync(); }
+        catch (Exception ex) { _loggingService.LogError("Failed to load service manager status", ex); }
     }
 
     private async void Install_Click(object sender, RoutedEventArgs e)
@@ -49,7 +50,8 @@ public partial class ServiceManagerPage : Page
 
     private async void Refresh_Click(object sender, RoutedEventArgs e)
     {
-        await RefreshStatusAsync();
+        try { await RefreshStatusAsync(); }
+        catch (Exception ex) { _loggingService.LogError("Failed to refresh service manager status", ex); }
     }
 
     private async Task ExecuteOperationAsync(Func<Task<BackendServiceOperationResult>> operation)

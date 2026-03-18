@@ -285,6 +285,11 @@ public partial class SettingsPage : Page
             ConnectionTestResult.Text = "Error";
             ConnectionTestResult.Foreground = new SolidColorBrush(Color.FromRgb(248, 81, 73));
         }
+        catch (Exception)
+        {
+            ConnectionTestResult.Text = "Error";
+            ConnectionTestResult.Foreground = new SolidColorBrush(Color.FromRgb(248, 81, 73));
+        }
     }
 
     private void TestCredential_Click(object sender, RoutedEventArgs e)

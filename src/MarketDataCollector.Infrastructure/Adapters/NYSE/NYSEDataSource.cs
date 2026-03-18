@@ -722,7 +722,9 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             MigrationDiagnostics.IncReconnectAttempt("nyse");
             Log.Information("NYSE reconnection attempt {Attempt}/{Max}", attempt, _options.MaxReconnectAttempts);
 
-            await Task.Delay(TimeSpan.FromSeconds(_options.ReconnectDelaySeconds * attempt))
+            var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000));
+            var backoff = TimeSpan.FromSeconds(_options.ReconnectDelaySeconds * attempt) + jitter;
+            await Task.Delay(backoff, CancellationToken.None)
                 .ConfigureAwait(false);
 
             try
