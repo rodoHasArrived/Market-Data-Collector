@@ -327,14 +327,17 @@ public sealed class DataGapRepairService
     /// <summary>
     /// Check which providers might have data for the given gaps.
     /// </summary>
-    private Task EnrichGapsWithAlternateSourcesAsync(
+    private async Task EnrichGapsWithAlternateSourcesAsync(
         List<DataGap> gaps,
         string symbol,
         CancellationToken ct)
     {
+        var availabilityTasks = _providers.Select(p => p.IsAvailableAsync(ct));
+        var availability = await Task.WhenAll(availabilityTasks).ConfigureAwait(false);
         var availableProviders = _providers
-            .Where(p => p.IsAvailableAsync(ct).GetAwaiter().GetResult())
-            .Select(p => p.Name)
+            .Zip(availability, (p, available) => (p, available))
+            .Where(x => x.available)
+            .Select(x => x.p.Name)
             .ToArray();
 
         // For simplicity, mark all gaps as having all available providers
@@ -343,8 +346,6 @@ public sealed class DataGapRepairService
         {
             gaps[i] = gaps[i] with { AvailableAlternateSources = availableProviders };
         }
-
-        return Task.CompletedTask;
     }
 
     private async Task<GapRepairItemResult> RepairSingleGapAsync(

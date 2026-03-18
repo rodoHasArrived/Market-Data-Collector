@@ -68,7 +68,7 @@ public sealed record ServiceInfo(
 /// - Reporting: ProgressDisplayService, DailySummaryWebhook, ApiDocumentationService
 /// </remarks>
 [ImplementsAdr("ADR-001", "Centralized service registry for organization and discovery")]
-public sealed class ServiceRegistry : IDisposable
+public sealed class ServiceRegistry : IDisposable, IAsyncDisposable
 {
     private readonly Dictionary<string, ServiceInfo> _services = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, object> _instances = new();
@@ -150,8 +150,31 @@ public sealed class ServiceRegistry : IDisposable
             {
                 if (instance is IDisposable disposable)
                     disposable.Dispose();
-                else if (instance is IAsyncDisposable asyncDisposable)
-                    asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Error disposing service {ServiceType}", instance.GetType().Name);
+            }
+        }
+
+        _services.Clear();
+        _instances.Clear();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+
+        foreach (var instance in _instances.Values)
+        {
+            try
+            {
+                if (instance is IAsyncDisposable asyncDisposable)
+                    await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+                else if (instance is IDisposable disposable)
+                    disposable.Dispose();
             }
             catch (Exception ex)
             {
