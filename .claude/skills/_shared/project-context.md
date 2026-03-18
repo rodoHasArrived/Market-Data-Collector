@@ -18,7 +18,7 @@
 | Test Files | 266 |
 | Test Methods | ~4,135 |
 | Documentation Files | 163 |
-| Main Projects | 13 (+ 4 test + 1 benchmark) |
+| Main Projects | 15 (+ 4 test + 1 benchmark) |
 | CI/CD Workflows | 27 |
 | Makefile Targets | 96 |
 | Provider Implementations | 5 streaming, 10 historical |
@@ -28,7 +28,7 @@
 
 ---
 
-## Solution Layout (13 main projects)
+## Solution Layout (15 main projects)
 
 ```
 Meridian.sln
@@ -45,7 +45,9 @@ Meridian.sln
 │   ├── Meridian.Ui/                # Web dashboard (ASP.NET)
 │   ├── Meridian.Ui.Services/       # Shared UI services (platform-neutral)
 │   ├── Meridian.Ui.Shared/         # Shared endpoint handlers (platform-neutral)
-│   └── Meridian.Wpf/               # WPF desktop app (recommended Windows client)
+│   ├── Meridian.Wpf/               # WPF desktop app (recommended Windows client)
+│   ├── MarketDataCollector.Execution/   # [NEW] IOrderGateway, PaperTradingGateway, broker adapters (ADR-015)
+│   └── MarketDataCollector.Strategies/  # [NEW] IStrategyLifecycle, StrategyRunStore, promotion workflow (ADR-016)
 ├── tests/
 │   ├── Meridian.Tests/             # 266 test files, ~4135 test methods
 │   ├── Meridian.FSharp.Tests/      # F# unit tests (expecto/xUnit)
@@ -73,6 +75,8 @@ Contracts       → nothing (leaf project)
 Storage         → Contracts, Core
 Domain          → Contracts, Core
 Web host        → Ui.Services, Ui.Shared, Contracts
+Execution       → Contracts, Core, ProviderSdk  (ADR-015)
+Strategies      → Contracts, Core, Backtesting.Sdk, Execution    (ADR-016)
 ```
 
 **Forbidden (flag as CRITICAL in reviews):**
@@ -86,6 +90,10 @@ ProviderSdk     → anything except Contracts
 FSharp          → anything except Contracts
 Contracts       → Infrastructure           (dependency inversion)
 Core/Domain     → Infrastructure           (dependency inversion)
+Backtesting.*   → Execution.*              (backtesting is simulation-only; no live concepts)
+Execution.*     → Backtesting.*            (execution must not depend on simulation infra)
+Strategies.*    → any concrete Execution.* type  (strategies depend only on IOrderGateway/IExecutionContext)
+DataCollection  → Strategies.* or Execution.*   (data layer is infrastructure, not strategy-aware)
 ```
 
 ---

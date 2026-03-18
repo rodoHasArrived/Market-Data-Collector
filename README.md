@@ -1,6 +1,6 @@
 # Market Data Collector
 
-A high-performance, cross-platform market data collection system for real-time and historical market microstructure data.
+A high-performance, self-hosted algorithmic trading platform — **collect**, **backtest**, and **execute** strategies over real-time and historical market data.
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-13-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
@@ -20,7 +20,19 @@ A high-performance, cross-platform market data collection system for real-time a
 
 ## What This Project Does
 
-Market Data Collector is a complete solution for **building your own market data archive**. It connects to financial data providers, captures market data in real-time, and stores everything locally so you have full ownership and offline access to your data.
+Market Data Collector is a self-hosted, multi-pillar trading platform. Starting from a
+rock-solid data collection and backtesting foundation, it is expanding to support
+**live and simulated order execution** and a full **strategy lifecycle** — from first
+backtest through paper trading to production deployment.
+
+### Platform Pillars
+
+| Pillar | Projects | Status |
+|--------|----------|--------|
+| **📡 Data Collection** | `MarketDataCollector.*` core projects | ✅ Production-ready |
+| **🔬 Backtesting** | `MarketDataCollector.Backtesting`, `.Backtesting.Sdk` | ✅ Production-ready |
+| **⚡ Execution** | `MarketDataCollector.Execution` | 🚧 Scaffolded — paper gateway active |
+| **🗂️ Strategies** | `MarketDataCollector.Strategies` | 🚧 Scaffolded — lifecycle management |
 
 ### Core Capabilities
 
@@ -28,28 +40,33 @@ Market Data Collector is a complete solution for **building your own market data
 |------------|---------------------|
 | **📡 Real-Time Streaming** | Capture live trades, quotes, and order book depth as they happen from Interactive Brokers, Alpaca, NYSE, Polygon, or StockSharp |
 | **📥 Historical Backfill** | Download years of historical price data from 10+ providers (Yahoo Finance, Tiingo, Polygon, Alpaca, and more) with automatic failover |
-| **💾 Local Data Storage** | Own your data—everything is stored in structured JSONL or Parquet files on your machine, not locked in a vendor's cloud |
+| **💾 Local Data Storage** | Own your data — everything is stored in structured JSONL or Parquet files on your machine, not locked in a vendor's cloud |
 | **🔍 Data Quality Monitoring** | Automatic validation catches missing data, sequence gaps, and anomalies before they corrupt your analysis |
 | **📦 Data Packaging** | Export and package your data for sharing, backup, or use in other tools |
 | **📊 Live Dashboards** | Monitor collection status, throughput, and data quality through a web dashboard or Windows desktop app |
-| **🔬 Backtesting Integration** | Feed your collected data directly into QuantConnect Lean for algorithmic strategy development |
+| **🔬 Backtesting Engine** | Replay tick-level historical data through strategy plugins; compute Sharpe, drawdown, XIRR, and full fill tape |
+| **⚡ Paper Trading** | Run strategies against a live feed with zero financial risk using `PaperTradingGateway` (ADR-015) |
+| **🗂️ Strategy Lifecycle** | Register, start, pause, stop, and archive strategy runs with full audit trail and promotion workflow |
 
 ### Who Is This For?
 
 - **Quantitative researchers** who need tick-level market microstructure data for analysis
-- **Algorithmic traders** building strategies that require historical and real-time market data
+- **Algorithmic traders** building and validating strategies before committing real capital
 - **Data engineers** who want to build a reliable market data pipeline
-- **Hobbyist traders** who want to collect and own their own market data archive
+- **Hobbyist traders** who want to collect, backtest, and paper-trade their own strategies
 - **Students and academics** studying market microstructure, price formation, or trading systems
 
 ### The Problem It Solves
 
-Commercial market data is expensive, vendor APIs change without notice, and cloud-only solutions mean you never truly own your data. Market Data Collector gives you:
+Commercial market data is expensive, vendor APIs change without notice, and cloud-only
+solutions mean you never truly own your data or your strategy infrastructure. Market
+Data Collector gives you:
 
 1. **Data independence** — Switch providers without losing your archive or rewriting code
 2. **Cost control** — Use free-tier APIs strategically, pay only for premium data you actually need
 3. **Reliability** — Automatic reconnection, failover between providers, and data integrity checks
 4. **Flexibility** — Collect exactly the symbols and data types you need, store them how you want
+5. **Paper-first safety** — Validate every strategy in simulation before any real capital is committed
 
 ---
 

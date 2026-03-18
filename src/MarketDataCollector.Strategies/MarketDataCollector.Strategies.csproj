@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Core\MarketDataCollector.Core.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Backtesting.Sdk\MarketDataCollector.Backtesting.Sdk.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Execution\MarketDataCollector.Execution.csproj" />
+  </ItemGroup>
+
+</Project>
