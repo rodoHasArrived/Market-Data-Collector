@@ -34,7 +34,8 @@ Introduce two new interfaces that form the **Strategy Execution Contract**:
    gateway without exposing any broker-specific type.
 
 These interfaces live in `src/MarketDataCollector.Execution/Interfaces/` and are
-referenced via `MarketDataCollector.Contracts` by the strategy layer.
+referenced directly by the strategy layer via a project reference to
+`MarketDataCollector.Execution`.
 
 ## Implementation Links
 

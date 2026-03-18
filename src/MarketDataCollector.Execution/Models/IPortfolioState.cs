@@ -19,5 +19,5 @@ public interface IPortfolioState
     decimal RealisedPnl { get; }
 
     /// <summary>Open positions keyed by symbol.</summary>
-    IReadOnlyDictionary<string, Position> Positions { get; }
+    IReadOnlyDictionary<string, ExecutionPosition> Positions { get; }
 }

@@ -23,9 +23,17 @@ public sealed class OrderLifecycleManager : IAsyncDisposable
         _logger = logger;
     }
 
-    /// <summary>Starts consuming the order update stream from the gateway.</summary>
+    /// <summary>
+    /// Starts consuming the order update stream from the gateway.
+    /// This method is idempotent — calling it a second time is a no-op.
+    /// </summary>
     public void Start(CancellationToken ct = default)
     {
+        if (_streamTask is not null)
+        {
+            return;
+        }
+
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _streamTask = ConsumeUpdatesAsync(_cts.Token);
     }

@@ -1,20 +1,23 @@
 using System.Runtime.CompilerServices;
-using System.Threading.Channels;
 using MarketDataCollector.Execution.Models;
 
 namespace MarketDataCollector.Execution.Adapters;
 
 /// <summary>
 /// Simulated order gateway that routes no real orders to any exchange.
-/// Fills are generated synthetically at the last-traded price of the live MDC feed,
-/// making this the safe default for strategy validation before live promotion.
+/// Fills are generated synthetically at a notional price (or at the limit price for
+/// limit orders), making this the safe default for strategy validation before live promotion.
 /// Implements ADR-015.
 /// </summary>
 [ImplementsAdr("ADR-015", "Simulated IOrderGateway over live MDC feed — no real orders")]
 public sealed class PaperTradingGateway : IOrderGateway
 {
+    // Notional fill price used for market orders in this scaffold.
+    // A production implementation would source the last-traded price from ILiveFeedAdapter.
+    private const decimal ScaffoldMarketFillPrice = 1m;
+
     private readonly ILogger<PaperTradingGateway> _logger;
-    private readonly Channel<OrderStatusUpdate> _updates;
+    private readonly System.Threading.Channels.Channel<OrderStatusUpdate> _updates;
     private readonly Dictionary<string, OrderRequest> _workingOrders = new();
     private readonly Lock _lock = new();
     private bool _disposed;
@@ -31,12 +34,10 @@ public sealed class PaperTradingGateway : IOrderGateway
     public PaperTradingGateway(ILogger<PaperTradingGateway> logger)
     {
         _logger = logger;
-        _updates = Channel.CreateBounded<OrderStatusUpdate>(new BoundedChannelOptions(1_000)
-        {
-            FullMode = BoundedChannelFullMode.DropOldest,
-            SingleWriter = false,
-            SingleReader = false
-        });
+        // Use EventPipelinePolicy for consistent backpressure settings across the platform (ADR-013).
+        // CompletionQueue (Wait mode, 500 capacity) ensures no terminal order updates are dropped.
+        _updates = EventPipelinePolicy.CompletionQueue.CreateChannel<OrderStatusUpdate>(
+            singleReader: false, singleWriter: false);
     }
 
     /// <inheritdoc/>
@@ -58,13 +59,12 @@ public sealed class PaperTradingGateway : IOrderGateway
             OrderId: request.ClientOrderId,
             ClientOrderId: request.ClientOrderId,
             Symbol: request.Symbol,
-            Status: ExecutionOrderStatus.Accepted,
+            Status: OrderStatus.Accepted,
             AcknowledgedAt: DateTimeOffset.UtcNow);
 
-        // Immediately simulate a market fill at a notional zero-slippage price.
-        // Real paper implementations would subscribe to the live feed and fill
-        // on the next matching tick; this stub fills instantly for scaffolding purposes.
-        _ = SimulateFillAsync(request, ct);
+        // Use CancellationToken.None so the fill simulation always runs to completion
+        // and emits a terminal update, even if the caller cancels after receiving the ack.
+        _ = SimulateFillAsync(request, CancellationToken.None);
 
         return Task.FromResult(ack);
     }
@@ -74,20 +74,23 @@ public sealed class PaperTradingGateway : IOrderGateway
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        bool removed;
+        OrderRequest? cancelledRequest = null;
         lock (_lock)
         {
-            removed = _workingOrders.Remove(orderId);
+            if (_workingOrders.Remove(orderId, out var req))
+            {
+                cancelledRequest = req;
+            }
         }
 
-        if (removed)
+        if (cancelledRequest is not null)
         {
-            _logger.LogInformation("Paper order cancelled: {OrderId}", orderId);
+            _logger.LogInformation("Paper order cancelled: {OrderId} {Symbol}", orderId, cancelledRequest.Symbol);
             var update = new OrderStatusUpdate(
                 OrderId: orderId,
                 ClientOrderId: orderId,
-                Symbol: string.Empty,
-                Status: ExecutionOrderStatus.Cancelled,
+                Symbol: cancelledRequest.Symbol,
+                Status: OrderStatus.Cancelled,
                 FilledQuantity: 0,
                 AverageFillPrice: null,
                 RejectReason: null,
@@ -96,7 +99,7 @@ public sealed class PaperTradingGateway : IOrderGateway
             _updates.Writer.TryWrite(update);
         }
 
-        return Task.FromResult(removed);
+        return Task.FromResult(cancelledRequest is not null);
     }
 
     /// <inheritdoc/>
@@ -114,31 +117,30 @@ public sealed class PaperTradingGateway : IOrderGateway
         // Yield to allow the caller to receive the acknowledgement before the fill.
         await Task.Yield();
 
-        if (ct.IsCancellationRequested)
-        {
-            return;
-        }
-
         lock (_lock)
         {
             _workingOrders.Remove(request.ClientOrderId);
         }
 
+        // For limit orders use the limit price; for market orders use the scaffold notional price.
+        // A real implementation would source the fill price from the live feed via ILiveFeedAdapter.
+        var fillPrice = request.LimitPrice ?? ScaffoldMarketFillPrice;
+
         var fill = new OrderStatusUpdate(
             OrderId: request.ClientOrderId,
             ClientOrderId: request.ClientOrderId,
             Symbol: request.Symbol,
-            Status: ExecutionOrderStatus.Filled,
+            Status: OrderStatus.Filled,
             FilledQuantity: Math.Abs(request.Quantity),
-            AverageFillPrice: request.LimitPrice,
+            AverageFillPrice: fillPrice,
             RejectReason: null,
             Timestamp: DateTimeOffset.UtcNow);
 
         _updates.Writer.TryWrite(fill);
 
         _logger.LogInformation(
-            "Paper fill: {ClientOrderId} {Quantity} {Symbol}",
-            request.ClientOrderId, request.Quantity, request.Symbol);
+            "Paper fill: {ClientOrderId} {Quantity} {Symbol} @ {FillPrice}",
+            request.ClientOrderId, request.Quantity, request.Symbol, fillPrice);
     }
 
     /// <inheritdoc/>

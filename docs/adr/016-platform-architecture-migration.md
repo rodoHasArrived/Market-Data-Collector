@@ -172,19 +172,19 @@ later.
 
 ## Compliance
 
-### Solution Folder Structure
+### Solution Organisation
 
-The `MarketDataCollector.sln` solution must organise projects under named solution folders:
+The `MarketDataCollector.sln` solution currently organises all source projects under a
+single `src` solution folder, which mirrors the existing project layout. Pillar
+isolation is enforced through project reference rules (see Allowed/Forbidden dependency
+graph above), not through separate Visual Studio solution folders. This keeps the
+solution compatible with existing build pipelines and avoids restructuring the full
+project hierarchy.
 
-```
-[DataCollection]  — existing MDC projects
-[Backtesting]     — MarketDataCollector.Backtesting, .Backtesting.Sdk
-[Execution]       — MarketDataCollector.Execution (new)
-[Strategies]      — MarketDataCollector.Strategies (new)
-[UI]              — MarketDataCollector.Wpf, .Ui, .Ui.Services, .Ui.Shared
-[Tests]           — all test projects
-[Benchmarks]      — benchmark projects
-```
+A future cleanup sprint may introduce per-pillar solution folders
+(`[DataCollection]`, `[Backtesting]`, `[Execution]`, `[Strategies]`, `[UI]`, `[Tests]`)
+if Visual Studio navigation becomes a priority. Adding those folders is a non-breaking
+IDE-only change that does not affect build, test, or CI behaviour.
 
 ### Attribute Enforcement
 

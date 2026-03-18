@@ -75,7 +75,7 @@ Contracts       → nothing (leaf project)
 Storage         → Contracts, Core
 Domain          → Contracts, Core
 Web host        → Ui.Services, Ui.Shared, Contracts
-Execution       → Contracts, Core, ProviderSdk, Backtesting.Sdk  (ADR-015)
+Execution       → Contracts, Core, ProviderSdk  (ADR-015)
 Strategies      → Contracts, Core, Backtesting.Sdk, Execution    (ADR-016)
 ```
 

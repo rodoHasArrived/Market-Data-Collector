@@ -35,6 +35,7 @@ public sealed class StrategyRunStore : IStrategyRepository
     }
 
     /// <inheritdoc/>
+#pragma warning disable CS1998 // Intentionally synchronous: in-memory store has no I/O operations to await
     public async IAsyncEnumerable<StrategyRunEntry> GetRunsAsync(
         string strategyId,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
@@ -53,9 +54,8 @@ public sealed class StrategyRunStore : IStrategyRepository
             ct.ThrowIfCancellationRequested();
             yield return entry;
         }
-
-        await Task.CompletedTask.ConfigureAwait(false);
     }
+#pragma warning restore CS1998
 
     /// <inheritdoc/>
     public Task<StrategyRunEntry?> GetLatestRunAsync(string strategyId, CancellationToken ct = default)
@@ -65,7 +65,8 @@ public sealed class StrategyRunStore : IStrategyRepository
         {
             latest = _runs
                 .Where(r => r.StrategyId == strategyId)
-                .MaxBy(r => r.StartedAt);
+                .OrderByDescending(r => r.StartedAt)
+                .FirstOrDefault();
         }
 
         return Task.FromResult(latest);
