@@ -118,7 +118,8 @@ public sealed record BackfillProvidersConfig(
     TiingoConfig? Tiingo = null,
     PolygonConfig? Polygon = null,
     AlphaVantageConfig? AlphaVantage = null,
-    FinnhubConfig? Finnhub = null
+    FinnhubConfig? Finnhub = null,
+    TwelveDataConfig? TwelveData = null
 );
 
 /// <summary>
@@ -255,4 +256,20 @@ public sealed record FinnhubConfig(
     string? ApiKey = null,
     int Priority = 18,
     int RateLimitPerMinute = 60
+);
+
+/// <summary>
+/// Twelve Data provider configuration.
+/// OHLCV data for US and international equities, ETFs, forex, and crypto.
+/// Free tier: 800 requests/day, 8 requests/minute.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="ApiKey">API key (falls back to TWELVEDATA_API_KEY env var).</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerMinute">Maximum requests per minute.</param>
+public sealed record TwelveDataConfig(
+    bool Enabled = true,
+    string? ApiKey = null,
+    int Priority = 22,
+    int RateLimitPerMinute = 8
 );

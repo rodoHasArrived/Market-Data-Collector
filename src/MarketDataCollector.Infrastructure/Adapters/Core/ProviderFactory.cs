@@ -10,6 +10,7 @@ using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
 using MarketDataCollector.Infrastructure.Adapters.Polygon;
 using MarketDataCollector.Infrastructure.Adapters.Stooq;
 using MarketDataCollector.Infrastructure.Adapters.Tiingo;
+using MarketDataCollector.Infrastructure.Adapters.TwelveData;
 using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
 using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
@@ -19,6 +20,7 @@ using NasdaqBackfillConfig = MarketDataCollector.Application.Config.NasdaqDataLi
 using PolygonBackfillConfig = MarketDataCollector.Application.Config.PolygonConfig;
 using StooqBackfillConfig = MarketDataCollector.Application.Config.StooqConfig;
 using TiingoBackfillConfig = MarketDataCollector.Application.Config.TiingoConfig;
+using TwelveDataBackfillConfig = MarketDataCollector.Application.Config.TwelveDataConfig;
 // Type aliases for clarity when dealing with backfill provider configs
 using YahooBackfillConfig = MarketDataCollector.Application.Config.YahooFinanceConfig;
 
@@ -125,6 +127,9 @@ public sealed class ProviderFactory
 
         // Nasdaq Data Link
         TryAddBackfillProvider(providers, () => CreateNasdaqBackfillProvider(providersCfg?.Nasdaq));
+
+        // Twelve Data
+        TryAddBackfillProvider(providers, () => CreateTwelveDataBackfillProvider(providersCfg?.TwelveData));
 
         return providers
             .OrderBy(p => p.Priority)
@@ -241,6 +246,19 @@ public sealed class ProviderFactory
             apiKey: apiKey,
             database: cfg?.Database ?? "WIKI",
             log: _log);
+    }
+
+    private IHistoricalDataProvider? CreateTwelveDataBackfillProvider(TwelveDataBackfillConfig? cfg)
+    {
+        // Disabled by default when no API key is configured
+        if (!(cfg?.Enabled ?? true))
+            return null;
+
+        var apiKey = _credentialResolver.ResolveTwelveDataCredentials(cfg?.ApiKey);
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
+
+        return new TwelveDataHistoricalDataProvider(apiKey: apiKey, log: _log);
     }
 
     /// <summary>
@@ -372,6 +390,7 @@ public interface ICredentialResolver
     string? ResolveFinnhubCredentials(string? configApiKey);
     string? ResolveAlphaVantageCredentials(string? configApiKey);
     string? ResolveNasdaqCredentials(string? configApiKey);
+    string? ResolveTwelveDataCredentials(string? configApiKey);
 }
 
 /// <summary>
@@ -408,4 +427,8 @@ public sealed class EnvironmentCredentialResolver : ICredentialResolver
     public string? ResolveNasdaqCredentials(string? configApiKey)
         => configApiKey ?? Environment.GetEnvironmentVariable("NASDAQ__APIKEY")
                         ?? Environment.GetEnvironmentVariable("NASDAQ_DATA_LINK_API_KEY");
+
+    public string? ResolveTwelveDataCredentials(string? configApiKey)
+        => configApiKey ?? Environment.GetEnvironmentVariable("TWELVEDATA__APIKEY")
+                        ?? Environment.GetEnvironmentVariable("TWELVEDATA_API_KEY");
 }

@@ -106,6 +106,7 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(PolygonConfig))]
 [JsonSerializable(typeof(AlphaVantageConfig))]
 [JsonSerializable(typeof(FinnhubConfig))]
+[JsonSerializable(typeof(TwelveDataConfig))]
 [JsonSerializable(typeof(DerivativesConfig))]
 [JsonSerializable(typeof(IndexOptionsConfig))]
 [JsonSerializable(typeof(StockSharpConfig))]
