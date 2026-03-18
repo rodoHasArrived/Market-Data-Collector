@@ -175,6 +175,45 @@ public sealed class ReturnSeries
     /// <summary>Maximum drawdown as a positive fraction.</summary>
     public double MaxDrawdown();
 }
+
+/// <summary>
+/// Immutable time-indexed numeric series for derived calculations (indicators, spreads, etc.).
+/// Pairs each value with its date so callers never lose temporal context.
+/// Supports operator chaining and rolling statistics to enable a pandas-like scripting style.
+/// </summary>
+public sealed class NumericSeries
+{
+    public string Label { get; }
+    public IReadOnlyList<DateOnly> Dates { get; }
+    public IReadOnlyList<double?> Values { get; }
+    public int Count { get; }
+
+    public NumericSeries(string label, IReadOnlyList<DateOnly> dates, IReadOnlyList<double?> values);
+
+    // --- Arithmetic operators (inner-join on dates) ---
+    public static NumericSeries operator +(NumericSeries a, NumericSeries b);
+    public static NumericSeries operator -(NumericSeries a, NumericSeries b);
+    public static NumericSeries operator *(NumericSeries a, double scalar);
+    public static NumericSeries operator /(NumericSeries a, NumericSeries b);
+
+    // --- Rolling statistics ---
+    /// <summary>Rolling arithmetic mean over <paramref name="window"/> observations.</summary>
+    public NumericSeries RollingMean(int window);
+
+    /// <summary>Rolling sample standard deviation over <paramref name="window"/> observations.</summary>
+    public NumericSeries RollingStd(int window);
+
+    /// <summary>Cumulative sum of values.</summary>
+    public NumericSeries Cumulative();
+
+    // --- Filtering ---
+    /// <summary>Retain only entries where the predicate returns true; others become null.</summary>
+    public NumericSeries Where(Func<double?, bool> predicate);
+
+    // --- Conversion ---
+    /// <summary>Returns the raw value list without date context (for downstream consumers).</summary>
+    public IReadOnlyList<double?> ToList();
+}
 ```
 
 ### 3.2 Data Context
@@ -560,31 +599,49 @@ public sealed class QuantScriptOptions
 namespace MarketDataCollector.QuantScript.Indicators;
 
 /// <summary>
-/// Fluent extension methods bridging PriceSeries → Skender indicators → double[].
+/// Fluent extension methods bridging PriceSeries → Skender indicators → NumericSeries.
+/// Every method preserves the date index from the source series so callers retain
+/// temporal context for plotting, alignment, and further chaining.
 /// </summary>
 public static class TechnicalSeriesExtensions
 {
-    public static IReadOnlyList<double?> Sma(this PriceSeries series, int periods)
-        => series.ToQuotes().GetSma(periods).Select(r => r.Sma).ToList();
+    public static NumericSeries Sma(this PriceSeries series, int periods)
+        => new($"SMA({periods})", series.Dates,
+            series.ToQuotes().GetSma(periods).Select(r => r.Sma).ToList());
 
-    public static IReadOnlyList<double?> Ema(this PriceSeries series, int periods)
-        => series.ToQuotes().GetEma(periods).Select(r => r.Ema).ToList();
+    public static NumericSeries Ema(this PriceSeries series, int periods)
+        => new($"EMA({periods})", series.Dates,
+            series.ToQuotes().GetEma(periods).Select(r => r.Ema).ToList());
 
-    public static IReadOnlyList<double?> Rsi(this PriceSeries series, int periods = 14)
-        => series.ToQuotes().GetRsi(periods).Select(r => r.Rsi).ToList();
+    public static NumericSeries Rsi(this PriceSeries series, int periods = 14)
+        => new($"RSI({periods})", series.Dates,
+            series.ToQuotes().GetRsi(periods).Select(r => r.Rsi).ToList());
 
-    public static IReadOnlyList<(double? Macd, double? Signal, double? Histogram)>
+    public static (NumericSeries Macd, NumericSeries Signal, NumericSeries Histogram)
         Macd(this PriceSeries series, int fast = 12, int slow = 26, int signal = 9)
-        => series.ToQuotes().GetMacd(fast, slow, signal)
-            .Select(r => (r.Macd, r.Signal, r.Histogram)).ToList();
+    {
+        var results = series.ToQuotes().GetMacd(fast, slow, signal).ToList();
+        return (
+            new NumericSeries($"MACD({fast},{slow})", series.Dates, results.Select(r => r.Macd).ToList()),
+            new NumericSeries($"Signal({signal})",    series.Dates, results.Select(r => r.Signal).ToList()),
+            new NumericSeries("Histogram",             series.Dates, results.Select(r => r.Histogram).ToList())
+        );
+    }
 
-    public static IReadOnlyList<(double? Upper, double? Middle, double? Lower)>
+    public static (NumericSeries Upper, NumericSeries Middle, NumericSeries Lower)
         BollingerBands(this PriceSeries series, int periods = 20, double stdDevs = 2.0)
-        => series.ToQuotes().GetBollingerBands(periods, stdDevs)
-            .Select(r => (r.UpperBand, r.Sma, r.LowerBand)).ToList();
+    {
+        var results = series.ToQuotes().GetBollingerBands(periods, stdDevs).ToList();
+        return (
+            new NumericSeries($"BB_Upper({periods})",  series.Dates, results.Select(r => r.UpperBand).ToList()),
+            new NumericSeries($"BB_Middle({periods})", series.Dates, results.Select(r => r.Sma).ToList()),
+            new NumericSeries($"BB_Lower({periods})",  series.Dates, results.Select(r => r.LowerBand).ToList())
+        );
+    }
 
-    public static IReadOnlyList<double?> Atr(this PriceSeries series, int periods = 14)
-        => series.ToQuotes().GetAtr(periods).Select(r => r.Atr).ToList();
+    public static NumericSeries Atr(this PriceSeries series, int periods = 14)
+        => new($"ATR({periods})", series.Dates,
+            series.ToQuotes().GetAtr(periods).Select(r => r.Atr).ToList());
 }
 ```
 
@@ -1005,9 +1062,12 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 
 | # | Test Name | What It Verifies |
 |---|---|---|
-| 33 | `SMA_KnownData_MatchesExpected` | SMA(3) on [1,2,3,4,5] → [null, null, 2, 3, 4] |
-| 34 | `RSI_ReturnsCorrectCount` | Output length == input length |
-| 35 | `BollingerBands_ReturnsTriple` | Upper > Middle > Lower for positive data |
+| 33 | `SMA_KnownData_ReturnsDatesAligned` | SMA(3) returns `NumericSeries` with same `Dates` as input |
+| 34 | `SMA_KnownData_ValuesMatchExpected` | SMA(3) on [1,2,3,4,5] → values [null, null, 2, 3, 4] |
+| 35 | `RSI_ReturnsCorrectCount` | Output `NumericSeries.Count` == input length |
+| 36 | `BollingerBands_ReturnsTriple_DatesAligned` | Upper/Middle/Lower each carry matching `Dates` |
+| 37 | `BollingerBands_UpperGreaterThanLower` | Upper > Lower for positive data |
+| 38 | `Macd_ReturnsThreeAlignedSeries` | MACD/Signal/Histogram share same `Dates` |
 
 #### 7.8 QuantDataContext Tests
 
@@ -1036,12 +1096,12 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 - [ ] Add `Microsoft.CodeAnalysis.CSharp.Scripting` v5.0.0 to `Directory.Packages.props`
 - [ ] Add `AvalonEditHighlightingThemes` or `AvalonEdit` (latest stable) to `Directory.Packages.props`
 - [ ] Add `ScottPlot.WPF` (latest v5.x) to `Directory.Packages.props`
-- [ ] Implement `PriceSeries` and `ReturnSeries` (§3.1)
+- [ ] Implement `PriceSeries`, `ReturnSeries`, and `NumericSeries` (§3.1)
 - [ ] Implement `ScriptParamAttribute` and `ScriptParameterInfo` (§3.8)
 - [ ] Implement `QuantScriptOptions` (§3.9)
 - [ ] Add `[InternalsVisibleTo("MarketDataCollector.QuantScript")]` to `Backtesting.csproj` (for `BacktestMetricsEngine`)
 - [ ] Create test project `tests/MarketDataCollector.QuantScript.Tests/`
-- [ ] Write PriceSeries + ReturnSeries tests (tests 1–12)
+- [ ] Write PriceSeries + ReturnSeries + NumericSeries tests (tests 1–12)
 
 ### Phase 2: Compilation & Execution (3–4 days)
 
