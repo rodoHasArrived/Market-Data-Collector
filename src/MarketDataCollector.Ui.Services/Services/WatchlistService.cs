@@ -2,38 +2,36 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Default watchlist service for the shared UI services layer.
-/// Platform-specific projects (WPF) override this with their own implementations
-/// by setting the Instance property during app startup.
+/// Platform-specific projects (WPF) can supply their own <see cref="IWatchlistService"/>
+/// implementation by assigning it to <see cref="Instance"/> during app startup.
 /// </summary>
-public sealed class WatchlistService
+public sealed class WatchlistService : IWatchlistService
 {
-    private static WatchlistService _instance = new WatchlistService();
+    private static IWatchlistService _instance = new WatchlistService();
 
-    public static WatchlistService Instance
+    /// <summary>
+    /// Gets or sets the active <see cref="IWatchlistService"/> implementation.
+    /// Replace with a platform-specific implementation during app startup.
+    /// </summary>
+    public static IWatchlistService Instance
     {
         get => _instance;
         set => _instance = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public virtual Task<WatchlistData> LoadWatchlistAsync()
+    /// <inheritdoc/>
+    public Task<WatchlistData> LoadWatchlistAsync()
         => Task.FromResult(new WatchlistData());
 
-    /// <summary>
-    /// Creates a new watchlist or updates an existing one.
-    /// Platform-specific implementations should override this method.
-    /// </summary>
-    /// <param name="name">The watchlist name.</param>
-    /// <param name="symbols">The symbols to add.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>True if successful, false otherwise.</returns>
-    public virtual Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
+    /// <inheritdoc/>
+    public Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
     {
-        // Default implementation - platform-specific implementations should override
         return Task.FromResult(false);
     }
 }

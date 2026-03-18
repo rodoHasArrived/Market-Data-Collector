@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Tests.Services;
 
@@ -121,7 +122,7 @@ public sealed class WatchlistServiceTests
     public void CustomWatchlistService_CanBeUsedAsWatchlistService()
     {
         // Arrange
-        WatchlistService service = new CustomWatchlistService();
+        IWatchlistService service = new CustomWatchlistService();
 
         // Assert
         service.Should().NotBeNull();
@@ -323,9 +324,9 @@ public sealed class WatchlistServiceTests
         watchlist.Symbols[0].Notes.Should().Be("Modified");
     }
 
-    private class CustomWatchlistService : WatchlistService
+    private class CustomWatchlistService : IWatchlistService
     {
-        public override Task<WatchlistData> LoadWatchlistAsync()
+        public Task<WatchlistData> LoadWatchlistAsync()
         {
             return Task.FromResult(new WatchlistData
             {
@@ -335,5 +336,8 @@ public sealed class WatchlistServiceTests
                 }
             });
         }
+
+        public Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
+            => Task.FromResult(true);
     }
 }

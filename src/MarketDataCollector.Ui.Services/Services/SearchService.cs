@@ -1,3 +1,4 @@
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -9,7 +10,7 @@ public sealed class SearchService
 {
     private static readonly Lazy<SearchService> _instance = new(() => new SearchService());
     private readonly ConfigService _configService;
-    private readonly WatchlistService _watchlistService;
+    private readonly IWatchlistService _watchlistService;
 
     /// <summary>
     /// Gets the singleton instance of the SearchService.
