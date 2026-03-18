@@ -347,17 +347,7 @@ public sealed class PlotQueue
         _queue.Enqueue(new PlotRequest(title, PlotType.Scatter, null, null, x, y, label, color));
     }
 
-    /// <summary>Overload accepting date x-axis and decimal prices.</summary>
-    public void Scatter(string title, IReadOnlyList<DateOnly> x, IReadOnlyList<decimal> y,
-        string? label = null, string? color = null)
-    {
-        Scatter(title,
-            x.Select(d => (double)d.DayNumber).ToList(),
-            y.Select(v => (double)v).ToList(),
-            label, color);
-    }
-
-    public void Histogram(string title, IReadOnlyList<double> values, int bins = 50,
+    public void Histogram(string title, IReadOnlyList<double> values,
         string? label = null)
     {
         _queue.Enqueue(new PlotRequest(title, PlotType.Histogram, null, null,
@@ -493,16 +483,16 @@ public sealed class DataProxy
     public DataProxy(IQuantDataContext ctx, CancellationToken ct);
 
     /// <summary>Load daily OHLCV bars.</summary>
-    public PriceSeries Prices(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetPricesAsync(symbol, from, to, _ct).GetAwaiter().GetResult();
+    public Task<PriceSeries> PricesAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
+        => _ctx.GetPricesAsync(symbol, from, to, _ct);
 
     /// <summary>Load simple return series.</summary>
-    public ReturnSeries Returns(string symbol, DateOnly? from = null, DateOnly? to = null)
-        => _ctx.GetReturnsAsync(symbol, from, to, _ct).GetAwaiter().GetResult();
+    public Task<ReturnSeries> ReturnsAsync(string symbol, DateOnly? from = null, DateOnly? to = null)
+        => _ctx.GetReturnsAsync(symbol, from, to, _ct);
 
     /// <summary>List available symbols.</summary>
-    public IReadOnlyList<string> Symbols()
-        => _ctx.GetAvailableSymbolsAsync(_ct).GetAwaiter().GetResult();
+    public Task<IReadOnlyList<string>> SymbolsAsync()
+        => _ctx.GetAvailableSymbolsAsync(_ct);
 }
 
 /// <summary>
@@ -519,8 +509,8 @@ public sealed class BacktestProxy
     /// Run a backtest with the given strategy.
     /// Scripts implement IBacktestStrategy directly in their code.
     /// </summary>
-    public BacktestResult Run(BacktestRequest request, IBacktestStrategy strategy)
-        => _engine.RunAsync(request, strategy, progress: null, _ct).GetAwaiter().GetResult();
+    public Task<BacktestResult> RunAsync(BacktestRequest request, IBacktestStrategy strategy)
+        => _engine.RunAsync(request, strategy, progress: null, _ct);
 }
 ```
 
@@ -758,8 +748,14 @@ Already fully specified in §3.10. Pure static extension methods, no state.
 User writes:  var spy = Data.Prices("SPY");
               var sma = spy.Sma(20);
               var stats = Stats.Compute(spy.Returns());
-              Plot.Line("SPY Close", spy.Dates, spy.Close); // DateOnly/decimal overload
-              Plot.Line("SMA 20", spy.Dates, sma.Select(v => v ?? 0).ToList());
+              Plot.Line(
+                  "SPY Close",
+                  spy.Dates.Select(d => d.ToOADate()).ToArray(),
+                  spy.Close.Select(c => (double)c).ToArray());
+              Plot.Line(
+                  "SMA 20",
+                  spy.Dates.Select(d => d.ToOADate()).ToArray(),
+                  sma.Select(x => (double)x).ToArray());
 
 Execution:
   ScriptText ──► RoslynScriptCompiler.Compile()
@@ -1136,7 +1132,7 @@ All tests use xUnit + FluentAssertions. Mocking via NSubstitute.
 | 4 | **Efficient Frontier / Portfolio Optimisation** | Low — complex maths, limited audience | Defer entirely. If needed later, add `MathNet.Numerics` for matrix operations and a `PortfolioOptimiser` class. |
 | 5 | **`BacktestMetricsEngine` is internal** | Medium — compile error if not addressed | Add `[InternalsVisibleTo]` attribute to Backtesting project in Phase 1. Alternatively, make the class public. |
 | 6 | **Roslyn cold-start latency** | Medium — first compilation may take 2–5 seconds | Show a "Compiling..." spinner. Consider pre-warming the Roslyn workspace on page load. |
-| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | Cap cache at ~50 symbols × 10 years ≈ ~2,500 bars/symbol (daily, ~252 trading days/year) × 50 ≈ 125,000 bars total — manageable. Add `GC.Collect` after script completion if needed. |
+| 7 | **Memory pressure from large datasets** | Low — PriceSeries caches bars in memory | For daily OHLCV bars, cap cache at ~50 symbols × 10 years ≈ ~2,500 bars per symbol × 50 ≈ ~125K bars total. Reduce the cap further for intraday data. Add `GC.Collect` after script completion if needed. |
 | 8 | **Thread safety of `DataProxy.GetAwaiter().GetResult()`** | Low — runs on `Task.Run` background thread | Acceptable pattern for scripting contexts where async syntax is impractical. Document that scripts are synchronous by design. |
 
 ---
