@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-18 21:50:05 UTC
+> Auto-generated on 2026-03-18 21:57:30 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -282,6 +282,8 @@ Meridian/
 │   │   ├── 012-monitoring-and-alerting-pipeline.md
 │   │   ├── 013-bounded-channel-policy.md
 │   │   ├── 014-json-source-generators.md
+│   │   ├── 015-strategy-execution-contract.md
+│   │   ├── 016-platform-architecture-migration.md
 │   │   ├── _template.md
 │   │   ├── ADR-015-platform-restructuring.md
 │   │   └── README.md
@@ -532,6 +534,43 @@ Meridian/
 │       ├── desktop-dev.ps1
 │       └── diagnose-uwp-xaml.ps1
 ├── src/  # Source code
+│   ├── MarketDataCollector.Execution/
+│   │   ├── Adapters/
+│   │   │   └── PaperTradingGateway.cs
+│   │   ├── Interfaces/
+│   │   │   ├── IExecutionContext.cs
+│   │   │   ├── ILiveFeedAdapter.cs
+│   │   │   └── IOrderGateway.cs
+│   │   ├── Models/
+│   │   │   ├── ExecutionMode.cs
+│   │   │   ├── ExecutionPosition.cs
+│   │   │   ├── IPortfolioState.cs
+│   │   │   ├── OrderAcknowledgement.cs
+│   │   │   ├── OrderRequest.cs
+│   │   │   ├── OrderStatus.cs
+│   │   │   ├── OrderStatusUpdate.cs
+│   │   │   └── OrderType.cs
+│   │   ├── Services/
+│   │   │   └── OrderLifecycleManager.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Execution.csproj
+│   ├── MarketDataCollector.Strategies/
+│   │   ├── Interfaces/
+│   │   │   ├── ILiveStrategy.cs
+│   │   │   ├── IStrategyLifecycle.cs
+│   │   │   └── IStrategyRepository.cs
+│   │   ├── Models/
+│   │   │   ├── RunType.cs
+│   │   │   ├── StrategyRunEntry.cs
+│   │   │   └── StrategyStatus.cs
+│   │   ├── Promotions/
+│   │   │   └── BacktestToLivePromoter.cs
+│   │   ├── Services/
+│   │   │   └── StrategyLifecycleManager.cs
+│   │   ├── Storage/
+│   │   │   └── StrategyRunStore.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Strategies.csproj
 │   ├── Meridian/
 │   │   ├── Integrations/
 │   │   │   └── Lean/
@@ -1636,6 +1675,9 @@ Meridian/
 ├── .gitignore
 ├── .globalconfig
 ├── .markdownlint.json
+├── audit-architecture-results.txt
+├── audit-code-results.json
+├── AUDIT_REPORT.md
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
