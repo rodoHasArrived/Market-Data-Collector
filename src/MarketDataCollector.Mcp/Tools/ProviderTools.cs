@@ -83,7 +83,8 @@ public sealed class ProviderTools(RepoPathService repo)
 
     private static void AppendProviderSection(StringBuilder sb, string title, List<(string name, string cls, string path)> providers)
     {
-        if (providers.Count == 0) return;
+        if (providers.Count == 0)
+            return;
         sb.AppendLine($"### {title}\n");
         sb.AppendLine("| Provider ID | Class | File |");
         sb.AppendLine("|-------------|-------|------|");

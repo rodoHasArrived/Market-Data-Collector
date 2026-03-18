@@ -64,7 +64,8 @@ public sealed class KnownErrorTools(RepoPathService repo)
                         e.Contains($"Area**: {area}", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        if (matched.Count == 0) return string.Empty;
+        if (matched.Count == 0)
+            return string.Empty;
 
         var sb = new StringBuilder();
         sb.AppendLine($"## Known Errors — Area: {area} ({matched.Count} found)\n");

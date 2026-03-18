@@ -77,11 +77,16 @@ public sealed class AdrTools(RepoPathService repo)
             var lower = line.ToLowerInvariant();
             if (lower.Contains("status:") || lower.Contains("**status**"))
             {
-                if (lower.Contains("accepted")) return "✅ Accepted";
-                if (lower.Contains("rejected")) return "❌ Rejected";
-                if (lower.Contains("superseded")) return "⚠️ Superseded";
-                if (lower.Contains("deprecated")) return "⚠️ Deprecated";
-                if (lower.Contains("proposed")) return "🔵 Proposed";
+                if (lower.Contains("accepted"))
+                    return "✅ Accepted";
+                if (lower.Contains("rejected"))
+                    return "❌ Rejected";
+                if (lower.Contains("superseded"))
+                    return "⚠️ Superseded";
+                if (lower.Contains("deprecated"))
+                    return "⚠️ Deprecated";
+                if (lower.Contains("proposed"))
+                    return "🔵 Proposed";
             }
         }
         return "✅ Accepted";
