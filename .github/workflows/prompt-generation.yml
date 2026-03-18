@@ -89,7 +89,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -305,7 +305,7 @@ jobs:
 
       - name: Upload generation results
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: prompt-generation-results
           if-no-files-found: warn
@@ -432,7 +432,7 @@ jobs:
         id: trigger-copilot
         if: steps.copilot-ref.outputs.dispatch_ref != ''
         continue-on-error: true
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const promptFiles = `${{ steps.changed-prompts.outputs.files }}`
