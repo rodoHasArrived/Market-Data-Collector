@@ -365,7 +365,7 @@ public partial class MainWindow : Window
     {
         if (!Dispatcher.CheckAccess())
         {
-            Dispatcher.Invoke(() => OnFixtureModeChanged(sender, e));
+            _ = Dispatcher.InvokeAsync(() => OnFixtureModeChanged(sender, e));
             return;
         }
 
@@ -399,7 +399,7 @@ public partial class MainWindow : Window
     {
         if (!Dispatcher.CheckAccess())
         {
-            Dispatcher.Invoke(() => OnTourStepChanged(sender, e));
+            _ = Dispatcher.InvokeAsync(() => OnTourStepChanged(sender, e));
             return;
         }
 
@@ -410,7 +410,7 @@ public partial class MainWindow : Window
     {
         if (!Dispatcher.CheckAccess())
         {
-            Dispatcher.Invoke(() => OnTourCompleted(sender, e));
+            _ = Dispatcher.InvokeAsync(() => OnTourCompleted(sender, e));
             return;
         }
 
@@ -450,7 +450,7 @@ public partial class MainWindow : Window
 
         if (!Dispatcher.CheckAccess())
         {
-            Dispatcher.Invoke(() => OnAlertRaised(sender, e));
+            _ = Dispatcher.InvokeAsync(() => OnAlertRaised(sender, e));
             return;
         }
 

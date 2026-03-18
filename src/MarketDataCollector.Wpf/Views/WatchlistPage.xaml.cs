@@ -53,7 +53,11 @@ public partial class WatchlistPage : Page
 
     private void OnWatchlistsChanged(object? sender, WpfServices.WatchlistsChangedEventArgs e)
     {
-        Dispatcher.Invoke(() => LoadWatchlistsAsync());
+        _ = Dispatcher.InvokeAsync(async () =>
+        {
+            try { await LoadWatchlistsAsync(); }
+            catch (Exception ex) { _loggingService.LogError("Failed to reload watchlists", ex); }
+        });
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)

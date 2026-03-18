@@ -23,6 +23,12 @@ public partial class SystemHealthPage : Page
     private readonly DispatcherTimer _refreshTimer;
     private readonly DateTime _startTime = DateTime.UtcNow;
 
+    private Brush _errorBrush = null!;
+    private Brush _warningBrush = null!;
+    private Brush _successBrush = null!;
+    private Brush _infoBrush = null!;
+    private Brush _mutedBrush = null!;
+
     public SystemHealthPage()
     {
         InitializeComponent();
@@ -39,6 +45,12 @@ public partial class SystemHealthPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        _errorBrush = (Brush)FindResource("ErrorColorBrush");
+        _warningBrush = (Brush)FindResource("WarningColorBrush");
+        _successBrush = (Brush)FindResource("SuccessColorBrush");
+        _infoBrush = (Brush)FindResource("InfoColorBrush");
+        _mutedBrush = (Brush)FindResource("ConsoleTextMutedBrush");
+
         await LoadDataAsync();
         _refreshTimer.Start();
     }
@@ -116,14 +128,14 @@ public partial class SystemHealthPage : Page
             var metrics = await _healthService.GetSystemMetricsAsync();
             if (metrics != null)
             {
-                Dispatcher.Invoke(() =>
+                await Dispatcher.InvokeAsync(() =>
                 {
                     CpuText.Text = $"{metrics.CpuUsagePercent:F0}%";
                     CpuText.Foreground = metrics.CpuUsagePercent > 80
-                        ? (Brush)FindResource("ErrorColorBrush")
+                        ? _errorBrush
                         : metrics.CpuUsagePercent > 50
-                            ? (Brush)FindResource("WarningColorBrush")
-                            : (Brush)FindResource("SuccessColorBrush");
+                            ? _warningBrush
+                            : _successBrush;
 
                     MemoryText.Text = FormatHelpers.FormatBytes(metrics.MemoryUsedBytes);
                     ThreadsText.Text = metrics.ThreadCount.ToString("N0");
@@ -135,7 +147,7 @@ public partial class SystemHealthPage : Page
                 var process = Process.GetCurrentProcess();
                 var uptime = DateTime.UtcNow - _startTime;
 
-                Dispatcher.Invoke(() =>
+                await Dispatcher.InvokeAsync(() =>
                 {
                     CpuText.Text = "--";
                     MemoryText.Text = FormatHelpers.FormatBytes(process.WorkingSet64);
@@ -155,7 +167,7 @@ public partial class SystemHealthPage : Page
         try
         {
             var providers = await _healthService.GetProviderHealthAsync();
-            Dispatcher.Invoke(() =>
+            await Dispatcher.InvokeAsync(() =>
             {
                 _providers.Clear();
                 if (providers != null && providers.Count > 0)
@@ -171,9 +183,7 @@ public partial class SystemHealthPage : Page
                         {
                             Name = p.Provider,
                             Status = p.Status,
-                            StatusColor = isHealthy
-                                ? (Brush)FindResource("SuccessColorBrush")
-                                : (Brush)FindResource("ErrorColorBrush"),
+                            StatusColor = isHealthy ? _successBrush : _errorBrush,
                             LatencyText = $"{p.LatencyMs:F0}ms",
                             EventsText = $"{p.EventsPerSecond:F1}/s"
                         });
@@ -201,7 +211,7 @@ public partial class SystemHealthPage : Page
         try
         {
             var storage = await _healthService.GetStorageHealthAsync();
-            Dispatcher.Invoke(() =>
+            await Dispatcher.InvokeAsync(() =>
             {
                 if (storage != null)
                 {
@@ -214,10 +224,10 @@ public partial class SystemHealthPage : Page
                         DiskUsageText.Text = $"{usedPercent:F1}%";
                         DiskUsageBar.Value = usedPercent;
                         DiskUsageBar.Foreground = usedPercent > 90
-                            ? (Brush)FindResource("ErrorColorBrush")
+                            ? _errorBrush
                             : usedPercent > 75
-                                ? (Brush)FindResource("WarningColorBrush")
-                                : (Brush)FindResource("InfoColorBrush");
+                                ? _warningBrush
+                                : _infoBrush;
                     }
                     else
                     {
@@ -238,7 +248,7 @@ public partial class SystemHealthPage : Page
         try
         {
             var events = await _healthService.GetRecentEventsAsync(20);
-            Dispatcher.Invoke(() =>
+            await Dispatcher.InvokeAsync(() =>
             {
                 _events.Clear();
                 if (events != null && events.Count > 0)
@@ -275,12 +285,12 @@ public partial class SystemHealthPage : Page
         if (hasUnhealthy)
         {
             OverallStatusText.Text = "Degraded";
-            OverallStatusBadge.Background = (Brush)FindResource("WarningColorBrush");
+            OverallStatusBadge.Background = _warningBrush;
         }
         else
         {
             OverallStatusText.Text = "Healthy";
-            OverallStatusBadge.Background = (Brush)FindResource("SuccessColorBrush");
+            OverallStatusBadge.Background = _successBrush;
         }
     }
 
@@ -288,10 +298,10 @@ public partial class SystemHealthPage : Page
     {
         return severity?.ToLowerInvariant() switch
         {
-            "error" or "critical" => (Brush)FindResource("ErrorColorBrush"),
-            "warning" => (Brush)FindResource("WarningColorBrush"),
-            "info" or "information" => (Brush)FindResource("InfoColorBrush"),
-            _ => (Brush)FindResource("ConsoleTextMutedBrush")
+            "error" or "critical" => _errorBrush,
+            "warning" => _warningBrush,
+            "info" or "information" => _infoBrush,
+            _ => _mutedBrush
         };
     }
 
