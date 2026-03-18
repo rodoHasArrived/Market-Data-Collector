@@ -1,28 +1,26 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Wpf.Models;
+using MarketDataCollector.Wpf.ViewModels;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
 /// Notification Center page for viewing and managing all application notifications.
-/// Integrates with AlertService for grouped alert display, playbook-based remediation,
-/// and snooze/suppress controls to reduce alert fatigue.
+/// Code-behind handles only: DI wiring, alert group card building (uses FindResource),
+/// playbook display, snooze/suppress actions, and checkbox filter events.
 /// </summary>
 public partial class NotificationCenterPage : Page
 {
     private readonly WpfServices.NotificationService _notificationService;
     private readonly AlertService _alertService;
-    private readonly ObservableCollection<NotificationItem> _allNotifications = new();
-    private readonly ObservableCollection<NotificationItem> _filteredNotifications = new();
-    private bool _suppressFilterEvents;
-    private System.Timers.Timer? _alertRefreshTimer;
+    private readonly NotificationCenterViewModel _viewModel;
 
     public NotificationCenterPage(WpfServices.NotificationService notificationService)
     {
@@ -30,7 +28,11 @@ public partial class NotificationCenterPage : Page
 
         _notificationService = notificationService;
         _alertService = AlertService.Instance;
-        NotificationsList.ItemsSource = _filteredNotifications;
+
+        _viewModel = new NotificationCenterViewModel(notificationService, _alertService);
+        DataContext = _viewModel;
+
+        NotificationsList.ItemsSource = _viewModel.FilteredNotifications;
 
         // Sync preference checkboxes with current settings
         var settings = _notificationService.GetSettings();
@@ -41,30 +43,22 @@ public partial class NotificationCenterPage : Page
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        _notificationService.NotificationReceived += OnNotificationReceived;
-        _alertService.AlertRaised += OnAlertChanged;
-        _alertService.AlertResolved += OnAlertChanged;
-        LoadNotifications();
+        _viewModel.AlertsRefreshRequested += OnAlertsRefreshRequested;
+        _viewModel.Start();
         RefreshGroupedAlerts();
         RefreshAlertSummary();
-
-        // Refresh alert display periodically to update snooze expiry
-        _alertRefreshTimer = new System.Timers.Timer(10000);
-        _alertRefreshTimer.Elapsed += (_, _) => Dispatcher.InvokeAsync(() =>
-        {
-            RefreshGroupedAlerts();
-            RefreshAlertSummary();
-        });
-        _alertRefreshTimer.Start();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        _notificationService.NotificationReceived -= OnNotificationReceived;
-        _alertService.AlertRaised -= OnAlertChanged;
-        _alertService.AlertResolved -= OnAlertChanged;
-        _alertRefreshTimer?.Stop();
-        _alertRefreshTimer?.Dispose();
+        _viewModel.AlertsRefreshRequested -= OnAlertsRefreshRequested;
+        _viewModel.Stop();
+    }
+
+    private void OnAlertsRefreshRequested(object? sender, EventArgs e)
+    {
+        RefreshGroupedAlerts();
+        RefreshAlertSummary();
     }
 
     private void OnAlertChanged(object? sender, AlertEventArgs e)
@@ -75,49 +69,6 @@ public partial class NotificationCenterPage : Page
             RefreshAlertSummary();
         });
     }
-
-    private void OnNotificationReceived(object? sender, NotificationEventArgs e)
-    {
-        Dispatcher.Invoke(() =>
-        {
-            var item = CreateNotificationItem(
-                e.Title,
-                e.Message,
-                e.Type,
-                DateTime.Now);
-
-            _allNotifications.Insert(0, item);
-            ApplyFilters();
-            UpdateCounters();
-        });
-    }
-
-    private void LoadNotifications()
-    {
-        _allNotifications.Clear();
-
-        var history = _notificationService.GetHistory();
-
-        if (history.Count > 0)
-        {
-            foreach (var historyItem in history)
-            {
-                var item = CreateNotificationItem(
-                    historyItem.Title,
-                    historyItem.Message,
-                    historyItem.Type,
-                    historyItem.Timestamp);
-                item.IsRead = historyItem.IsRead;
-
-                _allNotifications.Add(item);
-            }
-        }
-
-        ApplyFilters();
-        UpdateCounters();
-    }
-
-    // ─── Alert Grouping ────────────────────────────────────────────
 
     private void RefreshGroupedAlerts()
     {
@@ -187,7 +138,6 @@ public partial class NotificationCenterPage : Page
         outerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         outerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        // Severity indicator
         var indicator = new Border
         {
             Width = 4,
@@ -199,11 +149,9 @@ public partial class NotificationCenterPage : Page
         Grid.SetColumn(indicator, 0);
         outerGrid.Children.Add(indicator);
 
-        // Content
         var contentPanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(contentPanel, 1);
 
-        // Title row
         var titlePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 4) };
         titlePanel.Children.Add(new TextBlock
         {
@@ -213,7 +161,6 @@ public partial class NotificationCenterPage : Page
             Foreground = (Brush)FindResource("ConsoleTextPrimaryBrush")
         });
 
-        // Category badge
         titlePanel.Children.Add(new Border
         {
             Background = new SolidColorBrush(Color.FromArgb(30, 139, 148, 158)),
@@ -229,7 +176,6 @@ public partial class NotificationCenterPage : Page
             }
         });
 
-        // Occurrence count
         if (group.Count > 1)
         {
             titlePanel.Children.Add(new Border
@@ -251,7 +197,6 @@ public partial class NotificationCenterPage : Page
 
         contentPanel.Children.Add(titlePanel);
 
-        // Affected resources
         if (group.AffectedResources.Count > 0)
         {
             var resources = string.Join(", ", group.AffectedResources.Take(5));
@@ -267,7 +212,6 @@ public partial class NotificationCenterPage : Page
             });
         }
 
-        // Time info
         contentPanel.Children.Add(new TextBlock
         {
             Text = $"First: {FormatTimestamp(group.FirstOccurred)}  |  Last: {FormatTimestamp(group.LastOccurred)}",
@@ -277,11 +221,9 @@ public partial class NotificationCenterPage : Page
 
         outerGrid.Children.Add(contentPanel);
 
-        // Action buttons
         var actionsPanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(actionsPanel, 2);
 
-        // Show Playbook button (only if a playbook exists)
         if (group.RepresentativeAlert.Playbook != null)
         {
             var playbookButton = new Button
@@ -297,7 +239,6 @@ public partial class NotificationCenterPage : Page
             actionsPanel.Children.Add(playbookButton);
         }
 
-        // Snooze button
         var snoozeButton = new Button
         {
             Content = "Snooze 1h",
@@ -310,7 +251,6 @@ public partial class NotificationCenterPage : Page
         snoozeButton.Click += SnoozeAlert_Click;
         actionsPanel.Children.Add(snoozeButton);
 
-        // Suppress button
         var suppressButton = new Button
         {
             Content = "Suppress",
@@ -328,8 +268,6 @@ public partial class NotificationCenterPage : Page
         return card;
     }
 
-    // ─── Playbook Display ──────────────────────────────────────────
-
     private void ShowPlaybook_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string alertId)
@@ -343,7 +281,6 @@ public partial class NotificationCenterPage : Page
         PlaybookTitle.Text = playbook.Title;
         PlaybookWhatHappened.Text = playbook.WhatHappened;
 
-        // Possible causes
         PlaybookCausesPanel.Children.Clear();
         foreach (var cause in playbook.PossibleCauses)
         {
@@ -365,7 +302,6 @@ public partial class NotificationCenterPage : Page
             PlaybookCausesPanel.Children.Add(causePanel);
         }
 
-        // Remediation steps
         PlaybookStepsPanel.Children.Clear();
         foreach (var step in playbook.RemediationSteps)
         {
@@ -427,8 +363,6 @@ public partial class NotificationCenterPage : Page
         PlaybookPanel.Visibility = Visibility.Collapsed;
     }
 
-    // ─── Snooze / Suppress ─────────────────────────────────────────
-
     private void SnoozeAlert_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string alertId)
@@ -450,103 +384,32 @@ public partial class NotificationCenterPage : Page
             return;
 
         var parts = tagValue.Split('|', 2);
-        if (parts.Length < 2)
-            return;
+        if (parts.Length < 2) return;
 
-        var category = parts[0];
-        var titlePattern = parts[1];
-
-        _alertService.AddSuppressionRule(category, titlePattern, TimeSpan.FromHours(24));
+        _alertService.AddSuppressionRule(parts[0], parts[1], TimeSpan.FromHours(24));
         _notificationService.ShowNotification(
             "Alert Suppressed",
-            $"Similar alerts in \"{category}\" will be suppressed for 24 hours.",
+            $"Similar alerts in \"{parts[0]}\" will be suppressed for 24 hours.",
             NotificationType.Info);
 
         RefreshGroupedAlerts();
         RefreshAlertSummary();
     }
 
-    // ─── Existing Notification Logic ───────────────────────────────
-
-    private NotificationItem CreateNotificationItem(
-        string title,
-        string message,
-        NotificationType type,
-        DateTime timestamp)
-    {
-        var (icon, iconColor, iconBackground, typeBackground, typeName) = type switch
-        {
-            NotificationType.Error => (
-                (string)FindResource("IconError"),
-                (Brush)FindResource("ErrorColorBrush"),
-                (Brush)FindResource("ErrorColorBrush"),
-                (Brush)FindResource("ConsoleAccentRedAlpha10Brush"),
-                "Error"),
-            NotificationType.Warning => (
-                (string)FindResource("IconWarning"),
-                (Brush)FindResource("WarningColorBrush"),
-                (Brush)FindResource("WarningColorBrush"),
-                (Brush)FindResource("ConsoleAccentOrangeAlpha10Brush"),
-                "Warning"),
-            NotificationType.Success => (
-                (string)FindResource("IconSuccess"),
-                (Brush)FindResource("SuccessColorBrush"),
-                (Brush)FindResource("SuccessColorBrush"),
-                (Brush)FindResource("ConsoleAccentGreenAlpha10Brush"),
-                "Success"),
-            _ => (
-                (string)FindResource("IconInfo"),
-                (Brush)FindResource("InfoColorBrush"),
-                (Brush)FindResource("InfoColorBrush"),
-                (Brush)FindResource("ConsoleAccentBlueAlpha10Brush"),
-                "Info")
-        };
-
-        return new NotificationItem
-        {
-            Icon = icon,
-            IconColor = iconColor,
-            IconBackground = iconBackground,
-            TypeBackground = typeBackground,
-            Title = title,
-            Message = message,
-            Timestamp = FormatTimestamp(timestamp),
-            Type = typeName,
-            RawTimestamp = timestamp,
-            NotificationType = type
-        };
-    }
-
     private void MarkAllRead_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var item in _allNotifications)
-        {
-            item.IsRead = true;
-        }
-
-        var history = _notificationService.GetHistory();
-        for (var i = 0; i < history.Count; i++)
-        {
-            _notificationService.MarkAsRead(i);
-        }
-
-        UpdateCounters();
+        _viewModel.MarkAllRead();
     }
 
     private void ClearAll_Click(object sender, RoutedEventArgs e)
     {
-        _allNotifications.Clear();
-        _notificationService.ClearHistory();
-        ApplyFilters();
-        UpdateCounters();
+        _viewModel.ClearAll();
     }
 
+    private bool _suppressFilterEvents;
     private void FilterChanged(object sender, RoutedEventArgs e)
     {
-        if (_suppressFilterEvents)
-        {
-            return;
-        }
+        if (_suppressFilterEvents) return;
 
         if (sender == FilterAllCheck)
         {
@@ -569,67 +432,17 @@ public partial class NotificationCenterPage : Page
             _suppressFilterEvents = false;
         }
 
-        ApplyFilters();
-        UpdateCounters();
-    }
-
-    private void ApplyFilters()
-    {
-        var showErrors = FilterErrorsCheck.IsChecked == true;
-        var showWarnings = FilterWarningsCheck.IsChecked == true;
-        var showInfo = FilterInfoCheck.IsChecked == true;
-        var showSuccess = FilterSuccessCheck.IsChecked == true;
-
-        _filteredNotifications.Clear();
-
-        foreach (var item in _allNotifications)
-        {
-            var shouldShow = item.NotificationType switch
-            {
-                NotificationType.Error => showErrors,
-                NotificationType.Warning => showWarnings,
-                NotificationType.Success => showSuccess,
-                NotificationType.Info => showInfo,
-                _ => showInfo
-            };
-
-            if (shouldShow)
-            {
-                _filteredNotifications.Add(item);
-            }
-        }
-
-        EmptyStatePanel.Visibility = _filteredNotifications.Count == 0
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-        NotificationsList.Visibility = _filteredNotifications.Count > 0
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-    }
-
-    private void UpdateCounters()
-    {
-        var totalFiltered = _filteredNotifications.Count;
-        NotificationCountText.Text = totalFiltered == 1
-            ? "1 notification"
-            : $"{totalFiltered} notifications";
-
-        var unreadCount = _allNotifications.Count(n => !n.IsRead);
-        if (unreadCount > 0)
-        {
-            UnreadBadge.Visibility = Visibility.Visible;
-            UnreadCountText.Text = unreadCount.ToString("N0");
-        }
-        else
-        {
-            UnreadBadge.Visibility = Visibility.Collapsed;
-        }
+        _viewModel.ApplyCheckboxFilters(
+            FilterErrorsCheck.IsChecked == true,
+            FilterWarningsCheck.IsChecked == true,
+            FilterInfoCheck.IsChecked == true,
+            FilterSuccessCheck.IsChecked == true);
+        _viewModel.UpdateCounters();
     }
 
     private static string FormatTimestamp(DateTime timestamp)
     {
         var elapsed = DateTime.Now - timestamp;
-
         return elapsed.TotalSeconds switch
         {
             < 60 => "Just now",
@@ -638,23 +451,5 @@ public partial class NotificationCenterPage : Page
             < 172800 => "Yesterday",
             _ => timestamp.ToString("MMM dd, HH:mm")
         };
-    }
-
-    /// <summary>
-    /// Display model for a single notification item in the list.
-    /// </summary>
-    public sealed class NotificationItem
-    {
-        public string Icon { get; set; } = string.Empty;
-        public Brush IconColor { get; set; } = Brushes.Transparent;
-        public Brush IconBackground { get; set; } = Brushes.Transparent;
-        public Brush TypeBackground { get; set; } = Brushes.Transparent;
-        public string Title { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public string Timestamp { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public DateTime RawTimestamp { get; set; }
-        public NotificationType NotificationType { get; set; }
-        public bool IsRead { get; set; }
     }
 }

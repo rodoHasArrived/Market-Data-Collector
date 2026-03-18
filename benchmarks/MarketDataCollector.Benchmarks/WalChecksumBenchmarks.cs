@@ -149,7 +149,7 @@ public class WalChecksumBenchmarks
 
     /// <summary>
     /// <see cref="Checksum_IncrementalHash"/> with a stackalloc output buffer to avoid the
-    /// 32-byte <c>byte[]</c> allocation from <see cref="IncrementalHash.GetHashAndReset"/>.
+    /// 32-byte <c>byte[]</c> allocation from <see cref="IncrementalHash.GetHashAndReset()"/>.
     /// Uses <see cref="IncrementalHash.TryGetHashAndReset"/> which writes into a caller-supplied span.
     /// </summary>
     [Benchmark]

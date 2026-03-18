@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using MarketDataCollector.Contracts.Backfill;
 using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Wpf.Models;
 using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
 using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
 using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
@@ -25,6 +26,7 @@ public partial class BackfillPage : Page
 {
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.NavigationService _navigationService;
+    private readonly WpfServices.LoggingService _loggingService;
     private readonly BackfillApiService _backfillApiService;
     private readonly UiBackfillService _backfillService;
     private readonly BackfillCheckpointService _checkpointService;
@@ -37,12 +39,14 @@ public partial class BackfillPage : Page
 
     public BackfillPage(
         WpfServices.NotificationService notificationService,
-        WpfServices.NavigationService navigationService)
+        WpfServices.NavigationService navigationService,
+        WpfServices.LoggingService loggingService)
     {
         InitializeComponent();
 
         _notificationService = notificationService;
         _navigationService = navigationService;
+        _loggingService = loggingService;
         _backfillApiService = new BackfillApiService();
         _backfillService = UiBackfillService.Instance;
         _checkpointService = BackfillCheckpointService.Instance;
@@ -152,7 +156,7 @@ public partial class BackfillPage : Page
     {
         if (e.Progress == null) return;
 
-        Dispatcher.Invoke(() =>
+        _ = Dispatcher.InvokeAsync(() =>
         {
             UpdateProgressDisplay(e.Progress);
         });
@@ -223,6 +227,14 @@ public partial class BackfillPage : Page
 
             await _backfillService.ResumeBackfillAsync(job.JobId);
         }
+        catch (OperationCanceledException)
+        {
+            _progressPollTimer.Stop();
+            BackfillStatusText.Text = "Cancelled";
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
+        }
         catch (Exception ex)
         {
             _progressPollTimer.Stop();
@@ -254,7 +266,7 @@ public partial class BackfillPage : Page
 
     private void OnBackfillCompleted(object? sender, UiBackfillCompletedEventArgs e)
     {
-        Dispatcher.Invoke(async () =>
+        _ = Dispatcher.InvokeAsync(async () =>
         {
             _progressPollTimer.Stop();
 
@@ -659,6 +671,14 @@ public partial class BackfillPage : Page
                 toDate,
                 granularity);
         }
+        catch (OperationCanceledException)
+        {
+            _progressPollTimer.Stop();
+            BackfillStatusText.Text = "Cancelled";
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
+        }
         catch (Exception ex)
         {
             _progressPollTimer.Stop();
@@ -851,7 +871,7 @@ public partial class BackfillPage : Page
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[BackfillPage] Gap scan failed for {sym}: {ex.Message}");
+                _loggingService.LogError("Gap scan failed for symbol", ex, ("symbol", sym));
             }
         }
 
@@ -952,57 +972,6 @@ public partial class BackfillPage : Page
             }
         }
     }
-}
-
-/// <summary>
-/// Symbol progress information for backfill tracking.
-/// </summary>
-public sealed class SymbolProgressInfo
-{
-    public string Symbol { get; set; } = string.Empty;
-    public double Progress { get; set; }
-    public string BarsText { get; set; } = string.Empty;
-    public string StatusText { get; set; } = string.Empty;
-    public string TimeText { get; set; } = string.Empty;
-    public SolidColorBrush StatusBackground { get; set; } = new(Color.FromArgb(40, 139, 148, 158));
-}
-
-/// <summary>
-/// Scheduled job information.
-/// </summary>
-public sealed class ScheduledJobInfo
-{
-    public string Name { get; set; } = string.Empty;
-    public string NextRun { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Resumable job information for checkpoint-based resume.
-/// </summary>
-public sealed class ResumableJobInfo
-{
-    public string JobId { get; set; } = string.Empty;
-    public string Provider { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string CreatedAt { get; set; } = string.Empty;
-    public string SymbolsSummary { get; set; } = string.Empty;
-    public int PendingCount { get; set; }
-    public int TotalBarsDownloaded { get; set; }
-    public string DateRange { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Gap analysis item for the gap preview.
-/// </summary>
-public class GapAnalysisItem
-{
-    public string Symbol { get; set; } = string.Empty;
-    public int CoveragePercent { get; set; }
-    public string CoverageText { get; set; } = string.Empty;
-    public int GapDays { get; set; }
-    public string GapDaysText { get; set; } = string.Empty;
-    public SolidColorBrush CoverageBrush { get; set; } = new(Color.FromRgb(63, 185, 80));
-    public double CoverageWidth { get; set; }
 }
 
 /// <summary>

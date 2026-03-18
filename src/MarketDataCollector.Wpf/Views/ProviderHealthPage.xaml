@@ -7,6 +7,10 @@
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
       Loaded="OnPageLoaded">
 
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">
             <!-- Header -->
@@ -25,9 +29,19 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <TextBlock x:Name="LastUpdateText" Text="Last updated: --"
-                               Foreground="{StaticResource ConsoleTextMutedBrush}"
-                               VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <TextBlock Text="{Binding LastUpdateText}"
+                               VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ConsoleTextMutedBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLastUpdateStale}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningColorBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <Button Content="Refresh" Click="Refresh_Click"
                             Background="{DynamicResource ConsoleBackgroundMediumBrush}"
                             Foreground="{DynamicResource ConsoleTextBrush}"
@@ -49,7 +63,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="ConnectedCountText" Text="0" FontSize="32" FontWeight="Bold"
+                        <TextBlock Text="{Binding ConnectedCount}" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Connected" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    HorizontalAlignment="Center"/>
@@ -58,7 +72,7 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="DisconnectedCountText" Text="0" FontSize="32" FontWeight="Bold"
+                        <TextBlock Text="{Binding DisconnectedCount}" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource ErrorColorBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Disconnected" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    HorizontalAlignment="Center"/>
@@ -67,7 +81,7 @@
 
                 <Border Grid.Column="4" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="AvgLatencyText" Text="--" FontSize="32" FontWeight="Bold"
+                        <TextBlock Text="{Binding AvgLatency}" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Avg Latency (ms)" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    HorizontalAlignment="Center"/>
@@ -76,7 +90,7 @@
 
                 <Border Grid.Column="6" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock x:Name="TotalProvidersText" Text="0" FontSize="32" FontWeight="Bold"
+                        <TextBlock Text="{Binding TotalProviders}" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource ConsoleTextPrimaryBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Total Providers" Foreground="{StaticResource ConsoleTextMutedBrush}"
                                    HorizontalAlignment="Center"/>
@@ -87,7 +101,7 @@
             <!-- Provider Status Cards -->
             <TextBlock Text="Streaming Providers" FontWeight="SemiBold" FontSize="16"
                        Foreground="{StaticResource ConsoleTextPrimaryBrush}" Margin="0,0,0,12"/>
-            <ItemsControl x:Name="StreamingProvidersControl" Margin="0,0,0,24">
+            <ItemsControl ItemsSource="{Binding StreamingProviders}" Margin="0,0,0,24">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel/>
@@ -138,7 +152,7 @@
             <!-- Backfill Providers -->
             <TextBlock Text="Backfill Providers" FontWeight="SemiBold" FontSize="16"
                        Foreground="{StaticResource ConsoleTextPrimaryBrush}" Margin="0,0,0,12"/>
-            <ItemsControl x:Name="BackfillProvidersControl" Margin="0,0,0,24">
+            <ItemsControl ItemsSource="{Binding BackfillProviders}" Margin="0,0,0,24">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel/>
@@ -186,7 +200,7 @@
                                 BorderThickness="0" Padding="8,4" FontSize="12"/>
                     </Grid>
 
-                    <ItemsControl x:Name="ConnectionHistoryControl">
+                    <ItemsControl ItemsSource="{Binding ConnectionHistory}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource ConsoleBorderBrush}"
@@ -215,9 +229,9 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock x:Name="NoHistoryText" Text="No connection events recorded."
+                    <TextBlock Text="No connection events recorded."
                                Foreground="{StaticResource ConsoleTextMutedBrush}"
-                               Visibility="Collapsed"/>
+                               Visibility="{Binding HasNoHistory, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
             </Border>
         </StackPanel>

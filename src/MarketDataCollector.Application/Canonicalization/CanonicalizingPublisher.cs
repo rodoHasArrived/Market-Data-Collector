@@ -21,7 +21,7 @@ namespace MarketDataCollector.Application.Canonicalization;
 /// <para>Pilot symbol filtering limits canonicalization to a configurable subset
 /// during rollout. Events for non-pilot symbols pass through unchanged.</para>
 /// <para><b>Quarantine Sink:</b> When a <see cref="DeadLetterSink"/> is provided via
-/// <paramref name="quarantine"/>, events whose symbol cannot be resolved are written
+/// the <c>quarantine</c> constructor parameter, events whose symbol cannot be resolved are written
 /// to the quarantine file in addition to being published with raw data.
 /// This prevents unmappable events from silently accumulating with no audit trail.</para>
 /// </remarks>

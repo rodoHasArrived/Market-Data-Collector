@@ -1,45 +1,27 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Contracts;
+using MarketDataCollector.Wpf.Models;
+using MarketDataCollector.Wpf.ViewModels;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
-/// Symbol subscription management page with bulk import, search/filter, and templates.
+/// Symbol subscription management page — thin code-behind.
+/// All state, business logic, watchlist event handling, and backend sync live in
+/// <see cref="SymbolsPageViewModel"/>.
 /// </summary>
 public partial class SymbolsPage : Page
 {
-    private readonly WpfServices.ConfigService _configService;
+    private readonly SymbolsPageViewModel _vm;
+    private readonly WpfServices.NavigationService _navigationService;
     private readonly WpfServices.WatchlistService _watchlistService;
-    private readonly ObservableCollection<SymbolViewModel> _symbols = new();
-    private readonly ObservableCollection<SymbolViewModel> _filteredSymbols = new();
-    private readonly ObservableCollection<WatchlistInfo> _watchlists = new();
-    private readonly SymbolManagementService _symbolManagementService;
     private SymbolViewModel? _selectedSymbol;
     private bool _isEditMode;
-    private CancellationTokenSource? _loadCts;
-
-    private static readonly Dictionary<string, string[]> SymbolTemplates = new()
-    {
-        ["FAANG"] = new[] { "META", "AAPL", "AMZN", "NFLX", "GOOGL" },
-        ["MagnificentSeven"] = new[] { "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA" },
-        ["MajorETFs"] = new[] { "SPY", "QQQ", "IWM", "DIA", "VTI" },
-        ["Semiconductors"] = new[] { "NVDA", "AMD", "INTC", "TSM", "AVGO", "QCOM" },
-        ["Financials"] = new[] { "JPM", "BAC", "WFC", "GS", "MS", "C" }
-    };
-
-    private readonly WpfServices.LoggingService _loggingService;
-    private readonly WpfServices.NotificationService _notificationService;
-    private readonly WpfServices.NavigationService _navigationService;
 
     public SymbolsPage(
         WpfServices.ConfigService configService,
@@ -50,180 +32,46 @@ public partial class SymbolsPage : Page
     {
         InitializeComponent();
 
-        _configService = configService;
-        _watchlistService = watchlistService;
-        _loggingService = loggingService;
-        _notificationService = notificationService;
         _navigationService = navigationService;
-        _symbolManagementService = SymbolManagementService.Instance;
-        SymbolsListView.ItemsSource = _filteredSymbols;
-        WatchlistsView.ItemsSource = _watchlists;
+        _watchlistService = watchlistService;
+        _vm = new SymbolsPageViewModel(configService, watchlistService, loggingService, notificationService);
+        DataContext = _vm;
 
-        _watchlistService.WatchlistsChanged += OnWatchlistsChanged;
+        SymbolsListView.ItemsSource = _vm.FilteredSymbols;
+        WatchlistsView.ItemsSource = _vm.Watchlists;
+
         Unloaded += OnPageUnloaded;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        _watchlistService.WatchlistsChanged -= OnWatchlistsChanged;
-        _loadCts?.Cancel();
-        _loadCts?.Dispose();
-
+        _vm.Stop();
         SavePageFilterState();
-    }
-
-    private void OnWatchlistsChanged(object? sender, WpfServices.WatchlistsChangedEventArgs e)
-    {
-        Dispatcher.Invoke(() => LoadWatchlistsAsync());
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        await LoadSymbolsFromConfigAsync();
-        await LoadWatchlistsAsync();
-
+        await _vm.StartAsync();
         RestorePageFilterState();
-        ApplyFilters();
+        CallApplyFilters();
     }
 
-    private async Task LoadSymbolsFromConfigAsync()
-    {
-        _symbols.Clear();
+    private void CallApplyFilters() =>
+        _vm.ApplyFilters(
+            SymbolSearchBox.Text?.ToUpper() ?? "",
+            GetComboSelectedTag(FilterCombo) ?? "All",
+            GetComboSelectedTag(ExchangeFilterCombo) ?? "All");
 
-        try
-        {
-            var configuredSymbols = await _configService.GetConfiguredSymbolsAsync();
+    private void SymbolSearch_TextChanged(object sender, TextChangedEventArgs e) => CallApplyFilters();
 
-            if (configuredSymbols.Length > 0)
-            {
-                foreach (var cfg in configuredSymbols)
-                {
-                    _symbols.Add(new SymbolViewModel
-                    {
-                        Symbol = cfg.Symbol,
-                        SubscribeTrades = cfg.SubscribeTrades,
-                        SubscribeDepth = cfg.SubscribeDepth,
-                        DepthLevels = cfg.DepthLevels,
-                        Exchange = cfg.Exchange,
-                        LocalSymbol = cfg.LocalSymbol,
-                        SecurityType = cfg.SecurityType,
-                        Strike = cfg.Strike,
-                        Right = cfg.Right,
-                        LastTradeDateOrContractMonth = cfg.LastTradeDateOrContractMonth,
-                        OptionStyle = cfg.OptionStyle,
-                        Multiplier = cfg.Multiplier
-                    });
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to load symbols from configuration", ex);
-        }
-
-        ApplyFilters();
-        SymbolCountText.Text = $"{_symbols.Count} symbols";
-    }
-
-    private async Task LoadWatchlistsAsync()
-    {
-        _loadCts?.Cancel();
-        _loadCts = new CancellationTokenSource();
-
-        try
-        {
-            var watchlists = await _watchlistService.GetAllWatchlistsAsync(_loadCts.Token);
-            _watchlists.Clear();
-            foreach (var wl in watchlists)
-            {
-                _watchlists.Add(new WatchlistInfo
-                {
-                    Id = wl.Id,
-                    Name = wl.Name,
-                    SymbolCount = $"{wl.Symbols.Count} symbols",
-                    Color = wl.Color,
-                    IsPinned = wl.IsPinned
-                });
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancelled - ignore
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to load watchlists", ex);
-        }
-    }
-
-    private const string PageTag = "Symbols";
-
-    private void SavePageFilterState()
-    {
-        var ws = WpfServices.WorkspaceService.Instance;
-        ws.UpdatePageFilterState(PageTag, "SearchText", SymbolSearchBox.Text);
-        ws.UpdatePageFilterState(PageTag, "FilterCombo", GetComboSelectedTag(FilterCombo) ?? "All");
-        ws.UpdatePageFilterState(PageTag, "ExchangeFilter", GetComboSelectedTag(ExchangeFilterCombo) ?? "All");
-    }
-
-    private void RestorePageFilterState()
-    {
-        var ws = WpfServices.WorkspaceService.Instance;
-        var searchText = ws.GetPageFilterState(PageTag, "SearchText");
-        if (searchText is not null)
-            SymbolSearchBox.Text = searchText;
-
-        var filter = ws.GetPageFilterState(PageTag, "FilterCombo");
-        if (filter is not null)
-            SelectComboItemByTag(FilterCombo, filter);
-
-        var exchange = ws.GetPageFilterState(PageTag, "ExchangeFilter");
-        if (exchange is not null)
-            SelectComboItemByTag(ExchangeFilterCombo, exchange);
-    }
-
-    private void ApplyFilters()
-    {
-        var searchText = SymbolSearchBox.Text?.ToUpper() ?? "";
-        var filter = GetComboSelectedTag(FilterCombo) ?? "All";
-        var exchangeFilter = GetComboSelectedTag(ExchangeFilterCombo) ?? "All";
-
-        _filteredSymbols.Clear();
-
-        foreach (var symbol in _symbols)
-        {
-            if (!string.IsNullOrEmpty(searchText) &&
-                !symbol.Symbol.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (filter == "Trades" && !symbol.SubscribeTrades) continue;
-            if (filter == "Depth" && !symbol.SubscribeDepth) continue;
-            if (filter == "Both" && !(symbol.SubscribeTrades && symbol.SubscribeDepth)) continue;
-
-            if (exchangeFilter != "All" && symbol.Exchange != exchangeFilter) continue;
-
-            _filteredSymbols.Add(symbol);
-        }
-
-        UpdateSelectionCount();
-    }
-
-    private void SymbolSearch_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        ApplyFilters();
-    }
-
-    private void Filter_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        ApplyFilters();
-    }
+    private void Filter_Changed(object sender, SelectionChangedEventArgs e) => CallApplyFilters();
 
     private void ClearFilters_Click(object sender, RoutedEventArgs e)
     {
         SymbolSearchBox.Text = "";
         SelectComboItemByTag(FilterCombo, "All");
         SelectComboItemByTag(ExchangeFilterCombo, "All");
-        ApplyFilters();
+        CallApplyFilters();
     }
 
     private void SecurityType_Changed(object sender, SelectionChangedEventArgs e)
@@ -232,10 +80,8 @@ public partial class SymbolsPage : Page
         {
             var tag = item.Tag?.ToString() ?? "STK";
             var isOption = tag == "OPT" || tag == "IND_OPT";
-
             if (OptionsExpander != null)
                 OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
-
             if (isOption && tag == "IND_OPT" && OptionStyleCombo != null)
                 SelectComboItemByTag(OptionStyleCombo, "European");
         }
@@ -244,100 +90,36 @@ public partial class SymbolsPage : Page
     private void SelectAll_Changed(object sender, RoutedEventArgs e)
     {
         var isChecked = SelectAllCheck.IsChecked ?? false;
-        foreach (var symbol in _filteredSymbols)
-        {
+        foreach (var symbol in _vm.FilteredSymbols)
             symbol.IsSelected = isChecked;
-        }
-        UpdateSelectionCount();
+        _vm.UpdateSelectionCount();
     }
 
-    private void SymbolCheckbox_Changed(object sender, RoutedEventArgs e)
-    {
-        UpdateSelectionCount();
-    }
-
-    private void UpdateSelectionCount()
-    {
-        var count = _filteredSymbols.Count(s => s.IsSelected);
-        SelectionCountText.Text = $"{count} selected";
-
-        BulkEnableTradesBtn.IsEnabled = count > 0;
-        BulkEnableDepthBtn.IsEnabled = count > 0;
-        BulkDeleteBtn.IsEnabled = count > 0;
-
-        if (count == 0)
-            SelectAllCheck.IsChecked = false;
-        else if (count == _filteredSymbols.Count)
-            SelectAllCheck.IsChecked = true;
-    }
+    private void SymbolCheckbox_Changed(object sender, RoutedEventArgs e) =>
+        _vm.UpdateSelectionCount();
 
     private void BulkEnableTrades_Click(object sender, RoutedEventArgs e)
     {
-        var selected = _filteredSymbols.Where(s => s.IsSelected).ToList();
-        foreach (var symbol in selected)
-        {
-            symbol.SubscribeTrades = true;
-        }
-
-        _notificationService.ShowNotification(
-            "Bulk Update",
-            $"Enabled trades for {selected.Count} symbols.",
-            NotificationType.Success);
-
-        ApplyFilters();
+        _vm.BulkEnableTrades();
+        CallApplyFilters();
     }
 
     private void BulkEnableDepth_Click(object sender, RoutedEventArgs e)
     {
-        var selected = _filteredSymbols.Where(s => s.IsSelected).ToList();
-        foreach (var symbol in selected)
-        {
-            symbol.SubscribeDepth = true;
-        }
-
-        _notificationService.ShowNotification(
-            "Bulk Update",
-            $"Enabled depth for {selected.Count} symbols.",
-            NotificationType.Success);
-
-        ApplyFilters();
+        _vm.BulkEnableDepth();
+        CallApplyFilters();
     }
 
     private async void BulkDelete_Click(object sender, RoutedEventArgs e)
     {
-        var selected = _filteredSymbols.Where(s => s.IsSelected).ToList();
-
+        var selected = _vm.FilteredSymbols.Where(s => s.IsSelected).ToList();
         var result = MessageBox.Show(
             $"Are you sure you want to delete {selected.Count} symbols?",
-            "Delete Symbols",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
+            "Delete Symbols", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (result != MessageBoxResult.Yes) return;
 
-        var symbolNames = selected.Select(s => s.Symbol).ToList();
-
-        foreach (var symbol in selected)
-        {
-            _symbols.Remove(symbol);
-        }
-
-        ApplyFilters();
-        SymbolCountText.Text = $"{_symbols.Count} symbols";
-
-        _notificationService.ShowNotification(
-            "Bulk Delete",
-            $"Deleted {selected.Count} symbols.",
-            NotificationType.Success);
-
-        // Persist to configuration file (was missing before)
-        await PersistSymbolsToConfigAsync();
-
-        // Sync each removal to backend (fire-and-forget)
-        foreach (var name in symbolNames)
-        {
-            _ = SyncRemoveSymbolFromBackendAsync(name);
-        }
+        await _vm.BulkDeleteSymbolsAsync(selected);
+        CallApplyFilters();
     }
 
     private void ImportCsv_Click(object sender, RoutedEventArgs e)
@@ -347,14 +129,7 @@ public partial class SymbolsPage : Page
             Filter = "CSV Files|*.csv|Text Files|*.txt|All Files|*.*",
             Title = "Import Symbols"
         };
-
-        if (dialog.ShowDialog() == true)
-        {
-            _notificationService.ShowNotification(
-                "Import Started",
-                $"Importing symbols from {System.IO.Path.GetFileName(dialog.FileName)}",
-                NotificationType.Info);
-        }
+        dialog.ShowDialog();
     }
 
     private void ExportCsv_Click(object sender, RoutedEventArgs e)
@@ -363,16 +138,9 @@ public partial class SymbolsPage : Page
         {
             Filter = "CSV Files|*.csv",
             Title = "Export Symbols",
-            FileName = $"symbols_{DateTime.Now:yyyyMMdd}"
+            FileName = $"symbols_{System.DateTime.Now:yyyyMMdd}"
         };
-
-        if (dialog.ShowDialog() == true)
-        {
-            _notificationService.ShowNotification(
-                "Export Complete",
-                $"Exported {_symbols.Count} symbols to {System.IO.Path.GetFileName(dialog.FileName)}",
-                NotificationType.Success);
-        }
+        dialog.ShowDialog();
     }
 
     private void SymbolsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -390,7 +158,6 @@ public partial class SymbolsPage : Page
             PrimaryExchangeBox.Text = string.Empty;
             LocalSymbolBox.Text = symbol.LocalSymbol ?? string.Empty;
 
-            // SecurityType and options fields
             SelectComboItemByTag(SecurityTypeCombo, symbol.SecurityType ?? "STK");
             var isOption = symbol.SecurityType == "OPT" || symbol.SecurityType == "IND_OPT";
             OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
@@ -401,8 +168,7 @@ public partial class SymbolsPage : Page
                 SelectComboItemByTag(RightCombo, symbol.Right ?? "Call");
                 SelectComboItemByTag(OptionStyleCombo, symbol.OptionStyle ?? "American");
                 MultiplierBox.Text = (symbol.Multiplier ?? 100).ToString();
-
-                if (DateTime.TryParse(symbol.LastTradeDateOrContractMonth, out var expDate))
+                if (System.DateTime.TryParse(symbol.LastTradeDateOrContractMonth, out var expDate))
                     ExpirationPicker.SelectedDate = expDate;
             }
 
@@ -415,14 +181,7 @@ public partial class SymbolsPage : Page
     private async void SaveSymbol_Click(object sender, RoutedEventArgs e)
     {
         var symbolName = SymbolBox.Text?.Trim().ToUpper();
-        if (string.IsNullOrEmpty(symbolName))
-        {
-            _notificationService.ShowNotification(
-                "Validation Error",
-                "Symbol is required.",
-                NotificationType.Error);
-            return;
-        }
+        if (string.IsNullOrEmpty(symbolName)) return;
 
         var securityType = GetComboSelectedTag(SecurityTypeCombo) ?? "STK";
         var isOption = securityType == "OPT" || securityType == "IND_OPT";
@@ -435,131 +194,51 @@ public partial class SymbolsPage : Page
 
         if (isOption)
         {
-            if (decimal.TryParse(StrikeBox.Text, out var s) && s > 0)
-                strike = s;
+            if (decimal.TryParse(StrikeBox.Text, out var s) && s > 0) strike = s;
             right = GetComboSelectedTag(RightCombo) ?? "Call";
-            if (ExpirationPicker.SelectedDate is DateTime expDate)
+            if (ExpirationPicker.SelectedDate is System.DateTime expDate)
                 lastTradeDateOrContractMonth = expDate.ToString("yyyyMMdd");
             optionStyle = GetComboSelectedTag(OptionStyleCombo) ?? "American";
-            if (int.TryParse(MultiplierBox.Text, out var m) && m > 0)
-                multiplier = m;
-            else
-                multiplier = 100;
+            multiplier = int.TryParse(MultiplierBox.Text, out var m) && m > 0 ? m : 100;
         }
 
-        if (_isEditMode && _selectedSymbol != null)
+        var error = await _vm.SaveSymbolAsync(
+            symbolName,
+            SubscribeTradesToggle.IsChecked ?? false,
+            SubscribeDepthToggle.IsChecked ?? false,
+            int.TryParse(DepthLevelsBox.Text, out var levels) ? levels : 10,
+            ExchangeBox.Text ?? "SMART",
+            LocalSymbolBox.Text,
+            securityType,
+            strike, right, lastTradeDateOrContractMonth, optionStyle, multiplier,
+            _isEditMode ? _selectedSymbol : null);
+
+        if (error == null)
         {
-            _selectedSymbol.Symbol = symbolName;
-            _selectedSymbol.SubscribeTrades = SubscribeTradesToggle.IsChecked ?? false;
-            _selectedSymbol.SubscribeDepth = SubscribeDepthToggle.IsChecked ?? false;
-            _selectedSymbol.DepthLevels = int.TryParse(DepthLevelsBox.Text, out var levels) ? levels : 10;
-            _selectedSymbol.Exchange = ExchangeBox.Text ?? "SMART";
-            _selectedSymbol.LocalSymbol = LocalSymbolBox.Text;
-            _selectedSymbol.SecurityType = securityType;
-            _selectedSymbol.Strike = strike;
-            _selectedSymbol.Right = right;
-            _selectedSymbol.LastTradeDateOrContractMonth = lastTradeDateOrContractMonth;
-            _selectedSymbol.OptionStyle = optionStyle;
-            _selectedSymbol.Multiplier = multiplier;
+            ClearForm();
+            CallApplyFilters();
         }
-        else
-        {
-            if (_symbols.Any(s => s.Symbol == symbolName))
-            {
-                _notificationService.ShowNotification(
-                    "Duplicate Symbol",
-                    $"{symbolName} already exists.",
-                    NotificationType.Warning);
-                return;
-            }
-
-            _symbols.Add(new SymbolViewModel
-            {
-                Symbol = symbolName,
-                SubscribeTrades = SubscribeTradesToggle.IsChecked ?? true,
-                SubscribeDepth = SubscribeDepthToggle.IsChecked ?? false,
-                DepthLevels = int.TryParse(DepthLevelsBox.Text, out var levels) ? levels : 10,
-                Exchange = ExchangeBox.Text ?? "SMART",
-                LocalSymbol = LocalSymbolBox.Text,
-                SecurityType = securityType,
-                Strike = strike,
-                Right = right,
-                LastTradeDateOrContractMonth = lastTradeDateOrContractMonth,
-                OptionStyle = optionStyle,
-                Multiplier = multiplier
-            });
-        }
-
-        _notificationService.ShowNotification(
-            "Success",
-            _isEditMode ? $"Symbol {symbolName} updated successfully." : $"Symbol {symbolName} added successfully.",
-            NotificationType.Success);
-
-        // Persist to configuration file
-        await PersistSymbolsToConfigAsync();
-
-        // Sync new symbol to backend (fire-and-forget; local config already updated above)
-        if (!_isEditMode)
-        {
-            var addedVm = _symbols.FirstOrDefault(s => s.Symbol == symbolName);
-            if (addedVm != null)
-            {
-                _ = SyncAddSymbolToBackendAsync(
-                    symbolName,
-                    addedVm.SubscribeTrades,
-                    addedVm.SubscribeDepth,
-                    addedVm.DepthLevels,
-                    addedVm.Exchange);
-            }
-        }
-
-        ClearForm();
-        ApplyFilters();
-        SymbolCountText.Text = $"{_symbols.Count} symbols";
     }
 
     private async void DeleteSymbol_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedSymbol == null) return;
-
         var result = MessageBox.Show(
             $"Are you sure you want to delete {_selectedSymbol.Symbol}?",
-            "Delete Symbol",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+            "Delete Symbol", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result != MessageBoxResult.Yes) return;
 
-        if (result == MessageBoxResult.Yes)
-        {
-            var symbolToDelete = _selectedSymbol.Symbol;
-            _symbols.Remove(_selectedSymbol);
-
-            _notificationService.ShowNotification(
-                "Success",
-                $"Symbol {symbolToDelete} deleted.",
-                NotificationType.Success);
-
-            // Persist to configuration file
-            await PersistSymbolsToConfigAsync();
-
-            // Sync removal to backend (fire-and-forget)
-            _ = SyncRemoveSymbolFromBackendAsync(symbolToDelete);
-
-            ClearForm();
-            ApplyFilters();
-            SymbolCountText.Text = $"{_symbols.Count} symbols";
-        }
-    }
-
-    private void ClearForm_Click(object sender, RoutedEventArgs e)
-    {
+        await _vm.DeleteSymbolAsync(_selectedSymbol);
         ClearForm();
+        CallApplyFilters();
     }
+
+    private void ClearForm_Click(object sender, RoutedEventArgs e) => ClearForm();
 
     private void ClearForm()
     {
         _selectedSymbol = null;
         _isEditMode = false;
-
         SymbolBox.Text = string.Empty;
         SubscribeTradesToggle.IsChecked = true;
         SubscribeDepthToggle.IsChecked = false;
@@ -567,8 +246,6 @@ public partial class SymbolsPage : Page
         ExchangeBox.Text = "SMART";
         PrimaryExchangeBox.Text = string.Empty;
         LocalSymbolBox.Text = string.Empty;
-
-        // Reset options fields
         SelectComboItemByTag(SecurityTypeCombo, "STK");
         OptionsExpander.Visibility = Visibility.Collapsed;
         OptionsExpander.IsExpanded = false;
@@ -577,11 +254,9 @@ public partial class SymbolsPage : Page
         ExpirationPicker.SelectedDate = null;
         SelectComboItemByTag(OptionStyleCombo, "American");
         MultiplierBox.Text = "100";
-
         FormTitle.Text = "Add Symbol";
         SaveSymbolButton.Content = "Add Symbol";
         DeleteSymbolButton.Visibility = Visibility.Collapsed;
-
         SymbolsListView.SelectedItem = null;
     }
 
@@ -589,169 +264,34 @@ public partial class SymbolsPage : Page
     {
         if (sender is Button btn && btn.Tag is string templateName)
         {
-            if (SymbolTemplates.TryGetValue(templateName, out var symbols))
-            {
-                var added = 0;
-                foreach (var symbol in symbols)
-                {
-                    if (!_symbols.Any(s => s.Symbol == symbol))
-                    {
-                        _symbols.Add(new SymbolViewModel
-                        {
-                            Symbol = symbol,
-                            SubscribeTrades = true,
-                            SubscribeDepth = false,
-                            DepthLevels = 10,
-                            Exchange = "SMART"
-                        });
-                        added++;
-                    }
-                }
-
-                ApplyFilters();
-                SymbolCountText.Text = $"{_symbols.Count} symbols";
-
-                _notificationService.ShowNotification(
-                    "Template Added",
-                    $"Added {added} new symbols from {templateName} template.",
-                    NotificationType.Success);
-            }
+            _vm.AddTemplate(templateName);
+            CallApplyFilters();
         }
     }
 
     private async void LoadWatchlist_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not string watchlistId)
-        {
-            // If no specific watchlist, show selection dialog
-            if (_watchlists.Count == 0)
-            {
-                _notificationService.ShowNotification(
-                    "No Watchlists",
-                    "No watchlists available. Create a watchlist first.",
-                    NotificationType.Warning);
-                return;
-            }
-
-            // Use first watchlist or show a selection prompt
-            var firstWatchlist = _watchlists.FirstOrDefault();
-            if (firstWatchlist == null) return;
-            watchlistId = firstWatchlist.Id;
-        }
-
-        try
-        {
-            var watchlist = await _watchlistService.GetWatchlistAsync(watchlistId);
-            if (watchlist == null)
-            {
-                _notificationService.ShowNotification(
-                    "Watchlist Not Found",
-                    "The selected watchlist could not be found.",
-                    NotificationType.Error);
-                return;
-            }
-
-            // Clear current symbols and load watchlist symbols
-            _symbols.Clear();
-            foreach (var symbol in watchlist.Symbols)
-            {
-                _symbols.Add(new SymbolViewModel
-                {
-                    Symbol = symbol,
-                    SubscribeTrades = true,
-                    SubscribeDepth = false,
-                    DepthLevels = 10,
-                    Exchange = "SMART"
-                });
-            }
-
-            ApplyFilters();
-            SymbolCountText.Text = $"{_symbols.Count} symbols";
-
-            _notificationService.ShowNotification(
-                "Watchlist Loaded",
-                $"Loaded {watchlist.Symbols.Count} symbols from '{watchlist.Name}'.",
-                NotificationType.Success);
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to load watchlist", ex);
-            _notificationService.ShowNotification(
-                "Error",
-                "Failed to load watchlist. Please try again.",
-                NotificationType.Error);
-        }
+        var watchlistId = (sender is Button b && b.Tag is string id) ? id : null;
+        await _vm.LoadWatchlistSymbolsAsync(watchlistId);
+        CallApplyFilters();
     }
 
     private async void SaveWatchlist_Click(object sender, RoutedEventArgs e)
     {
-        if (_symbols.Count == 0)
-        {
-            _notificationService.ShowNotification(
-                "No Symbols",
-                "Add some symbols before saving a watchlist.",
-                NotificationType.Warning);
-            return;
-        }
-
-        // Show save dialog
-        var dialog = new SaveWatchlistDialog(_watchlists.Select(w => w.Name).ToList());
+        if (_vm.Symbols.Count == 0) return;
+        var dialog = new SaveWatchlistDialog(_vm.Watchlists.Select(w => w.Name).ToList());
         if (dialog.ShowDialog() != true) return;
-
-        var name = dialog.WatchlistName;
-        var saveAsNew = dialog.SaveAsNew;
-        var selectedWatchlistId = dialog.SelectedWatchlistId;
-
-        try
-        {
-            var symbols = _symbols.Select(s => s.Symbol).ToArray();
-
-            if (saveAsNew || string.IsNullOrEmpty(selectedWatchlistId))
-            {
-                // Create new watchlist
-                var watchlist = await _watchlistService.CreateWatchlistAsync(name, symbols);
-                _notificationService.ShowNotification(
-                    "Watchlist Created",
-                    $"Created watchlist '{watchlist.Name}' with {symbols.Length} symbols.",
-                    NotificationType.Success);
-            }
-            else
-            {
-                // Update existing watchlist - clear and add all symbols
-                var existing = await _watchlistService.GetWatchlistAsync(selectedWatchlistId);
-                if (existing != null)
-                {
-                    await _watchlistService.RemoveSymbolsAsync(selectedWatchlistId, existing.Symbols);
-                    await _watchlistService.AddSymbolsAsync(selectedWatchlistId, symbols);
-                    _notificationService.ShowNotification(
-                        "Watchlist Updated",
-                        $"Updated watchlist '{existing.Name}' with {symbols.Length} symbols.",
-                        NotificationType.Success);
-                }
-            }
-
-            await LoadWatchlistsAsync();
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to save watchlist", ex);
-            _notificationService.ShowNotification(
-                "Error",
-                "Failed to save watchlist. Please try again.",
-                NotificationType.Error);
-        }
+        await _vm.SaveWatchlistAsync(dialog.WatchlistName, dialog.SaveAsNew, dialog.SelectedWatchlistId);
     }
 
-    private void ManageWatchlists_Click(object sender, RoutedEventArgs e)
-    {
-        // Navigate to the WpfServices.Watchlist management page
+    private void ManageWatchlists_Click(object sender, RoutedEventArgs e) =>
         _navigationService.NavigateTo(typeof(WatchlistPage));
-    }
 
     private async void RefreshList_Click(object sender, RoutedEventArgs e)
     {
-        await LoadSymbolsFromConfigAsync();
+        await _vm.LoadSymbolsFromConfigAsync();
         LastRefreshText.Text = "Last refreshed: just now";
+        CallApplyFilters();
     }
 
     private async Task SyncAddSymbolToBackendAsync(
@@ -764,11 +304,11 @@ public partial class SymbolsPage : Page
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Backend sync failed for add {symbol}", ex);
+            _loggingService.LogError("Backend sync failed for add", ex, ("Symbol", symbol));
         }
     }
 
-    private async Task SyncRemoveSymbolFromBackendAsync(string symbol)
+    private void SavePageFilterState()
     {
         try
         {
@@ -776,126 +316,33 @@ public partial class SymbolsPage : Page
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Backend sync failed for remove {symbol}", ex);
+            _loggingService.LogError("Backend sync failed for remove", ex, ("Symbol", symbol));
         }
     }
 
-    private async Task PersistSymbolsToConfigAsync()
+    private void RestorePageFilterState()
     {
-        try
-        {
-            var symbolDtos = _symbols.Select(s => new MarketDataCollector.Contracts.Configuration.SymbolConfigDto
-            {
-                Symbol = s.Symbol,
-                SubscribeTrades = s.SubscribeTrades,
-                SubscribeDepth = s.SubscribeDepth,
-                DepthLevels = s.DepthLevels,
-                Exchange = s.Exchange,
-                LocalSymbol = s.LocalSymbol,
-                SecurityType = s.SecurityType,
-                Strike = s.Strike,
-                Right = s.Right,
-                LastTradeDateOrContractMonth = s.LastTradeDateOrContractMonth,
-                OptionStyle = s.OptionStyle,
-                Multiplier = s.Multiplier
-            }).ToArray();
-
-            await _configService.SaveSymbolsAsync(symbolDtos);
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to persist symbols to config", ex);
-        }
+        var ws = WpfServices.WorkspaceService.Instance;
+        var searchText = ws.GetPageFilterState(PageTag, "SearchText");
+        if (searchText is not null) SymbolSearchBox.Text = searchText;
+        var filter = ws.GetPageFilterState(PageTag, "FilterCombo");
+        if (filter is not null) SelectComboItemByTag(FilterCombo, filter);
+        var exchange = ws.GetPageFilterState(PageTag, "ExchangeFilter");
+        if (exchange is not null) SelectComboItemByTag(ExchangeFilterCombo, exchange);
     }
 
     private static void SelectComboItemByTag(ComboBox combo, string tag)
     {
         foreach (var item in combo.Items)
-        {
             if (item is ComboBoxItem cbi && cbi.Tag?.ToString() == tag)
-            {
-                combo.SelectedItem = item;
-                return;
-            }
-        }
+            { combo.SelectedItem = item; return; }
     }
 
-    private static string? GetComboSelectedTag(ComboBox combo)
-    {
-        return (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-    }
+    private static string? GetComboSelectedTag(ComboBox combo) =>
+        (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
 }
 
-/// <summary>
-/// Symbol view model for the symbols page.
-/// </summary>
-public sealed class SymbolViewModel
-{
-    public bool IsSelected { get; set; }
-    public string Symbol { get; set; } = string.Empty;
-    public bool SubscribeTrades { get; set; }
-    public bool SubscribeDepth { get; set; }
-    public int DepthLevels { get; set; } = 10;
-    public string Exchange { get; set; } = "SMART";
-    public string? LocalSymbol { get; set; }
-    public string SecurityType { get; set; } = "STK";
-    public decimal? Strike { get; set; }
-    public string? Right { get; set; }
-    public string? LastTradeDateOrContractMonth { get; set; }
-    public string? OptionStyle { get; set; }
-    public int? Multiplier { get; set; }
-
-    public string TradesText => SubscribeTrades ? "On" : "Off";
-    public string DepthText => SubscribeDepth ? "On" : "Off";
-    public string StatusText => SubscribeTrades || SubscribeDepth ? "Active" : "Inactive";
-
-    public SolidColorBrush TradesStatusColor => SubscribeTrades
-        ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
-        : new SolidColorBrush(Color.FromRgb(139, 148, 158));
-
-    public SolidColorBrush DepthStatusColor => SubscribeDepth
-        ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
-        : new SolidColorBrush(Color.FromRgb(139, 148, 158));
-
-    public SolidColorBrush StatusBackground => SubscribeTrades || SubscribeDepth
-        ? new SolidColorBrush(Color.FromArgb(40, 63, 185, 80))
-        : new SolidColorBrush(Color.FromArgb(40, 139, 148, 158));
-}
-
-/// <summary>
-/// WpfServices.Watchlist information model for display.
-/// </summary>
-public sealed class WatchlistInfo
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string SymbolCount { get; set; } = string.Empty;
-    public string? Color { get; set; }
-    public bool IsPinned { get; set; }
-
-    public SolidColorBrush ColorBrush
-    {
-        get
-        {
-            if (string.IsNullOrEmpty(Color))
-                return new SolidColorBrush(Colors.Gray);
-
-            try
-            {
-                var color = (System.Windows.Media.Color)ColorConverter.ConvertFromString(Color);
-                return new SolidColorBrush(color);
-            }
-            catch
-            {
-                return new SolidColorBrush(Colors.Gray);
-            }
-        }
-    }
-}
-
-/// <summary>
-/// Dialog for saving watchlists.
-/// </summary>
+/// <summary>Dialog for saving watchlists.</summary>
 public sealed class SaveWatchlistDialog : Window
 {
     private readonly TextBox _nameBox;
@@ -910,7 +357,6 @@ public sealed class SaveWatchlistDialog : Window
     public SaveWatchlistDialog(List<string> existingWatchlists)
     {
         _existingWatchlists = existingWatchlists;
-
         Title = "Save Watchlist";
         Width = 400;
         Height = 220;
@@ -919,106 +365,35 @@ public sealed class SaveWatchlistDialog : Window
         Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#1E1E2E"));
 
         var grid = new Grid { Margin = new Thickness(16) };
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var i = 0; i < 6; i++)
+            grid.RowDefinitions.Add(new RowDefinition { Height = i == 4 ? new GridLength(1, GridUnitType.Star) : GridLength.Auto });
 
-        // Save as new checkbox
-        _saveAsNewCheck = new CheckBox
-        {
-            Content = "Create new watchlist",
-            IsChecked = true,
-            Foreground = Brushes.White,
-            Margin = new Thickness(0, 0, 0, 12)
-        };
+        _saveAsNewCheck = new CheckBox { Content = "Create new watchlist", IsChecked = true, Foreground = Brushes.White, Margin = new Thickness(0, 0, 0, 12) };
         _saveAsNewCheck.Checked += (_, _) => UpdateUIState();
         _saveAsNewCheck.Unchecked += (_, _) => UpdateUIState();
-        Grid.SetRow(_saveAsNewCheck, 0);
-        grid.Children.Add(_saveAsNewCheck);
+        Grid.SetRow(_saveAsNewCheck, 0); grid.Children.Add(_saveAsNewCheck);
 
-        // Name label
-        var nameLabel = new TextBlock
-        {
-            Text = "Watchlist Name:",
-            Foreground = Brushes.White,
-            Margin = new Thickness(0, 0, 0, 4)
-        };
-        Grid.SetRow(nameLabel, 1);
-        grid.Children.Add(nameLabel);
+        var nameLabel = new TextBlock { Text = "Watchlist Name:", Foreground = Brushes.White, Margin = new Thickness(0, 0, 0, 4) };
+        Grid.SetRow(nameLabel, 1); grid.Children.Add(nameLabel);
 
-        // Name textbox
-        _nameBox = new TextBox
-        {
-            Margin = new Thickness(0, 0, 0, 12),
-            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#2A2A3E")),
-            Foreground = Brushes.White,
-            BorderBrush = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#3A3A4E")),
-            Padding = new Thickness(8, 4, 8, 4)
-        };
-        Grid.SetRow(_nameBox, 2);
-        grid.Children.Add(_nameBox);
+        _nameBox = new TextBox { Margin = new Thickness(0, 0, 0, 12), Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#2A2A3E")), Foreground = Brushes.White, Padding = new Thickness(8, 4, 8, 4) };
+        Grid.SetRow(_nameBox, 2); grid.Children.Add(_nameBox);
 
-        // Existing watchlist label
-        var existingLabel = new TextBlock
-        {
-            Text = "Or update existing:",
-            Foreground = Brushes.Gray,
-            Margin = new Thickness(0, 0, 0, 4)
-        };
-        Grid.SetRow(existingLabel, 3);
-        grid.Children.Add(existingLabel);
+        var existingLabel = new TextBlock { Text = "Or update existing:", Foreground = Brushes.Gray, Margin = new Thickness(0, 0, 0, 4) };
+        Grid.SetRow(existingLabel, 3); grid.Children.Add(existingLabel);
 
-        // Existing watchlist combo
-        _existingCombo = new ComboBox
-        {
-            Margin = new Thickness(0, 0, 0, 16),
-            IsEnabled = false,
-            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#2A2A3E")),
-            Foreground = Brushes.White
-        };
-        foreach (var name in existingWatchlists)
-        {
-            _existingCombo.Items.Add(name);
-        }
-        Grid.SetRow(_existingCombo, 4);
-        grid.Children.Add(_existingCombo);
+        _existingCombo = new ComboBox { Margin = new Thickness(0, 0, 0, 16), IsEnabled = false, Foreground = Brushes.White };
+        foreach (var name in existingWatchlists) _existingCombo.Items.Add(name);
+        Grid.SetRow(_existingCombo, 4); grid.Children.Add(_existingCombo);
 
-        // Buttons
-        var buttonPanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right
-        };
+        var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         Grid.SetRow(buttonPanel, 5);
-
-        var cancelButton = new Button
-        {
-            Content = "Cancel",
-            Width = 80,
-            Margin = new Thickness(0, 0, 8, 0),
-            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#3A3A4E")),
-            Foreground = Brushes.White,
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 4, 8, 4)
-        };
+        var cancelButton = new Button { Content = "Cancel", Width = 80, Margin = new Thickness(0, 0, 8, 0), Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#3A3A4E")), Foreground = Brushes.White, BorderThickness = new Thickness(0), Padding = new Thickness(8, 4, 8, 4) };
         cancelButton.Click += (_, _) => { DialogResult = false; Close(); };
         buttonPanel.Children.Add(cancelButton);
-
-        var saveButton = new Button
-        {
-            Content = "Save",
-            Width = 80,
-            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#4CAF50")),
-            Foreground = Brushes.White,
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 4, 8, 4)
-        };
+        var saveButton = new Button { Content = "Save", Width = 80, Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#4CAF50")), Foreground = Brushes.White, BorderThickness = new Thickness(0), Padding = new Thickness(8, 4, 8, 4) };
         saveButton.Click += OnSaveClick;
         buttonPanel.Children.Add(saveButton);
-
         grid.Children.Add(buttonPanel);
         Content = grid;
     }
@@ -1032,22 +407,8 @@ public sealed class SaveWatchlistDialog : Window
 
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
-        if (SaveAsNew)
-        {
-            if (string.IsNullOrWhiteSpace(_nameBox.Text))
-            {
-                MessageBox.Show("Please enter a watchlist name.", "Validation Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-        }
-        else if (_existingCombo.SelectedItem == null)
-        {
-            MessageBox.Show("Please select an existing watchlist.", "Validation Error",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
+        if (SaveAsNew && string.IsNullOrWhiteSpace(_nameBox.Text)) { MessageBox.Show("Please enter a watchlist name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        else if (!SaveAsNew && _existingCombo.SelectedItem == null) { MessageBox.Show("Please select an existing watchlist.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         DialogResult = true;
         Close();
     }

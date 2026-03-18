@@ -392,7 +392,7 @@ Ensure:
 - **Service**: `src/MarketDataCollector.Ui.Services/Services/FixtureDataService.cs`
 - **Tests**: `tests/MarketDataCollector.Ui.Tests/Services/FixtureDataServiceTests.cs`
 - **Contracts**: `src/MarketDataCollector.Contracts/Api/`
-- **Implementation Guide**: `docs/development/desktop-platform-improvements-implementation-guide.md`
+- **Implementation Guide**: `docs/evaluations/desktop-platform-improvements-implementation-guide.md`
 
 ## Next Steps
 
@@ -415,7 +415,7 @@ After implementing basic fixture mode:
 - **Desktop Development:**
   - [Desktop Testing Guide](./desktop-testing-guide.md) - Complete testing procedures and fixture usage
   - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture and patterns
-  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Improvement roadmap
+  - [Desktop Platform Improvements](../evaluations/desktop-platform-improvements-implementation-guide.md) - Improvement roadmap
 
 - **Testing and Quality:**
   - [Test Project README](../../tests/MarketDataCollector.Ui.Tests/README.md) - Test coverage details

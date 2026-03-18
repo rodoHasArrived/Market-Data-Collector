@@ -231,8 +231,8 @@ MIT License - Same as parent project
 
 - **Desktop Development:**
   - [Desktop Testing Guide](./desktop-testing-guide.md) - Comprehensive testing procedures
-  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Full improvement roadmap
-  - [Desktop Improvements - Executive Summary](./desktop-improvements-executive-summary.md) - Impact analysis
+  - [Desktop Platform Improvements](../evaluations/desktop-platform-improvements-implementation-guide.md) - Full improvement roadmap
+  - [Desktop Improvements - Executive Summary](../evaluations/desktop-improvements-executive-summary.md) - Impact analysis
   - [Desktop Support Policy](./policies/desktop-support-policy.md) - Contribution requirements
 
 - **Architecture:**

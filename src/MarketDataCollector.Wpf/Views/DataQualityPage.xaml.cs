@@ -6,12 +6,12 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
+using MarketDataCollector.Wpf.Models;
 using WpfServices = MarketDataCollector.Wpf.Services;
-using Timer = System.Timers.Timer;
 
 using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
@@ -29,7 +29,7 @@ public partial class DataQualityPage : Page
     private readonly ObservableCollection<AnomalyModel> _anomalies = new();
     private readonly List<AlertModel> _allAlerts = new();
     private readonly List<AnomalyModel> _allAnomalies = new();
-    private Timer? _refreshTimer;
+    private DispatcherTimer? _refreshTimer;
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
     private string _timeRange = "7d";
@@ -63,7 +63,6 @@ public partial class DataQualityPage : Page
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _refreshTimer?.Stop();
-        _refreshTimer?.Dispose();
         _cts?.Cancel();
         _cts?.Dispose();
     }
@@ -72,8 +71,8 @@ public partial class DataQualityPage : Page
     {
         await RefreshDataAsync();
 
-        _refreshTimer = new Timer(30000);
-        _refreshTimer.Elapsed += async (_, _) => await Dispatcher.InvokeAsync(RefreshDataAsync);
+        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        _refreshTimer.Tick += async (_, _) => await RefreshDataAsync();
         _refreshTimer.Start();
     }
 
@@ -698,7 +697,7 @@ public partial class DataQualityPage : Page
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Failed to load provider comparison for {symbol}", ex);
+            _loggingService.LogError("Failed to load provider comparison", ex, ("Symbol", symbol));
         }
     }
 
@@ -1653,74 +1652,4 @@ public partial class DataQualityPage : Page
         window.ShowDialog();
         return result;
     }
-}
-
-public sealed class TrendPoint
-{
-    public TrendPoint(double score, string label)
-    {
-        Score = score;
-        Label = label;
-    }
-
-    public double Score { get; }
-    public string Label { get; }
-}
-
-/// <summary>
-/// Model for symbol quality display.
-/// </summary>
-public sealed class SymbolQualityModel
-{
-    public string Symbol { get; set; } = string.Empty;
-    public double Score { get; set; }
-    public string ScoreFormatted { get; set; } = string.Empty;
-    public string Grade { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string Issues { get; set; } = string.Empty;
-    public DateTimeOffset LastUpdate { get; set; }
-    public string LastUpdateFormatted { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Model for gap display.
-/// </summary>
-public sealed class GapModel
-{
-    public string GapId { get; set; } = string.Empty;
-    public string Symbol { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
-}
-
-public sealed class AlertModel
-{
-    public string Id { get; set; } = string.Empty;
-    public string Symbol { get; set; } = string.Empty;
-    public string AlertType { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public string Severity { get; set; } = string.Empty;
-    public Brush SeverityBrush { get; set; } = Brushes.Gray;
-}
-
-/// <summary>
-/// Model for anomaly display.
-/// </summary>
-public sealed class AnomalyModel
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string Timestamp { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public SolidColorBrush SeverityColor { get; set; } = new(Colors.Gray);
-}
-
-/// <summary>
-/// Model for symbol drilldown issue display.
-/// </summary>
-public class DrilldownIssue
-{
-    public string Description { get; set; } = string.Empty;
-    public string Timestamp { get; set; } = string.Empty;
-    public SolidColorBrush SeverityBrush { get; set; } = new(Colors.Gray);
 }

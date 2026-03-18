@@ -52,6 +52,11 @@
 
   <!-- Windows-only package references -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <!-- F# Core runtime — required so the XAML compiler's MetadataLoadContext can resolve
+         FSharp.Core.dll when processing transitive references through the FSharp project.
+         Without this, MC1000 is raised: "Could not find assembly FSharp.Core, Version=9.0.0.0". -->
+    <PackageReference Include="FSharp.Core" />
+
     <!-- MVVM Framework -->
     <PackageReference Include="CommunityToolkit.Mvvm" />
 

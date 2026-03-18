@@ -13,6 +13,9 @@ namespace MarketDataCollector.Wpf.Contracts;
 /// </summary>
 public interface INavigationService
 {
+    /// <summary>Gets whether the navigation service has been initialized with a frame.</summary>
+    bool IsInitialized { get; }
+
     /// <summary>Gets whether navigation can go back.</summary>
     bool CanGoBack { get; }
 

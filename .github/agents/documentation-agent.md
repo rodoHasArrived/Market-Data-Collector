@@ -1,3 +1,8 @@
+---
+name: Documentation Agent
+description: Documentation specialist for the MarketDataCollector project, ensuring documentation is accurate, comprehensive, up-to-date, and follows established conventions.
+---
+
 # Documentation Agent Instructions
 
 This file contains instructions for an agent responsible for updating and maintaining the project's documentation.
@@ -38,13 +43,21 @@ MarketDataCollector/docs/
 Market-Data-Collector/
 ├── .claude/
 │   ├── agents/
-│   │   └── mdc-cleanup.md
+│   │   ├── mdc-blueprint.md
+│   │   ├── mdc-cleanup.md
+│   │   └── mdc-docs.md
 │   ├── skills/
 │   │   ├── _shared/
 │   │   │   └── project-context.md
+│   │   ├── mdc-blueprint/
+│   │   │   ├── references/
+│   │   │   │   ...
+│   │   │   ├── CHANGELOG.md
+│   │   │   └── SKILL.md
 │   │   ├── mdc-brainstorm/
 │   │   │   ├── references/
 │   │   │   │   ...
+│   │   │   ├── brainstorm-history.jsonl
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
 │   │   ├── mdc-code-review/
@@ -79,8 +92,13 @@ Market-Data-Collector/
 │   │   └── setup-dotnet-cache/
 │   │       └── action.yml
 │   ├── agents/
+│   │   ├── adr-generator.agent.md
 │   │   ├── code-review-agent.md
-│   │   └── documentation-agent.md
+│   │   ├── documentation-agent.md
+│   │   ├── mdc-blueprint-agent.md
+│   │   ├── mdc-brainstorm-agent.md
+│   │   ├── mdc-provider-builder-agent.md
+│   │   └── mdc-test-writer-agent.md
 │   ├── instructions/
 │   │   ├── csharp.instructions.md
 │   │   ├── docs.instructions.md
@@ -293,10 +311,12 @@ Market-Data-Collector/
 │   │   │   └── README.md
 │   │   ├── claude/
 │   │   │   ├── CLAUDE.actions.md
+│   │   │   ├── CLAUDE.api.md
 │   │   │   ├── CLAUDE.fsharp.md
 │   │   │   ├── CLAUDE.providers.md
 │   │   │   ├── CLAUDE.repo-updater.md
 │   │   │   ├── CLAUDE.storage.md
+│   │   │   ├── CLAUDE.structure.md
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
 │   │   │   ├── ai-sync-workflow.md
@@ -453,7 +473,6 @@ Market-Data-Collector/
 │   │   ├── data-quality-monitoring-evaluation.md
 │   │   ├── desktop-end-user-improvements.md
 │   │   ├── desktop-improvements-executive-summary.md
-│   │   ├── desktop-improvements-quick-reference.md
 │   │   ├── desktop-platform-improvements-implementation-guide.md
 │   │   ├── high-impact-improvement-brainstorm-2026-03.md
 │   │   ├── high-impact-improvements-brainstorm.md
@@ -492,7 +511,9 @@ Market-Data-Collector/
 │   │   ├── README.md
 │   │   └── service-level-objectives.md
 │   ├── plans/
-│   │   └── l3-inference-implementation-plan.md
+│   │   ├── assembly-performance-roadmap.md
+│   │   ├── l3-inference-implementation-plan.md
+│   │   └── quant-script-environment-blueprint.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
 │   │   ├── backfill-guide.md
@@ -915,6 +936,8 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Tiingo/
 │   │   │   │   ...
+│   │   │   ├── TwelveData/
+│   │   │   │   ...
 │   │   │   └── YahooFinance/
 │   │   │       ...
 │   │   ├── Contracts/
@@ -943,6 +966,26 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.Infrastructure.csproj
 │   │   └── NoOpMarketDataClient.cs
+│   ├── MarketDataCollector.Mcp/
+│   │   ├── Prompts/
+│   │   │   ├── CodeReviewPrompts.cs
+│   │   │   ├── ProviderPrompts.cs
+│   │   │   └── TestWriterPrompts.cs
+│   │   ├── Resources/
+│   │   │   ├── AdrResources.cs
+│   │   │   ├── ConventionResources.cs
+│   │   │   └── TemplateResources.cs
+│   │   ├── Services/
+│   │   │   └── RepoPathService.cs
+│   │   ├── Tools/
+│   │   │   ├── AdrTools.cs
+│   │   │   ├── AuditTools.cs
+│   │   │   ├── ConventionTools.cs
+│   │   │   ├── KnownErrorTools.cs
+│   │   │   └── ProviderTools.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── MarketDataCollector.Mcp.csproj
+│   │   └── Program.cs
 │   ├── MarketDataCollector.McpServer/
 │   │   ├── Prompts/
 │   │   │   └── MarketDataPrompts.cs
@@ -1225,12 +1268,19 @@ Market-Data-Collector/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
 │       ├── Models/
+│       │   ├── ActivityLogModels.cs
 │       │   ├── AppConfig.cs
+│       │   ├── BackfillModels.cs
 │       │   ├── DashboardModels.cs
+│       │   ├── DataQualityModels.cs
 │       │   ├── LeanModels.cs
-│       │   └── StorageDisplayModels.cs
+│       │   ├── LiveDataModels.cs
+│       │   ├── NotificationModels.cs
+│       │   ├── OrderBookModels.cs
+│       │   ├── ProviderHealthModels.cs
+│       │   ├── StorageDisplayModels.cs
+│       │   └── SymbolsModels.cs
 │       ├── Services/
-│       │   ├── AdminMaintenanceService.cs
 │       │   ├── ArchiveHealthService.cs
 │       │   ├── BackendServiceManager.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
@@ -1266,10 +1316,18 @@ Market-Data-Collector/
 │       │   ├── AppStyles.xaml
 │       │   └── IconResources.xaml
 │       ├── ViewModels/
+│       │   ├── ActivityLogViewModel.cs
+│       │   ├── BackfillViewModel.cs
 │       │   ├── BacktestViewModel.cs
 │       │   ├── BindableBase.cs
 │       │   ├── DashboardViewModel.cs
-│       │   └── LeanIntegrationViewModel.cs
+│       │   ├── DataQualityViewModel.cs
+│       │   ├── LeanIntegrationViewModel.cs
+│       │   ├── LiveDataViewerViewModel.cs
+│       │   ├── NotificationCenterViewModel.cs
+│       │   ├── OrderBookViewModel.cs
+│       │   ├── ProviderHealthViewModel.cs
+│       │   └── SymbolsPageViewModel.cs
 │       ├── Views/
 │       │   ├── ActivityLogPage.xaml
 │       │   ├── ActivityLogPage.xaml.cs

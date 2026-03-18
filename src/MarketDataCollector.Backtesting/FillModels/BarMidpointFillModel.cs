@@ -15,8 +15,10 @@ internal sealed class BarMidpointFillModel(
 {
     public IReadOnlyList<FillEvent> TryFill(Order order, MarketEvent evt)
     {
-        if (evt.Payload is not HistoricalBar bar) return [];
-        if (!bar.Symbol.Equals(order.Symbol, StringComparison.OrdinalIgnoreCase)) return [];
+        if (evt.Payload is not HistoricalBar bar)
+            return [];
+        if (!bar.Symbol.Equals(order.Symbol, StringComparison.OrdinalIgnoreCase))
+            return [];
 
         var isBuy = order.Quantity > 0;
         decimal fillPrice;
@@ -31,8 +33,10 @@ internal sealed class BarMidpointFillModel(
         {
             var limitPrice = order.LimitPrice!.Value;
             // Check if limit was touched during the bar
-            if (isBuy && bar.Low > limitPrice) return [];
-            if (!isBuy && bar.High < limitPrice) return [];
+            if (isBuy && bar.Low > limitPrice)
+                return [];
+            if (!isBuy && bar.High < limitPrice)
+                return [];
             fillPrice = limitPrice;
         }
 

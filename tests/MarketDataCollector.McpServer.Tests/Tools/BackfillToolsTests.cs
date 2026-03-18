@@ -17,7 +17,7 @@ public sealed class BackfillToolsTests
     {
         // Verify date strings that look invalid are rejected before reaching the provider.
         bool fromBad = from is not null && !DateOnly.TryParse(from, out _);
-        bool toBad   = to   is not null && !DateOnly.TryParse(to,   out _);
+        bool toBad = to is not null && !DateOnly.TryParse(to, out _);
         (fromBad || toBad).Should().BeTrue();
     }
 

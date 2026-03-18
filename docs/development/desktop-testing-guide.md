@@ -296,9 +296,8 @@ See `.github/workflows/desktop-builds.yml` for CI configuration.
 ## Related Documentation
 
 - **Desktop Development:**
-  - [Desktop Platform Improvements - Implementation Guide](./desktop-platform-improvements-implementation-guide.md) - Complete improvement roadmap
-  - [Desktop Improvements - Executive Summary](./desktop-improvements-executive-summary.md) - Impact analysis and priorities
-  - [Desktop Improvements - Quick Reference](./desktop-improvements-quick-reference.md) - One-page summary
+  - [Desktop Platform Improvements - Implementation Guide](../evaluations/desktop-platform-improvements-implementation-guide.md) - Complete improvement roadmap
+  - [Desktop Improvements - Executive Summary](../evaluations/desktop-improvements-executive-summary.md) - Impact analysis, priorities, and quick reference
   
 - **Testing and Quality:**
   - [Test Project README](../../tests/MarketDataCollector.Ui.Tests/README.md) - Ui.Tests project details

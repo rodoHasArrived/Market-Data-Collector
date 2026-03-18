@@ -67,8 +67,8 @@ internal static class TemplateProviderFactory
         var apiKey = cfg?.ApiKey ?? Environment.GetEnvironmentVariable("TEMPLATE__APIKEY");
 
         // If the provider requires an API key, guard here and return null when missing.
-        // if (string.IsNullOrEmpty(apiKey))
-        //     return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         // Forward additional constructor arguments (log, priority, rateLimitPerMinute) as needed.
         return new TemplateHistoricalDataProvider(apiKey: apiKey);
@@ -88,7 +88,7 @@ internal static class TemplateProviderFactory
     /// </param>
     /// <param name="log">Optional logger.</param>
     /// <returns>A configured search provider, or <see langword="null"/>.</returns>
-    // TODO: Remove this method entirely if the provider does not support symbol search.
+    // Remove this method entirely if the provider does not support symbol search.
     internal static ISymbolSearchProvider? CreateSearchProvider(
         TemplateBackfillConfig? cfg,
         ILogger? log = null)
@@ -99,8 +99,8 @@ internal static class TemplateProviderFactory
         var apiKey = cfg?.ApiKey ?? Environment.GetEnvironmentVariable("TEMPLATE__APIKEY");
 
         // If credentials are required for symbol search, guard here.
-        // if (string.IsNullOrEmpty(apiKey))
-        //     return null;
+        if (string.IsNullOrEmpty(apiKey))
+            return null;
 
         return new TemplateSymbolSearchProvider(apiKey: apiKey);
     }

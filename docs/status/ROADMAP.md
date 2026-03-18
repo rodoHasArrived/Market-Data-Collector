@@ -1,9 +1,9 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.2
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-17
 **Status:** Development / Pilot Ready (hardening and scale-up in progress)
-**Repository Snapshot:** `src/` files: **779** | `tests/` files: **266** | HTTP route constants: **309** | Remaining stub routes: **0** | Test methods: **~4,135**
+**Repository Snapshot:** `src/` files: **832** | `tests/` files: **273** | HTTP route constants: **309** | Remaining stub routes: **0** | Test methods: **~4,093**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
@@ -66,6 +66,8 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 13: Observability Completion | 📝 Planned | End-to-end OTel trace propagation; correlation IDs. |
 | Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
 | Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
+| Phase 16: Assembly-Level Performance | 📝 Planned | Byte-level SIMD, algorithmic, and allocation improvements from `docs/evaluations/assembly-performance-opportunities.md`. |
+| Phase 16: Assembly-Level Performance Optimizations | 📝 Planned | SIMD hot-path and algorithmic improvements — guided by BenchmarkDotNet evidence. See detailed roadmap section. |
 
 ---
 
@@ -301,6 +303,66 @@ These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md
 
 ---
 
+### Phase 16: Assembly-Level Performance Optimizations
+
+**Goal:** Apply the highest-ROI performance improvements from
+[`docs/evaluations/assembly-performance-opportunities.md`](../evaluations/assembly-performance-opportunities.md)
+to CPU-bound hot paths, guided by `BenchmarkDotNet` evidence. All changes must include
+before/after benchmark results and must keep scalar fallback paths that produce identical output.
+
+#### Viability Assessment
+
+The evaluation document identifies 7 candidates. The table below scores each against delivery
+risk and expected impact to inform prioritization.
+
+| # | Candidate | Viability | Risk | Expected Gain | Priority |
+|---|-----------|-----------|------|---------------|----------|
+| P16-1 | Vectorized `\n` scan — `MemoryMappedJsonlReader` | **High** | Low — `SearchValues<byte>` portable fallback available | 1.5–4× scan throughput on large replay files | 1 |
+| P16-2 | Deferred UTF-16 decode — `MemoryMappedJsonlReader` | **Medium** | Medium — requires caller API change to pass `ReadOnlyMemory<byte>` | Eliminates millions of per-line `string` allocations for 1 GB+ uncompressed replays | 2 |
+| P16-3 | UTF-8 sequence extraction — `DataQualityScoringService` | **High** | Low — change isolated to one method | Eliminates 10 000 `string` allocations per scored file; removes double `OrdinalIgnoreCase` scan | 3 |
+| P16-4 | Binary-search buckets + circular sample ring — `LatencyHistogram` | **High** | Low — pure algorithmic drop-in, no SIMD required | Removes hidden O(n) copy under lock on every event; reduces GC pressure | 4 |
+| P16-5 | Ring-buffer `EventBuffer.Drain(maxCount)` | **Medium** | Medium — data-structure replacement required | Eliminates `GetRange` + front-shift cost during per-symbol sink flushes | 5 |
+| P16-6 | `DrainBySymbol` symbol-interning + in-place partition | **High** | Low — `SymbolTable` already exists in `Core/Performance/` | Eliminates two list allocations and a full-buffer copy per drain call | 6 |
+| P16-7 | SIMD rolling statistics — `AnomalyDetector.SymbolStatistics` | **Low–Medium** | High — only profitable if the path is CPU-hot (unconfirmed) | Modest gain in high-symbol-count configs; profile-first rule applies | 7 |
+
+**Key viability principle:** P16-1 through P16-6 are independently deliverable — each is
+localized to a single class or method and validated by the existing test suite without
+modification. P16-7 must be deferred until profiling confirms it is a hot path under a
+realistic workload.
+
+#### Implementation Items
+
+| Item | File(s) | Work |
+|------|---------|------|
+| P16-1 | `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` | Replace scalar `buffer[i] == '\n'` loop with `ReadOnlySpan<byte>.IndexOf` backed by `SearchValues<byte>`; add AVX2 fast path gated by `Avx2.IsSupported` with a static readonly dispatch delegate |
+| P16-2 | `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` | Defer `Encoding.UTF8.GetString` — pass `ReadOnlyMemory<byte>` slices to `DeserializeLines`; decode only after a line passes downstream filters. Deliver after P16-1 is merged and benchmarked |
+| P16-3 | `src/MarketDataCollector.Storage/Services/DataQualityScoringService.cs` | Replace `File.ReadLinesAsync` + `string.IndexOf` + `char.IsDigit` with a `PipeReader` / `ArrayPool<byte>` reader and a `TryExtractSequenceUtf8(ReadOnlySpan<byte>, out long)` helper; use `u8` string literals for key probes |
+| P16-4a | `src/MarketDataCollector.Application/Monitoring/LatencyHistogram.cs` | Replace linear `for` bucket scan with `Array.BinarySearch`; add `[MethodImpl(AggressiveInlining)]` |
+| P16-4b | `src/MarketDataCollector.Application/Monitoring/LatencyHistogram.cs` | Replace `List<LatencySample>` + `RemoveAt(0)` overflow with a fixed-size `LatencySample[]` circular ring indexed by `_sampleHead % MaxSamples` |
+| P16-5 | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Introduce a ring-buffer backed `Drain(int maxCount)` overload using a power-of-two array with `_head`/`_tail` indices; retain existing path for callers that pass no pooled buffer |
+| P16-6 | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Replace `DrainBySymbol` two-list reconstruction with an in-place partition using `SymbolTable.GetOrAdd` for integer symbol comparison; expose `DrainBySymbolId(int)` as the preferred API |
+| P16-7 | `src/MarketDataCollector.Application/Monitoring/DataQuality/AnomalyDetector.cs` | **Profile first.** If `SymbolStatistics.RecordTrade` is confirmed CPU-hot, apply `Vector<double>` horizontal-add for rolling mean/stddev and switch price window to struct-of-arrays layout |
+| P16-8 | `benchmarks/MarketDataCollector.Benchmarks/` | Add benchmark cases: newline scan (1 KB / 64 KB / 4 MB), sequence parse (1 K / 10 K lines), bucket selection (8 / 16 / 32 boundaries), `Drain` ring vs `GetRange`, `DrainBySymbol` two-list vs in-place partition |
+
+#### Delivery Notes
+
+- **P16-1 and P16-3** are the recommended starting points: both are fully localized, have
+  complete implementation sketches in the evaluation document, and carry the lowest rollback risk.
+- **P16-4** (binary search + circular ring) should be a single PR — both sub-items are in the
+  same class and complement each other.
+- **P16-2** (deferred UTF-16) should follow P16-1: extend the same method once the scan
+  refactor is merged and its benchmark improvement is confirmed.
+- Every optimization PR description must include `BenchmarkDotNet` before/after results (P16-8
+  additions serve as the benchmark harness for all other items).
+- P16-7 is gated on profiling evidence and should not be started without it.
+
+**Exit criteria:** `BenchmarkDotNet` before/after results attached to each PR show a measurable
+improvement on representative datasets. All existing tests pass with every optimized path
+active. Scalar fallback paths produce bit-identical results to SIMD paths. GC-allocated bytes
+per operation do not regress relative to the pre-optimization baseline.
+
+---
+
 ## Reference Documents
 
 - `docs/status/FEATURE_INVENTORY.md` — **new** comprehensive feature inventory with per-area status.
@@ -312,7 +374,8 @@ These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md
 - `docs/evaluations/` — detailed evaluation source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/audits/` — detailed audit source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/architecture/deterministic-canonicalization.md` — cross-provider canonicalization design.
+- `docs/plans/assembly-performance-roadmap.md` — detailed Phase 16 viability assessments and per-item implementation checklists.
 
 ---
 
-*Last Updated: 2026-02-26*
+*Last Updated: 2026-03-17*

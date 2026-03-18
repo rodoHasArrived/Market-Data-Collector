@@ -6,6 +6,9 @@
       mc:Ignorable="d"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
       Loaded="OnPageLoaded">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -33,6 +36,7 @@
                 <TextBlock Text="Symbol:" Foreground="{StaticResource ConsoleTextMutedBrush}"
                            VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <ComboBox x:Name="SymbolComboBox" Width="120" SelectionChanged="Symbol_SelectionChanged"
+                          ItemsSource="{Binding AvailableSymbols}"
                           Background="{DynamicResource ConsoleBackgroundMediumBrush}"
                           Foreground="{DynamicResource ConsoleTextBrush}"
                           BorderThickness="1" Padding="8,4"/>
@@ -54,9 +58,9 @@
                 <Border CornerRadius="4" Padding="8,4" Margin="16,0,0,0"
                         Background="{StaticResource ConsoleBackgroundMediumBrush}">
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="ConnectionIndicator" Width="8" Height="8"
-                                 Fill="{StaticResource ConsoleTextMutedBrush}" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="ConnectionStatusText" Text="Disconnected" Margin="8,0,0,0"
+                        <Ellipse Width="8" Height="8"
+                                 Fill="{Binding ConnectionIndicatorFill}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ConnectionStatusText}" Margin="8,0,0,0"
                                    Foreground="{StaticResource ConsoleTextMutedBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -100,7 +104,7 @@
                     </Grid>
 
                     <!-- Asks List -->
-                    <ItemsControl x:Name="AsksControl" Grid.Row="1">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Asks}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2">
@@ -139,9 +143,9 @@
                     <Grid Grid.Row="2" Margin="0,8">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="Spread: " Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="11"/>
-                            <TextBlock x:Name="SpreadText" Text="--" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding SpreadText}" FontWeight="SemiBold"
                                        Foreground="{StaticResource InfoColorBrush}" FontSize="11"/>
-                            <TextBlock x:Name="SpreadPercentText" Text="" Margin="8,0,0,0"
+                            <TextBlock Text="{Binding SpreadPercentText}" Margin="8,0,0,0"
                                        Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="11"/>
                         </StackPanel>
                     </Grid>
@@ -165,7 +169,7 @@
                     </Grid>
 
                     <!-- Bids List -->
-                    <ItemsControl x:Name="BidsControl" Grid.Row="3">
+                    <ItemsControl Grid.Row="3" ItemsSource="{Binding Bids}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2">
@@ -198,11 +202,11 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock x:Name="NoDataText" Grid.RowSpan="4"
+                    <TextBlock Grid.RowSpan="4"
                                Text="No order book data available. Select a symbol and ensure connection is active."
                                Foreground="{StaticResource ConsoleTextMutedBrush}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Visibility="Visible"/>
+                               Visibility="{Binding NoDataVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </Grid>
             </Border>
 
@@ -219,7 +223,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Best Bid" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
-                            <TextBlock x:Name="BestBidText" Grid.Column="1" Text="--"
+                            <TextBlock Grid.Column="1" Text="{Binding BestBidText}"
                                        Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold"/>
                         </Grid>
 
@@ -229,7 +233,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Best Ask" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
-                            <TextBlock x:Name="BestAskText" Grid.Column="1" Text="--"
+                            <TextBlock Grid.Column="1" Text="{Binding BestAskText}"
                                        Foreground="{StaticResource ErrorColorBrush}" FontWeight="SemiBold"/>
                         </Grid>
 
@@ -239,7 +243,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Mid Price" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
-                            <TextBlock x:Name="MidPriceText" Grid.Column="1" Text="--"
+                            <TextBlock Grid.Column="1" Text="{Binding MidPriceText}"
                                        Foreground="{StaticResource InfoColorBrush}" FontWeight="SemiBold"/>
                         </Grid>
 
@@ -251,7 +255,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Bid Volume" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
-                            <TextBlock x:Name="BidVolumeText" Grid.Column="1" Text="--"
+                            <TextBlock Grid.Column="1" Text="{Binding BidVolumeText}"
                                        Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold"/>
                         </Grid>
 
@@ -261,7 +265,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Ask Volume" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
-                            <TextBlock x:Name="AskVolumeText" Grid.Column="1" Text="--"
+                            <TextBlock Grid.Column="1" Text="{Binding AskVolumeText}"
                                        Foreground="{StaticResource ErrorColorBrush}" FontWeight="SemiBold"/>
                         </Grid>
 
@@ -271,7 +275,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Imbalance" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
-                            <TextBlock x:Name="ImbalanceText" Grid.Column="1" Text="--"
+                            <TextBlock Grid.Column="1" Text="{Binding ImbalanceText}"
                                        Foreground="{StaticResource ConsoleTextPrimaryBrush}" FontWeight="SemiBold"/>
                         </Grid>
 
@@ -297,7 +301,7 @@
                     <StackPanel>
                         <TextBlock Text="Recent Trades" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16"/>
 
-                        <ItemsControl x:Name="RecentTradesControl">
+                        <ItemsControl ItemsSource="{Binding RecentTrades}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,2">
@@ -321,9 +325,9 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock x:Name="NoTradesText" Text="No recent trades."
+                        <TextBlock Text="No recent trades."
                                    Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                   Visibility="Visible"/>
+                                   Visibility="{Binding NoTradesVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

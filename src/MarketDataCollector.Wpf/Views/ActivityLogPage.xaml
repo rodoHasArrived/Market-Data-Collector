@@ -6,6 +6,9 @@
       mc:Ignorable="d"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
       Loaded="OnPageLoaded">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -30,7 +33,8 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <CheckBox x:Name="AutoScrollCheck" Content="Auto-scroll" IsChecked="True"
+                <CheckBox x:Name="AutoScrollCheck" Content="Auto-scroll"
+                          IsChecked="{Binding IsAutoScrollEnabled, Mode=TwoWay}"
                           Foreground="{StaticResource ConsoleTextMutedBrush}"
                           VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <Button Content="Export" Click="Export_Click" Margin="0,0,8,0"
@@ -108,7 +112,7 @@
 
                 <!-- Stats -->
                 <StackPanel Grid.Column="5" Orientation="Horizontal">
-                    <TextBlock x:Name="LogCountText" Text="0 entries"
+                    <TextBlock Text="{Binding LogCount}"
                                Foreground="{StaticResource ConsoleTextMutedBrush}"
                                VerticalAlignment="Center" Margin="16,0,0,0"/>
                 </StackPanel>
@@ -119,6 +123,7 @@
         <Border Grid.Row="2" Margin="24,0,24,24" Style="{StaticResource CardStyle}">
             <Grid>
                 <ListBox x:Name="LogList" Background="Transparent" BorderThickness="0"
+                         ItemsSource="{Binding FilteredLogs}"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -157,10 +162,10 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <TextBlock x:Name="NoLogsText" Text="No log entries to display."
+                <TextBlock Text="No log entries to display."
                            Foreground="{StaticResource ConsoleTextMutedBrush}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Visibility="Collapsed"/>
+                           Visibility="{Binding NoLogsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </Grid>
         </Border>
     </Grid>

@@ -1,42 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Wpf.ViewModels;
 using Microsoft.Win32;
-using Timer = System.Timers.Timer;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
-using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
-/// Activity log page showing system events and application logs.
+/// Activity log page — thin code-behind.
+/// All state, HTTP loading, filtering, and timer management live in <see cref="ActivityLogViewModel"/>.
+/// The only UI-level action kept here is <c>LogList.ScrollIntoView</c> which requires
+/// a direct reference to the list control.
 /// </summary>
 public partial class ActivityLogPage : Page
 {
-    private readonly HttpClient _httpClient = new();
-    private readonly ObservableCollection<LogEntryModel> _allLogs = new();
-    private readonly ObservableCollection<LogEntryModel> _filteredLogs = new();
-    private Timer? _refreshTimer;
-    private CancellationTokenSource? _cts;
-    private string _baseUrl = "http://localhost:8080";
-    private string _levelFilter = "All";
-    private string _categoryFilter = "All";
-    private string _searchText = string.Empty;
-
-    private readonly WpfServices.StatusService _statusService;
-    private readonly WpfServices.LoggingService _loggingService;
-    private readonly WpfServices.NotificationService _notificationService;
+    private readonly ActivityLogViewModel _viewModel;
 
     public ActivityLogPage(
         WpfServices.StatusService statusService,
@@ -45,264 +24,36 @@ public partial class ActivityLogPage : Page
     {
         InitializeComponent();
 
-        _statusService = statusService;
-        _loggingService = loggingService;
-        _notificationService = notificationService;
+        _viewModel = new ActivityLogViewModel(statusService, loggingService, notificationService);
+        DataContext = _viewModel;
 
-        LogList.ItemsSource = _filteredLogs;
-
-        // Get base URL from StatusService
-        _baseUrl = _statusService.BaseUrl;
-
-        // Subscribe to logging service events
-        _loggingService.LogWritten += OnLogEntryAdded;
+        // Relay the VM's scroll-request to the actual ListBox control.
+        _viewModel.ScrollToTopRequested += (_, _) =>
+        {
+            if (LogList.Items.Count > 0)
+                LogList.ScrollIntoView(LogList.Items[0]);
+        };
 
         Unloaded += OnPageUnloaded;
     }
 
-    private void OnPageUnloaded(object sender, RoutedEventArgs e)
-    {
-        _loggingService.LogWritten -= OnLogEntryAdded;
-        _refreshTimer?.Stop();
-        _refreshTimer?.Dispose();
-        _cts?.Cancel();
-        _cts?.Dispose();
-    }
+    private async void OnPageLoaded(object sender, RoutedEventArgs e) =>
+        await _viewModel.StartAsync();
 
-    private async void OnPageLoaded(object sender, RoutedEventArgs e)
-    {
-        await LoadLogsAsync();
-
-        // Start refresh timer (every 5 seconds to check for new logs from API)
-        _refreshTimer = new Timer(5000);
-        _refreshTimer.Elapsed += async (_, _) => await Dispatcher.InvokeAsync(LoadLogsAsync);
-        _refreshTimer.Start();
-    }
-
-    private void OnLogEntryAdded(object? sender, LogEntryEventArgs e)
-    {
-        Dispatcher.Invoke(() =>
-        {
-            var category = "System";
-            foreach (var (key, value) in e.Properties)
-            {
-                if (string.Equals(key, "category", StringComparison.OrdinalIgnoreCase))
-                {
-                    category = value;
-                    break;
-                }
-            }
-
-            var level = e.Level.ToString();
-            var entry = new LogEntryModel
-            {
-                RawTimestamp = e.Timestamp,
-                Timestamp = e.Timestamp.ToString("HH:mm:ss"),
-                Level = level,
-                Category = category,
-                Message = e.Message,
-                LevelBackground = GetLevelBackground(level),
-                LevelForeground = GetLevelForeground(level)
-            };
-
-            _allLogs.Insert(0, entry);
-
-            // Limit total logs
-            while (_allLogs.Count > 1000)
-            {
-                _allLogs.RemoveAt(_allLogs.Count - 1);
-            }
-
-            ApplyFilters();
-
-            // Auto-scroll if enabled
-            if (AutoScrollCheck.IsChecked == true && _filteredLogs.Count > 0)
-            {
-                LogList.ScrollIntoView(_filteredLogs[0]);
-            }
-        });
-    }
-
-    private async Task LoadLogsAsync()
-    {
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
-
-        try
-        {
-            var response = await _httpClient.GetAsync(
-                $"{_baseUrl}/api/logs?limit=500", _cts.Token);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync(_cts.Token);
-                var data = JsonSerializer.Deserialize<JsonElement>(json);
-
-                if (data.ValueKind == JsonValueKind.Array)
-                {
-                    var existingIds = _allLogs.Select(l => $"{l.RawTimestamp:O}_{l.Message}").ToHashSet();
-
-                    foreach (var item in data.EnumerateArray())
-                    {
-                        var timestamp = item.TryGetProperty("timestamp", out var ts) ? ts.GetDateTime() : DateTime.UtcNow;
-                        var level = item.TryGetProperty("level", out var lv) ? lv.GetString() ?? "Info" : "Info";
-                        var category = item.TryGetProperty("category", out var cat) ? cat.GetString() ?? "System" : "System";
-                        var message = item.TryGetProperty("message", out var msg) ? msg.GetString() ?? "" : "";
-
-                        var id = $"{timestamp:O}_{message}";
-                        if (!existingIds.Contains(id))
-                        {
-                            _allLogs.Add(new LogEntryModel
-                            {
-                                RawTimestamp = timestamp,
-                                Timestamp = timestamp.ToString("HH:mm:ss"),
-                                Level = level,
-                                Category = category,
-                                Message = message,
-                                LevelBackground = GetLevelBackground(level),
-                                LevelForeground = GetLevelForeground(level)
-                            });
-                        }
-                    }
-                }
-
-                ApplyFilters();
-            }
-            else
-            {
-                // API returned non-success status — show offline indicator
-                if (_allLogs.Count == 0)
-                {
-                    ShowOfflineIndicator("Backend returned non-success status. Showing local logs only.");
-                }
-            }
-        }
-        catch (HttpRequestException)
-        {
-            if (_allLogs.Count == 0)
-            {
-                ShowOfflineIndicator("Backend is unreachable. Showing local logs only.");
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancelled - ignore
-        }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to load activity logs", ex);
-        }
-    }
-
-    private bool _offlineIndicatorShown;
-
-    private void ShowOfflineIndicator(string reason)
-    {
-        if (_offlineIndicatorShown) return;
-        _offlineIndicatorShown = true;
-
-        _notificationService.ShowNotification(
-            "Offline Mode",
-            $"{reason} Connect the backend service to see live activity logs.",
-            NotificationType.Warning);
-
-        // Add a single informational log entry so the page is not empty
-        var now = DateTime.Now;
-        _allLogs.Add(new LogEntryModel
-        {
-            RawTimestamp = now,
-            Timestamp = now.ToString("HH:mm:ss"),
-            Level = "Warning",
-            Category = "System",
-            Message = $"[Offline] {reason} Local UI events will still appear here.",
-            LevelBackground = GetLevelBackground("Warning"),
-            LevelForeground = GetLevelForeground("Warning")
-        });
-
-        ApplyFilters();
-    }
-
-    private void ApplyFilters()
-    {
-        _filteredLogs.Clear();
-
-        var filtered = _allLogs.AsEnumerable();
-
-        // Apply level filter
-        if (_levelFilter != "All")
-        {
-            filtered = filtered.Where(l => l.Level.Equals(_levelFilter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Apply category filter
-        if (_categoryFilter != "All")
-        {
-            filtered = filtered.Where(l => l.Category.Equals(_categoryFilter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Apply search filter
-        if (!string.IsNullOrWhiteSpace(_searchText))
-        {
-            filtered = filtered.Where(l =>
-                l.Message.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                l.Category.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Sort by timestamp descending and add to filtered collection
-        foreach (var log in filtered.OrderByDescending(l => l.RawTimestamp))
-        {
-            _filteredLogs.Add(log);
-        }
-
-        // Update count
-        LogCountText.Text = $"{_filteredLogs.Count} entries";
-        NoLogsText.Visibility = _filteredLogs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private static SolidColorBrush GetLevelBackground(string level)
-    {
-        return new SolidColorBrush(level.ToUpperInvariant() switch
-        {
-            "ERROR" => Color.FromArgb(40, 244, 67, 54),
-            "WARNING" or "WARN" => Color.FromArgb(40, 255, 193, 7),
-            "INFO" => Color.FromArgb(40, 88, 166, 255),
-            "DEBUG" => Color.FromArgb(40, 139, 148, 158),
-            _ => Color.FromArgb(40, 139, 148, 158)
-        });
-    }
-
-    private static SolidColorBrush GetLevelForeground(string level)
-    {
-        return new SolidColorBrush(level.ToUpperInvariant() switch
-        {
-            "ERROR" => Color.FromRgb(244, 67, 54),
-            "WARNING" or "WARN" => Color.FromRgb(255, 193, 7),
-            "INFO" => Color.FromRgb(88, 166, 255),
-            "DEBUG" => Color.FromRgb(139, 148, 158),
-            _ => Color.FromRgb(139, 148, 158)
-        });
-    }
+    private void OnPageUnloaded(object sender, RoutedEventArgs e) =>
+        _viewModel.Stop();
 
     private void Filter_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (LevelFilterCombo.SelectedItem is ComboBoxItem levelItem)
-        {
-            _levelFilter = levelItem.Content?.ToString() ?? "All";
-        }
+            _viewModel.UpdateLevelFilter(levelItem.Content?.ToString() ?? "All");
 
         if (CategoryFilterCombo.SelectedItem is ComboBoxItem categoryItem)
-        {
-            _categoryFilter = categoryItem.Content?.ToString() ?? "All";
-        }
-
-        ApplyFilters();
+            _viewModel.UpdateCategoryFilter(categoryItem.Content?.ToString() ?? "All");
     }
 
-    private void Search_Changed(object sender, TextChangedEventArgs e)
-    {
-        _searchText = SearchBox.Text;
-        ApplyFilters();
-    }
+    private void Search_Changed(object sender, TextChangedEventArgs e) =>
+        _viewModel.UpdateSearch(SearchBox.Text);
 
     private void Export_Click(object sender, RoutedEventArgs e)
     {
@@ -314,44 +65,21 @@ public partial class ActivityLogPage : Page
             FileName = $"activity_log_{DateTime.Now:yyyyMMdd_HHmmss}"
         };
 
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog() != true) return;
+
+        try
         {
-            try
-            {
-                var sb = new StringBuilder();
+            using var stream = File.OpenWrite(dialog.FileName);
+            if (dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                _viewModel.ExportAsCsv(stream);
+            else
+                _viewModel.ExportAsText(stream);
 
-                if (dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
-                {
-                    sb.AppendLine("Timestamp,Level,Category,Message");
-                    foreach (var log in _filteredLogs)
-                    {
-                        var escapedMessage = $"\"{log.Message.Replace("\"", "\"\"")}\"";
-                        sb.AppendLine($"{log.RawTimestamp:O},{log.Level},{log.Category},{escapedMessage}");
-                    }
-                }
-                else
-                {
-                    foreach (var log in _filteredLogs)
-                    {
-                        sb.AppendLine($"[{log.RawTimestamp:O}] [{log.Level}] [{log.Category}] {log.Message}");
-                    }
-                }
-
-                File.WriteAllText(dialog.FileName, sb.ToString());
-
-                _notificationService.ShowNotification(
-                    "Export Complete",
-                    $"Exported {_filteredLogs.Count} log entries to {Path.GetFileName(dialog.FileName)}",
-                    NotificationType.Success);
-            }
-            catch (Exception ex)
-            {
-                _loggingService.LogError("Failed to export activity log", ex);
-                _notificationService.ShowNotification(
-                    "Export Failed",
-                    "An error occurred while exporting the activity log.",
-                    NotificationType.Error);
-            }
+            _viewModel.ShowExportNotification(dialog.FileName);
+        }
+        catch (Exception ex)
+        {
+            _viewModel.ShowExportError(ex);
         }
     }
 
@@ -364,34 +92,6 @@ public partial class ActivityLogPage : Page
             MessageBoxImage.Question);
 
         if (result == MessageBoxResult.Yes)
-        {
-            _allLogs.Clear();
-            _filteredLogs.Clear();
-            NoLogsText.Visibility = Visibility.Visible;
-            LogCountText.Text = "0 entries";
-
-            _notificationService.ShowNotification(
-                "Cleared",
-                "Activity log has been cleared.",
-                NotificationType.Info);
-        }
+            _viewModel.ClearCommand.Execute(null);
     }
 }
-
-/// <summary>
-/// Model for log entry display.
-/// </summary>
-public sealed class LogEntryModel
-{
-    public DateTime RawTimestamp { get; set; }
-    public string Timestamp { get; set; } = string.Empty;
-    public string Level { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public SolidColorBrush LevelBackground { get; set; } = new(Colors.Transparent);
-    public SolidColorBrush LevelForeground { get; set; } = new(Colors.Gray);
-}
-
-/// <summary>
-/// Event args for log entry added events.
-/// </summary>

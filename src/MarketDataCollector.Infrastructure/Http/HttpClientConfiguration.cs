@@ -28,6 +28,7 @@ public static class HttpClientNames
     public const string FinnhubHistorical = "finnhub-historical";
     public const string AlphaVantageHistorical = "alpha-vantage-historical";
     public const string NasdaqDataLinkHistorical = "nasdaq-data-link-historical";
+    public const string TwelveDataHistorical = "twelvedata-historical";
 
     // Symbol search providers
     public const string AlpacaSymbolSearch = "alpaca-symbol-search";
@@ -212,6 +213,16 @@ public static class HttpClientConfiguration
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://data.nasdaq.com/api/v3/");
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            })
+            .AddSharedResiliencePolicy();
+
+        // Twelve Data Historical client
+        services.AddHttpClient(HttpClientNames.TwelveDataHistorical)
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri("https://api.twelvedata.com/");
                 client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
@@ -473,6 +484,16 @@ public static class HttpClientConfiguration
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
             .AddSharedResiliencePolicyTracked(HttpClientNames.NasdaqDataLinkHistorical, onStateChanged);
+
+        // Twelve Data Historical client
+        services.AddHttpClient(HttpClientNames.TwelveDataHistorical)
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri("https://api.twelvedata.com/");
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            })
+            .AddSharedResiliencePolicyTracked(HttpClientNames.TwelveDataHistorical, onStateChanged);
 
         // OpenFIGI client
         services.AddHttpClient(HttpClientNames.OpenFigi)

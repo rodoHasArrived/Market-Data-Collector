@@ -13,8 +13,10 @@ internal sealed class OrderBookFillModel(ICommissionModel commissionModel) : IFi
 {
     public IReadOnlyList<FillEvent> TryFill(Order order, MarketEvent evt)
     {
-        if (evt.Payload is not LOBSnapshot lob) return [];
-        if (!lob.Symbol.Equals(order.Symbol, StringComparison.OrdinalIgnoreCase)) return [];
+        if (evt.Payload is not LOBSnapshot lob)
+            return [];
+        if (!lob.Symbol.Equals(order.Symbol, StringComparison.OrdinalIgnoreCase))
+            return [];
 
         var fills = new List<FillEvent>();
         var remainingQty = Math.Abs(order.Quantity);
@@ -26,13 +28,16 @@ internal sealed class OrderBookFillModel(ICommissionModel commissionModel) : IFi
 
         foreach (var level in levels)
         {
-            if (remainingQty == 0) break;
+            if (remainingQty == 0)
+                break;
 
             // Limit order price check
             if (order.Type == OrderType.Limit)
             {
-                if (isBuy && level.Price > order.LimitPrice!.Value) break;
-                if (!isBuy && level.Price < order.LimitPrice!.Value) break;
+                if (isBuy && level.Price > order.LimitPrice!.Value)
+                    break;
+                if (!isBuy && level.Price < order.LimitPrice!.Value)
+                    break;
             }
 
             var fillQty = Math.Min(remainingQty, (long)level.Size);

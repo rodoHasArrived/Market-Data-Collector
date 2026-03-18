@@ -112,6 +112,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// <param name="sinkFlushTimeout">Optional per-call timeout for periodic sink flushes. Prevents a hung sink from stalling the pipeline indefinitely. Defaults to 60 seconds.</param>
     /// <param name="validator">Optional event validator for pre-persistence validation.</param>
     /// <param name="deadLetterSink">Optional dead-letter sink for rejected events.</param>
+    /// <param name="dedupLedger">Optional persistent deduplication ledger for suppressing duplicate events.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -149,10 +150,21 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// <summary>
     /// Creates a new EventPipeline with a shared policy for capacity and backpressure.
     /// </summary>
+    /// <param name="sink">The storage sink for persisting events.</param>
+    /// <param name="policy">The pipeline policy controlling channel capacity and backpressure.</param>
+    /// <param name="flushInterval">Interval between periodic flushes. Default is 5 seconds.</param>
+    /// <param name="batchSize">Number of events to batch before writing. Default is 100.</param>
+    /// <param name="enablePeriodicFlush">Whether to enable periodic flushing. Default is true.</param>
+    /// <param name="logger">Optional logger for error reporting.</param>
+    /// <param name="auditTrail">Optional audit trail for tracking dropped events.</param>
+    /// <param name="wal">Optional Write-Ahead Log for crash-safe durability.</param>
+    /// <param name="metrics">Optional event metrics for tracking pipeline throughput.</param>
+    /// <param name="finalFlushTimeout">Optional timeout for the final flush during shutdown. Defaults to 30 seconds.</param>
+    /// <param name="sinkFlushTimeout">Optional per-call timeout for periodic sink flushes. Defaults to 60 seconds.</param>
     /// <param name="validator">Optional event validator. When provided, events that fail validation
     /// are routed to the <paramref name="deadLetterSink"/> and excluded from primary storage.</param>
     /// <param name="deadLetterSink">Optional dead-letter sink for events rejected by the validator.</param>
-    /// <param name="sinkFlushTimeout">Optional per-call timeout for periodic sink flushes. Defaults to 60 seconds.</param>
+    /// <param name="dedupLedger">Optional persistent deduplication ledger for suppressing duplicate events.</param>
     public EventPipeline(
         IStorageSink sink,
         EventPipelinePolicy policy,

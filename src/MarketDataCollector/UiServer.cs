@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Ui.Shared;
 using MarketDataCollector.Ui.Shared.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -56,6 +57,9 @@ public sealed class UiServer : IAsyncDisposable
         // Use centralized service composition root
         var compositionOptions = CompositionOptions.WebDashboard with { ConfigPath = configPath };
         builder.Services.AddMarketDataServices(compositionOptions);
+
+        // Register session-based authentication service
+        builder.Services.AddSingleton<LoginSessionService>();
 
         // Register OpenAPI/Swagger services
         builder.Services.AddEndpointsApiExplorer();
@@ -131,6 +135,9 @@ public sealed class UiServer : IAsyncDisposable
 
         // Wire Polly circuit breaker callbacks to CircuitBreakerStatusService
         ServiceCompositionRoot.InitializeCircuitBreakerCallbackRouter(_app.Services);
+
+        // Enable session-based authentication middleware (enforced only when MDC_USERNAME/MDC_PASSWORD are set)
+        _app.UseLoginSessionAuthentication();
 
         // Enable Swagger middleware
         _app.UseSwagger();

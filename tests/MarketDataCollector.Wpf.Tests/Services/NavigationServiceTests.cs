@@ -53,7 +53,8 @@ public sealed class NavigationServiceTests
             // Act
             service.Initialize(frame);
 
-            // Assert - no exception thrown
+            // Assert
+            service.IsInitialized.Should().BeTrue("frame was provided to Initialize");
             service.CanGoBack.Should().BeFalse("newly initialized frame should have no navigation history");
         });
     }
@@ -75,17 +76,12 @@ public sealed class NavigationServiceTests
     [Fact]
     public void CanGoBack_BeforeInitialization_ShouldReturnFalse()
     {
-        // NOTE: This test assumes NavigationService might not be initialized
-        // In production, Initialize should be called during app startup
-        
         // Arrange
         var service = NavigationService.Instance;
 
-        // Act
-        var canGoBack = service.CanGoBack;
-
-        // Assert
-        canGoBack.Should().BeFalse("service without frame should not allow going back");
+        // Act & Assert – service is not yet initialized; both guards must hold
+        service.IsInitialized.Should().BeFalse("Initialize has not been called yet");
+        service.CanGoBack.Should().BeFalse("service without frame should not allow going back");
     }
 
     [Fact]

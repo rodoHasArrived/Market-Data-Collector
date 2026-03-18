@@ -8,6 +8,7 @@ global using MarketDataCollector.Application.Logging;
 global using MarketDataCollector.Application.UI;
 global using MarketDataCollector.Contracts.Domain.Models;
 global using MarketDataCollector.Infrastructure.Adapters.Core;
+global using MarketDataCollector.Infrastructure.Contracts;
 global using MarketDataCollector.Storage.Interfaces;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;

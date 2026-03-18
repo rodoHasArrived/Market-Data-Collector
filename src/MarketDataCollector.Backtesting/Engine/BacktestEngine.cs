@@ -158,9 +158,11 @@ public sealed class BacktestEngine(
     {
         await foreach (var evt in source.WithCancellation(ct))
         {
-            if (!evt.EffectiveSymbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!evt.EffectiveSymbol.Equals(symbol, StringComparison.OrdinalIgnoreCase))
+                continue;
             var date = DateOnly.FromDateTime(evt.Timestamp.LocalDateTime);
-            if (date < from || date > to) continue;
+            if (date < from || date > to)
+                continue;
             yield return evt;
         }
     }
@@ -182,10 +184,18 @@ public sealed class BacktestEngine(
     {
         switch (evt.Payload)
         {
-            case Trade t:          strategy.OnTrade(t, ctx); break;
-            case BboQuotePayload q: strategy.OnQuote(q, ctx); break;
-            case HistoricalBar bar: strategy.OnBar(bar, ctx); break;
-            case LOBSnapshot lob:  strategy.OnOrderBook(lob, ctx); break;
+            case Trade t:
+                strategy.OnTrade(t, ctx);
+                break;
+            case BboQuotePayload q:
+                strategy.OnQuote(q, ctx);
+                break;
+            case HistoricalBar bar:
+                strategy.OnBar(bar, ctx);
+                break;
+            case LOBSnapshot lob:
+                strategy.OnOrderBook(lob, ctx);
+                break;
         }
     }
 
@@ -204,7 +214,8 @@ public sealed class BacktestEngine(
         for (var i = pendingOrders.Count - 1; i >= 0; i--)
         {
             var order = pendingOrders[i];
-            if (!order.Symbol.Equals(evt.EffectiveSymbol, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!order.Symbol.Equals(evt.EffectiveSymbol, StringComparison.OrdinalIgnoreCase))
+                continue;
 
             // Select fill model based on available data
             var model = evt.Payload is LOBSnapshot ? lobModel : barModel;

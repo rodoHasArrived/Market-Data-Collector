@@ -630,8 +630,6 @@ public sealed record CompletenessReport
     public long TotalActualEvents => Symbols.Sum(s => s.TotalEvents);
 }
 
-// NOTE: SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
-
 public sealed class DayEventCount
 {
     public DateOnly Date { get; init; }

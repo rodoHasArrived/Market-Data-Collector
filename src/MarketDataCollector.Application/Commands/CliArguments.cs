@@ -19,6 +19,24 @@ internal sealed record CliArguments
     public bool StrictSchemas { get; init; }
     public bool WatchConfig { get; init; }
 
+    /// <summary>
+    /// Alias for <c>--dry-run --offline</c>: validates configuration without
+    /// performing any connectivity checks. Equivalent to 3.2 --check-config.
+    /// </summary>
+    public bool CheckConfig { get; init; }
+
+    // Backfill resume
+    /// <summary>
+    /// Whether to resume a previously interrupted backfill using persisted checkpoints.
+    /// </summary>
+    public bool Resume { get; init; }
+
+    // Provider recommendation
+    /// <summary>
+    /// Whether to print a provider recommendation report and exit.
+    /// </summary>
+    public bool RecommendProviders { get; init; }
+
     // Symbol management
     public bool Symbols { get; init; }
     public bool SymbolsMonitored { get; init; }
@@ -71,13 +89,16 @@ internal sealed record CliArguments
             SelfTest = HasFlag(args, "--selftest"),
             SimulateFeed = HasFlag(args, "--simulate-feed"),
             Backfill = HasFlag(args, "--backfill"),
-            DryRun = HasFlag(args, "--dry-run"),
+            DryRun = HasFlag(args, "--dry-run") || HasFlag(args, "--check-config"),
             Quickstart = HasFlag(args, "--quickstart"),
-            Offline = HasFlag(args, "--offline"),
+            Offline = HasFlag(args, "--offline") || HasFlag(args, "--check-config"),
             ValidateConfig = HasFlag(args, "--validate-config"),
             ValidateSchemas = HasFlag(args, "--validate-schemas"),
             StrictSchemas = HasFlag(args, "--strict-schemas"),
             WatchConfig = HasFlag(args, "--watch-config"),
+            CheckConfig = HasFlag(args, "--check-config"),
+            Resume = HasFlag(args, "--resume"),
+            RecommendProviders = HasFlag(args, "--recommend-providers"),
 
             Symbols = HasFlag(args, "--symbols"),
             SymbolsMonitored = HasFlag(args, "--symbols-monitored"),

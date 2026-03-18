@@ -43,7 +43,7 @@ Documents are archived when:
 
 | Document | Date Archived | Reason | Current Reference |
 |----------|---------------|--------|-------------------|
-| **desktop-devex-high-value-improvements.md** | 2026-02-20 | Superseded by implementation guide and executive summary | [Desktop Platform Improvements](../development/desktop-platform-improvements-implementation-guide.md) |
+| **desktop-devex-high-value-improvements.md** | 2026-02-20 | Superseded by implementation guide and executive summary | [Desktop Platform Improvements](../evaluations/desktop-platform-improvements-implementation-guide.md) |
 | **ROADMAP_UPDATE_SUMMARY.md** | 2026-02-20 | PR summary artifact, content in ROADMAP.md | [ROADMAP.md](../status/ROADMAP.md) |
 
 ### CI/CD & Build Fix Summaries (moved from `.github/`)
@@ -162,7 +162,7 @@ Documents are archived when:
 
 **Current Approach:**
 - See [WPF Implementation Notes](../development/wpf-implementation-notes.md)
-- See [Desktop Platform Improvements](../development/desktop-platform-improvements-implementation-guide.md)
+- See [Desktop Platform Improvements](../evaluations/desktop-platform-improvements-implementation-guide.md)
 
 ---
 

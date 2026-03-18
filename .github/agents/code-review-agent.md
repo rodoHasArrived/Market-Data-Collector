@@ -1,8 +1,13 @@
+---
+name: Code Review Agent
+description: Code review specialist for the MarketDataCollector project, identifying architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems.
+---
+
 # Code Review Agent Instructions
 
 This file contains instructions for an agent responsible for performing code review and architecture compliance checks on the Market Data Collector project.
 
-> **Claude Code equivalent:** [`.claude/skills/mdc-code-review/SKILL.md`](../../.claude/skills/mdc-code-review/SKILL.md) — same 6-lens framework packaged as a Claude Code skill with evals and dynamic resources.
+> **Claude Code equivalent:** [`.claude/skills/mdc-code-review/SKILL.md`](../../.claude/skills/mdc-code-review/SKILL.md) — same 7-lens framework packaged as a Claude Code skill with evals and dynamic resources.
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
 
 ## Agent Role
@@ -66,7 +71,7 @@ Market-Data-Collector/
 
 ## How to Review Code
 
-When a user shares code or asks for a review, work through these six lenses in order. Not all lenses apply to every file — use judgment to skip lenses that are irrelevant (e.g., don't apply Lens 1 to a pipeline service class, don't apply Lens 5 to a ViewModel).
+When a user shares code or asks for a review, work through these seven lenses in order. Not all lenses apply to every file — use judgment to skip lenses that are irrelevant (e.g., don't apply Lens 1 to a pipeline service class, don't apply Lens 5 to a ViewModel, don't apply Lens 7 to a ViewModel or provider that never touches storage).
 
 ---
 
@@ -302,6 +307,41 @@ These apply to any file in the project.
 
 ---
 
+### Lens 7: Storage & Pipeline Integrity
+
+*Apply to: `IStorageSink` implementations, `WriteAheadLog`, storage services, pipeline flush code*
+
+**What to look for:**
+
+1. **AtomicFileWriter compliance (ADR-007):**
+   - Storage writes MUST go through `AtomicFileWriter` — never direct `FileStream` / `File.WriteAllText`. Direct writes produce partial JSONL records on crash.
+   - Flag any `new FileStream(...)` or `File.WriteAllText(...)` inside a storage sink.
+
+2. **WAL flush ordering:**
+   - `WriteAheadLog.FlushAsync()` must be called before `DisposeAsync()` — WAL entries are lost on crash if the flush is omitted.
+   - WAL entries must be written **before** the event is enqueued in memory (crash safety requires this order).
+
+3. **Sink flush on shutdown:**
+   - `IStorageSink.FlushAsync()` must be called after the write loop completes — in-flight events are lost on graceful shutdown if omitted.
+   - Every `IStorageSink` must implement `IFlushable` — shutdown ordering breaks if it does not.
+
+4. **Serialization in storage paths (ADR-014):**
+   - `JsonSerializer.Serialize/Deserialize` without a source-generated context is forbidden in storage paths — falls back to reflection and breaks AOT.
+
+5. **Sink registration:**
+   - Every `IStorageSink` must carry `[StorageSink]` attribute so `StorageSinkRegistry` discovers it at startup.
+
+6. **Parquet / compaction timing:**
+   - Parquet conversion must only run after a session is closed or an explicit compaction is triggered — not during active writes.
+
+7. **Storage path construction:**
+   - Path construction must use `IStoragePolicy.GetPath(evt)` (e.g. `JsonlStoragePolicy.GetPath`) — not ad-hoc string concatenation — to ensure consistent org-mode naming.
+
+8. **Retention policy concurrency:**
+   - Retention policy engine must acquire a file lock before compacting or deleting files — running without a lock may corrupt files being actively written.
+
+---
+
 ## Review Output Format
 
 **For refactoring requests**, produce a complete, compilable C# file preceded by a summary comment block:
@@ -332,6 +372,10 @@ These apply to any file in the project.
 //
 // Data Integrity Findings:
 //   [D1] Added sequence gap detection before storage write
+//
+// Storage & Pipeline Findings:
+//   [S1] Routed file write through AtomicFileWriter — prevents partial JSONL on crash
+//   [S2] Added FlushAsync call after write loop — prevents in-flight event loss
 //
 // Breaking Changes: None — existing XAML bindings need updating to match
 // new property names (see binding migration notes below).
@@ -366,6 +410,10 @@ namespace MarketDataCollector.Wpf.ViewModels;
 
 ## Data Integrity
 - **[D1] WARNING**: No sequence validation on incoming trades
+
+## Storage & Pipeline Integrity
+- **[S1] CRITICAL**: Writing directly to FileStream in JsonlStorageSink — use AtomicFileWriter
+- **[S2] WARNING**: IStorageSink not implementing IFlushable — shutdown ordering broken
 
 ## Conventions
 - **[C1] INFO**: String interpolation in log call (line 89) — use structured logging

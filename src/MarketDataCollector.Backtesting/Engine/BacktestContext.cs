@@ -33,7 +33,8 @@ internal sealed class BacktestContext(
     public Guid PlaceLimitOrder(string symbol, long quantity, decimal limitPrice)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(symbol);
-        if (limitPrice <= 0) throw new ArgumentOutOfRangeException(nameof(limitPrice));
+        if (limitPrice <= 0)
+            throw new ArgumentOutOfRangeException(nameof(limitPrice));
         var order = new Order(Guid.NewGuid(), symbol, OrderType.Limit, quantity, limitPrice, null, CurrentTime);
         _pendingOrders.Add(order);
         return order.OrderId;

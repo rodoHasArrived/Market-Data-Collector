@@ -69,7 +69,8 @@ internal static class BacktestMetricsEngine
 
     private static double ComputeSharpe(IReadOnlyList<double> dailyReturns, double annualRfr)
     {
-        if (dailyReturns.Count < 2) return 0.0;
+        if (dailyReturns.Count < 2)
+            return 0.0;
         var dailyRfr = annualRfr / 252.0;
         var excess = dailyReturns.Select(r => r - dailyRfr).ToList();
         var mean = excess.Average();
@@ -79,12 +80,14 @@ internal static class BacktestMetricsEngine
 
     private static double ComputeSortino(IReadOnlyList<double> dailyReturns, double annualRfr)
     {
-        if (dailyReturns.Count < 2) return 0.0;
+        if (dailyReturns.Count < 2)
+            return 0.0;
         var dailyRfr = annualRfr / 252.0;
         var excess = dailyReturns.Select(r => r - dailyRfr).ToList();
         var mean = excess.Average();
         var downside = excess.Where(r => r < 0).ToList();
-        if (downside.Count == 0) return double.PositiveInfinity;
+        if (downside.Count == 0)
+            return double.PositiveInfinity;
         var downsideDev = Math.Sqrt(downside.Select(r => r * r).Average());
         return downsideDev < 1e-10 ? 0.0 : mean / downsideDev * Math.Sqrt(252.0);
     }
@@ -142,7 +145,8 @@ internal static class BacktestMetricsEngine
     {
         // Group fills into round-trips (buy then sell) by symbol — simplified per-fill P&L
         var trades = fills.Where(f => f.FilledQuantity != 0).ToList();
-        if (trades.Count == 0) return (0.0, 0.0, 0, 0, 0);
+        if (trades.Count == 0)
+            return (0.0, 0.0, 0, 0, 0);
 
         // For simplicity: each fill represents a "trade"; win = positive (qty * sign contributes to profit)
         // A more precise approach groups buy/sell pairs. We use a sign-based heuristic here.
@@ -159,8 +163,10 @@ internal static class BacktestMetricsEngine
                 ? Math.Abs(fill.FilledQuantity) * fill.FillPrice - fill.Commission   // sale proceeds
                 : -(fill.FilledQuantity * fill.FillPrice + fill.Commission);          // buy cost (negative)
 
-            if (net > 0) { grossWins += net; wins++; }
-            else if (net < 0) { grossLosses += Math.Abs(net); losses++; }
+            if (net > 0)
+            { grossWins += net; wins++; }
+            else if (net < 0)
+            { grossLosses += Math.Abs(net); losses++; }
         }
 
         var total = wins + losses;
@@ -253,7 +259,8 @@ internal static class BacktestMetricsEngine
 
     private static double StdDev(IReadOnlyList<double> values)
     {
-        if (values.Count < 2) return 0.0;
+        if (values.Count < 2)
+            return 0.0;
         var mean = values.Average();
         var variance = values.Sum(v => (v - mean) * (v - mean)) / (values.Count - 1);
         return Math.Sqrt(variance);

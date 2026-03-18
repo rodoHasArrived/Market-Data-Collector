@@ -165,7 +165,7 @@
     - name: Overview
       href: diagrams/README.md
     - name: UML Diagrams
-      href: uml/README.md
+      href: diagrams/uml/README.md
 
 - name: Dependencies
   href: DEPENDENCIES.md

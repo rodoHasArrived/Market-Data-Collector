@@ -162,7 +162,7 @@ public partial class App : Application
         services.AddSingleton(_ => WpfServices.WatchlistService.Instance);
         services.AddSingleton(_ => WpfServices.ArchiveHealthService.Instance);
         services.AddSingleton(_ => WpfServices.SchemaService.Instance);
-        services.AddSingleton(_ => WpfServices.AdminMaintenanceService.Instance);
+        services.AddSingleton<AdminMaintenanceServiceBase>(_ => AdminMaintenanceServiceBase.Instance);
         services.AddSingleton<AdvancedAnalyticsServiceBase>(_ => new AdvancedAnalyticsServiceBase());
         services.AddSingleton(_ => SearchService.Instance);
 

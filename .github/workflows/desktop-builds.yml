@@ -94,7 +94,7 @@ jobs:
           cache-suffix: 'wpf'
 
       - name: Restore dependencies
-        run: dotnet restore ${{ env.WPF_PROJECT }} -p:TargetFramework=net9.0-windows --verbosity minimal
+        run: dotnet restore ${{ env.WPF_PROJECT }} --verbosity minimal
 
       - name: Build
         run: dotnet build ${{ env.WPF_PROJECT }} -c ${{ env.BUILD_CONFIG }} --no-restore -p:TargetFramework=net9.0-windows --verbosity minimal

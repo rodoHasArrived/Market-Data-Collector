@@ -1,6 +1,6 @@
 namespace MarketDataCollector.Backtesting.Sdk;
 
-/// <summary>Progress notification emitted by <see cref="BacktestEngine"/> during replay.</summary>
+/// <summary>Progress notification emitted by <c>BacktestEngine</c> during replay.</summary>
 public sealed record BacktestProgressEvent(
     double ProgressFraction,        // 0.0 – 1.0
     DateOnly CurrentDate,

@@ -1,8 +1,8 @@
 name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-17
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23176598032
+# Generated: 2026-03-18
+# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23222443454
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,23 +23,25 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `CS0104`
+      - `CS0118`
       - `CS0219`
-      - `CS1573`
-      - `CS1734`
-      - `CS1998`
+      - `CS0234`
+      - `CS0246`
+      - `CS0433`
+      - `CS0534`
+      - `CS0535`
 
       ## Failure Patterns
-      - `2026-03-17T03:13:04.4653516Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\FillModels\BarMidpointFillModel.cs(16,58): error CS0104: 'MarketEvent' is an ...`
-      - `2026-03-17T03:13:04.4663649Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\MultiSymbolMergeEnumerator.cs(14,40): error CS0104: 'MarketEvent' is a...`
-      - `2026-03-17T03:13:04.4675216Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\MultiSymbolMergeEnumerator.cs(13,42): error CS0104: 'MarketEvent' is a...`
-      - `2026-03-17T03:13:04.4684135Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(135,51): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4694046Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\FillModels\IFillModel.cs(15,51): error CS0104: 'MarketEvent' is an ambiguous ...`
-      - `2026-03-17T03:13:04.4703577Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(153,26): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4712869Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(152,43): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4722547Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(168,71): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4733212Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(181,88): error CS0104: 'MarketEvent' is an ambiguous...`
-      - `2026-03-17T03:13:04.4744209Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Backtesting\Engine\BacktestEngine.cs(194,9): error CS0104: 'MarketEvent' is an ambiguous ...`
+      - `2026-03-18T00:10:47.9738927Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(138,9): error CS0433: The type 'BackfillProviderOptionsDto'...`
+      - `2026-03-18T00:10:47.9751046Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(186,74): error CS0433: The type 'BackfillProviderOptionsDto...`
+      - `2026-03-18T00:10:47.9764339Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(220,35): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T00:10:47.9775045Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(80,12): error CS0433: The type 'CredentialMetadata' exi...`
+      - `2026-03-18T00:10:47.9784399Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(244,55): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T00:10:47.9795956Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(82,57): error CS0433: The type 'CredentialMetadata' exi...`
+      - `2026-03-18T00:10:47.9805664Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in bo...`
+      - `2026-03-18T00:10:47.9813982Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement in...`
+      - `2026-03-18T00:10:47.9822967Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(484,12): error CS0433: The type 'CredentialMetadata' ex...`
+      - `2026-03-18T00:10:47.9832777Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\CredentialService.cs(493,67): error CS0433: The type 'CredentialMetadata' ex...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

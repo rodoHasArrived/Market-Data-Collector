@@ -21,7 +21,8 @@ internal static class XirrCalculator
         IReadOnlyList<(DateTimeOffset date, decimal amount)> cashFlows,
         double guess = 0.10)
     {
-        if (cashFlows.Count < 2) return double.NaN;
+        if (cashFlows.Count < 2)
+            return double.NaN;
 
         var reference = cashFlows[0].date;
         var days = cashFlows.Select(cf => (cf.date - reference).TotalDays).ToArray();
@@ -51,12 +52,16 @@ internal static class XirrCalculator
         for (var i = 0; i < MaxIterations; i++)
         {
             var npv = Npv(rate);
-            if (Math.Abs(npv) < Tolerance) return rate;
+            if (Math.Abs(npv) < Tolerance)
+                return rate;
             var deriv = NpvDerivative(rate);
-            if (Math.Abs(deriv) < 1e-10) break;
+            if (Math.Abs(deriv) < 1e-10)
+                break;
             var next = rate - npv / deriv;
-            if (next <= -1.0) break;
-            if (Math.Abs(next - rate) < Tolerance) return next;
+            if (next <= -1.0)
+                break;
+            if (Math.Abs(next - rate) < Tolerance)
+                return next;
             rate = next;
         }
 
@@ -68,15 +73,19 @@ internal static class XirrCalculator
     {
         var fLo = f(lo);
         var fHi = f(hi);
-        if (fLo * fHi > 0) return double.NaN;
+        if (fLo * fHi > 0)
+            return double.NaN;
 
         for (var i = 0; i < MaxIterations; i++)
         {
             var mid = (lo + hi) / 2.0;
             var fMid = f(mid);
-            if (Math.Abs(fMid) < Tolerance || (hi - lo) / 2.0 < Tolerance) return mid;
-            if (fLo * fMid < 0) hi = mid;
-            else { lo = mid; fLo = fMid; }
+            if (Math.Abs(fMid) < Tolerance || (hi - lo) / 2.0 < Tolerance)
+                return mid;
+            if (fLo * fMid < 0)
+                hi = mid;
+            else
+            { lo = mid; fLo = fMid; }
         }
         return (lo + hi) / 2.0;
     }

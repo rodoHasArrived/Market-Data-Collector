@@ -1,55 +1,40 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-17T03:10:22.701622+00:00
+> Last updated: 2026-03-18T02:07:40.128758+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 61 |
+| **Total Items** | 51 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 61 |
+| **Untracked** | 51 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `TODO` | 41 | General tasks to complete |
-| `NOTE` | 20 | Important notes and documentation |
+| `TODO` | 36 | General tasks to complete |
+| `NOTE` | 15 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 46 |
-| `tests/` | 12 |
+| `src/` | 39 |
+| `tests/` | 9 |
 | `.github/` | 3 |
 
 ## Unassigned & Untracked
 
-61 items have no assignee and no issue tracking:
+51 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### TODO (41)
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:10`
-  > Add your provider's base URL or WebSocket URI. Examples:
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:29`
-  > Set the maximum number of requests allowed per window.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:32`
-  > Set the rate-limit window duration.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateConstants.cs:35`
-  > Set the recommended minimum delay between consecutive requests. MinRequestDelay = Window / MaxRequestsPerWindow
-
-- [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:91`
-  > Remove this method entirely if the provider does not support symbol search.
+### TODO (36)
 
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateFactory.cs:157`
   > Register a named HttpClient for this provider: services.AddHttpClient(HttpClientNames.TemplateHistorical, client => { client.BaseAddress = new Uri(TemplateEndpoints.BaseUrl); client.DefaultRequestHeaders.Add("Accept", "application/json"); });
@@ -159,7 +144,7 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:147`
   > If the provider supports server-side filtering, implement it here. Otherwise, keep this call to the base class which filters client-side.
 
-### NOTE (20)
+### NOTE (15)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -173,14 +158,8 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/MarketDataCollector.Ui.Services/Services/AdminMaintenanceModels.cs:411`
   > SelfTest*, ErrorCodes*, ShowConfig*, QuickCheck* models are defined in DiagnosticsService.cs to avoid duplication and maintain single source of truth
 
-- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCompletenessService.cs:633`
-  > SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
-
 - [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:516`
   > ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison ProviderHealthComparison below is for overall provider ranking
-
-- [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:214`
-  > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
 
 - [ ] `src/MarketDataCollector.Wpf/GlobalUsings.cs:7`
   > Type aliases and Contracts namespaces are NOT re-defined here because they are already provided by the referenced MarketDataCollector.Ui.Services project (via its GlobalUsings.cs). Re-defining them would cause CS0101 duplicate type definition errors.
@@ -197,12 +176,6 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `tests/MarketDataCollector.Tests/Application/Monitoring/DataQuality/DataFreshnessSlaMonitorTests.cs:525`
   > Actual result depends on current time, so we check the logic is working
 
-- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:293`
-  > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
-
-- [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:525`
-  > the consumer drains the entire batch from the channel before processing, so the channel is empty once the consumer is blocked.
-
 - [ ] `tests/MarketDataCollector.Tests/Application/Pipeline/FSharpEventValidatorTests.cs:72`
   > Trade.ctor only checks Price > 0, so $2,000,000 is constructible.
 
@@ -211,9 +184,6 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `tests/MarketDataCollector.Ui.Tests/Services/ScheduledMaintenanceServiceTests.cs:85`
   > since this is a singleton shared across tests, if StartScheduler was previously called, we stop it first to ensure test isolation.
-
-- [ ] `tests/MarketDataCollector.Wpf.Tests/Services/NavigationServiceTests.cs:78`
-  > This test assumes NavigationService might not be initialized In production, Initialize should be called during app startup
 
 - [ ] `tests/MarketDataCollector.Wpf.Tests/Services/OfflineTrackingPersistenceServiceTests.cs:27`
   > Singleton state may persist across tests. We explicitly shut down first to verify the default state transition.

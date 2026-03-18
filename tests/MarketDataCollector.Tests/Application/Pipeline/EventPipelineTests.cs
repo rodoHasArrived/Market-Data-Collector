@@ -290,7 +290,7 @@ public class EventPipelineTests : IAsyncLifetime
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
         // Wait until the consumer has started and is blocked on the first event.
-        // NOTE: the consumer drains the entire batch from the channel before processing,
+        // The consumer drains the entire batch from the channel before processing,
         // so the channel is empty once the consumer is blocked.
         await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(2));
 
@@ -522,7 +522,7 @@ public class EventPipelineTests : IAsyncLifetime
         pipeline.TryPublish(CreateTradeEvent("SPY"));
 
         // Wait until the consumer has started and is blocked on the first event.
-        // NOTE: the consumer drains the entire batch from the channel before processing,
+        // The consumer drains the entire batch from the channel before processing,
         // so the channel is empty once the consumer is blocked.
         await sink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(2));
 

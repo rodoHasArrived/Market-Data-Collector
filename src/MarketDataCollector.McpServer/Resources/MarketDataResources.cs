@@ -40,8 +40,8 @@ public sealed class MarketDataResources
         UriTemplate = "mdc://providers/catalog",
         Name = "Provider Catalog",
         MimeType = "application/json",
-        Description = "Complete catalog of all registered historical and streaming data providers " +
-                      "with their capabilities, priority, rate limits, and supported markets.")]
+        Title = "Complete catalog of all registered historical and streaming data providers " +
+                "with their capabilities, priority, rate limits, and supported markets.")]
     public string GetProviderCatalog()
     {
         var providers = _coordinator.DescribeProviders();
@@ -59,8 +59,8 @@ public sealed class MarketDataResources
         UriTemplate = "mdc://storage/catalog",
         Name = "Storage Catalog",
         MimeType = "application/json",
-        Description = "Summary of locally stored market data: symbols, date ranges, file counts, " +
-                      "and storage statistics.")]
+        Title = "Summary of locally stored market data: symbols, date ranges, file counts, " +
+                "and storage statistics.")]
     public string GetStorageCatalog()
     {
         var catalog = _catalog.GetCatalog();
@@ -95,8 +95,8 @@ public sealed class MarketDataResources
         UriTemplate = "mdc://config/active",
         Name = "Active Configuration",
         MimeType = "application/json",
-        Description = "Current Market Data Collector configuration: active data source, " +
-                      "configured symbols, backfill defaults, and storage settings.")]
+        Title = "Current Market Data Collector configuration: active data source, " +
+                "configured symbols, backfill defaults, and storage settings.")]
     public string GetActiveConfiguration()
     {
         var cfg = _store.Load();

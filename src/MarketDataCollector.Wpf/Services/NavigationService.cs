@@ -28,6 +28,9 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
     public static NavigationService Instance => _instance.Value;
 
     /// <inheritdoc />
+    public bool IsInitialized => _frame != null;
+
+    /// <inheritdoc />
     public override bool CanGoBack => _frame?.CanGoBack ?? false;
 
     private NavigationService()

@@ -15,7 +15,7 @@ public sealed class ApiClientService : IDisposable
 {
     private static readonly Lazy<ApiClientService> _instance = new(() => new ApiClientService());
     private HttpClient _httpClient;
-    private HttpClient? _backfillHttpClient;
+    private volatile HttpClient? _backfillHttpClient;
     private readonly object _backfillClientLock = new();
     private string _baseUrl;
     private int _timeoutSeconds;
