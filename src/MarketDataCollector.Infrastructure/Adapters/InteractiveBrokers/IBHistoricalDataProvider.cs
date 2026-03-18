@@ -46,7 +46,7 @@ public sealed class IBHistoricalDataProvider : IHistoricalDataProvider, IRateLim
     public string Description => "Historical OHLCV data via TWS API. Requires active streaming subscription for US equities.";
 
     // IB-mandated cooldown after a pacing-violation response (error 162). Centralised here so both
-    // GetHistoricalBarsAsync and GetIntradayBarsAsync use the same value. [P1]
+    // GetDailyBarsAsync / GetAdjustedDailyBarsAsync and GetIntradayBarsAsync use the same value. [P1]
     private static readonly TimeSpan PacingViolationCooldown = TimeSpan.FromSeconds(30);
 
     public int Priority => _priority;
