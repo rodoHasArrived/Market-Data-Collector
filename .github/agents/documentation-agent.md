@@ -98,6 +98,9 @@ Market-Data-Collector/
 │   │   ├── documentation-agent.md
 │   │   ├── mdc-blueprint-agent.md
 │   │   ├── mdc-brainstorm-agent.md
+│   │   ├── mdc-bug-fix-agent.md
+│   │   ├── mdc-cleanup-agent.md
+│   │   ├── mdc-performance-agent.md
 │   │   ├── mdc-provider-builder-agent.md
 │   │   └── mdc-test-writer-agent.md
 │   ├── instructions/
