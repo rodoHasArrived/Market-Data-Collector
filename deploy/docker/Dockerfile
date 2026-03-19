@@ -33,8 +33,8 @@ COPY tests/Meridian.Tests/Meridian.Tests.csproj tests/Meridian.Tests/
 COPY tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj tests/Meridian.FSharp.Tests/
 COPY benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj benchmarks/Meridian.Benchmarks/
 
-# Restore dependencies
-RUN dotnet restore src/Meridian/Meridian.csproj
+# Restore dependencies (target linux-musl-x64 to match the Alpine runtime image)
+RUN dotnet restore src/Meridian/Meridian.csproj --runtime linux-musl-x64
 
 # Copy source code
 COPY src/ src/
@@ -46,6 +46,7 @@ RUN dotnet publish src/Meridian/Meridian.csproj \
     -c Release \
     -o /app/publish \
     --no-restore \
+    --runtime linux-musl-x64 \
     -p:PublishSingleFile=false \
     -p:SelfContained=false \
     -p:PublishTrimmed=false

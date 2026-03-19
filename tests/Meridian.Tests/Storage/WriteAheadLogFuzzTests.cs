@@ -246,15 +246,19 @@ public sealed class WriteAheadLogFuzzTests : IAsyncDisposable
     // ── Helpers ──────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Writes <paramref name="validRecords"/> valid records to a WAL file, then truncates
-    /// the file so that the last record line is cut in half (simulating a mid-write crash).
+    /// Writes <paramref name="validRecords"/> complete records to a WAL file and then
+    /// appends one additional record whose line is truncated (simulating a mid-write crash).
+    /// After this helper returns the WAL file contains exactly <paramref name="validRecords"/>
+    /// fully-intact records followed by one partial, unparseable record.
     /// </summary>
     private async Task WriteValidRecordsAndTruncateLastAsync(int validRecords)
     {
         await using (var seed = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.NoSync }))
         {
             await seed.InitializeAsync();
-            for (int i = 0; i < validRecords; i++)
+            // Write one extra record so that truncation of the last record leaves exactly
+            // validRecords complete records in the file (simulating a crash mid-write).
+            for (int i = 0; i < validRecords + 1; i++)
                 await seed.AppendAsync(new { Index = i, Symbol = "SPY" }, "trade");
             await seed.FlushAsync();
             // Do NOT commit so the records survive as uncommitted (recoverable) data.

@@ -387,8 +387,22 @@ public sealed class WriteAheadLog : IAsyncDisposable
     private async Task StartNewWalFileAsync(CancellationToken ct)
     {
         var now = DateTime.UtcNow;
-        var fileName = $"wal_{now:yyyyMMdd_HHmmss}_{_currentSequence:D12}.wal";
-        _currentWalPath = Path.Combine(_walDirectory, fileName);
+        var baseName = $"wal_{now:yyyyMMdd_HHmmss}_{_currentSequence:D12}";
+
+        // Guard against the rare case where two WAL files would share the same timestamp+sequence
+        // (e.g. rapid rotation within the same second, or re-initialization immediately after
+        // a session whose only valid sequence was 0).  Append a monotonically-increasing suffix
+        // until a unique path is found.
+        var disambiguator = 0;
+        do
+        {
+            var fileName = disambiguator == 0
+                ? $"{baseName}.wal"
+                : $"{baseName}_{disambiguator}.wal";
+            _currentWalPath = Path.Combine(_walDirectory, fileName);
+            disambiguator++;
+        }
+        while (File.Exists(_currentWalPath));
 
         _currentWalFile = new FileStream(
             _currentWalPath,
