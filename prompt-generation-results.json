@@ -1,22 +1,22 @@
 {
-  "generated_at": "2026-03-19T20:44:14.235236+00:00",
+  "generated_at": "2026-03-19T21:28:39.724400+00:00",
   "workflow": "test-matrix.yml",
-  "run_id": 23315915189,
-  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23315915189",
+  "run_id": 23317515114,
+  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23317515114",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Meridian",
   "failed_jobs": [
-    "Test (Linux)",
+    "Test (Windows)",
     "Test (macOS)",
-    "Test (Windows)"
+    "Test (Linux)"
   ],
   "findings_by_category": {
     "build": 10,
-    "test": 10,
-    "code-quality": 1
+    "test": 4,
+    "code-quality": 2
   },
-  "total_error_codes": 8,
-  "total_failed_tests": 10,
+  "total_error_codes": 6,
+  "total_failed_tests": 3,
   "existing_prompts": 16,
   "generated_prompts": [
     {
@@ -29,8 +29,6 @@
         "CS0219",
         "CS0234",
         "CS0246",
-        "CS0433",
-        "CS0534",
         "CS0535",
         "CS1061"
       ],
@@ -40,35 +38,26 @@
       "file": "fix-test-failures.prompt.yml",
       "category": "test",
       "action": "update",
-      "findings_count": 10,
+      "findings_count": 4,
       "error_codes": [
         "CS0118",
         "CS0219",
         "CS0234",
         "CS0246",
-        "CS0433",
-        "CS0534",
         "CS0535",
         "CS1061"
       ],
       "failed_tests": [
-        "2026-03-19T20:41:48.9587043Z [xUnit.net 00:00:05.10]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]",
-        "2026-03-19T20:41:48.9738076Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [26 ms]",
-        "2026-03-19T20:41:48.9890419Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [3 ms]",
-        "2026-03-19T20:41:33.7676510Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [16 ms]",
-        "2026-03-19T20:41:33.7845420Z [xUnit.net 00:00:07.81]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]",
-        "2026-03-19T20:41:33.7989840Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [4 ms]",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed"
+        "2026-03-19T21:23:38.1192990Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [22 ms]",
+        "2026-03-19T21:24:18.2302621Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [25 ms]",
+        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords"
       ]
     },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
       "action": "update",
-      "findings_count": 1,
+      "findings_count": 2,
       "error_codes": [],
       "failed_tests": []
     },
@@ -76,28 +65,19 @@
       "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 21,
+      "findings_count": 16,
       "error_codes": [
         "CS0118",
         "CS0219",
         "CS0234",
         "CS0246",
-        "CS0433",
-        "CS0534",
         "CS0535",
         "CS1061"
       ],
       "failed_tests": [
-        "2026-03-19T20:41:48.9587043Z [xUnit.net 00:00:05.10]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]",
-        "2026-03-19T20:41:48.9738076Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [26 ms]",
-        "2026-03-19T20:41:48.9890419Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [3 ms]",
-        "2026-03-19T20:41:33.7676510Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [16 ms]",
-        "2026-03-19T20:41:33.7845420Z [xUnit.net 00:00:07.81]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]",
-        "2026-03-19T20:41:33.7989840Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [4 ms]",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed"
+        "2026-03-19T21:23:38.1192990Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [22 ms]",
+        "2026-03-19T21:24:18.2302621Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [25 ms]",
+        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords"
       ]
     }
   ],
