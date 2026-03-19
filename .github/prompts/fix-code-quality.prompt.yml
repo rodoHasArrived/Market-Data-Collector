@@ -2,7 +2,7 @@ name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-19
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23321428710
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23322476846
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -17,8 +17,14 @@ messages:
       - Classes sealed unless designed for inheritance
 
       ## Failure Patterns
-      - `2026-03-19T23:16:43.9769982Z   key: Windows-nuget-674ee0943a02f28b3a9782326a8b4094419a73f980cf98949010befca3402e42`
-      - `2026-03-19T23:16:44.4091822Z Cache not found for input keys: Windows-nuget-674ee0943a02f28b3a9782326a8b4094419a73f980cf98949010befca3402e42, Windows-nuget-, Windows-nuget-`
+      - `2026-03-19T23:52:21.8087336Z ##[warning]D:\a\Meridian\Meridian\src\Meridian.Contracts\Domain\Events\MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEvent' that could...`
+      - `2026-03-19T23:52:31.5482771Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The variable 'eventRaised' is assigned but its value is...`
+      - `2026-03-19T23:53:06.3705681Z ##[warning]D:\a\Meridian\Meridian\src\Meridian.Contracts\Domain\Events\MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEvent' that could...`
+      - `2026-03-19T23:53:06.3790647Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The variable 'eventRaised' is assigned but its value is...`
+      - `2026-03-19T23:50:27.8953080Z ##[warning]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEve...`
+      - `2026-03-19T23:51:04.6092930Z ##[warning]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEve...`
+      - `2026-03-19T23:50:45.1764407Z ##[warning]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEven...`
+      - `2026-03-19T23:51:25.7565609Z ##[warning]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEven...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
