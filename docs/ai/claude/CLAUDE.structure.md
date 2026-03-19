@@ -1,13 +1,13 @@
 # Repository Structure
 
-Full annotated file tree for Market Data Collector (773 source files).
+Full annotated file tree for Meridian (704 source files: 692 C# + 12 F#).
 
 > Use `Glob` or `Grep` for navigation rather than scanning this tree manually.
 > This document exists so AI agents can load it on-demand when they need to orient within the repo.
 
 
 ```
-Market-Data-Collector/
+Meridian/
 ├── .claude/
 │   ├── agents/
 │   │   ├── mdc-blueprint.md
@@ -271,6 +271,7 @@ Market-Data-Collector/
 │   │   ├── 012-monitoring-and-alerting-pipeline.md
 │   │   ├── 013-bounded-channel-policy.md
 │   │   ├── 014-json-source-generators.md
+│   │   ├── 015-paper-trading-gateway.md
 │   │   ├── _template.md
 │   │   └── README.md
 │   ├── ai/
@@ -718,6 +719,28 @@ Market-Data-Collector/
 │   │   ├── PortfolioSnapshot.cs
 │   │   ├── Position.cs
 │   │   └── StrategyParameterAttribute.cs
+│   ├── Meridian.Execution/
+│   │   ├── Gateways/
+│   │   │   ├── IPaperTradingGateway.cs
+│   │   │   ├── PaperTradingGateway.cs
+│   │   │   └── OrderExecutionGateway.cs
+│   │   ├── Models/
+│   │   │   ├── ExecutionOrder.cs
+│   │   │   ├── ExecutionFill.cs
+│   │   │   └── ExecutionReport.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── Meridian.Execution.csproj
+│   ├── Meridian.Strategies/
+│   │   ├── Lifecycle/
+│   │   │   ├── StrategyRegistry.cs
+│   │   │   ├── StrategyRunner.cs
+│   │   │   └── StrategyState.cs
+│   │   ├── Portfolio/
+│   │   │   ├── PortfolioTracker.cs
+│   │   │   ├── PerformanceMetrics.cs
+│   │   │   └── PnLCalculator.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── Meridian.Strategies.csproj
 │   ├── Meridian.Contracts/
 │   │   ├── Api/
 │   │   │   ├── BackfillApiModels.cs

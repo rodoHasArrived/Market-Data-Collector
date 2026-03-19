@@ -1,7 +1,7 @@
 # CLAUDE.api.md — HTTP API & Application Services Reference
 
-This sub-document covers the REST API endpoints and application service catalogue for Market Data Collector.
-Load this when working on endpoints, API clients, monitoring services, or data quality components.
+This sub-document covers the REST API endpoints and application service catalogue for Meridian.
+Load this when working on endpoints, API clients, monitoring services, backtesting, portfolio tracking, or strategy management.
 
 ---
 
@@ -104,6 +104,42 @@ The application exposes a REST API when running with `--ui` or `--mode web`.
 | `/api/packaging/list` | GET | List packages |
 | `/api/packaging/download/{fileName}` | GET | Download package |
 
+### Backtesting API (`/api/backtesting/`)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/backtesting/strategies` | GET | List registered strategies |
+| `/api/backtesting/run` | POST | Execute backtest |
+| `/api/backtesting/status/{runId}` | GET | Get backtest status |
+| `/api/backtesting/results/{runId}` | GET | Get backtest results |
+| `/api/backtesting/results/{runId}/metrics` | GET | Performance metrics (Sharpe, drawdown, XIRR) |
+| `/api/backtesting/results/{runId}/fills` | GET | Fill tape |
+| `/api/backtesting/results/{runId}/portfolio` | GET | Portfolio snapshots |
+| `/api/backtesting/compare` | POST | Compare multiple backtests |
+| `/api/backtesting/history` | GET | Backtest execution history |
+
+### Strategy Execution API (`/api/strategies/`)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/strategies/list` | GET | List registered strategies |
+| `/api/strategies/register` | POST | Register new strategy |
+| `/api/strategies/{id}/start` | POST | Start strategy |
+| `/api/strategies/{id}/pause` | POST | Pause strategy |
+| `/api/strategies/{id}/stop` | POST | Stop strategy |
+| `/api/strategies/{id}/status` | GET | Get strategy status |
+| `/api/strategies/{id}/parameters` | GET/POST | Get/update strategy parameters |
+
+### Portfolio Tracking API (`/api/portfolio/`)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/portfolio/snapshot` | GET | Current portfolio snapshot |
+| `/api/portfolio/snapshot/{timestamp}` | GET | Historical portfolio snapshot |
+| `/api/portfolio/positions` | GET | Current positions |
+| `/api/portfolio/pnl` | GET | PnL summary |
+| `/api/portfolio/metrics` | GET | Performance metrics |
+| `/api/portfolio/metrics/{strategyId}` | GET | Strategy-specific metrics |
+| `/api/portfolio/history` | GET | Historical portfolio data |
+| `/api/portfolio/comparison` | POST | Compare multiple runs |
+
 ---
 
 ## Data Quality Monitoring
@@ -172,7 +208,7 @@ Located in `src/Meridian.Application/Monitoring/DataQuality/`.
 
 ## CI/CD Pipelines
 
-28 GitHub Actions workflows in `.github/workflows/`:
+25+ GitHub Actions workflows in `.github/workflows/`:
 
 | Workflow | Purpose |
 |----------|---------|
