@@ -20,7 +20,7 @@ A high-performance, self-hosted algorithmic trading platform — **collect**, **
 
 ## What This Project Does
 
-Market Data Collector is a self-hosted, multi-pillar trading platform. Starting from a
+Meridian is a self-hosted, multi-pillar trading platform. Starting from a
 rock-solid data collection and backtesting foundation, it is expanding to support
 **live and simulated order execution** and a full **strategy lifecycle** — from first
 backtest through paper trading to production deployment.
@@ -29,10 +29,10 @@ backtest through paper trading to production deployment.
 
 | Pillar | Projects | Status |
 |--------|----------|--------|
-| **📡 Data Collection** | `MarketDataCollector.*` core projects | ✅ Production-ready |
-| **🔬 Backtesting** | `MarketDataCollector.Backtesting`, `.Backtesting.Sdk` | ✅ Production-ready |
-| **⚡ Execution** | `MarketDataCollector.Execution` | 🚧 Scaffolded — paper gateway active |
-| **🗂️ Strategies** | `MarketDataCollector.Strategies` | 🚧 Scaffolded — lifecycle management |
+| **📡 Data Collection** | `Meridian.*` core projects | ✅ Production-ready |
+| **🔬 Backtesting** | `Meridian.Backtesting`, `.Backtesting.Sdk` | ✅ Production-ready |
+| **⚡ Execution** | `Meridian.Execution` | 🚧 Scaffolded — paper gateway active |
+| **🗂️ Strategies** | `Meridian.Strategies` | 🚧 Scaffolded — lifecycle management |
 
 ### Core Capabilities
 
@@ -59,8 +59,7 @@ backtest through paper trading to production deployment.
 ### The Problem It Solves
 
 Commercial market data is expensive, vendor APIs change without notice, and cloud-only
-solutions mean you never truly own your data or your strategy infrastructure. Market
-Data Collector gives you:
+solutions mean you never truly own your data or your strategy infrastructure. Meridian gives you:
 
 1. **Data independence** — Switch providers without losing your archive or rewriting code
 2. **Cost control** — Use free-tier APIs strategically, pay only for premium data you actually need
@@ -202,7 +201,7 @@ make build-wpf
 
 ## Technical Overview
 
-Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 source files** (692 C# + 12 F# in `src/`). It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+Meridian is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 source files** (692 C# + 12 F# in `src/`). It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
 
 ### Implementation Status Snapshot
 
@@ -256,8 +255,8 @@ For first-time users, the interactive wizard guides you through setup:
 
 ```bash
 # Clone the repository
-git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
-cd Market-Data-Collector
+git clone https://github.com/rodoHasArrived/Meridian.git
+cd Meridian
 
 # Run the interactive configuration wizard (recommended for new users)
 dotnet run --project src/Meridian/Meridian.csproj -- --wizard
@@ -288,8 +287,8 @@ dotnet run --project src/Meridian/Meridian.csproj -- --validate-credentials
 
 ```bash
 # Clone the repository
-git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
-cd Market-Data-Collector
+git clone https://github.com/rodoHasArrived/Meridian.git
+cd Meridian
 
 # Copy the sample settings and edit as needed
 cp config/appsettings.sample.json config/appsettings.json
@@ -365,7 +364,7 @@ Configure fallback chains in `appsettings.json` under `Backfill.ProviderPriority
 
 ## Lean Engine Integration
 
-Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabling sophisticated algorithmic trading strategies:
+Meridian now integrates with **QuantConnect's Lean Engine**, enabling sophisticated algorithmic trading strategies:
 
 - **Custom Data Types**: Trade and quote data exposed as Lean `BaseData` types
 - **Backtesting Support**: Use collected tick data for algorithm backtesting
@@ -422,11 +421,11 @@ The application supports Kubernetes-style health probes:
 
 ```bash
 # Copy service file
-sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+sudo cp deploy/systemd/meridian.service /etc/systemd/system/
 
 # Enable and start
-sudo systemctl enable marketdatacollector
-sudo systemctl start marketdatacollector
+sudo systemctl enable meridian
+sudo systemctl start meridian
 ```
 
 ### Environment Variables
@@ -509,13 +508,13 @@ Pre-built Docker images are available from GitHub Container Registry:
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/rodohasarrived/market-data-collector:latest
+docker pull ghcr.io/rodohasarrived/meridian:latest
 
 # Run the container
 docker run -d -p 8080:8080 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/appsettings.json:/app/appsettings.json:ro \
-  ghcr.io/rodohasarrived/market-data-collector:latest
+  ghcr.io/rodohasarrived/meridian:latest
 ```
 
 ## Repository Structure
@@ -523,7 +522,7 @@ docker run -d -p 8080:8080 \
 **704 source files** | **692 C#** | **12 F#** | **243 test files** | **214 documentation files**
 
 ```
-Market-Data-Collector/
+Meridian/
 ├── .github/              # CI/CD workflows (25), AI prompts, Dependabot
 ├── docs/                 # Documentation (214 files), ADRs, AI assistant guides
 ├── build/                # Build tooling (Python, Node.js, .NET generators, scripts)
