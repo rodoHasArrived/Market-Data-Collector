@@ -10,9 +10,9 @@ namespace MarketDataCollector.Wpf.Views.Dialogs;
 /// </summary>
 public sealed class ApiKeyDialog : Window
 {
-    private readonly TextBox _apiKeyBox;
+    private readonly PasswordBox _apiKeyBox;
 
-    public string ApiKey => _apiKeyBox.Text;
+    public string ApiKey => _apiKeyBox.Password;
 
     public ApiKeyDialog(string providerName, string envVarName, bool isOptional = false)
     {
@@ -52,8 +52,8 @@ public sealed class ApiKeyDialog : Window
         Grid.SetRow(hintText, 1);
         grid.Children.Add(hintText);
 
-        // API Key input
-        _apiKeyBox = new TextBox
+        // API Key input — uses PasswordBox so the value is masked
+        _apiKeyBox = new PasswordBox
         {
             Background = new SolidColorBrush(Color.FromRgb(42, 42, 62)),
             Foreground = Brushes.White,
@@ -62,13 +62,6 @@ public sealed class ApiKeyDialog : Window
             FontFamily = new FontFamily("Consolas"),
             Margin = new Thickness(0, 0, 0, 16)
         };
-
-        // Try to load existing value
-        var existingValue = Environment.GetEnvironmentVariable(envVarName, EnvironmentVariableTarget.User);
-        if (!string.IsNullOrEmpty(existingValue))
-        {
-            _apiKeyBox.Text = existingValue;
-        }
 
         Grid.SetRow(_apiKeyBox, 2);
         grid.Children.Add(_apiKeyBox);

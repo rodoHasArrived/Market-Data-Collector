@@ -281,13 +281,106 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
             HasApiStatus = false;
         }
 
-        RaisePropertyChanged(nameof(LastApiStatus));
-        RaisePropertyChanged(nameof(HasApiStatus));
+        UpdateStatusDisplayProperties();
     }
 
-    // Status from API (exposed for code-behind to render into named elements)
-    public MarketDataCollector.Ui.Services.BackfillResultDto? LastApiStatus { get; private set; }
-    public bool HasApiStatus { get; private set; }
+    private void UpdateStatusDisplayProperties()
+    {
+        if (HasApiStatus && LastApiStatus != null)
+        {
+            var isSuccess = LastApiStatus.Success;
+            IsStatusGridVisible = true;
+            IsNoStatusVisible = false;
+            LastRunStatusText = isSuccess ? "Completed" : "Failed";
+            LastRunStatusForeground = isSuccess
+                ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
+                : new SolidColorBrush(Color.FromRgb(244, 67, 54));
+            LastRunProvider = LastApiStatus.Provider ?? "Unknown";
+            LastRunSymbols = LastApiStatus.Symbols != null ? string.Join(", ", LastApiStatus.Symbols) : "N/A";
+            LastRunBarsWritten = LastApiStatus.BarsWritten.ToString("N0");
+            LastRunStarted = LastApiStatus.StartedUtc?.LocalDateTime.ToString("g") ?? "Unknown";
+            LastRunCompleted = LastApiStatus.CompletedUtc?.LocalDateTime.ToString("g") ?? "N/A";
+        }
+        else
+        {
+            IsStatusGridVisible = false;
+            IsNoStatusVisible = true;
+            LastRunStatusText = string.Empty;
+            LastRunProvider = string.Empty;
+            LastRunSymbols = string.Empty;
+            LastRunBarsWritten = string.Empty;
+            LastRunStarted = string.Empty;
+            LastRunCompleted = string.Empty;
+        }
+    }
+
+    // ── Last-run status display properties (bound in XAML) ──────────────────
+    private bool _isStatusGridVisible;
+    public bool IsStatusGridVisible
+    {
+        get => _isStatusGridVisible;
+        private set => SetProperty(ref _isStatusGridVisible, value);
+    }
+
+    private bool _isNoStatusVisible = true;
+    public bool IsNoStatusVisible
+    {
+        get => _isNoStatusVisible;
+        private set => SetProperty(ref _isNoStatusVisible, value);
+    }
+
+    private string _lastRunStatusText = string.Empty;
+    public string LastRunStatusText
+    {
+        get => _lastRunStatusText;
+        private set => SetProperty(ref _lastRunStatusText, value);
+    }
+
+    private SolidColorBrush _lastRunStatusForeground = new(Color.FromRgb(139, 148, 158));
+    public SolidColorBrush LastRunStatusForeground
+    {
+        get => _lastRunStatusForeground;
+        private set => SetProperty(ref _lastRunStatusForeground, value);
+    }
+
+    private string _lastRunProvider = string.Empty;
+    public string LastRunProvider
+    {
+        get => _lastRunProvider;
+        private set => SetProperty(ref _lastRunProvider, value);
+    }
+
+    private string _lastRunSymbols = string.Empty;
+    public string LastRunSymbols
+    {
+        get => _lastRunSymbols;
+        private set => SetProperty(ref _lastRunSymbols, value);
+    }
+
+    private string _lastRunBarsWritten = string.Empty;
+    public string LastRunBarsWritten
+    {
+        get => _lastRunBarsWritten;
+        private set => SetProperty(ref _lastRunBarsWritten, value);
+    }
+
+    private string _lastRunStarted = string.Empty;
+    public string LastRunStarted
+    {
+        get => _lastRunStarted;
+        private set => SetProperty(ref _lastRunStarted, value);
+    }
+
+    private string _lastRunCompleted = string.Empty;
+    public string LastRunCompleted
+    {
+        get => _lastRunCompleted;
+        private set => SetProperty(ref _lastRunCompleted, value);
+    }
+
+    // Internal access for code-behind (status refresh still raises via property-change notifications)
+    internal MarketDataCollector.Ui.Services.BackfillResultDto? LastApiStatus { get; private set; }
+    internal bool HasApiStatus { get; private set; }
 
     // ── Backfill control ────────────────────────────────────────────────────
     public async Task StartBackfillAsync(
@@ -511,6 +604,13 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     // ── Gap scanning ────────────────────────────────────────────────────────
     public async Task ScanGapsAsync(string[] symbols, DateTime fromDate, DateTime toDate)
     {
+        if (symbols.Length == 0)
+        {
+            IsGapAnalysisCardVisible = true;
+            GapAnalysisSummaryText = "Enter at least one symbol before scanning for gaps.";
+            return;
+        }
+
         var totalDays = Math.Max(1, (int)(toDate - fromDate).TotalDays);
 
         GapItems.Clear();
@@ -659,6 +759,36 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     {
         OpenFigiKeyStatusText = "No API key stored (optional)";
         IsOpenFigiKeyClearVisible = false;
+    }
+
+    // ── Scheduled job management ────────────────────────────────────────────
+    public void DeleteScheduledJob(ScheduledJobInfo job)
+    {
+        ScheduledJobs.Remove(job);
+        HasNoScheduledJobs = ScheduledJobs.Count == 0;
+        _notificationService.ShowNotification(
+            "Job Deleted",
+            $"Scheduled job '{job.Name}' has been deleted.",
+            NotificationType.Success);
+    }
+
+    public void UpdateScheduledJob(ScheduledJobInfo job, string newName, string nextRunText)
+    {
+        var index = ScheduledJobs.IndexOf(job);
+        if (index >= 0)
+        {
+            ScheduledJobs[index] = new ScheduledJobInfo
+            {
+                Name = newName,
+                NextRun = nextRunText,
+                Frequency = job.Frequency
+            };
+        }
+
+        _notificationService.ShowNotification(
+            "Job Updated",
+            $"Scheduled job '{newName}' has been updated.",
+            NotificationType.Success);
     }
 
     // ── Navigation helper ───────────────────────────────────────────────────

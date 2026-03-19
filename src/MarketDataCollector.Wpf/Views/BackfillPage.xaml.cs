@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Wpf.Models;
 using MarketDataCollector.Wpf.ViewModels;
@@ -32,11 +31,6 @@ public partial class BackfillPage : Page
         _notificationService = notificationService;
         _viewModel = new BackfillViewModel(notificationService, navigationService, loggingService);
         DataContext = _viewModel;
-
-        SymbolProgressList.ItemsSource = _viewModel.SymbolProgress;
-        ScheduledJobsList.ItemsSource = _viewModel.ScheduledJobs;
-        ResumableJobsList.ItemsSource = _viewModel.ResumableJobs;
-        GapAnalysisList.ItemsSource = _viewModel.GapItems;
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -56,7 +50,6 @@ public partial class BackfillPage : Page
         _viewModel.UpdateProviderPrioritySummary(primary, secondary, tertiary);
 
         await _viewModel.StartAsync();
-        RefreshLastStatusDisplay();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -65,40 +58,12 @@ public partial class BackfillPage : Page
         SavePageFilterState();
     }
 
-    // ── Last-run status display (reads from ViewModel, updates named TextBlocks) ─────────────
-    private void RefreshLastStatusDisplay()
-    {
-        if (_viewModel.HasApiStatus && _viewModel.LastApiStatus != null)
-        {
-            var lastStatus = _viewModel.LastApiStatus;
-            StatusGrid.Visibility = Visibility.Visible;
-            NoStatusText.Visibility = Visibility.Collapsed;
-
-            var isSuccess = lastStatus.Success;
-            StatusText.Text = isSuccess ? "Completed" : "Failed";
-            StatusText.Foreground = isSuccess
-                ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
-                : new SolidColorBrush(Color.FromRgb(244, 67, 54));
-            ProviderText.Text = lastStatus.Provider ?? "Unknown";
-            SymbolsText.Text = lastStatus.Symbols != null ? string.Join(", ", lastStatus.Symbols) : "N/A";
-            BarsWrittenText.Text = lastStatus.BarsWritten.ToString("N0");
-            StartedText.Text = lastStatus.StartedUtc?.LocalDateTime.ToString("g") ?? "Unknown";
-            CompletedText.Text = lastStatus.CompletedUtc?.LocalDateTime.ToString("g") ?? "N/A";
-        }
-        else
-        {
-            StatusGrid.Visibility = Visibility.Collapsed;
-            NoStatusText.Visibility = Visibility.Visible;
-        }
-    }
-
     private async void ResumeJob_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not ResumableJobInfo job)
             return;
 
         await _viewModel.ResumeJobAsync(job);
-        RefreshLastStatusDisplay();
     }
 
     private void DismissJob_Click(object sender, RoutedEventArgs e)
@@ -216,18 +181,6 @@ public partial class BackfillPage : Page
             ToDatePicker.SelectedDate = toDate;
     }
 
-    private static string GetGranularityDisplay(string granularity)
-    {
-        return granularity switch
-        {
-            "1Min" => "1-minute",
-            "15Min" => "15-minute",
-            "Hourly" => "hourly",
-            "Daily" => "daily",
-            _ => granularity.ToLowerInvariant()
-        };
-    }
-
     private void DatePicker_SelectedDateChanged(object? sender, SelectionChangedEventArgs e)
     {
         FromDateValidationError.Visibility = Visibility.Collapsed;
@@ -252,7 +205,7 @@ public partial class BackfillPage : Page
 
     private void OpenWizard_Click(object sender, RoutedEventArgs e)
     {
-        _navigationService.NavigateTo("AnalysisExportWizard");
+        _viewModel.NavigateToWizard();
     }
 
     private void FillAllGaps_Click(object sender, RoutedEventArgs e)
@@ -278,7 +231,7 @@ public partial class BackfillPage : Page
 
     private void BrowseData_Click(object sender, RoutedEventArgs e)
     {
-        _navigationService.NavigateTo("DataBrowser");
+        _viewModel.NavigateToBrowser();
     }
 
     private async void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
@@ -392,7 +345,6 @@ public partial class BackfillPage : Page
     private async void RefreshStatus_Click(object sender, RoutedEventArgs e)
     {
         await _viewModel.RefreshStatusFromApiAsync();
-        RefreshLastStatusDisplay();
 
         _notificationService.ShowNotification(
             "Status Refreshed",
@@ -402,7 +354,10 @@ public partial class BackfillPage : Page
 
     private void SetNasdaqApiKey_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new ApiKeyDialog("Nasdaq Data Link", "NASDAQDATALINK__APIKEY");
+        var dialog = new ApiKeyDialog("Nasdaq Data Link", "NASDAQDATALINK__APIKEY")
+        {
+            Owner = Window.GetWindow(this)
+        };
         if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.ApiKey))
             _viewModel.SetNasdaqApiKey(dialog.ApiKey);
     }
@@ -412,7 +367,10 @@ public partial class BackfillPage : Page
 
     private void SetOpenFigiApiKey_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new ApiKeyDialog("OpenFIGI", "OPENFIGI__APIKEY", isOptional: true);
+        var dialog = new ApiKeyDialog("OpenFIGI", "OPENFIGI__APIKEY", isOptional: true)
+        {
+            Owner = Window.GetWindow(this)
+        };
         if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.ApiKey))
             _viewModel.SetOpenFigiApiKey(dialog.ApiKey);
     }
@@ -423,10 +381,10 @@ public partial class BackfillPage : Page
     private async void ScanGaps_Click(object sender, RoutedEventArgs e)
     {
         var symbolsText = SymbolsBox.Text?.Trim() ?? "";
-        if (string.IsNullOrWhiteSpace(symbolsText))
-            return;
+        var symbols = string.IsNullOrWhiteSpace(symbolsText)
+            ? Array.Empty<string>()
+            : symbolsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var symbols = symbolsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddDays(-30);
         var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
 
@@ -481,34 +439,16 @@ public partial class BackfillPage : Page
         if (sender is not Button btn || btn.Tag is not ScheduledJobInfo job)
             return;
 
-        var dialog = new EditScheduledJobDialog(job);
+        var dialog = new EditScheduledJobDialog(job)
+        {
+            Owner = Window.GetWindow(this)
+        };
         if (dialog.ShowDialog() != true)
             return;
 
         if (dialog.ShouldDelete)
-        {
-            _viewModel.ScheduledJobs.Remove(job);
-            _notificationService.ShowNotification(
-                "Job Deleted",
-                $"Scheduled job '{job.Name}' has been deleted.",
-                NotificationType.Success);
-        }
+            _viewModel.DeleteScheduledJob(job);
         else
-        {
-            var index = _viewModel.ScheduledJobs.IndexOf(job);
-            if (index >= 0)
-            {
-                _viewModel.ScheduledJobs[index] = new ScheduledJobInfo
-                {
-                    Name = dialog.JobName,
-                    NextRun = dialog.NextRunText
-                };
-            }
-
-            _notificationService.ShowNotification(
-                "Job Updated",
-                $"Scheduled job '{dialog.JobName}' has been updated.",
-                NotificationType.Success);
-        }
+            _viewModel.UpdateScheduledJob(job, dialog.JobName, dialog.NextRunText);
     }
 }
