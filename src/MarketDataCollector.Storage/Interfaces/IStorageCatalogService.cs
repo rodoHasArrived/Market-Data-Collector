@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Catalog;
+using Meridian.Contracts.Catalog;
 
-namespace MarketDataCollector.Storage.Interfaces;
+namespace Meridian.Storage.Interfaces;
 
 /// <summary>
 /// Service for managing the storage catalog and manifest system.

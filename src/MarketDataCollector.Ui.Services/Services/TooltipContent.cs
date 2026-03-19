@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Contextual help information for a feature.

@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Pipeline;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Storage.Maintenance;
+namespace Meridian.Storage.Maintenance;
 
 /// <summary>
 /// Background service that schedules and executes archive maintenance tasks.

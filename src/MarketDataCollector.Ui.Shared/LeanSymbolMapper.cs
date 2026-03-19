@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MarketDataCollector.Ui.Shared;
+namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// Maps between MarketDataCollector symbol format and QuantConnect Lean's SecurityIdentifier format.

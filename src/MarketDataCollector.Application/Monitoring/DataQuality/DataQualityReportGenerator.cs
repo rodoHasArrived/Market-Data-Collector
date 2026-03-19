@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Generates comprehensive daily and weekly data quality reports with export functionality.

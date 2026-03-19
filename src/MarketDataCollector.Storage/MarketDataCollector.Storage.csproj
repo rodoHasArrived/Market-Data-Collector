@@ -3,7 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>MarketDataCollector.Storage</RootNamespace>
+    <RootNamespace>Meridian.Storage</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <!-- Allow unsafe code for Linux directory fsync operations in AtomicFileWriter.cs -->

@@ -1,13 +1,13 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 using Prometheus;
 using QuantConnect;
 using QuantConnect.Data;
 using Serilog;
 
-namespace MarketDataCollector.Integrations.Lean;
+namespace Meridian.Integrations.Lean;
 
 /// <summary>
 /// Custom Lean BaseData implementation for MarketDataCollector BBO quote events.

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Domain;
+namespace Meridian.Contracts.Domain;
 
 /// <summary>
 /// Trade data transfer object.

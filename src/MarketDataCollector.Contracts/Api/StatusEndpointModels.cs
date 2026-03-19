@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Api;
+namespace Meridian.Contracts.Api;
 
 /// <summary>
 /// Backpressure status response.

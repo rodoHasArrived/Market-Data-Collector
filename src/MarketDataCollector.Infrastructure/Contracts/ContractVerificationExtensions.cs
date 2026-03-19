@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Infrastructure.Contracts;
+namespace Meridian.Infrastructure.Contracts;
 
 /// <summary>
 /// Extension methods for adding contract verification to the DI container.

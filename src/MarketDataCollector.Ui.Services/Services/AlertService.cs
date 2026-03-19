@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Unified alert management service with classification, grouping, deduplication,

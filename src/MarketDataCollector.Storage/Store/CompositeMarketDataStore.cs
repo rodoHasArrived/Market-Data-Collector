@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
-using MarketDataCollector.Contracts.Store;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Contracts.Store;
+using Meridian.Storage.Interfaces;
 
-namespace MarketDataCollector.Storage.Store;
+namespace Meridian.Storage.Store;
 
 /// <summary>
 /// <see cref="IMarketDataStore"/> that aggregates results from multiple underlying stores

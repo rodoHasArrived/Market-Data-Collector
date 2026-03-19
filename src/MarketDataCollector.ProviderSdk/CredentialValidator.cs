@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Infrastructure.Utilities;
+namespace Meridian.Infrastructure.Utilities;
 
 /// <summary>
 /// Centralized credential validation utilities to eliminate duplicate validation code

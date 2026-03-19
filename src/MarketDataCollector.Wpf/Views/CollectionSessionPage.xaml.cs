@@ -3,10 +3,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
-using CollectionSessionService = MarketDataCollector.Ui.Services.CollectionSessionService;
+using Meridian.Wpf.Services;
+using CollectionSessionService = Meridian.Ui.Services.CollectionSessionService;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class CollectionSessionPage : Page
 {

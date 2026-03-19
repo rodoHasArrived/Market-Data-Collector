@@ -1,8 +1,8 @@
 // Thin wrapper around the core ConfigStore that provides the web dashboard default path.
-// New code should reference MarketDataCollector.Application.UI.ConfigStore directly when possible.
-using CoreConfigStore = MarketDataCollector.Application.UI.ConfigStore;
+// New code should reference Meridian.Application.UI.ConfigStore directly when possible.
+using CoreConfigStore = Meridian.Application.UI.ConfigStore;
 
-namespace MarketDataCollector.Ui.Shared.Services;
+namespace Meridian.Ui.Shared.Services;
 
 /// <summary>
 /// ConfigStore for web dashboard hosting.
@@ -22,26 +22,26 @@ public sealed class ConfigStore
 
     public string ConfigPath => _core.ConfigPath;
 
-    public static MarketDataCollector.Application.Config.AppConfig LoadConfig(string path)
+    public static Meridian.Application.Config.AppConfig LoadConfig(string path)
         => CoreConfigStore.LoadConfig(path);
 
-    public MarketDataCollector.Application.Config.AppConfig Load() => _core.Load();
+    public Meridian.Application.Config.AppConfig Load() => _core.Load();
 
-    public System.Threading.Tasks.Task SaveAsync(MarketDataCollector.Application.Config.AppConfig cfg)
+    public System.Threading.Tasks.Task SaveAsync(Meridian.Application.Config.AppConfig cfg)
         => _core.SaveAsync(cfg);
 
-    public MarketDataCollector.Application.Monitoring.ProviderMetricsStatus? TryLoadProviderMetrics()
+    public Meridian.Application.Monitoring.ProviderMetricsStatus? TryLoadProviderMetrics()
         => _core.TryLoadProviderMetrics();
 
     public string? TryLoadStatusJson() => _core.TryLoadStatusJson();
 
-    public string GetDataRoot(MarketDataCollector.Application.Config.AppConfig? cfg = null)
+    public string GetDataRoot(Meridian.Application.Config.AppConfig? cfg = null)
         => _core.GetDataRoot(cfg);
 
-    public string GetStatusPath(MarketDataCollector.Application.Config.AppConfig? cfg = null)
+    public string GetStatusPath(Meridian.Application.Config.AppConfig? cfg = null)
         => _core.GetStatusPath(cfg);
 
-    public string GetBackfillStatusPath(MarketDataCollector.Application.Config.AppConfig? cfg = null)
+    public string GetBackfillStatusPath(Meridian.Application.Config.AppConfig? cfg = null)
         => _core.GetBackfillStatusPath(cfg);
 
     private static string GetWebDefaultPath()

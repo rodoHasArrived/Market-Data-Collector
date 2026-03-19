@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Finnhub;
+namespace Meridian.Infrastructure.Adapters.Finnhub;
 
 /// <summary>
 /// Refactored symbol search provider using Finnhub API, now extending BaseSymbolSearchProvider.

@@ -1,19 +1,19 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Resilience;
-using MarketDataCollector.Infrastructure.Utilities;
+using Meridian.Application.Exceptions;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
+using Meridian.Infrastructure.Resilience;
+using Meridian.Infrastructure.Utilities;
 using Polly;
 using Serilog;
 
 // Use centralized HttpHandleResult from HttpResiliencePolicy
-using HttpHandleResult = MarketDataCollector.Infrastructure.Resilience.HttpHandleResult;
+using HttpHandleResult = Meridian.Infrastructure.Resilience.HttpHandleResult;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Base class for historical data providers to eliminate duplicate code patterns

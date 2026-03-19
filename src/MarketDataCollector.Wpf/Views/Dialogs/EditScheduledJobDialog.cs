@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Models;
+using Meridian.Wpf.Models;
 
-namespace MarketDataCollector.Wpf.Views.Dialogs;
+namespace Meridian.Wpf.Views.Dialogs;
 
 /// <summary>
 /// Dialog for editing or deleting a scheduled backfill job.

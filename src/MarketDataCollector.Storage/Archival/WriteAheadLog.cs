@@ -5,12 +5,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
 using Prometheus;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Archival;
+namespace Meridian.Storage.Archival;
 
 /// <summary>
 /// Write-Ahead Log (WAL) for durable, crash-safe storage operations.

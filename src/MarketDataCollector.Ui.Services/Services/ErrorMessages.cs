@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Centralized error message templates with actionable remediation suggestions.

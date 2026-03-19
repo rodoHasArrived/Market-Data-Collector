@@ -1,7 +1,7 @@
 /// Side and aggressor types for market data events.
 /// These discriminated unions provide exhaustive pattern matching
 /// and eliminate null reference exceptions.
-module MarketDataCollector.FSharp.Domain.Sides
+module Meridian.FSharp.Domain.Sides
 
 open System
 

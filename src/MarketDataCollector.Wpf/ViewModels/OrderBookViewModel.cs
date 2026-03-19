@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Models;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Models;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Order Book page.

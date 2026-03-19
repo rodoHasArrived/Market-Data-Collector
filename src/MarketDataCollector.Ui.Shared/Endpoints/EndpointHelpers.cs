@@ -1,8 +1,8 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Services;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Shared helpers to reduce boilerplate in endpoint handlers.

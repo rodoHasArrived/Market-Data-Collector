@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Abstract base class for verifying that every <see cref="IHistoricalDataProvider"/> implementation
@@ -70,7 +70,7 @@ public abstract class HistoricalDataProviderContractTests<TProvider>
     public void IProviderMetadata_ProviderId_MatchesName()
     {
         using var provider = CreateProvider();
-        var meta = (MarketDataCollector.Infrastructure.Adapters.Core.IProviderMetadata)provider;
+        var meta = (Meridian.Infrastructure.Adapters.Core.IProviderMetadata)provider;
         meta.ProviderId.Should().Be(provider.Name,
             "IProviderMetadata.ProviderId must delegate to Name for historical providers");
     }
@@ -79,7 +79,7 @@ public abstract class HistoricalDataProviderContractTests<TProvider>
     public void IProviderMetadata_DisplayName_MatchesDisplayName()
     {
         using var provider = CreateProvider();
-        var meta = (MarketDataCollector.Infrastructure.Adapters.Core.IProviderMetadata)provider;
+        var meta = (Meridian.Infrastructure.Adapters.Core.IProviderMetadata)provider;
         meta.ProviderDisplayName.Should().Be(provider.DisplayName,
             "IProviderMetadata.ProviderDisplayName must delegate to DisplayName");
     }

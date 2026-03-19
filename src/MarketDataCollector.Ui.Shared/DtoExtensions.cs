@@ -1,7 +1,7 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Configuration;
+using Meridian.Application.Config;
+using Meridian.Contracts.Configuration;
 
-namespace MarketDataCollector.Ui.Shared;
+namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// Extension methods for converting DTOs to domain types.

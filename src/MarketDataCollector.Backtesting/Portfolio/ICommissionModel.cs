@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Portfolio;
+namespace Meridian.Backtesting.Portfolio;
 
 /// <summary>Computes brokerage commission for a single fill.</summary>
 public interface ICommissionModel

@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Infrastructure.Contracts;
+namespace Meridian.Infrastructure.Contracts;
 
 /// <summary>
 /// Service that verifies implementations satisfy documented ADR contracts at runtime.

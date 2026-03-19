@@ -1,6 +1,6 @@
-using MarketDataCollector.Application.Monitoring;
+using Meridian.Application.Monitoring;
 
-namespace MarketDataCollector.Application.Composition;
+namespace Meridian.Application.Composition;
 
 /// <summary>
 /// Static bridge that receives Polly circuit breaker state-change notifications

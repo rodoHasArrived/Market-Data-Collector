@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Tracks rate limit status across multiple providers for intelligent rotation.

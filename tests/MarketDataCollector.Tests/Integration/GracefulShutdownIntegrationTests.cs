@@ -1,17 +1,17 @@
 using System.Collections.Concurrent;
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Pipeline;
+using Meridian.Application.Services;
+using Meridian.Contracts.Configuration;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage.Interfaces;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MarketDataCollector.Tests.Integration;
+namespace Meridian.Tests.Integration;
 
 /// <summary>
 /// Integration tests verifying zero data loss during graceful shutdown.

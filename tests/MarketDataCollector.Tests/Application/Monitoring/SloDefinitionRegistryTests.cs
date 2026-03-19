@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring.Core;
+using Meridian.Application.Monitoring.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Monitoring;
+namespace Meridian.Tests.Application.Monitoring;
 
 /// <summary>
 /// Tests for <see cref="SloDefinitionRegistry"/> and <see cref="AlertRunbookRegistry"/>.

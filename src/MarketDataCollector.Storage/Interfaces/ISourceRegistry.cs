@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Storage.Interfaces;
+namespace Meridian.Storage.Interfaces;
 
 /// <summary>
 /// Interface for managing data source and symbol registry information.

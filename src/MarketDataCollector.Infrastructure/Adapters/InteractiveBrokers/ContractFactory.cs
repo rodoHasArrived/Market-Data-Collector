@@ -1,6 +1,6 @@
-using MarketDataCollector.Application.Config;
+using Meridian.Application.Config;
 
-namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
 /// <summary>
 /// Builds IB contract objects from SymbolConfig.

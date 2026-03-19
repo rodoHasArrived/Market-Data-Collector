@@ -1,13 +1,13 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Adapters.Polygon;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Application.Config;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Adapters.Polygon;
+using Meridian.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Adapters;
+namespace Meridian.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Unit tests for Polygon subscription management and reconnect behavior.
@@ -199,7 +199,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
         var client = CreateClient();
 
         // IMarketDataClient / IProviderMetadata defaults
-        var metadata = client as MarketDataCollector.Infrastructure.IMarketDataClient;
+        var metadata = client as Meridian.Infrastructure.IMarketDataClient;
         metadata.Should().NotBeNull();
         client.IsEnabled.Should().BeFalse("no API key configured");
     }

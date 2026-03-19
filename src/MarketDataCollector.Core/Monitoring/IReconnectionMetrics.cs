@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Abstraction for recording WebSocket reconnection metrics.

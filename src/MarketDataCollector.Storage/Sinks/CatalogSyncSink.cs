@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Contracts.Catalog;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Storage.Sinks;
+namespace Meridian.Storage.Sinks;
 
 /// <summary>
 /// Decorator around any <see cref="IStorageSink"/> that automatically updates the

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>
 /// Base record for all typed cash-flow entries that form the ledger used to compute XIRR

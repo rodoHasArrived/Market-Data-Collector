@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Failover;
+namespace Meridian.Infrastructure.Adapters.Failover;
 
 /// <summary>
 /// Orchestrates automatic failover between streaming market data providers.

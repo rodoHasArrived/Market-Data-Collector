@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Represents a pending operation in the queue.

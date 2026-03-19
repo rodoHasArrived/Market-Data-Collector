@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Ui.Services;
+using Meridian.Contracts.Api;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="BackfillApiService"/> — service construction,

@@ -1,8 +1,8 @@
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Storage.Export;
+using Meridian.Application.ResultTypes;
+using Meridian.Storage.Export;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles --generate-loader CLI command for generating standalone Python/R loader scripts

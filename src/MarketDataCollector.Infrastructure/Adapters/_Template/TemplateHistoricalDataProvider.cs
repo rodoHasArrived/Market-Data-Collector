@@ -1,13 +1,13 @@
 // Replace every occurrence of "Template" with your provider name.
 // Replace the namespace segment "Template" with your provider's namespace segment.
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Http;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Template;
+namespace Meridian.Infrastructure.Adapters.Template;
 
 /// <summary>
 /// Template historical data provider — replace "Template" with your provider name.

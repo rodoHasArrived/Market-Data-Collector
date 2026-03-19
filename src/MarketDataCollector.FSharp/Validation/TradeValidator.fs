@@ -1,11 +1,11 @@
 /// Trade event validation using Railway-Oriented Programming.
 /// Validates all fields of a trade event and accumulates errors.
-module MarketDataCollector.FSharp.Validation.TradeValidator
+module Meridian.FSharp.Validation.TradeValidator
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Domain.Sides
-open MarketDataCollector.FSharp.Validation.ValidationTypes
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.Sides
+open Meridian.FSharp.Validation.ValidationTypes
 
 /// Configuration for trade validation
 type TradeValidationConfig = {

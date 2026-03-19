@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
+using Meridian.Application.Monitoring;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Monitoring;
+namespace Meridian.Tests.Monitoring;
 
 public sealed class ProviderLatencyServiceTests : IDisposable
 {

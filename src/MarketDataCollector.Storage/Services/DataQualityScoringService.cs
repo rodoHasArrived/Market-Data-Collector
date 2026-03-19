@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Policies;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Policies;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service that computes quality scores for stored data files and performs

@@ -3,10 +3,10 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Cross-platform service for managing file and directory permissions.

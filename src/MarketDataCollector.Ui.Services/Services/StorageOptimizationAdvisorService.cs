@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ZstdSharp;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for analyzing storage and providing optimization recommendations.

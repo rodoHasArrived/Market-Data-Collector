@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Exceptions;
+using Meridian.Application.Exceptions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.ProviderSdk;
+namespace Meridian.Tests.ProviderSdk;
 
 /// <summary>
 /// Tests for custom exception types ensuring correct property propagation and hierarchy.

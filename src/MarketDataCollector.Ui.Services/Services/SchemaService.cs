@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Default schema service for the shared UI services layer.

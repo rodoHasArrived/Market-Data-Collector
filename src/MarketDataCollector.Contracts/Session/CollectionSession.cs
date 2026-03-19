@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Session;
+namespace Meridian.Contracts.Session;
 
 /// <summary>
 /// Represents a discrete data collection session with comprehensive tracking.

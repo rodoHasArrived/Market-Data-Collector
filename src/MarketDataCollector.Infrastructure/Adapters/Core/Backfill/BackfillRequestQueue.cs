@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Channels;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Pipeline;
+using Meridian.Application.Logging;
+using Meridian.Application.Pipeline;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Intelligent queue for backfill requests with prioritization, rate-limit awareness,

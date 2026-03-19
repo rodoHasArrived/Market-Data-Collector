@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for managing multi-provider configurations including failover,

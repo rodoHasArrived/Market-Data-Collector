@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for managing contextual tooltips, onboarding tips, and feature discovery.

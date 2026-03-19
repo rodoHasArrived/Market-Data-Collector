@@ -1,6 +1,6 @@
 /// Core validation types for Railway-Oriented Programming.
 /// Provides Result-based validation with composable error handling.
-module MarketDataCollector.FSharp.Validation.ValidationTypes
+module Meridian.FSharp.Validation.ValidationTypes
 
 open System
 

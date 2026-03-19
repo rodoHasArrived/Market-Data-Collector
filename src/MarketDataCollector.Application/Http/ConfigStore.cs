@@ -1,11 +1,11 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage;
+using Meridian.Application.Backfill;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Storage;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// Service for loading and persisting application configuration.

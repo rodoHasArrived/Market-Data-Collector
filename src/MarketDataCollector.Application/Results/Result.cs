@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.ResultTypes;
+namespace Meridian.Application.ResultTypes;
 
 /// <summary>
 /// Represents the result of an operation that can either succeed with a value or fail with an error.

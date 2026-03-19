@@ -4,10 +4,10 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Input;
-using MarketDataCollector.Backtesting.Sdk;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Backtesting.Sdk;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the BacktestPage. Drives the three-panel layout:

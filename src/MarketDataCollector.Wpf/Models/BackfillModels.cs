@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>Symbol progress information for backfill tracking.</summary>
 public sealed class SymbolProgressInfo

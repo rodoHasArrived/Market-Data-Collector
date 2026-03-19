@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Metrics;
+namespace Meridian.Backtesting.Metrics;
 
 /// <summary>
 /// Computes all performance metrics from the portfolio snapshot series and cash-flow ledger

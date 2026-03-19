@@ -1,7 +1,7 @@
 using System.Threading.Channels;
-using MarketDataCollector.Contracts.Pipeline;
+using Meridian.Contracts.Pipeline;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Central configuration policy for bounded-channel pipelines.

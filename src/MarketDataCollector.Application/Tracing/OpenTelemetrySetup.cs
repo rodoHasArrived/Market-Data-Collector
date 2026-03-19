@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -7,7 +7,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 
-namespace MarketDataCollector.Application.Tracing;
+namespace Meridian.Application.Tracing;
 
 /// <summary>
 /// OpenTelemetry setup for distributed tracing across the market data pipeline.

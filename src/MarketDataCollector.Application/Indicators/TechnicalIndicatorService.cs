@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
 using Serilog;
 using Skender.Stock.Indicators;
 
-namespace MarketDataCollector.Application.Indicators;
+namespace Meridian.Application.Indicators;
 
 /// <summary>
 /// Real-time technical indicator calculation service using Skender.Stock.Indicators.

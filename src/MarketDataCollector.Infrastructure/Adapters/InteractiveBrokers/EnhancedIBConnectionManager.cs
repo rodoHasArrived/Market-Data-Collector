@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
 /// <summary>
 /// IB connection manager that owns the socket/EReader loop and forwards raw callbacks into <see cref="IBCallbackRouter"/>.

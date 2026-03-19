@@ -6,7 +6,7 @@
 
     <!-- Assembly Information -->
     <AssemblyName>MarketDataCollector.Ui.Shared</AssemblyName>
-    <RootNamespace>MarketDataCollector.Ui.Shared</RootNamespace>
+    <RootNamespace>Meridian.Ui.Shared</RootNamespace>
     <Version>1.0.0</Version>
     <Authors>MarketDataCollector Team</Authors>
     <Description>Shared UI endpoint handlers, services, and templates for MarketDataCollector web and desktop hosts</Description>

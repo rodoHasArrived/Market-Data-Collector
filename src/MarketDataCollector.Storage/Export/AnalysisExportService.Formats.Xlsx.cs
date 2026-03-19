@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// XLSX (Excel) format export with Open XML generation.

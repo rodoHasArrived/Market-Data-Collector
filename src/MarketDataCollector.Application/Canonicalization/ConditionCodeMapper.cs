@@ -1,10 +1,10 @@
 using System.Collections.Frozen;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Enums;
 using Serilog;
 
-namespace MarketDataCollector.Application.Canonicalization;
+namespace Meridian.Application.Canonicalization;
 
 /// <summary>
 /// Maps provider-specific raw trade condition codes to canonical <see cref="CanonicalTradeCondition"/> values.

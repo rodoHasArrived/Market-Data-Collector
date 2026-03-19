@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Config;
+using Meridian.Application.ResultTypes;
+using Meridian.Application.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles --preset CLI command for applying role-based configuration presets.

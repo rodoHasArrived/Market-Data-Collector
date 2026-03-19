@@ -1,8 +1,8 @@
-using MarketDataCollector.Ui.Services.Contracts;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for ConnectionService singleton service.

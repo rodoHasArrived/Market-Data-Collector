@@ -1,11 +1,11 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Contracts.Api;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using AppBackfillRequest = Meridian.Application.Backfill.BackfillRequest;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering backfill checkpoint/resume API endpoints.

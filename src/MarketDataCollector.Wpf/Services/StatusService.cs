@@ -1,8 +1,8 @@
 using System;
 using System.Net.Http;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// WPF platform-specific status service.

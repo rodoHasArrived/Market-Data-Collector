@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Pipeline;
+using Meridian.Application.Logging;
+using Meridian.Application.Pipeline;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Handles graceful shutdown of the application, ensuring all buffered events

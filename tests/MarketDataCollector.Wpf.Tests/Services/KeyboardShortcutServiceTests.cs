@@ -1,7 +1,7 @@
 using System.Windows.Input;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="KeyboardShortcutService"/> — shortcut registration,

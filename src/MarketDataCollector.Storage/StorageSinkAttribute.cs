@@ -1,8 +1,8 @@
 using System.Reflection;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Storage.Interfaces;
 
-namespace MarketDataCollector.Storage;
+namespace Meridian.Storage;
 
 /// <summary>
 /// Marks a class as a storage sink plugin for automatic discovery and registration.

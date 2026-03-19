@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 // Primary navigation pages
 public partial class DashboardPage : Page { }

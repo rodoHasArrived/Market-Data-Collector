@@ -1,7 +1,7 @@
-using MarketDataCollector.Application.Composition;
-using MarketDataCollector.McpServer.Prompts;
-using MarketDataCollector.McpServer.Resources;
-using MarketDataCollector.McpServer.Tools;
+using Meridian.Application.Composition;
+using Meridian.McpServer.Prompts;
+using Meridian.McpServer.Resources;
+using Meridian.McpServer.Tools;
 using ModelContextProtocol.Server;
 
 // ─────────────────────────────────────────────────────────────────────────────

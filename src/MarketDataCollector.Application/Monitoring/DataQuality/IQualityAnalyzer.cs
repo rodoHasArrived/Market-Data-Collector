@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Quality analysis severity levels.

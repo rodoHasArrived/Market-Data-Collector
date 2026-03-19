@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Config;
+using Meridian.Application.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Tests for ConfigurationService focusing on self-healing fixes,

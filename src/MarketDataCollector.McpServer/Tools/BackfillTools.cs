@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.McpServer.Tools;
+namespace Meridian.McpServer.Tools;
 
 /// <summary>
 /// MCP tools for running and inspecting historical data backfill operations.

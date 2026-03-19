@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Export;
+namespace Meridian.Contracts.Export;
 
 #region Export Event Args
 

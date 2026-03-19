@@ -1,33 +1,33 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Commands;
-using MarketDataCollector.Application.Composition;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Subscriptions;
-using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Failover;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Policies;
-using MarketDataCollector.Storage.Replay;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Backfill;
+using Meridian.Application.Commands;
+using Meridian.Application.Composition;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Application.ResultTypes;
+using Meridian.Application.Services;
+using Meridian.Application.Subscriptions;
+using Meridian.Application.Subscriptions.Services;
+using Meridian.Application.UI;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Failover;
+using Meridian.Storage;
+using Meridian.Storage.Policies;
+using Meridian.Storage.Replay;
+using Meridian.Storage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
-using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
-using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
+using BackfillRequest = Meridian.Application.Backfill.BackfillRequest;
+using DeploymentContext = Meridian.Application.Config.DeploymentContext;
+using DeploymentMode = Meridian.Application.Config.DeploymentMode;
 
 namespace MarketDataCollector;
 
@@ -441,7 +441,7 @@ public partial class Program
             depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20m, 100m, "MM3"));
             depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22m, 90m, "MM4"));
 
-            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, MarketDataCollector.Contracts.Domain.Enums.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
+            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Meridian.Contracts.Domain.Enums.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
 
             await Task.Delay(200);
         }

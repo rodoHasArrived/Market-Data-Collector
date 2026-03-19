@@ -1,9 +1,9 @@
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Application.Backfill;
+using Meridian.Application.Backfill;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Backfill;
+namespace Meridian.Tests.Application.Backfill;
 
 public sealed class BackfillStatusStoreTests : IDisposable
 {

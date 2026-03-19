@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Pipeline;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Pipeline;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Pipeline;
+namespace Meridian.Tests.Application.Pipeline;
 
 /// <summary>
 /// Tests for <see cref="IngestionJobService"/> — the unified job lifecycle manager.

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Configuration;
+namespace Meridian.Contracts.Configuration;
 
 /// <summary>
 /// Application configuration DTO shared between core and desktop applications.

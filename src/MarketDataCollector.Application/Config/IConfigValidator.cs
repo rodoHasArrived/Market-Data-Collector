@@ -1,6 +1,6 @@
 using FluentValidation.Results;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Abstraction over configuration validation so that validation logic

@@ -1,11 +1,11 @@
 using System.Net.WebSockets;
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Resilience;
+using Meridian.Infrastructure.Resilience;
 using Polly;
 using Polly.Timeout;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 /// <summary>
 /// Tests for WebSocket resilience policies.

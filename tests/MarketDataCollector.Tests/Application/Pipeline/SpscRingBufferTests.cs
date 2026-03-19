@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Core.Performance;
+using Meridian.Core.Performance;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Pipeline;
+namespace Meridian.Tests.Pipeline;
 
 /// <summary>
 /// Tests for the lock-free single-producer/single-consumer ring buffer.

@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Serialization;
+using Meridian.Contracts.Domain;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Persists events that failed validation to a JSONL dead-letter file for later inspection

@@ -3,12 +3,12 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using MarketDataCollector.Ui.Services.Contracts;
-using MarketDataCollector.Ui.Services.Services;
-using MarketDataCollector.Wpf.Contracts;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Ui.Services.Services;
+using Meridian.Wpf.Contracts;
 using Timer = System.Timers.Timer;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// WPF-specific connection service that extends <see cref="ConnectionServiceBase"/> with

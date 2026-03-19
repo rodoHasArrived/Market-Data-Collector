@@ -1,12 +1,12 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring.Core;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Extension methods for registering provider services with the DI container.

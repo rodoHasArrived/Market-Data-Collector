@@ -1,6 +1,6 @@
-using MarketDataCollector.Storage.Services;
+using Meridian.Storage.Services;
 
-namespace MarketDataCollector.Backtesting.Engine;
+namespace Meridian.Backtesting.Engine;
 
 /// <summary>
 /// Discovers which symbols have locally-stored JSONL data for the requested date range.

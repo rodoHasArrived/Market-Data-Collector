@@ -1,15 +1,15 @@
 using System.Threading;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Sinks;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Sinks;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public class JsonlBatchWriteTests : IDisposable
 {

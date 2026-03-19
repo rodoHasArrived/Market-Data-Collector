@@ -1,10 +1,10 @@
 using System.Reflection;
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.DataSources;
+using Meridian.Infrastructure.DataSources;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace MarketDataCollector.Tests.ProviderSdk;
+namespace Meridian.Tests.ProviderSdk;
 
 /// <summary>
 /// Tests for DataSourceRegistry discovery and registration.

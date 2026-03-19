@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Storage.Packaging;
+namespace Meridian.Storage.Packaging;
 
 /// <summary>
 /// Result of a packaging operation.

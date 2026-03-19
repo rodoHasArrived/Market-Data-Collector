@@ -1,18 +1,18 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Services;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Sinks;
+namespace Meridian.Storage.Sinks;
 
 /// <summary>
 /// Apache Parquet storage sink for high-performance columnar storage.

@@ -1,7 +1,7 @@
-using MarketDataCollector.Infrastructure.Adapters.Stooq;
-using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
+using Meridian.Infrastructure.Adapters.Stooq;
+using Meridian.Infrastructure.Adapters.YahooFinance;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Applies the shared <see cref="HistoricalDataProviderContractTests{TProvider}"/> suite to

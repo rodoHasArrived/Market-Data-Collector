@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Pipeline;
+namespace Meridian.Contracts.Pipeline;
 
 /// <summary>
 /// Unified ingestion job state machine that applies to both realtime and historical flows.

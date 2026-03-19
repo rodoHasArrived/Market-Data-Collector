@@ -1,7 +1,7 @@
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Events;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Events;
 
-namespace MarketDataCollector.Contracts.Domain.Models;
+namespace Meridian.Contracts.Domain.Models;
 
 /// <summary>
 /// Best bid/offer quote for an option contract, including greeks and implied volatility.

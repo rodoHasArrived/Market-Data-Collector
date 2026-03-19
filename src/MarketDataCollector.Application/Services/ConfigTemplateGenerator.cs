@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for generating configuration templates.

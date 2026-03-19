@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
 /// <summary>
 /// No-op connection manager stub for builds without the Interactive Brokers API.

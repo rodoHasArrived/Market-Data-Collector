@@ -1,13 +1,13 @@
 /// Validation pipeline for composing multiple validators.
 /// Provides a fluent API for building validation workflows.
-module MarketDataCollector.FSharp.Validation.ValidationPipeline
+module Meridian.FSharp.Validation.ValidationPipeline
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Domain.Integrity
-open MarketDataCollector.FSharp.Validation.ValidationTypes
-open MarketDataCollector.FSharp.Validation.TradeValidator
-open MarketDataCollector.FSharp.Validation.QuoteValidator
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.Integrity
+open Meridian.FSharp.Validation.ValidationTypes
+open Meridian.FSharp.Validation.TradeValidator
+open Meridian.FSharp.Validation.QuoteValidator
 
 /// Result of validating a market event.
 type ValidatedEvent<'T> = {

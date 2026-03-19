@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Api;
+using Meridian.Contracts.Api;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Provides canned fixture data for UI development without backend dependency.

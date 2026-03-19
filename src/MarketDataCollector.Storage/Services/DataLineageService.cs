@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service for tracking data lineage: provenance, transformations, and dependency graphs

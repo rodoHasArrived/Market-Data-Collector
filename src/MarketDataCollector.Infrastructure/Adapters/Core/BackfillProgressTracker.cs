@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Tracks per-symbol backfill progress for reporting to the API and SSE streams.

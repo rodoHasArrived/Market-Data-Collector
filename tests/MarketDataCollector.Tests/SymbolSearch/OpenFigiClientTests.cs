@@ -1,12 +1,12 @@
 using System.Net;
 using System.Text;
 using FluentAssertions;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.OpenFigi;
 using Xunit;
 
-namespace MarketDataCollector.Tests.SymbolSearch;
+namespace Meridian.Tests.SymbolSearch;
 
 /// <summary>
 /// Unit tests for the OpenFigiClient class.

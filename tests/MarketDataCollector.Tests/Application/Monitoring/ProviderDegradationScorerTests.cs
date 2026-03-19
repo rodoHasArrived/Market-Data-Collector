@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
+using Meridian.Application.Monitoring;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Monitoring;
+namespace Meridian.Tests.Monitoring;
 
 /// <summary>
 /// Tests for <see cref="ProviderDegradationScorer"/> composite health scoring.

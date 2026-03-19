@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Logging;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Polygon;
+namespace Meridian.Infrastructure.Adapters.Polygon;
 
 /// <summary>
 /// Symbol search provider using Polygon.io API.

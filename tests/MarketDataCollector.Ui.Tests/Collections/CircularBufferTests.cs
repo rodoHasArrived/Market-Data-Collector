@@ -1,7 +1,7 @@
 using FluentAssertions;
-using MarketDataCollector.Ui.Services.Collections;
+using Meridian.Ui.Services.Collections;
 
-namespace MarketDataCollector.Ui.Tests.Collections;
+namespace Meridian.Ui.Tests.Collections;
 
 /// <summary>
 /// Tests for <see cref="CircularBuffer{T}"/>.

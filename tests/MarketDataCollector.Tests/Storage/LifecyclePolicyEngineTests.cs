@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Services;
+using Meridian.Storage;
+using Meridian.Storage.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class LifecyclePolicyEngineTests : IDisposable
 {

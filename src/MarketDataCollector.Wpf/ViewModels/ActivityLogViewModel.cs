@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Input;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Activity Log page.

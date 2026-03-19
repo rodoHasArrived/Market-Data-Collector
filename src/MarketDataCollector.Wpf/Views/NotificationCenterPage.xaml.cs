@@ -4,12 +4,12 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
-using MarketDataCollector.Wpf.ViewModels;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
+using Meridian.Wpf.ViewModels;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Notification Center page for viewing and managing all application notifications.

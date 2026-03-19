@@ -1,15 +1,15 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Ui.Shared.Endpoints;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Application.UI;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Ui.Shared.Endpoints;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Shared test fixture that sets up an in-memory ASP.NET Core test server
@@ -50,7 +50,7 @@ public sealed class EndpointTestFixture : IAsyncLifetime
 
         // Register the Ui.Shared ConfigStore wrapper (endpoints resolve this type).
         // The core ConfigStore (Application.UI.ConfigStore) is registered separately by AddMarketDataServices.
-        builder.Services.AddSingleton(new MarketDataCollector.Ui.Shared.Services.ConfigStore(configPath));
+        builder.Services.AddSingleton(new Meridian.Ui.Shared.Services.ConfigStore(configPath));
 
         _app = builder.BuildUiHost(statusHandlers, configPath);
 

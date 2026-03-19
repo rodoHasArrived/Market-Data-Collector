@@ -1,13 +1,13 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Application.Config;
+using Meridian.Contracts.Api;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering extended provider API endpoints (failover, rate limits, capabilities, switching).

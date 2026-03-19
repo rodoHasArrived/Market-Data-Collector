@@ -1,10 +1,10 @@
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Storage.Services;
+using Meridian.Contracts.Catalog;
+using Meridian.Storage.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Tests for the SymbolRegistryService.

@@ -3,15 +3,15 @@ using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.StockSharp.Converters;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
+namespace Meridian.Infrastructure.Adapters.StockSharp;
 
 /// <summary>
 /// Historical data provider that leverages StockSharp connector capabilities.

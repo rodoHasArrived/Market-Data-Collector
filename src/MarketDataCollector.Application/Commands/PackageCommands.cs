@@ -1,9 +1,9 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Storage.Packaging;
+using Meridian.Application.Config;
+using Meridian.Application.ResultTypes;
+using Meridian.Storage.Packaging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles all package-related CLI commands:

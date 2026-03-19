@@ -3,7 +3,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Validates that core endpoint responses conform to their expected JSON schemas.

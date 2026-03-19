@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Storage.Archival;
+using Meridian.Storage.Archival;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class WriteAheadLogTests : IAsyncDisposable
 {

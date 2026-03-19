@@ -1,16 +1,16 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Contracts.Store;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Replay;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Domain;
+using Meridian.Contracts.Store;
+using Meridian.Domain.Events;
+using Meridian.Storage;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Replay;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering event replay API endpoints.

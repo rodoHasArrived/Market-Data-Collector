@@ -1,10 +1,10 @@
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
-using Palette = MarketDataCollector.Ui.Services.Services.ColorPalette;
-using ColorPalette = MarketDataCollector.Ui.Services.Services.ColorPalette;
-using IntegritySeverity = MarketDataCollector.Ui.Services.IntegritySeverity;
+using Meridian.Ui.Services;
+using Palette = Meridian.Ui.Services.Services.ColorPalette;
+using ColorPalette = Meridian.Ui.Services.Services.ColorPalette;
+using IntegritySeverity = Meridian.Ui.Services.IntegritySeverity;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Centralized registry for cached SolidColorBrush instances.
@@ -76,7 +76,7 @@ public static class BrushRegistry
 
     #region State-Based Brush Lookups
 
-    public static SolidColorBrush GetNotificationBrush(NotificationType type) => FromArgb(Palette.GetNotificationColor((MarketDataCollector.Ui.Services.NotificationType)(int)type));
+    public static SolidColorBrush GetNotificationBrush(NotificationType type) => FromArgb(Palette.GetNotificationColor((Meridian.Ui.Services.NotificationType)(int)type));
     public static SolidColorBrush GetSeverityBrush(IntegritySeverity severity) => FromArgb(Palette.GetSeverityColor(severity));
 
     public static Color GetSeverityColor(IntegritySeverity severity)

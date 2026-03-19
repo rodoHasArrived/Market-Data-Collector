@@ -1,9 +1,9 @@
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Logging;
+using Meridian.Application.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Sends webhook notifications for connection status changes.

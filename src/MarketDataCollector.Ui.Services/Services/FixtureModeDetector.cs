@@ -1,6 +1,6 @@
 using System;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Detects and tracks whether the application is running in fixture/offline mode.

@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Models;
 
-namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
 /// <summary>
 /// Thin adapter that turns raw IB callbacks into domain updates.

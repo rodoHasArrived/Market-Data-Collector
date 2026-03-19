@@ -1,7 +1,7 @@
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for RetentionAssuranceService singleton service.

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Parses <see cref="DataSourceKind"/> from config JSON strings in a forgiving way

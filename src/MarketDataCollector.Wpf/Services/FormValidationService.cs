@@ -1,10 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services.Services;
-using ValidationResult = MarketDataCollector.Ui.Services.Services.ValidationResult;
+using Meridian.Ui.Services.Services;
+using ValidationResult = Meridian.Ui.Services.Services.ValidationResult;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for form validation with inline error display.

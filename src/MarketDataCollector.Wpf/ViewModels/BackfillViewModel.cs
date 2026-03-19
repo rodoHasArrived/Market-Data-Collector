@@ -5,14 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Threading;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
-using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
-using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
-using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
+using UiBackfillService = Meridian.Ui.Services.BackfillService;
+using UiBackfillProgressEventArgs = Meridian.Ui.Services.BackfillProgressEventArgs;
+using UiBackfillCompletedEventArgs = Meridian.Ui.Services.BackfillCompletedEventArgs;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Backfill page.
@@ -379,7 +379,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     }
 
     // Internal access for code-behind (status refresh still raises via property-change notifications)
-    internal MarketDataCollector.Ui.Services.BackfillResultDto? LastApiStatus { get; private set; }
+    internal Meridian.Ui.Services.BackfillResultDto? LastApiStatus { get; private set; }
     internal bool HasApiStatus { get; private set; }
 
     // ── Backfill control ────────────────────────────────────────────────────
@@ -537,7 +537,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
         });
     }
 
-    private void UpdateProgressDisplay(MarketDataCollector.Contracts.Backfill.BackfillProgress progress)
+    private void UpdateProgressDisplay(Meridian.Contracts.Backfill.BackfillProgress progress)
     {
         BackfillStatusText = progress.Status;
         var completedCount = progress.CompletedSymbols;

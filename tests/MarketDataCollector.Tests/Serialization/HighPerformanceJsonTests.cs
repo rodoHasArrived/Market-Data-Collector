@@ -1,13 +1,13 @@
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Serialization;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Serialization;
+namespace Meridian.Tests.Serialization;
 
 /// <summary>
 /// Tests for high-performance JSON serialization with source generators.

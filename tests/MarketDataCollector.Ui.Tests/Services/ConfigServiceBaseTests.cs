@@ -4,11 +4,11 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Contracts.Configuration;
+using Meridian.Ui.Services.Services;
 using Xunit;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Concrete test implementation of ConfigServiceBase for testing.

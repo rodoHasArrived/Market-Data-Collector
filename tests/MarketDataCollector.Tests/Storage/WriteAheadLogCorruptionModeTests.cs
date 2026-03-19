@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Storage.Archival;
+using Meridian.Storage.Archival;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Tests for WAL corruption response modes introduced in fix 4.3 of the

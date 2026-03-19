@@ -1,14 +1,14 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Exceptions;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core.SymbolResolution;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Composite provider that chains multiple data providers with automatic failover.

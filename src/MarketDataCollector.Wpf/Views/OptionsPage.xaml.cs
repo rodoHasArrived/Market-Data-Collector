@@ -4,10 +4,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using MarketDataCollector.Contracts.Api;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Api;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Options chain page for viewing option expirations, strikes, greeks,

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Api;
+namespace Meridian.Contracts.Api;
 
 // ============================================================
 // Backfill Health and Provider Status DTOs

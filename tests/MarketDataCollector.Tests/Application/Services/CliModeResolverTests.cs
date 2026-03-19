@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 public sealed class CliModeResolverTests
 {

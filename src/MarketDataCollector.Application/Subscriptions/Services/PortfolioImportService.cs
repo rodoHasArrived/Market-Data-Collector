@@ -2,12 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Config;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Application.UI;
+using Meridian.Infrastructure.Http;
 
-namespace MarketDataCollector.Application.Subscriptions.Services;
+namespace Meridian.Application.Subscriptions.Services;
 
 /// <summary>
 /// Service for importing symbols from broker portfolios.

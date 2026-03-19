@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Enums;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Central orchestrator for all data quality monitoring components.

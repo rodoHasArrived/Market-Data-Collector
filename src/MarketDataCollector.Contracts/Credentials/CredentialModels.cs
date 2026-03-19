@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Credentials;
+namespace Meridian.Contracts.Credentials;
 
 /// <summary>
 /// Types of credentials supported by the system.

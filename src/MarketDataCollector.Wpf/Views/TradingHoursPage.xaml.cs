@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Contracts.Api;
+using Meridian.Ui.Services;
+using Meridian.Contracts.Api;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Trading hours page showing live US market status, session schedule, and upcoming holidays.

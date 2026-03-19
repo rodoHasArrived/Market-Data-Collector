@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Portfolio;
+namespace Meridian.Backtesting.Portfolio;
 
 /// <summary>
 /// Tracks simulated cash, margin, positions, and a typed cash-flow ledger.

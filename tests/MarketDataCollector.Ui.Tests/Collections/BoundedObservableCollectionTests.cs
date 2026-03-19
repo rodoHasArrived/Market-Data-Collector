@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Ui.Services.Collections;
+using Meridian.Ui.Services.Collections;
 using System.Collections.Specialized;
 
-namespace MarketDataCollector.Ui.Tests.Collections;
+namespace Meridian.Ui.Tests.Collections;
 
 /// <summary>
 /// Tests for <see cref="BoundedObservableCollection{T}"/>.

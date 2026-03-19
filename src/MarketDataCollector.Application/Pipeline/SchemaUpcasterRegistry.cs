@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Schema;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Contracts.Schema;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Registry that chains <see cref="ISchemaUpcaster{T}"/> instances to migrate stored records

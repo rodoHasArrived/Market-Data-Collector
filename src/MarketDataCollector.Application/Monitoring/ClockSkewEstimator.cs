@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Maintains per-provider EWMA estimates of clock skew between exchange/provider

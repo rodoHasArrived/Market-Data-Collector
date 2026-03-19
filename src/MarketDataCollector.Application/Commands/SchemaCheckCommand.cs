@@ -1,10 +1,10 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring;
+using Meridian.Application.ResultTypes;
+using Meridian.Application.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles the --check-schemas CLI command.

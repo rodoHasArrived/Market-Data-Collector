@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Monitoring.Core;
+namespace Meridian.Application.Monitoring.Core;
 
 /// <summary>
 /// Severity levels for monitoring alerts.

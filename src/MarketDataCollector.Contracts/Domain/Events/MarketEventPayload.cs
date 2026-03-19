@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Domain.Models;
+using Meridian.Contracts.Domain.Models;
 
-namespace MarketDataCollector.Contracts.Domain.Events;
+namespace Meridian.Contracts.Domain.Events;
 
 /// <summary>
 /// Discriminated-union base for all market event payloads.

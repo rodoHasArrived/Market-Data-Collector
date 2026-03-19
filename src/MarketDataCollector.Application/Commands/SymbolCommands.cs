@@ -1,9 +1,9 @@
 using System.Text.Json;
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Application.Subscriptions.Services;
+using Meridian.Application.ResultTypes;
+using Meridian.Application.Subscriptions.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles all symbol management CLI commands:

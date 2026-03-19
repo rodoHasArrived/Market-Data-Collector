@@ -2,10 +2,10 @@ using System;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.Services;
-using ScheduleManagerService = MarketDataCollector.Ui.Services.ScheduleManagerService;
+using Meridian.Wpf.Services;
+using ScheduleManagerService = Meridian.Ui.Services.ScheduleManagerService;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class ScheduleManagerPage : Page
 {

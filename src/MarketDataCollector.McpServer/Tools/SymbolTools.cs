@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Configuration;
+using Meridian.Contracts.Configuration;
 
-namespace MarketDataCollector.McpServer.Tools;
+namespace Meridian.McpServer.Tools;
 
 /// <summary>
 /// MCP tools for reading and managing symbol configurations.

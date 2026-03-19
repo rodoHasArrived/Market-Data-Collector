@@ -1,9 +1,9 @@
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Storage.Sinks;
+namespace Meridian.Storage.Sinks;
 
 /// <summary>
 /// Health state of an individual storage sink within the composite.

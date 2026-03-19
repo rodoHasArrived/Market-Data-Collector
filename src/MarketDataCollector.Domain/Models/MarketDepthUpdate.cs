@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Domain.Models;
+namespace Meridian.Domain.Models;
 
 /// <summary>
 /// Normalized L2 depth delta update (adapter input into MarketDepthCollector).

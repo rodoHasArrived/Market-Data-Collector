@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using MarketDataCollector.Ui.Services;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Ui.Services.Contracts;
+namespace Meridian.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for notification services used by shared UI services.

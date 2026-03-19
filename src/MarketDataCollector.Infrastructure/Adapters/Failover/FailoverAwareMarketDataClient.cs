@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Failover;
+namespace Meridian.Infrastructure.Adapters.Failover;
 
 /// <summary>
 /// A composite <see cref="IMarketDataClient"/> that wraps multiple provider clients and

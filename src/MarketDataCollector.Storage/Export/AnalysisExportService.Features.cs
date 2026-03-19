@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Feature engineering for exported data. Computes returns, rolling statistics,

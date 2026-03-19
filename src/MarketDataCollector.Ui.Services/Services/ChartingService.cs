@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for advanced charting with candlesticks and technical indicators.

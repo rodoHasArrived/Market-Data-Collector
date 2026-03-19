@@ -1,16 +1,16 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Utilities;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Http;
+using Meridian.Infrastructure.Utilities;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.AlphaVantage;
+namespace Meridian.Infrastructure.Adapters.AlphaVantage;
 
 /// <summary>
 /// Historical data provider using Alpha Vantage API (free tier with API key).

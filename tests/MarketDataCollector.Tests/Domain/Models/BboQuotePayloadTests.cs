@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 /// <summary>
 /// Unit tests for the BboQuotePayload domain model.

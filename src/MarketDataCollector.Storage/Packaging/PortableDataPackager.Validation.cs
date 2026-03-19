@@ -2,9 +2,9 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MarketDataCollector.Application.Serialization;
+using Meridian.Application.Serialization;
 
-namespace MarketDataCollector.Storage.Packaging;
+namespace Meridian.Storage.Packaging;
 
 /// <summary>
 /// Package validation, manifest reading, import/extraction, and utility methods.

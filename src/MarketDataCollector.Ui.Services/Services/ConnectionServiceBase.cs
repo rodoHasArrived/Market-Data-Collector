@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Ui.Services.Contracts;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Abstract base class for connection management shared across desktop applications.

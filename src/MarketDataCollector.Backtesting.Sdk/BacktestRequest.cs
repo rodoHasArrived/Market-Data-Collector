@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Parameters for a single backtest run.</summary>
 /// <param name="From">Inclusive start date.</param>

@@ -1,15 +1,15 @@
 using System.Reflection;
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Canonicalization;
+using Meridian.Contracts.Catalog;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 using NSubstitute;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Canonicalization;
+namespace Meridian.Tests.Application.Canonicalization;
 
 /// <summary>
 /// Golden fixture tests for <see cref="EventCanonicalizer"/> using curated

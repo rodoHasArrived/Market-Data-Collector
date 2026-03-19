@@ -1,14 +1,14 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Models;
 using Serilog;
 
-namespace MarketDataCollector.Application.Subscriptions.Services;
+namespace Meridian.Application.Subscriptions.Services;
 
 /// <summary>
 /// Auto-resubscribe policy that triggers resubscription when integrity events occur.

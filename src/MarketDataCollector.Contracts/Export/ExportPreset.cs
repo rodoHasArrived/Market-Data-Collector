@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Export;
+namespace Meridian.Contracts.Export;
 
 /// <summary>
 /// Represents a saveable export preset configuration.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Mcp.Services;
+namespace Meridian.Mcp.Services;
 
 /// <summary>
 /// Locates the MarketDataCollector repository root and exposes well-known paths

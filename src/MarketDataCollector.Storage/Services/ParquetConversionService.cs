@@ -1,13 +1,13 @@
 using System.IO.Compression;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Logging;
+using Meridian.Storage.Interfaces;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Background service that detects completed trading days' JSONL files

@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Events;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Events;
 using Xunit;
-using ContractPayload = MarketDataCollector.Contracts.Domain.Events.MarketEventPayload;
+using ContractPayload = Meridian.Contracts.Domain.Events.MarketEventPayload;
 
-namespace MarketDataCollector.Tests.Domain.Models;
+namespace Meridian.Tests.Domain.Models;
 
 /// <summary>
 /// Tests for the <see cref="MarketEvent.EffectiveSymbol"/> property

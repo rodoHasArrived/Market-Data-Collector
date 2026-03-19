@@ -2,10 +2,10 @@ using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Analyzes existing archived data to detect gaps and avoid duplicate requests.

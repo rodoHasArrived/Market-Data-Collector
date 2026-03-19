@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Monitoring;
+namespace Meridian.Tests.Monitoring;
 
 public sealed class BackpressureAlertServiceTests : IDisposable
 {

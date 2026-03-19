@@ -1,8 +1,8 @@
 using System.Threading;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Configuration;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Infrastructure.DataSources;
+namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
 /// Interface for real-time data sources providing streaming market data.

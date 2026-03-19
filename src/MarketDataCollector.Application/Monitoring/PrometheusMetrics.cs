@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Application.Subscriptions.Models;
+using Meridian.Application.Canonicalization;
+using Meridian.Application.Subscriptions.Models;
 using Prometheus;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Prometheus metrics exporter for MarketDataCollector.

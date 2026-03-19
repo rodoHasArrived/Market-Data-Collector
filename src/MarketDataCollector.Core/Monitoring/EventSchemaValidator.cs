@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Lightweight schema validation for <see cref="MarketEvent"/> instances before they are persisted.

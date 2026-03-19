@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace MarketDataCollector.Core.Performance;
+namespace Meridian.Core.Performance;
 
 // Each padded long occupies exactly 128 bytes (two typical 64-byte cache lines),
 // ensuring head and tail never share a cache line regardless of surrounding allocations.

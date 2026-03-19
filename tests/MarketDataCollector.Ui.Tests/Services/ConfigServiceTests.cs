@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Contracts.Configuration;
+using Meridian.Ui.Services;
+using Meridian.Ui.Services.Contracts;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="ConfigService"/> — configuration loading/saving,

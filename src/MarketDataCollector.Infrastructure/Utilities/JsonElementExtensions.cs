@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace MarketDataCollector.Infrastructure.Utilities;
+namespace Meridian.Infrastructure.Utilities;
 
 /// <summary>
 /// Extension methods for <see cref="JsonElement"/> to simplify property extraction.

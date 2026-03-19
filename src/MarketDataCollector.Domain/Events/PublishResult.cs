@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Domain.Events;
+namespace Meridian.Domain.Events;
 
 /// <summary>
 /// Detailed result of a <see cref="IMarketEventPublisher.TryPublish"/> call.

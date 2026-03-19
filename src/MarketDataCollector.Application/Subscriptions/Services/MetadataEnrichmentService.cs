@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Subscriptions.Models;
+using Meridian.Application.Logging;
+using Meridian.Application.Subscriptions.Models;
 using Serilog;
 
-namespace MarketDataCollector.Application.Subscriptions.Services;
+namespace Meridian.Application.Subscriptions.Services;
 
 /// <summary>
 /// Service for enriching symbols with metadata (industry, sector, market cap).

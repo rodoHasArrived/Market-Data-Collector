@@ -8,11 +8,11 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using WpfServices = MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = Meridian.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class SetupWizardPage : Page
 {

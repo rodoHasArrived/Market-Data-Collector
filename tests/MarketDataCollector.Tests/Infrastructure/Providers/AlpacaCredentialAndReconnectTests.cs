@@ -1,12 +1,12 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Adapters.Alpaca;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Application.Config;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Adapters.Alpaca;
+using Meridian.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Providers;
+namespace Meridian.Tests.Providers;
 
 /// <summary>
 /// Tests for <see cref="AlpacaMarketDataClient"/> credential validation and

@@ -1,13 +1,13 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Backfill;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Api;
+using Meridian.Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering resilience, cost estimation, and compliance endpoints.

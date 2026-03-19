@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Manifest;
-using MarketDataCollector.Contracts.Session;
-using MarketDataCollector.Ui.Services;
+using Meridian.Contracts.Manifest;
+using Meridian.Contracts.Session;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="ManifestService"/> and its associated manifest models.

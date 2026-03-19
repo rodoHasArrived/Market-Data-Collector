@@ -1,10 +1,10 @@
 using System.Text;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for dry-run validation of configuration and operations.

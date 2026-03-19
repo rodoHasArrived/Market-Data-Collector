@@ -1,11 +1,11 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Storage.Services;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Endpoints for the Data Catalog — unified search and discovery over stored market data.

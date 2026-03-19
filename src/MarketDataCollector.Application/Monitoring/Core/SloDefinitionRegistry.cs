@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.Core;
+namespace Meridian.Application.Monitoring.Core;
 
 /// <summary>
 /// Runtime registry of Service Level Objectives (SLOs) per subsystem.

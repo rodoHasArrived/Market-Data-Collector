@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Threading;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Pipeline;
+using Meridian.Domain.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.Canonicalization;
+namespace Meridian.Application.Canonicalization;
 
 /// <summary>
 /// Decorator that canonicalizes events before forwarding them to the inner publisher.

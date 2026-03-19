@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
 
-namespace MarketDataCollector.Domain.Collectors;
+namespace Meridian.Domain.Collectors;
 
 /// <summary>
 /// Maintains per-symbol Best-Bid/Offer (BBO) state and emits BboQuote market events.

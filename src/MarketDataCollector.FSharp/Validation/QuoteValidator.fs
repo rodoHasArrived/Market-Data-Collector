@@ -1,10 +1,10 @@
 /// Quote event validation using Railway-Oriented Programming.
 /// Validates bid/ask prices, sizes, and spread integrity.
-module MarketDataCollector.FSharp.Validation.QuoteValidator
+module Meridian.FSharp.Validation.QuoteValidator
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Validation.ValidationTypes
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Validation.ValidationTypes
 
 /// Configuration for quote validation
 type QuoteValidationConfig = {

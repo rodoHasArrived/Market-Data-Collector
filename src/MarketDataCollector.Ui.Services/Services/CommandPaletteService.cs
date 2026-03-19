@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service providing a command palette (Ctrl+K) for quick navigation and action execution.

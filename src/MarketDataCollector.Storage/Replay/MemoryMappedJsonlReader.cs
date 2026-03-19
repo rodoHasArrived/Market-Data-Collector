@@ -4,10 +4,10 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Serialization;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Storage.Replay;
+namespace Meridian.Storage.Replay;
 
 /// <summary>
 /// Configuration options for memory-mapped file reading.

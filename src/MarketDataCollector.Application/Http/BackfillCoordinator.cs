@@ -1,23 +1,23 @@
 using System.Threading;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
-using MarketDataCollector.Infrastructure.Adapters.NasdaqDataLink;
-using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
-using MarketDataCollector.Infrastructure.Adapters.Stooq;
-using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Policies;
-using MarketDataCollector.Storage.Sinks;
+using Meridian.Application.Backfill;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core.SymbolResolution;
+using Meridian.Infrastructure.Adapters.NasdaqDataLink;
+using Meridian.Infrastructure.Adapters.OpenFigi;
+using Meridian.Infrastructure.Adapters.Stooq;
+using Meridian.Infrastructure.Adapters.YahooFinance;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Storage;
+using Meridian.Storage.Policies;
+using Meridian.Storage.Sinks;
 using Serilog;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using BackfillRequest = Meridian.Application.Backfill.BackfillRequest;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// Coordinates backfill operations using providers from <see cref="ProviderRegistry"/>.

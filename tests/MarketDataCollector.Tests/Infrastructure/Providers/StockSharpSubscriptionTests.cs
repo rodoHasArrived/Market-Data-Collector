@@ -1,15 +1,15 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.StockSharp;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Application.Config;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.StockSharp;
+using Meridian.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Adapters;
+namespace Meridian.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Unit tests for StockSharp client subscription lifecycle, configuration, and error handling.

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for persisting offline tracking data.

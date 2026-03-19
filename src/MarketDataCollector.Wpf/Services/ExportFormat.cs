@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Supported export formats for sampling/alignment outputs.

@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Thread-safe generic event buffer using a swap-buffer drain strategy to eliminate

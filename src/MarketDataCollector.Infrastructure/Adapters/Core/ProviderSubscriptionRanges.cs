@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Centralized subscription ID ranges for each provider to prevent collisions.

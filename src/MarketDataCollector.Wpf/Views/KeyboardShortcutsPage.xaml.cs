@@ -4,9 +4,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Keyboard shortcuts reference page that dynamically loads shortcuts

@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Serialization;
+using Meridian.Contracts.Domain;
+using Meridian.Domain.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Audit trail for events dropped by the pipeline due to backpressure.

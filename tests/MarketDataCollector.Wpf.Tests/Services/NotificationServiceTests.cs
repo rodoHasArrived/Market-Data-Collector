@@ -1,8 +1,8 @@
-using MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Ui.Services.Services;
-using NotificationType = MarketDataCollector.Ui.Services.NotificationType;
+using Meridian.Wpf.Services;
+using Meridian.Ui.Services.Services;
+using NotificationType = Meridian.Ui.Services.NotificationType;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for NotificationService singleton service.

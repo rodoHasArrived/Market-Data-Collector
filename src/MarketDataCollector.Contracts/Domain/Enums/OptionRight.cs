@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Domain.Enums;
+namespace Meridian.Contracts.Domain.Enums;
 
 /// <summary>
 /// Indicates whether an option contract is a call or a put.

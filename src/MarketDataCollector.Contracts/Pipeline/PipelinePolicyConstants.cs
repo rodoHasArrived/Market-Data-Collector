@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Pipeline;
+namespace Meridian.Contracts.Pipeline;
 
 /// <summary>
 /// Constants for pipeline policy configuration.

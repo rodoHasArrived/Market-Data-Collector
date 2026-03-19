@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Contracts.Domain;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Domain.Collectors;
+namespace Meridian.Domain.Collectors;
 
 /// <summary>
 /// Maintains per-symbol L3 order books from individual order lifecycle events

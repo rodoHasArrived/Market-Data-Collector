@@ -1,15 +1,15 @@
 using System.Net;
 using System.Text;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Stooq;
-using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Stooq;
+using Meridian.Infrastructure.Adapters.YahooFinance;
 using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Backfill;
+namespace Meridian.Tests.Backfill;
 
 /// <summary>
 /// Contract tests for historical data providers using recorded API responses.

@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Help page with tutorials, documentation, and support links.

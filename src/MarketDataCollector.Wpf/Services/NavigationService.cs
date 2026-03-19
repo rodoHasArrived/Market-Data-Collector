@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
-using MarketDataCollector.Ui.Services.Contracts;
-using MarketDataCollector.Ui.Services.Services;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Views;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Ui.Services.Services;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Views;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// WPF-specific navigation service that extends <see cref="NavigationServiceBase"/> with
@@ -165,7 +165,7 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
     {
         try
         {
-            var tourService = MarketDataCollector.Ui.Services.OnboardingTourService.Instance;
+            var tourService = Meridian.Ui.Services.OnboardingTourService.Instance;
             if (tourService.IsTourActive) return;
 
             var tour = tourService.GetTourForPage(pageTag);

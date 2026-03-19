@@ -1,9 +1,9 @@
 using System.Runtime.ExceptionServices;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for NavigationService singleton service.

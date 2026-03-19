@@ -7,20 +7,20 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Resilience;
-using MarketDataCollector.Infrastructure.Shared;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Resilience;
+using Meridian.Infrastructure.Shared;
 using Serilog;
-using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
+using DataSourceType = Meridian.Infrastructure.DataSources.DataSourceType;
 
-namespace MarketDataCollector.Infrastructure.Adapters.NYSE;
+namespace Meridian.Infrastructure.Adapters.NYSE;
 
 /// <summary>
 /// NYSE Direct Connection data source providing real-time and historical market data

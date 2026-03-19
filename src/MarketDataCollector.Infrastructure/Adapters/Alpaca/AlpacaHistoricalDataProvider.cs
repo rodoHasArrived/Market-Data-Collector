@@ -2,14 +2,14 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Alpaca;
+namespace Meridian.Infrastructure.Adapters.Alpaca;
 
 /// <summary>
 /// Historical data provider using Alpaca Markets Data API v2.

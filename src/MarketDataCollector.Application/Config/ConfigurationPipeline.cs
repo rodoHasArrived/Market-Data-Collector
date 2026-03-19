@@ -1,10 +1,10 @@
-using MarketDataCollector.Application.Config.Credentials;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.UI;
+using Meridian.Application.Config.Credentials;
+using Meridian.Application.Logging;
+using Meridian.Application.Services;
+using Meridian.Application.UI;
 using Serilog;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Unified configuration pipeline that always produces a validated, normalized configuration.

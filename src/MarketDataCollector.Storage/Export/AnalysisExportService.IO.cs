@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Documentation generation, loader scripts, and I/O utility methods.

@@ -1,7 +1,7 @@
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Validates <see cref="MarketEvent"/> instances before they are persisted to the WAL or

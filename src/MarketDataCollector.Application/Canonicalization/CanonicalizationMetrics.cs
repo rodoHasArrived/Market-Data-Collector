@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace MarketDataCollector.Application.Canonicalization;
+namespace Meridian.Application.Canonicalization;
 
 /// <summary>
 /// Abstraction over canonicalization counters that enables DI injection and test isolation.

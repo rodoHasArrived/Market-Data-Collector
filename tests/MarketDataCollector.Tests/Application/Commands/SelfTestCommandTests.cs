@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Commands;
+using Meridian.Application.Commands;
 using Serilog;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Commands;
+namespace Meridian.Tests.Application.Commands;
 
 /// <summary>
 /// Tests for the SelfTestCommand CLI handler.

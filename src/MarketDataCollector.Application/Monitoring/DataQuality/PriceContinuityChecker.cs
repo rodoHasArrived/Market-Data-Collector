@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Validates price continuity to detect gap moves, splits, or erroneous data.

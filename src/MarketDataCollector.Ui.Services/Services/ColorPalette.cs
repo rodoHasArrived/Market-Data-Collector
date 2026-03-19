@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Platform-agnostic color palette defining all ARGB color values used across desktop applications.

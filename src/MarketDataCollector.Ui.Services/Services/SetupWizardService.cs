@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Text.Json;
-using MarketDataCollector.Contracts.Configuration;
+using Meridian.Contracts.Configuration;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for guided setup wizard with preflight connectivity checks.

@@ -2,12 +2,12 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.YahooFinance;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MarketDataCollector.Tests.Integration;
+namespace Meridian.Tests.Integration;
 
 /// <summary>
 /// Integration test that fetches Yahoo Finance historical data for configurable ticker symbols.

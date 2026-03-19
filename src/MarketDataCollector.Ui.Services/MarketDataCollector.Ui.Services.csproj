@@ -9,7 +9,7 @@
   <PropertyGroup Condition="'$(IsWindows)' != 'true'">
     <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>MarketDataCollector.Ui.Services</RootNamespace>
+    <RootNamespace>Meridian.Ui.Services</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Exclude all source files on non-Windows -->
@@ -20,7 +20,7 @@
   <PropertyGroup Condition="'$(IsWindows)' == 'true'">
     <TargetFramework>net9.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>MarketDataCollector.Ui.Services</RootNamespace>
+    <RootNamespace>Meridian.Ui.Services</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 

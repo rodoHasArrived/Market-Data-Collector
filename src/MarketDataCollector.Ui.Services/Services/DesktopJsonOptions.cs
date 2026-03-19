@@ -1,13 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Centralized JSON serialization options for desktop applications (WPF).
 /// Consolidates all JsonSerializerOptions to avoid duplication across services.
 ///
-/// This mirrors the patterns from MarketDataCollector.Application.Serialization.MarketDataJsonContext
+/// This mirrors the patterns from Meridian.Application.Serialization.MarketDataJsonContext
 /// but provides desktop-specific defaults without requiring a reference to the core assembly.
 /// </summary>
 public static class DesktopJsonOptions

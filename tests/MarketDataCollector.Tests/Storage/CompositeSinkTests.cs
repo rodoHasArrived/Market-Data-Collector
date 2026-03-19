@@ -1,15 +1,15 @@
 using System.Threading;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Sinks;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Sinks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Unit tests for CompositeSink including circuit breaker health tracking,

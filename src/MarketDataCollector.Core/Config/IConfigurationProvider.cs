@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Configuration change notification event args.

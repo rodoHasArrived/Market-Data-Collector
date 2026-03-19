@@ -1,16 +1,16 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Maintenance;
-using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Application.Services;
+using Meridian.Contracts.Api;
+using Meridian.Storage;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Maintenance;
+using Meridian.Storage.Services;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering admin and maintenance API endpoints.
@@ -300,7 +300,7 @@ public static class AdminEndpoints
         // Admin error codes
         group.MapGet(UiApiRoutes.AdminErrorCodes, () =>
         {
-            var codes = Enum.GetValues<MarketDataCollector.Application.ResultTypes.ErrorCode>()
+            var codes = Enum.GetValues<Meridian.Application.ResultTypes.ErrorCode>()
                 .Select(e => new { code = (int)e, name = e.ToString() });
             return Results.Json(new { errorCodes = codes, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })

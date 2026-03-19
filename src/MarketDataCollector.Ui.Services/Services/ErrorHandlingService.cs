@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Ui.Services.Collections;
+using Meridian.Ui.Services.Collections;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Centralized error handling service that provides consistent error processing,

@@ -1,8 +1,8 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Subscriptions;
-using MarketDataCollector.Infrastructure;
+using Meridian.Application.Config;
+using Meridian.Application.Subscriptions;
+using Meridian.Infrastructure;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 public sealed record StatusSnapshot(
     DateTimeOffset TimestampUtc,

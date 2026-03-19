@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
 using FluentAssertions;
-using MarketDataCollector.Storage.Archival;
+using Meridian.Storage.Archival;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class AtomicFileWriterTests : IDisposable
 {

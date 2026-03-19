@@ -1,12 +1,12 @@
 using System.IO.Compression;
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Storage;
+using Meridian.Contracts.Api;
+using Meridian.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering data sampling API endpoints.

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Named HttpClient identifiers for IHttpClientFactory in desktop apps.
@@ -50,7 +50,7 @@ public static class HttpClientNames
 /// - Better testability through DI
 ///
 /// This intentionally duplicates resilience policies from
-/// MarketDataCollector.Infrastructure.Http.SharedResiliencePolicies because the WPF desktop app
+/// Meridian.Infrastructure.Http.SharedResiliencePolicies because the WPF desktop app
 /// cannot reference the Infrastructure project (XAML compiler limitation).
 /// When updating retry/circuit breaker policies, keep both implementations in sync.
 /// </remarks>

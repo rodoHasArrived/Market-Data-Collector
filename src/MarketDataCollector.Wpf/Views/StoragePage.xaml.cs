@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Ui.Services.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Ui.Services.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class StoragePage : Page
 {

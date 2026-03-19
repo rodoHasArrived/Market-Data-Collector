@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace MarketDataCollector.McpServer.Tests.Tools;
+namespace Meridian.McpServer.Tests.Tools;
 
 /// <summary>
 /// Unit tests for <see cref="BackfillTools"/> input validation (no real provider calls).

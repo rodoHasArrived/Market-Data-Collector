@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Failover;
+namespace Meridian.Infrastructure.Adapters.Failover;
 
 /// <summary>
 /// Singleton registry that holds the runtime <see cref="StreamingFailoverService"/> instance.

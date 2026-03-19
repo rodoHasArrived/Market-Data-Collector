@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 /// <summary>
 /// Tests for the GracefulShutdownService and IFlushable implementations.

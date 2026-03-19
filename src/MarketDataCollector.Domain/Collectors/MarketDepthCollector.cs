@@ -1,12 +1,12 @@
 using System.Buffers;
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
 
-namespace MarketDataCollector.Domain.Collectors;
+namespace Meridian.Domain.Collectors;
 
 /// <summary>
 /// Maintains per-symbol Level-2 order books from depth deltas and emits L2 snapshots + depth integrity events.

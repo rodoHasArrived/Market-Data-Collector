@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Contracts.Configuration;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Infrastructure.Adapters.InteractiveBrokers;
+using Meridian.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Providers;
+namespace Meridian.Tests.Providers;
 
 /// <summary>
 /// Tests for <see cref="IBSimulationClient"/>.

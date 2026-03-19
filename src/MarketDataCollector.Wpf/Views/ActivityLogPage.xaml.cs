@@ -1,11 +1,11 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.ViewModels;
+using Meridian.Wpf.ViewModels;
 using Microsoft.Win32;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Activity log page — thin code-behind.

@@ -1,9 +1,9 @@
 using System.Text;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Generates and displays a user-friendly summary of the configuration at startup.

@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Events;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Pipeline;
+namespace Meridian.Tests.Application.Pipeline;
 
 public sealed class DroppedEventAuditTrailTests : IAsyncLifetime
 {

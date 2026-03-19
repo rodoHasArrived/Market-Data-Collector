@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Completeness score for a specific symbol on a specific date.

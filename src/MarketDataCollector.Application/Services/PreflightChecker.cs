@@ -3,13 +3,13 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Http;
+using Meridian.Storage.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Performs comprehensive pre-flight checks before starting data collection.

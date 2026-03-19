@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Interface for components that can be flushed during shutdown.

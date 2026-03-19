@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Utility for masking sensitive values in logs, diagnostics, and configuration displays.

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Server;
 
-namespace MarketDataCollector.McpServer.Prompts;
+namespace Meridian.McpServer.Prompts;
 
 /// <summary>
 /// MCP prompt templates for common Market Data Collector workflows.

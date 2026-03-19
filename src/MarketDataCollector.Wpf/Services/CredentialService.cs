@@ -10,11 +10,11 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Credentials;
-using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.HttpClientFactoryProvider;
-using HttpClientNames = MarketDataCollector.Ui.Services.HttpClientNames;
+using Meridian.Contracts.Credentials;
+using HttpClientFactoryProvider = Meridian.Ui.Services.HttpClientFactoryProvider;
+using HttpClientNames = Meridian.Ui.Services.HttpClientNames;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Types of credential operations that can fail.

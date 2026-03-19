@@ -1,8 +1,8 @@
 using System.IO.Compression;
 using System.Threading;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Storage.Interfaces;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service for managing data migration between storage tiers.

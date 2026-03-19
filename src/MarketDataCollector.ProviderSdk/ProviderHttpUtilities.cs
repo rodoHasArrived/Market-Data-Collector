@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 
-namespace MarketDataCollector.Infrastructure.Http;
+namespace Meridian.Infrastructure.Http;
 
 /// <summary>
 /// Shared HTTP helpers for provider implementations.

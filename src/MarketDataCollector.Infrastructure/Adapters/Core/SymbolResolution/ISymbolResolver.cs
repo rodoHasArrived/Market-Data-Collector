@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
+namespace Meridian.Infrastructure.Adapters.Core.SymbolResolution;
 
 /// <summary>
 /// Contract for resolving and normalizing symbols across different providers and exchanges.

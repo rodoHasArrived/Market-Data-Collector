@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Pipeline;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Pipeline;
 using Serilog;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Manages the lifecycle of unified <see cref="IngestionJob"/> instances,

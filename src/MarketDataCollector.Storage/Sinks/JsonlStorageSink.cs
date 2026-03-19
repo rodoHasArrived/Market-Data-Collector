@@ -5,15 +5,15 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Serialization;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Storage.Sinks;
+namespace Meridian.Storage.Sinks;
 
 /// <summary>
 /// Configuration options for batched JSONL storage.

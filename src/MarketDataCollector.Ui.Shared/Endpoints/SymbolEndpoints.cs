@@ -1,15 +1,15 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Configuration;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Storage;
+using Meridian.Storage.Services;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering symbol management API endpoints.

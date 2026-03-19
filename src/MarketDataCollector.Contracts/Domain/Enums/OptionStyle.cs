@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Domain.Enums;
+namespace Meridian.Contracts.Domain.Enums;
 
 /// <summary>
 /// Exercise style of an option contract.

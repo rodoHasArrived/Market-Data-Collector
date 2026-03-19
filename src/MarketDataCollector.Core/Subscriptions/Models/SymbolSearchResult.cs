@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Subscriptions.Models;
+namespace Meridian.Application.Subscriptions.Models;
 
 /// <summary>
 /// Represents a single symbol search result from autocomplete.

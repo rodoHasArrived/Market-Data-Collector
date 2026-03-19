@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Archival;
+namespace Meridian.Storage.Archival;
 
 /// <summary>
 /// Manages schema versions for long-term format preservation.

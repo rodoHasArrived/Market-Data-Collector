@@ -1,13 +1,13 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Storage;
+using Meridian.Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering storage quality API endpoints.

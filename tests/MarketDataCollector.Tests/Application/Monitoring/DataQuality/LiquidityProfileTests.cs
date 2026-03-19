@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Contracts.Domain.Enums;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Monitoring.DataQuality;
+namespace Meridian.Tests.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Tests for liquidity-aware monitoring thresholds across GapAnalyzer,
@@ -327,7 +327,7 @@ public sealed class LiquidityProfileTests
     [Fact]
     public void SymbolConfig_DefaultLiquidityIsNull()
     {
-        var config = new MarketDataCollector.Contracts.Configuration.SymbolConfig("SPY");
+        var config = new Meridian.Contracts.Configuration.SymbolConfig("SPY");
 
         config.LiquidityProfile.Should().BeNull();
     }
@@ -335,7 +335,7 @@ public sealed class LiquidityProfileTests
     [Fact]
     public void SymbolConfig_CanSetLiquidityProfile()
     {
-        var config = new MarketDataCollector.Contracts.Configuration.SymbolConfig(
+        var config = new Meridian.Contracts.Configuration.SymbolConfig(
             "OTCPK:XYZ",
             LiquidityProfile: LiquidityProfile.VeryLow);
 

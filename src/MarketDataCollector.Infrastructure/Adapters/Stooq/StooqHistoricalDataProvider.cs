@@ -1,13 +1,13 @@
 using System.Globalization;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Utilities;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
+using Meridian.Infrastructure.Utilities;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Stooq;
+namespace Meridian.Infrastructure.Adapters.Stooq;
 
 /// <summary>
 /// Pulls free end-of-day historical bars from Stooq (https://stooq.pl).

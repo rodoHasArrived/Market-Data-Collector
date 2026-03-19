@@ -1,9 +1,9 @@
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Shared;
+namespace Meridian.Infrastructure.Shared;
 
 /// <summary>
 /// Standardized reconnection helper for WebSocket-based providers.

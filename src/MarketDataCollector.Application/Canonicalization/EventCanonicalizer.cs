@@ -1,13 +1,13 @@
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Catalog;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 using Serilog;
 
-using ContractPayload = MarketDataCollector.Contracts.Domain.Events.MarketEventPayload;
+using ContractPayload = Meridian.Contracts.Domain.Events.MarketEventPayload;
 
-namespace MarketDataCollector.Application.Canonicalization;
+namespace Meridian.Application.Canonicalization;
 
 /// <summary>
 /// Default canonicalization implementation that resolves symbols, maps condition codes,

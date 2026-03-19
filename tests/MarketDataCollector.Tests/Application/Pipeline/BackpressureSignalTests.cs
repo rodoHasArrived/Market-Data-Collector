@@ -1,13 +1,13 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage.Interfaces;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Pipeline;
+namespace Meridian.Tests.Pipeline;
 
 /// <summary>
 /// Tests for the <see cref="IBackpressureSignal"/> implementation on <see cref="EventPipeline"/>,

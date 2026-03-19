@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Infrastructure;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Collectors;
+using Meridian.Infrastructure;
 using Serilog;
 
-namespace MarketDataCollector.Application.Subscriptions;
+namespace Meridian.Application.Subscriptions;
 
 /// <summary>
 /// Applies AppConfig symbol changes at runtime (hot reload).

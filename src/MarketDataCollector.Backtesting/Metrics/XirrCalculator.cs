@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Metrics;
+namespace Meridian.Backtesting.Metrics;
 
 /// <summary>
 /// Computes the extended internal rate of return (XIRR) for an irregular cash-flow series

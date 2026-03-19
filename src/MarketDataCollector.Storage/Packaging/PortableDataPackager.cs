@@ -2,13 +2,13 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage.Archival;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Storage.Archival;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Packaging;
+namespace Meridian.Storage.Packaging;
 
 /// <summary>
 /// Service for creating and importing portable data packages.

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Generates retention compliance reports by scanning stored data against

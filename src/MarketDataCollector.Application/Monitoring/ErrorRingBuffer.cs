@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Thread-safe ring buffer for storing recent errors.

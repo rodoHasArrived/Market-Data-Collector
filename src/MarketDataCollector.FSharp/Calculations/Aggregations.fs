@@ -1,10 +1,10 @@
 /// Aggregation functions for market data analysis.
 /// Includes VWAP, TWAP, volume analysis, and trade flow metrics.
-module MarketDataCollector.FSharp.Calculations.Aggregations
+module Meridian.FSharp.Calculations.Aggregations
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Domain.Sides
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.Sides
 
 /// Calculate Volume-Weighted Average Price (VWAP).
 [<CompiledName("Vwap")>]

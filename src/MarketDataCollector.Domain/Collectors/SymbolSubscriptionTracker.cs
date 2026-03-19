@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Domain;
+using Meridian.Contracts.Domain;
 
-namespace MarketDataCollector.Domain.Collectors;
+namespace Meridian.Domain.Collectors;
 
 /// <summary>
 /// Provides common subscription management functionality for market data collectors.

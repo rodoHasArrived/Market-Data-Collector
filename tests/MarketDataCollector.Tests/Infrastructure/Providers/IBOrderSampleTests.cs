@@ -3,7 +3,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Sample-data fixture tests for Interactive Brokers order messages.

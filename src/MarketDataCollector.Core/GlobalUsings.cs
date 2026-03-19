@@ -1,10 +1,10 @@
 // Global using directives for Core layer (cross-cutting concerns)
-global using MarketDataCollector.Contracts.Configuration;
-global using MarketDataCollector.Contracts.Domain.Enums;
-global using MarketDataCollector.Contracts.Domain.Models;
+global using Meridian.Contracts.Configuration;
+global using Meridian.Contracts.Domain.Enums;
+global using Meridian.Contracts.Domain.Models;
 // Type aliases used by serialization context
-global using MarketEvent = MarketDataCollector.Domain.Events.MarketEvent;
-global using MarketEventPayload = MarketDataCollector.Domain.Events.MarketEventPayload;
+global using MarketEvent = Meridian.Domain.Events.MarketEvent;
+global using MarketEventPayload = Meridian.Domain.Events.MarketEventPayload;
 // Expose internal classes to test assembly for unit testing
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("MarketDataCollector.Tests")]

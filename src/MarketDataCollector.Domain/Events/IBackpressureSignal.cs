@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Domain.Events;
+namespace Meridian.Domain.Events;
 
 /// <summary>
 /// Exposes pipeline backpressure state so upstream producers can self-throttle

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Manifest;
+namespace Meridian.Contracts.Manifest;
 
 /// <summary>
 /// Comprehensive manifest for a collection session or archive package.

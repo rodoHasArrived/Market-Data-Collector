@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Application.Config;
+using Meridian.Application.Services;
+using Meridian.Contracts.Domain.Enums;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Config;
+namespace Meridian.Tests.Config;
 
 /// <summary>
 /// Tests for the unified configuration and deployment model.

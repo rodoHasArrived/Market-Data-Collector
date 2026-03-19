@@ -1,9 +1,9 @@
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Config;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Infrastructure;
+namespace Meridian.Infrastructure;
 
 /// <summary>
 /// Runtime no-op implementation used when no data provider is configured or available.

@@ -1,15 +1,15 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Scheduling;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Application.Backfill;
+using Meridian.Application.Scheduling;
+using Meridian.Contracts.Api;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
+using BackfillResult = Meridian.Application.Backfill.BackfillResult;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering backfill schedule, execution, and utility API endpoints.

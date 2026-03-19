@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Domain.Models;
+using Meridian.Domain.Models;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Models;
+namespace Meridian.Tests.Models;
 
 /// <summary>
 /// Unit tests for the AggregateBar model.

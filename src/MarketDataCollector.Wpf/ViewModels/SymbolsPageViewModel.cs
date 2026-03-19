@@ -4,11 +4,11 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Symbols subscription management page.
@@ -454,7 +454,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
         try
         {
             var symbolDtos = Symbols.Select(s =>
-                new MarketDataCollector.Contracts.Configuration.SymbolConfigDto
+                new Meridian.Contracts.Configuration.SymbolConfigDto
                 {
                     Symbol = s.Symbol,
                     SubscribeTrades = s.SubscribeTrades,

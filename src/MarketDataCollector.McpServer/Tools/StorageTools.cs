@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Catalog;
+using Meridian.Application.Services;
+using Meridian.Contracts.Catalog;
 
-namespace MarketDataCollector.McpServer.Tools;
+namespace Meridian.McpServer.Tools;
 
 /// <summary>
 /// MCP tools for inspecting the storage catalog and querying stored market data.

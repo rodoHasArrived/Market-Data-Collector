@@ -1,12 +1,12 @@
 using System.Diagnostics;
-using MarketDataCollector.Backtesting.FillModels;
-using MarketDataCollector.Backtesting.Metrics;
-using MarketDataCollector.Backtesting.Portfolio;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Replay;
-using MarketDataCollector.Storage.Services;
+using Meridian.Backtesting.FillModels;
+using Meridian.Backtesting.Metrics;
+using Meridian.Backtesting.Portfolio;
+using Meridian.Domain.Events;
+using Meridian.Storage.Replay;
+using Meridian.Storage.Services;
 
-namespace MarketDataCollector.Backtesting.Engine;
+namespace Meridian.Backtesting.Engine;
 
 /// <summary>
 /// Core backtesting engine. Drives a multi-symbol chronological merge over locally-stored

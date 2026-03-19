@@ -1,7 +1,7 @@
 using System.Linq;
-using MarketDataCollector.Application.Config;
+using Meridian.Application.Config;
 
-namespace MarketDataCollector.Application.Backfill;
+namespace Meridian.Application.Backfill;
 
 /// <summary>
 /// Incoming request describing a historical backfill.

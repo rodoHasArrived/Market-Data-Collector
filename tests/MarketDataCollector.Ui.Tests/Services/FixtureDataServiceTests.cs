@@ -1,7 +1,7 @@
 using FluentAssertions;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="FixtureDataService"/> mock data generation.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Mcp.Resources;
+namespace Meridian.Mcp.Resources;
 
 [McpServerResourceType]
 public sealed class ConventionResources(RepoPathService repo)

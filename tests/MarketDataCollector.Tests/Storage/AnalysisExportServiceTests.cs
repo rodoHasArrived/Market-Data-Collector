@@ -2,10 +2,10 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Storage.Export;
+using Meridian.Storage.Export;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public class AnalysisExportServiceTests : IDisposable
 {

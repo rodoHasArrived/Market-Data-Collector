@@ -1,8 +1,8 @@
-using MarketDataCollector.Contracts.Api;
+using Meridian.Contracts.Api;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering login/logout authentication endpoints.

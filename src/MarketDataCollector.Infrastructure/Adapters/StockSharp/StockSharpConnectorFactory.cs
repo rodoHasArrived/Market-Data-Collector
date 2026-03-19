@@ -7,11 +7,11 @@ using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
+namespace Meridian.Infrastructure.Adapters.StockSharp;
 
 /// <summary>
 /// Factory for creating StockSharp connectors based on configuration.

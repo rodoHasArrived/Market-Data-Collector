@@ -2,14 +2,14 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage.Replay;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage.Replay;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public class MemoryMappedJsonlReaderTests : IDisposable
 {

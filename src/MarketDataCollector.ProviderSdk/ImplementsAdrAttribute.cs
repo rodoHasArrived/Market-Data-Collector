@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Contracts;
+namespace Meridian.Infrastructure.Contracts;
 
 /// <summary>
 /// Marks a class as implementing a specific Architectural Decision Record (ADR).

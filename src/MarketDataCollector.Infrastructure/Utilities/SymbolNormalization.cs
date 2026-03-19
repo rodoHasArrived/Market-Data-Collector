@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Utilities;
+namespace Meridian.Infrastructure.Utilities;
 
 /// <summary>
 /// Centralized symbol normalization utilities to eliminate duplicate implementations

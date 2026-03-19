@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services.Contracts;
+namespace Meridian.Ui.Services.Contracts;
 
 /// <summary>
 /// Application theme options.

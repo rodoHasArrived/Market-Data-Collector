@@ -1,10 +1,10 @@
 using System.Diagnostics;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Events;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Events;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
 
-namespace MarketDataCollector.Domain.Events;
+namespace Meridian.Domain.Events;
 
 public sealed record MarketEvent(
     DateTimeOffset Timestamp,

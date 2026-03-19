@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Catalog;
+namespace Meridian.Contracts.Catalog;
 
 /// <summary>
 /// Per-directory metadata index stored as _index.json in each data directory.

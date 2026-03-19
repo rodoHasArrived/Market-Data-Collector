@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Domain.Models;
+namespace Meridian.Domain.Models;
 
 /// <summary>
 /// Represents a real-time OHLCV aggregate bar from streaming data providers.

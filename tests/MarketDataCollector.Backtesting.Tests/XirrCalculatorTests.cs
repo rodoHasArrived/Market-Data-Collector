@@ -1,7 +1,7 @@
 using FluentAssertions;
-using MarketDataCollector.Backtesting.Metrics;
+using Meridian.Backtesting.Metrics;
 
-namespace MarketDataCollector.Backtesting.Tests;
+namespace Meridian.Backtesting.Tests;
 
 public sealed class XirrCalculatorTests
 {

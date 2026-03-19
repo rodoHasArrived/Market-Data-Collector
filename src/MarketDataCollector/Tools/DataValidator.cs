@@ -1,11 +1,11 @@
 using System.IO.Compression;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Logging;
+using Meridian.Domain.Events;
 using Serilog;
 
-namespace MarketDataCollector.Tools;
+namespace Meridian.Tools;
 
 /// <summary>
 /// Validates JSONL data files for integrity and completeness.

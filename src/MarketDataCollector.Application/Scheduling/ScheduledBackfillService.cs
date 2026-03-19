@@ -1,7 +1,7 @@
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Application.Scheduling;
+namespace Meridian.Application.Scheduling;
 
 /// <summary>
 /// Background service that monitors backfill schedules and triggers executions at scheduled times.

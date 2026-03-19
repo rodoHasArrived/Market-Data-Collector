@@ -1,9 +1,9 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
+using Meridian.Contracts.Api;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// HTTP endpoint extensions for data quality monitoring dashboard.

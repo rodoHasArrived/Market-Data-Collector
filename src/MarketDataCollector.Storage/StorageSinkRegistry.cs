@@ -1,8 +1,8 @@
 using System.Reflection;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Storage.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Storage;
+namespace Meridian.Storage;
 
 /// <summary>
 /// Registry for discovering and registering <see cref="IStorageSink"/> plugins

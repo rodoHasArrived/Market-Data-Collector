@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using FluentAssertions;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Services;
 using Xunit;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Concrete test implementation of LoggingServiceBase.

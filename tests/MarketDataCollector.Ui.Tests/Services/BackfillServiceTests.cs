@@ -1,7 +1,7 @@
 using FluentAssertions;
-using MarketDataCollector.Ui.Services;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="BackfillService"/> business logic.
@@ -180,7 +180,7 @@ public sealed class BackfillServiceTests
     {
         // Arrange
         var service = new BackfillService(useInstance: false);
-        SetCurrentProgress(service, new MarketDataCollector.Contracts.Backfill.BackfillProgress { Status = status });
+        SetCurrentProgress(service, new Meridian.Contracts.Backfill.BackfillProgress { Status = status });
 
         // Act
         var result = service.IsRunning;
@@ -197,7 +197,7 @@ public sealed class BackfillServiceTests
     {
         // Arrange
         var service = new BackfillService(useInstance: false);
-        SetCurrentProgress(service, new MarketDataCollector.Contracts.Backfill.BackfillProgress { Status = status });
+        SetCurrentProgress(service, new Meridian.Contracts.Backfill.BackfillProgress { Status = status });
 
         // Act
         var result = service.IsPaused;
@@ -206,7 +206,7 @@ public sealed class BackfillServiceTests
         result.Should().Be(expectedPaused);
     }
 
-    private static void SetCurrentProgress(BackfillService service, MarketDataCollector.Contracts.Backfill.BackfillProgress? progress)
+    private static void SetCurrentProgress(BackfillService service, Meridian.Contracts.Backfill.BackfillProgress? progress)
     {
         var field = typeof(BackfillService)
             .GetField("_currentProgress", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)

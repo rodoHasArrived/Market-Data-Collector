@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Defines export profiles for different external analysis tools.

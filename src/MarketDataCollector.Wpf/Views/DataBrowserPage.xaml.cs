@@ -9,10 +9,10 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.ViewModels;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.ViewModels;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class DataBrowserPage : Page
 {

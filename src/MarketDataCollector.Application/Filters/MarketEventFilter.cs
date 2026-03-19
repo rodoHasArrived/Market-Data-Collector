@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Application.Filters;
+namespace Meridian.Application.Filters;
 
 public sealed class MarketEventFilter
 {

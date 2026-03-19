@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.McpServer.Resources;
+namespace Meridian.McpServer.Resources;
 
 /// <summary>
 /// MCP resources that expose read-only market data catalogs to the LLM context.

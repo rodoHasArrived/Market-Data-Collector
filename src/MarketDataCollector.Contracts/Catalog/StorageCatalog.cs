@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Catalog;
+namespace Meridian.Contracts.Catalog;
 
 /// <summary>
 /// Root storage catalog manifest stored at _catalog/manifest.json.

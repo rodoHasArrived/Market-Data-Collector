@@ -3,10 +3,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.ViewModels;
+using Meridian.Ui.Services;
+using Meridian.Wpf.ViewModels;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class TimeSeriesAlignmentPage : Page
 {

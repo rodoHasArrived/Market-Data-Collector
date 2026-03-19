@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Config.Credentials;
+namespace Meridian.Application.Config.Credentials;
 
 /// <summary>
 /// Represents the current authentication status of a provider credential.

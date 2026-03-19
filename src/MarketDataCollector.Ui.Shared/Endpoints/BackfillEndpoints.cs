@@ -1,15 +1,15 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Contracts.Api;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
-using AppBackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
-using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
+using AppBackfillRequest = Meridian.Application.Backfill.BackfillRequest;
+using AppBackfillResult = Meridian.Application.Backfill.BackfillResult;
+using BackfillRequest = Meridian.Application.Backfill.BackfillRequest;
+using BackfillResult = Meridian.Application.Backfill.BackfillResult;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering backfill-related API endpoints.
@@ -136,7 +136,7 @@ public static class BackfillEndpoints
         })
         .WithName("GetBackfillProviderMetadata")
         .WithDescription("Returns metadata descriptors for all known backfill providers.")
-        .Produces<MarketDataCollector.Contracts.Configuration.BackfillProviderMetadataDto[]>(200);
+        .Produces<Meridian.Contracts.Configuration.BackfillProviderMetadataDto[]>(200);
 
         // Get provider statuses (config + health combined, uses defaults when no config available)
         group.MapGet(UiApiRoutes.BackfillProviderStatuses, () =>
@@ -147,7 +147,7 @@ public static class BackfillEndpoints
         })
         .WithName("GetBackfillProviderStatuses")
         .WithDescription("Returns combined status of all backfill providers including config and health.")
-        .Produces<MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[]>(200);
+        .Produces<Meridian.Contracts.Configuration.BackfillProviderStatusDto[]>(200);
 
         // Get fallback chain preview (enabled providers only, sorted by priority)
         group.MapGet(UiApiRoutes.BackfillFallbackChain, () =>
@@ -159,7 +159,7 @@ public static class BackfillEndpoints
         })
         .WithName("GetBackfillFallbackChain")
         .WithDescription("Returns the effective fallback chain sorted by priority (enabled providers only).")
-        .Produces<MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[]>(200);
+        .Produces<Meridian.Contracts.Configuration.BackfillProviderStatusDto[]>(200);
 
         // Dry-run backfill plan
         group.MapPost(UiApiRoutes.BackfillDryRunPlan, async (HttpRequest request) =>
@@ -177,20 +177,20 @@ public static class BackfillEndpoints
         })
         .WithName("PostBackfillDryRunPlan")
         .WithDescription("Generates a dry-run backfill plan showing which providers would be selected per symbol.")
-        .Produces<MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto>(200)
+        .Produces<Meridian.Contracts.Configuration.BackfillDryRunPlanDto>(200)
         .Produces(400);
 
         // Get audit log (stub — desktop persists locally, server returns empty)
         group.MapGet(UiApiRoutes.BackfillProviderConfigAudit, () =>
         {
-            return Results.Json(Array.Empty<MarketDataCollector.Contracts.Configuration.ProviderConfigAuditEntryDto>());
+            return Results.Json(Array.Empty<Meridian.Contracts.Configuration.ProviderConfigAuditEntryDto>());
         })
         .WithName("GetBackfillProviderConfigAudit")
         .WithDescription("Returns the audit trail of provider configuration changes.")
-        .Produces<MarketDataCollector.Contracts.Configuration.ProviderConfigAuditEntryDto[]>(200);
+        .Produces<Meridian.Contracts.Configuration.ProviderConfigAuditEntryDto[]>(200);
     }
 
-    private static MarketDataCollector.Contracts.Configuration.BackfillProviderMetadataDto[] GetKnownProviderMetadata()
+    private static Meridian.Contracts.Configuration.BackfillProviderMetadataDto[] GetKnownProviderMetadata()
     {
         return
         [
@@ -205,17 +205,17 @@ public static class BackfillEndpoints
         ];
     }
 
-    private static MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[] BuildProviderStatuses(
-        MarketDataCollector.Contracts.Configuration.BackfillProviderMetadataDto[] metadata,
-        MarketDataCollector.Contracts.Configuration.BackfillProvidersConfigDto? config)
+    private static Meridian.Contracts.Configuration.BackfillProviderStatusDto[] BuildProviderStatuses(
+        Meridian.Contracts.Configuration.BackfillProviderMetadataDto[] metadata,
+        Meridian.Contracts.Configuration.BackfillProvidersConfigDto? config)
     {
         return metadata.Select(m =>
         {
             var opts = GetProviderOptionsFromConfig(config, m.ProviderId);
-            return new MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto
+            return new Meridian.Contracts.Configuration.BackfillProviderStatusDto
             {
                 Metadata = m,
-                Options = opts ?? new MarketDataCollector.Contracts.Configuration.BackfillProviderOptionsDto
+                Options = opts ?? new Meridian.Contracts.Configuration.BackfillProviderOptionsDto
                 {
                     Enabled = true,
                     Priority = m.DefaultPriority,
@@ -230,8 +230,8 @@ public static class BackfillEndpoints
         .ToArray();
     }
 
-    private static MarketDataCollector.Contracts.Configuration.BackfillProviderOptionsDto? GetProviderOptionsFromConfig(
-        MarketDataCollector.Contracts.Configuration.BackfillProvidersConfigDto? config,
+    private static Meridian.Contracts.Configuration.BackfillProviderOptionsDto? GetProviderOptionsFromConfig(
+        Meridian.Contracts.Configuration.BackfillProvidersConfigDto? config,
         string providerId)
     {
         if (config == null)
@@ -250,20 +250,20 @@ public static class BackfillEndpoints
         };
     }
 
-    private static MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto BuildDryRunPlan(
+    private static Meridian.Contracts.Configuration.BackfillDryRunPlanDto BuildDryRunPlan(
         string[] symbols,
-        MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[] enabledChain)
+        Meridian.Contracts.Configuration.BackfillProviderStatusDto[] enabledChain)
     {
         if (enabledChain.Length == 0)
         {
-            return new MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto
+            return new Meridian.Contracts.Configuration.BackfillDryRunPlanDto
             {
                 ValidationErrors = ["No enabled providers available. Enable at least one provider."],
             };
         }
 
         var sequence = enabledChain.Select(c => c.Metadata.ProviderId).ToArray();
-        var plans = symbols.Select(s => new MarketDataCollector.Contracts.Configuration.BackfillSymbolPlanDto
+        var plans = symbols.Select(s => new Meridian.Contracts.Configuration.BackfillSymbolPlanDto
         {
             Symbol = s,
             ProviderSequence = sequence,
@@ -271,7 +271,7 @@ public static class BackfillEndpoints
             Reason = $"Highest priority enabled provider (priority {enabledChain[0].Options.Priority ?? enabledChain[0].Metadata.DefaultPriority})",
         }).ToArray();
 
-        return new MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto
+        return new Meridian.Contracts.Configuration.BackfillDryRunPlanDto
         {
             Symbols = plans,
         };

@@ -1,7 +1,7 @@
-using MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Infrastructure.Adapters.InteractiveBrokers;
+using Meridian.Tests.TestHelpers;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Applies the shared <see cref="MarketDataClientContractTests{TClient}"/> suite to

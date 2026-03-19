@@ -1,15 +1,15 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Alpaca;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Finnhub;
-using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
-using MarketDataCollector.Infrastructure.Adapters.Polygon;
+using Meridian.Application.Logging;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Alpaca;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Finnhub;
+using Meridian.Infrastructure.Adapters.OpenFigi;
+using Meridian.Infrastructure.Adapters.Polygon;
 using Serilog;
 
-namespace MarketDataCollector.Application.Subscriptions.Services;
+namespace Meridian.Application.Subscriptions.Services;
 
 /// <summary>
 /// Service for searching and autocompleting symbols across multiple providers.

@@ -1,13 +1,13 @@
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Backtesting.Engine;
-using MarketDataCollector.Backtesting.Sdk;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Services;
+using Meridian.Backtesting.Engine;
+using Meridian.Backtesting.Sdk;
+using Meridian.Storage;
+using Meridian.Storage.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// WPF singleton wrapper around <see cref="BacktestEngine"/> that manages the active backtest

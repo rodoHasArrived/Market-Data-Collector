@@ -5,15 +5,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Ui.Services.Services;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
-using SearchService = MarketDataCollector.Ui.Services.SearchService;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Ui.Services.Services;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Services;
+using SearchService = Meridian.Ui.Services.SearchService;
+using WpfServices = Meridian.Wpf.Services;
 using SysNavigation = System.Windows.Navigation;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Main page with workspace-based navigation sidebar (Monitor, Collect, Storage, Quality, Settings)

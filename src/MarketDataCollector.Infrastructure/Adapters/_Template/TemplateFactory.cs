@@ -21,14 +21,14 @@
 //
 // See docs/development/provider-implementation.md for the full step-by-step guide.
 
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.ProviderSdk;
+using Meridian.Domain.Collectors;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.DataSources;
+using Meridian.ProviderSdk;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Template;
+namespace Meridian.Infrastructure.Adapters.Template;
 
 /// <summary>
 /// Factory helpers for creating and registering Template provider instances.

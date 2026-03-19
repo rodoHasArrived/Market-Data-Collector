@@ -4,11 +4,11 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using K4os.Compression.LZ4;
 using K4os.Compression.LZ4.Streams;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 using ZstdSharp;
 
-namespace MarketDataCollector.Storage.Archival;
+namespace Meridian.Storage.Archival;
 
 /// <summary>
 /// Manages compression profiles for different archival use cases.

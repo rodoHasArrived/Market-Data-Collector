@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Credentials;
+namespace Meridian.Application.Credentials;
 
 /// <summary>
 /// Credential types supported by the store.

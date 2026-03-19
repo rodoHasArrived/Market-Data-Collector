@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
+using Meridian.Contracts.Api;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for managing data storage, file operations, and storage statistics.

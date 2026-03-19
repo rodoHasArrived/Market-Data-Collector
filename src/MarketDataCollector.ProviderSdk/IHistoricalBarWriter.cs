@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Models;
+using Meridian.Contracts.Domain.Models;
 
-namespace MarketDataCollector.ProviderSdk;
+namespace Meridian.ProviderSdk;
 
 /// <summary>
 /// Abstraction for writing historical bar data to storage.

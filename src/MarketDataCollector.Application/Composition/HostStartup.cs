@@ -1,26 +1,26 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Subscriptions;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Policies;
-using MarketDataCollector.Storage.Sinks;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Application.Services;
+using Meridian.Application.Subscriptions;
+using Meridian.Application.UI;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
+using Meridian.Storage;
+using Meridian.Storage.Policies;
+using Meridian.Storage.Sinks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Composition;
+namespace Meridian.Application.Composition;
 
 /// <summary>
 /// Unified startup class that provides a single entry point for all host types.

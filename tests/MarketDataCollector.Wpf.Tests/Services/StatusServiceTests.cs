@@ -1,7 +1,7 @@
-using MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Wpf.Services;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for StatusService singleton service.

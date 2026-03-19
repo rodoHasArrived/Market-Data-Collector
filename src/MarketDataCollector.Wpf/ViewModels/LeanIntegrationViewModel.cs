@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Input;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Lean Integration page.

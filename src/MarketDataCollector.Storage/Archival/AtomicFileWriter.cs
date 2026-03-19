@@ -2,10 +2,10 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Archival;
+namespace Meridian.Storage.Archival;
 
 /// <summary>
 /// Provides atomic file write operations using write-to-temp-then-rename pattern.

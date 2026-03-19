@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Storage;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.UI;
+using Meridian.Storage;
 using Serilog;
 
-namespace MarketDataCollector.Application.Subscriptions.Services;
+namespace Meridian.Application.Subscriptions.Services;
 
 /// <summary>
 /// Unified service for symbol management operations including:

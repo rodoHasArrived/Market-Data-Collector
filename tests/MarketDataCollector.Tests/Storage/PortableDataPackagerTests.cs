@@ -3,10 +3,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using FluentAssertions;
-using MarketDataCollector.Storage.Packaging;
+using Meridian.Storage.Packaging;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public class PortableDataPackagerTests : IDisposable
 {

@@ -1,11 +1,11 @@
 using System.Net.WebSockets;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Polly;
 using Polly.Retry;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Resilience;
+namespace Meridian.Infrastructure.Resilience;
 
 /// <summary>
 /// WebSocket resilience policies using Polly.

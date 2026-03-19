@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>Backtest summary row displayed in the Recent Backtests side panel.</summary>
 public sealed class BacktestDisplayItem

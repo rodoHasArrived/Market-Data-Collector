@@ -1,10 +1,10 @@
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Periodically writes a small status snapshot JSON file for dashboards.

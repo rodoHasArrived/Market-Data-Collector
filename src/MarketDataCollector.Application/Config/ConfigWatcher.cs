@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Watches a JSON config file and raises debounced change events with the parsed AppConfig.

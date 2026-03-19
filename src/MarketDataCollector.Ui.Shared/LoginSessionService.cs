@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MarketDataCollector.Ui.Shared;
+namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// In-memory session store for username/password authentication.

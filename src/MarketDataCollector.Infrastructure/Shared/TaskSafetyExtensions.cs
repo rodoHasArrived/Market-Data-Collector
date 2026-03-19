@@ -1,7 +1,7 @@
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Shared;
+namespace Meridian.Infrastructure.Shared;
 
 /// <summary>
 /// Extension methods for safely handling fire-and-forget async operations.

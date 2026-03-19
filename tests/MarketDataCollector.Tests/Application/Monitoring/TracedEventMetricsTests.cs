@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Tracing;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Tracing;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Monitoring;
+namespace Meridian.Tests.Application.Monitoring;
 
 /// <summary>
 /// Tests for the TracedEventMetrics decorator that wraps IEventMetrics

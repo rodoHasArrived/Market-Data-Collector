@@ -1,7 +1,7 @@
-using MarketDataCollector.Infrastructure.DataSources;
+using Meridian.Infrastructure.DataSources;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Defines a provider module that can register provider services and data sources.

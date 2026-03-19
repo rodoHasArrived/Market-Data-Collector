@@ -1,15 +1,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Ui.Services.Contracts;
 
-namespace MarketDataCollector.Wpf.Contracts;
+namespace Meridian.Wpf.Contracts;
 
 /// <summary>
 /// Interface for managing provider connections with auto-reconnection support.
 /// Enables testability and dependency injection.
 /// Phase 6C.2: Connection types (ConnectionState, ConnectionSettings, event args)
-/// are now shared from MarketDataCollector.Ui.Services.Contracts.
+/// are now shared from Meridian.Ui.Services.Contracts.
 /// </summary>
 public interface IConnectionService : IDisposable
 {

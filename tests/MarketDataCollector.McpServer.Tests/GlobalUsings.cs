@@ -1,11 +1,11 @@
 global using System.Text.Json;
 global using FluentAssertions;
-global using MarketDataCollector.Application.Backfill;
-global using MarketDataCollector.Application.Config;
-global using MarketDataCollector.Application.UI;
-global using MarketDataCollector.Contracts.Catalog;
-global using MarketDataCollector.McpServer.Tools;
-global using MarketDataCollector.Storage.Interfaces;
+global using Meridian.Application.Backfill;
+global using Meridian.Application.Config;
+global using Meridian.Application.UI;
+global using Meridian.Contracts.Catalog;
+global using Meridian.McpServer.Tools;
+global using Meridian.Storage.Interfaces;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Logging.Abstractions;
 global using Moq;

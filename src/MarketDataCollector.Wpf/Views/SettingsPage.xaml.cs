@@ -8,10 +8,10 @@ using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Settings page for application configuration, notifications, and credentials.

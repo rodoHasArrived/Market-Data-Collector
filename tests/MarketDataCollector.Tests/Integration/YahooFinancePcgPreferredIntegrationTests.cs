@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.YahooFinance;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MarketDataCollector.Tests.Integration;
+namespace Meridian.Tests.Integration;
 
 /// <summary>
 /// Integration tests that pull real historical data from Yahoo Finance

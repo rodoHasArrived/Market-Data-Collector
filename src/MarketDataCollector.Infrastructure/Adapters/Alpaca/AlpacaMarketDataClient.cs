@@ -2,19 +2,19 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Resilience;
-using MarketDataCollector.Infrastructure.Shared;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Resilience;
+using Meridian.Infrastructure.Shared;
 using Serilog;
-using AlpacaOptions = MarketDataCollector.Application.Config.AlpacaOptions;
+using AlpacaOptions = Meridian.Application.Config.AlpacaOptions;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Alpaca;
+namespace Meridian.Infrastructure.Adapters.Alpaca;
 
 /// <summary>
 /// Alpaca Market Data client (WebSocket) that implements the IMarketDataClient abstraction.

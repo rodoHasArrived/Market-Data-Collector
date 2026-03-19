@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Reactive.Subjects;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.DataSources;
+namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
 /// Base class providing common functionality for data source implementations.

@@ -8,13 +8,13 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Archive;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Serialization;
-using HttpClientFactoryProvider = MarketDataCollector.Ui.Services.HttpClientFactoryProvider;
-using HttpClientNames = MarketDataCollector.Ui.Services.HttpClientNames;
+using Meridian.Contracts.Archive;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Serialization;
+using HttpClientFactoryProvider = Meridian.Ui.Services.HttpClientFactoryProvider;
+using HttpClientNames = Meridian.Ui.Services.HttpClientNames;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for monitoring archive health and verification.

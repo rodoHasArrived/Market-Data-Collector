@@ -1,12 +1,12 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Contracts.Api;
+using Meridian.Storage;
+using Meridian.Storage.Services;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering storage operation API endpoints.
@@ -549,7 +549,7 @@ public static class StorageEndpoints
         {
             try
             {
-                var conversionService = new MarketDataCollector.Storage.Services.ParquetConversionService(opts);
+                var conversionService = new Meridian.Storage.Services.ParquetConversionService(opts);
                 var result = await conversionService.ConvertCompletedDaysAsync(ct: ct);
                 return Results.Json(new
                 {

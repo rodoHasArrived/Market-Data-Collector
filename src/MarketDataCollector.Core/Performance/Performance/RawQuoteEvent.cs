@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace MarketDataCollector.Core.Performance;
+namespace Meridian.Core.Performance;
 
 /// <summary>
 /// Zero-allocation struct representation of a Best-Bid/Offer quote event for the hot path.

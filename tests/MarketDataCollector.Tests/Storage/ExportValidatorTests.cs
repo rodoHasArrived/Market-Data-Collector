@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Export;
-using MarketDataCollector.Storage.Export;
+using Meridian.Contracts.Export;
+using Meridian.Storage.Export;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class ExportValidatorTests : IDisposable
 {

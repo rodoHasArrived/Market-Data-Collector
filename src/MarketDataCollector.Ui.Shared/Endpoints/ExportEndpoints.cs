@@ -1,14 +1,14 @@
 using System.Globalization;
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Export;
+using Meridian.Contracts.Api;
+using Meridian.Storage;
+using Meridian.Storage.Export;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering data export API endpoints.

@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.Core;
+namespace Meridian.Application.Monitoring.Core;
 
 /// <summary>
 /// Default implementation of IHealthCheckAggregator that runs health checks

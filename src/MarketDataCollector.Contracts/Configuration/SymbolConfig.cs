@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Contracts.Configuration;
+namespace Meridian.Contracts.Configuration;
 
 /// <summary>
 /// Configuration for a subscribed symbol and how to build its IB contract.

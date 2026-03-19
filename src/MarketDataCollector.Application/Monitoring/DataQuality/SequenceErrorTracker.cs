@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Tracks and reports sequence errors in market data streams.

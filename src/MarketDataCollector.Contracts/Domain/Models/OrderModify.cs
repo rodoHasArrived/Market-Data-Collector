@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Events;
+using Meridian.Contracts.Domain.Events;
 
-namespace MarketDataCollector.Contracts.Domain.Models;
+namespace Meridian.Contracts.Domain.Models;
 
 /// <summary>
 /// Represents a modification to an existing order's price, size, or flags.

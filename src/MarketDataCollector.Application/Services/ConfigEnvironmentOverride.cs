@@ -1,10 +1,10 @@
 using System.Reflection;
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for applying environment variable overrides to configuration.

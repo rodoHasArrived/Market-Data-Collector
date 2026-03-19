@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Indicators;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Indicators;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Indicators;
+namespace Meridian.Tests.Indicators;
 
 /// <summary>
 /// Tests for TechnicalIndicatorService.

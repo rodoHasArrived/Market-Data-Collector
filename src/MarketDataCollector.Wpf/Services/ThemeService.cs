@@ -1,9 +1,9 @@
 using System;
 using System.Windows;
-using MarketDataCollector.Ui.Services.Contracts;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// WPF-specific theme service that extends <see cref="ThemeServiceBase"/> with

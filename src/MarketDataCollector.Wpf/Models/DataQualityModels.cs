@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>Single data point for the quality trend sparkline.</summary>
 public sealed class TrendPoint

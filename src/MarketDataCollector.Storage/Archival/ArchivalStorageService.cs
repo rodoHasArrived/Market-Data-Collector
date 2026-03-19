@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Logging;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Archival;
+namespace Meridian.Storage.Archival;
 
 /// <summary>
 /// Archival-first storage service with Write-Ahead Logging for crash-safe persistence.

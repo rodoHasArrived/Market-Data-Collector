@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.ResultTypes;
+namespace Meridian.Application.ResultTypes;
 
 /// <summary>
 /// Represents a standardized error from any operation in the system.

@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Core.Scheduling;
+using Meridian.Core.Scheduling;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Application.Scheduling;
+namespace Meridian.Application.Scheduling;
 
 /// <summary>
 /// Manages backfill schedules including CRUD operations, persistence, and status tracking.

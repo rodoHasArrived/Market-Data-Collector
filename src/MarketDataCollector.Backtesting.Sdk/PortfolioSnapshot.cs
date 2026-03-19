@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Point-in-time snapshot of the simulated portfolio, recorded at each simulated day-end.</summary>
 public sealed record PortfolioSnapshot(

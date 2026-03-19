@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Serialization;
+using Meridian.Storage.Interfaces;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// In-memory implementation of source and symbol registry with JSON persistence.

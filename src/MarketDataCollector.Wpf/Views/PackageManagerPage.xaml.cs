@@ -3,14 +3,14 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Services;
-using NotificationService = MarketDataCollector.Wpf.Services.NotificationService;
-using PackageCreationOptions = MarketDataCollector.Ui.Services.PackageCreationOptions;
-using PackageImportOptions = MarketDataCollector.Ui.Services.PackageImportOptions;
-using PortablePackagerService = MarketDataCollector.Ui.Services.PortablePackagerService;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Services;
+using NotificationService = Meridian.Wpf.Services.NotificationService;
+using PackageCreationOptions = Meridian.Ui.Services.PackageCreationOptions;
+using PackageImportOptions = Meridian.Ui.Services.PackageImportOptions;
+using PortablePackagerService = Meridian.Ui.Services.PortablePackagerService;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class PackageManagerPage : Page
 {

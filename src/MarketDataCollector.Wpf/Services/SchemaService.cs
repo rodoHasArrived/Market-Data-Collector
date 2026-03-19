@@ -2,15 +2,15 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Schema;
+using Meridian.Contracts.Schema;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// WPF-specific schema service with data dictionary persistence and export capabilities.
 /// Extends SchemaServiceBase for shared schema creation and export logic.
 /// </summary>
-public sealed class SchemaService : MarketDataCollector.Ui.Services.SchemaServiceBase
+public sealed class SchemaService : Meridian.Ui.Services.SchemaServiceBase
 {
     private static readonly Lazy<SchemaService> _instance = new(() => new SchemaService());
     public static SchemaService Instance => _instance.Value;
@@ -23,7 +23,7 @@ public sealed class SchemaService : MarketDataCollector.Ui.Services.SchemaServic
         _schemasPath = Path.Combine(AppContext.BaseDirectory, "_catalog", "schemas");
     }
 
-    public event EventHandler<MarketDataCollector.Ui.Services.DataDictionaryEventArgs>? DictionaryGenerated;
+    public event EventHandler<Meridian.Ui.Services.DataDictionaryEventArgs>? DictionaryGenerated;
 
     public async Task<DataDictionary> GetDataDictionaryAsync()
     {
@@ -43,7 +43,7 @@ public sealed class SchemaService : MarketDataCollector.Ui.Services.SchemaServic
         var dictionary = CreateDataDictionary();
         _dataDictionary = dictionary;
         await SaveDataDictionaryAsync(dictionary);
-        DictionaryGenerated?.Invoke(this, new MarketDataCollector.Ui.Services.DataDictionaryEventArgs { Dictionary = dictionary });
+        DictionaryGenerated?.Invoke(this, new Meridian.Ui.Services.DataDictionaryEventArgs { Dictionary = dictionary });
         return dictionary;
     }
 

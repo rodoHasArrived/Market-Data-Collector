@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Consolidated capability flags for historical data providers.

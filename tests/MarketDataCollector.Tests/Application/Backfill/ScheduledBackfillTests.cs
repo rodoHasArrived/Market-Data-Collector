@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Scheduling;
-using MarketDataCollector.Core.Scheduling;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Application.Scheduling;
+using Meridian.Core.Scheduling;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Backfill;
+namespace Meridian.Tests.Backfill;
 
 /// <summary>
 /// Unit tests for the cron expression parser.

@@ -1,11 +1,11 @@
 /// Market event types with type-safe discriminated unions.
 /// Provides exhaustive pattern matching for all event types
 /// and eliminates null reference exceptions.
-module MarketDataCollector.FSharp.Domain.MarketEvents
+module Meridian.FSharp.Domain.MarketEvents
 
 open System
-open MarketDataCollector.FSharp.Domain.Sides
-open MarketDataCollector.FSharp.Domain.Integrity
+open Meridian.FSharp.Domain.Sides
+open Meridian.FSharp.Domain.Integrity
 
 /// Trade event representing a single executed trade.
 [<CLIMutable>]

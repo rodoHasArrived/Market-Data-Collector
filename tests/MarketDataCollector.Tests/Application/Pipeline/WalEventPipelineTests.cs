@@ -1,14 +1,14 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage.Archival;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage.Archival;
+using Meridian.Storage.Interfaces;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Pipeline;
+namespace Meridian.Tests.Pipeline;
 
 /// <summary>
 /// Tests for the EventPipeline's Write-Ahead Log (WAL) integration.

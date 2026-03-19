@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Domain.Events.Publishers;
+namespace Meridian.Domain.Events.Publishers;
 
 /// <summary>
 /// Composite publisher that publishes events to multiple publishers.

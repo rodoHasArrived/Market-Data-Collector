@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Schema;
+namespace Meridian.Contracts.Schema;
 
 /// <summary>
 /// Contract for upgrading a stored record from an older schema version to the current one.

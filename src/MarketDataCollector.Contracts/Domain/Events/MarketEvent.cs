@@ -1,7 +1,7 @@
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
 
-namespace MarketDataCollector.Contracts.Domain.Events;
+namespace Meridian.Contracts.Domain.Events;
 
 /// <summary>
 /// Top-level container for all market events with timestamp, symbol, type, and payload.

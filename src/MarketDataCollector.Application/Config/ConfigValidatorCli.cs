@@ -1,10 +1,10 @@
 using System.Text.Json;
 using FluentValidation;
 using FluentValidation.Results;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// CLI tool for validating configuration files without starting the collector.

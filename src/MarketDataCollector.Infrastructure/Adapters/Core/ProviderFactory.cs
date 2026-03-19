@@ -1,28 +1,28 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Adapters.Alpaca;
-using MarketDataCollector.Infrastructure.Adapters.AlphaVantage;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Finnhub;
-using MarketDataCollector.Infrastructure.Adapters.NasdaqDataLink;
-using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
-using MarketDataCollector.Infrastructure.Adapters.Polygon;
-using MarketDataCollector.Infrastructure.Adapters.Stooq;
-using MarketDataCollector.Infrastructure.Adapters.Tiingo;
-using MarketDataCollector.Infrastructure.Adapters.YahooFinance;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure.Adapters.Alpaca;
+using Meridian.Infrastructure.Adapters.AlphaVantage;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Finnhub;
+using Meridian.Infrastructure.Adapters.NasdaqDataLink;
+using Meridian.Infrastructure.Adapters.OpenFigi;
+using Meridian.Infrastructure.Adapters.Polygon;
+using Meridian.Infrastructure.Adapters.Stooq;
+using Meridian.Infrastructure.Adapters.Tiingo;
+using Meridian.Infrastructure.Adapters.YahooFinance;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
-using AlphaVantageBackfillConfig = MarketDataCollector.Application.Config.AlphaVantageConfig;
-using FinnhubBackfillConfig = MarketDataCollector.Application.Config.FinnhubConfig;
-using NasdaqBackfillConfig = MarketDataCollector.Application.Config.NasdaqDataLinkConfig;
-using PolygonBackfillConfig = MarketDataCollector.Application.Config.PolygonConfig;
-using StooqBackfillConfig = MarketDataCollector.Application.Config.StooqConfig;
-using TiingoBackfillConfig = MarketDataCollector.Application.Config.TiingoConfig;
+using AlphaVantageBackfillConfig = Meridian.Application.Config.AlphaVantageConfig;
+using FinnhubBackfillConfig = Meridian.Application.Config.FinnhubConfig;
+using NasdaqBackfillConfig = Meridian.Application.Config.NasdaqDataLinkConfig;
+using PolygonBackfillConfig = Meridian.Application.Config.PolygonConfig;
+using StooqBackfillConfig = Meridian.Application.Config.StooqConfig;
+using TiingoBackfillConfig = Meridian.Application.Config.TiingoConfig;
 // Type aliases for clarity when dealing with backfill provider configs
-using YahooBackfillConfig = MarketDataCollector.Application.Config.YahooFinanceConfig;
+using YahooBackfillConfig = Meridian.Application.Config.YahooFinanceConfig;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Unified factory for creating and registering all provider types (streaming, backfill, symbol search).

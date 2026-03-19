@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Subscriptions.Models;
+namespace Meridian.Application.Subscriptions.Models;
 
 /// <summary>
 /// Represents a position from a broker portfolio.
