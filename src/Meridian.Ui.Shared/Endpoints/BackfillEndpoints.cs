@@ -4,10 +4,7 @@ using Meridian.Contracts.Api;
 using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using AppBackfillRequest = Meridian.Application.Backfill.BackfillRequest;
-using AppBackfillResult = Meridian.Application.Backfill.BackfillResult;
-using BackfillRequest = Meridian.Application.Backfill.BackfillRequest;
-using BackfillResult = Meridian.Application.Backfill.BackfillResult;
+using Meridian.Application.Backfill;
 
 namespace Meridian.Ui.Shared.Endpoints;
 
@@ -47,7 +44,7 @@ public static class BackfillEndpoints
         })
         .WithName("GetBackfillStatus")
         .WithDescription("Returns the result of the most recent backfill operation, or 404 if none has been run.")
-        .Produces<AppBackfillResult>(200)
+        .Produces<BackfillResult>(200)
         .Produces(404);
 
         // Preview backfill (dry run - shows what would be fetched)
@@ -59,7 +56,7 @@ public static class BackfillEndpoints
 
             try
             {
-                var request = new AppBackfillRequest(
+                var request = new BackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
                     req.Symbols!,
                     req.From,
@@ -79,7 +76,7 @@ public static class BackfillEndpoints
         })
         .WithName("PreviewBackfill")
         .WithDescription("Dry-run preview of a backfill operation showing what data would be fetched.")
-        .Produces<AppBackfillResult>(200)
+        .Produces<BackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -92,7 +89,7 @@ public static class BackfillEndpoints
 
             try
             {
-                var request = new AppBackfillRequest(
+                var request = new BackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
                     req.Symbols!,
                     req.From,
@@ -112,7 +109,7 @@ public static class BackfillEndpoints
         })
         .WithName("RunBackfill")
         .WithDescription("Executes a backfill operation for the specified symbols and date range.")
-        .Produces<AppBackfillResult>(200)
+        .Produces<BackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 

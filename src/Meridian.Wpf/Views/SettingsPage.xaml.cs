@@ -460,7 +460,7 @@ public sealed class SettingsActivityItem
 /// <summary>
 /// View model for credential vault list items showing per-provider credential status.
 /// </summary>
-public class CredentialVaultItem
+public sealed class CredentialVaultItem
 {
     public string ProviderId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;

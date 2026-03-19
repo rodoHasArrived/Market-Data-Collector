@@ -192,6 +192,6 @@ public class ConfigService : IConfigService
     public Task InitializeAsync(CancellationToken ct = default)
         => Task.CompletedTask;
 
-    public Task<ConfigValidationResult> ValidateConfigAsync(CancellationToken ct = default)
-        => Task.FromResult(new ConfigValidationResult { IsValid = true });
+    public Task<DiagnosticValidationResult> ValidateConfigAsync(CancellationToken ct = default)
+        => Task.FromResult(new DiagnosticValidationResult { IsValid = true });
 }

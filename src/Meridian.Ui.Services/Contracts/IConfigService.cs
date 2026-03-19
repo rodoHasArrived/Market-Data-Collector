@@ -113,13 +113,13 @@ public interface IConfigService
     /// <summary>
     /// Validates the current configuration.
     /// </summary>
-    Task<ConfigValidationResult> ValidateConfigAsync(CancellationToken ct = default);
+    Task<DiagnosticValidationResult> ValidateConfigAsync(CancellationToken ct = default);
 }
 
 /// <summary>
-/// Result of configuration validation.
+/// Result of configuration validation for UI diagnostics.
 /// </summary>
-public sealed class ConfigValidationResult
+public sealed class DiagnosticValidationResult
 {
     public bool IsValid { get; init; }
     public string[] Errors { get; init; } = [];

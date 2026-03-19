@@ -307,12 +307,12 @@ public sealed class ConfigServiceTests : IDisposable
         loaded.Symbols[0].DepthLevels.Should().Be(5);
     }
 
-    // ── ConfigValidationResult model ────────────────────────────────
+    // ── DiagnosticValidationResult model ────────────────────────────────
 
     [Fact]
-    public void ConfigValidationResult_ShouldHaveDefaultValues()
+    public void DiagnosticValidationResult_ShouldHaveDefaultValues()
     {
-        var result = new ConfigValidationResult();
+        var result = new DiagnosticValidationResult();
         result.IsValid.Should().BeFalse();
         result.Errors.Should().NotBeNull();
         result.Warnings.Should().NotBeNull();
