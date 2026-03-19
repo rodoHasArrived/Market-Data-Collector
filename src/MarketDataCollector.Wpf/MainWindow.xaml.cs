@@ -99,8 +99,8 @@ public partial class MainWindow : Window
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
-        // Save window state before closing
-        SaveWindowState();
+        // Save window state before closing (fire-and-forget; exceptions handled inside)
+        _ = SaveWindowStateAsync();
 
         // Save workspace session state for next launch
         SaveWorkspaceSession();
@@ -662,9 +662,10 @@ public partial class MainWindow : Window
     /// <summary>
     /// Saves the current window position, size, and state to disk.
     /// Uses source-generated serialization and async file I/O to avoid
-    /// blocking the UI thread during window close.
+    /// blocking the UI thread during window close. Exceptions are handled
+    /// internally so callers do not need to observe the returned task.
     /// </summary>
-    private void SaveWindowState()
+    private async Task SaveWindowStateAsync()
     {
         try
         {
@@ -686,8 +687,7 @@ public partial class MainWindow : Window
 
             var json = JsonSerializer.Serialize(state, WindowStateJsonContext.Default.PersistedWindowState);
 
-            // Fire-and-forget async write to avoid blocking close animation
-            _ = Task.Run(() => File.WriteAllText(WindowStateFilePath, json));
+            await File.WriteAllTextAsync(WindowStateFilePath, json).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -782,7 +782,7 @@ public partial class MainWindow : Window
     /// Source-generated JSON context for window state persistence (ADR-014).
     /// Avoids reflection-based serialization overhead.
     /// </summary>
-    [JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSourceGenerationOptions(WriteIndented = true)]
     [JsonSerializable(typeof(PersistedWindowState))]
     private sealed partial class WindowStateJsonContext : JsonSerializerContext;
 

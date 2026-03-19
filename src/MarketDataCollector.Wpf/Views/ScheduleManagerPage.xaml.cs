@@ -12,9 +12,9 @@ public partial class ScheduleManagerPage : Page
     private readonly NavigationService _navigationService;
     private readonly NotificationService _notificationService;
     private readonly ScheduleManagerService _scheduleService;
-    private System.Windows.Media.Brush? _warningBrush;
-    private System.Windows.Media.Brush? _successBrush;
-    private System.Windows.Media.Brush? _errorBrush;
+    private System.Windows.Media.Brush _warningBrush = null!;
+    private System.Windows.Media.Brush _successBrush = null!;
+    private System.Windows.Media.Brush _errorBrush = null!;
 
     public ScheduleManagerPage(
         NavigationService navigationService,
@@ -55,7 +55,7 @@ public partial class ScheduleManagerPage : Page
         if (string.IsNullOrEmpty(expression))
         {
             CronValidationResult.Text = "Please enter a cron expression.";
-            CronValidationResult.Foreground = _warningBrush!;
+            CronValidationResult.Foreground = _warningBrush;
             return;
         }
 
@@ -67,7 +67,7 @@ public partial class ScheduleManagerPage : Page
             if (result == null)
             {
                 CronValidationResult.Text = "Could not validate expression. Backend may be unavailable.";
-                CronValidationResult.Foreground = _warningBrush!;
+                CronValidationResult.Foreground = _warningBrush;
                 return;
             }
 
@@ -83,18 +83,18 @@ public partial class ScheduleManagerPage : Page
                     }
                 }
                 CronValidationResult.Text = text;
-                CronValidationResult.Foreground = _successBrush!;
+                CronValidationResult.Foreground = _successBrush;
             }
             else
             {
                 CronValidationResult.Text = $"Invalid: {result.ErrorMessage}";
-                CronValidationResult.Foreground = _errorBrush!;
+                CronValidationResult.Foreground = _errorBrush;
             }
         }
         catch (Exception ex)
         {
             CronValidationResult.Text = $"Validation failed: {ex.Message}";
-            CronValidationResult.Foreground = _errorBrush!;
+            CronValidationResult.Foreground = _errorBrush;
         }
     }
 
@@ -119,7 +119,7 @@ public partial class ScheduleManagerPage : Page
         catch (Exception ex)
         {
             BackfillSchedulesStatus.Text = $"Failed to load: {ex.Message}";
-            BackfillSchedulesStatus.Foreground = _errorBrush!;
+            BackfillSchedulesStatus.Foreground = _errorBrush;
         }
     }
 
@@ -144,7 +144,7 @@ public partial class ScheduleManagerPage : Page
         catch (Exception ex)
         {
             MaintenanceSchedulesStatus.Text = $"Failed to load: {ex.Message}";
-            MaintenanceSchedulesStatus.Foreground = _errorBrush!;
+            MaintenanceSchedulesStatus.Foreground = _errorBrush;
         }
     }
 
@@ -169,7 +169,7 @@ public partial class ScheduleManagerPage : Page
         catch (Exception ex)
         {
             TemplatesStatus.Text = $"Failed to load: {ex.Message}";
-            TemplatesStatus.Foreground = _errorBrush!;
+            TemplatesStatus.Foreground = _errorBrush;
         }
     }
 }

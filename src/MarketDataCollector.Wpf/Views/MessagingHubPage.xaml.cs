@@ -23,9 +23,9 @@ public partial class MessagingHubPage : Page
     private IDisposable? _messageSubscription;
     private int _totalMessages;
     private int _failedMessages;
-    private Brush? _infoBrush;
-    private Brush? _successBrush;
-    private Brush? _errorBrush;
+    private Brush _infoBrush = null!;
+    private Brush _successBrush = null!;
+    private Brush _errorBrush = null!;
 
     public MessagingHubPage()
     {
@@ -73,7 +73,7 @@ public partial class MessagingHubPage : Page
             _activityItems.Insert(0, new ActivityItem
             {
                 DirectionIcon = "\u2192",
-                DirectionColor = _infoBrush!,
+                DirectionColor = _infoBrush,
                 MessageType = message.Length > 30 ? message[..30] + "..." : message,
                 Detail = "Delivered",
                 TimeText = "Just now"
@@ -159,12 +159,12 @@ public partial class MessagingHubPage : Page
         if (isConnected)
         {
             ConnectionStatusText.Text = "Active";
-            ConnectionBadge.Background = _successBrush!;
+            ConnectionBadge.Background = _successBrush;
         }
         else
         {
             ConnectionStatusText.Text = "Inactive";
-            ConnectionBadge.Background = _errorBrush!;
+            ConnectionBadge.Background = _errorBrush;
         }
     }
 
