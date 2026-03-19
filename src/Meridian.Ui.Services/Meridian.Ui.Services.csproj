@@ -51,7 +51,7 @@
 
   <!--
     Reference the Contracts assembly directly so that types from
-    MarketDataCollector.Contracts live in exactly one assembly.
+    Meridian.Contracts live in exactly one assembly.
     Using <Compile Include> to source-link those files caused CS0433
     "type exists in both assemblies" errors when the WPF project also
     referenced Backtesting, which brings in Contracts.dll transitively.
