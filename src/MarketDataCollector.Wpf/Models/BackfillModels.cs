@@ -18,6 +18,8 @@ public sealed class ScheduledJobInfo
 {
     public string Name { get; set; } = string.Empty;
     public string NextRun { get; set; } = string.Empty;
+    /// <summary>Recurrence frequency: "Daily", "Weekly", or "Monthly".</summary>
+    public string Frequency { get; set; } = "Daily";
 }
 
 /// <summary>Resumable job information for checkpoint-based resume.</summary>

@@ -63,7 +63,7 @@ public sealed class EditScheduledJobDialog : Window
         _frequencyCombo.Items.Add("Daily");
         _frequencyCombo.Items.Add("Weekly");
         _frequencyCombo.Items.Add("Monthly");
-        _frequencyCombo.SelectedIndex = job.Name.Contains("Weekly") ? 1 : 0;
+        _frequencyCombo.SelectedIndex = job.Frequency == "Weekly" ? 1 : job.Frequency == "Monthly" ? 2 : 0;
         _frequencyCombo.SelectionChanged += OnFrequencyChanged;
         Grid.SetRow(_frequencyCombo, 3);
         grid.Children.Add(_frequencyCombo);
@@ -91,7 +91,7 @@ public sealed class EditScheduledJobDialog : Window
             Background = new SolidColorBrush(Color.FromRgb(42, 42, 62)),
             Foreground = Brushes.White,
             Margin = new Thickness(0, 4, 0, 12),
-            Visibility = job.Name.Contains("Weekly") ? Visibility.Visible : Visibility.Collapsed
+            Visibility = job.Frequency == "Weekly" ? Visibility.Visible : Visibility.Collapsed
         };
         foreach (var day in new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" })
         {

@@ -455,7 +455,7 @@ public sealed class ArchiveHealthService
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(status, WpfJsonContext.PrettyPrintOptions);
+            var json = JsonSerializer.Serialize(status, WpfJsonContext.CamelCaseOptions);
 
             await File.WriteAllTextAsync(_healthStatusPath, json);
         }
