@@ -11,7 +11,29 @@ public sealed record JournalEntry(
     string Description,
     IReadOnlyList<LedgerEntry> Lines)
 {
-    /// <summary>Returns <c>true</c> when the total debits equal the total credits.</summary>
-    public bool IsBalanced =>
-        Lines.Sum(l => l.Debit) == Lines.Sum(l => l.Credit);
+    /// <summary>
+    /// Tolerance used when comparing total debits to total credits.
+    /// Prevents false negatives caused by separate rounding paths.
+    /// </summary>
+    private const decimal BalanceTolerance = 0.000001m;
+
+    /// <summary>
+    /// Returns <c>true</c> when the total debits approximately equal the total credits
+    /// (within <see cref="BalanceTolerance"/>).
+    /// </summary>
+    public bool IsBalanced
+    {
+        get
+        {
+            var totalDebit = 0m;
+            var totalCredit = 0m;
+            foreach (var line in Lines)
+            {
+                totalDebit += line.Debit;
+                totalCredit += line.Credit;
+            }
+
+            return Math.Abs(totalDebit - totalCredit) <= BalanceTolerance;
+        }
+    }
 }

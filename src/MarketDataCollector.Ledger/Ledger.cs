@@ -74,16 +74,33 @@ public sealed class Ledger
     /// Returns a trial balance mapping every account that has been posted to its net balance.
     /// If accounting is correct the sum of asset and expense balances equals the sum of liability,
     /// equity, and revenue balances (the accounting equation holds).
+    /// Computed in a single pass over the journal to avoid O(A×N) scans.
     /// </summary>
     public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance()
     {
-        var accounts = _journal
-            .SelectMany(j => j.Lines)
-            .Select(l => l.Account)
-            .Distinct()
-            .ToList();
+        // Aggregate debits and credits per account in one pass.
+        var aggregates = new Dictionary<LedgerAccount, (decimal Debits, decimal Credits)>();
 
-        return accounts.ToDictionary(a => a, GetBalance);
+        foreach (var journalEntry in _journal)
+        {
+            foreach (var line in journalEntry.Lines)
+            {
+                if (!aggregates.TryGetValue(line.Account, out var totals))
+                    totals = (0m, 0m);
+
+                aggregates[line.Account] = (totals.Debits + line.Debit, totals.Credits + line.Credit);
+            }
+        }
+
+        var result = new Dictionary<LedgerAccount, decimal>(aggregates.Count);
+        foreach (var (account, (debits, credits)) in aggregates)
+        {
+            result[account] = account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
+                ? debits - credits
+                : credits - debits;
+        }
+
+        return result;
     }
 
     // ── Internal factory helpers ─────────────────────────────────────────────
@@ -92,11 +109,21 @@ public sealed class Ledger
     /// Creates a balanced <see cref="JournalEntry"/> from a list of (account, debit, credit) tuples
     /// and immediately posts it. All lines share the same journal entry ID and timestamp.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="lines"/> is null.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="description"/> is null or whitespace, or when <paramref name="lines"/> is empty.
+    /// </exception>
     public void PostLines(
         DateTimeOffset timestamp,
         string description,
         IReadOnlyList<(LedgerAccount account, decimal debit, decimal credit)> lines)
     {
+        ArgumentNullException.ThrowIfNull(lines);
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("Journal entry description must not be null or whitespace.", nameof(description));
+        if (lines.Count == 0)
+            throw new ArgumentException("A journal entry must have at least one line.", nameof(lines));
+
         var journalId = Guid.NewGuid();
         var entries = lines
             .Select(l => new LedgerEntry(Guid.NewGuid(), journalId, timestamp, l.account, l.debit, l.credit, description))

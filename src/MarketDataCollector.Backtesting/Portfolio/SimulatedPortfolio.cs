@@ -30,7 +30,8 @@ internal sealed class SimulatedPortfolio
         ICommissionModel commission,
         double annualMarginRate,
         double annualShortRebateRate,
-        BacktestLedger? ledger = null)
+        BacktestLedger? ledger = null,
+        DateTimeOffset startTimestamp = default)
     {
         Cash = initialCash;
         _prevEquity = initialCash;
@@ -43,7 +44,7 @@ internal sealed class SimulatedPortfolio
         if (_ledger is not null && initialCash > 0)
         {
             _ledger.PostLines(
-                DateTimeOffset.UtcNow,
+                startTimestamp == default ? DateTimeOffset.UtcNow : startTimestamp,
                 "Initial capital deposit",
                 [
                     (LedgerAccounts.Cash, initialCash, 0m),
@@ -118,7 +119,7 @@ internal sealed class SimulatedPortfolio
 
     public void AccrueDailyInterest(DateOnly date)
     {
-        var ts = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var ts = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
         // Margin debit interest (we owe; negative cash flow)
         if (MarginBalance < 0)
@@ -228,7 +229,7 @@ internal sealed class SimulatedPortfolio
 
             List<(LedgerAccount account, decimal debit, decimal credit)> lines;
 
-            if (gain >= 0)
+            if (gain > 0)
             {
                 // Proceeds = cost basis + gain
                 // DR Cash / CR Securities (cost basis) / CR Realized Gain
@@ -239,7 +240,7 @@ internal sealed class SimulatedPortfolio
                     (LedgerAccounts.RealizedGain, 0m, gain),
                 ];
             }
-            else
+            else if (gain < 0)
             {
                 // Proceeds + loss = cost basis
                 // DR Cash / DR Realized Loss / CR Securities (cost basis)
@@ -247,6 +248,16 @@ internal sealed class SimulatedPortfolio
                 [
                     (LedgerAccounts.Cash, proceeds, 0m),
                     (LedgerAccounts.RealizedLoss, Math.Abs(gain), 0m),
+                    (securitiesAccount, 0m, costBasisRemoved),
+                ];
+            }
+            else
+            {
+                // No gain or loss — proceeds equal cost basis exactly
+                // DR Cash / CR Securities
+                lines =
+                [
+                    (LedgerAccounts.Cash, proceeds, 0m),
                     (securitiesAccount, 0m, costBasisRemoved),
                 ];
             }

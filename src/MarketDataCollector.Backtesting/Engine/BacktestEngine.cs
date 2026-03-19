@@ -52,7 +52,8 @@ public sealed class BacktestEngine(
         // 2. Set up portfolio, fill models, context
         var commissionModel = new PerShareCommissionModel();
         var ledger = new BacktestLedger();
-        var portfolio = new SimulatedPortfolio(request.InitialCash, commissionModel, request.AnnualMarginRate, request.AnnualShortRebateRate, ledger);
+        var startTimestamp = new DateTimeOffset(request.From.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var portfolio = new SimulatedPortfolio(request.InitialCash, commissionModel, request.AnnualMarginRate, request.AnnualShortRebateRate, ledger, startTimestamp);
         var ctx = new BacktestContext(portfolio, universe, ledger);
         var orderBookFillModel = new OrderBookFillModel(commissionModel);
         var barFillModel = new BarMidpointFillModel(commissionModel);

@@ -9,11 +9,7 @@ public static class LedgerAccounts
     public static readonly LedgerAccount Cash =
         new("Cash", LedgerAccountType.Asset);
 
-    /// <summary>Margin debt owed to the simulated broker (credit balance = outstanding borrowing).</summary>
-    public static readonly LedgerAccount MarginPayable =
-        new("Margin Payable", LedgerAccountType.Liability);
-
-    /// <summary>Initial capital deposited into the account at the start of the backtest.</summary>
+    /// <summary>Initial capital deposited into the account at the start of the run.</summary>
     public static readonly LedgerAccount CapitalAccount =
         new("Capital Account", LedgerAccountType.Equity);
 
@@ -42,9 +38,13 @@ public static class LedgerAccounts
         new("Dividend Income", LedgerAccountType.Revenue);
 
     /// <summary>
-    /// Returns the asset account representing long equity holdings in <paramref name="symbol"/>.
+    /// Returns the asset account representing equity holdings in <paramref name="symbol"/>.
     /// Each symbol has its own securities account so per-symbol cost-basis is tracked separately.
+    /// The symbol is normalized to upper-case so accounts are case-insensitive by identity.
     /// </summary>
-    public static LedgerAccount Securities(string symbol) =>
-        new($"Securities \u2013 {symbol}", LedgerAccountType.Asset, symbol);
+    public static LedgerAccount Securities(string symbol)
+    {
+        var normalizedSymbol = symbol.ToUpperInvariant();
+        return new("Securities", LedgerAccountType.Asset, normalizedSymbol);
+    }
 }
