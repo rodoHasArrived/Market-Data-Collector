@@ -1,8 +1,8 @@
 name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23227231362
+# Generated: 2026-03-19
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23310776745
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -31,7 +31,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23227231362
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23310776745
 
       Additional context:
       {{additional_context}}
