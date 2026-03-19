@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-19
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23311303219
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23315915189
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,15 +19,34 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-19T18:49:33.3316542Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(682,23): error CS0433: The type 'Credentia...`
-      - `2026-03-19T18:49:33.4637208Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(737,23): error CS0433: The type 'Credentia...`
-      - `2026-03-19T18:49:33.4716618Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(310,25): error CS0246: The type or names...`
-      - `2026-03-19T18:49:33.4909408Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(790,23): error CS0433: The type 'Credentia...`
-      - `2026-03-19T18:49:33.4958963Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(220,35): error CS0433: The type 'AppConfigDto'...`
+      - `2026-03-19T20:43:42.5651733Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto'...`
+      - `2026-03-19T20:43:42.5769933Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not...`
+      - `2026-03-19T20:43:42.6052439Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(312,29): error CS0246: The type or names...`
+      - `2026-03-19T20:43:42.6196009Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrate...`
+      - `2026-03-19T20:43:42.6469067Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrate...`
+
+      ### Test
+      - `2026-03-19T20:42:00.5741590Z Failed!  - Failed:     4, Passed:  2842, Skipped:     0, Total:  2846, Duration: 12 s - Meridian.Tests.dll (net9.0)`
+      - `2026-03-19T20:41:43.9195840Z Failed!  - Failed:     4, Passed:  2842, Skipped:     0, Total:  2846, Duration: 17 s - Meridian.Tests.dll (net9.0)`
+      - `2026-03-19T20:41:48.9409646Z [xUnit.net 00:00:05.09]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedi...`
+      - `2026-03-19T20:41:48.9587043Z [xUnit.net 00:00:05.10]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWit...`
+      - `2026-03-19T20:41:48.9646579Z [xUnit.net 00:00:05.11]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllC...`
 
       ### Code Quality
-      - `2026-03-19T18:49:41.1778973Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The v...`
+      - `2026-03-19T20:43:50.1646483Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The v...`
 
+
+      ## Failed Tests
+      - `2026-03-19T20:41:48.9587043Z [xUnit.net 00:00:05.10]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
+      - `2026-03-19T20:41:48.9738076Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [26 ms]`
+      - `2026-03-19T20:41:48.9890419Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [3 ms]`
+      - `2026-03-19T20:41:33.7676510Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [16 ms]`
+      - `2026-03-19T20:41:33.7845420Z [xUnit.net 00:00:07.81]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
+      - `2026-03-19T20:41:33.7989840Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [4 ms]`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed`
 
       ## Error Codes
       - `CS0118`
@@ -37,6 +56,7 @@ messages:
       - `CS0433`
       - `CS0534`
       - `CS0535`
+      - `CS1061`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -49,7 +69,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23311303219
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23315915189
 
       Additional context:
       {{additional_context}}

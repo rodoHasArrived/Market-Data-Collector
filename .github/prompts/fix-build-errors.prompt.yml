@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-19
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23311303219
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23315915189
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -30,18 +30,19 @@ messages:
       - `CS0433`
       - `CS0534`
       - `CS0535`
+      - `CS1061`
 
       ## Failure Patterns
-      - `2026-03-19T18:49:33.3316542Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(682,23): error CS0433: The type 'CredentialTestResult' exists in both 'Meridian.Contracts, V...`
-      - `2026-03-19T18:49:33.4637208Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(737,23): error CS0433: The type 'CredentialTestResult' exists in both 'Meridian.Contracts, V...`
-      - `2026-03-19T18:49:33.4716618Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(310,25): error CS0246: The type or namespace name 'Trade' could not be found (are you miss...`
-      - `2026-03-19T18:49:33.4909408Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(790,23): error CS0433: The type 'CredentialTestResult' exists in both 'Meridian.Contracts, V...`
-      - `2026-03-19T18:49:33.4958963Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(220,35): error CS0433: The type 'AppConfigDto' exists in both 'Meridian.Contracts, Version=1.0.0...`
-      - `2026-03-19T18:49:33.5181196Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(801,42): error CS0433: The type 'CredentialTestResult' exists in both 'Meridian.Contracts, V...`
-      - `2026-03-19T18:49:33.5589269Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(244,55): error CS0433: The type 'AppConfigDto' exists in both 'Meridian.Contracts, Version=1.0.0...`
-      - `2026-03-19T18:49:33.5631627Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in both 'Meridian.Contracts, Version=1.0.0...`
-      - `2026-03-19T18:49:33.5679479Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement inherited abstract member 'ConfigServic...`
-      - `2026-03-19T18:49:33.5850050Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(132,32): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Ver...`
+      - `2026-03-19T20:43:42.5651733Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in both 'Meridian.Contracts, Version=1.0.0...`
+      - `2026-03-19T20:43:42.5769933Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement inherited abstract member 'ConfigServic...`
+      - `2026-03-19T20:43:42.6052439Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(312,29): error CS0246: The type or namespace name 'LOBSnapshot' could not be found (are yo...`
+      - `2026-03-19T20:43:42.6196009Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
+      - `2026-03-19T20:43:42.6469067Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
+      - `2026-03-19T20:43:42.6678715Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
+      - `2026-03-19T20:43:42.6792303Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
+      - `2026-03-19T20:43:42.6968628Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(80,12): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Vers...`
+      - `2026-03-19T20:43:42.7228337Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(82,57): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Vers...`
+      - `2026-03-19T20:43:42.7440425Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(484,12): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Ver...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
