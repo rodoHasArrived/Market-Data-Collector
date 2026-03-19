@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Ledger\MarketDataCollector.Ledger.csproj" />
   </ItemGroup>
 
 </Project>
