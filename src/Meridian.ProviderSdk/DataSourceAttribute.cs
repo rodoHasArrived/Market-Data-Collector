@@ -1,3 +1,5 @@
+using Meridian.Infrastructure.Contracts;
+
 namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
@@ -151,13 +153,22 @@ public static class DataSourceAttributeExtensions
     }
 
     /// <summary>
-    /// Checks if a type is a data source (implements IDataSource and has DataSourceAttribute).
+    /// Checks if a type is a data source (has DataSourceAttribute and is a concrete class).
+    /// Accepts types implementing <see cref="IDataSource"/> or any recognized provider interface
+    /// (IHistoricalDataProvider, IMarketDataClient, ISymbolSearchProvider).
     /// </summary>
     public static bool IsDataSource(this Type type)
     {
-        return type.GetDataSourceAttribute() != null
-            && typeof(IDataSource).IsAssignableFrom(type)
-            && !type.IsAbstract
-            && !type.IsInterface;
+        if (type.GetDataSourceAttribute() == null || type.IsAbstract || type.IsInterface)
+            return false;
+
+        if (typeof(IDataSource).IsAssignableFrom(type))
+            return true;
+
+        // Also accept legacy provider interfaces decorated with [DataSource] for ADR-005 discovery
+        return type.GetInterfaces().Any(i =>
+            i.FullName == "Meridian.Infrastructure.Adapters.Core.IHistoricalDataProvider" ||
+            i.FullName == "Meridian.ProviderSdk.IMarketDataClient" ||
+            i.FullName == "Meridian.Infrastructure.Adapters.Core.ISymbolSearchProvider");
     }
 }

@@ -1,5 +1,7 @@
 using System.Threading;
 using Meridian.Contracts.Configuration;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
 
 namespace Meridian.Infrastructure;
 

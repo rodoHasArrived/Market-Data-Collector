@@ -5,6 +5,7 @@ using Meridian.Infrastructure.Adapters.Core;
 using Meridian.Infrastructure.Contracts;
 using Meridian.Infrastructure.DataSources;
 using Serilog;
+using DataSourceType = Meridian.Infrastructure.DataSources.DataSourceType;
 
 namespace Meridian.Infrastructure.Adapters.Failover;
 

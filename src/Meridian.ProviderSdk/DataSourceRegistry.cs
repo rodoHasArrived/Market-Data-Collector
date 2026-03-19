@@ -54,9 +54,13 @@ public sealed class DataSourceRegistry
         foreach (var source in _sources)
         {
             services.Add(new ServiceDescriptor(source.ImplementationType, source.ImplementationType, lifetime));
-            services.Add(new ServiceDescriptor(typeof(IDataSource),
-                sp => (IDataSource)sp.GetRequiredService(source.ImplementationType),
-                lifetime));
+            // Only register as IDataSource if the type actually implements it
+            if (typeof(IDataSource).IsAssignableFrom(source.ImplementationType))
+            {
+                services.Add(new ServiceDescriptor(typeof(IDataSource),
+                    sp => (IDataSource)sp.GetRequiredService(source.ImplementationType),
+                    lifetime));
+            }
         }
     }
 

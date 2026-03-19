@@ -21,7 +21,7 @@ namespace Meridian.Infrastructure.Adapters.Tiingo;
 /// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [DataSource("tiingo", "Tiingo (free tier)", DataSourceType.Historical, DataSourceCategory.Free,
-    Priority = 35, Description = "Dividend-adjusted historical OHLCV data via Tiingo API")]
+    Priority = 15, Description = "Dividend-adjusted historical OHLCV data via Tiingo API")]
 [ImplementsAdr("ADR-001", "Tiingo historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 [ImplementsAdr("ADR-005", "Attribute-based provider discovery")]

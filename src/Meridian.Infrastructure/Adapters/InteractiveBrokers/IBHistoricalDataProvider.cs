@@ -11,6 +11,7 @@ using Meridian.Infrastructure.Contracts;
 using Meridian.Infrastructure.Adapters.Core;
 using Meridian.Infrastructure.DataSources;
 using Serilog;
+using DataSourceType = Meridian.Infrastructure.DataSources.DataSourceType;
 
 namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
@@ -27,7 +28,7 @@ namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 /// Free streaming data is available via Cboe One + IEX (non-consolidated).
 /// </remarks>
 [DataSource("ibkr", "Interactive Brokers", DataSourceType.Historical, DataSourceCategory.Broker,
-    Priority = 1, Description = "Historical OHLCV data via Interactive Brokers TWS API")]
+    Priority = 10, Description = "Historical OHLCV data via Interactive Brokers TWS API")]
 [ImplementsAdr("ADR-001", "Interactive Brokers historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 [ImplementsAdr("ADR-005", "Attribute-based provider discovery")]

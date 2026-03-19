@@ -19,7 +19,7 @@ namespace Meridian.Infrastructure.Adapters.YahooFinance;
 /// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [DataSource("yahoo", "Yahoo Finance (free)", DataSourceType.Historical, DataSourceCategory.Free,
-    Priority = 60, Description = "Free daily OHLCV via Yahoo Finance unofficial API")]
+    Priority = 22, Description = "Free daily OHLCV via Yahoo Finance unofficial API")]
 [ImplementsAdr("ADR-001", "Yahoo Finance historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 [ImplementsAdr("ADR-005", "Attribute-based provider discovery")]

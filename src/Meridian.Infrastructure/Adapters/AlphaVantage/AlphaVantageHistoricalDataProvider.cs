@@ -20,7 +20,7 @@ namespace Meridian.Infrastructure.Adapters.AlphaVantage;
 /// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [DataSource("alphavantage", "Alpha Vantage (free tier)", DataSourceType.Historical, DataSourceCategory.Free,
-    Priority = 50, Description = "Free tier historical OHLCV data via Alpha Vantage API")]
+    Priority = 25, Description = "Free tier historical OHLCV data via Alpha Vantage API")]
 [ImplementsAdr("ADR-001", "Alpha Vantage historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 [ImplementsAdr("ADR-005", "Attribute-based provider discovery")]
