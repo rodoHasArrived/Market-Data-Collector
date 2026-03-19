@@ -73,14 +73,14 @@ Legacy provider-specific variables (e.g., `ALPACA_KEY_ID`) are supported alongsi
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Configuration contract | `src/MarketDataCollector.Core/Config/IConfigurationProvider.cs` | Typed, validated configuration access |
-| Configuration pipeline | `src/MarketDataCollector.Application/Config/ConfigurationPipeline.cs` | Seven-stage configuration processing |
-| Configuration store | `src/MarketDataCollector.Application/Http/ConfigStore.cs` | Shared load/save for all hosts |
-| Credential contract | `src/MarketDataCollector.Application/Credentials/ICredentialStore.cs` | Unified credential resolution and caching |
-| Environment overrides | `src/MarketDataCollector.Application/Services/ConfigEnvironmentOverride.cs` | 96 environment variable mappings |
-| Config validation | `src/MarketDataCollector.Application/Config/ConfigValidationHelper.cs` | Validation rules and self-healing |
-| Composition registration | `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs` | Consistent wiring across hosts |
-| Config tests | `tests/MarketDataCollector.Tests/Application/Config/` | Pipeline and validation tests |
+| Configuration contract | `src/Meridian.Core/Config/IConfigurationProvider.cs` | Typed, validated configuration access |
+| Configuration pipeline | `src/Meridian.Application/Config/ConfigurationPipeline.cs` | Seven-stage configuration processing |
+| Configuration store | `src/Meridian.Application/Http/ConfigStore.cs` | Shared load/save for all hosts |
+| Credential contract | `src/Meridian.Application/Credentials/ICredentialStore.cs` | Unified credential resolution and caching |
+| Environment overrides | `src/Meridian.Application/Services/ConfigEnvironmentOverride.cs` | 96 environment variable mappings |
+| Config validation | `src/Meridian.Application/Config/ConfigValidationHelper.cs` | Validation rules and self-healing |
+| Composition registration | `src/Meridian.Application/Composition/ServiceCompositionRoot.cs` | Consistent wiring across hosts |
+| Config tests | `tests/Meridian.Tests/Application/Config/` | Pipeline and validation tests |
 
 ## Rationale
 

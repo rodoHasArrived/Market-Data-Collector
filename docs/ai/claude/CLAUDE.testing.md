@@ -22,11 +22,11 @@ This document provides guidance for AI assistants working with tests in Market D
 
 | Project | Location | Files | Purpose |
 |---------|----------|-------|---------|
-| C# Unit Tests | `tests/MarketDataCollector.Tests/` | 134 | Main test suite |
-| F# Tests | `tests/MarketDataCollector.FSharp.Tests/` | 4 | F# domain tests |
-| UI Service Tests | `tests/MarketDataCollector.Ui.Tests/` | 15 | Desktop UI service tests |
-| WPF Tests | `tests/MarketDataCollector.Wpf.Tests/` | 5 | WPF desktop service tests |
-| Benchmarks | `benchmarks/MarketDataCollector.Benchmarks/` | - | Performance benchmarks |
+| C# Unit Tests | `tests/Meridian.Tests/` | 134 | Main test suite |
+| F# Tests | `tests/Meridian.FSharp.Tests/` | 4 | F# domain tests |
+| UI Service Tests | `tests/Meridian.Ui.Tests/` | 15 | Desktop UI service tests |
+| WPF Tests | `tests/Meridian.Wpf.Tests/` | 5 | WPF desktop service tests |
+| Benchmarks | `benchmarks/Meridian.Benchmarks/` | - | Performance benchmarks |
 
 **Total: 158 test files (154 C# + 4 F#)**
 
@@ -41,16 +41,16 @@ This document provides guidance for AI assistants working with tests in Market D
 dotnet test
 
 # Run specific test project
-dotnet test tests/MarketDataCollector.Tests
+dotnet test tests/Meridian.Tests
 
 # Run F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests
+dotnet test tests/Meridian.FSharp.Tests
 
 # Run WPF desktop service tests (Windows only)
-dotnet test tests/MarketDataCollector.Wpf.Tests
+dotnet test tests/Meridian.Wpf.Tests
 
 # Run desktop UI service tests (Windows only)
-dotnet test tests/MarketDataCollector.Ui.Tests
+dotnet test tests/Meridian.Ui.Tests
 
 # Run all desktop tests
 make test-desktop-services
@@ -96,7 +96,7 @@ make test-coverage
 ### Test Directory Structure
 
 ```
-tests/MarketDataCollector.Tests/           # 134 C# test files
+tests/Meridian.Tests/           # 134 C# test files
 ├── Application/                           # 52 files
 │   ├── Backfill/                          # 8 files
 │   │   ├── AdditionalProviderContractTests.cs
@@ -131,13 +131,13 @@ tests/MarketDataCollector.Tests/           # 134 C# test files
 ├── SymbolSearch/                          # 2 files
 └── TestHelpers/                           # 1 file
 
-tests/MarketDataCollector.FSharp.Tests/    # 4 F# test files
+tests/Meridian.FSharp.Tests/    # 4 F# test files
 ├── CalculationTests.fs
 ├── ValidationTests.fs
 ├── DomainTests.fs
 └── PipelineTests.fs
 
-tests/MarketDataCollector.Ui.Tests/        # 15 C# test files
+tests/Meridian.Ui.Tests/        # 15 C# test files
 ├── Services/                              # 13 files
 │   ├── ApiClientServiceTests.cs
 │   ├── BackfillProviderConfigServiceTests.cs
@@ -156,7 +156,7 @@ tests/MarketDataCollector.Ui.Tests/        # 15 C# test files
     ├── BoundedObservableCollectionTests.cs
     └── CircularBufferTests.cs
 
-tests/MarketDataCollector.Wpf.Tests/       # 5 C# test files
+tests/Meridian.Wpf.Tests/       # 5 C# test files
 └── Services/                              # 5 files
     ├── ConfigServiceTests.cs
     ├── ConnectionServiceTests.cs
@@ -562,7 +562,7 @@ public class AlpacaIntegrationTests
 ### BenchmarkDotNet Example
 
 ```csharp
-// Location: benchmarks/MarketDataCollector.Benchmarks/EventPipelineBenchmarks.cs
+// Location: benchmarks/Meridian.Benchmarks/EventPipelineBenchmarks.cs
 
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net90)]
@@ -614,13 +614,13 @@ public class EventPipelineBenchmarks
 
 ```bash
 # Run all benchmarks
-dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release
+dotnet run --project benchmarks/Meridian.Benchmarks -c Release
 
 # Run specific benchmark
-dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release -- --filter *EventPipeline*
+dotnet run --project benchmarks/Meridian.Benchmarks -c Release -- --filter *EventPipeline*
 
 # Export results to various formats
-dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release -- --exporters html,csv,json
+dotnet run --project benchmarks/Meridian.Benchmarks -c Release -- --exporters html,csv,json
 ```
 
 ---

@@ -26,7 +26,7 @@ this creates ~150-200K short-lived objects/sec of GC pressure.
 
 #### #1 — PersistentDedupLedger: SHA256 key computation (5-6 allocs/event)
 
-**File:** `src/MarketDataCollector.Application/Pipeline/PersistentDedupLedger.cs`
+**File:** `src/Meridian.Application/Pipeline/PersistentDedupLedger.cs`
 **Lines:** 160-191
 
 ```csharp
@@ -53,7 +53,7 @@ prefix + HashIdentity($"{trade.Timestamp.Ticks}|{trade.Price}|{trade.Size}|...")
 
 #### #2 — WriteAheadLog: record serialization + checksum (5-6 allocs/record)
 
-**File:** `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs`
+**File:** `src/Meridian.Storage/Archival/WriteAheadLog.cs`
 **Lines:** 400, 532-538
 
 ```csharp
@@ -75,7 +75,7 @@ return Convert.ToHexString(hash).ToLowerInvariant();  // two string allocs
 
 #### #3 — MarketDepthCollector: ToArray() under write lock on every update
 
-**File:** `src/MarketDataCollector.Domain/Collectors/MarketDepthCollector.cs`
+**File:** `src/Meridian.Domain/Collectors/MarketDepthCollector.cs`
 **Lines:** 235-338 (Apply), 355-356 (BuildSnapshot)
 
 ```csharp
@@ -92,7 +92,7 @@ var asksCopy = _asks.ToArray();   // allocates OrderBookLevel[50]
 
 #### #4 — TradeDataCollector: double lock + string interpolation per trade
 
-**File:** `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs`
+**File:** `src/Meridian.Domain/Collectors/TradeDataCollector.cs`
 **Lines:** 122-123, 187, 196, 247
 
 ```csharp
@@ -112,7 +112,7 @@ var stats = state.BuildOrderFlowStats(...); // lock(_sync) { ... } (trims again!
 
 #### #5 — EventPipeline: `evt.Type.ToString()` per WAL-enabled event
 
-**File:** `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`
+**File:** `src/Meridian.Application/Pipeline/EventPipeline.cs`
 **Line:** 524
 
 ```csharp
@@ -129,7 +129,7 @@ var walRecord = await _wal.AppendAsync(evt, evt.Type.ToString(), _cts.Token);
 
 #### #6 — JsonlStorageSink: string allocation per serialized event
 
-**File:** `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs`
+**File:** `src/Meridian.Storage/Sinks/JsonlStorageSink.cs`
 **Lines:** 191, 205-217
 
 Every event is serialized to a `string` via `JsonSerializer.Serialize()`, then written. The string is immediately discarded. Writing directly to a `Utf8JsonWriter` backed by a pooled buffer would eliminate this.
@@ -140,7 +140,7 @@ Also: `ConcurrentDictionary.GetOrAdd` lambda closures (lines 177, 201) allocate 
 
 #### #7 — WriteAheadLog: SemaphoreSlim serializes JSON + checksum + I/O
 
-**File:** `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs`
+**File:** `src/Meridian.Storage/Archival/WriteAheadLog.cs`
 **Lines:** 116-159
 
 The critical section includes: JSON serialization → checksum computation → file write → rotation check. JSON serialization and SHA256 hashing are CPU-bound work that should happen outside the lock.
@@ -149,7 +149,7 @@ The critical section includes: JSON serialization → checksum computation → f
 
 #### #8 — CanonicalizingPublisher: 4 Interlocked operations per event
 
-**File:** `src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs`
+**File:** `src/Meridian.Application/Canonicalization/CanonicalizingPublisher.cs`
 **Lines:** 79-112
 
 In dual-write mode, each event triggers up to 4 `Interlocked` operations (increment counters + add duration ticks). Each causes a full memory barrier and cache-line flush. Under high throughput, this creates cross-core cache-line bouncing.
@@ -158,7 +158,7 @@ In dual-write mode, each event triggers up to 4 `Interlocked` operations (increm
 
 #### #9 — MarketDepthCollector: ReindexFrom creates N records per insert/delete
 
-**File:** `src/MarketDataCollector.Domain/Collectors/MarketDepthCollector.cs`
+**File:** `src/Meridian.Domain/Collectors/MarketDepthCollector.cs`
 **Lines:** 341-344
 
 ```csharp
@@ -174,7 +174,7 @@ An Insert at position 0 in a 50-level book creates 49 new `OrderBookLevel` recor
 
 #### #10 — PersistentDedupLedger: EvictExpired iterates 500K entries on hot path
 
-**File:** `src/MarketDataCollector.Application/Pipeline/PersistentDedupLedger.cs`
+**File:** `src/Meridian.Application/Pipeline/PersistentDedupLedger.cs`
 **Lines:** 198-215
 
 When cache exceeds 500K entries, eviction scans the entire dictionary on the calling thread. Should be moved to a background timer.
@@ -183,7 +183,7 @@ When cache exceeds 500K entries, eviction scans the entire dictionary on the cal
 
 #### #11 — EventPipeline: Reader.Count called on every publish
 
-**File:** `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`
+**File:** `src/Meridian.Application/Pipeline/EventPipeline.cs`
 **Lines:** 335-342
 
 `_channel.Reader.Count` is not free on `BoundedChannel` — it inspects internal state. Called unconditionally on every successful publish for peak tracking and utilization calculation. Should be sampled (e.g., every 100th event).
@@ -192,7 +192,7 @@ When cache exceeds 500K entries, eviction scans the entire dictionary on the cal
 
 #### #12 — WriteAheadLog: File.GetCreationTimeUtc syscall per append
 
-**File:** `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs`
+**File:** `src/Meridian.Storage/Archival/WriteAheadLog.cs`
 **Lines:** 386-391
 
 Filesystem metadata syscall on every WAL append to check rotation. Should cache the creation time when the file is opened.
@@ -232,7 +232,7 @@ Filesystem metadata syscall on every WAL append to check rotation. Should cache 
 make benchmark
 
 # Direct BenchmarkDotNet (most control)
-dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release -- \
+dotnet run --project benchmarks/Meridian.Benchmarks -c Release -- \
     --filter "*EndToEnd*" --memory --join
 ```
 
@@ -263,7 +263,7 @@ dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release -- \
 
 ### CRITICAL: Synchronous fsync inside async WAL path
 
-**File:** `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs:229`
+**File:** `src/Meridian.Storage/Archival/WriteAheadLog.cs:229`
 
 ```csharp
 _currentWalFile.Flush(flushToDisk: true);  // synchronous fsync!
@@ -279,7 +279,7 @@ concurrent WAL writers are blocked. In `EveryWrite` sync mode, this fires on eve
 
 ### HIGH: WriterState.GetOrAdd can leak file handles
 
-**File:** `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs:190`
+**File:** `src/Meridian.Storage/Sinks/JsonlStorageSink.cs:190`
 
 ```csharp
 var writer = _writers.GetOrAdd(path, p => WriterState.Create(p, _options.Compress));
@@ -295,7 +295,7 @@ leaking the file handle.
 
 ### HIGH: CompositeSink sequential fan-out doubles latency
 
-**File:** `src/MarketDataCollector.Storage/Sinks/CompositeSink.cs:133-203`
+**File:** `src/Meridian.Storage/Sinks/CompositeSink.cs:133-203`
 
 ```csharp
 for (var i = 0; i < _sinks.Count; i++)
@@ -321,7 +321,7 @@ the pipeline consumer stalls waiting for lock acquisition.
 
 ### MEDIUM: Double flush in WriteBatchAsync
 
-**File:** `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs:414-415`
+**File:** `src/Meridian.Storage/Sinks/JsonlStorageSink.cs:414-415`
 
 ```csharp
 await _writer.FlushAsync();        // pushes to FileStream buffer

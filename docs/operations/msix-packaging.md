@@ -76,13 +76,13 @@ Or use the interactive menu:
 To generate an AppInstaller alongside the MSIX package, provide the AppInstaller URI:
 
 ```powershell
-$env:MDC_APPINSTALLER_URI = "https://example.com/market-data-collector/MarketDataCollector.appinstaller"
+$env:MDC_APPINSTALLER_URI = "https://example.com/market-data-collector/Meridian.appinstaller"
 ```
 
 For `make`:
 
 ```powershell
-set APPINSTALLER_URI=https://example.com/market-data-collector/MarketDataCollector.appinstaller
+set APPINSTALLER_URI=https://example.com/market-data-collector/Meridian.appinstaller
 make desktop-publish
 ```
 
@@ -94,25 +94,25 @@ Create one and export a PFX:
 ```powershell
 $cert = New-SelfSignedCertificate `
   -Type Custom `
-  -Subject "CN=MarketDataCollector" `
+  -Subject "CN=Meridian" `
   -KeyUsage DigitalSignature `
-  -FriendlyName "MarketDataCollector Dev Certificate" `
+  -FriendlyName "Meridian Dev Certificate" `
   -CertStoreLocation "Cert:\CurrentUser\My"
 
 $password = ConvertTo-SecureString -String "dev-password" -Force -AsPlainText
-Export-PfxCertificate -Cert $cert -FilePath "$env:USERPROFILE\Documents\MarketDataCollector.Dev.pfx" -Password $password
+Export-PfxCertificate -Cert $cert -FilePath "$env:USERPROFILE\Documents\Meridian.Dev.pfx" -Password $password
 ```
 
 Trust the certificate for local installs:
 
 ```powershell
-Import-Certificate -FilePath "$env:USERPROFILE\Documents\MarketDataCollector.Dev.pfx" -CertStoreLocation "Cert:\CurrentUser\TrustedPeople"
+Import-Certificate -FilePath "$env:USERPROFILE\Documents\Meridian.Dev.pfx" -CertStoreLocation "Cert:\CurrentUser\TrustedPeople"
 ```
 
 Then pass the certificate to the build:
 
 ```powershell
-$env:MDC_SIGNING_CERT_PFX = "$env:USERPROFILE\Documents\MarketDataCollector.Dev.pfx"
+$env:MDC_SIGNING_CERT_PFX = "$env:USERPROFILE\Documents\Meridian.Dev.pfx"
 $env:MDC_SIGNING_CERT_PASSWORD = "dev-password"
 ```
 
@@ -122,18 +122,18 @@ For production distribution, use a trusted code-signing certificate from a CA:
 
 1. Purchase a code-signing certificate (standard or EV).
 2. Ensure the **Publisher** in `Package.appxmanifest` and
-   `MarketDataCollector.Wpf.csproj` matches the certificate subject exactly.
+   `Meridian.Wpf.csproj` matches the certificate subject exactly.
 3. Provide the PFX path and password via environment variables:
 
 ```powershell
-$env:MDC_SIGNING_CERT_PFX = "C:\secure\MarketDataCollector.Release.pfx"
+$env:MDC_SIGNING_CERT_PFX = "C:\secure\Meridian.Release.pfx"
 $env:MDC_SIGNING_CERT_PASSWORD = "<secure-password>"
 ```
 
 For `make`, pass the same values:
 
 ```powershell
-set SIGNING_CERT_PFX=C:\secure\MarketDataCollector.Release.pfx
+set SIGNING_CERT_PFX=C:\secure\Meridian.Release.pfx
 set SIGNING_CERT_PASSWORD=<secure-password>
 make desktop-publish
 ```

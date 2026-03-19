@@ -277,7 +277,7 @@ This assessment focuses on high-value improvements for the Windows desktop exper
 
 #### Phase 1: Dashboard Live Data ✅ IMPLEMENTED
 
-**`DashboardViewModel`** is fully implemented in `src/MarketDataCollector.Wpf/ViewModels/DashboardViewModel.cs` and wired to `DashboardPage.xaml.cs` (thin code-behind pattern). Features:
+**`DashboardViewModel`** is fully implemented in `src/Meridian.Wpf/ViewModels/DashboardViewModel.cs` and wired to `DashboardPage.xaml.cs` (thin code-behind pattern). Features:
 - **Live `StatusService` polling** — 2-second `DispatcherTimer` drives `StatusService.RefreshAsync()`
 - **Stale data indicators** — `_staleCheckTimer` checks staleness every second; `LastUpdateForeground` grays out when data exceeds 15 seconds old; `LastUpdateText` shows "Just now" / "Xs ago"
 - **Provenance tracking** — `DataProvenance` field ("live", "cached", "fixture", "offline") surfaced from backend
@@ -370,13 +370,13 @@ public async Task<BackfillProgress> TrackJobAsync(string jobId, CancellationToke
 
 #### Component 1: Resumable Backfill Sessions ✅ IMPLEMENTED
 
-`BackfillCheckpointService` is fully implemented in `src/MarketDataCollector.Ui.Services/Services/BackfillCheckpointService.cs` with:
+`BackfillCheckpointService` is fully implemented in `src/Meridian.Ui.Services/Services/BackfillCheckpointService.cs` with:
 
 - **`BackfillCheckpoint`** model — tracks job ID, symbols, provider, date range, status, created/completed timestamps
 - **`SymbolCheckpoint`** model — per-symbol progress with bars downloaded, error messages, retry count
 - **`CheckpointStatus`** enum — InProgress, Completed, PartiallyCompleted, Failed, Cancelled
 - **`SymbolCheckpointStatus`** enum — Pending, Downloading, Completed, Failed, Skipped
-- **Disk persistence** — checkpoints saved to `%APPDATA%\MarketDataCollector\` as JSON
+- **Disk persistence** — checkpoints saved to `%APPDATA%\Meridian\` as JSON
 - **Cleanup policy** — configurable retention (default 30 days)
 - **22 tests** validating checkpoint lifecycle
 
@@ -520,7 +520,7 @@ Step 5: Start Collection
 
 #### Phase 2: In-App Tours ✅ IMPLEMENTED AND WIRED
 
-`OnboardingTourService` is fully implemented in `src/MarketDataCollector.Ui.Services/Services/OnboardingTourService.cs` and **is wired in `MainWindow`** — `StepChanged` and `TourCompleted` events are subscribed; tour completion is announced via notification.
+`OnboardingTourService` is fully implemented in `src/Meridian.Ui.Services/Services/OnboardingTourService.cs` and **is wired in `MainWindow`** — `StepChanged` and `TourCompleted` events are subscribed; tour completion is announced via notification.
 
 **5 Built-In Tours:**
 1. **Welcome** (4 steps) — Dashboard overview, navigation sidebar, keyboard shortcuts, help access
@@ -530,7 +530,7 @@ Step 5: Start Collection
 5. **Export** (3 steps) — Export options, presets, custom exports
 
 **Features:**
-- Progress persistence to `%APPDATA%\MarketDataCollector\onboarding-progress.json`
+- Progress persistence to `%APPDATA%\Meridian\onboarding-progress.json`
 - `GetTourForPage(pageTag)` — auto-trigger relevant tours on first page visit
 - `StartTour()`, `NextStep()`, `PreviousStep()`, `DismissTour()`, `ResetTour()` lifecycle
 - `StepChanged` and `TourCompleted` events for UI coordination
@@ -577,7 +577,7 @@ Step 5: Start Collection
 
 #### Component 1: Workspace Persistence ✅ IMPLEMENTED
 
-`WorkspaceService` is fully implemented in `src/MarketDataCollector.Wpf/Services/WorkspaceService.cs` with:
+`WorkspaceService` is fully implemented in `src/Meridian.Wpf/Services/WorkspaceService.cs` with:
 
 **4 Default Workspaces:**
 - **monitoring** — Real-time monitoring and data quality overview
@@ -605,7 +605,7 @@ Step 5: Start Collection
 
 #### Component 2: Command Palette (Ctrl+K) ✅ IMPLEMENTED AND WIRED
 
-`CommandPaletteService` is fully implemented in `src/MarketDataCollector.Ui.Services/Services/CommandPaletteService.cs` and `CommandPaletteWindow` in `src/MarketDataCollector.Wpf/Views/CommandPaletteWindow.xaml`. **Ctrl+K is wired in `MainWindow.xaml.cs`** — `OnWindowKeyDown` routes the keystroke to `KeyboardShortcutService`, which triggers `ShowCommandPalette()`, instantiating and displaying `CommandPaletteWindow`.
+`CommandPaletteService` is fully implemented in `src/Meridian.Ui.Services/Services/CommandPaletteService.cs` and `CommandPaletteWindow` in `src/Meridian.Wpf/Views/CommandPaletteWindow.xaml`. **Ctrl+K is wired in `MainWindow.xaml.cs`** — `OnWindowKeyDown` routes the keystroke to `KeyboardShortcutService`, which triggers `ShowCommandPalette()`, instantiating and displaying `CommandPaletteWindow`.
 
 **47 Registered Commands:**
 - **39 Navigation commands** — all pages accessible (Dashboard, Symbols, Backfill, Live Data, Data Quality, Storage, Providers, Charts, Order Book, Settings, Help, Diagnostics, System Health, Archive Health, etc.)
@@ -633,7 +633,7 @@ Step 5: Start Collection
 
 #### Component 3: Expanded Keyboard Coverage ✅ PARTIALLY IMPLEMENTED
 
-`KeyboardShortcutService` is implemented in `src/MarketDataCollector.Wpf/Services/KeyboardShortcutService.cs` with 35 tests.
+`KeyboardShortcutService` is implemented in `src/Meridian.Wpf/Services/KeyboardShortcutService.cs` with 35 tests.
 
 **Enhanced Shortcuts (target):**
 ```
@@ -681,7 +681,7 @@ Lists/Tables:
 
 **Why users care:** Too many warnings without prioritization reduces response quality.
 
-**Implementation Status:** `AlertService` is **fully implemented** in `src/MarketDataCollector.Ui.Services/Services/AlertService.cs` with `AlertSeverity`, `BusinessImpact`, `AlertPlaybook`, deduplication, grouping, smart suppression, and `AlertRaised`/`AlertResolved` events. Default playbooks cover connection-lost, data-gap, storage-warning, and rate-limit scenarios. Remaining work is surfacing these alerts with inline playbook UI and snooze controls in `NotificationCenterPage`.
+**Implementation Status:** `AlertService` is **fully implemented** in `src/Meridian.Ui.Services/Services/AlertService.cs` with `AlertSeverity`, `BusinessImpact`, `AlertPlaybook`, deduplication, grouping, smart suppression, and `AlertRaised`/`AlertResolved` events. Default playbooks cover connection-lost, data-gap, storage-warning, and rate-limit scenarios. Remaining work is surfacing these alerts with inline playbook UI and snooze controls in `NotificationCenterPage`.
 
 **Current Alerting State:**
 
@@ -3034,8 +3034,8 @@ The WPF desktop application has a comprehensive feature surface with 51 pages an
 
 ### Test Projects
 
-- **MarketDataCollector.Ui.Tests** - `tests/MarketDataCollector.Ui.Tests/` (927 tests across 52 test files)
-- **MarketDataCollector.Wpf.Tests** - `tests/MarketDataCollector.Wpf.Tests/` (324 tests across 19 test files)
+- **Meridian.Ui.Tests** - `tests/Meridian.Ui.Tests/` (927 tests across 52 test files)
+- **Meridian.Wpf.Tests** - `tests/Meridian.Wpf.Tests/` (324 tests across 19 test files)
 
 ### External Resources
 

@@ -21,9 +21,9 @@ messages:
       - Support hot configuration reload for symbol subscriptions
 
       ## Directory Structure
-      - `src/MarketDataCollector/Infrastructure/Adapters/` - Provider implementations
-      - `src/MarketDataCollector/Domain/` - Domain models and collectors
-      - `src/MarketDataCollector/Contracts/` - Shared interfaces and DTOs
+      - `src/Meridian/Infrastructure/Adapters/` - Provider implementations
+      - `src/Meridian/Domain/` - Domain models and collectors
+      - `src/Meridian/Contracts/` - Shared interfaces and DTOs
 
       ## Key Files to Reference
       - `Infrastructure/Adapters/AlpacaMarketDataClient.cs` - WebSocket streaming example

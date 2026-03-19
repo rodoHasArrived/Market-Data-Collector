@@ -79,8 +79,8 @@ flowchart TB
     ALP[Alpaca\nWebSocket + REST]:::ext
     HIST[Historical APIs\nYahoo/Stooq/Nasdaq]:::ext
     DISK[(Filesystem\n./data)]:::store
-    UI[Web Dashboard\nMarketDataCollector.Ui]:::container
-    WPF[Desktop App\nMarketDataCollector.Wpf]:::container
+    UI[Web Dashboard\nMeridian.Ui]:::container
+    WPF[Desktop App\nMeridian.Wpf]:::container
     OPR[Operator]:::person
 
     OPR --> UI
@@ -224,5 +224,5 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 ---
 
 **Version:** 1.7.0
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-18
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [ADR Index](../adr/README.md)

@@ -165,7 +165,7 @@ Shows the project layer dependencies:
 - **Layer 2 (Infrastructure)**: Infrastructure, Storage
 - **Layer 3 (Application)**: Application logic
 - **Layer 4 (UI)**: Ui.Shared, Ui.Services, Ui (web), Wpf (desktop)
-- **Layer 5 (Entry Point)**: MarketDataCollector main app
+- **Layer 5 (Entry Point)**: Meridian main app
 - **Tests**: 140 main tests, 4 F# tests, 19 WPF tests, 50 UI tests
 - **Benchmarks**: BenchmarkDotNet performance tests
 

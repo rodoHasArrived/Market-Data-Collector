@@ -13,8 +13,8 @@ make build-wpf                    # Build WPF desktop app
 
 # Run tests
 make test-desktop-services        # Run all desktop-focused tests
-dotnet test tests/MarketDataCollector.Wpf.Tests        # WPF service tests (Windows only)
-dotnet test tests/MarketDataCollector.Ui.Tests         # Shared UI service tests (Windows only)
+dotnet test tests/Meridian.Wpf.Tests        # WPF service tests (Windows only)
+dotnet test tests/Meridian.Ui.Tests         # Shared UI service tests (Windows only)
 ```
 
 ## Quick Start
@@ -49,13 +49,13 @@ This script validates:
 make test-desktop-services
 
 # Or run specific test projects:
-dotnet test tests/MarketDataCollector.Wpf.Tests  # Windows only
-dotnet test tests/MarketDataCollector.Tests --filter "FullyQualifiedName~ConfigurationUnificationTests"
+dotnet test tests/Meridian.Wpf.Tests  # Windows only
+dotnet test tests/Meridian.Tests --filter "FullyQualifiedName~ConfigurationUnificationTests"
 ```
 
 ## Test Projects
 
-### MarketDataCollector.Ui.Tests (71 tests, Windows only)
+### Meridian.Ui.Tests (71 tests, Windows only)
 
 Tests for shared UI services used by the WPF desktop application.
 
@@ -77,12 +77,12 @@ Tests for shared UI services used by the WPF desktop application.
 
 ```bash
 # Windows only
-dotnet test tests/MarketDataCollector.Ui.Tests/MarketDataCollector.Ui.Tests.csproj
+dotnet test tests/Meridian.Ui.Tests/Meridian.Ui.Tests.csproj
 ```
 
 These tests validate shared services used by the WPF desktop application.
 
-### MarketDataCollector.Wpf.Tests (58 tests, Windows only)
+### Meridian.Wpf.Tests (58 tests, Windows only)
 
 Tests for WPF singleton services. These tests require Windows as they depend on WPF types (`System.Windows.Controls.Frame`, etc.).
 
@@ -123,7 +123,7 @@ Tests for WPF singleton services. These tests require Windows as they depend on 
 
 ```bash
 # Windows only
-dotnet test tests/MarketDataCollector.Wpf.Tests/MarketDataCollector.Wpf.Tests.csproj
+dotnet test tests/Meridian.Wpf.Tests/Meridian.Wpf.Tests.csproj
 ```
 
 On non-Windows platforms, these tests will be skipped automatically by the Makefile target.
@@ -132,8 +132,8 @@ On non-Windows platforms, these tests will be skipped automatically by the Makef
 
 | Project | Tests | Platform | Coverage Areas |
 |---------|-------|----------|----------------|
-| **MarketDataCollector.Ui.Tests** | 71 | Windows | Shared UI services, collections, form validation |
-| **MarketDataCollector.Wpf.Tests** | 58 | Windows | WPF singleton services, navigation, configuration |
+| **Meridian.Ui.Tests** | 71 | Windows | Shared UI services, collections, form validation |
+| **Meridian.Wpf.Tests** | 58 | Windows | WPF singleton services, navigation, configuration |
 | **Total Desktop Tests** | **129** | Windows | Comprehensive desktop service validation |
 
 **Coverage breakdown:**
@@ -155,11 +155,11 @@ The UI fixture mode enables desktop developers to work without a running backend
 ```bash
 # Windows PowerShell
 $env:MDC_FIXTURE_MODE = "1"
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 
 # Windows Command Prompt
 set MDC_FIXTURE_MODE=1
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 ```
 
 **What Fixture Mode Provides:**
@@ -195,7 +195,7 @@ See [UI Fixture Mode Guide](./ui-fixture-mode-guide.md) for complete documentati
 make build-wpf
 
 # Or directly:
-dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -r win-x64
+dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -r win-x64
 ```
 
 ## Common Issues and Solutions
@@ -226,8 +226,8 @@ dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Relea
 **Expected Behavior**: WPF tests require Windows and will be skipped on Linux/macOS. This is by design.
 
 **What Runs on Non-Windows**:
-- Core tests in `MarketDataCollector.Tests`
-- F# tests in `MarketDataCollector.FSharp.Tests`
+- Core tests in `Meridian.Tests`
+- F# tests in `Meridian.FSharp.Tests`
 - Configuration and CLI tests
 
 ## Test Coverage
@@ -300,7 +300,7 @@ See `.github/workflows/desktop-builds.yml` for CI configuration.
   - [Desktop Improvements - Executive Summary](../evaluations/desktop-improvements-executive-summary.md) - Impact analysis, priorities, and quick reference
   
 - **Testing and Quality:**
-  - [Test Project README](../../tests/MarketDataCollector.Ui.Tests/README.md) - Ui.Tests project details
+  - [Test Project README](../../tests/Meridian.Ui.Tests/README.md) - Ui.Tests project details
   
 - **Architecture and Policies:**
   - [Repository Organization Guide](./repository-organization-guide.md) - Code structure conventions

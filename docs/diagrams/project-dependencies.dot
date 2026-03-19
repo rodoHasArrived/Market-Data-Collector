@@ -94,7 +94,7 @@ digraph ProjectDependencies {
         color="#cccccc";
         fontsize=11;
 
-        MainApp [label="MarketDataCollector\n(entry point, CLI)", fillcolor="#FFEBEE"];
+        MainApp [label="Meridian\n(entry point, CLI)", fillcolor="#FFEBEE"];
     }
 
     // ==================== Test Projects ====================

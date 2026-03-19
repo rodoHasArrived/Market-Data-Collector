@@ -57,7 +57,7 @@ jobs:
       shell: bash
       run: |
         dotnet run \
-          --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+          --project benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj \
           -c Release \
           -- --exporters json
 
@@ -90,13 +90,13 @@ jobs:
         mkdir -p data logs
 
     - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true --verbosity minimal
+      run: dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true --verbosity minimal
 
     - name: Run self-tests
       shell: bash
       run: |
         dotnet run \
-          --project src/MarketDataCollector/MarketDataCollector.csproj \
+          --project src/Meridian/Meridian.csproj \
           --no-build \
           -c Release \
           -- --selftest

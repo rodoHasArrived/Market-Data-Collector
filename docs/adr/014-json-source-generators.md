@@ -67,14 +67,14 @@ var json = JsonSerializer.Serialize(evt);
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| JSON Context | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs:97` | Source-generated serializers |
-| Alpaca Context | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs:142` | Alpaca wire messages |
-| HighPerformanceJson | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs:243` | Typed utilities |
-| WAL Integration | `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs:92` | Uses HighPerformanceOptions |
-| JSONL Sink | `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs` | Bulk serialization |
-| HTTP Endpoints | `src/MarketDataCollector.Application/Http/Endpoints/` | API responses |
-| Benchmarks | `benchmarks/MarketDataCollector.Benchmarks/JsonSerializationBenchmarks.cs` | Performance validation |
-| Tests | `tests/MarketDataCollector.Tests/Serialization/HighPerformanceJsonTests.cs` | Correctness tests |
+| JSON Context | `src/Meridian.Core/Serialization/MarketDataJsonContext.cs:97` | Source-generated serializers |
+| Alpaca Context | `src/Meridian.Core/Serialization/MarketDataJsonContext.cs:142` | Alpaca wire messages |
+| HighPerformanceJson | `src/Meridian.Core/Serialization/MarketDataJsonContext.cs:243` | Typed utilities |
+| WAL Integration | `src/Meridian.Storage/Archival/WriteAheadLog.cs:92` | Uses HighPerformanceOptions |
+| JSONL Sink | `src/Meridian.Storage/Sinks/JsonlStorageSink.cs` | Bulk serialization |
+| HTTP Endpoints | `src/Meridian.Application/Http/Endpoints/` | API responses |
+| Benchmarks | `benchmarks/Meridian.Benchmarks/JsonSerializationBenchmarks.cs` | Performance validation |
+| Tests | `tests/Meridian.Tests/Serialization/HighPerformanceJsonTests.cs` | Correctness tests |
 
 ## Rationale
 
@@ -89,7 +89,7 @@ Source generators eliminate reflection overhead:
 | Bulk serialize (10k events) | 8.5 ms | 5.2 ms | **1.6x** |
 | First call (cold start) | 12 ms | 0.6 ms | **20x** |
 
-Benchmarks in `benchmarks/MarketDataCollector.Benchmarks/JsonSerializationBenchmarks.cs`.
+Benchmarks in `benchmarks/Meridian.Benchmarks/JsonSerializationBenchmarks.cs`.
 
 ### AOT Compatibility
 

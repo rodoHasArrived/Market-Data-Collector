@@ -34,15 +34,15 @@ Data flows through tiers automatically based on age and access patterns.
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Storage Configuration | `src/MarketDataCollector.Storage/StorageOptions.cs` | Tier configuration |
-| Event Pipeline | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Bounded channel routing |
-| JSONL Sink | `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs` | Hot/warm tier writer |
-| Parquet Sink | `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` | Cold tier Parquet writer |
-| WAL Implementation | `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs` | Durability layer |
-| Compression Profiles | `src/MarketDataCollector.Storage/Archival/CompressionProfileManager.cs` | Compression strategies |
-| Tier Migration | `src/MarketDataCollector.Storage/Services/TierMigrationService.cs` | Data lifecycle management |
-| Archival Service | `src/MarketDataCollector.Storage/Archival/ArchivalStorageService.cs` | Archive management |
-| Storage Tests | `tests/MarketDataCollector.Tests/Storage/` | Tier verification |
+| Storage Configuration | `src/Meridian.Storage/StorageOptions.cs` | Tier configuration |
+| Event Pipeline | `src/Meridian.Application/Pipeline/EventPipeline.cs` | Bounded channel routing |
+| JSONL Sink | `src/Meridian.Storage/Sinks/JsonlStorageSink.cs` | Hot/warm tier writer |
+| Parquet Sink | `src/Meridian.Storage/Sinks/ParquetStorageSink.cs` | Cold tier Parquet writer |
+| WAL Implementation | `src/Meridian.Storage/Archival/WriteAheadLog.cs` | Durability layer |
+| Compression Profiles | `src/Meridian.Storage/Archival/CompressionProfileManager.cs` | Compression strategies |
+| Tier Migration | `src/Meridian.Storage/Services/TierMigrationService.cs` | Data lifecycle management |
+| Archival Service | `src/Meridian.Storage/Archival/ArchivalStorageService.cs` | Archive management |
+| Storage Tests | `tests/Meridian.Tests/Storage/` | Tier verification |
 
 ## Rationale
 

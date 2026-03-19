@@ -43,11 +43,11 @@ Use `IHttpClientFactory` from `Microsoft.Extensions.Http` for all HTTP client cr
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Client Names | `src/MarketDataCollector.Infrastructure/Http/HttpClientConfiguration.cs` | Named client identifiers |
-| Registration | `src/MarketDataCollector.Infrastructure/Http/HttpClientConfiguration.cs` | DI configuration |
-| Resilience Policies | `src/MarketDataCollector.Infrastructure/Http/SharedResiliencePolicies.cs` | Retry/circuit breaker |
-| Alpaca Provider | `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Usage example |
-| Historical Providers | `src/MarketDataCollector.Infrastructure/Adapters/Core/` | Provider implementations |
+| Client Names | `src/Meridian.Infrastructure/Http/HttpClientConfiguration.cs` | Named client identifiers |
+| Registration | `src/Meridian.Infrastructure/Http/HttpClientConfiguration.cs` | DI configuration |
+| Resilience Policies | `src/Meridian.Infrastructure/Http/SharedResiliencePolicies.cs` | Retry/circuit breaker |
+| Alpaca Provider | `src/Meridian.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` | Usage example |
+| Historical Providers | `src/Meridian.Infrastructure/Adapters/Core/` | Provider implementations |
 
 ## Rationale
 

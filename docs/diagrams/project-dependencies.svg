@@ -37,8 +37,8 @@
 </g>
 <g id="clust6" class="cluster">
 <title>cluster_layer5</title>
-<path fill="none" stroke="#cccccc" stroke-dasharray="5,2" d="M320,-438C320,-438 426,-438 426,-438 432,-438 438,-444 438,-450 438,-450 438,-498 438,-498 438,-504 432,-510 426,-510 426,-510 320,-510 320,-510 314,-510 308,-504 308,-498 308,-498 308,-450 308,-450 308,-444 314,-438 320,-438"/>
-<text text-anchor="middle" x="373" y="-497.2" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11.00">Layer 5: Entry Point</text>
+<path fill="none" stroke="#cccccc" stroke-dasharray="5,2" d="M325,-438C325,-438 413,-438 413,-438 419,-438 425,-444 425,-450 425,-450 425,-498 425,-498 425,-504 419,-510 413,-510 413,-510 325,-510 325,-510 319,-510 313,-504 313,-498 313,-498 313,-450 313,-450 313,-444 319,-438 325,-438"/>
+<text text-anchor="middle" x="369" y="-497.2" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11.00">Layer 5: Entry Point</text>
 </g>
 <g id="clust7" class="cluster">
 <title>cluster_tests</title>
@@ -149,8 +149,8 @@
 <!-- Infrastructure&#45;&gt;Core -->
 <g id="edge7" class="edge">
 <title>Infrastructure&#45;&gt;Core</title>
-<path fill="none" stroke="#666666" d="M720.25,-278.13C720.25,-288.71 720.25,-300 720.25,-300 720.25,-300 371.25,-300 371.25,-300 371.25,-300 371.25,-285.13 371.25,-285.13"/>
-<polygon fill="#666666" stroke="#666666" points="373.7,-285.13 371.25,-278.13 368.8,-285.13 373.7,-285.13"/>
+<path fill="none" stroke="#666666" d="M720.25,-278.13C720.25,-288.71 720.25,-300 720.25,-300 720.25,-300 372.38,-300 372.38,-300 372.38,-300 372.38,-285.13 372.38,-285.13"/>
+<polygon fill="#666666" stroke="#666666" points="374.83,-285.13 372.38,-278.13 369.93,-285.13 374.83,-285.13"/>
 </g>
 <!-- Storage -->
 <g id="node7" class="node">
@@ -289,57 +289,57 @@
 <!-- MainApp -->
 <g id="node13" class="node">
 <title>MainApp</title>
-<path fill="#ffebee" stroke="black" d="M417.5,-482C417.5,-482 328.5,-482 328.5,-482 322.5,-482 316.5,-476 316.5,-470 316.5,-470 316.5,-458 316.5,-458 316.5,-452 322.5,-446 328.5,-446 328.5,-446 417.5,-446 417.5,-446 423.5,-446 429.5,-452 429.5,-458 429.5,-458 429.5,-470 429.5,-470 429.5,-476 423.5,-482 417.5,-482"/>
-<text text-anchor="middle" x="373" y="-467" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">MarketDataCollector</text>
-<text text-anchor="middle" x="373" y="-456" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">(entry point, CLI)</text>
+<path fill="#ffebee" stroke="black" d="M405,-482C405,-482 333,-482 333,-482 327,-482 321,-476 321,-470 321,-470 321,-458 321,-458 321,-452 327,-446 333,-446 333,-446 405,-446 405,-446 411,-446 417,-452 417,-458 417,-458 417,-470 417,-470 417,-476 411,-482 405,-482"/>
+<text text-anchor="middle" x="369" y="-467" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">Meridian</text>
+<text text-anchor="middle" x="369" y="-456" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="10.00">(entry point, CLI)</text>
 </g>
 <!-- MainApp&#45;&gt;Contracts -->
 <g id="edge31" class="edge">
 <title>MainApp&#45;&gt;Contracts</title>
-<path fill="none" stroke="#666666" d="M429.95,-464C556.32,-464 849.07,-464 849.07,-464 849.07,-464 849.07,-59.2 849.07,-59.2"/>
+<path fill="none" stroke="#666666" d="M417.23,-464C538.97,-464 849.07,-464 849.07,-464 849.07,-464 849.07,-59.2 849.07,-59.2"/>
 <polygon fill="#666666" stroke="#666666" points="851.52,-59.2 849.07,-52.2 846.62,-59.2 851.52,-59.2"/>
 </g>
 <!-- MainApp&#45;&gt;ProviderSdk -->
 <g id="edge32" class="edge">
 <title>MainApp&#45;&gt;ProviderSdk</title>
-<path fill="none" stroke="#666666" d="M405.5,-445.77C405.5,-365.32 405.5,-46 405.5,-46 405.5,-46 396.8,-46 396.8,-46"/>
-<polygon fill="#666666" stroke="#666666" points="396.8,-43.55 389.8,-46 396.8,-48.45 396.8,-43.55"/>
+<path fill="none" stroke="#666666" d="M400.5,-445.77C400.5,-365.32 400.5,-46 400.5,-46 400.5,-46 396.54,-46 396.54,-46"/>
+<polygon fill="#666666" stroke="#666666" points="396.54,-43.55 389.54,-46 396.54,-48.45 396.54,-43.55"/>
 </g>
 <!-- MainApp&#45;&gt;Domain -->
 <g id="edge30" class="edge">
 <title>MainApp&#45;&gt;Domain</title>
-<path fill="none" stroke="#666666" d="M397.5,-445.64C397.5,-378.2 397.5,-148 397.5,-148 397.5,-148 350.55,-148 350.55,-148"/>
+<path fill="none" stroke="#666666" d="M395,-445.64C395,-378.2 395,-148 395,-148 395,-148 350.55,-148 350.55,-148"/>
 <polygon fill="#666666" stroke="#666666" points="350.55,-145.55 343.55,-148 350.55,-150.45 350.55,-145.55"/>
 </g>
 <!-- MainApp&#45;&gt;Core -->
 <g id="edge29" class="edge">
 <title>MainApp&#45;&gt;Core</title>
-<path fill="none" stroke="#666666" d="M353,-445.9C353,-445.9 353,-285.06 353,-285.06"/>
-<polygon fill="#666666" stroke="#666666" points="355.45,-285.06 353,-278.06 350.55,-285.06 355.45,-285.06"/>
+<path fill="none" stroke="#666666" d="M355.25,-445.9C355.25,-445.9 355.25,-285.06 355.25,-285.06"/>
+<polygon fill="#666666" stroke="#666666" points="357.7,-285.06 355.25,-278.06 352.8,-285.06 357.7,-285.06"/>
 </g>
 <!-- MainApp&#45;&gt;Infrastructure -->
 <g id="edge27" class="edge">
 <title>MainApp&#45;&gt;Infrastructure</title>
-<path fill="none" stroke="#666666" d="M429.85,-455C522.32,-455 695.12,-455 695.12,-455 695.12,-455 695.12,-285.35 695.12,-285.35"/>
+<path fill="none" stroke="#666666" d="M417.12,-455C507.84,-455 695.12,-455 695.12,-455 695.12,-455 695.12,-285.35 695.12,-285.35"/>
 <polygon fill="#666666" stroke="#666666" points="697.58,-285.35 695.12,-278.35 692.68,-285.35 697.58,-285.35"/>
 </g>
 <!-- MainApp&#45;&gt;Storage -->
 <g id="edge28" class="edge">
 <title>MainApp&#45;&gt;Storage</title>
-<path fill="none" stroke="#666666" d="M413.5,-445.73C413.5,-396.71 413.5,-266 413.5,-266 413.5,-266 467.61,-266 467.61,-266"/>
-<polygon fill="#666666" stroke="#666666" points="467.61,-268.45 474.61,-266 467.61,-263.55 467.61,-268.45"/>
+<path fill="none" stroke="#666666" d="M406,-445.73C406,-396.71 406,-266 406,-266 406,-266 467.68,-266 467.68,-266"/>
+<polygon fill="#666666" stroke="#666666" points="467.68,-268.45 474.68,-266 467.68,-263.55 467.68,-268.45"/>
 </g>
 <!-- MainApp&#45;&gt;Application -->
 <g id="edge26" class="edge">
 <title>MainApp&#45;&gt;Application</title>
-<path fill="none" stroke="#666666" d="M334.75,-445.68C334.75,-418.08 334.75,-369 334.75,-369 334.75,-369 259.7,-369 259.7,-369"/>
-<polygon fill="#666666" stroke="#666666" points="259.7,-366.55 252.7,-369 259.7,-371.45 259.7,-366.55"/>
+<path fill="none" stroke="#666666" d="M338.12,-445.68C338.12,-418.08 338.12,-369 338.12,-369 338.12,-369 259.91,-369 259.91,-369"/>
+<polygon fill="#666666" stroke="#666666" points="259.91,-366.55 252.91,-369 259.91,-371.45 259.91,-366.55"/>
 </g>
 <!-- MainApp&#45;&gt;UiShared -->
 <g id="edge33" class="edge">
 <title>MainApp&#45;&gt;UiShared</title>
-<path fill="none" stroke="#666666" d="M421.5,-445.82C421.5,-419.01 421.5,-372 421.5,-372 421.5,-372 984.75,-372 984.75,-372"/>
-<polygon fill="#666666" stroke="#666666" points="984.75,-374.45 991.75,-372 984.75,-369.55 984.75,-374.45"/>
+<path fill="none" stroke="#666666" d="M411.5,-445.82C411.5,-419.01 411.5,-372 411.5,-372 411.5,-372 985,-372 985,-372"/>
+<polygon fill="#666666" stroke="#666666" points="985,-374.45 992,-372 985,-369.55 985,-374.45"/>
 </g>
 <!-- Tests -->
 <g id="node14" class="node">
@@ -357,8 +357,8 @@
 <!-- Tests&#45;&gt;Core -->
 <g id="edge38" class="edge">
 <title>Tests&#45;&gt;Core</title>
-<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M770.18,-575C646.12,-575 295.17,-575 295.17,-575 295.17,-575 295.17,-285.3 295.17,-285.3"/>
-<polygon fill="#999999" stroke="#999999" points="297.62,-285.3 295.17,-278.3 292.72,-285.3 297.62,-285.3"/>
+<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M770.43,-575C647.08,-575 298.17,-575 298.17,-575 298.17,-575 298.17,-285.3 298.17,-285.3"/>
+<polygon fill="#999999" stroke="#999999" points="300.62,-285.3 298.17,-278.3 295.72,-285.3 300.62,-285.3"/>
 </g>
 <!-- Tests&#45;&gt;Infrastructure -->
 <g id="edge36" class="edge">
@@ -387,8 +387,8 @@
 <!-- Tests&#45;&gt;MainApp -->
 <g id="edge34" class="edge">
 <title>Tests&#45;&gt;MainApp</title>
-<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M782.38,-547.63C782.38,-520.52 782.38,-473 782.38,-473 782.38,-473 436.92,-473 436.92,-473"/>
-<polygon fill="#999999" stroke="#999999" points="436.92,-470.55 429.92,-473 436.92,-475.45 436.92,-470.55"/>
+<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M782.38,-547.63C782.38,-520.52 782.38,-473 782.38,-473 782.38,-473 424.23,-473 424.23,-473"/>
+<polygon fill="#999999" stroke="#999999" points="424.23,-470.55 417.23,-473 424.23,-475.45 424.23,-470.55"/>
 </g>
 <!-- FSharpTests -->
 <g id="node15" class="node">
@@ -457,8 +457,8 @@
 <!-- Benchmarks&#45;&gt;Core -->
 <g id="edge48" class="edge">
 <title>Benchmarks&#45;&gt;Core</title>
-<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M126.16,-557C186.22,-557 273.83,-557 273.83,-557 273.83,-557 273.83,-285.13 273.83,-285.13"/>
-<polygon fill="#999999" stroke="#999999" points="276.28,-285.13 273.83,-278.13 271.38,-285.13 276.28,-285.13"/>
+<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M126.03,-557C186.55,-557 275.33,-557 275.33,-557 275.33,-557 275.33,-285.13 275.33,-285.13"/>
+<polygon fill="#999999" stroke="#999999" points="277.78,-285.13 275.33,-278.13 272.88,-285.13 277.78,-285.13"/>
 </g>
 <!-- Benchmarks&#45;&gt;Application -->
 <g id="edge47" class="edge">
@@ -469,8 +469,8 @@
 <!-- Benchmarks&#45;&gt;MainApp -->
 <g id="edge46" class="edge">
 <title>Benchmarks&#45;&gt;MainApp</title>
-<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M118.5,-547.76C118.5,-518.43 118.5,-464 118.5,-464 118.5,-464 309.2,-464 309.2,-464"/>
-<polygon fill="#999999" stroke="#999999" points="309.2,-466.45 316.2,-464 309.2,-461.55 309.2,-466.45"/>
+<path fill="none" stroke="#999999" stroke-dasharray="1,5" d="M118.5,-547.76C118.5,-518.43 118.5,-464 118.5,-464 118.5,-464 314,-464 314,-464"/>
+<polygon fill="#999999" stroke="#999999" points="314,-466.45 321,-464 314,-461.55 314,-466.45"/>
 </g>
 </g>
 </svg>

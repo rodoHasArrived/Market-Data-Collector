@@ -58,7 +58,7 @@ Brainstorm → Roadmap → Blueprint (this agent) → Implementation → Code Re
 **File:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
 **Used by:** GitHub Copilot agents, Claude Code (`mdc-code-review` skill)
 
-Defines the canonical **7-lens code review framework** for the MarketDataCollector codebase:
+Defines the canonical **7-lens code review framework** for the Meridian codebase:
 
 | Lens | Focus Area | Key Checks |
 |------|-----------|------------|
@@ -95,7 +95,7 @@ Handles documentation maintenance and quality tasks:
 **Used by:** GitHub Copilot agents
 **Claude Code equivalent:** [`mdc-brainstorm`](../skills/README.md#mdc-brainstorm) skill
 
-Generates high-value, implementable ideas for the MarketDataCollector platform. Supports 11
+Generates high-value, implementable ideas for the Meridian platform. Supports 11
 brainstorm modes (Open Exploration, Problem-Focused, Persona-Focused, Domain-Focused, Competitive,
 Quick Wins, Architecture/Refactoring, User Growth/Adoption, Technical Debt, UX/Information Design,
 Skill Improvement). Produces a summary table + narrative ideas + synthesis with competitive signals.
@@ -127,6 +127,64 @@ and selects from 8 named patterns (A–H) based on the component type.
 
 ---
 
+### Cleanup Agent
+
+**File:** [`.github/agents/mdc-cleanup-agent.md`](../../../.github/agents/mdc-cleanup-agent.md)
+**Used by:** GitHub Copilot agents
+**Claude Code equivalent:** [`.claude/agents/mdc-cleanup.md`](../../../.claude/agents/mdc-cleanup.md)
+
+Removes dead code, duplication, anti-patterns, and stale documentation without changing
+observable behaviour. Covers 7 categories:
+
+| # | Category |
+|---|---------|
+| 1 | Dead code removal (C# / F#) |
+| 2 | Anti-pattern correction (MDC-specific) |
+| 3 | Duplication consolidation |
+| 4 | WPF code-behind mechanical cleanup |
+| 5 | Documentation cleanup (stale refs, broken links) |
+| 6 | Central Package Management (CPM) compliance |
+| 7 | ADR attribute cleanup (`[DataSource]`, `[ImplementsAdr]`) |
+
+---
+
+### Bug Fix Agent
+
+**File:** [`.github/agents/mdc-bug-fix-agent.md`](../../../.github/agents/mdc-bug-fix-agent.md)
+**Used by:** GitHub Copilot agents
+
+Traces failures from symptom to root cause across all MDC layers and applies the minimal
+correct fix with a mandatory regression test. Follows a 5-step workflow:
+
+| Step | Action |
+|------|--------|
+| 1 | Reproduce — confirm the failure with exact CLI / test command |
+| 2 | Isolate — identify the layer (provider, pipeline, storage, WPF, F#) |
+| 3 | Diagnose — apply layer-specific diagnostic lens |
+| 4 | Fix — minimal change at the root cause, following all CLAUDE.md rules |
+| 5 | Regression test — new test that was red before, green after |
+
+---
+
+### Performance Agent
+
+**File:** [`.github/agents/mdc-performance-agent.md`](../../../.github/agents/mdc-performance-agent.md)
+**Used by:** GitHub Copilot agents
+
+Identifies and eliminates hot-path bottlenecks across streaming pipelines, storage sinks, and
+provider adapters. Operates only on **measured** bottlenecks (BenchmarkDotNet / dotnet-counters).
+
+| Category | Key Fix Pattern |
+|----------|----------------|
+| Per-tick allocations | Span\<T\>, ArrayPool, LoggerMessage.Define |
+| Blocking I/O | Remove `Task.Run` wrappers; use true async I/O |
+| Channel saturation | `EventPipelinePolicy.Default.CreateChannel<T>()` (ADR-013) |
+| JSON overhead | `MarketDataJsonContext.Default.*` source-generated context (ADR-014) |
+| LINQ in hot path | Replace with `foreach` + pre-allocated buffers |
+| String interning | `SymbolTable.Intern()` for repeated symbol keys |
+
+---
+
 ## Claude Code Agents (`.claude/agents/`)
 
 ### mdc-blueprint
@@ -146,8 +204,9 @@ and implementation checklists — grounded in MDC's actual stack.
 
 **File:** [`.claude/agents/mdc-cleanup.md`](../../../.claude/agents/mdc-cleanup.md)
 **Used by:** Claude Code
+**Copilot equivalent:** [`.github/agents/mdc-cleanup-agent.md`](../../../.github/agents/mdc-cleanup-agent.md)
 
-Cleanup specialist for the MarketDataCollector repository. Removes dead code, duplication,
+Cleanup specialist for the Meridian repository. Removes dead code, duplication,
 anti-patterns, and stale documentation across C# 13, F# 8, WPF, and .NET 9 source files —
 without changing observable behaviour. Covers 7 categories: dead code, anti-pattern correction,
 duplication consolidation, WPF code-behind cleanup, documentation cleanup, CPM compliance,
@@ -161,7 +220,7 @@ and ADR attribute cleanup.
 **Used by:** Claude Code
 **Copilot equivalent:** [`.github/agents/documentation-agent.md`](../../../.github/agents/documentation-agent.md)
 
-Documentation maintenance specialist for the MarketDataCollector repository. Keeps docs accurate,
+Documentation maintenance specialist for the Meridian repository. Keeps docs accurate,
 comprehensive, and up-to-date across the AI guidance system (`docs/ai/`), architecture docs,
 provider docs, developer guides, `CLAUDE.md`, and the `ai-known-errors.md` registry.
 
@@ -178,7 +237,9 @@ provider docs, developer guides, `CLAUDE.md`, and the `ai-known-errors.md` regis
 | Provider implementation | `mdc-provider-builder-agent.md` | `mdc-provider-builder` skill |
 | Test generation | `mdc-test-writer-agent.md` | `mdc-test-writer` skill |
 | Documentation maintenance | `documentation-agent.md` | `mdc-docs` agent |
-| Code cleanup / anti-pattern fix | *(via code-review-agent.md)* | `mdc-cleanup` agent |
+| Code cleanup / anti-pattern fix | `mdc-cleanup-agent.md` | `mdc-cleanup` agent |
+| Bug diagnosis & fix | `mdc-bug-fix-agent.md` | *(Copilot-only)* |
+| Performance profiling & optimisation | `mdc-performance-agent.md` | *(Copilot-only)* |
 
 ---
 
@@ -202,4 +263,4 @@ Copilot agents, referencing these files in the issue or prompt body improves out
 
 ---
 
-*Last Updated: 2026-03-17*
+*Last Updated: 2026-03-18*

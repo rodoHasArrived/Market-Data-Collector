@@ -342,7 +342,7 @@ jobs:
 
       - name: Detect changed areas
         id: filter
-        uses: dorny/paths-filter@v3.0.2
+        uses: dorny/paths-filter@v4.0.1
         with:
           filters: |
             docs:
@@ -359,10 +359,10 @@ jobs:
               - added|deleted: 'src/**'
               - added|deleted: 'docs/**'
             providers:
-              - 'src/MarketDataCollector/Infrastructure/Adapters/**'
+              - 'src/Meridian/Infrastructure/Adapters/**'
             interfaces:
-              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
-              - 'src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider*.cs'
+              - 'src/Meridian/Infrastructure/IMarketDataClient.cs'
+              - 'src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider*.cs'
             adrs:
               - 'docs/adr/**'
             config:
@@ -497,8 +497,8 @@ jobs:
       - name: Build project for metadata extraction
         run: |
           set -euo pipefail
-          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-          dotnet build src/MarketDataCollector/MarketDataCollector.csproj -c Release --no-restore /p:EnableWindowsTargeting=true /p:GenerateDocumentationFile=true
+          dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
+          dotnet build src/Meridian/Meridian.csproj -c Release --no-restore /p:EnableWindowsTargeting=true /p:GenerateDocumentationFile=true
         continue-on-error: true
 
       # --- Structure docs ---
@@ -620,7 +620,7 @@ jobs:
           if [ -d "build/dotnet/DocGenerator" ]; then
             dotnet restore build/dotnet/DocGenerator/DocGenerator.csproj
             dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
-            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/MarketDataCollector --output docs/generated/project-context.md || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/Meridian --output docs/generated/project-context.md || true
           fi
 
       # --- AI instruction sync ---
@@ -1518,8 +1518,8 @@ jobs:
       - name: Build project for XML documentation
         run: |
           set -euo pipefail
-          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-          dotnet build MarketDataCollector.sln -c Release --no-restore \
+          dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
+          dotnet build Meridian.sln -c Release --no-restore \
             /p:EnableWindowsTargeting=true \
             /p:GenerateDocumentationFile=true
         continue-on-error: true
@@ -1536,7 +1536,7 @@ jobs:
         if: steps.configure-pages.outcome == 'success'
         uses: actions/upload-pages-artifact@v4
         with:
-          path: docs/docfx/_site
+          path: _site
         continue-on-error: true
 
   # ─── Deploy to GitHub Pages ──────────────────────────────────────────

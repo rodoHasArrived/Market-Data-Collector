@@ -45,13 +45,13 @@ Two test projects were created to separate platform-specific WPF tests from shar
 
 | Test Project | Test Files | Tests | Platform | Coverage |
 |---|---|---|---|---|
-| `MarketDataCollector.Ui.Tests` | 51 | ~293 | Windows | Shared UI services, collections |
-| `MarketDataCollector.Wpf.Tests` | 20 | ~142 | Windows | WPF singleton services |
+| `Meridian.Ui.Tests` | 51 | ~293 | Windows | Shared UI services, collections |
+| `Meridian.Wpf.Tests` | 20 | ~142 | Windows | WPF singleton services |
 | **Total** | **71** | **~435** | | |
 
-#### MarketDataCollector.Ui.Tests — Shared UI Service Tests
+#### Meridian.Ui.Tests — Shared UI Service Tests
 
-Located in `tests/MarketDataCollector.Ui.Tests/`. Tests the platform-agnostic services in `MarketDataCollector.Ui.Services`.
+Located in `tests/Meridian.Ui.Tests/`. Tests the platform-agnostic services in `Meridian.Ui.Services`.
 
 **Collection Tests** (2 files):
 
@@ -115,9 +115,9 @@ Located in `tests/MarketDataCollector.Ui.Tests/`. Tests the platform-agnostic se
 | `TimeSeriesAlignmentServiceTests` | Time series alignment |
 | `WatchlistServiceTests` | Watchlist management |
 
-#### MarketDataCollector.Wpf.Tests — WPF Platform Tests
+#### Meridian.Wpf.Tests — WPF Platform Tests
 
-Located in `tests/MarketDataCollector.Wpf.Tests/`. Tests WPF-specific singleton services that depend on WPF types.
+Located in `tests/Meridian.Wpf.Tests/`. Tests WPF-specific singleton services that depend on WPF types.
 
 **Service Tests** (20 files):
 
@@ -153,8 +153,8 @@ Desktop tests run via the `desktop-builds.yml` workflow on Windows runners, and 
 make test-desktop-services
 
 # Run individual projects
-dotnet test tests/MarketDataCollector.Ui.Tests
-dotnet test tests/MarketDataCollector.Wpf.Tests
+dotnet test tests/Meridian.Ui.Tests
+dotnet test tests/Meridian.Wpf.Tests
 ```
 
 ### Outcomes
@@ -167,7 +167,7 @@ dotnet test tests/MarketDataCollector.Wpf.Tests
 ### Success Metrics
 
 - [x] At least 15 unit test files created (actual: 71)
-- [x] 60%+ code coverage for `MarketDataCollector.Ui.Services` project
+- [x] 60%+ code coverage for `Meridian.Ui.Services` project
 - [x] All new desktop service PRs include unit tests
 - [x] CI runs desktop tests on every PR via `desktop-builds.yml`
 
@@ -182,7 +182,7 @@ Desktop developers must run the backend collector service (`http://localhost:808
 
 #### FixtureDataService
 
-Implemented in `src/MarketDataCollector.Ui.Services/Services/FixtureDataService.cs`. Provides mock data matching the real `MarketDataCollector.Contracts.Api` types:
+Implemented in `src/Meridian.Ui.Services/Services/FixtureDataService.cs`. Provides mock data matching the real `Meridian.Contracts.Api` types:
 
 | Method | Returns | Mock Data |
 |---|---|---|
@@ -207,16 +207,16 @@ The `App.IsFixtureMode` static property is available throughout the application.
 
 ```bash
 # Run WPF with fixture data
-dotnet run --project src/MarketDataCollector.Wpf -- --fixture
+dotnet run --project src/Meridian.Wpf -- --fixture
 
 # Or set environment variable
 $env:MDC_FIXTURE_MODE = "1"
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 ```
 
 #### Test Coverage
 
-`tests/MarketDataCollector.Ui.Tests/Services/FixtureDataServiceTests.cs` validates all mock data methods return valid contract-conforming objects.
+`tests/Meridian.Ui.Tests/Services/FixtureDataServiceTests.cs` validates all mock data methods return valid contract-conforming objects.
 
 #### Documentation
 
@@ -244,7 +244,7 @@ Created `docs/architecture/desktop-layers.md` documenting the dual UI surface ar
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                          UI Host Layer                                    │
 │  ┌────────────────────────────┐     ┌──────────────────────────────────┐  │
-│  │ MarketDataCollector.Wpf    │     │ MarketDataCollector.Ui           │  │
+│  │ Meridian.Wpf    │     │ Meridian.Ui           │  │
 │  │ (Windows desktop host)     │     │ (ASP.NET Core web host)          │  │
 │  │ - XAML views/viewmodels    │     │ - Thin Program.cs host           │  │
 │  │ - WPF-only services        │     │ - Serves dashboard/static assets │  │
@@ -253,7 +253,7 @@ Created `docs/architecture/desktop-layers.md` documenting the dual UI surface ar
                   │                                        │
                   │                                        ▼
                   │                    ┌──────────────────────────────────┐
-                  │                    │ MarketDataCollector.Ui.Shared    │
+                  │                    │ Meridian.Ui.Shared    │
                   │                    │ - Endpoint mapping               │
                   │                    │ - Shared web UI services         │
                   │                    └──────────────────┬───────────────┘
@@ -262,7 +262,7 @@ Created `docs/architecture/desktop-layers.md` documenting the dual UI surface ar
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                      Shared UI Services Layer                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │ MarketDataCollector.Ui.Services                                     │  │
+│  │ Meridian.Ui.Services                                     │  │
 │  │ - 15 abstract base classes (shared testable logic)                  │  │
 │  │ - 50+ feature services (backfill, charting, diagnostics, etc.)      │  │
 │  │ - Fixture data, validation, notifications, config helpers           │  │
@@ -272,7 +272,7 @@ Created `docs/architecture/desktop-layers.md` documenting the dual UI surface ar
                                           ▼
 ┌────────────────────────────────────────────────────────────────────────────┐
 │               Contracts + Backend Application Layers                      │
-│  MarketDataCollector.Contracts  +  Application/Core/Domain/...            │
+│  Meridian.Contracts  +  Application/Core/Domain/...            │
 │  (DTOs, API contracts, orchestration, pipelines, providers, storage)      │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ WPF originally used manual singleton patterns everywhere, making testing difficu
 
 `App.xaml.cs` now uses `Microsoft.Extensions.Hosting` with full DI container. Key aspects:
 
-#### Host Setup (`src/MarketDataCollector.Wpf/App.xaml.cs`)
+#### Host Setup (`src/Meridian.Wpf/App.xaml.cs`)
 
 ```csharp
 private IHost? _host;
@@ -375,7 +375,7 @@ All three phases are complete:
 
 #### Phase 1: Shared Interfaces ✅
 
-16 interface files in `src/MarketDataCollector.Ui.Services/Contracts/`:
+16 interface files in `src/Meridian.Ui.Services/Contracts/`:
 
 | Interface | Purpose |
 |---|---|
@@ -398,7 +398,7 @@ All three phases are complete:
 
 #### Phase 2: Abstract Base Classes ✅
 
-15 base classes in `src/MarketDataCollector.Ui.Services/Services/`:
+15 base classes in `src/Meridian.Ui.Services/Services/`:
 
 | Base Class | Shared Logic |
 |---|---|
@@ -500,13 +500,13 @@ make desktop-dev-bootstrap
 make build-wpf
 
 # 3. Run with fixture data (offline)
-dotnet run --project src/MarketDataCollector.Wpf -- --fixture
+dotnet run --project src/Meridian.Wpf -- --fixture
 
 # 4. Run with live backend
 # Terminal 1:
-dotnet run --project src/MarketDataCollector -- --ui --http-port 8080
+dotnet run --project src/Meridian -- --ui --http-port 8080
 # Terminal 2:
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 
 # 5. Run desktop tests
 make test-desktop-services
@@ -516,7 +516,7 @@ make test-desktop-services
 
 With DI in place, new pages are added by:
 
-1. Creating the XAML page in `src/MarketDataCollector.Wpf/Views/`
+1. Creating the XAML page in `src/Meridian.Wpf/Views/`
 2. Registering the page as transient in `App.ConfigureServices()`
 3. Registering the page tag in `NavigationService.RegisterAllPages()`
 
@@ -529,8 +529,8 @@ Pages are resolved through the DI container, so they support constructor injecti
 All phases are complete.
 
 ### Phase 1: Foundation ✅
-- [x] Create `MarketDataCollector.Ui.Tests` project
-- [x] Create `MarketDataCollector.Wpf.Tests` project
+- [x] Create `Meridian.Ui.Tests` project
+- [x] Create `Meridian.Wpf.Tests` project
 - [x] Add initial test files (ApiClient, FormValidation, Collections, core WPF services)
 - [x] Add `FixtureDataService` with contract-conforming mock data
 - [x] Update CI to run desktop unit tests via `desktop-builds.yml`
@@ -599,7 +599,7 @@ While all original priorities are complete, potential enhancements include:
 | UI Fixture Mode Guide | `docs/development/ui-fixture-mode-guide.md` |
 | Desktop Architecture Layers | `docs/architecture/desktop-layers.md` |
 | Desktop Improvements Summary | `docs/evaluations/desktop-improvements-executive-summary.md` |
-| Ui.Tests README | `tests/MarketDataCollector.Ui.Tests/README.md` |
+| Ui.Tests README | `tests/Meridian.Ui.Tests/README.md` |
 
 ---
 

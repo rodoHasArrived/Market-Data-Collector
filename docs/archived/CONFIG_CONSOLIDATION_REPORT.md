@@ -20,7 +20,7 @@ Successfully audited and consolidated configuration files in the Market Data Col
 |------|---------|--------|
 | `Directory.Build.props` | Global MSBuild properties for all projects | ✅ Canonical |
 | `Directory.Packages.props` | Central Package Management (CPM) | ✅ Canonical |
-| `src/MarketDataCollector.Uwp/Build.Notifications.targets` | UWP-specific build event notifications | ✅ Project-specific (documented) |
+| `src/Meridian.Uwp/Build.Notifications.targets` | UWP-specific build event notifications | ✅ Project-specific (documented) |
 
 **Finding:** No duplicate .props or .targets files. Each serves a unique purpose.
 
@@ -157,7 +157,7 @@ is_global = true
   Related Configuration Files:
   - Directory.Packages.props  : Central Package Management (CPM) version definitions
   - .globalconfig             : Roslyn analyzer and code style rules
-  - src/MarketDataCollector.Uwp/Build.Notifications.targets : UWP-specific build events
+  - src/Meridian.Uwp/Build.Notifications.targets : UWP-specific build events
   ============================================================================
 -->
 ```
@@ -195,7 +195,7 @@ is_global = true
 
 ---
 
-#### 4. `src/MarketDataCollector.Uwp/Build.Notifications.targets`
+#### 4. `src/Meridian.Uwp/Build.Notifications.targets`
 
 **Enhancement:** Clarified scope and added related files:
 
@@ -204,7 +204,7 @@ is_global = true
   ============================================================================
   Market Data Collector - Build Notifications MSBuild Targets
   ============================================================================
-  PROJECT-SPECIFIC: This file is imported ONLY by MarketDataCollector.Uwp.csproj
+  PROJECT-SPECIFIC: This file is imported ONLY by Meridian.Uwp.csproj
                     to provide enhanced build feedback for the Windows Desktop app.
   
   Related Configuration Files:
@@ -286,8 +286,8 @@ Directory.Packages.props (CPM)
   ├─ Purpose: Code style and analyzer rules
   └─ Defers to: Directory.Build.props for diagnostic suppressions
 
-src/MarketDataCollector.Uwp/Build.Notifications.targets
-  ├─ Applies to: ONLY MarketDataCollector.Uwp
+src/Meridian.Uwp/Build.Notifications.targets
+  ├─ Applies to: ONLY Meridian.Uwp
   ├─ Purpose: Build progress notifications
   └─ Type: Project-specific enhancement
 ```
@@ -360,7 +360,7 @@ Repository Root:
   ├── config/
   │   ├── appsettings.json                   # Runtime config (gitignored)
   │   └── appsettings.sample.json            # Config template (committed)
-  └── src/MarketDataCollector.Uwp/
+  └── src/Meridian.Uwp/
       └── Build.Notifications.targets        # UWP build events (project-specific)
 ```
 

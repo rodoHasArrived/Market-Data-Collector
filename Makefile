@@ -36,12 +36,12 @@
 .DEFAULT_GOAL := help
 
 # Project settings
-PROJECT := src/MarketDataCollector/MarketDataCollector.csproj
-UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
-WPF_PROJECT := src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+PROJECT := src/Meridian/Meridian.csproj
+UI_PROJECT := src/Meridian.Ui/Meridian.Ui.csproj
+WPF_PROJECT := src/Meridian.Wpf/Meridian.Wpf.csproj
 DESKTOP_PROJECT := $(WPF_PROJECT)
-TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
-BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
+TEST_PROJECT := tests/Meridian.Tests/Meridian.Tests.csproj
+BENCHMARK_PROJECT := benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj
 DOCGEN_PROJECT := build/dotnet/DocGenerator/DocGenerator.csproj
 DOCKER_IMAGE := marketdatacollector:latest
 HTTP_PORT ?= 8080
@@ -234,7 +234,7 @@ build: ## Build the project (Release)
 	@BUILD_VERBOSITY=$(BUILD_VERBOSITY) $(BUILDCTL) build --project $(PROJECT) --configuration Release
 
 build-quick: ## Fast incremental build (Debug, no analyzers)
-	@dotnet build MarketDataCollector.sln -c Debug --verbosity quiet --nologo /p:EnableWindowsTargeting=true
+	@dotnet build Meridian.sln -c Debug --verbosity quiet --nologo /p:EnableWindowsTargeting=true
 
 run: setup-config ## Run the collector
 	@echo "$(BLUE)Running collector...$(NC)"
@@ -258,7 +258,7 @@ run-selftest: ## Run self-tests
 test: ## Run unit tests (C# + F#)
 	@echo "$(BLUE)Running tests...$(NC)"
 	dotnet test $(TEST_PROJECT) --logger "console;verbosity=normal" --filter "Category!=Integration"
-	dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj --logger "console;verbosity=normal"
+	dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj --logger "console;verbosity=normal"
 
 test-unit: ## Run C# unit tests only (fastest)
 	@echo "$(BLUE)Running C# unit tests...$(NC)"
@@ -266,7 +266,7 @@ test-unit: ## Run C# unit tests only (fastest)
 
 test-fsharp: ## Run F# tests only
 	@echo "$(BLUE)Running F# tests...$(NC)"
-	dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj --logger "console;verbosity=normal"
+	dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj --logger "console;verbosity=normal"
 
 test-integration: ## Run integration tests
 	@echo "$(BLUE)Running integration tests...$(NC)"
@@ -274,7 +274,7 @@ test-integration: ## Run integration tests
 
 test-all: ## Run all tests with coverage report
 	@echo "$(BLUE)Running all tests with coverage...$(NC)"
-	dotnet test MarketDataCollector.sln \
+	dotnet test Meridian.sln \
 		--collect:"XPlat Code Coverage" \
 		--results-directory ./TestResults \
 		--settings tests/coverlet.runsettings \
@@ -303,14 +303,14 @@ bench-filter: ## Run specific benchmarks (FILTER required, e.g. FILTER=*Collecto
 	dotnet run --project $(BENCHMARK_PROJECT) -c Release -- --filter "$(FILTER)" --memory --job short
 
 lint: ## Check code formatting (solution-wide)
-	dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal
+	dotnet format Meridian.sln --verify-no-changes --verbosity normal
 
 format: ## Auto-fix code formatting
-	dotnet format MarketDataCollector.sln
+	dotnet format Meridian.sln
 	@echo "$(GREEN)Formatting applied$(NC)"
 
 format-check: ## Check formatting and show diff of needed changes
-	@dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic 2>&1 || \
+	@dotnet format Meridian.sln --verify-no-changes --verbosity diagnostic 2>&1 || \
 		{ echo ""; echo "$(YELLOW)Run 'make format' to auto-fix these issues.$(NC)"; exit 1; }
 
 watch: ## Watch for changes and re-run tests (C# unit tests)
@@ -334,11 +334,11 @@ setup-dev: install-hooks setup-config ## Full local dev setup (hooks, config, re
 	@echo "  git $$(git --version | cut -d' ' -f3)"
 	@echo ""
 	@echo "$(BLUE)[2/4] Restoring packages...$(NC)"
-	@dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity quiet
+	@dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity quiet
 	@echo "  $(GREEN)Packages restored$(NC)"
 	@echo ""
 	@echo "$(BLUE)[3/4] Building (Debug)...$(NC)"
-	@dotnet build MarketDataCollector.sln -c Debug --verbosity quiet --nologo /p:EnableWindowsTargeting=true
+	@dotnet build Meridian.sln -c Debug --verbosity quiet --nologo /p:EnableWindowsTargeting=true
 	@echo "  $(GREEN)Build succeeded$(NC)"
 	@echo ""
 	@echo "$(BLUE)[4/4] Running quick test...$(NC)"
@@ -400,9 +400,9 @@ gen-context: ## Generate project-context.md from code annotations
 	@echo "$(BLUE)Generating project context from code...$(NC)"
 	@dotnet build $(DOCGEN_PROJECT) -c Release -v q
 	@dotnet run --project $(DOCGEN_PROJECT) --no-build -c Release -- context \
-		--src src/MarketDataCollector \
+		--src src/Meridian \
 		--output docs/generated/project-context.md \
-		--xml-docs src/MarketDataCollector/bin/Release/net9.0/MarketDataCollector.xml
+		--xml-docs src/Meridian/bin/Release/net9.0/Meridian.xml
 	@echo "$(GREEN)Generated docs/generated/project-context.md$(NC)"
 
 verify-adrs: ## Verify ADR implementation links are valid
@@ -421,7 +421,7 @@ gen-interfaces: ## Extract interface documentation from code
 	@echo "$(BLUE)Extracting interface documentation...$(NC)"
 	@dotnet build $(DOCGEN_PROJECT) -c Release -v q
 	@dotnet run --project $(DOCGEN_PROJECT) --no-build -c Release -- interfaces \
-		--src src/MarketDataCollector \
+		--src src/Meridian \
 		--output docs/generated/interfaces.md
 	@echo "$(GREEN)Generated docs/generated/interfaces.md$(NC)"
 
@@ -571,9 +571,9 @@ test-desktop-services: ## Run desktop-focused regression tests
 	@echo "$(BLUE)Running desktop-focused tests...$(NC)"
 ifeq ($(OS),Windows_NT)
 	@echo "Running WPF service tests..."
-	dotnet test tests/MarketDataCollector.Wpf.Tests/MarketDataCollector.Wpf.Tests.csproj -c Release
+	dotnet test tests/Meridian.Wpf.Tests/Meridian.Wpf.Tests.csproj -c Release
 	@echo "Running UI service tests..."
-	dotnet test tests/MarketDataCollector.Ui.Tests/MarketDataCollector.Ui.Tests.csproj -c Release
+	dotnet test tests/Meridian.Ui.Tests/Meridian.Ui.Tests.csproj -c Release
 	@echo "Running integration tests..."
 	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
 else

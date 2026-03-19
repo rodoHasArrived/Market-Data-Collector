@@ -222,7 +222,7 @@ This document provides an overview of the Market Data Collector repository struc
     content += """
 ## Source Code Organization
 
-### Core Application (`src/MarketDataCollector/`)
+### Core Application (`src/Meridian/`)
 
 | Directory | Purpose |
 |-----------|---------|
@@ -260,8 +260,8 @@ def generate_structure_tree(root: Path, max_depth: int = 4) -> str:
 def extract_providers(root: Path) -> list[dict[str, str]]:
     """Extract provider information from source code."""
     providers = []
-    # Correct path: MarketDataCollector.Infrastructure project, not MarketDataCollector/Infrastructure sub-folder
-    providers_dir = root / 'src' / 'MarketDataCollector.Infrastructure' / 'Providers'
+    # Correct path: Meridian.Infrastructure project, not Meridian/Infrastructure sub-folder
+    providers_dir = root / 'src' / 'Meridian.Infrastructure' / 'Providers'
 
     if not providers_dir.exists():
         return providers
@@ -408,7 +408,7 @@ export ALPHAVANTAGE__APIKEY=your-key
 
 ## Adding a New Provider
 
-1. Create provider class in `src/MarketDataCollector.Infrastructure/Adapters/{Name}/`
+1. Create provider class in `src/Meridian.Infrastructure/Adapters/{Name}/`
 2. Implement `IMarketDataClient` (streaming) or `IHistoricalDataProvider` (backfill)
 3. Add `[DataSource]` attribute with provider metadata
 4. Add `[ImplementsAdr]` attributes for ADR compliance

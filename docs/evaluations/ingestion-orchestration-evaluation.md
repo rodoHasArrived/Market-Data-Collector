@@ -173,7 +173,7 @@ The following capabilities were implemented beyond the original P0/P1 roadmap, c
 
 ### G.1 EventPipeline — High-Throughput Async Channel
 
-`src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`
+`src/Meridian.Application/Pipeline/EventPipeline.cs`
 
 The central orchestrator that decouples producers from storage sinks:
 
@@ -189,7 +189,7 @@ The central orchestrator that decouples producers from storage sinks:
 
 ### G.2 EventPipelinePolicy — Bounded Channel Presets (ADR-013)
 
-`src/MarketDataCollector.Core/Pipeline/EventPipelinePolicy.cs`
+`src/Meridian.Core/Pipeline/EventPipelinePolicy.cs`
 
 Six static presets enforce consistent backpressure across all channels:
 
@@ -204,7 +204,7 @@ Six static presets enforce consistent backpressure across all channels:
 
 ### G.3 Backpressure Alerting
 
-`src/MarketDataCollector.Application/Monitoring/BackpressureAlertService.cs`
+`src/Meridian.Application/Monitoring/BackpressureAlertService.cs`
 
 Monitors pipeline queue utilization and drop rate, emitting debounced alerts:
 
@@ -216,15 +216,15 @@ Monitors pipeline queue utilization and drop rate, emitting debounced alerts:
 
 ### G.4 Dead-Letter and Audit Trail
 
-`src/MarketDataCollector.Application/Pipeline/DeadLetterSink.cs`  
-`src/MarketDataCollector.Application/Pipeline/DroppedEventAuditTrail.cs`
+`src/Meridian.Application/Pipeline/DeadLetterSink.cs`  
+`src/Meridian.Application/Pipeline/DroppedEventAuditTrail.cs`
 
 - **DeadLetterSink**: records events that fail `IEventValidator` to `_dead_letter/rejected_events.jsonl` with error details. Enables post-fix replay.
 - **DroppedEventAuditTrail**: records events dropped by backpressure to `_audit/dropped_events.jsonl` with per-symbol statistics for gap detection.
 
 ### G.5 Schema Upcasting
 
-`src/MarketDataCollector.Application/Pipeline/SchemaUpcasterRegistry.cs`
+`src/Meridian.Application/Pipeline/SchemaUpcasterRegistry.cs`
 
 Transparent schema migration chain for stored events:
 
@@ -234,7 +234,7 @@ Transparent schema migration chain for stored events:
 
 ### G.6 SubscriptionOrchestrator — Hot-Reload Symbol Management
 
-`src/MarketDataCollector.Application/Subscriptions/SubscriptionOrchestrator.cs`
+`src/Meridian.Application/Subscriptions/SubscriptionOrchestrator.cs`
 
 Applies `AppConfig` symbol changes at runtime without restarting the service:
 
@@ -245,7 +245,7 @@ Applies `AppConfig` symbol changes at runtime without restarting the service:
 
 ### G.7 Monitoring/Core — SLOs and Centralized Alerting
 
-`src/MarketDataCollector.Application/Monitoring/Core/`
+`src/Meridian.Application/Monitoring/Core/`
 
 - **`SloDefinitionRegistry`**: pre-defined SLOs (SLO-ING-001 P95 latency, SLO-ING-002 drop rate, SLO-DC-001 completeness, SLO-DC-002 max gap). Maps each SLO to alert rules and runbooks.
 - **`AlertDispatcher`**: centralized alert publishing with severity/category/source filtering; maintains a recent-alerts buffer and tracks statistics by severity and category.
@@ -254,7 +254,7 @@ Applies `AppConfig` symbol changes at runtime without restarting the service:
 
 ### G.8 Subscriptions Supporting Services
 
-`src/MarketDataCollector.Application/Subscriptions/Services/`
+`src/Meridian.Application/Subscriptions/Services/`
 
 Eleven supporting services complete the subscription management surface:
 
@@ -274,7 +274,7 @@ Eleven supporting services complete the subscription management surface:
 
 ### G.9 Test Coverage
 
-`tests/MarketDataCollector.Tests/Application/Pipeline/` — 11 test files covering:
+`tests/Meridian.Tests/Application/Pipeline/` — 11 test files covering:
 
 | Test File | Coverage |
 |-----------|----------|

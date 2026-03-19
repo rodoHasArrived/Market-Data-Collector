@@ -20,7 +20,7 @@ digraph OnboardingFlow {
 
   // Entry Point
   START [shape=oval, fillcolor="#38a169", fontcolor="white",
-         label="User Runs\nMarketDataCollector"];
+         label="User Runs\nMeridian"];
 
   // First-Run Detection
   subgraph cluster_firstrun {

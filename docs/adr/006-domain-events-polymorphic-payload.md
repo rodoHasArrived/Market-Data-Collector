@@ -49,13 +49,13 @@ All payload types implement `IMarketEventPayload` (marker interface) and seriali
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Event Wrapper | `src/MarketDataCollector.Domain/Events/MarketEvent.cs:8` | Sealed record with static factories |
-| Payload Interface | `src/MarketDataCollector.Contracts/Domain/Events/MarketEventPayload.cs` | Marker interface for payloads |
-| Payload Types | `src/MarketDataCollector.Contracts/Domain/Models/` | Trade, LOBSnapshot, BboQuotePayload, etc. |
-| Type Enum | `src/MarketDataCollector.Contracts/Domain/Enums/MarketEventType.cs` | Discriminator enum |
-| Serialization | `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs:30` | Source-generated JSON |
-| Pipeline Integration | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Unified streaming |
-| F# Interop | `src/MarketDataCollector.FSharp/Domain/MarketEvents.fs` | Discriminated union equivalent |
+| Event Wrapper | `src/Meridian.Domain/Events/MarketEvent.cs:8` | Sealed record with static factories |
+| Payload Interface | `src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs` | Marker interface for payloads |
+| Payload Types | `src/Meridian.Contracts/Domain/Models/` | Trade, LOBSnapshot, BboQuotePayload, etc. |
+| Type Enum | `src/Meridian.Contracts/Domain/Enums/MarketEventType.cs` | Discriminator enum |
+| Serialization | `src/Meridian.Core/Serialization/MarketDataJsonContext.cs:30` | Source-generated JSON |
+| Pipeline Integration | `src/Meridian.Application/Pipeline/EventPipeline.cs` | Unified streaming |
+| F# Interop | `src/Meridian.FSharp/Domain/MarketEvents.fs` | Discriminated union equivalent |
 
 ## Rationale
 

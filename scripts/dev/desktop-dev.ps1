@@ -117,16 +117,16 @@ if (-not $onWindows) {
 Write-Host ""
 Write-Host "Step 3: Restoring desktop projects..." -ForegroundColor Cyan
 
-$wpfProject = "src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj"
-$uwpProject = "src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj"
-$uiServicesProject = "src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj"
+$wpfProject = "src/Meridian.Wpf/Meridian.Wpf.csproj"
+$uwpProject = "src/Meridian.Uwp/Meridian.Uwp.csproj"
+$uiServicesProject = "src/Meridian.Ui.Services/Meridian.Ui.Services.csproj"
 
 # Restore shared UI services first
 Info "Restoring UI services project..."
 & dotnet restore $uiServicesProject --verbosity quiet 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Error "UI services restore failed"
-    $validationErrors += "Failed to restore MarketDataCollector.Ui.Services"
+    $validationErrors += "Failed to restore Meridian.Ui.Services"
     Write-Host ""
     Write-Host "Fix: Check that the project file exists and dependencies are valid" -ForegroundColor Yellow
     Write-Host "      Run: dotnet restore $uiServicesProject" -ForegroundColor Yellow
@@ -233,7 +233,7 @@ if ($validationErrors.Count -eq 0) {
     Write-Host "Next steps for desktop development:" -ForegroundColor Cyan
     Write-Host "  1. Build WPF app:              make build-wpf" -ForegroundColor Gray
     Write-Host "  2. Run desktop service tests:  make test-desktop-services" -ForegroundColor Gray
-    Write-Host "  3. Open in Visual Studio:      Start-Process src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj" -ForegroundColor Gray
+    Write-Host "  3. Open in Visual Studio:      Start-Process src/Meridian.Wpf/Meridian.Wpf.csproj" -ForegroundColor Gray
     if ($onWindows) {
         Write-Host "  4. UWP diagnostics (if needed): make uwp-xaml-diagnose" -ForegroundColor Gray
     }

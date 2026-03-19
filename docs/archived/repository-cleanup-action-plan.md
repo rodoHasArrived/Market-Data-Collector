@@ -87,8 +87,8 @@ These items have no downstream impact and can be deleted/cleaned immediately.
 
 | File/Folder | Size | References | Action | Command |
 |-------------|------|------------|--------|---------|
-| `src/MarketDataCollector.Infrastructure/Utilities/SymbolNormalizer.cs` | ~80 LOC | 0 | ✅ Already deleted (PR #1028) | — |
-| `src/MarketDataCollector.Uwp/Examples/` | ~260 KB | 0 | ✅ Deleted (UWP project removed) | — |
+| `src/Meridian.Infrastructure/Utilities/SymbolNormalizer.cs` | ~80 LOC | 0 | ✅ Already deleted (PR #1028) | — |
+| `src/Meridian.Uwp/Examples/` | ~260 KB | 0 | ✅ Deleted (UWP project removed) | — |
 | `build-output.log` (if tracked) | Various | 0 | Remove from git | `git rm build-output.log` |
 | Orphaned test files | Various | 0 | Audit and delete | See Section 1.2 |
 
@@ -204,7 +204,7 @@ Consolidate duplicate interface definitions into canonical locations.
 #### Step 1: Verify Canonical Interface
 
 ```bash
-cat src/MarketDataCollector.Ui.Services/Contracts/IConfigService.cs
+cat src/Meridian.Ui.Services/Contracts/IConfigService.cs
 ```
 
 Ensure it has the most complete method signatures (127 lines in canonical vs 15-line stubs).
@@ -226,17 +226,17 @@ In WPF and UWP implementations, update:
 
 ```csharp
 // OLD
-using MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Services;
 
 // NEW
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Ui.Services.Contracts;
 ```
 
 #### Step 4: Delete Duplicate Interface Files
 
 ```bash
-git rm src/MarketDataCollector.Wpf/Services/IConfigService.cs
-git rm src/MarketDataCollector.Uwp/Contracts/IConfigService.cs
+git rm src/Meridian.Wpf/Services/IConfigService.cs
+git rm src/Meridian.Uwp/Contracts/IConfigService.cs
 ```
 
 #### Step 5: Build and Test
@@ -246,8 +246,8 @@ git rm src/MarketDataCollector.Uwp/Contracts/IConfigService.cs
 dotnet build -c Release
 
 # Run affected tests
-dotnet test tests/MarketDataCollector.Wpf.Tests/ --filter "ConfigService"
-dotnet test tests/MarketDataCollector.Ui.Tests/ --filter "ConfigService"
+dotnet test tests/Meridian.Wpf.Tests/ --filter "ConfigService"
+dotnet test tests/Meridian.Ui.Tests/ --filter "ConfigService"
 ```
 
 #### Step 6: Commit
@@ -307,8 +307,8 @@ Uwp/Services/ — References shared service
 
 1. **Compare implementations:**
    ```bash
-   diff src/MarketDataCollector.Wpf/Services/FormValidationService.cs \
-        src/MarketDataCollector.Uwp/Services/FormValidationService.cs
+   diff src/Meridian.Wpf/Services/FormValidationService.cs \
+        src/Meridian.Uwp/Services/FormValidationService.cs
    ```
 
 2. **If <5% difference:**
@@ -412,8 +412,8 @@ Application/Http/
 
 1. **Create new endpoint files:**
    ```bash
-   mkdir -p src/MarketDataCollector.Application/Http/Endpoints
-   touch src/MarketDataCollector.Application/Http/Endpoints/HealthEndpoints.cs
+   mkdir -p src/Meridian.Application/Http/Endpoints
+   touch src/Meridian.Application/Http/Endpoints/HealthEndpoints.cs
    ```
 
 2. **Extract endpoint mapping methods:**
@@ -443,13 +443,13 @@ Application/Http/
 
 4. **Build and test:**
    ```bash
-   dotnet build src/MarketDataCollector.Application/
-   dotnet test tests/MarketDataCollector.Tests/Integration/EndpointTests/
+   dotnet build src/Meridian.Application/
+   dotnet test tests/Meridian.Tests/Integration/EndpointTests/
    ```
 
 5. **Commit incrementally:**
    ```bash
-   git add src/MarketDataCollector.Application/Http/Endpoints/HealthEndpoints.cs
+   git add src/Meridian.Application/Http/Endpoints/HealthEndpoints.cs
    git commit -m "refactor: Extract health endpoints from UiServer
 
    - Create dedicated HealthEndpoints class
@@ -687,17 +687,17 @@ Run end-to-end scenarios:
 
 ```bash
 # Test scenario 1: Start server and check health
-dotnet run --project src/MarketDataCollector -- --ui --http-port 8080 &
+dotnet run --project src/Meridian -- --ui --http-port 8080 &
 sleep 5
 curl http://localhost:8080/healthz
 kill %1
 
 # Test scenario 2: Run backfill
-dotnet run --project src/MarketDataCollector -- --dry-run
+dotnet run --project src/Meridian -- --dry-run
 
 # Test scenario 3: Desktop app launches (Windows only)
 if [[ "$OS" == "Windows_NT" ]]; then
-    dotnet run --project src/MarketDataCollector.Wpf &
+    dotnet run --project src/Meridian.Wpf &
     sleep 10
     kill %1
 fi
@@ -729,7 +729,7 @@ Commit after each file/component:
 
 ```bash
 # Good: Small, revertible commit
-git add src/MarketDataCollector.Ui.Services/Contracts/IConfigService.cs
+git add src/Meridian.Ui.Services/Contracts/IConfigService.cs
 git commit -m "refactor: Consolidate IConfigService interface"
 
 # Bad: Giant commit

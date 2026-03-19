@@ -32,10 +32,10 @@ This document catalogs publicly available codebases, libraries, and resources th
   - Portfolio and risk management patterns
   - Modular data source architecture
 - **Integration Details**:
-  - Custom BaseData types: `MarketDataCollectorTradeData`, `MarketDataCollectorQuoteData`
-  - Custom IDataProvider: `MarketDataCollectorDataProvider` for JSONL file reading
+  - Custom BaseData types: `MeridianTradeData`, `MeridianQuoteData`
+  - Custom IDataProvider: `MeridianDataProvider` for JSONL file reading
   - Sample algorithms for microstructure-aware trading
-  - See `src/MarketDataCollector/Integrations/Lean/README.md` for complete guide
+  - See `src/Meridian/Integrations/Lean/README.md` for complete guide
 
 ### 2. **StockSharp**
 - **Repository**: https://github.com/StockSharp/StockSharp
@@ -628,7 +628,7 @@ Recent optimizations and patterns:
    - WebSocket resilience policy tests
    - Prometheus metrics integration tests
    - Configuration validation tests
-   - Implemented in `tests/MarketDataCollector.Tests/`
+   - Implemented in `tests/Meridian.Tests/`
 
 ---
 

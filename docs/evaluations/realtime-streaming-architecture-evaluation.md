@@ -373,7 +373,7 @@ Events arrive → TryPublish → Bounded Channel → Consumer Task
 
 ### Throughput Benchmarks
 
-Benchmarked in `benchmarks/MarketDataCollector.Benchmarks/EventPipelineBenchmarks.cs`:
+Benchmarked in `benchmarks/Meridian.Benchmarks/EventPipelineBenchmarks.cs`:
 
 | Scenario | Configuration | Events Tested |
 |----------|---------------|---------------|

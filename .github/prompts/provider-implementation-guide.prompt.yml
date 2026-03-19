@@ -25,7 +25,7 @@ messages:
           private readonly ILogger<{Provider}MarketDataClient> _logger;
 
           // 2. Event channel with bounded capacity - use centralized policy
-          // See: src/MarketDataCollector/Application/Pipeline/EventPipelinePolicy.cs
+          // See: src/Meridian/Application/Pipeline/EventPipelinePolicy.cs
           private readonly Channel<MarketDataEvent> _eventChannel =
               EventPipelinePolicy.HighThroughput.CreateChannel<MarketDataEvent>();
 

@@ -102,5 +102,5 @@ The monolith supports optional UI projects (web dashboard, WPF desktop) as separ
 ---
 
 **Version:** 1.7.0
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-18
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [ADR Index](../adr/README.md) | [Lean Integration](../integrations/lean-integration.md) | [Canonicalization Design](deterministic-canonicalization.md)

@@ -92,9 +92,9 @@ Use this map as a starting point before diving into generated type/member pages.
 
 ### Lean integration
 
-- `MarketDataCollectorTradeData` - Lean `BaseData` implementation for trades.
-- `MarketDataCollectorQuoteData` - Lean `BaseData` implementation for quotes.
-- `MarketDataCollectorDataProvider` - Lean `IDataProvider` integration.
+- `MeridianTradeData` - Lean `BaseData` implementation for trades.
+- `MeridianQuoteData` - Lean `BaseData` implementation for quotes.
+- `MeridianDataProvider` - Lean `IDataProvider` integration.
 
 ### F# domain library
 

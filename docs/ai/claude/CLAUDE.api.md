@@ -108,7 +108,7 @@ The application exposes a REST API when running with `--ui` or `--mode web`.
 
 ## Data Quality Monitoring
 
-Located in `src/MarketDataCollector.Application/Monitoring/DataQuality/`.
+Located in `src/Meridian.Application/Monitoring/DataQuality/`.
 
 ### Quality Services
 | Service | Purpose |
@@ -137,7 +137,7 @@ Located in `src/MarketDataCollector.Application/Monitoring/DataQuality/`.
 
 ## Application Services
 
-### Core Services (`src/MarketDataCollector.Application/Services/`)
+### Core Services (`src/Meridian.Application/Services/`)
 | Service | Purpose |
 |---------|---------|
 | `ConfigurationService` | Configuration loading with self-healing |
@@ -149,7 +149,7 @@ Located in `src/MarketDataCollector.Application/Monitoring/DataQuality/`.
 | `DiagnosticBundleService` | Comprehensive diagnostics |
 | `TradingCalendar` | Market hours and holidays |
 
-### Monitoring Services (`src/MarketDataCollector.Application/Monitoring/`)
+### Monitoring Services (`src/Meridian.Application/Monitoring/`)
 | Service | Purpose |
 |---------|---------|
 | `ConnectionHealthMonitor` | Provider connection health |

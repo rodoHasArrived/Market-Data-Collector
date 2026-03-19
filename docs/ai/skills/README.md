@@ -16,7 +16,7 @@ automatically.
 **Copilot equivalent:** [`.github/agents/mdc-blueprint-agent.md`](../../../.github/agents/mdc-blueprint-agent.md)
 **Claude agent:** [`.claude/agents/mdc-blueprint.md`](../../../.claude/agents/mdc-blueprint.md)
 
-Blueprint Mode skill for the MarketDataCollector project. Translates a single prioritised idea
+Blueprint Mode skill for the Meridian project. Translates a single prioritised idea
 into a complete, code-ready technical design document — interfaces, component designs, data flows,
 XAML sketches, test plans, and implementation checklists — grounded in MDC's actual stack
 (C# 13, F# 8, .NET 9, WPF, MVVM via `BindableBase`, `EventPipeline`, `IMarketDataClient`,
@@ -53,14 +53,14 @@ XAML sketches, test plans, and implementation checklists — grounded in MDC's a
 **Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
 **Copilot equivalent:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
 
-Code review and architecture compliance skill for the MarketDataCollector codebase. Applies the
+Code review and architecture compliance skill for the Meridian codebase. Applies the
 canonical 7-lens framework defined in
 [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md).
 
 **Trigger conditions** (from system prompt):
 
 - User asks to review, audit, refactor, or improve C#/F# code
-- Code references `MarketDataCollector` namespaces, `BindableBase`, `EventPipeline`,
+- Code references `Meridian` namespaces, `BindableBase`, `EventPipeline`,
   `IMarketDataClient`, `IStorageSink`, or `ProviderSdk` types
 - Tasks involving MVVM compliance, hot-path optimization, provider implementation, or WPF architecture
 
@@ -90,11 +90,11 @@ canonical 7-lens framework defined in
 **Entry point:** [`.claude/skills/mdc-brainstorm/SKILL.md`](../../../.claude/skills/mdc-brainstorm/SKILL.md)
 **Copilot equivalent:** [`.github/agents/mdc-brainstorm-agent.md`](../../../.github/agents/mdc-brainstorm-agent.md)
 
-Brainstorming, ideation, and creative feature exploration skill for the MarketDataCollector project.
+Brainstorming, ideation, and creative feature exploration skill for the Meridian project.
 
 **Trigger conditions** (from system prompt):
 
-- User wants to generate new ideas, features, or improvements for MarketDataCollector
+- User wants to generate new ideas, features, or improvements for Meridian
 - User asks "what could we add", "how could we improve", "what features should we build"
 - Tasks involving architecture brainstorms, user growth strategy, or technical debt ideation
 - User describes a pain point or domain problem and wants ideas for solving it
@@ -114,7 +114,7 @@ Brainstorming, ideation, and creative feature exploration skill for the MarketDa
 **Entry point:** [`.claude/skills/mdc-provider-builder/SKILL.md`](../../../.claude/skills/mdc-provider-builder/SKILL.md)
 **Copilot equivalent:** [`.github/agents/mdc-provider-builder-agent.md`](../../../.github/agents/mdc-provider-builder-agent.md)
 
-Step-by-step guided skill for building new data provider adapters for MarketDataCollector.
+Step-by-step guided skill for building new data provider adapters for Meridian.
 Covers all three provider types (`IMarketDataClient`, `IHistoricalDataProvider`,
 `ISymbolSearchProvider`) with a 12-step build process, compliance checklist, and known AI
 error table.
@@ -140,7 +140,7 @@ error table.
 **Entry point:** [`.claude/skills/mdc-test-writer/SKILL.md`](../../../.claude/skills/mdc-test-writer/SKILL.md)
 **Copilot equivalent:** [`.github/agents/mdc-test-writer-agent.md`](../../../.github/agents/mdc-test-writer-agent.md)
 
-Test generation skill for any MarketDataCollector component. Produces idiomatic xUnit +
+Test generation skill for any Meridian component. Produces idiomatic xUnit +
 FluentAssertions tests with correct async patterns, isolation, naming conventions, and mock
 setup for all major component types.
 

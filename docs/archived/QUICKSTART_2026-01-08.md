@@ -225,7 +225,7 @@ Types of alerts:
 **Before committing:**
 ```bash
 # Format code
-dotnet format MarketDataCollector.sln
+dotnet format Meridian.sln
 
 # Run tests locally
 dotnet test

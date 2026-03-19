@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AI Architecture Guard — static compliance checker for MarketDataCollector.
+AI Architecture Guard — static compliance checker for Meridian.
 
 Scans source files for architecture violations that AI agents commonly
 introduce.  Produces a structured report listing findings by severity
@@ -190,30 +190,30 @@ _DEP_RULES: list[tuple[str, re.Pattern[str], str, str, str, bool]] = [
     # (trigger_project_dir, forbidden_using_pattern, severity, check_id, message, exact_project_match)
     # exact_project_match=True: trigger only when the path is *inside* a directory with that project name
     (
-        "MarketDataCollector.Ui.Services",
-        re.compile(r"using\s+MarketDataCollector\.Wpf", re.IGNORECASE),
+        "Meridian.Ui.Services",
+        re.compile(r"using\s+Meridian\.Wpf", re.IGNORECASE),
         CRITICAL, "DEP-001",
         "Ui.Services references Wpf host type — reverse dependency violation.",
         True,
     ),
     (
-        "MarketDataCollector.Ui.Services",
+        "Meridian.Ui.Services",
         re.compile(r"using\s+Windows\.", re.IGNORECASE),
         CRITICAL, "DEP-002",
         "Ui.Services uses Windows.* (WinRT/UWP) API — platform leak.",
         True,
     ),
     (
-        "MarketDataCollector.Ui.Shared",
+        "Meridian.Ui.Shared",
         re.compile(r"using\s+Windows\.", re.IGNORECASE),
         CRITICAL, "DEP-003",
         "Ui.Shared uses Windows.* (WinRT/UWP) API — platform leak.",
         True,
     ),
     (
-        "MarketDataCollector.ProviderSdk",
+        "Meridian.ProviderSdk",
         re.compile(
-            r"using\s+MarketDataCollector\.(Application|Infrastructure|Storage|Domain|Wpf)",
+            r"using\s+Meridian\.(Application|Infrastructure|Storage|Domain|Wpf)",
             re.IGNORECASE,
         ),
         CRITICAL, "DEP-004",
@@ -222,15 +222,15 @@ _DEP_RULES: list[tuple[str, re.Pattern[str], str, str, str, bool]] = [
     ),
     (
         "",   # applies everywhere — exact_project_match ignored
-        re.compile(r"using\s+MarketDataCollector\.Uwp", re.IGNORECASE),
+        re.compile(r"using\s+Meridian\.Uwp", re.IGNORECASE),
         CRITICAL, "DEP-005",
-        "Reference to removed UWP project (MarketDataCollector.Uwp). UWP was fully removed.",
+        "Reference to removed UWP project (Meridian.Uwp). UWP was fully removed.",
         False,
     ),
     (
-        "MarketDataCollector.FSharp",
+        "Meridian.FSharp",
         re.compile(
-            r"using\s+MarketDataCollector\.(Application|Infrastructure|Storage|Domain|Wpf|Core)",
+            r"using\s+Meridian\.(Application|Infrastructure|Storage|Domain|Wpf|Core)",
             re.IGNORECASE,
         ),
         CRITICAL, "DEP-006",
@@ -292,7 +292,7 @@ def check_adrs(root: Path) -> CheckResult:
         description="Missing [ImplementsAdr] and [DataSource] attributes on providers",
     )
     # Only scan Infrastructure and ProviderSdk adapter directories
-    adapter_root = root / "MarketDataCollector.Infrastructure" / "Adapters"
+    adapter_root = root / "Meridian.Infrastructure" / "Adapters"
     if not adapter_root.exists():
         adapter_root = root  # fallback
 
@@ -401,8 +401,8 @@ def check_sinks(root: Path) -> CheckResult:
         check_id="SINK",
         description="ADR-007: Direct FileStream writes bypass AtomicFileWriter",
     )
-    sink_paths = list((root / "MarketDataCollector.Storage").rglob("*.cs")) if \
-        (root / "MarketDataCollector.Storage").exists() else list(root.rglob("*Sink*.cs"))
+    sink_paths = list((root / "Meridian.Storage").rglob("*.cs")) if \
+        (root / "Meridian.Storage").exists() else list(root.rglob("*Sink*.cs"))
 
     for path in sink_paths:
         if any(p in ("Tests", "obj", "bin") for p in path.parts):
@@ -560,7 +560,7 @@ def print_human_report(results: list[CheckResult]) -> int:
 
     print()
     print("=" * 70)
-    print(f"  AI Architecture Guard — MarketDataCollector")
+    print(f"  AI Architecture Guard — Meridian")
     print("=" * 70)
     print(f"  Files scanned : {total_files}")
     print(f"  Total findings: {total_findings}  "
@@ -642,7 +642,7 @@ def print_summary(results: list[CheckResult]) -> int:
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="ai-architecture-check",
-        description="AI Architecture Guard — static compliance checker for MarketDataCollector",
+        description="AI Architecture Guard — static compliance checker for Meridian",
     )
     p.add_argument(
         "--src",

@@ -1,6 +1,6 @@
-# MarketDataCollector Project Context
+# Meridian Project Context
 
-**Generated:** 2026-03-18 08:22:40 UTC
+**Generated:** 2026-03-19 20:59:26 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -11,11 +11,11 @@
 
 | Type | Location | Description |
 |------|----------|-------------|
-| `UiServer` | `MarketDataCollector/UiServer.cs` | UiServer uses centralized composition root |
+| `UiServer` | `Meridian/UiServer.cs` | UiServer uses centralized composition root |
 
 ### ADR-004
 
 | Type | Location | Description |
 |------|----------|-------------|
-| `UiServer` | `MarketDataCollector/UiServer.cs` | Large file decomposition - endpoints extracted to dedicated modules |
+| `UiServer` | `Meridian/UiServer.cs` | Large file decomposition - endpoints extracted to dedicated modules |
 

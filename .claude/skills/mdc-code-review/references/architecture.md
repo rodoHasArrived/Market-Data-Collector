@@ -1,4 +1,4 @@
-# MarketDataCollector — Architecture Reference
+# Meridian — Architecture Reference
 
 > **Last verified:** 2026-03-16 | **Refresh:** `python3 build/scripts/ai-repo-updater.py audit`
 >
@@ -23,7 +23,7 @@
 
 ## 1. Project Overview
 
-MarketDataCollector is a .NET 9 / C# 13 application (with F# 8.0 domain models) for capturing real-time market microstructure data (trades, quotes, L2 order books) from multiple providers. It also supports historical backfill from 10+ providers with automatic failover. It persists data via a backpressured pipeline to JSONL/Parquet storage with WAL durability. Two UI surfaces: a WPF desktop app (recommended) and a web dashboard; they share services through a layered architecture. **UWP was fully removed.**
+Meridian is a .NET 9 / C# 13 application (with F# 8.0 domain models) for capturing real-time market microstructure data (trades, quotes, L2 order books) from multiple providers. It also supports historical backfill from 10+ providers with automatic failover. It persists data via a backpressured pipeline to JSONL/Parquet storage with WAL durability. Two UI surfaces: a WPF desktop app (recommended) and a web dashboard; they share services through a layered architecture. **UWP was fully removed.**
 
 **Performance contract**: millisecond-accurate timestamping of market events. UI work must never starve the data pipeline.
 
@@ -34,11 +34,11 @@ MarketDataCollector is a .NET 9 / C# 13 application (with F# 8.0 domain models) 
 ## 2. Solution Layout
 
 ```
-MarketDataCollector.sln
+Meridian.sln
 ├── .claude/                             # AI assistant settings
 ├── .github/                             # CI/CD workflows (17), Dependabot, AI prompts
 ├── benchmarks/
-│   └── MarketDataCollector.Benchmarks/  # BenchmarkDotNet performance benchmarks
+│   └── Meridian.Benchmarks/  # BenchmarkDotNet performance benchmarks
 ├── build/                               # Build tooling (Python, Node.js, .NET generators)
 ├── config/                              # Configuration files (appsettings.json, samples)
 ├── deploy/                              # Docker, systemd, monitoring configs
@@ -51,7 +51,7 @@ MarketDataCollector.sln
 │   ├── integrations/                    # Lean engine integration
 │   └── operations/                      # Operator runbook, production deploy
 ├── src/
-│   ├── MarketDataCollector/             # Core application (entry point)
+│   ├── Meridian/             # Core application (entry point)
 │   │   ├── Domain/                      # Business logic, collectors, events, models
 │   │   │   ├── Collectors/              # Provider-specific collector implementations
 │   │   │   ├── Events/                  # Market event types, integrity events
@@ -67,28 +67,28 @@ MarketDataCollector.sln
 │   │   └── Integrations/
 │   │       └── Lean/                    # QuantConnect Lean backtesting integration
 │   │
-│   ├── MarketDataCollector.FSharp/      # F# 8.0 domain models (17 files)
+│   ├── Meridian.FSharp/      # F# 8.0 domain models (17 files)
 │   │                                    # Discriminated unions, record types for
 │   │                                    # type-safe market data representation
 │   │
-│   ├── MarketDataCollector.Contracts/   # Shared DTOs and contracts (LEAF project)
+│   ├── Meridian.Contracts/   # Shared DTOs and contracts (LEAF project)
 │   │                                    # IMarketDataClient, IStorageSink, etc.
 │   │                                    # NO upstream dependencies allowed
 │   │
-│   ├── MarketDataCollector.ProviderSdk/ # Provider SDK interfaces & base classes
+│   ├── Meridian.ProviderSdk/ # Provider SDK interfaces & base classes
 │   │                                    # Rate limit tracking, reconnection helpers
 │   │                                    # Depends on Contracts only
 │   │
-│   ├── MarketDataCollector.Ui/          # Web dashboard (ASP.NET)
+│   ├── Meridian.Ui/          # Web dashboard (ASP.NET)
 │   │
-│   ├── MarketDataCollector.Ui.Shared/   # Shared UI endpoint handlers
+│   ├── Meridian.Ui.Shared/   # Shared UI endpoint handlers
 │   │                                    # Must be platform-neutral (no WPF/UWP APIs)
 │   │
-│   ├── MarketDataCollector.Ui.Services/ # Shared UI service abstractions
+│   ├── Meridian.Ui.Services/ # Shared UI service abstractions
 │   │                                    # CollectorService, status, backfill logic
 │   │                                    # Must be platform-neutral
 │   │
-│   ├── MarketDataCollector.Wpf/         # WPF desktop app (RECOMMENDED)
+│   ├── Meridian.Wpf/         # WPF desktop app (RECOMMENDED)
 │   │   ├── App.xaml / App.xaml.cs
 │   │   ├── Views/                       # XAML pages and windows
 │   │   │   ├── DashboardPage.xaml(.cs)
@@ -102,17 +102,17 @@ MarketDataCollector.sln
 │   │
 │
 ├── tests/                               # 266 test files, ~4,135 test methods
-│   ├── MarketDataCollector.Tests/       # Main test project (unit + integration)
-│   ├── MarketDataCollector.FSharp.Tests/# F# domain tests
-│   ├── MarketDataCollector.Wpf.Tests/   # WPF service tests (Windows only, 324 tests)
-│   └── MarketDataCollector.Ui.Tests/    # UI service tests (Windows only, 927 tests)
+│   ├── Meridian.Tests/       # Main test project (unit + integration)
+│   ├── Meridian.FSharp.Tests/# F# domain tests
+│   ├── Meridian.Wpf.Tests/   # WPF service tests (Windows only, 324 tests)
+│   └── Meridian.Ui.Tests/    # UI service tests (Windows only, 927 tests)
 │
 ├── CLAUDE.md                            # Main AI assistant guide
 ├── Directory.Build.props                # Shared build properties
 ├── Directory.Packages.props             # Central package management
 ├── Makefile                             # Build automation (96 targets)
 ├── global.json                          # SDK version pinning
-└── MarketDataCollector.sln
+└── Meridian.sln
 ```
 
 ---
@@ -362,7 +362,7 @@ The project supports `--watch-config` for live configuration changes:
 
 ## 8. F# Domain Models
 
-`MarketDataCollector.FSharp` contains 17 F# 8.0 files with type-safe domain representations:
+`Meridian.FSharp` contains 17 F# 8.0 files with type-safe domain representations:
 
 **Key interop rules for C# consumers:**
 - F# `option<T>` becomes `FSharpOption<T>` in C# — use `FSharpOption.get_IsSome()` / `FSharpOption.get_Value()`, not null checks

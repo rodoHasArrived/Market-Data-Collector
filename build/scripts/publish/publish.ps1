@@ -1,4 +1,4 @@
-# MarketDataCollector - Cross-platform Single Executable Build Script (PowerShell)
+# Meridian - Cross-platform Single Executable Build Script (PowerShell)
 # Usage: .\publish.ps1 [-Platform <platform>] [-Project <project>]
 # Examples:
 #   .\publish.ps1                              # Build all platforms, all projects
@@ -32,9 +32,9 @@ Set-Location $ScriptDir
 # Configuration
 $AllPlatforms = @("win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64")
 $WindowsPlatforms = @("win-x64", "win-arm64")
-$CollectorProject = "src/MarketDataCollector/MarketDataCollector.csproj"
-$UiProject = "src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj"
-$DesktopProject = "src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj"
+$CollectorProject = "src/Meridian/Meridian.csproj"
+$UiProject = "src/Meridian.Ui/Meridian.Ui.csproj"
+$DesktopProject = "src/Meridian.Uwp/Meridian.Uwp.csproj"
 
 function Write-Info {
     param([string]$Message)
@@ -62,7 +62,7 @@ function Write-Error {
 
 function Show-Help {
     Write-Host @"
-MarketDataCollector - Single Executable Build Script (PowerShell)
+Meridian - Single Executable Build Script (PowerShell)
 
 Usage: .\publish.ps1 [-Platform <platform>] [-Project <project>]
 
@@ -78,9 +78,9 @@ Parameters:
 
   -Project      Target project (default: all)
                   all        Build all projects
-                  collector  Build only MarketDataCollector (CLI)
-                  ui         Build only MarketDataCollector.Ui (Web Dashboard)
-                  desktop    Build only MarketDataCollector.Uwp (Windows Desktop App)
+                  collector  Build only Meridian (CLI)
+                  ui         Build only Meridian.Ui (Web Dashboard)
+                  desktop    Build only Meridian.Uwp (Windows Desktop App)
 
   -Version      Version number (default: 1.0.0)
   -Configuration Build configuration (default: Release)
@@ -176,7 +176,7 @@ function New-Package {
     param([string]$RuntimeId)
 
     $outputPath = Join-Path $OutputDir $RuntimeId
-    $packageName = "MarketDataCollector-$Version-$RuntimeId"
+    $packageName = "Meridian-$Version-$RuntimeId"
 
     if (Test-Path $outputPath) {
         Write-Info "Creating package for $RuntimeId..."
@@ -209,7 +209,7 @@ if (Test-Path $OutputDir) {
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
 # Build projects
-Write-Info "Building MarketDataCollector v$Version ($Configuration)"
+Write-Info "Building Meridian v$Version ($Configuration)"
 Write-Info "Target platforms: $($TargetPlatforms -join ', ')"
 Write-Info "Target projects: $Project"
 Write-Host ""
@@ -218,11 +218,11 @@ foreach ($rid in $TargetPlatforms) {
     Write-Info "=== Building for $rid ==="
 
     if ($Project -eq "all" -or $Project -eq "collector") {
-        Publish-Project -ProjectPath $CollectorProject -RuntimeId $rid -ProjectName "MarketDataCollector" -OutputSubDir "collector"
+        Publish-Project -ProjectPath $CollectorProject -RuntimeId $rid -ProjectName "Meridian" -OutputSubDir "collector"
     }
 
     if ($Project -eq "all" -or $Project -eq "ui") {
-        Publish-Project -ProjectPath $UiProject -RuntimeId $rid -ProjectName "MarketDataCollector.Ui" -OutputSubDir "ui"
+        Publish-Project -ProjectPath $UiProject -RuntimeId $rid -ProjectName "Meridian.Ui" -OutputSubDir "ui"
     }
 
     # Build Windows Desktop App only for Windows platforms
@@ -244,11 +244,11 @@ Write-Info "Output directory: $OutputDir"
 Write-Host ""
 
 # List outputs
-Get-ChildItem $OutputDir -Recurse -Filter "MarketDataCollector*" |
+Get-ChildItem $OutputDir -Recurse -Filter "Meridian*" |
     Where-Object { $_.Extension -in @(".exe", "", ".zip", ".tar.gz") } |
     Select-Object -First 20 |
     ForEach-Object { Write-Host "  $($_.FullName)" }
 
 Write-Host ""
 Write-Info "To run the collector:"
-Write-Host "  $OutputDir\win-x64\collector\MarketDataCollector.exe"
+Write-Host "  $OutputDir\win-x64\collector\Meridian.exe"

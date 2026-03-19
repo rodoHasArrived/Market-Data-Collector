@@ -35,19 +35,19 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
 
       - name: Build (catch compile errors early)
         id: build
         run: |
-          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true 2>&1 | tee build_output.txt
+          dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true 2>&1 | tee build_output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Run tests (no-build)
         id: tests
         continue-on-error: true
         run: |
-          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+          dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
             -c Release --no-build /p:EnableWindowsTargeting=true \
             --filter "Category!=Integration" \
             --blame-hang-timeout 60s \
@@ -171,7 +171,7 @@ jobs:
                   warning_count += 1
               if count_matches(r'throw\s+new\s+Exception\b|throw\s+new\s+ApplicationException\b', src):
                   findings["error"].append(
-                      f"**[E-WARNING]** `{short}`: `throw new Exception/ApplicationException` — derive from `MarketDataCollectorException` instead.")
+                      f"**[E-WARNING]** `{short}`: `throw new Exception/ApplicationException` — derive from `MeridianException` instead.")
                   warning_count += 1
 
               # ── Lens 4: Test Quality ─────────────────────────────────────────

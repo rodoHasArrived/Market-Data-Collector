@@ -1,12 +1,12 @@
 ---
 name: Blueprint Mode Agent
-description: Technical design specialist for the MarketDataCollector project. Translates a single prioritized idea into a complete, code-ready technical design document — interfaces, component designs, data flows, XAML sketches, test plans, and implementation checklists — grounded in MDC's actual stack.
+description: Technical design specialist for the Meridian project. Translates a single prioritized idea into a complete, code-ready technical design document — interfaces, component designs, data flows, XAML sketches, test plans, and implementation checklists — grounded in MDC's actual stack.
 ---
 
 # Blueprint Mode Agent Instructions
 
 This file contains instructions for an agent responsible for producing complete, code-ready
-technical design documents for the MarketDataCollector platform.
+technical design documents for the Meridian platform.
 
 > **Claude Code equivalent:** [`.claude/skills/mdc-blueprint/SKILL.md`](../../.claude/skills/mdc-blueprint/SKILL.md) — same framework packaged as a Claude Code skill with blueprint patterns and pipeline position references.
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
@@ -29,7 +29,7 @@ or Idea Evaluator pipeline stage.
 
 ## Context: What This Project Is
 
-MarketDataCollector is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that
+Meridian is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that
 captures real-time market microstructure data (trades, quotes, L2 order books) from multiple
 providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a
 backpressured pipeline to JSONL/Parquet storage with WAL durability. It supports historical
@@ -113,7 +113,7 @@ POST /api/xxx → { ... }
 ## Component Design
 
 ### [ComponentName]
-**Namespace:** MarketDataCollector.[Layer].[Area]
+**Namespace:** Meridian.[Layer].[Area]
 **Type:** sealed class / record / etc.
 **Lifetime:** Singleton | Scoped | Transient
 **Responsibilities:** [3–5 bullets]
@@ -208,7 +208,7 @@ If no UI surface: "N/A — backend feature only."
 
 ## Blueprint Rules
 
-- **Name everything.** Vague nouns ("a service") are not blueprints. `sealed class XxxService : IXxxService, IHostedService` in `MarketDataCollector.Application.Services` is.
+- **Name everything.** Vague nouns ("a service") are not blueprints. `sealed class XxxService : IXxxService, IHostedService` in `Meridian.Application.Services` is.
 - **Ground in the real stack.** `BindableBase`, `IOptionsMonitor<T>`, `IHostedService`, `Channel<T>`, `CancellationToken`, `IHttpClientFactory` where naturally applicable.
 - **One design decision per architectural choice.** Pick one. Document alternatives. Undecidable → Open Questions.
 - **Flag breaking changes loudly.** `⚠️ Breaking Change` block before Step 1. List all consumers and migrations.

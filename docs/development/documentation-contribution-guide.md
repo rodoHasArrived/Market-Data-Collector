@@ -392,7 +392,7 @@ Include descriptive text, not bare URLs:
 
 ```markdown
 # Reference code
-See `src/MarketDataCollector.Core/Config/AppConfig.cs` for implementation.
+See `src/Meridian.Core/Config/AppConfig.cs` for implementation.
 
 # Reference other docs
 See [ROADMAP Phase 6](../status/ROADMAP.md#phase-6-duplicate--unused-code-cleanup).
@@ -409,7 +409,7 @@ Based on [ADR-001](../adr/001-provider-abstraction.md).
 
 Use backticks for:
 - Commands: `dotnet build`
-- File paths: `src/MarketDataCollector/Program.cs`
+- File paths: `src/Meridian/Program.cs`
 - Code identifiers: `IMarketDataClient`
 - Environment variables: `$ALPACA_API_KEY`
 
@@ -471,12 +471,12 @@ Show actual commands with expected output:
 
 ````markdown
 ```bash
-$ dotnet run --project src/MarketDataCollector -- --help
+$ dotnet run --project src/Meridian -- --help
 
 Market Data Collector v1.6.1
 
 Usage:
-  MarketDataCollector [options]
+  Meridian [options]
 
 Options:
   --help                 Show help information

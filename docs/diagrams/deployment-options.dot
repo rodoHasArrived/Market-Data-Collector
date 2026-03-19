@@ -34,7 +34,7 @@ digraph DeploymentOptions {
       color="#047857";
 
       SA_CORE [shape=box, fillcolor="#9ae6b4",
-               label="MarketDataCollector\n[Console App]\n\nCore + Collectors\nStorage + HTTP"];
+               label="Meridian\n[Console App]\n\nCore + Collectors\nStorage + HTTP"];
       SA_DATA [shape=cylinder, fillcolor="#c6f6d5",
                label="./data/\n[Local Storage]\n\nJSONL files"];
       SA_CONFIG [shape=note, fillcolor="#bbf7d0",
@@ -45,7 +45,7 @@ digraph DeploymentOptions {
                     label="Best For:\n\n• Development\n• Single machine\n• Low volume\n• Quick setup"];
 
     STANDALONE_CMD [shape=note, fillcolor="#c6f6d5",
-                    label="Run Command:\n\ndotnet run --project src/MarketDataCollector\n\nOr with UI:\ndotnet run -- --ui --http-port 8080"];
+                    label="Run Command:\n\ndotnet run --project src/Meridian\n\nOr with UI:\ndotnet run -- --ui --http-port 8080"];
   }
 
   // Option 2: Docker Compose

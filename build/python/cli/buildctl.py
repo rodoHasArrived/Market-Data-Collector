@@ -26,8 +26,8 @@ from diagnostics.preflight import run_preflight
 from diagnostics.validate_data import validate_directory
 
 
-DEFAULT_PROJECT = "src/MarketDataCollector/MarketDataCollector.csproj"
-DEFAULT_TEST_PROJECT = "tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj"
+DEFAULT_PROJECT = "src/Meridian/Meridian.csproj"
+DEFAULT_TEST_PROJECT = "tests/Meridian.Tests/Meridian.Tests.csproj"
 
 
 def run_build(args: argparse.Namespace) -> int:

@@ -61,13 +61,13 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true --verbosity minimal
+        run: dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal
 
       # Format check — on PRs this is already covered by pr-checks.yml lint job,
       # but we still run it here on pushes to main for the quality report.
       - name: Check code formatting
         id: format-check
-        run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal
+        run: dotnet format Meridian.sln --verify-no-changes --verbosity normal
         continue-on-error: true
 
       # Single build with all analysis enabled
@@ -76,7 +76,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          dotnet build MarketDataCollector.sln \
+          dotnet build Meridian.sln \
             -c Release \
             --no-restore \
             /p:EnableWindowsTargeting=true \

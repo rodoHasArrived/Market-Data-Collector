@@ -20,13 +20,13 @@ Market Data Collector is a high-performance .NET 9.0 / C# 13 / F# 8.0 market dat
 ```bash
 # Build & Test
 dotnet build -c Release
-dotnet test tests/MarketDataCollector.Tests
-dotnet test tests/MarketDataCollector.FSharp.Tests
+dotnet test tests/Meridian.Tests
+dotnet test tests/Meridian.FSharp.Tests
 make test                    # All tests via Makefile
 make build                   # Build via Makefile
 
 # Run
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --ui --http-port 8080
 make run-ui
 
 # AI Audit Tools (run before/after changes)
@@ -43,7 +43,7 @@ make diagnose
 dotnet restore /p:EnableWindowsTargeting=true -v diag   # Build issue diagnosis
 
 # Backfill
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --backfill --backfill-provider stooq \
   --backfill-symbols SPY,AAPL \
   --backfill-from 2024-01-01 --backfill-to 2024-01-05
@@ -70,22 +70,22 @@ make test-desktop-services
 ```
 Market-Data-Collector/
 ├── src/                     # Source code (13 projects)
-│   ├── MarketDataCollector/             # Entry point, CLI, web server
-│   ├── MarketDataCollector.Application/ # Commands, pipeline, monitoring, services
-│   ├── MarketDataCollector.Domain/      # Collectors, event publishers
-│   ├── MarketDataCollector.Core/        # Config, exceptions, logging
-│   ├── MarketDataCollector.Contracts/   # API models, domain types, interfaces
-│   ├── MarketDataCollector.Infrastructure/ # Provider adapters (Alpaca, IB, Polygon…)
-│   ├── MarketDataCollector.Storage/     # WAL, sinks, archival, packaging
-│   ├── MarketDataCollector.ProviderSdk/ # IMarketDataClient, IHistoricalDataProvider
-│   ├── MarketDataCollector.FSharp/      # F# domain: validation, calculations
-│   ├── MarketDataCollector.Backtesting/ # Backtest engine, fill models, portfolio
-│   ├── MarketDataCollector.Backtesting.Sdk/ # Backtest strategy SDK
-│   ├── MarketDataCollector.Wpf/         # WPF desktop app (Windows)
-│   ├── MarketDataCollector.Ui.Services/ # Shared desktop UI services
-│   ├── MarketDataCollector.Ui.Shared/   # Shared endpoints, HTML templates
-│   ├── MarketDataCollector.Ui/          # Web UI entry point
-│   └── MarketDataCollector.McpServer/   # MCP server tools
+│   ├── Meridian/             # Entry point, CLI, web server
+│   ├── Meridian.Application/ # Commands, pipeline, monitoring, services
+│   ├── Meridian.Domain/      # Collectors, event publishers
+│   ├── Meridian.Core/        # Config, exceptions, logging
+│   ├── Meridian.Contracts/   # API models, domain types, interfaces
+│   ├── Meridian.Infrastructure/ # Provider adapters (Alpaca, IB, Polygon…)
+│   ├── Meridian.Storage/     # WAL, sinks, archival, packaging
+│   ├── Meridian.ProviderSdk/ # IMarketDataClient, IHistoricalDataProvider
+│   ├── Meridian.FSharp/      # F# domain: validation, calculations
+│   ├── Meridian.Backtesting/ # Backtest engine, fill models, portfolio
+│   ├── Meridian.Backtesting.Sdk/ # Backtest strategy SDK
+│   ├── Meridian.Wpf/         # WPF desktop app (Windows)
+│   ├── Meridian.Ui.Services/ # Shared desktop UI services
+│   ├── Meridian.Ui.Shared/   # Shared endpoints, HTML templates
+│   ├── Meridian.Ui/          # Web UI entry point
+│   └── Meridian.McpServer/   # MCP server tools
 ├── tests/                   # 4 test projects, ~4,135 tests
 ├── benchmarks/              # BenchmarkDotNet performance benchmarks
 ├── docs/                    # 163 documentation files
@@ -135,7 +135,7 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 - Log all errors with context (symbol, provider, timestamp)
 - Use exponential backoff for retries
 - Throw `ArgumentException` for bad inputs, `InvalidOperationException` for state errors
-- Custom exceptions in `src/MarketDataCollector.Core/Exceptions/`: `ConfigurationException`, `ConnectionException`, `DataProviderException`, `RateLimitException`, `SequenceValidationException`, `StorageException`, `ValidationException`, `OperationTimeoutException`
+- Custom exceptions in `src/Meridian.Core/Exceptions/`: `ConfigurationException`, `ConnectionException`, `DataProviderException`, `RateLimitException`, `SequenceValidationException`, `StorageException`, `ValidationException`, `OperationTimeoutException`
 
 ### Naming
 - Async methods: suffix `Async`
@@ -247,7 +247,7 @@ Located in `docs/adr/`. Use `[ImplementsAdr("ADR-XXX", "reason")]` on implementi
 | `WriteAheadLog` | `Storage/Archival/` | WAL for data durability |
 | `CompositeHistoricalDataProvider` | `Infrastructure/Adapters/Core/` | Multi-provider backfill with fallback |
 
-*All locations relative to `src/MarketDataCollector/`*
+*All locations relative to `src/Meridian/`*
 
 ---
 

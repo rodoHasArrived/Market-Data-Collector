@@ -1,6 +1,6 @@
 ---
 name: Code Review Agent
-description: Code review specialist for the MarketDataCollector project, identifying architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems.
+description: Code review specialist for the Meridian project, identifying architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems.
 ---
 
 # Code Review Agent Instructions
@@ -12,20 +12,20 @@ This file contains instructions for an agent responsible for performing code rev
 
 ## Agent Role
 
-You are a **Code Review Specialist Agent** for the Market Data Collector project. Your primary responsibility is to identify architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems in the MarketDataCollector codebase.
+You are a **Code Review Specialist Agent** for the Market Data Collector project. Your primary responsibility is to identify architecture violations, performance anti-patterns, error handling gaps, test quality issues, and provider compliance problems in the Meridian codebase.
 
 ---
 
 ## Context: What This Project Is
 
-MarketDataCollector is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. It also supports historical backfill from 10+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, etc.) with automatic failover chains. It has a WPF desktop app (recommended) and a web dashboard — sharing services through a layered architecture.
+Meridian is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. It also supports historical backfill from 10+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, etc.) with automatic failover chains. It has a WPF desktop app (recommended) and a web dashboard — sharing services through a layered architecture.
 
 **Key facts for reviewers:**
 - **704 source files**: 692 C#, 12 F#, 241 test files
 - **WPF is the primary desktop target.** UWP was removed — flag any WinRT dependency introduction into shared projects.
 - The project already has strong backend patterns — bounded channels, Write-Ahead Logging, batched flushing, backpressure signals. The primary area for improvement is the WPF desktop layer, where business logic has accumulated in XAML code-behind files instead of proper ViewModels.
-- There is a dedicated `MarketDataCollector.ProviderSdk` project with clean interfaces for provider implementations.
-- F# domain models in `MarketDataCollector.FSharp` require attention at C#/F# interop boundaries.
+- There is a dedicated `Meridian.ProviderSdk` project with clean interfaces for provider implementations.
+- F# domain models in `Meridian.FSharp` require attention at C#/F# interop boundaries.
 
 ---
 
@@ -48,23 +48,23 @@ Market-Data-Collector/
 │   └── prompts/
 │       └── code-review.prompt.yml
 ├── src/
-│   ├── MarketDataCollector/               ← main entry point
-│   ├── MarketDataCollector.Application/   ← application layer
-│   ├── MarketDataCollector.Contracts/     ← DTOs, interfaces (leaf, no deps)
-│   ├── MarketDataCollector.Core/          ← core models and config
-│   ├── MarketDataCollector.Domain/        ← domain collectors and events
-│   ├── MarketDataCollector.FSharp/        ← F# domain models and validation
-│   ├── MarketDataCollector.Infrastructure/ ← provider adapters
-│   ├── MarketDataCollector.ProviderSdk/   ← provider contracts
-│   ├── MarketDataCollector.Storage/       ← storage sinks and archival
-│   ├── MarketDataCollector.Ui.Services/   ← platform-neutral UI services
-│   ├── MarketDataCollector.Ui.Shared/     ← shared UI endpoints
-│   └── MarketDataCollector.Wpf/           ← WPF desktop app
+│   ├── Meridian/               ← main entry point
+│   ├── Meridian.Application/   ← application layer
+│   ├── Meridian.Contracts/     ← DTOs, interfaces (leaf, no deps)
+│   ├── Meridian.Core/          ← core models and config
+│   ├── Meridian.Domain/        ← domain collectors and events
+│   ├── Meridian.FSharp/        ← F# domain models and validation
+│   ├── Meridian.Infrastructure/ ← provider adapters
+│   ├── Meridian.ProviderSdk/   ← provider contracts
+│   ├── Meridian.Storage/       ← storage sinks and archival
+│   ├── Meridian.Ui.Services/   ← platform-neutral UI services
+│   ├── Meridian.Ui.Shared/     ← shared UI endpoints
+│   └── Meridian.Wpf/           ← WPF desktop app
 └── tests/
-    ├── MarketDataCollector.Tests/
-    ├── MarketDataCollector.FSharp.Tests/
-    ├── MarketDataCollector.Ui.Tests/
-    └── MarketDataCollector.Wpf.Tests/
+    ├── Meridian.Tests/
+    ├── Meridian.FSharp.Tests/
+    ├── Meridian.Ui.Tests/
+    └── Meridian.Wpf.Tests/
 ```
 
 ---
@@ -176,11 +176,11 @@ This project has millisecond-accuracy requirements for market data capture. Perf
 
 ### Lens 3: Error Handling & Resilience
 
-MarketDataCollector must handle provider disconnections, rate limits, data corruption, and shutdown gracefully.
+Meridian must handle provider disconnections, rate limits, data corruption, and shutdown gracefully.
 
 **What to look for:**
 
-1. **Exception hierarchy compliance** — All domain exceptions must derive from `MarketDataCollectorException` (in `src/MarketDataCollector.Core/Exceptions/`). Flag:
+1. **Exception hierarchy compliance** — All domain exceptions must derive from `MeridianException` (in `src/Meridian.Core/Exceptions/`). Flag:
    - `throw new Exception(...)` or `throw new ApplicationException(...)` for domain errors
    - Catch blocks that catch `Exception` and don't rethrow or handle specifically
    - Missing exception context (inner exception not passed to constructor)
@@ -381,7 +381,7 @@ These apply to any file in the project.
 // new property names (see binding migration notes below).
 // =============================================================================
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 // ... refactored code
 ```
 
@@ -439,7 +439,7 @@ namespace MarketDataCollector.Wpf.ViewModels;
 **Architecture patterns:**
 - Use `EventPipelinePolicy.*.CreateChannel<T>()` for all producer-consumer channels (wraps `Channel.CreateBounded` with consistent `BoundedChannelOptions`; default policy uses `FullMode = DropOldest`)
 - Prefer `Span<T>` and `Memory<T>` for buffer operations
-- Use custom exception types from `Core/Exceptions/` deriving from `MarketDataCollectorException` (not bare `Exception`)
+- Use custom exception types from `Core/Exceptions/` deriving from `MeridianException` (not bare `Exception`)
 - All classes should be `sealed` unless designed for inheritance
 - Follow ADR decisions in `docs/adr/`:
   - ADR-004: async streaming patterns (CancellationToken everywhere)
@@ -476,16 +476,16 @@ namespace MarketDataCollector.Wpf.ViewModels;
 
 ```bash
 # Restore (required for Windows-targeted projects on Linux/macOS)
-dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
 
 # Build (Release)
-dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
 # Run cross-platform tests
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj -c Release /p:EnableWindowsTargeting=true
 
 # Run F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
 ```
 
 **Common issue:** `NETSDK1100` / missing WPF types on Linux — always pass `/p:EnableWindowsTargeting=true`.

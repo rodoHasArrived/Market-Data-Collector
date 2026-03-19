@@ -137,7 +137,7 @@ updates:
 
   # Benchmark project
   - package-ecosystem: "nuget"
-    directory: "/benchmarks/MarketDataCollector.Benchmarks"
+    directory: "/benchmarks/Meridian.Benchmarks"
     schedule:
       interval: "monthly"
       day: "monday"

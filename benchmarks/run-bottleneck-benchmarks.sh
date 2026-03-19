@@ -13,7 +13,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PROJECT="$REPO_ROOT/benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj"
+PROJECT="$REPO_ROOT/benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj"
 RESULTS_DIR="$REPO_ROOT/benchmarks/results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 

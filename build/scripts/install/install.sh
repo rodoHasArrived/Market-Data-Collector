@@ -241,10 +241,10 @@ install_native() {
     # Restore and build
     print_info "Restoring dependencies..."
     cd "$PROJECT_ROOT"
-    dotnet restore src/MarketDataCollector/MarketDataCollector.csproj
+    dotnet restore src/Meridian/Meridian.csproj
 
     print_info "Building project..."
-    dotnet build src/MarketDataCollector/MarketDataCollector.csproj -c Release
+    dotnet build src/Meridian/Meridian.csproj -c Release
 
     if [ $? -eq 0 ]; then
         print_success "Build completed successfully"
@@ -258,7 +258,7 @@ install_native() {
 
     # Run tests
     print_info "Running self-tests..."
-    dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --selftest
+    dotnet run --project src/Meridian/Meridian.csproj --configuration Release -- --selftest
 
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════╗"
@@ -277,15 +277,15 @@ install_native() {
     case "${config_choice:-1}" in
         1)
             print_info "Running quickstart configuration..."
-            dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --quickstart
+            dotnet run --project src/Meridian/Meridian.csproj --configuration Release -- --quickstart
             ;;
         2)
             print_info "Starting configuration wizard..."
-            dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --wizard
+            dotnet run --project src/Meridian/Meridian.csproj --configuration Release -- --wizard
             ;;
         3)
             print_info "Skipping configuration. You can run it later with:"
-            echo "  dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard"
+            echo "  dotnet run --project src/Meridian/Meridian.csproj -- --wizard"
             ;;
         *)
             print_info "Skipping configuration."
@@ -297,13 +297,13 @@ install_native() {
     echo "║                    Installation Complete!                            ║"
     echo "╠══════════════════════════════════════════════════════════════════════╣"
     echo "║  Start with dashboard:                                              ║"
-    echo "║    dotnet run --project src/MarketDataCollector -- --mode web        ║"
+    echo "║    dotnet run --project src/Meridian -- --mode web        ║"
     echo "║                                                                      ║"
     echo "║  Quickstart (auto-configure + validate):                            ║"
-    echo "║    dotnet run --project src/MarketDataCollector -- --quickstart      ║"
+    echo "║    dotnet run --project src/Meridian -- --quickstart      ║"
     echo "║                                                                      ║"
     echo "║  Validate setup:                                                    ║"
-    echo "║    dotnet run --project src/MarketDataCollector -- --dry-run         ║"
+    echo "║    dotnet run --project src/Meridian -- --dry-run         ║"
     echo "║                                                                      ║"
     echo "║  Dashboard: http://localhost:8080                                    ║"
     echo "╚══════════════════════════════════════════════════════════════════════╝"

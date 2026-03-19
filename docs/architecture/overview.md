@@ -111,6 +111,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
   - `NasdaqDataLinkHistoricalDataProvider` – Alternative datasets via Quandl API
   - `IBHistoricalDataProvider` – Historical data via Interactive Brokers API
   - `StockSharpHistoricalDataProvider` – Historical data via StockSharp connectors
+  - `TwelveDataHistoricalDataProvider` – OHLCV bars for US equities, ETFs, international stocks, forex, and crypto via Twelve Data API
   - `CompositeHistoricalDataProvider` – Automatic failover with rate-limit rotation
   - `BaseHistoricalDataProvider` – Shared base class with common HTTP handling
 * **Symbol Search Providers** for symbol resolution:
@@ -149,7 +150,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 * `QuoteCollector` – BBO state cache and `BboQuote` event emission
 * Domain models: `Trade`, `LOBSnapshot`, `BboQuotePayload`, `OrderFlowStatistics`, integrity events
 
-### F# Domain Library (`MarketDataCollector.FSharp`)
+### F# Domain Library (`Meridian.FSharp`)
 * **Type-Safe Domain Models** – Discriminated unions with exhaustive pattern matching
   - `MarketEvent` – Trade, Quote, Bar, Depth, Integrity variants
   - `ValidationError` – Rich error types with context
@@ -365,7 +366,7 @@ The `EventSchemaValidator` component validates that emitted events conform to ex
 
 `OpenTelemetrySetup` integrates the OpenTelemetry SDK for distributed tracing across the full market data pipeline:
 
-* **Activity source** – `MarketDataCollector` named activity source propagates trace context from provider through collector to storage
+* **Activity source** – `Meridian` named activity source propagates trace context from provider through collector to storage
 * **`TracedEventMetrics`** – Wraps `IEventMetrics` to emit OTEL span events alongside Prometheus counters, enabling trace-linked latency analysis
 * Supports OTLP, Jaeger, or console exporters via configuration
 
@@ -502,8 +503,8 @@ The system supports historical data backfill from multiple providers with automa
 
 The system integrates with QuantConnect's Lean algorithmic trading engine for backtesting:
 
-* **Custom Data Types** – `MarketDataCollectorTradeData`, `MarketDataCollectorQuoteData`
-* **Data Provider** – `MarketDataCollectorDataProvider` implements Lean's `IDataProvider`
+* **Custom Data Types** – `MeridianTradeData`, `MeridianQuoteData`
+* **Data Provider** – `MeridianDataProvider` implements Lean's `IDataProvider`
 * **Sample Algorithms** – Spread arbitrage, order flow strategies
 * **JSONL Reader** – Automatic decompression and parsing of collected data
 
@@ -588,5 +589,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.7.0
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-18
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [deterministic-canonicalization.md](deterministic-canonicalization.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)

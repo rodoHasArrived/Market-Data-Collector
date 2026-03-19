@@ -64,13 +64,13 @@ var pipeline = new EventPipeline(compositeSink, ...);
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Composite Sink | `src/MarketDataCollector.Storage/Sinks/CompositeSink.cs:12` | Fan-out implementation |
-| Storage Sink Interface | `src/MarketDataCollector.Storage/Interfaces/IStorageSink.cs` | Sink contract |
-| JSONL Sink | `src/MarketDataCollector.Storage/Sinks/JsonlStorageSink.cs` | Row-based storage |
-| Parquet Sink | `src/MarketDataCollector.Storage/Sinks/ParquetStorageSink.cs` | Columnar storage |
-| Pipeline Integration | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Sink injection |
-| Composition Root | `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs` | DI configuration |
-| Tests | `tests/MarketDataCollector.Tests/Storage/CompositeSinkTests.cs` | Verification |
+| Composite Sink | `src/Meridian.Storage/Sinks/CompositeSink.cs:12` | Fan-out implementation |
+| Storage Sink Interface | `src/Meridian.Storage/Interfaces/IStorageSink.cs` | Sink contract |
+| JSONL Sink | `src/Meridian.Storage/Sinks/JsonlStorageSink.cs` | Row-based storage |
+| Parquet Sink | `src/Meridian.Storage/Sinks/ParquetStorageSink.cs` | Columnar storage |
+| Pipeline Integration | `src/Meridian.Application/Pipeline/EventPipeline.cs` | Sink injection |
+| Composition Root | `src/Meridian.Application/Composition/ServiceCompositionRoot.cs` | DI configuration |
+| Tests | `tests/Meridian.Tests/Storage/CompositeSinkTests.cs` | Verification |
 
 ## Rationale
 

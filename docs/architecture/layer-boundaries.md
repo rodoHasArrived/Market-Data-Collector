@@ -7,34 +7,37 @@ These boundaries are enforced by **project references** (compile-time) and
 ## Dependency Graph
 
 ```
-MarketDataCollector.Contracts          (no project dependencies)
+Meridian.Contracts          (no project dependencies)
        ↑
-MarketDataCollector.ProviderSdk  →  Contracts
+Meridian.ProviderSdk  →  Contracts
        ↑
-MarketDataCollector.Domain       →  Contracts, ProviderSdk
+Meridian.Domain       →  Contracts, ProviderSdk
        ↑
-MarketDataCollector.Core         →  Domain, Contracts, ProviderSdk
+Meridian.Core         →  Domain, Contracts, ProviderSdk
        ↑                              (cross-cutting: logging, serialization, exceptions)
        ├─────────────────────────┐
        ↑                         ↑
-MarketDataCollector.Infrastructure   MarketDataCollector.Storage
+Meridian.Infrastructure   Meridian.Storage
   →  Core, Domain,                     →  Core, Domain,
      Contracts, ProviderSdk               Contracts, ProviderSdk
        ↑                         ↑
        └────────┬─────────────────┘
                 ↑
-MarketDataCollector.Application  →  Infrastructure, Storage, Core,
+Meridian.Application  →  Infrastructure, Storage, Core,
                                     Domain, Contracts, ProviderSdk
                 ↑                         ↑
-MarketDataCollector (Host/Exe)   →  Application (+ transitive)
+Meridian (Host/Exe)   →  Application (+ transitive)
                                          ↑
                          ┌───────────────┴────────────────┐
                          ↑                                ↑
-          MarketDataCollector.Ui.Shared          MarketDataCollector.Ui.Services
+          Meridian.Ui.Shared          Meridian.Ui.Services
             →  Application, Contracts              →  Contracts
                          ↑                                ↑
-          MarketDataCollector.Ui                  MarketDataCollector.Wpf
+          Meridian.Ui                  Meridian.Wpf
             →  Ui.Shared                            →  Ui.Services, Contracts
+                         ↑
+          MarketDataCollector.McpServer
+            →  Application, Core, Storage, Contracts
 ```
 
 ## Forbidden Dependencies
@@ -49,6 +52,7 @@ MarketDataCollector (Host/Exe)   →  Application (+ transitive)
 | **Ui.Services**     | Wpf host types                             | Must stay platform-neutral            |
 | **Ui.Shared**       | WPF-only APIs, Ui.Services                 | Must stay web-host-agnostic           |
 | **Ui / Wpf hosts**  | Each other                                 | No host-to-host references            |
+| **McpServer**       | Ui.Shared, Ui.Services, Wpf                | Tool host only; no UI-layer deps      |
 | **Contracts**       | UI or application hosts                    | Pure contract layer                   |
 
 ## Enforcement Mechanisms
@@ -68,24 +72,24 @@ MarketDataCollector (Host/Exe)   →  Application (+ transitive)
 ### Allowed: Application using Infrastructure
 
 ```csharp
-// In MarketDataCollector.Application/Services/SomeService.cs
-using MarketDataCollector.Infrastructure.Providers; // ✅ OK — Application may reference Infrastructure
+// In Meridian.Application/Services/SomeService.cs
+using Meridian.Infrastructure.Providers; // ✅ OK — Application may reference Infrastructure
 ```
 
 ### Forbidden: Infrastructure using Application
 
 ```csharp
-// In MarketDataCollector.Infrastructure/Adapters/SomeProvider.cs
-using MarketDataCollector.Application.Services; // ❌ COMPILE ERROR — Infrastructure cannot reference Application
+// In Meridian.Infrastructure/Adapters/SomeProvider.cs
+using Meridian.Application.Services; // ❌ COMPILE ERROR — Infrastructure cannot reference Application
 ```
 
-The compiler enforces this because `MarketDataCollector.Infrastructure.csproj` does not have a `<ProjectReference>` to `MarketDataCollector.Application`.
+The compiler enforces this because `Meridian.Infrastructure.csproj` does not have a `<ProjectReference>` to `Meridian.Application`.
 
 ### Forbidden: Domain using Core
 
 ```csharp
-// In MarketDataCollector.Domain/Collectors/TradeDataCollector.cs
-using MarketDataCollector.Core.Logging; // ❌ FORBIDDEN — Domain must remain pure business logic
+// In Meridian.Domain/Collectors/TradeDataCollector.cs
+using Meridian.Core.Logging; // ❌ FORBIDDEN — Domain must remain pure business logic
 ```
 
 Domain uses only `Contracts` and `ProviderSdk`. If Domain needs a utility from Core, the utility should be moved to Contracts or an interface defined in ProviderSdk.
@@ -112,21 +116,21 @@ If a new cross-layer dependency is needed:
 
 ## BannedReferences.txt
 
-The `MarketDataCollector.Domain` project includes a `BannedReferences.txt` file that explicitly lists assemblies that Domain must never reference. This provides an additional safety net beyond project references.
+The `Meridian.Domain` project includes a `BannedReferences.txt` file that explicitly lists assemblies that Domain must never reference. This provides an additional safety net beyond project references.
 
 ## UI Layer Dependency Rules
 
 The four UI-facing projects follow the same dependency direction rules but are isolated from one another:
 
-* **`MarketDataCollector.Ui.Shared`** – web endpoint mapping and host wiring; may reference `Application` and `Contracts`. Must not reference `Ui.Services` or `Wpf`.
-* **`MarketDataCollector.Ui.Services`** – cross-feature shared UI services (API client, fixture data, validation); may reference `Contracts` and lightweight platform-neutral libs. Must not reference WPF or `Ui.Shared`.
-* **`MarketDataCollector.Ui`** – intentionally thin web host; delegates to `Ui.Shared`. No application logic lives here.
-* **`MarketDataCollector.Wpf`** – Windows desktop host with XAML views and WPF services; references `Ui.Services` and `Contracts`. Must not reference `Ui.Shared` or `Ui`.
+* **`Meridian.Ui.Shared`** – web endpoint mapping and host wiring; may reference `Application` and `Contracts`. Must not reference `Ui.Services` or `Wpf`.
+* **`Meridian.Ui.Services`** – cross-feature shared UI services (API client, fixture data, validation); may reference `Contracts` and lightweight platform-neutral libs. Must not reference WPF or `Ui.Shared`.
+* **`Meridian.Ui`** – intentionally thin web host; delegates to `Ui.Shared`. No application logic lives here.
+* **`Meridian.Wpf`** – Windows desktop host with XAML views and WPF services; references `Ui.Services` and `Contracts`. Must not reference `Ui.Shared` or `Ui`.
 
 See [Desktop & UI Layer Architecture](desktop-layers.md) for a detailed diagram and communication flow.
 
 ---
 
 **Version:** 1.6.2
-**Last Updated:** 2026-03-16
+**Last Updated:** 2026-03-18
 **Audience:** Contributors and AI assistants working on project architecture and dependency management.

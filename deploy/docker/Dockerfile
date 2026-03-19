@@ -16,25 +16,25 @@ WORKDIR /src
 
 # Note: Build context should be the repo root (docker build -f deploy/docker/Dockerfile .)
 # Copy solution and project files first for layer caching
-COPY MarketDataCollector.sln Directory.Build.props Directory.Packages.props global.json ./
-COPY src/MarketDataCollector/MarketDataCollector.csproj src/MarketDataCollector/
-COPY src/MarketDataCollector.Application/MarketDataCollector.Application.csproj src/MarketDataCollector.Application/
-COPY src/MarketDataCollector.Contracts/MarketDataCollector.Contracts.csproj src/MarketDataCollector.Contracts/
-COPY src/MarketDataCollector.Core/MarketDataCollector.Core.csproj src/MarketDataCollector.Core/
-COPY src/MarketDataCollector.Domain/MarketDataCollector.Domain.csproj src/MarketDataCollector.Domain/
-COPY src/MarketDataCollector.Infrastructure/MarketDataCollector.Infrastructure.csproj src/MarketDataCollector.Infrastructure/
-COPY src/MarketDataCollector.ProviderSdk/MarketDataCollector.ProviderSdk.csproj src/MarketDataCollector.ProviderSdk/
-COPY src/MarketDataCollector.Storage/MarketDataCollector.Storage.csproj src/MarketDataCollector.Storage/
-COPY src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj src/MarketDataCollector.Ui/
-COPY src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj src/MarketDataCollector.Ui.Services/
-COPY src/MarketDataCollector.Ui.Shared/MarketDataCollector.Ui.Shared.csproj src/MarketDataCollector.Ui.Shared/
-COPY src/MarketDataCollector.FSharp/MarketDataCollector.FSharp.fsproj src/MarketDataCollector.FSharp/
-COPY tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj tests/MarketDataCollector.Tests/
-COPY tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj tests/MarketDataCollector.FSharp.Tests/
-COPY benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj benchmarks/MarketDataCollector.Benchmarks/
+COPY Meridian.sln Directory.Build.props Directory.Packages.props global.json ./
+COPY src/Meridian/Meridian.csproj src/Meridian/
+COPY src/Meridian.Application/Meridian.Application.csproj src/Meridian.Application/
+COPY src/Meridian.Contracts/Meridian.Contracts.csproj src/Meridian.Contracts/
+COPY src/Meridian.Core/Meridian.Core.csproj src/Meridian.Core/
+COPY src/Meridian.Domain/Meridian.Domain.csproj src/Meridian.Domain/
+COPY src/Meridian.Infrastructure/Meridian.Infrastructure.csproj src/Meridian.Infrastructure/
+COPY src/Meridian.ProviderSdk/Meridian.ProviderSdk.csproj src/Meridian.ProviderSdk/
+COPY src/Meridian.Storage/Meridian.Storage.csproj src/Meridian.Storage/
+COPY src/Meridian.Ui/Meridian.Ui.csproj src/Meridian.Ui/
+COPY src/Meridian.Ui.Services/Meridian.Ui.Services.csproj src/Meridian.Ui.Services/
+COPY src/Meridian.Ui.Shared/Meridian.Ui.Shared.csproj src/Meridian.Ui.Shared/
+COPY src/Meridian.FSharp/Meridian.FSharp.fsproj src/Meridian.FSharp/
+COPY tests/Meridian.Tests/Meridian.Tests.csproj tests/Meridian.Tests/
+COPY tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj tests/Meridian.FSharp.Tests/
+COPY benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj benchmarks/Meridian.Benchmarks/
 
-# Restore dependencies
-RUN dotnet restore src/MarketDataCollector/MarketDataCollector.csproj
+# Restore dependencies (target linux-musl-x64 to match the Alpine runtime image)
+RUN dotnet restore src/Meridian/Meridian.csproj --runtime linux-musl-x64
 
 # Copy source code
 COPY src/ src/
@@ -42,10 +42,11 @@ COPY tests/ tests/
 COPY benchmarks/ benchmarks/
 
 # Build and publish
-RUN dotnet publish src/MarketDataCollector/MarketDataCollector.csproj \
+RUN dotnet publish src/Meridian/Meridian.csproj \
     -c Release \
     -o /app/publish \
     --no-restore \
+    --runtime linux-musl-x64 \
     -p:PublishSingleFile=false \
     -p:SelfContained=false \
     -p:PublishTrimmed=false
@@ -94,7 +95,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Default entrypoint - web dashboard mode
-ENTRYPOINT ["dotnet", "MarketDataCollector.dll"]
+ENTRYPOINT ["dotnet", "Meridian.dll"]
 CMD ["--ui", "--http-port", "8080", "--watch-config"]
 
 # =============================================================================
