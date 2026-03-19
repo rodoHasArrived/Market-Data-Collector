@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-19
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23315915189
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23317515114
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -27,22 +27,20 @@ messages:
       - `CS0219`
       - `CS0234`
       - `CS0246`
-      - `CS0433`
-      - `CS0534`
       - `CS0535`
       - `CS1061`
 
       ## Failure Patterns
-      - `2026-03-19T20:43:42.5651733Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in both 'Meridian.Contracts, Version=1.0.0...`
-      - `2026-03-19T20:43:42.5769933Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement inherited abstract member 'ConfigServic...`
-      - `2026-03-19T20:43:42.6052439Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(312,29): error CS0246: The type or namespace name 'LOBSnapshot' could not be found (are yo...`
-      - `2026-03-19T20:43:42.6196009Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
-      - `2026-03-19T20:43:42.6469067Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
-      - `2026-03-19T20:43:42.6678715Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
-      - `2026-03-19T20:43:42.6792303Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\ViewModels\BacktestViewModel.cs(291,44): error CS0535: 'BuyAndHoldStrategy' does not implement interface member 'IBacktest...`
-      - `2026-03-19T20:43:42.6968628Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(80,12): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Vers...`
-      - `2026-03-19T20:43:42.7228337Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(82,57): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Vers...`
-      - `2026-03-19T20:43:42.7440425Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Wpf\Services\CredentialService.cs(484,12): error CS0433: The type 'CredentialMetadata' exists in both 'Meridian.Contracts, Ver...`
+      - `2026-03-19T21:27:41.6094624Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Collections\BoundedObservableCollectionTests.cs(166,35): error CS1061: 'NumericAssertions<int>' does not contain a ...`
+      - `2026-03-19T21:27:41.6333853Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(173,28): error CS1061: 'GenericCollectionAssertions<AlignmentInterval>'...`
+      - `2026-03-19T21:27:41.6828593Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\AlertServiceTests.cs(251,48): error CS1061: 'NumericAssertions<int>' does not contain a definition for 'Be...`
+      - `2026-03-19T21:27:41.7271048Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(190,26): error CS1061: 'GenericCollectionAssertions<AggregationMethod>'...`
+      - `2026-03-19T21:27:41.7407410Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(206,29): error CS1061: 'GenericCollectionAssertions<GapHandlingStrategy...`
+      - `2026-03-19T21:27:41.7530970Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(223,26): error CS1061: 'GenericCollectionAssertions<AlignmentPreset>' d...`
+      - `2026-03-19T21:27:41.7592455Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ActivityFeedServiceTests.cs(349,49): error CS1061: 'GenericCollectionAssertions<ActivityType>' does not co...`
+      - `2026-03-19T21:27:41.7684000Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\BackfillProviderConfigServiceTests.cs(55,40): error CS1061: 'NumericAssertions<int>' does not contain a de...`
+      - `2026-03-19T21:27:41.7721326Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\BackfillProviderConfigServiceTests.cs(230,26): error CS1061: 'GenericCollectionAssertions<ProviderConfigAu...`
+      - `2026-03-19T21:27:41.7784370Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ChartingServiceTests.cs(227,29): error CS1061: 'GenericCollectionAssertions<TechnicalIndicatorInfo>' does ...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
