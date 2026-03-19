@@ -1,6 +1,6 @@
 # CLAUDE.providers.md - Data Provider Implementation Guide
 
-This document provides guidance for AI assistants working with data providers in Market Data Collector.
+This document provides guidance for AI assistants working with data providers in Meridian. Data providers form the foundation of the data collection pillar, feeding real-time and historical market data into backtesting, paper trading, and live execution pipelines.
 
 ---
 
