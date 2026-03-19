@@ -523,6 +523,7 @@ Meridian/
 │   │   └── service-level-objectives.md
 │   ├── plans/
 │   │   ├── assembly-performance-roadmap.md
+│   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
 │   │   └── quant-script-environment-blueprint.md
 │   ├── providers/

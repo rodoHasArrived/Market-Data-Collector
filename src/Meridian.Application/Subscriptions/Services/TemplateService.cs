@@ -3,6 +3,7 @@ using System.Threading;
 using Meridian.Application.Config;
 using Meridian.Application.Subscriptions.Models;
 using Meridian.Application.UI;
+using Meridian.Storage.Archival;
 
 namespace Meridian.Application.Subscriptions.Services;
 
@@ -198,7 +199,7 @@ public sealed class TemplateService
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
-        await File.WriteAllTextAsync(_templatesPath, json, ct);
+        await AtomicFileWriter.WriteAsync(_templatesPath, json, ct);
     }
 
     private static Dictionary<string, SymbolTemplate> InitializeBuiltInTemplates()

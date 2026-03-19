@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-18 21:57:30 UTC
+> Auto-generated on 2026-03-19 18:07:24 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -494,6 +494,7 @@ Meridian/
 │   │   └── service-level-objectives.md
 │   ├── plans/
 │   │   ├── assembly-performance-roadmap.md
+│   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
 │   │   └── quant-script-environment-blueprint.md
 │   ├── providers/

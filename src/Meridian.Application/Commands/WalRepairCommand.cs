@@ -194,7 +194,7 @@ internal sealed class WalRepairCommand : ICliCommand
 
         if (!string.IsNullOrWhiteSpace(outputPath))
         {
-            await File.WriteAllLinesAsync(outputPath, corruptedInfo, ct);
+            await AtomicFileWriter.WriteAsync(outputPath, string.Join(Environment.NewLine, corruptedInfo) + Environment.NewLine, ct);
             Console.WriteLine($"  Dry-run report written to: {outputPath}");
             Console.WriteLine();
         }
@@ -221,6 +221,6 @@ internal sealed class WalRepairCommand : ICliCommand
             "represent data that was not yet committed to primary storage."
         };
 
-        await File.WriteAllLinesAsync(outputPath, lines, ct);
+        await AtomicFileWriter.WriteAsync(outputPath, string.Join(Environment.NewLine, lines) + Environment.NewLine, ct);
     }
 }

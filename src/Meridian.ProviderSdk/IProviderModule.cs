@@ -1,4 +1,3 @@
-using Meridian.Infrastructure.DataSources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Meridian.Infrastructure.Adapters.Core;
@@ -11,5 +10,5 @@ public interface IProviderModule
     /// <summary>
     /// Register provider services into the DI container.
     /// </summary>
-    void Register(IServiceCollection services, DataSourceRegistry registry);
+    void Register(IServiceCollection services, Meridian.Infrastructure.DataSources.DataSourceRegistry registry);
 }

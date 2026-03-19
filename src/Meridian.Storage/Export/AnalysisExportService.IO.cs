@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Meridian.Storage.Archival;
 
 namespace Meridian.Storage.Export;
 
@@ -61,7 +62,7 @@ public sealed partial class AnalysisExportService
             sb.AppendLine();
         }
 
-        await File.WriteAllTextAsync(dictPath, sb.ToString(), ct);
+        await AtomicFileWriter.WriteAsync(dictPath, sb.ToString(), ct);
         return dictPath;
     }
 
@@ -96,7 +97,7 @@ public sealed partial class AnalysisExportService
                 return string.Empty;
         }
 
-        await File.WriteAllTextAsync(scriptPath, script, ct);
+        await AtomicFileWriter.WriteAsync(scriptPath, script, ct);
         return scriptPath;
     }
 
@@ -348,7 +349,7 @@ load_trades <- function(symbol = NULL) {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
-        await File.WriteAllTextAsync(manifestPath, json, ct);
+        await AtomicFileWriter.WriteAsync(manifestPath, json, ct);
 
         return manifestPath;
     }

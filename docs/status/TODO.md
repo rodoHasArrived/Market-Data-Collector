@@ -1,22 +1,22 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-18T20:21:48.004314+00:00
+> Last updated: 2026-03-19T18:06:14.833967+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 51 |
+| **Total Items** | 50 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 51 |
+| **Untracked** | 50 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `TODO` | 36 | General tasks to complete |
-| `NOTE` | 15 | Important notes and documentation |
+| `NOTE` | 14 | Important notes and documentation |
 
 ### By Directory
 
@@ -24,11 +24,11 @@
 |-----------|-------|
 | `src/` | 39 |
 | `tests/` | 9 |
-| `.github/` | 3 |
+| `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-51 items have no assignee and no issue tracking:
+50 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
@@ -144,13 +144,10 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:147`
   > If the provider supports server-side filtering, implement it here. Otherwise, keep this call to the base class which filters client-side.
 
-### NOTE (15)
+### NOTE (14)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
-
-- [ ] `.github/workflows/skill-evals.yml:165`
-  > Live eval execution requires ANTHROPIC_API_KEY secret. The job below is a placeholder that documents the manual eval workflow. Enable it by adding ANTHROPIC_API_KEY to repository secrets and removing the `if: false` condition.
 
 - [ ] `.github/workflows/test-matrix.yml:5`
   > This workflow intentionally does NOT use reusable-dotnet-build.yml because it needs separate C# / F# test runs with per-language arguments, a Category!=Integration filter, platform-conditional jobs, and per-platform Codecov flags. The reusable template targets simpler "build + test entire solution" scenarios.

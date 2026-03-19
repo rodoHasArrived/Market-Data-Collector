@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using Meridian.Application.Pipeline;
 using Meridian.Execution.Sdk;
 using Microsoft.Extensions.Logging;
 
@@ -28,13 +29,14 @@ public sealed class OrderManagementSystem : IOrderManager, IDisposable
         _gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _riskValidator = riskValidator;
-        _executionChannel = Channel.CreateBounded<ExecutionReport>(
-            new BoundedChannelOptions(1000)
-            {
-                FullMode = BoundedChannelFullMode.Wait,
-                SingleReader = true,
-                SingleWriter = false
-            });
+        // Use custom EventPipelinePolicy for execution reports: high capacity with backpressure
+        var executionPolicy = new EventPipelinePolicy(
+            Capacity: 1000,
+            FullMode: BoundedChannelFullMode.Wait,
+            EnableMetrics: false);
+        _executionChannel = executionPolicy.CreateChannel<ExecutionReport>(
+            singleReader: true,
+            singleWriter: false);
     }
 
     /// <inheritdoc />

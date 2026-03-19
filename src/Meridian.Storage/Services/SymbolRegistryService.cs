@@ -3,6 +3,7 @@ using System.Text.Json;
 using Meridian.Application.Logging;
 using Meridian.Application.Serialization;
 using Meridian.Contracts.Catalog;
+using Meridian.Storage.Archival;
 using Meridian.Storage.Interfaces;
 using Serilog;
 
@@ -339,7 +340,7 @@ public sealed class SymbolRegistryService : ISymbolRegistryService
     public async Task SaveRegistryAsync(CancellationToken ct = default)
     {
         var json = JsonSerializer.Serialize(_registry, MarketDataJsonContext.PrettyPrintOptions);
-        await File.WriteAllTextAsync(_registryPath, json, ct);
+        await AtomicFileWriter.WriteAsync(_registryPath, json, ct);
         _log.Debug("Saved symbol registry to {Path}", _registryPath);
     }
 

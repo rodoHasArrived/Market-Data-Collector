@@ -5,6 +5,7 @@ using Meridian.Application.Config;
 using Meridian.Application.Logging;
 using Meridian.Application.Subscriptions.Models;
 using Meridian.Application.UI;
+using Meridian.Storage.Archival;
 using Serilog;
 
 namespace Meridian.Application.Subscriptions.Services;
@@ -421,7 +422,7 @@ public sealed class SchedulingService : IAsyncDisposable
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
-            await File.WriteAllTextAsync(_schedulesPath, json, ct);
+            await AtomicFileWriter.WriteAsync(_schedulesPath, json, ct);
         }
         catch (Exception ex)
         {
