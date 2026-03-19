@@ -19,7 +19,7 @@ internal sealed class BacktestContext(
     public decimal Cash => portfolio.Cash;
     public decimal PortfolioValue => portfolio.ComputeCurrentEquity();
     public IReadOnlyDictionary<string, Position> Positions => portfolio.GetCurrentPositions();
-    public BacktestLedger Ledger => ledger;
+    public IReadOnlyLedger Ledger => ledger;
 
     public decimal? GetLastPrice(string symbol) =>
         portfolio.LastPrices.TryGetValue(symbol, out var p) ? p : null;

@@ -40,6 +40,7 @@ public interface IBacktestContext
     /// <summary>
     /// The double-entry accounting ledger for this backtest run.
     /// Strategies can query account balances and journal entries to audit or report on costs.
+    /// The ledger is read-only to prevent strategy code from corrupting the audit trail.
     /// </summary>
-    BacktestLedger Ledger { get; }
+    IReadOnlyLedger Ledger { get; }
 }

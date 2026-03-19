@@ -7,25 +7,25 @@ namespace MarketDataCollector.Ledger;
 public sealed record LedgerEntry
 {
     /// <summary>Unique identifier for this ledger line.</summary>
-    public Guid EntryId { get; init; }
+    public Guid EntryId { get; private init; }
 
     /// <summary>The journal entry this line belongs to.</summary>
-    public Guid JournalEntryId { get; init; }
+    public Guid JournalEntryId { get; private init; }
 
     /// <summary>When the underlying economic event occurred (replay / simulated time).</summary>
-    public DateTimeOffset Timestamp { get; init; }
+    public DateTimeOffset Timestamp { get; private init; }
 
     /// <summary>Account being debited or credited.</summary>
-    public LedgerAccount Account { get; init; }
+    public LedgerAccount Account { get; private init; }
 
     /// <summary>Non-negative debit amount; must be zero when <see cref="Credit"/> is non-zero.</summary>
-    public decimal Debit { get; init; }
+    public decimal Debit { get; private init; }
 
     /// <summary>Non-negative credit amount; must be zero when <see cref="Debit"/> is non-zero.</summary>
-    public decimal Credit { get; init; }
+    public decimal Credit { get; private init; }
 
     /// <summary>Human-readable description of the economic event.</summary>
-    public string Description { get; init; }
+    public string Description { get; private init; }
 
     /// <summary>
     /// Initializes a new <see cref="LedgerEntry"/> with validation.

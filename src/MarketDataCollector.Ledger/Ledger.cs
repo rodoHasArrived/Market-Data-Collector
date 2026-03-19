@@ -18,7 +18,7 @@ namespace MarketDataCollector.Ledger;
 /// </list>
 /// </para>
 /// </remarks>
-public sealed class Ledger
+public sealed class Ledger : IReadOnlyLedger
 {
     private readonly List<JournalEntry> _journal = [];
 
@@ -33,12 +33,20 @@ public sealed class Ledger
     public void Post(JournalEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
+
+        if (string.IsNullOrWhiteSpace(entry.Description))
+            throw new LedgerValidationException("Journal entry description must not be null or whitespace.");
+
+        if (entry.Lines is null || entry.Lines.Count == 0)
+            throw new LedgerValidationException("Journal entry must have at least one line.");
+
         if (!entry.IsBalanced)
         {
-            throw new ArgumentException(
+            var totalDebit = entry.Lines.Sum(l => l.Debit);
+            var totalCredit = entry.Lines.Sum(l => l.Credit);
+            throw new LedgerValidationException(
                 $"Journal entry '{entry.JournalEntryId}' is not balanced " +
-                $"(debits={entry.Lines.Sum(l => l.Debit):F4}, credits={entry.Lines.Sum(l => l.Credit):F4}).",
-                nameof(entry));
+                $"(debits={totalDebit:F4}, credits={totalCredit:F4}).");
         }
 
         _journal.Add(entry);

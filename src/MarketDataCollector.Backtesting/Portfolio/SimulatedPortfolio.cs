@@ -13,6 +13,7 @@ internal sealed class SimulatedPortfolio
 
     // FIFO cost-basis lots: symbol → queue of (quantity, avgPrice)
     private readonly Dictionary<string, Queue<(long qty, decimal price)>> _lots = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Queue<(long qty, decimal price)>> _shortLots = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, decimal> _lastPrices = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, long> _positions = new(StringComparer.OrdinalIgnoreCase);  // net qty (neg=short)
     private readonly Dictionary<string, decimal> _avgCost = new(StringComparer.OrdinalIgnoreCase);
@@ -83,6 +84,9 @@ internal sealed class SimulatedPortfolio
 
         decimal? realised = null;
         decimal costBasisRemoved = 0m;
+        decimal? shortRealised = null;
+        decimal shortOriginalProceeds = 0m;
+        long shortOpenQty = 0L;
 
         // Update average cost basis
         if (qty > 0)  // buying
@@ -105,6 +109,32 @@ internal sealed class SimulatedPortfolio
             costBasisRemoved = closeQty * price - realised.Value;
         }
 
+        // Track short lots (for ledger P&L)
+        if (qty < 0)
+        {
+            // All qty below existingQty (when existingQty <= 0 there's no long to close first)
+            shortOpenQty = existingQty <= 0
+                ? -qty                                          // full short
+                : Math.Max(-qty - existingQty, 0L);            // excess beyond long close
+        }
+
+        if (shortOpenQty > 0)
+        {
+            if (!_shortLots.TryGetValue(symbol, out var shortQueue))
+            {
+                shortQueue = new Queue<(long, decimal)>();
+                _shortLots[symbol] = shortQueue;
+            }
+            shortQueue.Enqueue((shortOpenQty, price));
+        }
+
+        if (qty > 0 && existingQty < 0)  // covering short
+        {
+            var coverQty = Math.Min(qty, -existingQty);
+            (shortRealised, shortOriginalProceeds) = RealiseShortFifo(symbol, coverQty, price);
+            _realizedPnl[symbol] = (_realizedPnl.GetValueOrDefault(symbol)) + shortRealised.Value;
+        }
+
         // Record trade cash flow
         _cashFlows.Add(new TradeCashFlow(fill.FilledAt, cashImpact, symbol, qty, price));
 
@@ -112,7 +142,7 @@ internal sealed class SimulatedPortfolio
             _cashFlows.Add(new CommissionCashFlow(fill.FilledAt, -commission, symbol, fill.OrderId));
 
         // Post double-entry journal entries to ledger
-        PostFillLedgerEntries(fill, qty, price, commission, existingQty, realised, costBasisRemoved);
+        PostFillLedgerEntries(fill, qty, price, commission, existingQty, realised, costBasisRemoved, shortOpenQty, shortRealised, shortOriginalProceeds);
     }
 
     // ── Day-end accruals ─────────────────────────────────────────────────────
@@ -199,7 +229,10 @@ internal sealed class SimulatedPortfolio
         decimal commission,
         long existingQty,
         decimal? realised,
-        decimal costBasisRemoved)
+        decimal costBasisRemoved,
+        long shortOpenQty,
+        decimal? shortRealised,
+        decimal shortOriginalProceeds)
     {
         if (_ledger is null)
             return;
@@ -207,14 +240,21 @@ internal sealed class SimulatedPortfolio
         var ts = fill.FilledAt;
         var symbol = fill.Symbol;
         var securitiesAccount = LedgerAccounts.Securities(symbol);
+        var shortPayableAccount = LedgerAccounts.ShortSecuritiesPayable(symbol);
 
-        if (qty > 0)
+        // Compute long buy quantity: all of qty when adding to a long; only the excess after
+        // covering a short when transitioning from short to long in a single fill.
+        var longBuyQty = qty > 0
+            ? (existingQty >= 0 ? qty : Math.Max(qty + existingQty, 0L))
+            : 0L;
+
+        if (longBuyQty > 0)
         {
-            // Buying: DR Securities / CR Cash
-            var cost = qty * price;
+            // Buying (net new long shares): DR Securities / CR Cash
+            var cost = longBuyQty * price;
             _ledger.PostLines(
                 ts,
-                $"Buy {qty} {symbol} @ {price:F4}",
+                $"Buy {longBuyQty} {symbol} @ {price:F4}",
                 [
                     (securitiesAccount, cost, 0m),
                     (LedgerAccounts.Cash, 0m, cost),
@@ -263,6 +303,64 @@ internal sealed class SimulatedPortfolio
             }
 
             _ledger.PostLines(ts, $"Sell {closeQty} {symbol} @ {price:F4}", lines);
+        }
+
+        // Short sell: DR Cash / CR Short Securities Payable
+        if (shortOpenQty > 0)
+        {
+            var shortProceeds = shortOpenQty * price;
+            _ledger.PostLines(
+                ts,
+                $"Short sell {shortOpenQty} {symbol} @ {price:F4}",
+                [
+                    (LedgerAccounts.Cash, shortProceeds, 0m),
+                    (shortPayableAccount, 0m, shortProceeds),
+                ]);
+        }
+
+        // Cover short: DR Short Securities Payable / CR Cash ± Realized Gain/Loss
+        if (qty > 0 && existingQty < 0 && shortRealised.HasValue)
+        {
+            var coverQty = Math.Min(qty, -existingQty);
+            var coverCost = coverQty * price;
+            var gain = shortRealised.Value;
+
+            List<(LedgerAccount account, decimal debit, decimal credit)> lines;
+
+            if (gain > 0)
+            {
+                // Covered at lower price than shorted — profit
+                // DR Short Payable (original proceeds) / CR Cash (cover cost) / CR Realized Gain
+                lines =
+                [
+                    (shortPayableAccount, shortOriginalProceeds, 0m),
+                    (LedgerAccounts.Cash, 0m, coverCost),
+                    (LedgerAccounts.RealizedGain, 0m, gain),
+                ];
+            }
+            else if (gain < 0)
+            {
+                // Covered at higher price than shorted — loss
+                // DR Short Payable (original proceeds) / DR Realized Loss / CR Cash (cover cost)
+                lines =
+                [
+                    (shortPayableAccount, shortOriginalProceeds, 0m),
+                    (LedgerAccounts.RealizedLoss, Math.Abs(gain), 0m),
+                    (LedgerAccounts.Cash, 0m, coverCost),
+                ];
+            }
+            else
+            {
+                // Covered at same price as shorted — no P&L
+                // DR Short Payable / CR Cash
+                lines =
+                [
+                    (shortPayableAccount, shortOriginalProceeds, 0m),
+                    (LedgerAccounts.Cash, 0m, coverCost),
+                ];
+            }
+
+            _ledger.PostLines(ts, $"Cover short {coverQty} {symbol} @ {price:F4}", lines);
         }
 
         // Commission: DR Commission Expense / CR Cash
@@ -330,5 +428,43 @@ internal sealed class SimulatedPortfolio
         }
         _avgCost[symbol] = ComputeAvgCost(symbol);
         return realised;
+    }
+
+    /// <summary>
+    /// FIFO realisation for short positions. Returns the realized P&amp;L and the total original
+    /// short-sale proceeds consumed (needed for balanced ledger entries).
+    /// Realized P&amp;L = shortSaleProceeds − coverCost; positive means profit (covered at a lower price).
+    /// </summary>
+    private (decimal realised, decimal shortSaleProceeds) RealiseShortFifo(string symbol, long coverQty, decimal coverPrice)
+    {
+        if (!_shortLots.TryGetValue(symbol, out var queue))
+            return (0m, coverQty * coverPrice);
+
+        var realised = 0m;
+        var shortSaleProceeds = 0m;
+        var remaining = coverQty;
+
+        while (remaining > 0 && queue.Count > 0)
+        {
+            var (lotQty, lotShortPrice) = queue.Peek();
+            var lotClose = Math.Min(lotQty, remaining);
+            var lotProceeds = lotClose * lotShortPrice;
+            realised += lotProceeds - lotClose * coverPrice;
+            shortSaleProceeds += lotProceeds;
+
+            if (lotQty <= remaining)
+            {
+                remaining -= lotQty;
+                queue.Dequeue();
+            }
+            else
+            {
+                queue = new Queue<(long, decimal)>(queue.Skip(1).Prepend((lotQty - remaining, lotShortPrice)));
+                _shortLots[symbol] = queue;
+                remaining = 0;
+            }
+        }
+
+        return (realised, shortSaleProceeds);
     }
 }

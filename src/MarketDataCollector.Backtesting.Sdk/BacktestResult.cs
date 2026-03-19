@@ -42,6 +42,6 @@ public sealed record BacktestResult(
     IReadOnlyList<CashFlowEntry> CashFlows,
     IReadOnlyList<FillEvent> Fills,
     BacktestMetrics Metrics,
-    BacktestLedger Ledger,
+    IReadOnlyLedger Ledger,
     TimeSpan ElapsedTime,
     long TotalEventsProcessed);

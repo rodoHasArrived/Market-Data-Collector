@@ -47,4 +47,15 @@ public static class LedgerAccounts
         var normalizedSymbol = symbol.ToUpperInvariant();
         return new("Securities", LedgerAccountType.Asset, normalizedSymbol);
     }
+
+    /// <summary>
+    /// Returns the liability account representing the obligation to return borrowed shares for
+    /// a short position in <paramref name="symbol"/>.
+    /// Each symbol has its own short payable account. The symbol is normalized to upper-case.
+    /// </summary>
+    public static LedgerAccount ShortSecuritiesPayable(string symbol)
+    {
+        var normalizedSymbol = symbol.ToUpperInvariant();
+        return new("Short Securities Payable", LedgerAccountType.Liability, normalizedSymbol);
+    }
 }

@@ -181,4 +181,58 @@ public sealed class SimulatedPortfolioTests
 
         lower.Should().Be(upper);  // record equality; both use "SPY"
     }
+
+    [Fact]
+    public void Ledger_ShortSell_PostsShortPayable()
+    {
+        var ledger = NewLedger();
+        var startTs = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(0m), 0.05, 0.02, ledger, startTs);
+
+        // Short sell 10 SPY @ $400 (no existing position)
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), Guid.NewGuid(), "SPY", -10L, 400m, 0m, DateTimeOffset.UtcNow));
+
+        var shortPayable = LedgerAccounts.ShortSecuritiesPayable("SPY");
+        ledger.GetBalance(shortPayable).Should().Be(4_000m);     // CR Short Payable
+        ledger.GetBalance(LedgerAccounts.Cash).Should().Be(14_000m); // 10k + 4k proceeds
+        ledger.Journal.All(j => j.IsBalanced).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Ledger_CoverShortWithGain_PostsRealizedGain()
+    {
+        var ledger = NewLedger();
+        var startTs = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(0m), 0.05, 0.02, ledger, startTs);
+        var orderId = Guid.NewGuid();
+
+        // Short 10 @ $400, cover @ $350 → gain $500
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), orderId, "SPY", -10L, 400m, 0m, DateTimeOffset.UtcNow));
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), orderId, "SPY", 10L, 350m, 0m, DateTimeOffset.UtcNow));
+
+        var shortPayable = LedgerAccounts.ShortSecuritiesPayable("SPY");
+        ledger.GetBalance(shortPayable).Should().Be(0m);              // payable cleared
+        ledger.GetBalance(LedgerAccounts.RealizedGain).Should().Be(500m);  // (400-350)*10
+        ledger.GetBalance(LedgerAccounts.RealizedLoss).Should().Be(0m);
+        ledger.Journal.All(j => j.IsBalanced).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Ledger_CoverShortWithLoss_PostsRealizedLoss()
+    {
+        var ledger = NewLedger();
+        var startTs = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(0m), 0.05, 0.02, ledger, startTs);
+        var orderId = Guid.NewGuid();
+
+        // Short 10 @ $400, cover @ $450 → loss $500
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), orderId, "SPY", -10L, 400m, 0m, DateTimeOffset.UtcNow));
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), orderId, "SPY", 10L, 450m, 0m, DateTimeOffset.UtcNow));
+
+        var shortPayable = LedgerAccounts.ShortSecuritiesPayable("SPY");
+        ledger.GetBalance(shortPayable).Should().Be(0m);               // payable cleared
+        ledger.GetBalance(LedgerAccounts.RealizedLoss).Should().Be(500m);  // (450-400)*10
+        ledger.GetBalance(LedgerAccounts.RealizedGain).Should().Be(0m);
+        ledger.Journal.All(j => j.IsBalanced).Should().BeTrue();
+    }
 }
