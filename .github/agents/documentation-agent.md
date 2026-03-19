@@ -918,7 +918,6 @@ Meridian/
 │   │   │   ├── ExecutionPosition.cs
 │   │   │   ├── IPortfolioState.cs
 │   │   │   ├── OrderAcknowledgement.cs
-│   │   │   ├── OrderRequest.cs
 │   │   │   ├── OrderStatus.cs
 │   │   │   ├── OrderStatusUpdate.cs
 │   │   │   └── OrderType.cs
@@ -1728,6 +1727,7 @@ Meridian/
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
+├── environment.yml
 ├── global.json
 ├── LICENSE
 ├── Makefile

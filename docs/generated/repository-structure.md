@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-19 23:34:36 UTC
+> Auto-generated on 2026-03-19 23:51:21 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -889,7 +889,6 @@ Meridian/
 │   │   │   ├── ExecutionPosition.cs
 │   │   │   ├── IPortfolioState.cs
 │   │   │   ├── OrderAcknowledgement.cs
-│   │   │   ├── OrderRequest.cs
 │   │   │   ├── OrderStatus.cs
 │   │   │   ├── OrderStatusUpdate.cs
 │   │   │   └── OrderType.cs
@@ -1699,6 +1698,7 @@ Meridian/
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
+├── environment.yml
 ├── global.json
 ├── LICENSE
 ├── Makefile
