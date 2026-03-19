@@ -3,7 +3,7 @@
 ## Market Data Collector — Backfill Provider Assessment
 
 **Date:** 2026-02-20
-**Status:** Updated (Polygon.io documentation refresh)
+**Status:** Updated | Polygon refresh: 2026-02-20
 **Author:** Architecture Review
 
 ---
@@ -777,4 +777,5 @@ The current implementation handles the complexity of 10 providers well through t
 
 ---
 
-*Evaluation Date: 2026-02-20 (Polygon documentation refresh)*
+**Evaluation Date:** 2026-02-20
+**Last Reviewed:** 2026-03-19

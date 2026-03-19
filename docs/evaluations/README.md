@@ -1,8 +1,9 @@
 # Technology Evaluations
 
-**Owner:** Core Team  
-**Scope:** Governance — Architecture Reviews  
+**Owner:** Core Team
+**Scope:** Governance — Architecture Reviews
 **Review Cadence:** As evaluations are completed or superseded
+**Last Audited:** 2026-03-19
 
 This directory contains in-depth evaluations of architecture components, providers, and improvement proposals.
 

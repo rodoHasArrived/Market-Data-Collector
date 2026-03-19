@@ -195,3 +195,42 @@ These should feed both the **Provider Health page** and a long-term trend view.
 - Preflight blocks impossible runs with clear remediation text.
 - Config validation detects invalid priorities/rate limits.
 - End-to-end integration test covers: config edit -> save -> backfill uses updated order.
+
+---
+
+## 7) Implementation Follow-Up (2026-03-19)
+
+**Status:** Proposals documented and infrastructure in place; UI implementation in progress.
+
+### Implementation Status by Phase
+
+| Phase | Proposal | Status | Evidence |
+|-------|----------|--------|----------|
+| **Phase 1** | Typed DTOs for provider config | ✅ Done | `BackfillProviderOptionsDto`, `BackfillProvidersConfigDto` in `Meridian.Contracts` |
+| **Phase 2** | Desktop config service methods | ✅ Done | `GetBackfillProvidersConfigAsync()`, `SetBackfillProviderOptionsAsync()` in `ConfigService` |
+| **Phase 3** | WPF UI binding framework | ✅ Done | `BackfillProviderSettingsViewModel`, `ObservableCollection<BackfillProviderSettingsViewModel>` |
+| **Phase 4** | Backfill page UI controls | 🔄 Partial | Provider list, priority reordering partially implemented; full settings workflow deferred to Phase 11 |
+| **Phase 5** | Runtime diagnostics endpoint | 🔄 Partial | Provider health dashboard exists (`/api/providers/dashboard`); effective selection context pending |
+| **Phase 6** | Preflight validator | ⚠️ Open | Validator patterns exist; comprehensive backfill preflight not yet integrated |
+| **Phase 7** | Backward-compatible migration | ⚠️ Open | Old config fields supported; automatic migration on first save not yet implemented |
+| **Phase 8** | Telemetry & operability | 🔄 Partial | Provider health metrics captured; long-term trend view roadmapped for Phase 14+ |
+
+### Key Achievements
+
+1. ✅ **Type-safe config layer** — Eliminated error-prone JSON string manipulation
+2. ✅ **WPF service bindings** — `ConfigService` methods decouple UI from direct config mutation
+3. ✅ **Provider health visibility** — `/api/providers/dashboard` surfaces runtime provider state to UI
+
+### Remaining Gaps
+
+- Full WPF UI for reordering/enabling providers (tracked in Phase 11)
+- Backward-compatible config migration script
+- Comprehensive preflight validation before backfill execution
+- Long-term provider telemetry trends
+
+**Verdict:** Foundation is solid; UI completion expected in Phase 11. Core infrastructure enables rapid UI buildout without architectural changes.
+
+---
+
+**Assessment Date:** 2026-02-13
+**Last Reviewed:** 2026-03-19
