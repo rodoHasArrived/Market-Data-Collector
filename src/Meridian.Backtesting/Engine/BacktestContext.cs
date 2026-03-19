@@ -8,7 +8,8 @@ namespace Meridian.Backtesting.Engine;
 /// </summary>
 internal sealed class BacktestContext(
     SimulatedPortfolio portfolio,
-    IReadOnlySet<string> universe) : IBacktestContext
+    IReadOnlySet<string> universe,
+    BacktestLedger ledger) : IBacktestContext
 {
     private readonly List<Order> _pendingOrders = [];
 
@@ -18,6 +19,7 @@ internal sealed class BacktestContext(
     public decimal Cash => portfolio.Cash;
     public decimal PortfolioValue => portfolio.ComputeCurrentEquity();
     public IReadOnlyDictionary<string, Position> Positions => portfolio.GetCurrentPositions();
+    public IReadOnlyLedger Ledger => ledger;
 
     public decimal? GetLastPrice(string symbol) =>
         portfolio.LastPrices.TryGetValue(symbol, out var p) ? p : null;

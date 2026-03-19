@@ -51,8 +51,10 @@ public sealed class BacktestEngine(
 
         // 2. Set up portfolio, fill models, context
         var commissionModel = new PerShareCommissionModel();
-        var portfolio = new SimulatedPortfolio(request.InitialCash, commissionModel, request.AnnualMarginRate, request.AnnualShortRebateRate);
-        var ctx = new BacktestContext(portfolio, universe);
+        var ledger = new BacktestLedger();
+        var startTimestamp = new DateTimeOffset(request.From.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var portfolio = new SimulatedPortfolio(request.InitialCash, commissionModel, request.AnnualMarginRate, request.AnnualShortRebateRate, ledger, startTimestamp);
+        var ctx = new BacktestContext(portfolio, universe, ledger);
         var orderBookFillModel = new OrderBookFillModel(commissionModel);
         var barFillModel = new BarMidpointFillModel(commissionModel);
 
@@ -127,7 +129,7 @@ public sealed class BacktestEngine(
             "Backtest complete: {Events} events, final equity {Equity:C}, net PnL {NetPnl:C} in {Elapsed}ms",
             eventsProcessed, metrics.FinalEquity, metrics.NetPnl, sw.ElapsedMilliseconds);
 
-        return new BacktestResult(request, universe, allSnapshots, allCashFlows, allFills, metrics, sw.Elapsed, eventsProcessed);
+        return new BacktestResult(request, universe, allSnapshots, allCashFlows, allFills, metrics, ledger, sw.Elapsed, eventsProcessed);
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
@@ -257,6 +259,6 @@ public sealed class BacktestEngine(
     private static BacktestResult CreateEmptyResult(BacktestRequest request, IReadOnlySet<string> universe, TimeSpan elapsed)
     {
         var metrics = BacktestMetricsEngine.Compute([], [], [], request);
-        return new BacktestResult(request, universe, [], [], [], metrics, elapsed, 0);
+        return new BacktestResult(request, universe, [], [], [], metrics, new BacktestLedger(), elapsed, 0);
     }
 }
