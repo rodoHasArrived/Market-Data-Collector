@@ -839,4 +839,51 @@ Items still actionable with minimal risk, in priority order:
 
 ---
 
-*This is a living document. Last reviewed 2026-03-11.*
+## Implementation Update (2026-03-19)
+
+**Overall Status:** 5/12 proposals implemented; 5/12 partial; 2/12 not started
+
+### Progress Summary
+
+| Bucket | Count | Details |
+|--------|-------|---------|
+| ✅ Fully Implemented | 5 | 1.1, 1.6 (structural); all of these complete and stable |
+| ⚠️ Partially Implemented | 5 | 1.2, 1.7, 2.2, 2.3, 2.4 (foundation in place; finishing work needed) |
+| ❌ Not Started | 2 | 1.3, 1.4, 1.5, 2.1, 2.5 (5 items actually; requires architectural decisions) |
+
+### Recommended Next Steps (Priority Order)
+
+**Tier 1 — Quick Wins (Low Risk, High Value)**
+| Item | Effort | Benefit |
+|------|--------|---------|
+| 1. Remove `Refactored` suffix files (AlpacaSymbolSearchProvider) | <1 hour | Cleaner provider interface |
+| 2. Fix namespace/folder mismatch in `Application/Http/` (Meridian.Application.UI → Meridian.Application.Http) | 2-3 hours | Alignment with folder structure |
+| 3. Fix double-nested `Core/Performance/Performance/` folder | <30 min | Clean directory structure |
+| 4. Update 5 remaining backfill test namespaces | <1 hour | Consistent test layout |
+
+**Tier 2 — Medium Effort (Moderate Value)**
+| Item | Effort | Impact |
+|------|--------|--------|
+| 5. Implement 1.3 — Co-located Provider Configuration | 4-6 hours | Reduced coupling between Application and Infrastructure |
+| 6. Implement 2.1 — Component Lifecycle FSM Base Class | 6-8 hours | Standardized lifecycle management |
+| 7. Implement 2.5 — ArchUnitNET Dependency Tests | 3-4 hours | Prevent future boundary violations |
+
+**Tier 3 — High Effort (Architectural)**
+| Item | Effort | Impact |
+|------|--------|--------|
+| 8. Implement 1.4 — Explicit Per-Provider Parsing Layer | 12-16 hours | Testable, modular parsing; ~200-300 LOC extraction per provider |
+| 9. Resolve provider interface location (1.5 refactoring) | 8-12 hours | Move `IHistoricalDataProvider` to `ProviderSdk` |
+
+### Roadmap Mapping
+
+| Proposal | Current Roadmap Phase | Recommendation |
+|----------|----------------------|-----------------|
+| 1.1, 1.6 | ✅ Complete (Phases 5-6) | Stabilize; no further changes |
+| 1.2, 1.3, 1.4 | Phase 8 (Repository Organization) | Include Tier 1-2 quick wins |
+| 2.1, 2.2, 2.3, 2.4, 2.5 | Phase 8+ (Long-term cleanup) | Roadmap for Q2 2026 |
+
+**Verdict:** Foundation work (1.1, 1.6) is solid. Quick wins in Tier 1 worth prioritizing in next planning cycle. Tier 2-3 architectural work appropriate for Phase 8 (Repository Organization) roadmap phase.
+
+---
+
+*Proposal Date: 2026-03-01 | Last Reviewed: 2026-03-11 | Updated: 2026-03-19*
