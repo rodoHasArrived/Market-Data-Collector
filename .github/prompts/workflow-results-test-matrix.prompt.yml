@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-19
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23317515114
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23321428710
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,36 +18,10 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      ### Build
-      - `2026-03-19T21:27:41.6094624Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Collections\BoundedObservableCollectionTests.cs(166,35): error CS...`
-      - `2026-03-19T21:27:41.6333853Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(173,28): error CS1061...`
-      - `2026-03-19T21:27:41.6828593Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\AlertServiceTests.cs(251,48): error CS1061: 'NumericAsse...`
-      - `2026-03-19T21:27:41.7271048Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(190,26): error CS1061...`
-      - `2026-03-19T21:27:41.7407410Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(206,29): error CS1061...`
-
-      ### Test
-      - `2026-03-19T21:23:52.2397870Z Failed!  - Failed:     1, Passed:  2845, Skipped:     0, Total:  2846, Duration: 17 s - Meridian.Tests.dll (net9.0)`
-      - `2026-03-19T21:24:29.3496476Z Failed!  - Failed:     1, Passed:  2845, Skipped:     0, Total:  2846, Duration: 14 s - Meridian.Tests.dll (net9.0)`
-      - `2026-03-19T21:23:38.1105740Z [xUnit.net 00:00:03.75]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWit...`
-      - `2026-03-19T21:24:18.2257053Z [xUnit.net 00:00:06.73]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWit...`
-
       ### Code Quality
-      - `2026-03-19T21:27:41.6247961Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The v...`
-      - `2026-03-19T21:28:15.6141803Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The v...`
+      - `2026-03-19T23:16:43.9769982Z   key: Windows-nuget-674ee0943a02f28b3a9782326a8b4094419a73f980cf98949010befca3402e42`
+      - `2026-03-19T23:16:44.4091822Z Cache not found for input keys: Windows-nuget-674ee0943a02f28b3a9782326a8b4094419a73f980cf98949010befca3402e42, Windows-n...`
 
-
-      ## Failed Tests
-      - `2026-03-19T21:23:38.1192990Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [22 ms]`
-      - `2026-03-19T21:24:18.2302621Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [25 ms]`
-      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords`
-
-      ## Error Codes
-      - `CS0118`
-      - `CS0219`
-      - `CS0234`
-      - `CS0246`
-      - `CS0535`
-      - `CS1061`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -60,7 +34,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23317515114
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23321428710
 
       Additional context:
       {{additional_context}}
