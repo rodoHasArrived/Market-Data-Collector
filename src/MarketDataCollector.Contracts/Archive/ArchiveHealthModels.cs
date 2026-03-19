@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Archive;
+namespace Meridian.Contracts.Archive;
 
 /// <summary>
 /// Archive health status severity constants.

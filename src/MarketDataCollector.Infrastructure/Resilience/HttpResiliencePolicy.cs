@@ -1,11 +1,11 @@
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Resilience;
+namespace Meridian.Infrastructure.Resilience;
 
 /// <summary>
 /// HTTP resilience policies using Polly for backfill providers.

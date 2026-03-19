@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Export;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Contracts.Export;
+using Meridian.Ui.Services.Services;
 using Xunit;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 public sealed class AnalysisExportServiceTests
 {

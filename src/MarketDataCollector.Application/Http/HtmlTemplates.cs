@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// Manages HTML templates for the web dashboard.

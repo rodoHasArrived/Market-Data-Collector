@@ -2,7 +2,7 @@ using System.Net;
 using FluentAssertions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Integration tests for the Data Catalog endpoints (/api/catalog/*).

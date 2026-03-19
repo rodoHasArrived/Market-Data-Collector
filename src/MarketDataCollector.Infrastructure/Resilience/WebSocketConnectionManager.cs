@@ -1,11 +1,11 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Polly;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Resilience;
+namespace Meridian.Infrastructure.Resilience;
 
 /// <summary>
 /// Centralized WebSocket connection manager that handles connection lifecycle,

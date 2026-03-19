@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Archive;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Archive;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Serialization;
+namespace Meridian.Wpf.Serialization;
 
 /// <summary>
 /// Source-generated JSON context for WPF service types.

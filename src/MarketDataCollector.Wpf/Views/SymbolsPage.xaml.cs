@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Models;
-using MarketDataCollector.Wpf.ViewModels;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Models;
+using Meridian.Wpf.ViewModels;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Symbol subscription management page — thin code-behind.

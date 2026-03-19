@@ -1,12 +1,12 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Domain.Collectors;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Api;
+using Meridian.Domain.Collectors;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering live data API endpoints.

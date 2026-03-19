@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Formats errors with error codes, actionable suggestions, and user-friendly messages.

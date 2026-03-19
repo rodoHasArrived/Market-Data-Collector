@@ -2,11 +2,11 @@
 using StockSharp.Messages;
 #endif
 using System.Buffers;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Models;
 using Microsoft.Extensions.ObjectPool;
 
-namespace MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters;
+namespace Meridian.Infrastructure.Adapters.StockSharp.Converters;
 
 /// <summary>
 /// Converts StockSharp messages to MarketDataCollector domain models.

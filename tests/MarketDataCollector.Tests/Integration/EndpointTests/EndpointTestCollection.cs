@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Collection definition that shares a single EndpointTestFixture instance

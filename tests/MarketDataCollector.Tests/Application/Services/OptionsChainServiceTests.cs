@@ -1,17 +1,17 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Application.Config;
+using Meridian.Application.Services;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Tests.TestHelpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Unit tests for the OptionsChainService application service.

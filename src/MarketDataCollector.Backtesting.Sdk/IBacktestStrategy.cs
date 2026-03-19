@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>
 /// Contract that all user-authored backtest strategies must implement.

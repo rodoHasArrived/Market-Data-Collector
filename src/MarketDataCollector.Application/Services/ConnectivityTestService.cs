@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Net.Sockets;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for testing connectivity to data providers and reporting results.

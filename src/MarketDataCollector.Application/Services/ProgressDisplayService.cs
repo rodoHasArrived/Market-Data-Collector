@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for displaying real-time progress feedback during long-running operations.

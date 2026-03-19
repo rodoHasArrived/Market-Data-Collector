@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Application.Canonicalization;
+using Meridian.Contracts.Domain.Enums;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Tests for <see cref="ConditionCodeMapper"/>.

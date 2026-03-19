@@ -1,7 +1,7 @@
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Contracts.Store;
+namespace Meridian.Contracts.Store;
 
 /// <summary>
 /// Immutable query specification for <c>IMarketDataStore</c>.

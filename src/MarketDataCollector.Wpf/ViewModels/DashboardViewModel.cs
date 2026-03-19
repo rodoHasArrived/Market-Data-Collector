@@ -7,12 +7,12 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Input;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Models;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Models;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 /// <summary>
 /// ViewModel for the Dashboard page.

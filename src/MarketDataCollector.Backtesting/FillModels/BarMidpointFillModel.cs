@@ -1,8 +1,8 @@
-using MarketDataCollector.Backtesting.Portfolio;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Backtesting.Portfolio;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Backtesting.FillModels;
+namespace Meridian.Backtesting.FillModels;
 
 /// <summary>
 /// Fallback fill model used when only OHLCV bar data is available.

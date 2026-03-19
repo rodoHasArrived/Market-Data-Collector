@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Shared validation rules for form validation across desktop applications.

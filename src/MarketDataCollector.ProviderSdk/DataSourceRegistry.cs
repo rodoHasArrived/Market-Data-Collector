@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Infrastructure.DataSources;
+namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
 /// Registry for discovering and registering data source providers.
@@ -77,12 +77,12 @@ public sealed class DataSourceRegistry
                     continue;
                 }
 
-                if (!typeof(MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule).IsAssignableFrom(type))
+                if (!typeof(Meridian.Infrastructure.Adapters.Core.IProviderModule).IsAssignableFrom(type))
                 {
                     continue;
                 }
 
-                if (Activator.CreateInstance(type) is MarketDataCollector.Infrastructure.Adapters.Core.IProviderModule module)
+                if (Activator.CreateInstance(type) is Meridian.Infrastructure.Adapters.Core.IProviderModule module)
                 {
                     module.Register(services, this);
                 }

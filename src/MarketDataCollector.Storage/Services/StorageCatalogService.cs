@@ -3,13 +3,13 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
+using Meridian.Contracts.Catalog;
+using Meridian.Storage.Interfaces;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service for managing the storage catalog and manifest system.

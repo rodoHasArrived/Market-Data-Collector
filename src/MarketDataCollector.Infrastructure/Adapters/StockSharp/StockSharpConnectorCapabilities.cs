@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
+namespace Meridian.Infrastructure.Adapters.StockSharp;
 
 /// <summary>
 /// Documents the capabilities of each StockSharp connector type.

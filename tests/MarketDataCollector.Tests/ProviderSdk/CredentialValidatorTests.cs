@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Utilities;
+using Meridian.Infrastructure.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.ProviderSdk;
+namespace Meridian.Tests.ProviderSdk;
 
 /// <summary>
 /// Tests for CredentialValidator utility methods.

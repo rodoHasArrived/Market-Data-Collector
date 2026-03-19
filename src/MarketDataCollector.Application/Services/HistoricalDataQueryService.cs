@@ -1,11 +1,11 @@
 using System.IO.Compression;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for querying historical market data from storage.

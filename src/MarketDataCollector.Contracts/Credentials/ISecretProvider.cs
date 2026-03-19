@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Credentials;
+namespace Meridian.Contracts.Credentials;
 
 /// <summary>
 /// Abstraction for retrieving secrets from external stores such as

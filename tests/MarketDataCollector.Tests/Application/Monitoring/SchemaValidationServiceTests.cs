@@ -1,12 +1,12 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 using Xunit;
-using ContractPayload = MarketDataCollector.Contracts.Domain.Events.MarketEventPayload;
+using ContractPayload = Meridian.Contracts.Domain.Events.MarketEventPayload;
 
-namespace MarketDataCollector.Tests.Monitoring;
+namespace Meridian.Tests.Monitoring;
 
 public sealed class SchemaValidationServiceTests : IAsyncDisposable
 {

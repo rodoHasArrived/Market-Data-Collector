@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Core.Scheduling;
+using Meridian.Core.Scheduling;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Storage.Maintenance;
+namespace Meridian.Storage.Maintenance;
 
 /// <summary>
 /// Manages archive maintenance schedules with file-based persistence.

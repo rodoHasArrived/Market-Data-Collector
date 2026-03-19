@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Domain.Collectors;
+namespace Meridian.Domain.Collectors;
 
 /// <summary>
 /// Captures option quotes, trades, greeks, and chain snapshots,

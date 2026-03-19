@@ -1,14 +1,14 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Polygon;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Application.Config;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Polygon;
+using Meridian.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Providers;
+namespace Meridian.Tests.Providers;
 
 /// <summary>
 /// Unit tests for the PolygonMarketDataClient class.

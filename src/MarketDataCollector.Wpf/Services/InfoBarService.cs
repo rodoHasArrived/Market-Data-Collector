@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Severity levels for info bar notifications.

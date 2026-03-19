@@ -1,8 +1,8 @@
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Shared;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Shared;
 using Serilog;
 
-namespace MarketDataCollector.Application.Backfill;
+namespace Meridian.Application.Backfill;
 
 /// <summary>
 /// Automatically triggers targeted backfill when a streaming provider reconnects

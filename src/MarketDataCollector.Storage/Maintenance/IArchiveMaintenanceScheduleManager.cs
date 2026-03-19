@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Storage.Maintenance;
+namespace Meridian.Storage.Maintenance;
 
 /// <summary>
 /// Interface for managing archive maintenance schedules.

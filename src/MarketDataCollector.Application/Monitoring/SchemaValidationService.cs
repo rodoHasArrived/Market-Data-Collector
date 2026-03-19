@@ -1,10 +1,10 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Archival;
+using Meridian.Application.Logging;
+using Meridian.Domain.Events;
+using Meridian.Storage.Archival;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Consolidated schema validation service providing a single entrypoint for

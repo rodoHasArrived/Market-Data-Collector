@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MarketDataCollector.Storage.Packaging;
+namespace Meridian.Storage.Packaging;
 
 /// <summary>
 /// Database import script generation (PostgreSQL, ClickHouse, DuckDB).

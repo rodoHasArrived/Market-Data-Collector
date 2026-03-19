@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Views.Dialogs;
+namespace Meridian.Wpf.Views.Dialogs;
 
 /// <summary>
 /// Dialog for configuring provider API keys.

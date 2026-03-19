@@ -6,11 +6,11 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Ui.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Configuration;
+using Meridian.Ui.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Page for viewing and managing market data providers for real-time streaming and historical data.

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace MarketDataCollector.Tests.Infrastructure;
+namespace Meridian.Tests.Infrastructure;
 
 /// <summary>
 /// Base class for tests that require temporary directory creation and cleanup.

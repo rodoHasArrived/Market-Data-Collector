@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Alpaca;
+namespace Meridian.Infrastructure.Adapters.Alpaca;
 
 /// <summary>
 /// WebSocket endpoint constants for the Alpaca Market Data API.

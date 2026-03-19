@@ -1,11 +1,11 @@
 // Replace every occurrence of "Template" with your provider name.
 // Replace the namespace segment "Template" with your provider's namespace segment.
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Template;
+namespace Meridian.Infrastructure.Adapters.Template;
 
 /// <summary>
 /// Template symbol search provider — replace "Template" with your provider name.

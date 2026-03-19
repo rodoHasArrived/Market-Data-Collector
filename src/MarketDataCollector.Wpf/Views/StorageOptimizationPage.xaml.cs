@@ -4,11 +4,11 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Ui.Services;
-using WpfNotificationService = MarketDataCollector.Wpf.Services.NotificationService;
+using Meridian.Wpf.Services;
+using Meridian.Ui.Services;
+using WpfNotificationService = Meridian.Wpf.Services.NotificationService;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class StorageOptimizationPage : Page
 {

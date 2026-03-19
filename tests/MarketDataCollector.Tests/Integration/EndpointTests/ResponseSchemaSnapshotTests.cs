@@ -3,7 +3,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Schema snapshot tests that lock the JSON structure of key API responses.

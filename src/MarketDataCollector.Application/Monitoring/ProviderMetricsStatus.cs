@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Represents the aggregated metrics status for all providers.

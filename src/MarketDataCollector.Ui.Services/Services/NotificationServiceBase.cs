@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using NotificationType = MarketDataCollector.Ui.Services.NotificationType;
+using NotificationType = Meridian.Ui.Services.NotificationType;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Notification settings.

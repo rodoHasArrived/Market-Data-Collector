@@ -3,9 +3,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.ViewModels;
+using Meridian.Wpf.ViewModels;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class DataSamplingPage : Page
 {

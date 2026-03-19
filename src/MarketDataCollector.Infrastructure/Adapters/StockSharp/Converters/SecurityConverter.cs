@@ -2,9 +2,9 @@
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif
-using MarketDataCollector.Application.Config;
+using Meridian.Application.Config;
 
-namespace MarketDataCollector.Infrastructure.Adapters.StockSharp.Converters;
+namespace Meridian.Infrastructure.Adapters.StockSharp.Converters;
 
 /// <summary>
 /// Converts between MarketDataCollector symbol configuration and StockSharp security types.

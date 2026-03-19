@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.Core;
+namespace Meridian.Application.Monitoring.Core;
 
 /// <summary>
 /// Provides explicit mapping between alert rules and operator runbook sections.

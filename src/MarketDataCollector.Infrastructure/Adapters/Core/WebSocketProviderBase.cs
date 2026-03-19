@@ -1,14 +1,14 @@
 using System.Net.WebSockets;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Resilience;
-using MarketDataCollector.Infrastructure.Shared;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Resilience;
+using Meridian.Infrastructure.Shared;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Abstract base class for WebSocket-based streaming market data providers.

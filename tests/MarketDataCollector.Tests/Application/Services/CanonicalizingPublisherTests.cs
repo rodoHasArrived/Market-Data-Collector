@@ -1,13 +1,13 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Canonicalization;
+using Meridian.Contracts.Catalog;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 using NSubstitute;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Tests for <see cref="CanonicalizingPublisher"/>.

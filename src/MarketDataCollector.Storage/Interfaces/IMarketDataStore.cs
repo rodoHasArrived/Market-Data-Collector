@@ -1,7 +1,7 @@
-using MarketDataCollector.Contracts.Store;
-using MarketDataCollector.Domain.Events;
+using Meridian.Contracts.Store;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Storage.Interfaces;
+namespace Meridian.Storage.Interfaces;
 
 /// <summary>
 /// Unified read abstraction over all stored market data.

@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Ui.Services.Contracts;
 
-namespace MarketDataCollector.Wpf.Contracts;
+namespace Meridian.Wpf.Contracts;
 
 /// <summary>
 /// Interface for managing navigation throughout the application.
 /// Enables testability and dependency injection.
 /// Phase 6C.2: Navigation types (NavigationEntry, NavigationEventArgs) are now
-/// shared from MarketDataCollector.Ui.Services.Contracts.
+/// shared from Meridian.Ui.Services.Contracts.
 /// </summary>
 public interface INavigationService
 {

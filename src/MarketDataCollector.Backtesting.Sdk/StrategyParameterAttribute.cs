@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>
 /// Marks a public property on an <see cref="IBacktestStrategy"/> implementation as a user-configurable

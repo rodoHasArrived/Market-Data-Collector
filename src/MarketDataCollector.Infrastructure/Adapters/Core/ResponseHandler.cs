@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Utility class for handling HTTP responses from historical data providers.

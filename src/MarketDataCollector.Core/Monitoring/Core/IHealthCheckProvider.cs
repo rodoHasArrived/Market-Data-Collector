@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Monitoring.Core;
+namespace Meridian.Application.Monitoring.Core;
 
 /// <summary>
 /// Represents the severity of a health status.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Per-symbol position held in the simulated portfolio.</summary>
 /// <param name="Symbol">Ticker symbol.</param>

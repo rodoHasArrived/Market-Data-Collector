@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>
 /// Display model for a single order book price level (bid or ask).

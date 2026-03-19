@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Commands;
-using MarketDataCollector.Application.Config;
+using Meridian.Application.Commands;
+using Meridian.Application.Config;
 using Serilog;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Commands;
+namespace Meridian.Tests.Application.Commands;
 
 /// <summary>
 /// Tests for the DryRunCommand CLI handler.
@@ -58,7 +58,7 @@ public sealed class DryRunCommandTests
 
     private static DryRunCommand CreateCommand()
     {
-        var configService = new MarketDataCollector.Application.Services.ConfigurationService(Logger);
+        var configService = new Meridian.Application.Services.ConfigurationService(Logger);
         return new DryRunCommand(TestConfig, configService, Logger);
     }
 }

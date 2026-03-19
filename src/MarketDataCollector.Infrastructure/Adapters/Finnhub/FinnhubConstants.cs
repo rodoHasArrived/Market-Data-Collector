@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Finnhub;
+namespace Meridian.Infrastructure.Adapters.Finnhub;
 
 /// <summary>
 /// HTTP endpoint constants for the Finnhub REST API.

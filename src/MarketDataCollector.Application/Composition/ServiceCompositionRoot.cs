@@ -1,38 +1,38 @@
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Config.Credentials;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.Scheduling;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Contracts.Store;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.OpenFigi;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Export;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Maintenance;
-using MarketDataCollector.Storage.Policies;
-using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Storage.Sinks;
-using MarketDataCollector.Storage.Store;
+using Meridian.Application.Backfill;
+using Meridian.Application.Canonicalization;
+using Meridian.Application.Config;
+using Meridian.Application.Config.Credentials;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Application.Pipeline;
+using Meridian.Application.Scheduling;
+using Meridian.Application.Services;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Application.Subscriptions.Services;
+using Meridian.Application.UI;
+using Meridian.Contracts.Store;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.OpenFigi;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Http;
+using Meridian.Storage;
+using Meridian.Storage.Export;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Maintenance;
+using Meridian.Storage.Policies;
+using Meridian.Storage.Services;
+using Meridian.Storage.Sinks;
+using Meridian.Storage.Store;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Composition;
+namespace Meridian.Application.Composition;
 
 /// <summary>
 /// Centralizes all service registration for the application.
@@ -500,7 +500,7 @@ public static class ServiceCompositionRoot
         services.AddSingleton<DataSourceRegistry>(sp =>
         {
             var registry = new DataSourceRegistry();
-            registry.DiscoverFromAssemblies(typeof(MarketDataCollector.Infrastructure.NoOpMarketDataClient).Assembly);
+            registry.DiscoverFromAssemblies(typeof(Meridian.Infrastructure.NoOpMarketDataClient).Assembly);
             return registry;
         });
 

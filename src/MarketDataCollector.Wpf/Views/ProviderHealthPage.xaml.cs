@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.ViewModels;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.ViewModels;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Provider health page — thin code-behind.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Services.Contracts;
+namespace Meridian.Ui.Services.Contracts;
 
 /// <summary>
 /// Connection states shared between WPF desktop applications.

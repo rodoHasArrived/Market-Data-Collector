@@ -3,7 +3,7 @@ using QuantConnect.Algorithm;
 using QuantConnect.Data;
 using QuantConnect.Indicators;
 
-namespace MarketDataCollector.Integrations.Lean;
+namespace Meridian.Integrations.Lean;
 
 /// <summary>
 /// Sample Lean algorithm demonstrating how to use MarketDataCollector's high-fidelity market data.

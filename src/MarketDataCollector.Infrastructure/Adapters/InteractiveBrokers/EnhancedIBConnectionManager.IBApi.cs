@@ -5,10 +5,10 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using IBApi;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Infrastructure.Performance;
+using Meridian.Application.Config;
+using Meridian.Infrastructure.Performance;
 
-namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
 public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
 {

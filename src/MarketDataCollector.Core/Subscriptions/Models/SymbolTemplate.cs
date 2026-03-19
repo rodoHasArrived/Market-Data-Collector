@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Subscriptions.Models;
+namespace Meridian.Application.Subscriptions.Models;
 
 /// <summary>
 /// Predefined template for bulk symbol subscriptions.

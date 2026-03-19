@@ -3,13 +3,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Models;
-using MarketDataCollector.Wpf.ViewModels;
-using MarketDataCollector.Wpf.Views.Dialogs;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Models;
+using Meridian.Wpf.ViewModels;
+using Meridian.Wpf.Views.Dialogs;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Historical data backfill page with provider selection, date ranges, and scheduling.

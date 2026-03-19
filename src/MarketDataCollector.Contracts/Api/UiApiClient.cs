@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Api;
+namespace Meridian.Contracts.Api;
 
 /// <summary>
 /// Shared HTTP client for UI-facing endpoints (web dashboard + desktop).

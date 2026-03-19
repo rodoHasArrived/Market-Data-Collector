@@ -6,10 +6,10 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.Serialization;
+using Meridian.Ui.Services;
+using Meridian.Wpf.Serialization;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for retention policy assurance with guardrails, legal holds, and verification.

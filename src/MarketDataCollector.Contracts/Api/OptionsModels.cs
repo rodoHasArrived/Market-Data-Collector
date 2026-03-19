@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Contracts.Api;
+namespace Meridian.Contracts.Api;
 
 /// <summary>
 /// Response DTO for option chain expirations.

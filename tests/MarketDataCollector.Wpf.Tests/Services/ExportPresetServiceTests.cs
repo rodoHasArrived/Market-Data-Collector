@@ -1,8 +1,8 @@
-using MarketDataCollector.Contracts.Export;
-using MarketDataCollector.Ui.Services.Services;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Export;
+using Meridian.Ui.Services.Services;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for ExportPresetService singleton service.

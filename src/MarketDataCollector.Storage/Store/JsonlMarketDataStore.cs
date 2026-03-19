@@ -1,14 +1,14 @@
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Contracts.Store;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
+using Meridian.Contracts.Store;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Store;
+namespace Meridian.Storage.Store;
 
 /// <summary>
 /// <see cref="IMarketDataStore"/> implementation backed by JSONL (optionally gzip-compressed) files.

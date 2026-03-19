@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Adapters;
+namespace Meridian.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Unit tests for Polygon WebSocket message parsing.

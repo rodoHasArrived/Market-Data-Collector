@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// Loads HTML templates from external files in wwwroot/templates/.

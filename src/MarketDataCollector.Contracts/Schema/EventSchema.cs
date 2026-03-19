@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Schema;
+namespace Meridian.Contracts.Schema;
 
 /// <summary>
 /// Schema definition for a data event type.

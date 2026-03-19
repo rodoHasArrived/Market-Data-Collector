@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.Services;
+using Meridian.Contracts.Catalog;
+using Meridian.Storage.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Tests for the CanonicalSymbolRegistry service.

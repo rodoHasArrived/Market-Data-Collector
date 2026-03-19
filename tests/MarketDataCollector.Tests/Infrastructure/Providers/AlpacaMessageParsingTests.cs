@@ -1,17 +1,17 @@
 using System.Reflection;
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Adapters.Alpaca;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Application.Config;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Adapters.Alpaca;
+using Meridian.Tests.TestHelpers;
 using Xunit;
-using DomainMarketEvent = MarketDataCollector.Domain.Events.MarketEvent;
+using DomainMarketEvent = Meridian.Domain.Events.MarketEvent;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Tests for Alpaca message parsing correctness — timestamp handling,

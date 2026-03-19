@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Contracts.Configuration;
+using Meridian.Ui.Services.Contracts;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Default configuration service for the shared UI services layer.

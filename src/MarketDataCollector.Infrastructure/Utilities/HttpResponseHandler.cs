@@ -1,11 +1,11 @@
 using System.Net;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Resilience;
+using Meridian.Application.Exceptions;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Resilience;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Utilities;
+namespace Meridian.Infrastructure.Utilities;
 
 /// <summary>
 /// Centralized HTTP response handling to eliminate duplicate error handling code

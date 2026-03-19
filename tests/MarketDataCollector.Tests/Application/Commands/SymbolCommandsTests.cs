@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Commands;
+using Meridian.Application.Commands;
 using Serilog;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Commands;
+namespace Meridian.Tests.Application.Commands;
 
 /// <summary>
 /// Tests for the SymbolCommands CLI handler.
@@ -190,7 +190,7 @@ public sealed class SymbolCommandsTests
 
     /// <summary>
     /// Creates a <see cref="SymbolCommands"/> backed by a lightweight
-    /// <see cref="MarketDataCollector.Application.Subscriptions.Services.SymbolManagementService"/>
+    /// <see cref="Meridian.Application.Subscriptions.Services.SymbolManagementService"/>
     /// that targets an isolated temp-directory config file.
     /// <para>
     /// This instance is sufficient for two test categories:
@@ -201,7 +201,7 @@ public sealed class SymbolCommandsTests
     ///   </description></item>
     ///   <item><description>
     ///     <b>ExecuteAsync validation tests</b> (missing required argument) – the command
-    ///     returns <see cref="MarketDataCollector.Application.ResultTypes.ErrorCode.RequiredFieldMissing"/>
+    ///     returns <see cref="Meridian.Application.ResultTypes.ErrorCode.RequiredFieldMissing"/>
     ///     (exit code 2) before invoking the service, so no real config state is needed.
     ///   </description></item>
     /// </list>
@@ -209,9 +209,9 @@ public sealed class SymbolCommandsTests
     /// </summary>
     private static SymbolCommands CreateCommand()
     {
-        var configStore = new MarketDataCollector.Application.UI.ConfigStore(
+        var configStore = new Meridian.Application.UI.ConfigStore(
             Path.Combine(Path.GetTempPath(), $"mdc-test-{Guid.NewGuid()}.json"));
-        var service = new MarketDataCollector.Application.Subscriptions.Services.SymbolManagementService(
+        var service = new Meridian.Application.Subscriptions.Services.SymbolManagementService(
             configStore, Path.GetTempPath(), Logger);
         return new SymbolCommands(service, Logger);
     }

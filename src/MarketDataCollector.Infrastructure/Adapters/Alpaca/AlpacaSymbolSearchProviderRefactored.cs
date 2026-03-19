@@ -1,13 +1,13 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Alpaca;
+namespace Meridian.Infrastructure.Adapters.Alpaca;
 
 /// <summary>
 /// Refactored symbol search provider using Alpaca Markets API, now extending BaseSymbolSearchProvider.

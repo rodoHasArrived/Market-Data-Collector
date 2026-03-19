@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Pipeline;
+using Meridian.Contracts.Pipeline;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Pipeline;
+namespace Meridian.Tests.Application.Pipeline;
 
 /// <summary>
 /// Tests for the unified ingestion job state machine contract.

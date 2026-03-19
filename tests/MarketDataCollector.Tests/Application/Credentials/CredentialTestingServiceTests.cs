@@ -1,12 +1,12 @@
 using System.Net;
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Config.Credentials;
+using Meridian.Application.Config;
+using Meridian.Application.Config.Credentials;
 using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Credentials;
+namespace Meridian.Tests.Credentials;
 
 public class CredentialTestingServiceTests : IAsyncLifetime
 {

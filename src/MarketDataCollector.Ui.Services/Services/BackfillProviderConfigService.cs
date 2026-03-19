@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Configuration;
+using Meridian.Contracts.Configuration;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for managing backfill provider configuration in the desktop UI.

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Contracts.Configuration;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Configuration;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Page for managing multiple data source configurations.

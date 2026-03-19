@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Export;
+namespace Meridian.Contracts.Export;
 
 /// <summary>
 /// Ready-to-use export preset templates for common research and backtesting workflows.

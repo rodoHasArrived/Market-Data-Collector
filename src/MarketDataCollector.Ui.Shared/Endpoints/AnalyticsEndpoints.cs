@@ -1,13 +1,13 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Contracts.Api;
+using Meridian.Infrastructure.Adapters.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering analytics API endpoints.

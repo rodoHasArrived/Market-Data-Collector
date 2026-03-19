@@ -1,7 +1,7 @@
 using System.Timers;
 using System.Threading;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Background service that automatically refreshes OAuth tokens before they expire.

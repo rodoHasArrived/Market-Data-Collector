@@ -2,9 +2,9 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Storage.Interfaces;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service for file health monitoring, self-healing, and maintenance operations.

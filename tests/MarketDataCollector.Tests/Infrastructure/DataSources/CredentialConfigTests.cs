@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.DataSources;
+using Meridian.Infrastructure.DataSources;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.DataSources;
+namespace Meridian.Tests.Infrastructure.DataSources;
 
 public class CredentialConfigTests
 {

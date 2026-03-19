@@ -1,14 +1,14 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using ContractEvents = MarketDataCollector.Contracts.Domain.Events;
+using Meridian.Application.Config;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using ContractEvents = Meridian.Contracts.Domain.Events;
 
-namespace MarketDataCollector.Application.Serialization;
+namespace Meridian.Application.Serialization;
 
 /// <summary>
 /// High-performance JSON serialization using source generators.

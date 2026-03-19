@@ -1,15 +1,15 @@
 // Replace every occurrence of "Template" with your provider name.
 // Replace the namespace segment "Template" with your provider's namespace segment.
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Shared;
+using Meridian.Contracts.Configuration;
+using Meridian.Domain.Collectors;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Shared;
 using System.Net.WebSockets;
 using System.Text.Json;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Template;
+namespace Meridian.Infrastructure.Adapters.Template;
 
 /// <summary>
 /// Template streaming market data client — replace "Template" with your provider name.

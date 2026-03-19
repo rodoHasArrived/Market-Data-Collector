@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Domain.Models;
+namespace Meridian.Contracts.Domain.Models;
 
 /// <summary>
 /// Normalized best-bid/offer quote update (adapter input into QuoteCollector).

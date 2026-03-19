@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MarketDataCollector.Storage.Packaging;
+namespace Meridian.Storage.Packaging;
 
 /// <summary>
 /// Language-specific database import script generation (Python, R, Spark).

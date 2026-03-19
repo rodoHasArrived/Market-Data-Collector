@@ -1,14 +1,14 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Events.Publishers;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Events.Publishers;
+using Meridian.Domain.Models;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 public class CompositePublisherTests
 {

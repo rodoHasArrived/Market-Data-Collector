@@ -1,9 +1,9 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using MarketDataCollector.Core.Performance;
+using Meridian.Core.Performance;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Batch-serializes hot-path struct events (<see cref="RawTradeEvent"/>,

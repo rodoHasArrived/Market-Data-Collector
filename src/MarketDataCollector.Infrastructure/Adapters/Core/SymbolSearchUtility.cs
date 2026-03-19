@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Shared utility methods for symbol search providers.

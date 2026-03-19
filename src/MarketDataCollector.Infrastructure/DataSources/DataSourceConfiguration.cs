@@ -1,9 +1,9 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Credentials;
-using MarketDataCollector.Infrastructure.Adapters.NYSE;
+using Meridian.Application.Config;
+using Meridian.Contracts.Credentials;
+using Meridian.Infrastructure.Adapters.NYSE;
 
-namespace MarketDataCollector.Infrastructure.DataSources;
+namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
 /// Unified configuration for all data sources.

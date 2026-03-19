@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Backfill;
+namespace Meridian.Tests.Application.Backfill;
 
 public sealed class PriorityBackfillQueueTests : IDisposable
 {

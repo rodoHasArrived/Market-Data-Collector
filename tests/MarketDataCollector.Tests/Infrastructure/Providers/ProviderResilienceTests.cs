@@ -1,18 +1,18 @@
 using System.Threading;
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Failover;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Sinks;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Failover;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Sinks;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Provider resilience tests for circuit-breaker and automatic-recovery scenarios.

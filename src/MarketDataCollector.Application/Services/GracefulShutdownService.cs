@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
-using MarketDataCollector.Application.Monitoring;
+using Meridian.Application.Monitoring;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// IHostedService that ensures graceful shutdown by flushing all registered buffers

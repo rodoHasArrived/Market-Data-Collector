@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Abstraction over event pipeline counters so that hot-path metrics

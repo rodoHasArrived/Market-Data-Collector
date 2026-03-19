@@ -1,7 +1,7 @@
 using System.Threading;
-using MarketDataCollector.Contracts.Domain.Models;
+using Meridian.Contracts.Domain.Models;
 
-namespace MarketDataCollector.Infrastructure.DataSources;
+namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
 /// Interface for historical data sources providing bar data, dividends,

@@ -1,19 +1,19 @@
 using System.Text.Json;
 using System.Threading.RateLimiting;
-using MarketDataCollector.Application.Composition;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Ui.Shared;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Application.Composition;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Application.Pipeline;
+using Meridian.Application.UI;
+using Meridian.Ui.Shared;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Master extension methods for registering all UI API endpoints.
@@ -110,10 +110,10 @@ public static class UiEndpoints
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
         // The Ui.Shared.Services.BackfillCoordinator wraps the core and adds preview functionality
-        services.AddSingleton<MarketDataCollector.Ui.Shared.Services.BackfillCoordinator>(sp =>
+        services.AddSingleton<Meridian.Ui.Shared.Services.BackfillCoordinator>(sp =>
         {
-            var configStore = sp.GetRequiredService<MarketDataCollector.Ui.Shared.Services.ConfigStore>();
-            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
+            var configStore = sp.GetRequiredService<Meridian.Ui.Shared.Services.ConfigStore>();
+            return new Meridian.Ui.Shared.Services.BackfillCoordinator(configStore);
         });
 
         services.AddMutationRateLimiter();
@@ -142,10 +142,10 @@ public static class UiEndpoints
         services.AddSingleton<LoginSessionService>();
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
-        services.AddSingleton<MarketDataCollector.Ui.Shared.Services.BackfillCoordinator>(sp =>
+        services.AddSingleton<Meridian.Ui.Shared.Services.BackfillCoordinator>(sp =>
         {
-            var configStore = sp.GetRequiredService<MarketDataCollector.Ui.Shared.Services.ConfigStore>();
-            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
+            var configStore = sp.GetRequiredService<Meridian.Ui.Shared.Services.ConfigStore>();
+            return new Meridian.Ui.Shared.Services.BackfillCoordinator(configStore);
         });
 
         services.AddSingleton(statusHandlers);
@@ -354,7 +354,7 @@ public static class UiEndpoints
     /// </summary>
     public static WebApplication MapDashboard(this WebApplication app)
     {
-        app.MapGet("/", (MarketDataCollector.Ui.Shared.Services.ConfigStore store) =>
+        app.MapGet("/", (Meridian.Ui.Shared.Services.ConfigStore store) =>
         {
             var html = HtmlTemplateGenerator.Index(store.ConfigPath, store.GetStatusPath(), store.GetBackfillStatusPath());
             return Results.Content(html, "text/html");

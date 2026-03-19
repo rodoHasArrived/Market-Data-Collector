@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Events;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Events;
 
-namespace MarketDataCollector.Contracts.Domain.Models;
+namespace Meridian.Contracts.Domain.Models;
 
 /// <summary>
 /// Integrity event specific to market depth streams.

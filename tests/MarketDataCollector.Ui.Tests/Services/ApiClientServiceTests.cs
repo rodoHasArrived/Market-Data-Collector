@@ -1,13 +1,13 @@
 using FluentAssertions;
-using MarketDataCollector.Ui.Services;
+using Meridian.Ui.Services;
 using Moq;
 using Moq.Protected;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
-using UiAppSettings = MarketDataCollector.Ui.Services.AppSettings;
+using UiAppSettings = Meridian.Ui.Services.AppSettings;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="ApiClientService"/> HTTP communication logic.

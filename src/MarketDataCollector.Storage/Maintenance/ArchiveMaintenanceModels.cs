@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Core.Scheduling;
+using Meridian.Core.Scheduling;
 
-namespace MarketDataCollector.Storage.Maintenance;
+namespace Meridian.Storage.Maintenance;
 
 /// <summary>
 /// Represents a scheduled archive maintenance configuration with cron-like scheduling.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Subscriptions.Models;
+namespace Meridian.Application.Subscriptions.Models;
 
 /// <summary>
 /// Schedule for enabling/disabling symbol subscriptions by time/date.

@@ -1,7 +1,7 @@
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
 
-namespace MarketDataCollector.Tests.TestHelpers;
+namespace Meridian.Tests.TestHelpers;
 
 /// <summary>
 /// Test implementation of IMarketEventPublisher that captures published events.

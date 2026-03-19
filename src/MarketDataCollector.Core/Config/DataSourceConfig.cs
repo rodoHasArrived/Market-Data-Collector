@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Configuration for an individual data source (real-time or historical).

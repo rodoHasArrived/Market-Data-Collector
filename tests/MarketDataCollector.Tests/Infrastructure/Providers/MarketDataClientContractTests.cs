@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Infrastructure;
+using Meridian.Contracts.Configuration;
+using Meridian.Infrastructure;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 /// <summary>
 /// Abstract base class for verifying that every <see cref="IMarketDataClient"/> implementation
@@ -52,7 +52,7 @@ public abstract class MarketDataClientContractTests<TClient>
     public async Task IProviderMetadata_ProviderId_IsNotNullOrWhiteSpace()
     {
         await using var client = CreateClient();
-        var meta = (MarketDataCollector.Infrastructure.Adapters.Core.IProviderMetadata)client;
+        var meta = (Meridian.Infrastructure.Adapters.Core.IProviderMetadata)client;
         meta.ProviderId.Should().NotBeNullOrWhiteSpace(
             "every streaming client must declare a unique provider ID");
     }
@@ -61,7 +61,7 @@ public abstract class MarketDataClientContractTests<TClient>
     public async Task IProviderMetadata_DisplayName_IsNotNullOrWhiteSpace()
     {
         await using var client = CreateClient();
-        var meta = (MarketDataCollector.Infrastructure.Adapters.Core.IProviderMetadata)client;
+        var meta = (Meridian.Infrastructure.Adapters.Core.IProviderMetadata)client;
         meta.ProviderDisplayName.Should().NotBeNullOrWhiteSpace(
             "every streaming client must expose a human-readable display name");
     }
@@ -70,7 +70,7 @@ public abstract class MarketDataClientContractTests<TClient>
     public async Task IProviderMetadata_ProviderCapabilities_IsNotNull()
     {
         await using var client = CreateClient();
-        var meta = (MarketDataCollector.Infrastructure.Adapters.Core.IProviderMetadata)client;
+        var meta = (Meridian.Infrastructure.Adapters.Core.IProviderMetadata)client;
         var act = () => _ = meta.ProviderCapabilities;
         act.Should().NotThrow("ProviderCapabilities must never throw");
     }

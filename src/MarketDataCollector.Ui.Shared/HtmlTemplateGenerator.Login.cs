@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Shared;
+namespace Meridian.Ui.Shared;
 
 public static partial class HtmlTemplateGenerator
 {

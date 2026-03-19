@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Exceptions;
+namespace Meridian.Application.Exceptions;
 
 /// <summary>
 /// Exception thrown when data validation fails

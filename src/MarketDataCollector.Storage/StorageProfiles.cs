@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace MarketDataCollector.Storage;
+namespace Meridian.Storage;
 
 /// <summary>
 /// Storage profile presets for simplifying configuration.

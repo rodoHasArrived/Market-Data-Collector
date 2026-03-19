@@ -4,7 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Integration tests for live data endpoints (/api/data/*).

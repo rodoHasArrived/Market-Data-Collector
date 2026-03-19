@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Domain;
+namespace Meridian.Contracts.Domain;
 
 /// <summary>
 /// Zero-cost value object representing a market instrument symbol.

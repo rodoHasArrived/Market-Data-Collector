@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Mcp.Prompts;
+namespace Meridian.Mcp.Prompts;
 
 [McpServerPromptType]
 public sealed class TestWriterPrompts(RepoPathService repo)
@@ -128,7 +128,7 @@ public sealed class TestWriterPrompts(RepoPathService repo)
                 break;
 
             case "wpf-service":
-                sb.AppendLine("These tests live in `tests/MarketDataCollector.Wpf.Tests/Services/`.\n");
+                sb.AppendLine("These tests live in `tests/Meridian.Wpf.Tests/Services/`.\n");
                 sb.AppendLine("```csharp");
                 sb.AppendLine($"public sealed class {className}Tests");
                 sb.AppendLine("{");

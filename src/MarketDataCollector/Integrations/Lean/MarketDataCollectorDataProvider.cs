@@ -4,7 +4,7 @@ using QuantConnect.Interfaces;
 using QuantConnect.Logging;
 using QuantConnect.Util;
 
-namespace MarketDataCollector.Integrations.Lean;
+namespace Meridian.Integrations.Lean;
 
 /// <summary>
 /// Custom IDataProvider implementation that reads market data from MarketDataCollector's JSONL files.

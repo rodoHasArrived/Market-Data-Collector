@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.ResultTypes;
+using Meridian.Application.Exceptions;
+using Meridian.Application.ResultTypes;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Tests for <see cref="ErrorCodeExtensions.FromException"/> and exit code mapping.

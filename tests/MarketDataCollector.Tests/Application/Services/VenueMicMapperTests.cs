@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Canonicalization;
+using Meridian.Application.Canonicalization;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Tests for <see cref="VenueMicMapper"/>.

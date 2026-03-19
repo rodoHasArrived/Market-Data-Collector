@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-namespace MarketDataCollector.Ui.Services.Collections;
+namespace Meridian.Ui.Services.Collections;
 
 /// <summary>
 /// An observable collection optimized for prepending items with a fixed maximum size.

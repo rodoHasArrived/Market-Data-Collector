@@ -1,17 +1,17 @@
 /// Pipeline transformation functions for market event streams.
 /// Provides composable operators for filtering, mapping, and aggregating events.
-module MarketDataCollector.FSharp.Pipeline.Transforms
+module Meridian.FSharp.Pipeline.Transforms
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Domain.Sides
-open MarketDataCollector.FSharp.Domain.Integrity
-open MarketDataCollector.FSharp.Validation.ValidationTypes
-open MarketDataCollector.FSharp.Validation.ValidationPipeline
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.Sides
+open Meridian.FSharp.Domain.Integrity
+open Meridian.FSharp.Validation.ValidationTypes
+open Meridian.FSharp.Validation.ValidationPipeline
 
 // Module aliases to avoid shadowing with record field names
-module SpreadCalc = MarketDataCollector.FSharp.Calculations.Spread
-module ImbalanceCalc = MarketDataCollector.FSharp.Calculations.Imbalance
+module SpreadCalc = Meridian.FSharp.Calculations.Spread
+module ImbalanceCalc = Meridian.FSharp.Calculations.Imbalance
 
 /// Filter events by symbol.
 [<CompiledName("FilterBySymbol")>]

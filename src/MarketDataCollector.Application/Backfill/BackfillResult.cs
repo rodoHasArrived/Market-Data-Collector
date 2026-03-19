@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace MarketDataCollector.Application.Backfill;
+namespace Meridian.Application.Backfill;
 
 /// <summary>
 /// Outcome of a single historical backfill run.

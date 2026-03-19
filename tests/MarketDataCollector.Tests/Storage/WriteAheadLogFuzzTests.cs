@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Storage.Archival;
+using Meridian.Storage.Archival;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Fuzz-style tests that simulate partial writes, mid-record truncations, and

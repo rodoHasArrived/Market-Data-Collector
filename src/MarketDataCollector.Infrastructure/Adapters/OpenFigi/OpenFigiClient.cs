@@ -1,13 +1,13 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Logging;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.OpenFigi;
+namespace Meridian.Infrastructure.Adapters.OpenFigi;
 
 /// <summary>
 /// Client for the OpenFIGI API (https://www.openfigi.com/api).

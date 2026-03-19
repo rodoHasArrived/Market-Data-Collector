@@ -1,7 +1,7 @@
 using FluentValidation;
 using Serilog;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Validates AppConfig using FluentValidation patterns.

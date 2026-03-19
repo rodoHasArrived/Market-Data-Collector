@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Mcp.Tools;
+namespace Meridian.Mcp.Tools;
 
 [McpServerToolType]
 public sealed class KnownErrorTools(RepoPathService repo)

@@ -2,11 +2,11 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Application.Config.Credentials;
+namespace Meridian.Application.Config.Credentials;
 
 /// <summary>
 /// Service for testing and validating provider credentials.

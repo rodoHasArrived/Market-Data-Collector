@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Domain.Models;
+namespace Meridian.Domain.Models;
 
 /// <summary>
 /// Normalized tick-by-tick trade update (adapter input into TradeDataCollector).

@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Computes a composite health/degradation score per provider by combining

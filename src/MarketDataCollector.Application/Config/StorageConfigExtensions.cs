@@ -1,6 +1,6 @@
-using MarketDataCollector.Storage;
+using Meridian.Storage;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Extension methods for <see cref="StorageConfig"/> that require Storage layer types.

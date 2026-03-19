@@ -1,9 +1,9 @@
 /// Spread calculation functions for order book analysis.
 /// Pure functional implementations for bid-ask spread metrics.
-module MarketDataCollector.FSharp.Calculations.Spread
+module Meridian.FSharp.Calculations.Spread
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.MarketEvents
 
 /// Calculate the absolute bid-ask spread.
 /// Returns None if prices are invalid.

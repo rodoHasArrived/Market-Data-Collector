@@ -4,10 +4,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-using MarketDataCollector.Ui.Services;
-namespace MarketDataCollector.Wpf.Views;
+using Meridian.Ui.Services;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Page for administrative and maintenance operations including

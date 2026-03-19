@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.ViewModels;
+using Meridian.Wpf.ViewModels;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 public partial class AnalysisExportPage : Page
 {

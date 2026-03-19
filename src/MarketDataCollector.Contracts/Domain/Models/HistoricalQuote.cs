@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Events;
+using Meridian.Contracts.Domain.Events;
 
-namespace MarketDataCollector.Contracts.Domain.Models;
+namespace Meridian.Contracts.Domain.Models;
 
 /// <summary>
 /// Historical NBBO (National Best Bid and Offer) quote data from Alpaca Markets API.

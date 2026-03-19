@@ -1,7 +1,7 @@
 using System.Text.Json;
-using MarketDataCollector.Contracts.Export;
+using Meridian.Contracts.Export;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Export preset management service with file-based storage.

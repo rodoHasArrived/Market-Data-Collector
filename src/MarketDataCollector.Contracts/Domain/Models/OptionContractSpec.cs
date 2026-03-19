@@ -1,6 +1,6 @@
-using MarketDataCollector.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Contracts.Domain.Models;
+namespace Meridian.Contracts.Domain.Models;
 
 /// <summary>
 /// Specification for an exchange-traded option contract.

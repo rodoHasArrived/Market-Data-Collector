@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Configuration for historical backfill operations.

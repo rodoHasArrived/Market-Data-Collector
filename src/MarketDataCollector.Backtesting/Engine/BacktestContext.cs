@@ -1,6 +1,6 @@
-using MarketDataCollector.Backtesting.Portfolio;
+using Meridian.Backtesting.Portfolio;
 
-namespace MarketDataCollector.Backtesting.Engine;
+namespace Meridian.Backtesting.Engine;
 
 /// <summary>
 /// Mutable context object passed into every strategy callback during replay.

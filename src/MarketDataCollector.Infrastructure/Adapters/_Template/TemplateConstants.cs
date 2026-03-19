@@ -1,5 +1,5 @@
 // Replace "Template" with your provider name in the namespace and class names.
-namespace MarketDataCollector.Infrastructure.Adapters.Template;
+namespace Meridian.Infrastructure.Adapters.Template;
 
 /// <summary>
 /// HTTP / WebSocket endpoint constants for the Template provider API.

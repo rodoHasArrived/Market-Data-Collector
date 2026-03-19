@@ -2,12 +2,12 @@ using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
+using Meridian.Domain.Events;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Replay;
+namespace Meridian.Storage.Replay;
 
 /// <summary>
 /// Reads previously captured JSONL events (optionally gzip compressed) and replays them as <see cref="MarketEvent"/> objects.

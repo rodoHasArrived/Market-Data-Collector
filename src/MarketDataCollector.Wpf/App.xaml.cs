@@ -5,12 +5,12 @@ using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MarketDataCollector.Wpf.Contracts;
-using WpfServices = MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Wpf.Views;
-using MarketDataCollector.Ui.Services;
+using Meridian.Wpf.Contracts;
+using WpfServices = Meridian.Wpf.Services;
+using Meridian.Wpf.Views;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Wpf;
+namespace Meridian.Wpf;
 
 /// <summary>
 /// Market Data Collector WPF Application
@@ -132,7 +132,7 @@ public partial class App : Application
         services.AddHttpClient();
 
         // ── Fixture mode service (offline mock data) ────────────────────────
-        services.AddSingleton(_ => MarketDataCollector.Ui.Services.Services.FixtureDataService.Instance);
+        services.AddSingleton(_ => Meridian.Ui.Services.Services.FixtureDataService.Instance);
 
         // ── Core services (by interface + concrete type) ────────────────────
         services.AddSingleton<IConnectionService>(_ => WpfServices.ConnectionService.Instance);
@@ -141,7 +141,7 @@ public partial class App : Application
         services.AddSingleton<INavigationService>(_ => WpfServices.NavigationService.Instance);
         services.AddSingleton(_ => WpfServices.NavigationService.Instance);
 
-        services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => WpfServices.LoggingService.Instance);
+        services.AddSingleton<Meridian.Ui.Services.Contracts.ILoggingService>(_ => WpfServices.LoggingService.Instance);
         services.AddSingleton(_ => WpfServices.LoggingService.Instance);
 
         services.AddSingleton(_ => WpfServices.ConfigService.Instance);
@@ -153,9 +153,9 @@ public partial class App : Application
         services.AddSingleton(_ => WpfServices.FirstRunService.Instance);
 
         // ── Onboarding / workspace services ──────────────────────────────────
-        services.AddSingleton(_ => MarketDataCollector.Ui.Services.OnboardingTourService.Instance);
+        services.AddSingleton(_ => Meridian.Ui.Services.OnboardingTourService.Instance);
         services.AddSingleton(_ => WpfServices.WorkspaceService.Instance);
-        services.AddSingleton(_ => MarketDataCollector.Ui.Services.AlertService.Instance);
+        services.AddSingleton(_ => Meridian.Ui.Services.AlertService.Instance);
 
         // ── Domain / feature services ───────────────────────────────────────
         services.AddSingleton(_ => WpfServices.BackendServiceManager.Instance);
@@ -214,7 +214,7 @@ public partial class App : Application
         services.AddTransient<AdminMaintenancePage>();
         services.AddTransient<LeanIntegrationPage>();
         services.AddTransient<MessagingHubPage>();
-        services.AddTransient<MarketDataCollector.Wpf.Views.WorkspacePage>();
+        services.AddTransient<Meridian.Wpf.Views.WorkspacePage>();
         services.AddTransient<NotificationCenterPage>();
         services.AddTransient<HelpPage>();
         services.AddTransient<WelcomePage>();
@@ -353,7 +353,7 @@ public partial class App : Application
             var navService = WpfServices.NavigationService.Instance;
 
             var currentPageTag = navService.GetCurrentPageTag() ?? "Dashboard";
-            var session = new MarketDataCollector.Ui.Services.SessionState
+            var session = new Meridian.Ui.Services.SessionState
             {
                 ActivePageTag = currentPageTag,
                 SavedAt = DateTime.UtcNow

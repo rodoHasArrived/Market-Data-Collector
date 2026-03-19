@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring.DataQuality;
+using Meridian.Application.Monitoring.DataQuality;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services.DataQuality;
+namespace Meridian.Tests.Application.Services.DataQuality;
 
 /// <summary>
 /// Tests for CompletenessScoreCalculator.

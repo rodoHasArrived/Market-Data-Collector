@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Storage.Interfaces;
+namespace Meridian.Storage.Interfaces;
 
 public interface IStoragePolicy
 {

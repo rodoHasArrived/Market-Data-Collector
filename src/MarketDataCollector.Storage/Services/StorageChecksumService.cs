@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Centralized checksum computation service to eliminate duplicate implementations

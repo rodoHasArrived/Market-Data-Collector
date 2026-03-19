@@ -2,7 +2,7 @@ using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Parquet format export and type conversion helpers.

@@ -2,14 +2,14 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Threading;
 using FluentAssertions;
-using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Tools;
+using Meridian.Application.Serialization;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Tools;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class DataValidatorTests : IDisposable
 {

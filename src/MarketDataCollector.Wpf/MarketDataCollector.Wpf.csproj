@@ -13,7 +13,7 @@
   <PropertyGroup Condition="'$(IsWindows)' != 'true'">
     <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>MarketDataCollector.Wpf</RootNamespace>
+    <RootNamespace>Meridian.Wpf</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Exclude all source files on non-Windows -->
@@ -24,7 +24,7 @@
   <PropertyGroup Condition="'$(IsWindows)' == 'true'">
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
-    <RootNamespace>MarketDataCollector.Wpf</RootNamespace>
+    <RootNamespace>Meridian.Wpf</RootNamespace>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles --help / -h CLI flags.

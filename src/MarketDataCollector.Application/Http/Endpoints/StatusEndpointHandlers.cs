@@ -1,12 +1,12 @@
 using System.Text;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Models;
-using HealthCheckDto = MarketDataCollector.Contracts.Api.HealthCheckItem;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Api;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Models;
+using HealthCheckDto = Meridian.Contracts.Api.HealthCheckItem;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// Shared handlers for status endpoints used by both StatusHttpServer (HttpListener)

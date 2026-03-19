@@ -2,18 +2,18 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Tracing;
-using MarketDataCollector.Core.Performance;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Shared;
-using MarketDataCollector.Storage.Archival;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Services;
+using Meridian.Application.Tracing;
+using Meridian.Core.Performance;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Shared;
+using Meridian.Storage.Archival;
+using Meridian.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// High-throughput, backpressured pipeline that decouples producers from storage sinks.

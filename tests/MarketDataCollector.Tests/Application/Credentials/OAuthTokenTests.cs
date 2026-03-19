@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config.Credentials;
+using Meridian.Application.Config.Credentials;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Credentials;
+namespace Meridian.Tests.Credentials;
 
 public class OAuthTokenTests
 {

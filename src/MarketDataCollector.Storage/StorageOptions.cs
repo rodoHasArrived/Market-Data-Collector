@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Storage;
+namespace Meridian.Storage;
 
 /// <summary>
 /// Storage configuration options for market data persistence.

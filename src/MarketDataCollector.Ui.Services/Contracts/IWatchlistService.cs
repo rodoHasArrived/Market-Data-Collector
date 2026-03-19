@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace MarketDataCollector.Ui.Services.Contracts;
+namespace Meridian.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for watchlist services used by shared UI services.

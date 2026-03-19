@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>
 /// Symbol view model for the symbols page list and edit form.

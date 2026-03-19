@@ -1,6 +1,6 @@
 using System;
 
-namespace MarketDataCollector.Ui.Services.Contracts;
+namespace Meridian.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for logging services used by shared UI services.

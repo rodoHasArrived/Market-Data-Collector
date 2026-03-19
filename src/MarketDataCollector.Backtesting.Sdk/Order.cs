@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Order type classification.</summary>
 public enum OrderType { Market, Limit, StopMarket }

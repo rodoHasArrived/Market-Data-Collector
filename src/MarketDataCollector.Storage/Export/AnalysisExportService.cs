@@ -3,13 +3,13 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Service for exporting collected market data in analysis-ready formats.

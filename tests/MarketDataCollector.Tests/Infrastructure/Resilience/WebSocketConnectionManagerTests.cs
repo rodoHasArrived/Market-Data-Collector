@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Resilience;
+using Meridian.Infrastructure.Resilience;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Resilience;
+namespace Meridian.Tests.Infrastructure.Resilience;
 
 /// <summary>
 /// Unit tests for WebSocketConnectionManager lifecycle and resource management.

@@ -1,13 +1,13 @@
 using System.Reflection;
 using FluentAssertions;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Sinks;
+using Meridian.Domain.Events;
+using Meridian.Storage;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Sinks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Unit tests for <see cref="StorageSinkRegistry"/>, <see cref="StorageSinkAttribute"/>,

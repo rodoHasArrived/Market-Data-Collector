@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using MarketDataCollector.Application.Subscriptions.Models;
+using Meridian.Application.Subscriptions.Models;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Minimal hot-path safe counters (no allocations; thread-safe).

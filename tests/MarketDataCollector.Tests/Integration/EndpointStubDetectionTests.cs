@@ -2,13 +2,13 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Domain.Models;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Domain.Models;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration;
+namespace Meridian.Tests.Integration;
 
 /// <summary>
 /// Integration tests that enumerate all route constants from UiApiRoutes,

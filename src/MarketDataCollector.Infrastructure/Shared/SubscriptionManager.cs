@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Infrastructure.Shared;
+namespace Meridian.Infrastructure.Shared;
 
 /// <summary>
 /// Represents a subscription to market data.

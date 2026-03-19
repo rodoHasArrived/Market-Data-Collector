@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service for data quality scoring, best-of-breed selection, and quality monitoring.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Per-symbol trade attribution.</summary>
 public sealed record SymbolAttribution(

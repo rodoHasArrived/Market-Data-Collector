@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring.DataQuality;
+namespace Meridian.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// Compares data across multiple providers to identify discrepancies and recommend best sources.

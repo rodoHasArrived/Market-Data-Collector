@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Progress notification emitted by <c>BacktestEngine</c> during replay.</summary>
 public sealed record BacktestProgressEvent(

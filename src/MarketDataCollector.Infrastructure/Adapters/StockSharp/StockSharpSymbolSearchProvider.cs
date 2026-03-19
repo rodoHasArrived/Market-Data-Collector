@@ -3,14 +3,14 @@ using StockSharp.Algo;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.StockSharp;
+namespace Meridian.Infrastructure.Adapters.StockSharp;
 
 /// <summary>
 /// Symbol search provider that leverages StockSharp connector's SecurityLookup capability.

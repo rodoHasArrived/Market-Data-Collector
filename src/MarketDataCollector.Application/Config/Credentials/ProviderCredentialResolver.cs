@@ -1,7 +1,7 @@
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Config.Credentials;
+namespace Meridian.Application.Config.Credentials;
 
 /// <summary>
 /// Centralized credential resolver for all market data providers.

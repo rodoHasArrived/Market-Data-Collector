@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Application.Scheduling;
+namespace Meridian.Application.Scheduling;
 
 /// <summary>
 /// Types of operations that can be scheduled.

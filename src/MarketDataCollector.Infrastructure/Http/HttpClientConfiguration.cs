@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Infrastructure.Http;
+namespace Meridian.Infrastructure.Http;
 
 /// <summary>
 /// Named HttpClient identifiers for IHttpClientFactory.

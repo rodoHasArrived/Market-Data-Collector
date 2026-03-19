@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core.SymbolResolution;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.OpenFigi;
+namespace Meridian.Infrastructure.Adapters.OpenFigi;
 
 /// <summary>
 /// Symbol resolver using the OpenFIGI API (https://www.openfigi.com/).

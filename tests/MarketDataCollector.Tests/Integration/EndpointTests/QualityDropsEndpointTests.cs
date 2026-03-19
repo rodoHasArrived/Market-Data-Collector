@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration.EndpointTests;
+namespace Meridian.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Integration tests for the /api/quality/drops endpoint.

@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Application.Config;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Backfill;
+namespace Meridian.Tests.Backfill;
 
 /// <summary>
 /// Unit tests for the BackfillWorkerService class.

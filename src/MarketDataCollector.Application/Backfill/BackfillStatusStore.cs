@@ -1,7 +1,7 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
+using Meridian.Application.Config;
 
-namespace MarketDataCollector.Application.Backfill;
+namespace Meridian.Application.Backfill;
 
 /// <summary>
 /// Persists and reads last backfill status so both the collector and UI can surface progress.

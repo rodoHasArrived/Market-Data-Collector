@@ -2,11 +2,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Serialization;
+using Meridian.Application.Logging;
+using Meridian.Application.Serialization;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Generates analysis-ready data quality reports for exported datasets.

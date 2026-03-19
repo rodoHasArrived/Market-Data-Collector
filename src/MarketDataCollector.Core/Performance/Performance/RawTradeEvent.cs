@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace MarketDataCollector.Core.Performance;
+namespace Meridian.Core.Performance;
 
 /// <summary>
 /// Zero-allocation struct representation of a trade event for the hot path.
@@ -37,7 +37,7 @@ public readonly struct RawTradeEvent
 
     /// <summary>
     /// Aggressor side encoded as the underlying byte value of
-    /// <see cref="MarketDataCollector.Contracts.Domain.Enums.AggressorSide"/>:
+    /// <see cref="Meridian.Contracts.Domain.Enums.AggressorSide"/>:
     /// 0 = Unknown, 1 = Buy, 2 = Sell.
     /// </summary>
     public readonly byte Aggressor;

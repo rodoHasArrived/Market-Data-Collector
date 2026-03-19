@@ -1,21 +1,21 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
-using MarketDataCollector.Infrastructure.Resilience;
-using MarketDataCollector.Infrastructure.Shared;
-using PolygonOptions = MarketDataCollector.Application.Config.PolygonOptions;
+using Meridian.Application.Exceptions;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.DataSources;
+using Meridian.Infrastructure.Resilience;
+using Meridian.Infrastructure.Shared;
+using PolygonOptions = Meridian.Application.Config.PolygonOptions;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Polygon;
+namespace Meridian.Infrastructure.Adapters.Polygon;
 
 /// <summary>
 /// Polygon.io market data adapter implementing the IMarketDataClient abstraction.

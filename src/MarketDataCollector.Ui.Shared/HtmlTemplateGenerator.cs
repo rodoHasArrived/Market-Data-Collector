@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Shared;
+namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// Generates HTML templates for the web dashboard.

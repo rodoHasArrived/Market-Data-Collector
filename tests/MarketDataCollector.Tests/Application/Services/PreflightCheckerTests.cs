@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 /// <summary>
 /// Tests for PreflightChecker covering disk space, file permissions,

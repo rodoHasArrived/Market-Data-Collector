@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Wpf.ViewModels;
+using Meridian.Ui.Services;
+using Meridian.Wpf.ViewModels;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Lean Integration page — thin code-behind.

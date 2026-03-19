@@ -1,9 +1,9 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Application.UI;
+using Meridian.Application.Config;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Application.UI;
 
-namespace MarketDataCollector.Application.Subscriptions.Services;
+namespace Meridian.Application.Subscriptions.Services;
 
 /// <summary>
 /// Service for managing symbol watchlists (groups of symbols for organization and bulk operations).

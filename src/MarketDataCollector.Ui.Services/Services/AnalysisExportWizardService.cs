@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for guided analysis export wizard.

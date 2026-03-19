@@ -1,11 +1,11 @@
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Config.Credentials;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.UI;
+using Meridian.Application.Config;
+using Meridian.Application.Config.Credentials;
+using Meridian.Application.Logging;
+using Meridian.Application.UI;
 using Serilog;
-using static MarketDataCollector.Application.Services.AutoConfigurationService;
+using static Meridian.Application.Services.AutoConfigurationService;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Unified configuration service that consolidates all configuration-related operations.

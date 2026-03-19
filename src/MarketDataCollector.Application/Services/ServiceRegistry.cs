@@ -1,9 +1,9 @@
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring.Core;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring.Core;
+using Meridian.Infrastructure.Contracts;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service categories for organization and discovery.

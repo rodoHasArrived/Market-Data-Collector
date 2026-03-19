@@ -1,7 +1,7 @@
 /// Integrity event types for data quality monitoring.
 /// Uses discriminated unions to model different integrity issues
 /// with their associated data, ensuring exhaustive pattern matching.
-module MarketDataCollector.FSharp.Domain.Integrity
+module Meridian.FSharp.Domain.Integrity
 
 open System
 

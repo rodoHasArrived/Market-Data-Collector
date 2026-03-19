@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring.DataQuality;
+using Meridian.Application.Monitoring.DataQuality;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Monitoring.DataQuality;
+namespace Meridian.Tests.Monitoring.DataQuality;
 
 public sealed class CompletenessScoreCalculatorTests : IDisposable
 {

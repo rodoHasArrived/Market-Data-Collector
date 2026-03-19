@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace MarketDataCollector.Infrastructure.Resilience;
+namespace Meridian.Infrastructure.Resilience;
 
 /// <summary>
 /// Centralized configuration for WebSocket connections.

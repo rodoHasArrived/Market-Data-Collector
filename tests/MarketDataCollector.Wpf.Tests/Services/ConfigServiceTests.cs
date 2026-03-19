@@ -1,7 +1,7 @@
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Configuration;
+using Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 /// <summary>
 /// Tests for ConfigService singleton service.

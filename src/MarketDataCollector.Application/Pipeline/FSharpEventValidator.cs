@@ -1,19 +1,19 @@
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.Monitoring;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using FSharpQuoteEventWrapper = MarketDataCollector.FSharp.Interop.QuoteEventWrapper;
-using FSharpQuoteValidator = MarketDataCollector.FSharp.Interop.QuoteValidator;
-using FSharpTradeEventWrapper = MarketDataCollector.FSharp.Interop.TradeEventWrapper;
-using FSharpTradeValidator = MarketDataCollector.FSharp.Interop.TradeValidator;
+using FSharpQuoteEventWrapper = Meridian.FSharp.Interop.QuoteEventWrapper;
+using FSharpQuoteValidator = Meridian.FSharp.Interop.QuoteValidator;
+using FSharpTradeEventWrapper = Meridian.FSharp.Interop.TradeEventWrapper;
+using FSharpTradeValidator = Meridian.FSharp.Interop.TradeValidator;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Validates <see cref="MarketEvent"/> instances by delegating to the F# Railway-Oriented
-/// validation pipeline (<c>MarketDataCollector.FSharp.Validation</c>).
+/// validation pipeline (<c>Meridian.FSharp.Validation</c>).
 /// </summary>
 /// <remarks>
 /// <para>Trade and BBO-quote events are validated against the F# validators.

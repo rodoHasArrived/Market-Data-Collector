@@ -2,20 +2,20 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using FluentAssertions;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Backfill;
+using Meridian.Application.Config;
+using Meridian.Application.Exceptions;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Storage.Interfaces;
 using Xunit;
 
 // Disambiguate from the infrastructure-layer BackfillRequest used by the job-queue subsystem
-using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using AppBackfillRequest = Meridian.Application.Backfill.BackfillRequest;
 
-namespace MarketDataCollector.Tests.Application.Backfill;
+namespace Meridian.Tests.Application.Backfill;
 
 /// <summary>
 /// Tests for HistoricalBackfillService parallel execution, priority ordering,

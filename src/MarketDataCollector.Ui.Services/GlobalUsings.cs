@@ -6,36 +6,36 @@
 // =============================================================================
 
 // Import all Contracts namespaces globally so types are available throughout the library
-global using MarketDataCollector.Contracts.Api;
-global using MarketDataCollector.Contracts.Archive;
-global using MarketDataCollector.Contracts.Backfill;
-global using MarketDataCollector.Contracts.Credentials;
-global using MarketDataCollector.Contracts.Export;
-global using MarketDataCollector.Contracts.Manifest;
-global using MarketDataCollector.Contracts.Pipeline;
-global using MarketDataCollector.Contracts.Schema;
-global using MarketDataCollector.Contracts.Session;
+global using Meridian.Contracts.Api;
+global using Meridian.Contracts.Archive;
+global using Meridian.Contracts.Backfill;
+global using Meridian.Contracts.Credentials;
+global using Meridian.Contracts.Export;
+global using Meridian.Contracts.Manifest;
+global using Meridian.Contracts.Pipeline;
+global using Meridian.Contracts.Schema;
+global using Meridian.Contracts.Session;
 
 // Domain namespaces (Models, Events, Enums)
-global using MarketDataCollector.Contracts.Domain;
-global using MarketDataCollector.Contracts.Domain.Models;
-global using MarketDataCollector.Contracts.Domain.Events;
-global using MarketDataCollector.Contracts.Domain.Enums;
+global using Meridian.Contracts.Domain;
+global using Meridian.Contracts.Domain.Models;
+global using Meridian.Contracts.Domain.Events;
+global using Meridian.Contracts.Domain.Enums;
 
 // Configuration type aliases (Dto suffix -> non-Dto names for backwards compatibility)
-global using AppConfig = MarketDataCollector.Contracts.Configuration.AppConfigDto;
-global using AlpacaOptions = MarketDataCollector.Contracts.Configuration.AlpacaOptionsDto;
-global using StorageConfig = MarketDataCollector.Contracts.Configuration.StorageConfigDto;
-global using SymbolConfig = MarketDataCollector.Contracts.Configuration.SymbolConfigDto;
-global using BackfillConfig = MarketDataCollector.Contracts.Configuration.BackfillConfigDto;
-global using DataSourcesConfig = MarketDataCollector.Contracts.Configuration.DataSourcesConfigDto;
-global using DataSourceConfig = MarketDataCollector.Contracts.Configuration.DataSourceConfigDto;
-global using PolygonOptions = MarketDataCollector.Contracts.Configuration.PolygonOptionsDto;
-global using IBOptions = MarketDataCollector.Contracts.Configuration.IBOptionsDto;
-global using SymbolGroupsConfig = MarketDataCollector.Contracts.Configuration.SymbolGroupsConfigDto;
-global using SymbolGroup = MarketDataCollector.Contracts.Configuration.SymbolGroupDto;
-global using SmartGroupCriteria = MarketDataCollector.Contracts.Configuration.SmartGroupCriteriaDto;
-global using ExtendedSymbolConfig = MarketDataCollector.Contracts.Configuration.ExtendedSymbolConfigDto;
-global using AppSettings = MarketDataCollector.Contracts.Configuration.AppSettingsDto;
-global using DerivativesConfig = MarketDataCollector.Contracts.Configuration.DerivativesConfigDto;
-global using IndexOptionsConfig = MarketDataCollector.Contracts.Configuration.IndexOptionsConfigDto;
+global using AppConfig = Meridian.Contracts.Configuration.AppConfigDto;
+global using AlpacaOptions = Meridian.Contracts.Configuration.AlpacaOptionsDto;
+global using StorageConfig = Meridian.Contracts.Configuration.StorageConfigDto;
+global using SymbolConfig = Meridian.Contracts.Configuration.SymbolConfigDto;
+global using BackfillConfig = Meridian.Contracts.Configuration.BackfillConfigDto;
+global using DataSourcesConfig = Meridian.Contracts.Configuration.DataSourcesConfigDto;
+global using DataSourceConfig = Meridian.Contracts.Configuration.DataSourceConfigDto;
+global using PolygonOptions = Meridian.Contracts.Configuration.PolygonOptionsDto;
+global using IBOptions = Meridian.Contracts.Configuration.IBOptionsDto;
+global using SymbolGroupsConfig = Meridian.Contracts.Configuration.SymbolGroupsConfigDto;
+global using SymbolGroup = Meridian.Contracts.Configuration.SymbolGroupDto;
+global using SmartGroupCriteria = Meridian.Contracts.Configuration.SmartGroupCriteriaDto;
+global using ExtendedSymbolConfig = Meridian.Contracts.Configuration.ExtendedSymbolConfigDto;
+global using AppSettings = Meridian.Contracts.Configuration.AppSettingsDto;
+global using DerivativesConfig = Meridian.Contracts.Configuration.DerivativesConfigDto;
+global using IndexOptionsConfig = Meridian.Contracts.Configuration.IndexOptionsConfigDto;

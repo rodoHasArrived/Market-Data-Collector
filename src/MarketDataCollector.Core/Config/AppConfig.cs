@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Root configuration model loaded from appsettings.json.
@@ -123,7 +123,7 @@ public sealed record SourceRegistryConfig(
 
 /// <summary>
 /// Configuration for the F# validation pipeline stage.
-/// When enabled, every incoming <see cref="MarketDataCollector.Domain.Events.MarketEvent"/>
+/// When enabled, every incoming <see cref="Meridian.Domain.Events.MarketEvent"/>
 /// is validated against the F# Railway-Oriented validators before it is persisted.
 /// Events that fail validation are written to the dead-letter sink instead of primary storage.
 /// </summary>

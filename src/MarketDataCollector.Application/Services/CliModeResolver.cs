@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Resolves the application run mode from CLI arguments.

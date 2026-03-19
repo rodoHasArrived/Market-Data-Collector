@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MarketDataCollector.Ui.Services.Collections;
+namespace Meridian.Ui.Services.Collections;
 
 /// <summary>
 /// A fixed-size circular buffer (ring buffer) that provides O(1) operations

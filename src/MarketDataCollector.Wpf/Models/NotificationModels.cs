@@ -1,8 +1,8 @@
 using System;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>
 /// Display model for a single notification item in the list.

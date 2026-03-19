@@ -1,16 +1,16 @@
 /// C# interoperability helpers for the F# domain library.
 /// Provides extension methods and adapters for seamless C# consumption.
-module MarketDataCollector.FSharp.Interop
+module Meridian.FSharp.Interop
 
 open System
 open System.Runtime.CompilerServices
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Domain.Sides
-open MarketDataCollector.FSharp.Domain.Integrity
-open MarketDataCollector.FSharp.Validation.ValidationTypes
-module Spread = MarketDataCollector.FSharp.Calculations.Spread
-module Imbalance = MarketDataCollector.FSharp.Calculations.Imbalance
-module Aggregations = MarketDataCollector.FSharp.Calculations.Aggregations
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.Sides
+open Meridian.FSharp.Domain.Integrity
+open Meridian.FSharp.Validation.ValidationTypes
+module Spread = Meridian.FSharp.Calculations.Spread
+module Imbalance = Meridian.FSharp.Calculations.Imbalance
+module Aggregations = Meridian.FSharp.Calculations.Aggregations
 
 /// Private helper functions for option conversion (for F# internal use).
 /// These are needed because [<Extension>] methods only work for C# consumers.

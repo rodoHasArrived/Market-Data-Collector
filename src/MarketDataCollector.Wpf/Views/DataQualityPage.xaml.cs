@@ -10,11 +10,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using MarketDataCollector.Wpf.Models;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Wpf.Models;
+using WpfServices = Meridian.Wpf.Services;
 
-using MarketDataCollector.Wpf.Services;
-namespace MarketDataCollector.Wpf.Views;
+using Meridian.Wpf.Services;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Data quality monitoring page showing completeness, gaps, and anomalies.

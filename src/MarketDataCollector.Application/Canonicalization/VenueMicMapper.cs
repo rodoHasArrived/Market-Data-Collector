@@ -1,9 +1,9 @@
 using System.Collections.Frozen;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Canonicalization;
+namespace Meridian.Application.Canonicalization;
 
 /// <summary>
 /// Maps provider-specific venue identifiers to ISO 10383 MIC (Market Identifier Code).

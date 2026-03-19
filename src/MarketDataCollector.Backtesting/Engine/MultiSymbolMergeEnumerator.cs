@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Backtesting.Engine;
+namespace Meridian.Backtesting.Engine;
 
 /// <summary>
 /// Merges multiple per-symbol <see cref="IAsyncEnumerable{MarketEvent}"/> streams into a single

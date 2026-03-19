@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Adapters.Failover;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure;
+using Meridian.Infrastructure.Adapters.Failover;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Providers;
+namespace Meridian.Tests.Providers;
 
 /// <summary>
 /// Unit tests for <see cref="FailoverAwareMarketDataClient"/>.
@@ -195,8 +195,8 @@ public sealed class FailoverAwareMarketDataClientTests : IAsyncLifetime
         public string ProviderDisplayName => $"Fake {_id}";
         public string ProviderDescription => $"Fake provider {_id}";
         public int ProviderPriority => 50;
-        public MarketDataCollector.Infrastructure.Adapters.Core.ProviderCapabilities ProviderCapabilities
-            => MarketDataCollector.Infrastructure.Adapters.Core.ProviderCapabilities.Streaming();
+        public Meridian.Infrastructure.Adapters.Core.ProviderCapabilities ProviderCapabilities
+            => Meridian.Infrastructure.Adapters.Core.ProviderCapabilities.Streaming();
 
         public Task ConnectAsync(CancellationToken ct = default)
         {

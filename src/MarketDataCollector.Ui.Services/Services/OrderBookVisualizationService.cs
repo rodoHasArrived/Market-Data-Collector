@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for live order book visualization.

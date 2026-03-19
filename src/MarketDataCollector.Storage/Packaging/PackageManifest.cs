@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Manifest;
+using Meridian.Contracts.Manifest;
 
-namespace MarketDataCollector.Storage.Packaging;
+namespace Meridian.Storage.Packaging;
 
 /// <summary>
 /// Comprehensive manifest for a portable data package.

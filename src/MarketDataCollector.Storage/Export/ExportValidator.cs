@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Storage.Export;
+namespace Meridian.Storage.Export;
 
 /// <summary>
 /// Validates an export request before any files are written.

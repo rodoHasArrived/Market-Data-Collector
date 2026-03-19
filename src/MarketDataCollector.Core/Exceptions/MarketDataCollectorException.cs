@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Exceptions;
+namespace Meridian.Application.Exceptions;
 
 /// <summary>
 /// Base exception for all MarketDataCollector-specific exceptions

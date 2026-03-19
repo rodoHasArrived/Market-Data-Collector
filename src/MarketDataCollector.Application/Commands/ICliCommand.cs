@@ -1,6 +1,6 @@
-using MarketDataCollector.Application.ResultTypes;
+using Meridian.Application.ResultTypes;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Interface for CLI command handlers extracted from Program.cs.

@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Application.Exceptions;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Backfill;
+namespace Meridian.Tests.Application.Backfill;
 
 public sealed class CompositeHistoricalDataProviderTests : IDisposable
 {

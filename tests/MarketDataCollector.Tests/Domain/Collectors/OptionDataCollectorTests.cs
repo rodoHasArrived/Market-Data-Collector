@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Tests.TestHelpers;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Tests.TestHelpers;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Domain.Collectors;
+namespace Meridian.Tests.Domain.Collectors;
 
 /// <summary>
 /// Unit tests for the OptionDataCollector domain collector.

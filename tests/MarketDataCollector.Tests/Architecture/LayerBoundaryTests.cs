@@ -7,7 +7,7 @@ using static ArchUnitNET.Fluent.ArchRuleDefinition;
 // Alias the ArchUnitNET domain type to avoid collision with this test's namespace.
 using ArchModel = ArchUnitNET.Domain.Architecture;
 
-namespace MarketDataCollector.Tests.Architecture;
+namespace Meridian.Tests.Architecture;
 
 /// <summary>
 /// ArchUnitNET tests that enforce the layer-boundary rules defined in
@@ -27,20 +27,20 @@ public sealed class LayerBoundaryTests
     private static readonly ArchModel Architecture = new ArchLoader()
         .LoadAssemblies(
             // Leaf / shared contracts
-            typeof(MarketDataCollector.Contracts.Domain.ProviderId).Assembly,
+            typeof(Meridian.Contracts.Domain.ProviderId).Assembly,
             // Provider SDK
-            typeof(MarketDataCollector.Infrastructure.Adapters.Core.IProviderMetadata).Assembly,
+            typeof(Meridian.Infrastructure.Adapters.Core.IProviderMetadata).Assembly,
             // Domain
-            typeof(MarketDataCollector.Domain.Events.MarketEvent).Assembly,
+            typeof(Meridian.Domain.Events.MarketEvent).Assembly,
             // Infrastructure (adapters, providers, resilience)
-            typeof(MarketDataCollector.Infrastructure.Adapters.Core.ProviderTemplate).Assembly)
+            typeof(Meridian.Infrastructure.Adapters.Core.ProviderTemplate).Assembly)
         .Build();
 
     // ------------------------------------------------------------------ //
     //  Contracts — leaf project (no upstream dependencies)                //
     // ResideInNamespaceMatching / ResideInAssemblyMatching are used here  //
     // because ResideInNamespace and ResideInAssembly do exact matching;   //
-    // Contracts types live in sub-namespaces (MarketDataCollector.Contracts.*)
+    // Contracts types live in sub-namespaces (Meridian.Contracts.*)
     // and assembly-level rules require distinguishing Infrastructure.dll  //
     // from ProviderSdk.dll (both share the Infrastructure namespace).     //
     // ------------------------------------------------------------------ //
@@ -49,9 +49,9 @@ public sealed class LayerBoundaryTests
     public void Contracts_ShouldNot_DependOn_Domain()
     {
         var rule = Types()
-            .That().ResideInNamespaceMatching(@"^MarketDataCollector\.Contracts\.")
+            .That().ResideInNamespaceMatching(@"^Meridian..Contracts\.")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespaceMatching(@"^MarketDataCollector\.Domain\."))
+                Types().That().ResideInNamespaceMatching(@"^Meridian..Domain\."))
             .Because("Contracts is a leaf project that must have zero upstream project dependencies (ADR-001).");
 
         rule.Check(Architecture);
@@ -61,7 +61,7 @@ public sealed class LayerBoundaryTests
     public void Contracts_ShouldNot_DependOn_Infrastructure()
     {
         var rule = Types()
-            .That().ResideInNamespaceMatching(@"^MarketDataCollector\.Contracts\.")
+            .That().ResideInNamespaceMatching(@"^Meridian..Contracts\.")
             .Should().NotDependOnAny(
                 Types().That().ResideInAssemblyMatching(@"^MarketDataCollector\.Infrastructure$"))
             .Because("Contracts is a leaf project that must have zero upstream project dependencies (ADR-001).");
@@ -77,7 +77,7 @@ public sealed class LayerBoundaryTests
     public void Domain_ShouldNot_DependOn_Infrastructure()
     {
         var rule = Types()
-            .That().ResideInNamespaceMatching(@"^MarketDataCollector\.Domain\.")
+            .That().ResideInNamespaceMatching(@"^Meridian..Domain\.")
             .Should().NotDependOnAny(
                 Types().That().ResideInAssemblyMatching(@"^MarketDataCollector\.Infrastructure$"))
             .Because("Domain types must remain independent of Infrastructure to preserve the dependency inversion principle.");
@@ -93,9 +93,9 @@ public sealed class LayerBoundaryTests
     public void ProviderSdk_ShouldNot_DependOn_Domain()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.ProviderSdk")
+            .That().ResideInNamespace("Meridian.ProviderSdk")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespaceMatching(@"^MarketDataCollector\.Domain\."))
+                Types().That().ResideInNamespaceMatching(@"^Meridian..Domain\."))
             .Because("ProviderSdk must only reference Contracts to stay thin and reusable (ADR-001).");
 
         rule.Check(Architecture);
@@ -105,7 +105,7 @@ public sealed class LayerBoundaryTests
     public void ProviderSdk_ShouldNot_DependOn_Infrastructure()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.ProviderSdk")
+            .That().ResideInNamespace("Meridian.ProviderSdk")
             .Should().NotDependOnAny(
                 Types().That().ResideInAssemblyMatching(@"^MarketDataCollector\.Infrastructure$"))
             .Because("ProviderSdk must only reference Contracts to stay thin and reusable (ADR-001).");
@@ -121,9 +121,9 @@ public sealed class LayerBoundaryTests
     public void AlpacaAdapter_ShouldNot_DependOn_PolygonAdapter()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Alpaca")
+            .That().ResideInNamespace("Meridian.Infrastructure.Adapters.Alpaca")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Polygon"))
+                Types().That().ResideInNamespace("Meridian.Infrastructure.Adapters.Polygon"))
             .Because("Provider adapters must not cross-reference peer adapters to keep them independently deployable.");
 
         rule.Check(Architecture);
@@ -133,9 +133,9 @@ public sealed class LayerBoundaryTests
     public void PolygonAdapter_ShouldNot_DependOn_AlpacaAdapter()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Polygon")
+            .That().ResideInNamespace("Meridian.Infrastructure.Adapters.Polygon")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Alpaca"))
+                Types().That().ResideInNamespace("Meridian.Infrastructure.Adapters.Alpaca"))
             .Because("Provider adapters must not cross-reference peer adapters to keep them independently deployable.");
 
         rule.Check(Architecture);
@@ -145,9 +145,9 @@ public sealed class LayerBoundaryTests
     public void FinnhubAdapter_ShouldNot_DependOn_AlpacaAdapter()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Finnhub")
+            .That().ResideInNamespace("Meridian.Infrastructure.Adapters.Finnhub")
             .Should().NotDependOnAny(
-                Types().That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Alpaca"))
+                Types().That().ResideInNamespace("Meridian.Infrastructure.Adapters.Alpaca"))
             .Because("Provider adapters must not cross-reference peer adapters to keep them independently deployable.");
 
         rule.Check(Architecture);
@@ -161,7 +161,7 @@ public sealed class LayerBoundaryTests
     public void AlpacaConstants_ShouldBe_Internal()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Alpaca")
+            .That().ResideInNamespace("Meridian.Infrastructure.Adapters.Alpaca")
             .And().HaveNameEndingWith("Constants")
             .Or().HaveNameEndingWith("Endpoints")
             .Or().HaveNameEndingWith("RateLimits")
@@ -178,7 +178,7 @@ public sealed class LayerBoundaryTests
     public void PolygonConstants_ShouldBe_Internal()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Polygon")
+            .That().ResideInNamespace("Meridian.Infrastructure.Adapters.Polygon")
             .And().HaveNameEndingWith("Constants")
             .Or().HaveNameEndingWith("Endpoints")
             .Or().HaveNameEndingWith("RateLimits")
@@ -197,7 +197,7 @@ public sealed class LayerBoundaryTests
     public void FinnhubConstants_ShouldBe_Internal()
     {
         var rule = Types()
-            .That().ResideInNamespace("MarketDataCollector.Infrastructure.Adapters.Finnhub")
+            .That().ResideInNamespace("Meridian.Infrastructure.Adapters.Finnhub")
             .And().HaveNameEndingWith("Constants")
             .Or().HaveNameEndingWith("Endpoints")
             .Or().HaveNameEndingWith("RateLimits")

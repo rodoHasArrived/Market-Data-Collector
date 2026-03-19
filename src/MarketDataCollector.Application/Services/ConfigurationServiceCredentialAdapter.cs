@@ -1,6 +1,6 @@
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Adapter that wraps ConfigurationService to implement ICredentialResolver.

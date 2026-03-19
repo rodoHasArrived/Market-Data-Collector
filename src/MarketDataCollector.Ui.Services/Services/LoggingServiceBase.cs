@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace MarketDataCollector.Ui.Services.Services;
+namespace Meridian.Ui.Services.Services;
 
 /// <summary>
 /// Represents the severity level of a log entry.

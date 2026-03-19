@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.Polygon;
+namespace Meridian.Infrastructure.Adapters.Polygon;
 
 /// <summary>
 /// WebSocket endpoint constants for the Polygon.io Market Data API.

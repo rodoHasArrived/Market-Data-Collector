@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Core.Performance;
-using MarketDataCollector.Domain.Events;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Core.Performance;
+using Meridian.Domain.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// A dual-path event pipeline that routes high-volume <see cref="MarketEventType.Trade"/>

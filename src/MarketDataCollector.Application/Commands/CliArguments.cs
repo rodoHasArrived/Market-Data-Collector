@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Typed representation of all CLI arguments, parsed once from the raw args array.

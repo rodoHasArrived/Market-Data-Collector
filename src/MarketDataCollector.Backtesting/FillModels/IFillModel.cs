@@ -1,6 +1,6 @@
-using MarketDataCollector.Domain.Events;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Backtesting.FillModels;
+namespace Meridian.Backtesting.FillModels;
 
 /// <summary>
 /// Determines whether and how a pending order is filled given the current market event.

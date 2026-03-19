@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
+using Meridian.Application.Monitoring;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 /// <summary>
 /// Serializes all Prometheus metrics test classes that mutate the shared static

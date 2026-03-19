@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Application.Config.Credentials;
+namespace Meridian.Application.Config.Credentials;
 
 /// <summary>
 /// Represents an OAuth 2.0 token for providers that support OAuth authentication.

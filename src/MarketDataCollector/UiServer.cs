@@ -1,12 +1,12 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Composition;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Ui.Shared;
-using MarketDataCollector.Ui.Shared.Endpoints;
+using Meridian.Application.Composition;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Application.Pipeline;
+using Meridian.Application.UI;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Ui.Shared;
+using Meridian.Ui.Shared.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +19,7 @@ namespace MarketDataCollector;
 /// <summary>
 /// Embedded HTTP server for the web dashboard UI.
 /// Uses ServiceCompositionRoot for centralized service registration.
-/// All endpoints are organized in dedicated endpoint classes in MarketDataCollector.Ui.Shared/Endpoints/.
+/// All endpoints are organized in dedicated endpoint classes in Meridian.Ui.Shared/Endpoints/.
 /// </summary>
 [ImplementsAdr("ADR-001", "UiServer uses centralized composition root")]
 [ImplementsAdr("ADR-004", "Large file decomposition - endpoints extracted to dedicated modules")]
@@ -176,7 +176,7 @@ public sealed class UiServer : IAsyncDisposable
 
         // ==================== EXTRACTED ENDPOINT MODULES ====================
         // All API endpoints are organized in dedicated endpoint classes
-        // in MarketDataCollector.Ui.Shared/Endpoints/ for maintainability
+        // in Meridian.Ui.Shared/Endpoints/ for maintainability
         // This reduces UiServer from 3,030 lines to ~250 lines
 
         // Index page

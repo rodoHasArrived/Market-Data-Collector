@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
 
-namespace MarketDataCollector.Infrastructure.Http;
+namespace Meridian.Infrastructure.Http;
 
 /// <summary>
 /// Shared resilience policies for HTTP clients to eliminate duplicate policy definitions.

@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain;
+using Meridian.Contracts.Domain;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Domain;
+namespace Meridian.Tests.Domain;
 
 /// <summary>
 /// Tests for the strong domain-type value objects: <see cref="SymbolId"/>, <see cref="ProviderId"/>,

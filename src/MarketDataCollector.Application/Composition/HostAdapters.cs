@@ -1,13 +1,13 @@
 using System.Text.Json;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Application.UI;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Application.Composition;
+namespace Meridian.Application.Composition;
 
 /// <summary>
 /// Adapter interface for host-specific behavior.

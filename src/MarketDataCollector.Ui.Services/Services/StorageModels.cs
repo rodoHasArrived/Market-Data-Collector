@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 // DTO classes for storage API responses
 // Shared across desktop applications.

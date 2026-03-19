@@ -6,14 +6,14 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.TwelveData;
+namespace Meridian.Infrastructure.Adapters.TwelveData;
 
 /// <summary>
 /// Historical data provider using the Twelve Data API (https://api.twelvedata.com).

@@ -1,5 +1,5 @@
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for global search functionality across the application.

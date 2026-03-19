@@ -1,10 +1,10 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Storage;
+using Meridian.Application.Config;
+using Meridian.Application.Logging;
+using Meridian.Storage;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for automatic configuration based on available credentials and environment.

@@ -1,8 +1,8 @@
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Models;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Models;
 
-namespace MarketDataCollector.Application.Testing;
+namespace Meridian.Application.Testing;
 
 public static class DepthBufferSelfTests
 {

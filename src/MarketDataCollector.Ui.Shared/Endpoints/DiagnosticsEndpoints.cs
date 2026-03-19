@@ -1,15 +1,15 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Ui.Shared.Services;
+using Meridian.Application.Config;
+using Meridian.Application.Services;
+using Meridian.Contracts.Api;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Storage;
+using Meridian.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering diagnostics API endpoints.
@@ -259,7 +259,7 @@ public static class DiagnosticsEndpoints
         // Error codes reference
         group.MapGet(UiApiRoutes.DiagnosticsErrorCodes, () =>
         {
-            var codes = Enum.GetValues<MarketDataCollector.Application.ResultTypes.ErrorCode>()
+            var codes = Enum.GetValues<Meridian.Application.ResultTypes.ErrorCode>()
                 .Select(e => new { code = (int)e, name = e.ToString() });
             return Results.Json(new { errorCodes = codes, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Multi-step wizard for adding and configuring a new data provider.
@@ -205,7 +205,7 @@ public partial class AddProviderWizardPage : Page
         {
             if (_selectedProvider.SupportsHistorical)
             {
-                var options = new MarketDataCollector.Contracts.Configuration.BackfillProviderOptionsDto
+                var options = new Meridian.Contracts.Configuration.BackfillProviderOptionsDto
                 {
                     Enabled = EnableBackfillCheck.IsChecked == true,
                 };

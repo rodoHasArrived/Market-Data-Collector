@@ -3,10 +3,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Services;
 using Xunit;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Concrete test implementation of BackendServiceManagerBase.

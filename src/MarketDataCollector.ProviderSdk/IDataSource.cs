@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Threading;
 
-namespace MarketDataCollector.Infrastructure.DataSources;
+namespace Meridian.Infrastructure.DataSources;
 
 /// <summary>
 /// Unified base interface for all data sources (real-time and historical).

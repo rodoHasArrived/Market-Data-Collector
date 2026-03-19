@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Backfill;
+namespace Meridian.Contracts.Backfill;
 
 /// <summary>
 /// Backfill job status constants.

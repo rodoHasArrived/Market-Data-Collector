@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Core.Scheduling;
+using Meridian.Core.Scheduling;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 public sealed class CronExpressionParserTests
 {

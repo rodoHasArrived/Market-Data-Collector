@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.InteractiveBrokers;
+namespace Meridian.Infrastructure.Adapters.InteractiveBrokers;
 
 /// <summary>
 /// Constants defining Interactive Brokers API limits and constraints.

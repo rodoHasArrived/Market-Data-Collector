@@ -1,16 +1,16 @@
 using System.Net;
 using System.Text;
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Infrastructure.Adapters.AlphaVantage;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Finnhub;
-using MarketDataCollector.Infrastructure.Adapters.Tiingo;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Infrastructure.Adapters.AlphaVantage;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Finnhub;
+using Meridian.Infrastructure.Adapters.Tiingo;
 using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Backfill;
+namespace Meridian.Tests.Backfill;
 
 /// <summary>
 /// Contract tests for Tiingo, Finnhub, and Alpha Vantage historical data providers.

@@ -4,12 +4,12 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Events;
 using Serilog;
 
-namespace MarketDataCollector.Application.Pipeline;
+namespace Meridian.Application.Pipeline;
 
 /// <summary>
 /// Persistent deduplication ledger that survives restarts.

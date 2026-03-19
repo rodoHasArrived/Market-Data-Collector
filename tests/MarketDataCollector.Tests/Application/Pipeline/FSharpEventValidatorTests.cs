@@ -1,13 +1,13 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Configuration;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Pipeline;
+namespace Meridian.Tests.Pipeline;
 
 /// <summary>
 /// Unit tests for <see cref="FSharpEventValidator"/>.

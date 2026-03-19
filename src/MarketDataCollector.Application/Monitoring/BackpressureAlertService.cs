@@ -1,10 +1,10 @@
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Logging;
+using Meridian.Application.Pipeline;
+using Meridian.Application.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Monitors pipeline backpressure and sends alerts when thresholds are exceeded.

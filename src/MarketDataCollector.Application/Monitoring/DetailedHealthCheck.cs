@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Application.Pipeline;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Application.Pipeline;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Provides detailed health check information including dependencies, providers, and data quality.

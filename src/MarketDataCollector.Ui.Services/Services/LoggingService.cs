@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Default logging service for the shared UI services layer.

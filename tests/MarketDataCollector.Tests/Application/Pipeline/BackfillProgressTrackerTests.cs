@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Pipeline;
+namespace Meridian.Tests.Application.Pipeline;
 
 public sealed class BackfillProgressTrackerTests
 {

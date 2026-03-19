@@ -1,9 +1,9 @@
-using MarketDataCollector.Infrastructure.DataSources;
+using Meridian.Infrastructure.DataSources;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.NYSE;
+namespace Meridian.Infrastructure.Adapters.NYSE;
 
 /// <summary>
 /// Service registration extensions for NYSE Direct data source.

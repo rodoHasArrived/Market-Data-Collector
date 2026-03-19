@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Service for tracking and querying application errors.

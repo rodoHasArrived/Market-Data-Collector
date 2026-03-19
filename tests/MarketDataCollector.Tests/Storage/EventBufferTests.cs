@@ -1,12 +1,12 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Storage.Services;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Storage.Services;
 using Xunit;
-using AggressorSide = MarketDataCollector.Contracts.Domain.Enums.AggressorSide;
+using AggressorSide = Meridian.Contracts.Domain.Enums.AggressorSide;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class EventBufferTests
 {

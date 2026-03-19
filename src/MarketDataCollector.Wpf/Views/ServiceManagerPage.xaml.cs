@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-using MarketDataCollector.Wpf.Services;
-namespace MarketDataCollector.Wpf.Views;
+using Meridian.Wpf.Services;
+namespace Meridian.Wpf.Views;
 
 public partial class ServiceManagerPage : Page
 {

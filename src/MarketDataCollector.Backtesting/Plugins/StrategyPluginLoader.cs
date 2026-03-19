@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace MarketDataCollector.Backtesting.Plugins;
+namespace Meridian.Backtesting.Plugins;
 
 /// <summary>
 /// Loads <see cref="IBacktestStrategy"/> implementations from external assemblies using

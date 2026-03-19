@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Contracts.Configuration;
+using Meridian.Application.Config;
+using Meridian.Contracts.Configuration;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Config;
+namespace Meridian.Tests.Application.Config;
 
 /// <summary>
 /// Tests for ConfigValidationPipeline (C5 improvement).

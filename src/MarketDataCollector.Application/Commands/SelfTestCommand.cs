@@ -1,8 +1,8 @@
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Application.Testing;
+using Meridian.Application.ResultTypes;
+using Meridian.Application.Testing;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles the --selftest CLI command.

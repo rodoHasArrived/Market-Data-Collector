@@ -4,10 +4,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Ui.Services.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-namespace MarketDataCollector.Wpf.Views;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Welcome page with project branding, quick-start steps, system overview, and recent features.

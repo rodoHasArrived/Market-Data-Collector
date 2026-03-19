@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Scheduling;
+using Meridian.Application.Scheduling;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 public sealed class OperationalSchedulerTests
 {

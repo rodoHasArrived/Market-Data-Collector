@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Represents a backfill job that tracks the progress of historical data retrieval.

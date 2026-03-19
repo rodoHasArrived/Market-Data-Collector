@@ -1,8 +1,8 @@
-using MarketDataCollector.Application.ResultTypes;
-using MarketDataCollector.Storage.Services;
+using Meridian.Application.ResultTypes;
+using Meridian.Storage.Services;
 using Serilog;
 
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles --catalog CLI command for searching and discovering stored market data.

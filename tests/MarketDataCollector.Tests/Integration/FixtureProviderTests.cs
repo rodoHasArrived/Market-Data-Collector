@@ -1,18 +1,18 @@
 using System.Collections.Concurrent;
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Configuration;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
+using Meridian.Domain.Models;
+using Meridian.Infrastructure;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
+using Meridian.Storage.Interfaces;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Integration;
+namespace Meridian.Tests.Integration;
 
 /// <summary>
 /// Fixture-based market data client that generates deterministic trade and quote data

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Domain.Events;
+namespace Meridian.Contracts.Domain.Events;
 
 /// <summary>
 /// Marker interface for strongly-typed market event payloads.

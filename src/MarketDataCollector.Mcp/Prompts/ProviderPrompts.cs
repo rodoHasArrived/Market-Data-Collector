@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Mcp.Prompts;
+namespace Meridian.Mcp.Prompts;
 
 [McpServerPromptType]
 public sealed class ProviderPrompts(RepoPathService repo)

@@ -1,7 +1,7 @@
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Contracts.Api;
+using Meridian.Infrastructure.Adapters.Core;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Standardized provider metadata template for registry and UI surfaces.
@@ -153,10 +153,10 @@ public static class ProviderTemplateFactory
             .ToArray();
 
         // Build rate limit info if available
-        MarketDataCollector.Contracts.Api.RateLimitInfo? rateLimit = null;
+        Meridian.Contracts.Api.RateLimitInfo? rateLimit = null;
         if (caps.MaxRequestsPerWindow.HasValue || caps.RateLimitWindow.HasValue)
         {
-            rateLimit = new MarketDataCollector.Contracts.Api.RateLimitInfo
+            rateLimit = new Meridian.Contracts.Api.RateLimitInfo
             {
                 MaxRequestsPerWindow = caps.MaxRequestsPerWindow ?? 0,
                 WindowSeconds = (int)(caps.RateLimitWindow?.TotalSeconds ?? 0),

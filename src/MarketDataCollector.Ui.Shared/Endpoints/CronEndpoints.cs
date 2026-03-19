@@ -1,11 +1,11 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Scheduling;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Core.Scheduling;
+using Meridian.Application.Scheduling;
+using Meridian.Contracts.Api;
+using Meridian.Core.Scheduling;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering cron expression validation API endpoints.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Utility methods for validating and sanitizing file system paths in API inputs.

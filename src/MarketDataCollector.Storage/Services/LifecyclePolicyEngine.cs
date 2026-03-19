@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Engine that enforces tier-based lifecycle policies on stored data.

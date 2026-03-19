@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Core.Scheduling;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Core.Scheduling;
+using Meridian.Infrastructure.Adapters.Core;
 
-namespace MarketDataCollector.Application.Scheduling;
+namespace Meridian.Application.Scheduling;
 
 /// <summary>
 /// Represents a scheduled backfill configuration with cron-like scheduling.

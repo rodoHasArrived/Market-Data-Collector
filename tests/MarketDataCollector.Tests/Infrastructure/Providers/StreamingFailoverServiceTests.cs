@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Infrastructure.Adapters.Failover;
+using Meridian.Application.Config;
+using Meridian.Application.Monitoring;
+using Meridian.Infrastructure.Adapters.Failover;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Providers;
+namespace Meridian.Tests.Providers;
 
 /// <summary>
 /// Unit tests for <see cref="StreamingFailoverService"/>.

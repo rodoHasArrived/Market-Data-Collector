@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Storage.Services;
+using Meridian.Storage.Services;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class MetadataTagServiceTests : IDisposable
 {

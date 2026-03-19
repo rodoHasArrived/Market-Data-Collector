@@ -1,8 +1,8 @@
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Application.Logging;
+using Meridian.Infrastructure.Adapters.Core;
 using Serilog;
 
-namespace MarketDataCollector.Application.Backfill;
+namespace Meridian.Application.Backfill;
 
 /// <summary>
 /// Estimates the cost (API calls, wall-clock time, quota impact) of a backfill

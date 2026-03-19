@@ -1,8 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Api;
+using Meridian.Contracts.Api;
 
-namespace MarketDataCollector.Ui.Services.Contracts;
+namespace Meridian.Ui.Services.Contracts;
 
 /// <summary>
 /// Interface for retrieving system status from the collector.
@@ -31,7 +31,7 @@ public interface IStatusService
     /// <returns>A <see cref="ServiceHealthResult"/> containing health status information.</returns>
     /// <remarks>
     /// ServiceHealthResult and ApiResponse&lt;T&gt; are now defined in
-    /// MarketDataCollector.Contracts.Api.ClientModels.cs
+    /// Meridian.Contracts.Api.ClientModels.cs
     /// </remarks>
     Task<ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default);
 }

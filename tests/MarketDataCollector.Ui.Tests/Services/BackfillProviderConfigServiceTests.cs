@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Ui.Services;
+using Meridian.Contracts.Configuration;
+using Meridian.Ui.Services;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="BackfillProviderConfigService"/> — provider metadata,

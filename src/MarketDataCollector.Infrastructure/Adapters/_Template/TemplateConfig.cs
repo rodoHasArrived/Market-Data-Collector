@@ -3,7 +3,7 @@
 //
 // Integration steps:
 //   1. Copy TemplateBackfillConfig into src/MarketDataCollector.Core/Config/BackfillConfig.cs,
-//      change the namespace to MarketDataCollector.Application.Config, and rename the record.
+//      change the namespace to Meridian.Application.Config, and rename the record.
 //   2. Add `{YourProvider}Config? YourProvider = null` to BackfillProvidersConfig in BackfillConfig.cs.
 //   3. Copy TemplateStreamingOptions to a new dedicated file:
 //      src/MarketDataCollector.Core/Config/TemplateOptions.cs
@@ -13,7 +13,7 @@
 //
 // See docs/development/provider-implementation.md for the full guide.
 
-namespace MarketDataCollector.Infrastructure.Adapters.Template;
+namespace Meridian.Infrastructure.Adapters.Template;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Backfill / historical provider configuration
@@ -25,7 +25,7 @@ namespace MarketDataCollector.Infrastructure.Adapters.Template;
 /// TODO: Rename to <c>{YourProvider}Config</c>.
 /// TODO: Add provider-specific properties (e.g., feed, adjustment mode, database name).
 /// TODO: Move this record into <c>src/MarketDataCollector.Core/Config/BackfillConfig.cs</c>
-///       and change the namespace to <c>MarketDataCollector.Application.Config</c>.
+///       and change the namespace to <c>Meridian.Application.Config</c>.
 /// TODO: Add <c>{YourProvider}Config? YourProvider = null</c> to
 ///       <c>BackfillProvidersConfig</c> in <c>BackfillConfig.cs</c>.
 /// </summary>

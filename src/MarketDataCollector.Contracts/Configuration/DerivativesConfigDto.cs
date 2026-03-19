@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Contracts.Configuration;
+namespace Meridian.Contracts.Configuration;
 
 /// <summary>
 /// Configuration for derivatives (options and futures) data collection.

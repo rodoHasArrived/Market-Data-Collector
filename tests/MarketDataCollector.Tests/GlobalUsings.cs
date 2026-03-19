@@ -1,1 +1,1 @@
-global using MarketDataCollector.Contracts.Configuration;
+global using Meridian.Contracts.Configuration;

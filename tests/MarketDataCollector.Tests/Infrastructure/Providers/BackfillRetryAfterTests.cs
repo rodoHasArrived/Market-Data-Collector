@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure.Adapters;
+namespace Meridian.Tests.Infrastructure.Adapters;
 
 /// <summary>
 /// Unit tests for Retry-After header parsing in BackfillWorkerService.

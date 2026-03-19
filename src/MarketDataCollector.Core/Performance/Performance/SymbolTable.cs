@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
-namespace MarketDataCollector.Core.Performance;
+namespace Meridian.Core.Performance;
 
 /// <summary>
 /// Thread-safe symbol intern table that maps market symbol strings to compact integer IDs.

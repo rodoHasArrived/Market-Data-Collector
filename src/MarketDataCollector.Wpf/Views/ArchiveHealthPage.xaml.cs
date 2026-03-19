@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Contracts.Archive;
-using MarketDataCollector.Ui.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
+using Meridian.Contracts.Archive;
+using Meridian.Ui.Services;
+using WpfServices = Meridian.Wpf.Services;
 
-using MarketDataCollector.Wpf.Services;
-namespace MarketDataCollector.Wpf.Views;
+using Meridian.Wpf.Services;
+namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Page for archive health monitoring.

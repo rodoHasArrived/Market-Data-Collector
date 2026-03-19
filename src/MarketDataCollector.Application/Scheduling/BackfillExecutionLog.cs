@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
-namespace MarketDataCollector.Application.Scheduling;
+namespace Meridian.Application.Scheduling;
 
 /// <summary>
 /// Records the execution history of scheduled backfill jobs.

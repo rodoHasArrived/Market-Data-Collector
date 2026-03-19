@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Commands;
+namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Dispatches CLI arguments to the appropriate command handler.

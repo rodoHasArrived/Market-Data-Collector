@@ -1,14 +1,14 @@
 using System.Reflection;
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Ui.Shared;
+using Meridian.Contracts.Api;
+using Meridian.Storage;
+using Meridian.Ui.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering QuantConnect Lean integration API endpoints.

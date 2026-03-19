@@ -1,7 +1,7 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Serialization;
+using Meridian.Application.Serialization;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Centralized JSON serializer options for reading/writing AppConfig.

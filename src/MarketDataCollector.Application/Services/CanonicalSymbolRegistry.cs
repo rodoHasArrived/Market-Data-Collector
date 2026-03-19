@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Catalog;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Catalog;
+using Meridian.Storage.Interfaces;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 /// <summary>
 /// Canonical symbol registry providing standardized symbol naming across the system.

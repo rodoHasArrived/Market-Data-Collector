@@ -1,6 +1,6 @@
-using MarketDataCollector.Application.Services;
+using Meridian.Application.Services;
 
-namespace MarketDataCollector.Application.Config;
+namespace Meridian.Application.Config;
 
 /// <summary>
 /// Unified deployment context that captures all deployment-related settings at startup.

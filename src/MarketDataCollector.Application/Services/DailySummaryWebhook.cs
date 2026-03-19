@@ -3,17 +3,17 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Monitoring.DataQuality;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Infrastructure.Http;
+using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Monitoring.DataQuality;
+using Meridian.Application.Pipeline;
+using Meridian.Infrastructure.Http;
 using Serilog;
 
-namespace MarketDataCollector.Application.Services;
+namespace Meridian.Application.Services;
 
 // Type alias: StaleDataAlert is a DataAnomaly with Type = StaleData
-using StaleDataAlert = MarketDataCollector.Application.Monitoring.DataQuality.DataAnomaly;
+using StaleDataAlert = Meridian.Application.Monitoring.DataQuality.DataAnomaly;
 
 /// <summary>
 /// Sends end-of-day summary digests via webhook to external services.

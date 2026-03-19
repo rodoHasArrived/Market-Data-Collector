@@ -1,14 +1,14 @@
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Exceptions;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Config;
+using Meridian.Application.Exceptions;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Models;
 using Serilog;
 
-namespace MarketDataCollector.Infrastructure.Adapters.Core;
+namespace Meridian.Infrastructure.Adapters.Core;
 
 /// <summary>
 /// Background worker service that processes the backfill request queue.

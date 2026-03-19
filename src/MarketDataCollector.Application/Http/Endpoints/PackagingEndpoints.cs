@@ -1,10 +1,10 @@
 using System.Text.Json;
-using MarketDataCollector.Storage.Packaging;
+using Meridian.Storage.Packaging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// HTTP API endpoints for the Portable Data Packager.

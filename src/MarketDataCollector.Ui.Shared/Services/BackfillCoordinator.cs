@@ -1,13 +1,13 @@
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Adapters.Stooq;
-using MarketDataCollector.Infrastructure.Contracts;
-using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
-using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
-using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
+using Meridian.Application.Logging;
+using Meridian.Contracts.Api;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Stooq;
+using Meridian.Infrastructure.Contracts;
+using BackfillRequest = Meridian.Application.Backfill.BackfillRequest;
+using BackfillResult = Meridian.Application.Backfill.BackfillResult;
+using CoreBackfillCoordinator = Meridian.Application.UI.BackfillCoordinator;
 
-namespace MarketDataCollector.Ui.Shared.Services;
+namespace Meridian.Ui.Shared.Services;
 
 /// <summary>
 /// Result of a backfill preview operation.
@@ -53,7 +53,7 @@ public sealed record ExistingDataInfo(
 /// </summary>
 /// <remarks>
 /// <para><b>Migration Note:</b> This class wraps the core implementation from
-/// <see cref="MarketDataCollector.Application.UI.BackfillCoordinator"/> to add preview
+/// <see cref="Meridian.Application.UI.BackfillCoordinator"/> to add preview
 /// functionality while delegating core operations to the wrapped instance.</para>
 /// <para><b>Provider Discovery:</b> Uses <see cref="ProviderRegistry"/> for unified
 /// provider discovery. If a registry is provided, backfill providers are discovered
@@ -80,7 +80,7 @@ public sealed class BackfillCoordinator : IDisposable
         _registry = registry;
         _factory = factory;
         // Convert Ui.Shared.ConfigStore wrapper to the core ConfigStore for the core coordinator
-        var coreStore = new MarketDataCollector.Application.UI.ConfigStore(store.ConfigPath);
+        var coreStore = new Meridian.Application.UI.ConfigStore(store.ConfigPath);
         _core = new CoreBackfillCoordinator(coreStore, registry, factory);
     }
 
@@ -109,7 +109,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// <summary>
     /// Resolve a symbol using OpenFIGI.
     /// </summary>
-    public Task<MarketDataCollector.Infrastructure.Adapters.Core.SymbolResolution.SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
+    public Task<Meridian.Infrastructure.Adapters.Core.SymbolResolution.SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
         => _core.ResolveSymbolAsync(symbol, ct);
 
     /// <summary>
@@ -324,10 +324,10 @@ public sealed class BackfillCoordinator : IDisposable
     /// Creates the backfill service using providers from ProviderRegistry.
     /// Falls back to ProviderFactory or manual instantiation if registry is empty.
     /// </summary>
-    private MarketDataCollector.Application.Backfill.HistoricalBackfillService CreateService()
+    private Meridian.Application.Backfill.HistoricalBackfillService CreateService()
     {
         var providers = GetProviders();
-        return new MarketDataCollector.Application.Backfill.HistoricalBackfillService(providers, _log);
+        return new Meridian.Application.Backfill.HistoricalBackfillService(providers, _log);
     }
 
     /// <summary>

@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Contracts.Configuration;
+using Meridian.Contracts.Configuration;
 
-namespace MarketDataCollector.Contracts.Api;
+namespace Meridian.Contracts.Api;
 
 // ============================================================
 // Request DTOs

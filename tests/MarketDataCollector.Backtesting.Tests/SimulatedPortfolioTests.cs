@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Backtesting.Portfolio;
-using MarketDataCollector.Backtesting.Sdk;
+using Meridian.Backtesting.Portfolio;
+using Meridian.Backtesting.Sdk;
 
-namespace MarketDataCollector.Backtesting.Tests;
+namespace Meridian.Backtesting.Tests;
 
 public sealed class SimulatedPortfolioTests
 {

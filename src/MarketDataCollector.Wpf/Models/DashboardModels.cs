@@ -1,7 +1,7 @@
 using System.Windows.Media;
-using MarketDataCollector.Wpf.ViewModels;
+using Meridian.Wpf.ViewModels;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>Activity item for the dashboard activity feed.</summary>
 public sealed class DashboardActivityItem

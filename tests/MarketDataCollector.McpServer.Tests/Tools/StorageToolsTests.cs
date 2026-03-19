@@ -1,8 +1,8 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Contracts.Catalog;
+using Meridian.Application.Services;
+using Meridian.Contracts.Catalog;
 
-namespace MarketDataCollector.McpServer.Tests.Tools;
+namespace Meridian.McpServer.Tests.Tools;
 
 /// <summary>
 /// Unit tests for <see cref="StorageTools"/>.

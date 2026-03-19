@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
 
-namespace MarketDataCollector.Storage.Policies;
+namespace Meridian.Storage.Policies;
 
 /// <summary>
 /// Storage policy that generates file paths based on configurable naming conventions.

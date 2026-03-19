@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Ui.Services.Contracts;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Ui.Tests.Services;
+namespace Meridian.Ui.Tests.Services;
 
 /// <summary>
 /// Tests for <see cref="ConnectionServiceBase"/> — state machine,

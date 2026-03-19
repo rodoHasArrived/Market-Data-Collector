@@ -1,9 +1,9 @@
 using System.Threading;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Contracts.Configuration;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Infrastructure;
+namespace Meridian.Infrastructure;
 
 /// <summary>
 /// Market data client abstraction for provider-agnostic market data ingestion.

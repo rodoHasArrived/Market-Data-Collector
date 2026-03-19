@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Backtesting.Sdk;
+namespace Meridian.Backtesting.Sdk;
 
 /// <summary>Represents a complete or partial execution of a simulated order.</summary>
 public sealed record FillEvent(

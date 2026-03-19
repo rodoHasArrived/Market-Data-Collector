@@ -3,7 +3,7 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace MarketDataCollector.Application.Logging;
+namespace Meridian.Application.Logging;
 
 /// <summary>
 /// Configures Serilog logging infrastructure for the MarketDataCollector.

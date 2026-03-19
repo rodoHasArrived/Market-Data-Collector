@@ -1,9 +1,9 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Storage;
+using Meridian.Application.Config;
+using Meridian.Storage;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 /// <summary>
 /// Tests to verify default storage configuration values.

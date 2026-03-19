@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using MarketDataCollector.Infrastructure.Contracts;
+using Meridian.Infrastructure.Contracts;
 
-namespace MarketDataCollector.Infrastructure.Shared;
+namespace Meridian.Infrastructure.Shared;
 
 /// <summary>
 /// Generic interface for thread-safe symbol-keyed state storage.

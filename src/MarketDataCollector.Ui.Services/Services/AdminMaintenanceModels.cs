@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 // =====================================================================================
 // Admin Maintenance DTOs — shared across desktop applications.
@@ -272,7 +272,7 @@ public sealed class RetentionPoliciesResponse
 
 /// <summary>
 /// A storage retention policy definition for administrative operations.
-/// Note: Renamed from RetentionPolicy to avoid conflict with MarketDataCollector.Ui.Services.RetentionPolicy
+/// Note: Renamed from RetentionPolicy to avoid conflict with Meridian.Ui.Services.RetentionPolicy
 /// in RetentionAssuranceModels.cs which handles data retention periods.
 /// </summary>
 public sealed class StorageRetentionPolicy

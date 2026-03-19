@@ -1,10 +1,10 @@
 /// Order book imbalance calculations.
 /// Measures the relative pressure between bid and ask sides.
-module MarketDataCollector.FSharp.Calculations.Imbalance
+module Meridian.FSharp.Calculations.Imbalance
 
 open System
-open MarketDataCollector.FSharp.Domain.MarketEvents
-open MarketDataCollector.FSharp.Domain.Sides
+open Meridian.FSharp.Domain.MarketEvents
+open Meridian.FSharp.Domain.Sides
 
 /// Calculate order book imbalance from bid and ask quantities.
 /// Returns a value between -1 and +1:

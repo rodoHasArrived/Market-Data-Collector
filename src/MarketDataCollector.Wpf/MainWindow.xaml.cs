@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
-using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
-using WpfServices = MarketDataCollector.Wpf.Services;
-using MarketDataCollector.Wpf.Views;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Wpf.Contracts;
+using Meridian.Wpf.Services;
+using WpfServices = Meridian.Wpf.Services;
+using Meridian.Wpf.Views;
+using Meridian.Ui.Services;
+using Meridian.Ui.Services.Services;
 using SysNavigation = System.Windows.Navigation;
 
-namespace MarketDataCollector.Wpf;
+namespace Meridian.Wpf;
 
 /// <summary>
 /// Main application window containing the navigation frame.

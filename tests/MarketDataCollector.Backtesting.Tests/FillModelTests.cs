@@ -1,12 +1,12 @@
 using FluentAssertions;
-using MarketDataCollector.Backtesting.FillModels;
-using MarketDataCollector.Backtesting.Portfolio;
-using MarketDataCollector.Backtesting.Sdk;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using Meridian.Backtesting.FillModels;
+using Meridian.Backtesting.Portfolio;
+using Meridian.Backtesting.Sdk;
+using Meridian.Contracts.Domain.Enums;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Backtesting.Tests;
+namespace Meridian.Backtesting.Tests;
 
 public sealed class FillModelTests
 {

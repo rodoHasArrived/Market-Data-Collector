@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Media;
 
-namespace MarketDataCollector.Wpf.Models;
+namespace Meridian.Wpf.Models;
 
 /// <summary>Display model for a streaming provider status card.</summary>
 public sealed class ProviderStatusModel

@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Core;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Backfill;
+namespace Meridian.Tests.Backfill;
 
 /// <summary>
 /// Unit tests for the RateLimiter class.

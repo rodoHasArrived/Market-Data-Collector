@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Storage.Maintenance;
+namespace Meridian.Storage.Maintenance;
 
 /// <summary>
 /// Interface for tracking maintenance execution history.

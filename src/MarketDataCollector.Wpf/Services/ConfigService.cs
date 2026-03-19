@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Ui.Services;
-using MarketDataCollector.Ui.Services.Services;
+using Meridian.Contracts.Configuration;
+using Meridian.Ui.Services;
+using Meridian.Ui.Services.Services;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Result of configuration validation.

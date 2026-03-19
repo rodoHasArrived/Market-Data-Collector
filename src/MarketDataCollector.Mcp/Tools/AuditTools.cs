@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace MarketDataCollector.Mcp.Tools;
+namespace Meridian.Mcp.Tools;
 
 [McpServerToolType]
 public sealed class AuditTools(RepoPathService repo, ILogger<AuditTools> logger)

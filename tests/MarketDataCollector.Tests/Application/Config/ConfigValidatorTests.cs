@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Config;
+using Meridian.Application.Config;
 using Xunit;
 
-namespace MarketDataCollector.Tests;
+namespace Meridian.Tests;
 
 public class ConfigValidatorTests
 {

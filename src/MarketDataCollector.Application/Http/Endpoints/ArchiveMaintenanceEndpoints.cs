@@ -1,11 +1,11 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Scheduling;
-using MarketDataCollector.Core.Scheduling;
-using MarketDataCollector.Storage.Maintenance;
+using Meridian.Application.Scheduling;
+using Meridian.Core.Scheduling;
+using Meridian.Storage.Maintenance;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Application.UI;
+namespace Meridian.Application.UI;
 
 /// <summary>
 /// HTTP API endpoints for archive maintenance management.

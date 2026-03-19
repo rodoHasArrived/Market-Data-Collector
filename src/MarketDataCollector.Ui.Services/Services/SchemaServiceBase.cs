@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using MarketDataCollector.Contracts.Schema;
-using MarketDataCollector.Ui.Services.Contracts;
+using Meridian.Contracts.Schema;
+using Meridian.Ui.Services.Contracts;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Base class containing shared schema creation and export logic.
@@ -29,7 +29,7 @@ public abstract class SchemaServiceBase : ISchemaService
         var canonicalKey = schemas.Keys.Single(k => string.Equals(k, eventType, StringComparison.OrdinalIgnoreCase));
 
         return JsonSerializer.Serialize(
-            new { schema = canonicalKey, @namespace = "MarketDataCollector.Domain.Events", definition = schema },
+            new { schema = canonicalKey, @namespace = "Meridian.Domain.Events", definition = schema },
             new JsonSerializerOptions { WriteIndented = true });
     }
 

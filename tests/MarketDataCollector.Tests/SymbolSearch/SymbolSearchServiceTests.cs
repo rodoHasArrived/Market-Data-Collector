@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Infrastructure.Adapters.Core;
+using Meridian.Application.Subscriptions.Models;
+using Meridian.Application.Subscriptions.Services;
+using Meridian.Infrastructure.Adapters.Core;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.SymbolSearch;
+namespace Meridian.Tests.SymbolSearch;
 
 /// <summary>
 /// Unit tests for the SymbolSearchService class.

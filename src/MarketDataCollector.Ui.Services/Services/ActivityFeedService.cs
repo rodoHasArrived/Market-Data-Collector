@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Ui.Services.Collections;
+using Meridian.Contracts.Api;
+using Meridian.Ui.Services.Collections;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for tracking and displaying recent activity in the application.

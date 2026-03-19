@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Adapters.NYSE;
+namespace Meridian.Infrastructure.Adapters.NYSE;
 
 /// <summary>
 /// Configuration options for NYSE Direct Connection data source.

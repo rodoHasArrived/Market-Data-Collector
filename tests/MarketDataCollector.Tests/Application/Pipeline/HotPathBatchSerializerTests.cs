@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Core.Performance;
+using Meridian.Application.Pipeline;
+using Meridian.Core.Performance;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Pipeline;
+namespace Meridian.Tests.Pipeline;
 
 /// <summary>
 /// Tests for the hot-path batch serializer that converts <see cref="RawTradeEvent"/>

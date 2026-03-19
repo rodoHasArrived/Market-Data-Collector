@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Contracts.Api;
+using Meridian.Contracts.Api;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Base class for storage services providing platform-agnostic API delegation methods.

@@ -1,11 +1,11 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Pipeline;
+using Meridian.Application.Pipeline;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Pipeline;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Maps REST API endpoints for the unified ingestion job contract.

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Contracts.Api;
+namespace Meridian.Contracts.Api;
 
 /// <summary>
 /// Shared UI API routes for the web dashboard and desktop clients.

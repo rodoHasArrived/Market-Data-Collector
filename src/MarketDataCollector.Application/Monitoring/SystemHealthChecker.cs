@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
+using Meridian.Application.Logging;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Monitors system resources including disk space, memory, and CPU usage.

@@ -1,8 +1,8 @@
 using FluentAssertions;
-using MarketDataCollector.Infrastructure.Utilities;
+using Meridian.Infrastructure.Utilities;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Infrastructure;
+namespace Meridian.Tests.Infrastructure;
 
 /// <summary>
 /// Unit tests for the SymbolNormalization utility class.

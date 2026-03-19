@@ -3,16 +3,16 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.UI;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Models;
+using Meridian.Application.Logging;
+using Meridian.Application.Pipeline;
+using Meridian.Application.UI;
+using Meridian.Contracts.Api;
+using Meridian.Contracts.Domain.Models;
+using Meridian.Domain.Collectors;
+using Meridian.Domain.Models;
 using Serilog;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Lightweight HTTP server exposing runtime status, metrics (Prometheus format), and a minimal HTML dashboard.

@@ -1,8 +1,8 @@
-using MarketDataCollector.Storage;
+using Meridian.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Ui.Shared;
+namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// Background service that continuously exports collected market data to a Lean-compatible

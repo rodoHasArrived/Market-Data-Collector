@@ -1,10 +1,10 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Canonicalization;
-using MarketDataCollector.Contracts.Api;
+using Meridian.Application.Canonicalization;
+using Meridian.Contracts.Api;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Ui.Shared.Endpoints;
+namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
 /// Extension methods for registering canonicalization parity dashboard endpoints.

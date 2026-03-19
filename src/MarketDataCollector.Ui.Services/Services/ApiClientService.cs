@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Centralized HTTP client service for communicating with the Market Data Collector core service.
@@ -471,7 +471,7 @@ public sealed record AppSettings
 /// </summary>
 /// <remarks>
 /// ApiResponse&lt;T&gt; and ServiceHealthResult are now defined in
-/// MarketDataCollector.Contracts.Api.ClientModels.cs (imported via SharedModelAliases.cs)
+/// Meridian.Contracts.Api.ClientModels.cs (imported via SharedModelAliases.cs)
 /// </remarks>
 public sealed class ServiceUrlChangedEventArgs : EventArgs
 {

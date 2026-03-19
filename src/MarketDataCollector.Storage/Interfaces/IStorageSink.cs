@@ -1,8 +1,8 @@
 using System.Threading;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Domain.Events;
+using Meridian.Application.Services;
+using Meridian.Domain.Events;
 
-namespace MarketDataCollector.Storage.Interfaces;
+namespace Meridian.Storage.Interfaces;
 
 public interface IStorageSink : IAsyncDisposable, IFlushable
 {

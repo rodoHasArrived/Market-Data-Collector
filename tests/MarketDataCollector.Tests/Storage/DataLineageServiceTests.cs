@@ -1,10 +1,10 @@
 using FluentAssertions;
-using MarketDataCollector.Storage.Services;
+using Meridian.Storage.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class DataLineageServiceTests : IDisposable
 {

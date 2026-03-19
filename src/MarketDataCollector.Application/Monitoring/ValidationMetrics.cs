@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace MarketDataCollector.Application.Monitoring;
+namespace Meridian.Application.Monitoring;
 
 /// <summary>
 /// Thread-safe in-memory counters for the F# validation pipeline stage.

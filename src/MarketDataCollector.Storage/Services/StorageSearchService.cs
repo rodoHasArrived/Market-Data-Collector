@@ -2,11 +2,11 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
-using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Policies;
+using Meridian.Domain.Events;
+using Meridian.Storage.Interfaces;
+using Meridian.Storage.Policies;
 
-namespace MarketDataCollector.Storage.Services;
+namespace Meridian.Storage.Services;
 
 /// <summary>
 /// Service for searching and discovering data across storage.

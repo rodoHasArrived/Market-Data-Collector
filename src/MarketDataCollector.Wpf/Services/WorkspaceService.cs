@@ -4,15 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using UiServices = MarketDataCollector.Ui.Services;
-using WorkspaceTemplate = MarketDataCollector.Ui.Services.WorkspaceTemplate;
-using SessionState = MarketDataCollector.Ui.Services.SessionState;
-using WorkspaceCategory = MarketDataCollector.Ui.Services.WorkspaceCategory;
-using WorkspacePage = MarketDataCollector.Ui.Services.WorkspacePage;
-using WidgetPosition = MarketDataCollector.Ui.Services.WidgetPosition;
-using WorkspaceEventArgs = MarketDataCollector.Ui.Services.WorkspaceEventArgs;
+using UiServices = Meridian.Ui.Services;
+using WorkspaceTemplate = Meridian.Ui.Services.WorkspaceTemplate;
+using SessionState = Meridian.Ui.Services.SessionState;
+using WorkspaceCategory = Meridian.Ui.Services.WorkspaceCategory;
+using WorkspacePage = Meridian.Ui.Services.WorkspacePage;
+using WidgetPosition = Meridian.Ui.Services.WidgetPosition;
+using WorkspaceEventArgs = Meridian.Ui.Services.WorkspaceEventArgs;
 
-namespace MarketDataCollector.Wpf.Services;
+namespace Meridian.Wpf.Services;
 
 /// <summary>
 /// Service for managing workspace templates and session restore.

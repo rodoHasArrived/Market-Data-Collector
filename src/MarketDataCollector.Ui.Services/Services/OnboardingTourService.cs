@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace MarketDataCollector.Ui.Services;
+namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for managing interactive onboarding tours that guide new users
