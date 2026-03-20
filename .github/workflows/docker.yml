@@ -1,17 +1,25 @@
 # Unified Docker Build and Push Workflow
 # Builds multi-architecture Docker images and pushes to GitHub Container Registry
+#
+# Replaces and combines:
+#   - docker-image.yml (Docker Image CI — basic build on push/PR)
+#
+# CI build (push/PR): lightweight single-platform build to verify the Dockerfile compiles.
+# Manual dispatch: full multi-arch build with optional registry push.
 
 name: Docker
 
 on:
-  # push trigger disabled
-  # push:
-  #   branches: [ "main" ]
-  #   tags:
-  #     - 'v*'
-  # pull_request trigger disabled
-  # pull_request:
-  #   branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'deploy/docker/Dockerfile'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'deploy/docker/Dockerfile'
+      - '.github/workflows/docker.yml'
   workflow_dispatch:
     inputs:
       push:
@@ -37,10 +45,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Lightweight build check — runs on every push/PR to verify the Dockerfile compiles.
+  # No push to registry; replaces the old docker-image.yml CI job.
+  ci-build:
+    name: Docker CI Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image (CI check)
+        run: docker build . --file deploy/docker/Dockerfile --tag meridian:ci
+
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       id-token: write

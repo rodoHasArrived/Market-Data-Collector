@@ -13,7 +13,8 @@
         Background="{DynamicResource ConsoleBackgroundDarkBrush}"
         Loaded="OnWindowLoaded"
         Closing="OnWindowClosing"
-        KeyDown="OnWindowKeyDown">
+        KeyDown="OnWindowKeyDown"
+        AutomationProperties.Name="Meridian">
 
     <Window.InputBindings>
         <!-- Navigation shortcuts -->

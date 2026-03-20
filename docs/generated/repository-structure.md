@@ -115,7 +115,6 @@ Meridian/
 │   │   ├── desktop-builds.yml
 │   │   ├── docker.yml
 │   │   ├── documentation.yml
-│   │   ├── dotnet-desktop.yml
 │   │   ├── export-project-artifact.yml
 │   │   ├── golden-path-validation.yml
 │   │   ├── labeling.yml

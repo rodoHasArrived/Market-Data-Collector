@@ -224,7 +224,7 @@ Located in `src/Meridian.Application/Monitoring/DataQuality/`.
 | `release.yml` | Release automation |
 | `security.yml` | Security scanning (CodeQL, dependency audit) |
 | `test-matrix.yml` | Multi-platform test matrix (Windows, Linux, macOS) |
-| `update-diagrams.yml` / `update-uml-diagrams.yml` | Diagram generation |
+| `update-diagrams.yml` | Architecture diagram and UML generation |
 | `validate-workflows.yml` | Workflow validation |
 
 Full workflow details: `docs/development/github-actions-summary.md`

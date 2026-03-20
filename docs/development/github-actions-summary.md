@@ -10,11 +10,10 @@ This document provides a quick reference for all GitHub Actions workflows in the
 
 ## Workflow Inventory
 
-### Build & Release (6 workflows)
+### Build & Release (5 workflows)
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
-| Build and Release | `dotnet-desktop.yml` | Manual dispatch | Multi-platform publish (Linux, Windows, macOS x64/ARM64) |
 | Pull Request Checks | `pr-checks.yml` | PRs to main/develop | Format, build, test, coverage, AI review |
 | Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, optional GHCR push |
 | Release Management | `release.yml` | Manual dispatch | Semver validation, changelog, tag, GitHub release |

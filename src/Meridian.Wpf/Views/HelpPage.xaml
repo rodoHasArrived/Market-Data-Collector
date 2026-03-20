@@ -5,7 +5,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       d:DesignHeight="900" d:DesignWidth="1200"
-      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      AutomationProperties.Name="Help">
 
     <Page.Resources>
         <Style x:Key="KeyboardShortcutStyle" TargetType="Border">

@@ -107,7 +107,6 @@ Meridian/
 │   │   ├── docker.yml
 │   │   ├── docs-check.yml
 │   │   ├── documentation.yml
-│   │   ├── dotnet-desktop.yml
 │   │   ├── export-project-artifact.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
@@ -124,7 +123,6 @@ Meridian/
 │   │   ├── test-matrix.yml
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
-│   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── copilot-instructions.md
 │   ├── dependabot.yml

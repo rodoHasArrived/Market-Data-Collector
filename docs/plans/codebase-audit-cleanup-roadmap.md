@@ -254,16 +254,17 @@ Nine events are declared but never raised, suppressed via `#pragma warning disab
 
 > Reduce CI/CD maintenance burden and clean up documentation.
 
-### 4.1 Consolidate CI Workflows (M)
+### 4.1 Consolidate CI Workflows (M) ✅ Partially complete
 
-| Workflow | Issue | Recommendation |
-|----------|-------|----------------|
-| `docker-image.yml` | 316-byte stub, no real implementation | Remove or implement properly |
-| `copilot-pull-request-reviewer.yml` | Unclear if actively used | Verify with team; remove if unused |
-| `copilot-swe-agent-copilot.yml` | Unclear if actively used | Verify with team; remove if unused |
-| `copilot-setup-steps.yml` | Unclear if actively used | Verify with team; remove if unused |
-| `documentation.yml` vs `docs-check.yml` | Potential overlap | Merge if functionality overlaps |
-| `update-diagrams.yml` vs `update-uml-diagrams.yml` | Potential overlap | Merge if functionality overlaps |
+| Workflow | Issue | Status |
+|----------|-------|--------|
+| `docker-image.yml` | 316-byte stub, no real implementation | ✅ Removed; CI build job merged into `docker.yml` |
+| `dotnet-desktop.yml` | All triggers disabled; superseded by `desktop-builds.yml` | ✅ Removed |
+| `update-uml-diagrams.yml` | Duplicate of diagram job | ✅ Removed; merged into `update-diagrams.yml` |
+| `copilot-pull-request-reviewer.yml` | Unclear if actively used | Pending: verify with team; remove if unused |
+| `copilot-swe-agent-copilot.yml` | Unclear if actively used | Pending: verify with team; remove if unused |
+| `copilot-setup-steps.yml` | Unclear if actively used | Pending: verify with team; remove if unused |
+| `documentation.yml` vs `docs-check.yml` | Potential overlap | Pending: merge if functionality overlaps |
 
 **Target:** Reduce from 32 to ~24 workflows.
 

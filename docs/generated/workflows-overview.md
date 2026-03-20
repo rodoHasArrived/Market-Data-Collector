@@ -15,9 +15,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Benchmark Performance | `benchmark.yml` | push, PR, manual |
 | Bottleneck Detection | `bottleneck-detection.yml` | PR, manual |
 | Build Observability | `build-observability.yml` | push, PR, manual |
-| Build and Release | `dotnet-desktop.yml` | push, PR, manual |
 | Close Duplicate and Stale Auto-Generated Issues | `close-duplicate-issues.yml` | manual, scheduled |
-| Code Quality | `code-quality.yml` | push, PR, manual |
 | Copilot Pull Request Reviewer | `copilot-pull-request-reviewer.yml` | PR, manual |
 | Copilot SWE Agent / Copilot | `copilot-swe-agent-copilot.yml` | manual |
 | Copilot Setup Steps | `copilot-setup-steps.yml` | push, manual |

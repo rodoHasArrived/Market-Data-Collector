@@ -59,10 +59,10 @@ Install the PlantUML extension (`jebbs.plantuml`) and preview with `Alt+D`.
 
 ## Automated Maintenance Workflow (GitHub Actions)
 
-The repository includes `.github/workflows/update-uml-diagrams.yml` to keep committed PNG artifacts in sync:
+The repository includes `.github/workflows/update-diagrams.yml` to keep committed PNG artifacts in sync:
 
 - Triggered on pushes to `main` that modify `docs/diagrams/uml/*.puml`
-- Triggered manually via **Actions → Update UML Diagram Artifacts**
+- Triggered manually via **Actions → Update Diagram Artifacts**
 - Installs PlantUML and re-renders `docs/diagrams/uml/*.png`
 - Auto-commits changed PNG files back to the branch
 

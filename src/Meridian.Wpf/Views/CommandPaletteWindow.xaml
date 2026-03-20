@@ -13,7 +13,8 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         Deactivated="OnWindowDeactivated"
-        KeyDown="OnWindowKeyDown">
+        KeyDown="OnWindowKeyDown"
+        AutomationProperties.Name="Command Palette">
 
     <Border Background="#FF1E1E2E"
             CornerRadius="8"
