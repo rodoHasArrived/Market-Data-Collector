@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Meridian.Contracts.Api;
+using Meridian.Contracts.Api.Quality;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -55,7 +56,7 @@ public static class DataQualityEndpoints
     /// <summary>
     /// Returns the result as JSON using the shared serializer options.
     /// </summary>
-    private static IResult Json(object value) => Results.Json(value, s_jsonOptions);
+    private static IResult Json<T>(T value) => Results.Json(value, s_jsonOptions);
 
     /// <summary>
     /// Maps all data quality monitoring endpoints.
@@ -65,7 +66,7 @@ public static class DataQualityEndpoints
         // ==================== DASHBOARD ====================
 
         app.MapGet(UiApiRoutes.QualityDashboard, () =>
-            HandleSync(() => Json(qualityService.GetDashboard())));
+            HandleSync(() => Json(ToResponse(qualityService.GetDashboard()))));
 
         app.MapGet(UiApiRoutes.QualityMetrics, () =>
             HandleSync(() => Json(qualityService.GetRealTimeMetrics())));
@@ -112,10 +113,10 @@ public static class DataQualityEndpoints
                 if (date != null)
                 {
                     var targetDate = DateOnly.Parse(date);
-                    return Json(qualityService.GapAnalyzer.GetGapsForDate(targetDate));
+                    return Json(qualityService.GapAnalyzer.GetGapsForDate(targetDate).Select(ToResponse).ToArray());
                 }
 
-                return Json(qualityService.GapAnalyzer.GetRecentGaps(count ?? 100));
+                return Json(qualityService.GapAnalyzer.GetRecentGaps(count ?? 100).Select(ToResponse).ToArray());
             }));
 
         app.MapGet(UiApiRoutes.QualityGapsBySymbol, (string symbol, string? date) =>
@@ -192,21 +193,21 @@ public static class DataQualityEndpoints
                     anomalies = qualityService.AnomalyDetector.GetRecentAnomalies(count ?? 100);
                 }
 
-                return Json(anomalies);
+                return Json(anomalies.Select(ToResponse).ToArray());
             }));
 
         app.MapGet(UiApiRoutes.QualityAnomaliesBySymbol, (string symbol, int? count) =>
-            HandleSync(() => Json(qualityService.AnomalyDetector.GetAnomalies(symbol, count ?? 100))));
+            HandleSync(() => Json(qualityService.AnomalyDetector.GetAnomalies(symbol, count ?? 100).Select(ToResponse).ToArray())));
 
         app.MapGet(UiApiRoutes.QualityAnomaliesUnacknowledged, (int? count) =>
-            HandleSync(() => Json(qualityService.AnomalyDetector.GetUnacknowledgedAnomalies(count ?? 100))));
+            HandleSync(() => Json(qualityService.AnomalyDetector.GetUnacknowledgedAnomalies(count ?? 100).Select(ToResponse).ToArray())));
 
         app.MapPost(UiApiRoutes.QualityAnomaliesAcknowledge, (string anomalyId) =>
             HandleSync(() =>
             {
                 var success = qualityService.AnomalyDetector.AcknowledgeAnomaly(anomalyId);
                 return success
-                    ? Results.Ok(new { acknowledged = true })
+                    ? Json(new QualityAnomalyAcknowledgementResponse(Acknowledged: true))
                     : Results.NotFound($"Anomaly {anomalyId} not found");
             }));
 
@@ -234,7 +235,7 @@ public static class DataQualityEndpoints
             HandleSync(() => Json(new { symbol, provider, buckets = qualityService.LatencyHistogram.GetBuckets(symbol, provider) })));
 
         app.MapGet(UiApiRoutes.QualityLatencyStatistics, () =>
-            HandleSync(() => Json(qualityService.LatencyHistogram.GetStatistics())));
+            HandleSync(() => Json(ToResponse(qualityService.LatencyHistogram.GetStatistics()))));
 
         app.MapGet(UiApiRoutes.QualityLatencyHigh, (double? thresholdMs) =>
             HandleSync(() => Json(qualityService.LatencyHistogram.GetHighLatencySymbols(thresholdMs ?? 100))));
@@ -245,7 +246,7 @@ public static class DataQualityEndpoints
             HandleSync(() =>
             {
                 var targetDate = ParseDateOrToday(date);
-                return Json(qualityService.CrossProvider.Compare(symbol, targetDate, eventType ?? "Trade"));
+                return Json(ToResponse(qualityService.CrossProvider.Compare(symbol, targetDate, eventType ?? "Trade")));
             }));
 
         app.MapGet(UiApiRoutes.QualityComparisonDiscrepancies, (string? date, int? count) =>
@@ -343,6 +344,179 @@ public static class DataQualityEndpoints
         app.MapGet(UiApiRoutes.QualityHealthUnhealthy, () =>
             HandleSync(() => Json(qualityService.GetUnhealthySymbols())));
     }
+
+    private static QualityDashboardResponse ToResponse(DataQualityDashboard dashboard) =>
+        new(
+            Timestamp: dashboard.Timestamp,
+            RealTimeMetrics: ToResponse(dashboard.RealTimeMetrics),
+            CompletenessStats: ToResponse(dashboard.CompletenessStats),
+            GapStats: ToResponse(dashboard.GapStats),
+            SequenceStats: ToResponse(dashboard.SequenceStats),
+            AnomalyStats: ToResponse(dashboard.AnomalyStats),
+            LatencyStats: ToResponse(dashboard.LatencyStats),
+            RecentGaps: dashboard.RecentGaps.Select(ToResponse).ToArray(),
+            RecentErrors: dashboard.RecentErrors.Select(ToResponse).ToArray(),
+            RecentAnomalies: dashboard.RecentAnomalies.Select(ToResponse).ToArray(),
+            StaleSymbols: dashboard.StaleSymbols.ToArray());
+
+    private static QualityRealTimeMetricsResponse ToResponse(RealTimeQualityMetrics metrics) =>
+        new(
+            Timestamp: metrics.Timestamp,
+            ActiveSymbols: metrics.ActiveSymbols,
+            OverallHealthScore: metrics.OverallHealthScore,
+            EventsPerSecond: metrics.EventsPerSecond,
+            GapsLast5Minutes: metrics.GapsLast5Minutes,
+            SequenceErrorsLast5Minutes: metrics.SequenceErrorsLast5Minutes,
+            AnomaliesLast5Minutes: metrics.AnomaliesLast5Minutes,
+            AverageLatencyMs: metrics.AverageLatencyMs,
+            SymbolsWithIssues: metrics.SymbolsWithIssues,
+            SymbolHealth: metrics.SymbolHealth.Select(ToResponse).ToArray());
+
+    private static QualitySymbolHealthResponse ToResponse(SymbolHealthStatus status) =>
+        new(
+            Symbol: status.Symbol,
+            State: (byte)status.State,
+            Score: status.Score,
+            LastEvent: status.LastEvent,
+            TimeSinceLastEvent: status.TimeSinceLastEvent,
+            ActiveIssues: status.ActiveIssues);
+
+    private static QualityCompletenessSummaryResponse ToResponse(CompletenessSummary summary) =>
+        new(
+            TotalSymbolDates: summary.TotalSymbolDates,
+            AverageScore: summary.AverageScore,
+            MinScore: summary.MinScore,
+            MaxScore: summary.MaxScore,
+            SymbolsTracked: summary.SymbolsTracked,
+            DatesTracked: summary.DatesTracked,
+            TotalEvents: summary.TotalEvents,
+            TotalExpectedEvents: summary.TotalExpectedEvents,
+            OverallCoverage: summary.OverallCoverage,
+            GradeDistribution: new Dictionary<string, int>(summary.GradeDistribution),
+            CalculatedAt: summary.CalculatedAt);
+
+    private static QualityGapStatisticsResponse ToResponse(GapStatistics statistics) =>
+        new(
+            TotalGaps: statistics.TotalGaps,
+            TotalGapDuration: statistics.TotalGapDuration,
+            AverageGapDuration: statistics.AverageGapDuration,
+            MaxGapDuration: statistics.MaxGapDuration,
+            MinGapDuration: statistics.MinGapDuration,
+            GapsBySeverity: statistics.GapsBySeverity.ToDictionary(entry => (byte)entry.Key, entry => entry.Value),
+            SymbolsAffected: statistics.SymbolsAffected,
+            MostAffectedSymbols: statistics.MostAffectedSymbols.ToArray(),
+            CalculatedAt: statistics.CalculatedAt);
+
+    private static QualitySequenceErrorStatisticsResponse ToResponse(SequenceErrorStatistics statistics) =>
+        new(
+            TotalEventsChecked: statistics.TotalEventsChecked,
+            TotalErrors: statistics.TotalErrors,
+            ErrorRate: statistics.ErrorRate,
+            ErrorsByType: statistics.ErrorsByType.ToDictionary(entry => (byte)entry.Key, entry => entry.Value),
+            SymbolsWithErrors: statistics.SymbolsWithErrors,
+            AverageGapSize: statistics.AverageGapSize,
+            MaxGapSize: statistics.MaxGapSize,
+            CalculatedAt: statistics.CalculatedAt);
+
+    private static QualityAnomalyStatisticsResponse ToResponse(AnomalyStatistics statistics) =>
+        new(
+            TotalAnomalies: statistics.TotalAnomalies,
+            AnomaliesByType: statistics.AnomaliesByType.ToDictionary(entry => (byte)entry.Key, entry => entry.Value),
+            AnomaliesBySeverity: statistics.AnomaliesBySeverity.ToDictionary(entry => (byte)entry.Key, entry => entry.Value),
+            SymbolsWithMostAnomalies: statistics.SymbolsWithMostAnomalies
+                .Select(entry => new QualityCountBySymbolResponse(entry.Symbol, entry.Count))
+                .ToArray(),
+            UnacknowledgedCount: statistics.UnacknowledgedCount,
+            AnomaliesLast24Hours: statistics.AnomaliesLast24Hours,
+            CalculatedAt: statistics.CalculatedAt);
+
+    private static QualityLatencyStatisticsResponse ToResponse(LatencyStatistics statistics) =>
+        new(
+            SymbolsTracked: statistics.SymbolsTracked,
+            TotalSamples: statistics.TotalSamples,
+            GlobalMeanMs: statistics.GlobalMeanMs,
+            GlobalP50Ms: statistics.GlobalP50Ms,
+            GlobalP90Ms: statistics.GlobalP90Ms,
+            GlobalP99Ms: statistics.GlobalP99Ms,
+            FastestSymbol: statistics.FastestSymbol,
+            SlowestSymbol: statistics.SlowestSymbol,
+            DistributionsBySymbol: new Dictionary<string, double>(statistics.DistributionsBySymbol),
+            CalculatedAt: statistics.CalculatedAt);
+
+    private static QualityGapResponse ToResponse(DataGap gap) =>
+        new(
+            Symbol: gap.Symbol,
+            EventType: gap.EventType,
+            GapStart: gap.GapStart,
+            GapEnd: gap.GapEnd,
+            Duration: gap.Duration,
+            MissedSequenceStart: gap.MissedSequenceStart,
+            MissedSequenceEnd: gap.MissedSequenceEnd,
+            EstimatedMissedEvents: gap.EstimatedMissedEvents,
+            Severity: (byte)gap.Severity,
+            PossibleCause: gap.PossibleCause);
+
+    private static QualitySequenceErrorResponse ToResponse(SequenceError error) =>
+        new(
+            Timestamp: error.Timestamp,
+            Symbol: error.Symbol,
+            EventType: error.EventType,
+            ErrorType: (byte)error.ErrorType,
+            ExpectedSequence: error.ExpectedSequence,
+            ActualSequence: error.ActualSequence,
+            GapSize: error.GapSize,
+            StreamId: error.StreamId,
+            Provider: error.Provider);
+
+    private static QualityAnomalyResponse ToResponse(DataAnomaly anomaly) =>
+        new(
+            Id: anomaly.Id,
+            Timestamp: anomaly.Timestamp,
+            Symbol: anomaly.Symbol,
+            Type: (byte)anomaly.Type,
+            Severity: (byte)anomaly.Severity,
+            Description: anomaly.Description,
+            ExpectedValue: anomaly.ExpectedValue,
+            ActualValue: anomaly.ActualValue,
+            DeviationPercent: anomaly.DeviationPercent,
+            ZScore: anomaly.ZScore,
+            Provider: anomaly.Provider,
+            IsAcknowledged: anomaly.IsAcknowledged,
+            DetectedAt: anomaly.DetectedAt);
+
+    private static QualityComparisonResponse ToResponse(CrossProviderComparison comparison) =>
+        new(
+            Symbol: comparison.Symbol,
+            Date: comparison.Date,
+            EventType: comparison.EventType,
+            Providers: comparison.Providers.Select(ToResponse).ToArray(),
+            Discrepancies: comparison.Discrepancies.Select(ToResponse).ToArray(),
+            RecommendedProvider: comparison.RecommendedProvider,
+            ComparedAt: comparison.ComparedAt);
+
+    private static QualityProviderDataSummaryResponse ToResponse(ProviderDataSummary summary) =>
+        new(
+            Provider: summary.Provider,
+            EventCount: summary.EventCount,
+            FirstEvent: summary.FirstEvent,
+            LastEvent: summary.LastEvent,
+            Coverage: summary.Coverage,
+            GapCount: summary.GapCount,
+            CompletenessScore: summary.CompletenessScore,
+            Latency: summary.Latency,
+            IsRecommended: summary.IsRecommended);
+
+    private static QualityProviderDiscrepancyResponse ToResponse(ProviderDiscrepancy discrepancy) =>
+        new(
+            Timestamp: discrepancy.Timestamp,
+            DiscrepancyType: discrepancy.DiscrepancyType,
+            Provider1: discrepancy.Provider1,
+            Provider2: discrepancy.Provider2,
+            Field: discrepancy.Field,
+            Value1: discrepancy.Value1,
+            Value2: discrepancy.Value2,
+            Difference: discrepancy.Difference,
+            Severity: (byte)discrepancy.Severity);
 
     /// <summary>
     /// Maps SLA monitoring endpoints (ADQ-4.6).
