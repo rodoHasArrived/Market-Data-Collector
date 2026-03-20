@@ -21,5 +21,8 @@ public enum DataSourceKind : byte
     StockSharp = 3,
 
     /// <summary>NYSE market data feed.</summary>
-    NYSE = 4
+    NYSE = 4,
+
+    /// <summary>Built-in synthetic/reference market data for offline development and replay.</summary>
+    Synthetic = 5
 }

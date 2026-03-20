@@ -118,7 +118,8 @@ public sealed record BackfillProvidersConfig(
     TiingoConfig? Tiingo = null,
     PolygonConfig? Polygon = null,
     AlphaVantageConfig? AlphaVantage = null,
-    FinnhubConfig? Finnhub = null
+    FinnhubConfig? Finnhub = null,
+    SyntheticMarketDataConfig? Synthetic = null
 );
 
 /// <summary>

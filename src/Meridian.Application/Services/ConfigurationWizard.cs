@@ -319,6 +319,9 @@ public sealed class ConfigurationWizard
             case DataSourceKind.IB:
                 selection.IB = await ConfigureIBOptionsAsync(ct);
                 break;
+            case DataSourceKind.Synthetic:
+                PrintLine("\n  Synthetic offline dataset selected. No credentials are required.");
+                break;
         }
 
         return selection;
@@ -936,6 +939,9 @@ public sealed class ConfigurationWizard
                             break;
                         case DataSourceKind.Polygon:
                             dataSource.Polygon = await ConfigurePolygonOptionsAsync(ct);
+                            break;
+                        case DataSourceKind.Synthetic:
+                            PrintLine("\n  Synthetic offline dataset selected. No credentials are required.");
                             break;
                     }
 

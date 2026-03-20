@@ -627,6 +627,13 @@ public static class ServiceCompositionRoot
                 publisher, tradeCollector, depthCollector);
         });
 
+        // Synthetic offline data provider
+        registry.RegisterStreamingFactory(DataSourceKind.Synthetic, () =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            return new SyntheticMarketDataClient(publisher, config.Synthetic);
+        });
+
         log.Information("Registered streaming factories for {Count} data sources",
             registry.SupportedStreamingSources.Count);
     }
@@ -686,10 +693,11 @@ public static class ServiceCompositionRoot
             "polygon" => DataSourceKind.Polygon,
             "stocksharp" => DataSourceKind.StockSharp,
             "nyse" => DataSourceKind.NYSE,
+            "synthetic" => DataSourceKind.Synthetic,
             _ => default
         };
 
-        return id.ToLowerInvariant() is "ib" or "interactivebrokers" or "alpaca" or "polygon" or "stocksharp" or "nyse";
+        return id.ToLowerInvariant() is "ib" or "interactivebrokers" or "alpaca" or "polygon" or "stocksharp" or "nyse" or "synthetic";
     }
 
     /// <summary>

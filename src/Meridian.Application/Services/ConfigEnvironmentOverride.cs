@@ -28,6 +28,7 @@ public sealed class ConfigEnvironmentOverride
         ["MDC_DATA_ROOT"] = "DataRoot",
         ["MDC_COMPRESS"] = "Compress",
         ["MDC_DATASOURCE"] = "DataSource",
+        ["MDC_SYNTHETIC_MODE"] = "Synthetic:Enabled",
 
         // Alpaca settings
         ["MDC_ALPACA_KEY_ID"] = "Alpaca:KeyId",
@@ -226,12 +227,39 @@ public sealed class ConfigEnvironmentOverride
             "DataRoot" => config with { DataRoot = value },
             "Compress" => config with { Compress = ParseBool(value) },
             "DataSource" => config with { DataSource = ParseDataSource(value) },
+            "Synthetic" => ApplySyntheticOverride(config, parts.Skip(1).ToArray(), value),
             "Alpaca" => ApplyAlpacaOverride(config, parts.Skip(1).ToArray(), value),
             "StockSharp" => ApplyStockSharpOverride(config, parts.Skip(1).ToArray(), value),
             "Storage" => ApplyStorageOverride(config, parts.Skip(1).ToArray(), value),
             "Backfill" => ApplyBackfillOverride(config, parts.Skip(1).ToArray(), value),
             _ => config
         };
+    }
+
+
+    private AppConfig ApplySyntheticOverride(AppConfig config, string[] path, string value)
+    {
+        var synthetic = config.Synthetic ?? new SyntheticMarketDataConfig();
+
+        if (path.Length == 0)
+            return config;
+
+        synthetic = path[0] switch
+        {
+            "Enabled" => synthetic with { Enabled = ParseBool(value) },
+            _ => synthetic
+        };
+
+        if (path[0].Equals("Enabled", StringComparison.OrdinalIgnoreCase) && ParseBool(value))
+        {
+            var backfill = config.Backfill ?? new BackfillConfig();
+            var providers = backfill.Providers ?? new BackfillProvidersConfig();
+            providers = providers with { Synthetic = synthetic };
+            backfill = backfill with { Providers = providers };
+            return config with { Synthetic = synthetic, Backfill = backfill, DataSource = DataSourceKind.Synthetic };
+        }
+
+        return config with { Synthetic = synthetic };
     }
 
     private AppConfig ApplyAlpacaOverride(AppConfig config, string[] path, string value)
@@ -456,6 +484,8 @@ public sealed class ConfigEnvironmentOverride
             return "Storage Configuration";
         if (envVar.StartsWith("MDC_BACKFILL"))
             return "Backfill Configuration";
+        if (envVar.StartsWith("MDC_SYNTHETIC"))
+            return "Synthetic Provider";
         if (envVar.Contains("API_KEY") || envVar.Contains("TOKEN"))
             return "API Keys";
         return "Core Configuration";
@@ -467,7 +497,8 @@ public sealed class ConfigEnvironmentOverride
         {
             "MDC_DATA_ROOT" => "Root directory for data storage",
             "MDC_COMPRESS" => "Enable gzip compression (true/false)",
-            "MDC_DATASOURCE" => "Data source provider (IB, Alpaca, Polygon, StockSharp, NYSE)",
+            "MDC_DATASOURCE" => "Data source provider (IB, Alpaca, Polygon, StockSharp, NYSE, Synthetic)",
+            "MDC_SYNTHETIC_MODE" => "Enable the built-in synthetic/offline market data provider",
             "MDC_ALPACA_FEED" => "Alpaca data feed (iex or sip)",
             "MDC_STOCKSHARP_CONNECTOR" => "StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers, Custom)",
             "MDC_STOCKSHARP_ADAPTER_TYPE" => "StockSharp adapter type for custom connectors",
