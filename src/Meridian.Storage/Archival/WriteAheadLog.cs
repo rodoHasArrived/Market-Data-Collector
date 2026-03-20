@@ -722,14 +722,18 @@ public sealed class WriteAheadLog : IAsyncDisposable
         {
             ct.ThrowIfCancellationRequested();
 
-            // Skip the currently active WAL file and the last-recovered file (which
-            // was still open when the process last exited and is not a cleanly rotated
-            // file eligible for in-place repair).
-            if (string.Equals(walFile, _currentWalPath, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(walFile, _lastRecoveredWalPath, StringComparison.OrdinalIgnoreCase))
+            // Skip the currently active WAL file entirely; it may still be open for writes.
+            if (string.Equals(walFile, _currentWalPath, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
+
+            // The file that was open at crash time is still worth scanning so callers get an
+            // accurate corruption/retention report, but it is not eligible for in-place rewrite.
+            var canRewriteInPlace = !string.Equals(
+                walFile,
+                _lastRecoveredWalPath,
+                StringComparison.OrdinalIgnoreCase);
 
             var fileValidRecords = new List<WalRecord>();
             int fileCorruptedCount = 0;
@@ -792,8 +796,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
                 });
             }
 
-            // Only rewrite the file if corruption was found
-            if (fileCorruptedCount > 0)
+            // Only rewrite files that are eligible for in-place repair and actually contain corruption.
+            if (fileCorruptedCount > 0 && canRewriteInPlace)
             {
                 var tempPath = walFile + ".repair";
 
@@ -823,6 +827,12 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
                 _log.Information(
                     "Repaired WAL file {File}: kept {ValidCount} records, removed {CorruptedCount} corrupted",
+                    walFile, fileValidRecords.Count, fileCorruptedCount);
+            }
+            else if (fileCorruptedCount > 0)
+            {
+                _log.Information(
+                    "Scanned WAL file {File}: kept {ValidCount} records and found {CorruptedCount} corrupted, but skipped in-place rewrite because it was the last recovered file",
                     walFile, fileValidRecords.Count, fileCorruptedCount);
             }
         }
