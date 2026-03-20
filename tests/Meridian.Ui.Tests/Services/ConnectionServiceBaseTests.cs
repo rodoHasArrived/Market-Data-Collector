@@ -18,6 +18,7 @@ public sealed class ConnectionServiceBaseTests
     private sealed class TestConnectionService : ConnectionServiceBase
     {
         public bool HealthCheckResult { get; set; } = true;
+        public Exception? HealthCheckException { get; set; }
         public int MonitoringTimerStartCount { get; private set; }
         public int MonitoringTimerStopCount { get; private set; }
         public int ReconnectTimerStartCount { get; private set; }
@@ -27,7 +28,14 @@ public sealed class ConnectionServiceBaseTests
         public List<string> LogMessages { get; } = new();
 
         protected override Task<bool> PerformHealthCheckCoreAsync(CancellationToken ct)
-            => Task.FromResult(HealthCheckResult);
+        {
+            if (HealthCheckException != null)
+            {
+                return Task.FromException<bool>(HealthCheckException);
+            }
+
+            return Task.FromResult(HealthCheckResult);
+        }
 
         protected override void StartMonitoringTimer(int intervalMs)
         {
@@ -113,6 +121,51 @@ public sealed class ConnectionServiceBaseTests
         received!.OldState.Should().Be(ConnectionState.Disconnected);
         received.NewState.Should().Be(ConnectionState.Connected);
         received.Provider.Should().Be("EventProv");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_WhenHealthCheckIsCanceled_ReturnsFalseWithoutChangingState()
+    {
+        using var svc = new TestConnectionService
+        {
+            HealthCheckException = new OperationCanceledException()
+        };
+
+        var result = await svc.ConnectAsync("CanceledProvider");
+
+        result.Should().BeFalse();
+        svc.State.Should().Be(ConnectionState.Disconnected);
+        svc.IsMonitoring.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HealthCheck_AfterThreeFailures_ShouldScheduleReconnect()
+    {
+        using var svc = new TestConnectionService();
+        await svc.ConnectAsync("Provider");
+        svc.HealthCheckResult = false;
+
+        await svc.SimulateHealthCheck();
+        await svc.SimulateHealthCheck();
+        await svc.SimulateHealthCheck();
+
+        svc.State.Should().Be(ConnectionState.Reconnecting);
+        svc.ReconnectTimerStartCount.Should().Be(1);
+        svc.LastReconnectDelayMs.Should().Be(1000);
+    }
+
+    [Fact]
+    public async Task ResumeAutoReconnect_WhenDisconnected_ShouldScheduleReconnect()
+    {
+        using var svc = new TestConnectionService();
+        await svc.ConnectAsync("Provider");
+        await svc.DisconnectAsync();
+        svc.PauseAutoReconnect();
+
+        svc.ResumeAutoReconnect();
+
+        svc.State.Should().Be(ConnectionState.Reconnecting);
+        svc.ReconnectTimerStartCount.Should().Be(1);
     }
 
     // ── DisconnectAsync ──────────────────────────────────────────────

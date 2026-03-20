@@ -67,6 +67,50 @@ make test-desktop-services
 
 ---
 
+## Standard Execution Flow
+
+For every task, follow this sequence to maximize quality and minimize review cycles:
+
+1. **Restate the requested change** in one sentence.
+2. **Identify acceptance criteria** before coding (including required tests).
+3. **Make the smallest possible set of edits** that satisfy the task.
+4. **Run targeted validation commands** (see "Quick Commands" section above).
+5. **Summarize what changed, why, and how it was validated.**
+
+If requirements are ambiguous, document assumptions and propose concrete acceptance criteria before proceeding.
+
+---
+
+## Quality Bar Checklist (Before Opening PR or Marking Work Complete)
+
+Always complete this checklist before submitting a PR or marking work as complete:
+
+1. **Review known errors:** Run `python3 build/scripts/ai-repo-updater.py known-errors` and scan `docs/ai/ai-known-errors.md`. Apply all relevant prevention checks. If this task is related to a past AI mistake, verify the prevention pattern is applied.
+
+2. **Restore and build with Windows targeting:**
+   ```bash
+   dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
+   dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+   ```
+   **Note:** Always use `/p:EnableWindowsTargeting=true` on non-Windows systems to avoid NETSDK1100 errors.
+
+3. **Run tests relevant to touched code:**
+   - If you modified `src/Meridian.Domain/**`: `dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true`
+   - If you modified `src/Meridian.FSharp/**`: also run `dotnet test tests/Meridian.FSharp.Tests -c Release /p:EnableWindowsTargeting=true`
+   - If you modified WPF files: also run `dotnet test tests/Meridian.Wpf.Tests -c Release /p:EnableWindowsTargeting=true`
+   - Run `make test` to run all tests if unsure
+
+4. **Update docs when behavior changes:**
+   - Public API changes → update interface documentation in relevant `CLAUDE.*.md` file or code comments
+   - New feature or workflow change → update `docs/HELP.md` FAQ or relevant architecture doc
+   - Provider added/modified → update provider inventory in `CLAUDE.md` or `docs/ai/claude/CLAUDE.providers.md`
+
+5. **Keep PR title and body in sync:**
+   - Title should match final implemented behavior
+   - Body should include: summary, risks/tradeoffs, validation commands run, and follow-up items
+
+---
+
 ## AI Error Prevention
 
 **Required workflow:**
@@ -164,6 +208,29 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 - Prefer `Span<T>` / `Memory<T>` for buffer ops
 - Use `System.Threading.Channels` for producer-consumer patterns
 
+### Path-Specific Instruction Rules
+
+When working with files in specific paths or types, additional rules apply. Review these before making changes:
+
+**C# source files** (`src/**/*.cs`):
+- Use `IOptionsMonitor<T>` (not `IOptions<T>`) for runtime-mutable config
+- All JSON serialization must use ADR-014 source generators — call `JsonSerializer.Serialize(value, MyJsonContext.Default.MyType)`
+- Use `EventPipelinePolicy.Default.CreateChannel<T>()` for producer-consumer queues (ADR-013)
+- All domain exceptions must derive from `MeridianException` in `src/Meridian.Core/Exceptions/`
+- Register all new serializable DTOs in the project's `JsonSerializerContext` partial class
+
+**Test files** (`tests/**/*.cs`):
+- Keep tests deterministic (no time/network/external dependency flakiness)
+- Prefer clear Arrange-Act-Assert structure
+- Use existing test utilities and fixtures before introducing new helpers
+- Name tests to communicate behavior: `[MethodName]_[Condition]_[Expectation]`
+- Run the nearest test project and report exact command used
+
+**WPF/MVVM files** (`src/Meridian.Wpf/**`):
+- See `.github/instructions/wpf.instructions.md` for WPF-specific conventions
+
+Complete rules for each path are in `.github/instructions/` directory.
+
 ---
 
 ## Anti-Patterns to Avoid
@@ -220,6 +287,35 @@ cp config/appsettings.sample.json config/appsettings.json
 ```
 
 Key sections: `DataSource`, `Symbols`, `Storage`, `Backfill`, `DataQuality`, `Sla`, `Maintenance`
+
+### Git Hooks Setup (Optional but Recommended)
+
+Pre-commit and commit-msg hooks enforce code formatting and commit message conventions. Install them at repository setup:
+
+```bash
+./build/scripts/hooks/install-hooks.sh
+```
+
+**What they do:**
+
+| Hook | Behavior |
+|------|----------|
+| `pre-commit` | Runs `dotnet format` on staged C#/F# files, re-stages any changes, and blocks commit if formatting issues remain |
+| `commit-msg` | Validates commit message subject is <= 72 characters, non-empty, and optionally warns about trailing periods |
+
+**Manual installation:**
+
+```bash
+cp build/scripts/hooks/pre-commit .git/hooks/pre-commit
+cp build/scripts/hooks/commit-msg .git/hooks/commit-msg
+chmod +x .git/hooks/pre-commit .git/hooks/commit-msg
+```
+
+**To disable hooks temporarily:**
+
+```bash
+git commit --no-verify
+```
 
 ---
 

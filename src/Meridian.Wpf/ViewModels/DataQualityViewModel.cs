@@ -6,6 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Meridian.Ui.Services.DataQuality;
+using Meridian.Ui.Services;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Ui.Services.Services;
 using Meridian.Wpf.Models;
 using WpfServices = Meridian.Wpf.Services;
 
@@ -35,8 +38,11 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     private readonly IDataQualityRefreshService _refreshService;
     private readonly WpfServices.LoggingService _loggingService;
     private readonly WpfServices.NotificationService _notificationService;
+    private readonly HttpClient _httpClient = new();
+    private readonly DataQualityRefreshCoordinator _refreshCoordinator;
 
-    private CancellationTokenSource? _refreshCts;
+    private CancellationTokenSource? _cts;
+    private string _baseUrl = "http://localhost:8080";
     private string _timeRange = "7d";
     private double _lastOverallScore = 98.5;
     private string _symbolFilter = string.Empty;
@@ -166,23 +172,69 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     private string _anomalyCountText = "0";
     public string AnomalyCountText { get => _anomalyCountText; private set => SetProperty(ref _anomalyCountText, value); }
 
-    private string _avgScoreText = "--";
-    public string AvgScoreText { get => _avgScoreText; private set => SetProperty(ref _avgScoreText, value); }
+    public DataQualityViewModel(
+        WpfServices.StatusService statusService,
+        WpfServices.LoggingService loggingService,
+        WpfServices.NotificationService notificationService,
+        IRefreshScheduler? refreshScheduler = null)
+    {
+        _statusService = statusService;
+        _loggingService = loggingService;
+        _notificationService = notificationService;
+        _baseUrl = _statusService.BaseUrl;
+        _refreshCoordinator = new DataQualityRefreshCoordinator(
+            refreshScheduler ?? new PeriodicRefreshScheduler(),
+            RefreshDataAsync,
+            ex => _loggingService.LogError("Failed to refresh data quality", ex));
+    }
 
-    private string _minScoreText = "--";
-    public string MinScoreText { get => _minScoreText; private set => SetProperty(ref _minScoreText, value); }
+    // ── Lifecycle ───────────────────────────────────────────────────────────
+    public async Task StartAsync(CancellationToken ct = default)
+    {
+        await _refreshCoordinator.StartAsync(TimeSpan.FromSeconds(30), ct);
+    }
 
-    private string _maxScoreText = "--";
-    public string MaxScoreText { get => _maxScoreText; private set => SetProperty(ref _maxScoreText, value); }
-
-    private string _stdDevText = "--";
-    public string StdDevText { get => _stdDevText; private set => SetProperty(ref _stdDevText, value); }
+    public void Stop()
+    {
+        _refreshCoordinator.Stop();
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+        _httpClient.Dispose();
+    }
 
     private string _trendText = "--";
     public string TrendText { get => _trendText; private set => SetProperty(ref _trendText, value); }
 
-    private string _trendIconGlyph = "\uE70E";
-    public string TrendIconGlyph { get => _trendIconGlyph; private set => SetProperty(ref _trendIconGlyph, value); }
+    private async Task RefreshDataAsync(CancellationToken ct = default)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        try
+        {
+            await LoadDashboardAsync(_cts.Token);
+            await LoadGapsAsync(_cts.Token);
+            await LoadAnomaliesAsync(_cts.Token);
+            await LoadLatencyDistributionAsync(_cts.Token);
+            LastUpdateText = $"Last updated: {DateTime.Now:HH:mm:ss}";
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    // ── Dashboard loading ───────────────────────────────────────────────────
+    private async Task LoadDashboardAsync(CancellationToken ct)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/quality/dashboard", ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                LoadDemoDashboard();
+                return;
+            }
+
+            var json = await response.Content.ReadAsStringAsync(ct);
+            var data = JsonSerializer.Deserialize<JsonElement>(json);
 
     private Brush _trendBrush = new SolidColorBrush(Color.FromRgb(63, 185, 80));
     public Brush TrendBrush { get => _trendBrush; private set => SetProperty(ref _trendBrush, value); }
@@ -694,5 +746,55 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     {
         Stop();
         _refreshService.Dispose();
+    }
+
+    private static int GetGradeCount(JsonElement gradeDistribution, string grade)
+    {
+        if (gradeDistribution.ValueKind != JsonValueKind.Object) return 0;
+        return gradeDistribution.TryGetProperty(grade, out var value) ? value.GetInt32() : 0;
+    }
+
+    private static int GetAnomalyCount(JsonElement stats, string type)
+    {
+        if (stats.ValueKind != JsonValueKind.Object) return 0;
+        return stats.TryGetProperty(type, out var value) ? value.GetInt32() : 0;
+    }
+
+    private static int GetRangeCount(string range, int oneDay, int sevenDay, int thirtyDay, int ninetyDay) =>
+        range switch { "1d" => oneDay, "7d" => sevenDay, "30d" => thirtyDay, "90d" => ninetyDay, _ => sevenDay };
+
+    private static string FormatRelativeTime(DateTime time)
+    {
+        var span = DateTime.UtcNow - time;
+        return span.TotalSeconds < 60 ? "Just now"
+            : span.TotalMinutes < 60 ? $"{(int)span.TotalMinutes} minutes ago"
+            : span.TotalHours < 24 ? $"{(int)span.TotalHours} hours ago"
+            : $"{(int)span.TotalDays} days ago";
+    }
+
+    public static string GetGrade(double score) => score switch
+    {
+        >= 95 => "A+", >= 90 => "A", >= 85 => "A-", >= 80 => "B+", >= 75 => "B",
+        >= 70 => "B-", >= 65 => "C+", >= 60 => "C", >= 55 => "C-", >= 50 => "D", _ => "F"
+    };
+
+    public static string GetStatus(double score) => score switch
+    {
+        >= 90 => "Excellent", >= 75 => "Healthy", >= 50 => "Warning", _ => "Critical"
+    };
+
+    private static readonly string[] HealthStateNames = { "Healthy", "Degraded", "Unhealthy", "Stale", "Unknown" };
+    private static readonly string[] AnomalySeverityNames = { "Info", "Warning", "Error", "Critical" };
+    private static readonly string[] AnomalyTypeNames =
+    {
+        "PriceSpike", "PriceDrop", "VolumeSpike", "VolumeDrop", "SpreadWide", "StaleData",
+        "RapidPriceChange", "AbnormalVolatility", "MissingData", "DuplicateData",
+        "CrossedMarket", "InvalidPrice", "InvalidVolume"
+    };
+
+    public void Dispose()
+    {
+        Stop();
+        _refreshCoordinator.Dispose();
     }
 }

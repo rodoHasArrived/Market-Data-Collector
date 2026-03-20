@@ -12,7 +12,8 @@ namespace Meridian.Application.Composition;
 /// <summary>
 /// Adapter interface for host-specific behavior.
 /// Each host type (console, web, desktop) can customize endpoint exposure
-/// while sharing the same service graph from ServiceCompositionRoot.
+/// while sharing the same service graph from <see cref="ServiceCompositionRoot"/>
+/// and the same startup abstractions used by <see cref="HostStartup"/>.
 /// </summary>
 [ImplementsAdr("ADR-001", "Host adapters for mode-specific behavior")]
 public interface IHostAdapter

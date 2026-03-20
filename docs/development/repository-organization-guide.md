@@ -396,7 +396,7 @@ Test projects mirror source project structure:
 
 ```
 tests/
-├── Meridian.Tests/              # Tests for Application layer
+├── Meridian.Tests/              # Cross-platform startup/composition/contracts/core tests
 │   ├── Application/
 │   │   ├── Commands/
 │   │   ├── Config/
@@ -405,8 +405,8 @@ tests/
 │   ├── Infrastructure/
 │   └── Storage/
 ├── Meridian.FSharp.Tests/       # F# tests
-├── Meridian.Ui.Tests/           # UI Services tests
-├── Meridian.Wpf.Tests/          # WPF tests (Windows-only)
+├── Meridian.Ui.Tests/           # Shared UI service tests
+├── Meridian.Wpf.Tests/          # WPF-only binding/navigation/host-wiring tests
 └── coverlet.runsettings
 ```
 

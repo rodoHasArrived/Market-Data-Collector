@@ -77,7 +77,7 @@
 <polygon fill="#1d4ed8" stroke="#60a5fa" points="695.15,-762.8 486.85,-762.8 486.85,-704.4 701.15,-704.4 701.15,-756.8 695.15,-762.8"/>
 <polyline fill="none" stroke="#60a5fa" points="695.15,-762.8 695.15,-756.8"/>
 <polyline fill="none" stroke="#60a5fa" points="701.15,-756.8 695.15,-756.8"/>
-<text xml:space="preserve" text-anchor="middle" x="594" y="-746.2" font-family="Segoe UI" font-size="14.00" fill="#e2e8f0">Source fingerprint: c1be36f1b8bd</text>
+<text xml:space="preserve" text-anchor="middle" x="594" y="-746.2" font-family="Segoe UI" font-size="14.00" fill="#e2e8f0">Source fingerprint: eb39bb46a58b</text>
 <text xml:space="preserve" text-anchor="middle" x="594" y="-729.4" font-family="Segoe UI" font-size="14.00" fill="#e2e8f0">Transient pages in App.xaml.cs: 51</text>
 <text xml:space="preserve" text-anchor="middle" x="594" y="-712.6" font-family="Segoe UI" font-size="14.00" fill="#e2e8f0">Navigation tags: 49</text>
 </g>

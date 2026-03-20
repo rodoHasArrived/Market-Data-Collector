@@ -166,20 +166,20 @@ The repository includes comprehensive tests for desktop services:
 make test-desktop-services
 
 # On Windows, this runs:
-# - WPF service tests (NavigationService, ConfigService, StatusService, ConnectionService)
-# - Desktop UI service tests (ApiClientService, BackfillService, FixtureDataService, etc.)
-# - Integration tests for desktop-specific functionality
-
-# On non-Windows platforms, runs available integration tests only
+# - WPF-specific tests (binding/navigation/desktop host wiring)
+# - Shared desktop UI service tests
+#
+# On non-Windows platforms, use Meridian.Tests for startup/composition/contracts/endpoint-shape coverage
 ```
 
 **Test Projects:**
-- `tests/Meridian.Wpf.Tests` - 58 tests for WPF singleton services
+- `tests/Meridian.Tests` - cross-platform startup, composition, contract, endpoint-shape, and core/backend tests
+- `tests/Meridian.Wpf.Tests` - Windows-only WPF-specific binding, navigation, and desktop host wiring
   - NavigationServiceTests (14 tests)
   - ConfigServiceTests (13 tests)
   - StatusServiceTests (13 tests)
   - ConnectionServiceTests (18 tests)
-- `tests/Meridian.Ui.Tests` - 71 tests for desktop UI services
+- `tests/Meridian.Ui.Tests` - shared desktop UI service logic under the existing Windows target
   - ApiClientServiceTests, BackfillServiceTests, FixtureDataServiceTests
   - FormValidationServiceTests, SystemHealthServiceTests, WatchlistServiceTests
   - BoundedObservableCollectionTests, CircularBufferTests
@@ -597,11 +597,11 @@ Meridian/
 │   ├── Meridian.Risk/               # Risk management and portfolio analytics
 │   ├── Meridian.McpServer/          # MCP server tools integration
 │   └── Meridian.Mcp/                # MCP protocol support
-├── tests/                # 4 test projects, 273 files, ~4,100 test methods
-│   ├── Meridian.Tests/              # Core tests (~2,663 methods): backfill, storage, pipeline, providers, API
+├── tests/                # Test projects and shared test infrastructure
+│   ├── Meridian.Tests/              # Cross-platform startup, composition, contracts, API, and core/backend tests
 │   ├── Meridian.FSharp.Tests/       # F# domain tests (~99 methods)
-│   ├── Meridian.Wpf.Tests/          # WPF service tests (~324 methods)
-│   └── Meridian.Ui.Tests/           # Desktop UI service tests (~1,007 methods)
+│   ├── Meridian.Wpf.Tests/          # WPF-only binding/navigation/host-wiring tests
+│   └── Meridian.Ui.Tests/           # Shared desktop UI service tests
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── Meridian.sln         # Main solution file
 ├── Makefile             # 91+ build targets for development and operations
