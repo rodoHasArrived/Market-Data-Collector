@@ -6,6 +6,7 @@ using Meridian.Domain.Models;
 using Meridian.Infrastructure;
 using Meridian.Infrastructure.Adapters.Core;
 using Meridian.Infrastructure.Contracts;
+using Meridian.Infrastructure.Shared;
 
 namespace Meridian.Tests.TestHelpers;
 
