@@ -84,7 +84,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 ### Improvement Tracking (as of 2026-03-17)
 - 33/35 core improvement items completed (94.3%); additional H/I/J themes tracked
 - J1–J7 canonicalization items complete; J8 (golden fixture CI canary) partial
-- Remaining open: C3 (WebSocket base class — Polygon done; NYSE/StockSharp pending), G2 (trace propagation partial)
+- Remaining partial: C3 (NYSE-side WebSocket lifecycle consolidation; Polygon done, StockSharp re-scoped), G2 (trace propagation partial)
 
 ### Recent Changes (since 2026-02-22)
 - IBOrderSampleTests with fixture files for IB order validation (PR #2071)
@@ -166,7 +166,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 - C1/C2 architecture items (unified provider registry, single DI composition path) verified complete
 - F3 (first-run onboarding), E3 (GC pressure optimization), B3/B4 (provider/service tests) verified complete
 - H3 (event replay) and I2 (CLI progress reporting) verified complete
-- Remaining: C3 (WebSocket base class), G2 (trace propagation partial)
+- Remaining partial: C3 (NYSE-side WebSocket lifecycle consolidation), G2 (trace propagation partial)
 
 ### Recent Changes (since 2026-02-17)
 - Desktop improvements executive summary updated (PR #1372)
