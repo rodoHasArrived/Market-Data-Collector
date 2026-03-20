@@ -26,6 +26,7 @@
         icons desktop desktop-publish install-hooks \
         build-wpf test-desktop-services desktop-dev-bootstrap \
         ai-audit ai-audit-code ai-audit-docs ai-audit-tests ai-audit-ai-docs ai-verify ai-report \
+        ai-maintenance-light ai-maintenance-full \
         ai-arch-check ai-arch-check-summary ai-arch-check-json \
         ai-docs-freshness ai-docs-drift ai-docs-sync-report ai-docs-archive ai-docs-archive-execute \
         skill-list skill-resources skill-scripts skill-chains skill-resource \
@@ -107,7 +108,7 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'icons|desktop' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Pre-PR & Quality:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify|ai-docs|ai-report|ai-arch' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-28s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'pre-pr|ai-audit|ai-verify|ai-docs|ai-report|ai-arch|ai-maintenance' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-28s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Skills:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'skill-' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-24s$(NC) %s\n", $$1, $$2}'
@@ -624,6 +625,14 @@ ai-audit-tests: ## Run AI test coverage gap audit
 ai-verify: ## Run build + test + lint verification
 	@echo "$(BLUE)Running verification (build + test + lint)...$(NC)"
 	@$(AI_UPDATER) verify
+
+ai-maintenance-light: ## Run fast maintenance lane and write .ai status artifacts
+	@echo "$(BLUE)Running light maintenance lane...$(NC)"
+	@bash scripts/ai/maintenance.sh --light
+
+ai-maintenance-full: ## Run full maintenance lane and write .ai status artifacts
+	@echo "$(BLUE)Running full maintenance lane...$(NC)"
+	@bash scripts/ai/maintenance.sh --full
 
 ai-audit-ai-docs: ## Run AI documentation freshness and drift audit
 	@echo "$(BLUE)Auditing AI documentation health...$(NC)"

@@ -43,6 +43,8 @@ make ai-audit                # Full audit (code, docs, tests, providers)
 make ai-audit-code           # Convention violations only
 make ai-audit-tests          # Test coverage gaps
 make ai-verify               # Build + test + lint
+make ai-maintenance-light    # Fast maintenance lane + .ai/maintenance-status.json
+make ai-maintenance-full     # Full maintenance lane + .ai/maintenance-status.json
 python3 build/scripts/ai-repo-updater.py known-errors   # Avoid past AI mistakes
 python3 build/scripts/ai-repo-updater.py diff-summary   # Review uncommitted changes
 
@@ -71,6 +73,7 @@ make test-desktop-services
 1. **Before making changes**: run `python3 build/scripts/ai-repo-updater.py known-errors` and scan `docs/ai/ai-known-errors.md`
 2. **After fixing an agent-caused bug**: add a new entry to `docs/ai/ai-known-errors.md` (symptoms, root cause, prevention, verification command)
 3. **Before opening PR**: confirm your change does not repeat any known pattern
+4. **For automation environments**: prefer the light/full maintenance lanes, which emit `.ai/maintenance-status.json` and `.ai/MAINTENANCE_STATUS.md`
 
 ---
 
