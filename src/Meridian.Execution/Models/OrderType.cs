@@ -7,5 +7,11 @@ public enum OrderType
     Market,
 
     /// <summary>Execute at the specified price or better.</summary>
-    Limit
+    Limit,
+
+    /// <summary>Become a market order once the stop price has been crossed.</summary>
+    StopMarket,
+
+    /// <summary>Become a limit order once the stop price has been crossed.</summary>
+    StopLimit
 }

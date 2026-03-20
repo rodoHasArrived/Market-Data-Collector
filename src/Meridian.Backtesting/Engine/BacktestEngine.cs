@@ -62,7 +62,6 @@ public sealed class BacktestEngine(
         var allSnapshots = new List<PortfolioSnapshot>();
         var allCashFlows = new List<CashFlowEntry>();
         var allFills = new List<FillEvent>();
-        var lastPrices = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
         // 3. Initialise strategy
         ctx.CurrentTime = DateTimeOffset.UtcNow;
@@ -86,7 +85,7 @@ public sealed class BacktestEngine(
             // Day boundary — close out the previous day
             if (evtDate > currentDay)
             {
-                await ProcessDayEndAsync(currentDay, portfolio, ctx, strategy, allSnapshots, allCashFlows);
+                await ProcessDayEndAsync(currentDay, portfolio, pendingOrders, ctx, strategy, allSnapshots, allCashFlows);
                 currentDay = evtDate;
 
                 var daysElapsed = (currentDay.ToDateTime(TimeOnly.MinValue) - request.From.ToDateTime(TimeOnly.MinValue)).Days;
@@ -112,11 +111,11 @@ public sealed class BacktestEngine(
             pendingOrders.AddRange(newOrders);
 
             // Try to fill pending orders against current event
-            ProcessPendingOrders(pendingOrders, evt, orderBookFillModel, barFillModel, portfolio, strategy, ctx, allFills, allCashFlows);
+            ProcessPendingOrders(pendingOrders, evt, orderBookFillModel, barFillModel, portfolio, strategy, ctx, allFills);
         }
 
         // Final day-end
-        await ProcessDayEndAsync(currentDay, portfolio, ctx, strategy, allSnapshots, allCashFlows);
+        await ProcessDayEndAsync(currentDay, portfolio, pendingOrders, ctx, strategy, allSnapshots, allCashFlows);
         strategy.OnFinished(ctx);
 
         progress?.Report(new BacktestProgressEvent(1.0, request.To, portfolio.ComputeCurrentEquity(), eventsProcessed, "Complete"));
@@ -209,8 +208,7 @@ public sealed class BacktestEngine(
         SimulatedPortfolio portfolio,
         IBacktestStrategy strategy,
         BacktestContext ctx,
-        List<FillEvent> allFills,
-        List<CashFlowEntry> allCashFlows)
+        List<FillEvent> allFills)
     {
         var filled = new List<Guid>();
         for (var i = pendingOrders.Count - 1; i >= 0; i--)
@@ -219,19 +217,23 @@ public sealed class BacktestEngine(
             if (!order.Symbol.Equals(evt.EffectiveSymbol, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            // Select fill model based on available data
-            var model = evt.Payload is LOBSnapshot ? lobModel : barModel;
-            var fills = model.TryFill(order, evt);
+            var model = SelectFillModel(order, evt, lobModel, barModel);
+            var result = model.TryFill(order, evt);
 
-            foreach (var fill in fills)
+            foreach (var fill in result.Fills)
             {
                 portfolio.ProcessFill(fill);
                 allFills.Add(fill);
                 strategy.OnOrderFill(fill, ctx);
             }
 
-            if (fills.Count > 0 && order.Type == OrderType.Market)
-                filled.Add(order.OrderId);  // market orders are consumed on first fill
+            if (result.RemoveOrder)
+            {
+                filled.Add(order.OrderId);
+                continue;
+            }
+
+            pendingOrders[i] = result.UpdatedOrder;
         }
 
         pendingOrders.RemoveAll(o => filled.Contains(o.OrderId));
@@ -240,15 +242,25 @@ public sealed class BacktestEngine(
     private static async Task ProcessDayEndAsync(
         DateOnly date,
         SimulatedPortfolio portfolio,
+        List<Order> pendingOrders,
         BacktestContext ctx,
         IBacktestStrategy strategy,
         List<PortfolioSnapshot> snapshots,
         List<CashFlowEntry> allCashFlows, CancellationToken ct = default)
     {
+        _ = ct;
         await Task.Yield();  // allow UI thread to breathe during long replays
         portfolio.AccrueDailyInterest(date);
         ctx.CurrentDate = date;
         strategy.OnDayEnd(date, ctx);
+
+        for (var i = pendingOrders.Count - 1; i >= 0; i--)
+        {
+            if (pendingOrders[i].TimeInForce != TimeInForce.Day)
+                continue;
+
+            pendingOrders.RemoveAt(i);
+        }
 
         var ts = new DateTimeOffset(date.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero);
         var snapshot = portfolio.TakeSnapshot(ts, date);
@@ -260,5 +272,19 @@ public sealed class BacktestEngine(
     {
         var metrics = BacktestMetricsEngine.Compute([], [], [], request);
         return new BacktestResult(request, universe, [], [], [], metrics, new BacktestLedger(), elapsed, 0);
+    }
+
+    private static IFillModel SelectFillModel(
+        Order order,
+        MarketEvent evt,
+        IFillModel lobModel,
+        IFillModel barModel)
+    {
+        return order.ExecutionModel switch
+        {
+            ExecutionModel.OrderBook => lobModel,
+            ExecutionModel.BarMidpoint => barModel,
+            _ => evt.Payload is LOBSnapshot ? lobModel : barModel
+        };
     }
 }
