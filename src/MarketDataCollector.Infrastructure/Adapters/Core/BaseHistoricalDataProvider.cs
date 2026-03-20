@@ -277,12 +277,22 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
     /// <param name="ct">Cancellation token.</param>
     /// <param name="displayUrl">Optional redacted URL to use for logging instead of the actual request URL.</param>
     /// <returns>The HTTP response message.</returns>
-    protected async Task<HttpResponseMessage> ExecuteGetAsync(
+    protected Task<HttpResponseMessage> ExecuteGetAsync(
         string url,
         string symbol,
         string dataType,
         CancellationToken ct,
         string? displayUrl = null)
+    {
+        return ExecuteGetAsync(url, symbol, dataType, displayUrl, ct);
+    }
+
+    protected async Task<HttpResponseMessage> ExecuteGetAsync(
+        string url,
+        string symbol,
+        string dataType,
+        string? displayUrl,
+        CancellationToken ct)
     {
         ThrowIfDisposed();
         await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
