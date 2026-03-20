@@ -34,9 +34,9 @@ runs:
       uses: actions/cache@v5.0.3
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props', 'Directory.Packages.props', 'global.json') }}
+        key: ${{ runner.os }}-nuget-${{ inputs.cache-suffix && format('{0}-', inputs.cache-suffix) || '' }}${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props', 'Directory.Packages.props', 'global.json') }}
         restore-keys: |
-          ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}
+          ${{ runner.os }}-nuget-${{ inputs.cache-suffix && format('{0}-', inputs.cache-suffix) || '' }}
           ${{ runner.os }}-nuget-
 
     - name: Configure NuGet

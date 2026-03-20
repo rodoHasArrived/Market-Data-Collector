@@ -20,7 +20,7 @@ digraph CLICommands {
 
   // Entry Point
   MDC [shape=box, fillcolor="#438dd5", fontcolor="white", width=3,
-       label="dotnet run --project src/MarketDataCollector\n\nMarket Data Collector CLI\n.NET 9.0 | Cross-Platform"];
+       label="dotnet run --project src/Meridian\n\nMarket Data Collector CLI\n.NET 9.0 | Cross-Platform"];
 
   // Setup Commands
   subgraph cluster_setup {

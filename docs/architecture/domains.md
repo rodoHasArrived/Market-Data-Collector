@@ -3,9 +3,9 @@
 This document describes the **runtime domain contracts** used by the collectors and event pipeline.
 Primary source of truth lives in:
 
-- `src/MarketDataCollector.Contracts/Domain/Events/`
-- `src/MarketDataCollector.Contracts/Domain/Models/`
-- `src/MarketDataCollector.Domain/Collectors/`
+- `src/Meridian.Contracts/Domain/Events/`
+- `src/Meridian.Contracts/Domain/Models/`
+- `src/Meridian.Domain/Collectors/`
 
 ## MarketEvent Envelope
 
@@ -261,6 +261,38 @@ public interface IQuoteStateStore
 
 ---
 
+## OptionDataCollector
+
+Captures option market data and emits:
+
+- `OptionQuote` events – real-time option bid/ask snapshots
+- `GreeksSnapshot` events – delta, gamma, theta, vega, rho, IV
+- `OptionChainSnapshot` events – full chain state across all strikes and expiries
+- `OpenInterestUpdate` events – daily open interest changes
+
+Behavioral notes:
+
+- Maintains per-contract latest quote, greeks, and chain state in concurrent dictionaries.
+- Designed for providers that supply order-level option data (e.g., OPRA feeds).
+
+---
+
+## L3OrderBookCollector
+
+Processes individual order lifecycle events (add, modify, cancel, execute) from ITCH/PITCH-style message feeds and emits:
+
+- L3 order events (`MarketEventType` range 20–24) – raw order-level messages
+- Derived `LOBSnapshot` (L2) events – synthesized from L3 state (dual-write)
+
+Behavioral notes:
+
+- Maintains per-symbol L3 order book with configurable depth cap (`MaxDepth = 50`).
+- Dual-write contract: every `On*` call publishes exactly two events in order — the L3 event followed by a derived `LOBSnapshot` (L2).
+- Downstream consumers needing only L2 can filter by `MarketEventType.L2Snapshot`; consumers needing order-level granularity subscribe to the L3 types.
+- Providers that only support MBP/L2 deltas should use `MarketDepthCollector` instead.
+
+---
+
 ## Historical Domain Payloads
 
 ## `HistoricalBar`
@@ -294,7 +326,9 @@ Key points:
 
 - **Trade tape + order-flow** → `TradeDataCollector`
 - **Order book (L2)** → `MarketDepthCollector`
+- **Order book (L3 / order-level)** → `L3OrderBookCollector`
 - **Best bid/offer cache + events** → `QuoteCollector`
+- **Option quotes, greeks, chain snapshots, open interest** → `OptionDataCollector`
 - **Backfill bars** → `HistoricalBar` payloads on `MarketEventType.HistoricalBar`
 
 This split keeps domain logic deterministic, testable, and independent from provider adapter implementation details.
@@ -316,4 +350,4 @@ The canonicalization design is documented in [Deterministic Canonicalization](de
 
 ---
 
-*Last Updated: 2026-03-14*
+*Last Updated: 2026-03-18*

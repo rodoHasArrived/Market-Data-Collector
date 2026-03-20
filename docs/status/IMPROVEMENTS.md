@@ -279,24 +279,24 @@ This document consolidates **functional improvements** (features, reliability, U
   - `ResponseSchemaValidationTests.cs` — 15+ tests validating JSON response schemas for core endpoints (field presence, types, structural contracts for /api/status, /api/health, /api/health/summary, /api/config, /api/config/data-sources, /api/providers/comparison, /api/backpressure)
 
 **Files:**
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/EndpointTestFixture.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/StatusEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/HealthEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/ConfigEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/BackfillEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/ProviderEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/QualityEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/QualityDropsEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/SlaEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/PackagingEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/FailoverEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/SymbolEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/SubscriptionEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/LiveDataEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/DiagnosticsEndpointTests.cs`
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/NegativePathEndpointTests.cs` (new, Sprint 5)
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/ResponseSchemaValidationTests.cs` (new, Sprint 5)
+- `tests/Meridian.Tests/Integration/EndpointTests/EndpointTestFixture.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/StatusEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/HealthEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/ConfigEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/BackfillEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/ProviderEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/QualityEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/QualityDropsEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/SlaEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/PackagingEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/FailoverEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/SymbolEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/SubscriptionEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/LiveDataEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/DiagnosticsEndpointTests.cs`
+- `tests/Meridian.Tests/Integration/EndpointTests/NegativePathEndpointTests.cs` (new, Sprint 5)
+- `tests/Meridian.Tests/Integration/EndpointTests/ResponseSchemaValidationTests.cs` (new, Sprint 5)
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1A
 
@@ -388,10 +388,10 @@ This document consolidates **functional improvements** (features, reliability, U
 - `DataSourceAttributeTests` (14 tests): attribute construction, metadata mapping, IsRealtime/IsHistorical properties
 
 **Files:**
-- `tests/MarketDataCollector.Tests/ProviderSdk/DataSourceRegistryTests.cs` (14 tests)
-- `tests/MarketDataCollector.Tests/ProviderSdk/CredentialValidatorTests.cs` (16 tests)
-- `tests/MarketDataCollector.Tests/ProviderSdk/ExceptionTypeTests.cs` (24 tests)
-- `tests/MarketDataCollector.Tests/ProviderSdk/DataSourceAttributeTests.cs` (14 tests)
+- `tests/Meridian.Tests/ProviderSdk/DataSourceRegistryTests.cs` (14 tests)
+- `tests/Meridian.Tests/ProviderSdk/CredentialValidatorTests.cs` (16 tests)
+- `tests/Meridian.Tests/ProviderSdk/ExceptionTypeTests.cs` (24 tests)
+- `tests/Meridian.Tests/ProviderSdk/DataSourceAttributeTests.cs` (14 tests)
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1D
 
@@ -580,14 +580,14 @@ No clear contract for what each validates or when it runs.
 **Problem:** 25-30 services were nearly identical between WPF and UWP desktop projects.
 
 **Solution Implemented:**
-- UWP project (`src/MarketDataCollector.Uwp/`) fully removed from the codebase
+- UWP project (`src/Meridian.Uwp/`) fully removed from the codebase
 - WPF is the sole desktop client; no duplicate services remain
-- Shared service interfaces and base classes consolidated in `MarketDataCollector.Ui.Services`
-- Platform-specific adapters exist only in `MarketDataCollector.Wpf/Services/`
+- Shared service interfaces and base classes consolidated in `Meridian.Ui.Services`
+- Platform-specific adapters exist only in `Meridian.Wpf/Services/`
 
 **Files:**
-- `MarketDataCollector.Wpf/Services/*.cs` (51 service files)
-- `MarketDataCollector.Ui.Services/` (shared base classes and interfaces)
+- `Meridian.Wpf/Services/*.cs` (51 service files)
+- `Meridian.Ui.Services/` (shared base classes and interfaces)
 
 **Benefit:** UWP removal eliminated all service duplication. Single desktop platform simplifies maintenance.
 
@@ -700,7 +700,7 @@ No clear contract for what each validates or when it runs.
 
 **Files:**
 - `Ui.Shared/Endpoints/UiEndpoints.cs`
-- `MarketDataCollector.Ui.Shared.csproj`
+- `Meridian.Ui.Shared.csproj`
 
 **ROADMAP:** Phase 3 (API Completeness)
 
@@ -840,13 +840,15 @@ No clear contract for what each validates or when it runs.
 **Problem:** WPF consolidated into 5 workspaces (~15 navigation items) with command palette (Ctrl+K). UWP had 40+ pages in flat navigation list.
 
 **Solution Implemented:**
-- WPF has workspace model (Monitor, Collect, Storage, Quality, Settings)
+- WPF has a first-stage workspace model (Monitor, Collect, Storage, Quality, Settings)
 - WPF command palette functional (Ctrl+K)
 - UWP project removed — no remaining flat navigation to consolidate
 
+**Follow-on migration:** The next UX phase upgrades this first-stage consolidation into the workflow-centric Trading Workstation model (`Research`, `Trading`, `Data Operations`, `Governance`). See Theme K.
+
 **Files:**
-- `MarketDataCollector.Wpf/Views/MainPage.xaml`
-- `MarketDataCollector.Wpf/Services/NavigationService.cs`
+- `Meridian.Wpf/Views/MainPage.xaml`
+- `Meridian.Wpf/Services/NavigationService.cs`
 
 **ROADMAP:** Phase 4 (Desktop App Maturity)
 
@@ -899,9 +901,9 @@ No clear contract for what each validates or when it runs.
 **Files:**
 - `Application/Services/ConfigurationWizard.cs`
 - `Application/Services/AutoConfigurationService.cs`
-- `MarketDataCollector.Wpf/Services/FirstRunService.cs`
-- `MarketDataCollector.Ui.Services/Services/SetupWizardService.cs`
-- `MarketDataCollector.Ui.Services/Services/OnboardingTourService.cs`
+- `Meridian.Wpf/Services/FirstRunService.cs`
+- `Meridian.Ui.Services/Services/SetupWizardService.cs`
+- `Meridian.Ui.Services/Services/OnboardingTourService.cs`
 
 **ROADMAP:** Phase 4 (Desktop App Maturity)
 
@@ -937,7 +939,7 @@ No clear contract for what each validates or when it runs.
 
 **Solution Implemented (Partial):**
 - `TracedEventMetrics` decorator wraps `IEventMetrics` with `System.Diagnostics.Metrics` counters and histograms
-- Pipeline meter (`MarketDataCollector.Pipeline`) exports published/dropped/trade/depth/quote/integrity/historical counters via OTLP
+- Pipeline meter (`Meridian.Pipeline`) exports published/dropped/trade/depth/quote/integrity/historical counters via OTLP
 - Latency histogram (`mdc.pipeline.latency`) tracks event processing time in milliseconds
 - `OpenTelemetrySetup` updated to register pipeline meter alongside existing application meters
 - `CompositionOptions.EnableOpenTelemetry` flag gates decorator registration in DI
@@ -953,7 +955,7 @@ No clear contract for what each validates or when it runs.
 - `Application/Tracing/TracedEventMetrics.cs` (new)
 - `Application/Tracing/OpenTelemetrySetup.cs` (updated)
 - `Application/Composition/ServiceCompositionRoot.cs` (updated)
-- `tests/MarketDataCollector.Tests/Application/Monitoring/TracedEventMetricsTests.cs` (new)
+- `tests/Meridian.Tests/Application/Monitoring/TracedEventMetricsTests.cs` (new)
 
 **ROADMAP:** Sprint 4 (partial), Sprint 8 (full trace propagation)
 
@@ -1017,8 +1019,8 @@ No clear contract for what each validates or when it runs.
 - Both Domain and Contracts `MarketEvent` records updated in sync
 
 **Files:**
-- `src/MarketDataCollector.Domain/Events/MarketEvent.cs`
-- `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs`
+- `src/Meridian.Domain/Events/MarketEvent.cs`
+- `src/Meridian.Core/Serialization/MarketDataJsonContext.cs`
 
 **Dependencies:** None (additive change)
 
@@ -1039,9 +1041,9 @@ No clear contract for what each validates or when it runs.
 - 12+ unit tests covering symbol resolution, venue normalization, idempotency, and edge cases
 
 **Files:**
-- `src/MarketDataCollector.Application/Canonicalization/IEventCanonicalizer.cs`
-- `src/MarketDataCollector.Application/Canonicalization/EventCanonicalizer.cs`
-- `tests/MarketDataCollector.Tests/Application/Services/EventCanonicalizerTests.cs`
+- `src/Meridian.Application/Canonicalization/IEventCanonicalizer.cs`
+- `src/Meridian.Application/Canonicalization/EventCanonicalizer.cs`
+- `tests/Meridian.Tests/Application/Services/EventCanonicalizerTests.cs`
 
 **Dependencies:** J2 (canonical fields on MarketEvent)
 
@@ -1061,9 +1063,9 @@ No clear contract for what each validates or when it runs.
 - Loaded from JSON at startup with graceful fallback if file missing
 
 **Files:**
-- `src/MarketDataCollector.Application/Canonicalization/ConditionCodeMapper.cs`
+- `src/Meridian.Application/Canonicalization/ConditionCodeMapper.cs`
 - `config/condition-codes.json`
-- `tests/MarketDataCollector.Tests/Application/Services/ConditionCodeMapperTests.cs`
+- `tests/Meridian.Tests/Application/Services/ConditionCodeMapperTests.cs`
 
 **Dependencies:** J3 (EventCanonicalizer to invoke mapper)
 
@@ -1083,9 +1085,9 @@ No clear contract for what each validates or when it runs.
 - Loaded from JSON at startup with graceful fallback if file missing
 
 **Files:**
-- `src/MarketDataCollector.Application/Canonicalization/VenueMicMapper.cs`
+- `src/Meridian.Application/Canonicalization/VenueMicMapper.cs`
 - `config/venue-mapping.json`
-- `tests/MarketDataCollector.Tests/Application/Services/VenueMicMapperTests.cs`
+- `tests/Meridian.Tests/Application/Services/VenueMicMapperTests.cs`
 
 **Dependencies:** J3 (EventCanonicalizer to invoke mapper)
 
@@ -1107,10 +1109,10 @@ No clear contract for what each validates or when it runs.
 - 17+ unit tests covering pilot filtering, dual-write, metrics, and edge cases
 
 **Files:**
-- `src/MarketDataCollector.Application/Canonicalization/CanonicalizingPublisher.cs`
-- `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
-- `src/MarketDataCollector.Core/Config/CanonicalizationConfig.cs`
-- `tests/MarketDataCollector.Tests/Application/Services/CanonicalizingPublisherTests.cs`
+- `src/Meridian.Application/Canonicalization/CanonicalizingPublisher.cs`
+- `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
+- `src/Meridian.Core/Config/CanonicalizationConfig.cs`
+- `tests/Meridian.Tests/Application/Services/CanonicalizingPublisherTests.cs`
 
 **Dependencies:** J3 (EventCanonicalizer implementation)
 
@@ -1134,9 +1136,9 @@ No clear contract for what each validates or when it runs.
 - `CanonicalizingPublisher` also exposes per-instance metrics (canonicalized count, average duration)
 
 **Files:**
-- `src/MarketDataCollector.Application/Canonicalization/CanonicalizationMetrics.cs`
-- `src/MarketDataCollector.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs`
-- `src/MarketDataCollector.Contracts/Api/UiApiRoutes.cs` (route constants)
+- `src/Meridian.Application/Canonicalization/CanonicalizationMetrics.cs`
+- `src/Meridian.Ui.Shared/Endpoints/CanonicalizationEndpoints.cs`
+- `src/Meridian.Contracts/Api/UiApiRoutes.cs` (route constants)
 
 **Dependencies:** J3 (EventCanonicalizer must emit metrics)
 
@@ -1151,7 +1153,7 @@ No clear contract for what each validates or when it runs.
 **What exists:**
 - Unit tests for `EventCanonicalizer`, `ConditionCodeMapper`, `VenueMicMapper`, and `CanonicalizingPublisher` cover core correctness, idempotency, and edge cases
 - Property tests for idempotency (canonicalize twice = same result), raw symbol preservation, and tier progression are covered in `EventCanonicalizerTests`
-- **8 curated fixture JSON files** in `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/` covering Alpaca and Polygon regular, extended-hours, and odd-lot trade scenarios plus cross-provider XNAS identity checks
+- **8 curated fixture JSON files** in `tests/Meridian.Tests/Application/Canonicalization/Fixtures/` covering Alpaca and Polygon regular, extended-hours, and odd-lot trade scenarios plus cross-provider XNAS identity checks
 - **`CanonicalizationGoldenFixtureTests`** loads all `.json` fixture files at runtime using `[Theory][MemberData]`, constructs `MarketEvent` from fixture inputs, applies production symbol and venue canonicalization (via `venue-mapping.json`), and asserts canonical symbol, venue, tier, and version fields match expected values
 
 **Remaining:**
@@ -1159,8 +1161,8 @@ No clear contract for what each validates or when it runs.
 - Drift canary CI job for detecting new unmapped codes
 
 **Files:**
-- `tests/MarketDataCollector.Tests/Application/Canonicalization/Fixtures/*.json` (8 fixture files)
-- `tests/MarketDataCollector.Tests/Application/Canonicalization/CanonicalizationGoldenFixtureTests.cs` (new)
+- `tests/Meridian.Tests/Application/Canonicalization/Fixtures/*.json` (8 fixture files)
+- `tests/Meridian.Tests/Application/Canonicalization/CanonicalizationGoldenFixtureTests.cs` (new)
 
 **Dependencies:** J3 (EventCanonicalizer to test against)
 
@@ -1352,3 +1354,51 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 **Maintainer:** Project Team
 **Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (7/8)
 **Next Review:** Weekly engineering sync (or immediately after any status change)
+
+
+---
+
+## Theme K: Trading Workstation Migration
+
+### K1. 📝 Workflow-Centric Workspace Migration
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 PLANNED
+
+**Problem:** Meridian functionality is broad but still exposed through many page-centric entry points. Users can backtest, inspect live data, configure Lean, and manage storage, but the product does not yet present a unified research → trading → governance workflow.
+
+**Planned Solution:**
+- Consolidate top-level UX into `Research`, `Trading`, `Data Operations`, and `Governance` workspaces
+- Ensure all major capabilities are reachable from primary navigation and command palette
+- Add workflow-level entry points instead of orphan feature pages
+
+**ROADMAP:** Phase 11
+
+---
+
+### K2. 📝 Shared Run / Portfolio / Ledger Read Models
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 PLANNED
+
+**Problem:** Backtests, paper-trading sessions, and future live runs do not yet share one operator-facing run model. The ledger exists internally but is not first-class in the product.
+
+**Planned Solution:**
+- Introduce shared `StrategyRun` contracts
+- Add shared portfolio summaries and ledger read services
+- Make run history, portfolio state, and ledger drill-down reusable across engines and modes
+
+**ROADMAP:** Phase 12
+
+---
+
+### K3. 📝 Backtest + Paper-Trading Experience Unification
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 PLANNED
+
+**Problem:** Native backtesting, Lean integration, and paper-trading infrastructure exist, but the user experience is split across separate surfaces and does not yet feel like one strategy lifecycle.
+
+**Planned Solution:**
+- Build a unified Backtest Studio with engine selection and run comparison
+- Promote paper-trading infrastructure into a real trading cockpit
+- Add explicit promotion flow from Backtest → Paper → Live with safety guardrails
+
+**ROADMAP:** Phase 13

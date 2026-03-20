@@ -177,4 +177,4 @@ The broader desktop evaluation already documents key gaps and confirms that the 
 - Onboarding and discoverability improvements
 - Persistent workspace state
 
-Reference: `docs/evaluations/desktop-end-user-improvements.md`.
+Reference: `docs/archived/desktop-end-user-improvements.md`.

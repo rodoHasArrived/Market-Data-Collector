@@ -576,7 +576,7 @@ public sealed class AnalysisQualityReport
 Use `EventPipelinePolicy` for consistent channel configuration:
 
 ```csharp
-using MarketDataCollector.Application.Pipeline;
+using Meridian.Application.Pipeline;
 
 public sealed class EventPipeline
 {

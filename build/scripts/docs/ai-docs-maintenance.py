@@ -215,7 +215,7 @@ def _list_workflow_files() -> list[str]:
 def _extract_providers_from_code() -> set[str]:
     """Find provider class names in the codebase."""
     providers: set[str] = set()
-    adapters_dir = REPO_ROOT / "src" / "MarketDataCollector.Infrastructure" / "Adapters"
+    adapters_dir = REPO_ROOT / "src" / "Meridian.Infrastructure" / "Adapters"
     if not adapters_dir.exists():
         return providers
     for cs_file in adapters_dir.rglob("*.cs"):

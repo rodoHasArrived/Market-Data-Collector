@@ -178,6 +178,7 @@ C:*/
 msbuild.binlog
 vulnerable-packages.txt
 todo-scan-results.json
+.ai/
 
 # ============================================
 # Node.js Dependencies (for Build Tools)

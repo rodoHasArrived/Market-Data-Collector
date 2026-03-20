@@ -1,8 +1,8 @@
 name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23226734109
+# Generated: 2026-03-19
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23322476846
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -14,20 +14,36 @@ messages:
       ## Project Context
       Market Data Collector is a .NET 9.0 C#/F# market data collection system.
       - Build: `dotnet build -c Release`
-      - Test: `dotnet test tests/MarketDataCollector.Tests`
+      - Test: `dotnet test tests/Meridian.Tests`
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-18T02:49:22.0762862Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj ...`
-      - `2026-03-18T02:49:22.0771809Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj ...`
-      - `2026-03-18T02:49:22.0778413Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj ...`
-      - `2026-03-18T02:49:22.0784366Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj ...`
-      - `2026-03-18T02:49:22.0791134Z /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Mcp/MarketDataCollector.Mcp.csproj ...`
+      - `2026-03-19T23:52:31.5167673Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Collections\BoundedObservableCollectionTests.cs(166,35): error CS...`
+      - `2026-03-19T23:52:31.5195453Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(173,28): error CS1061...`
+      - `2026-03-19T23:52:31.5247401Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(190,26): error CS1061...`
+      - `2026-03-19T23:52:31.5260507Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(206,29): error CS1061...`
+      - `2026-03-19T23:52:31.5427539Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(223,26): error CS1061...`
+
+      ### Code Quality
+      - `2026-03-19T23:52:21.8087336Z ##[warning]D:\a\Meridian\Meridian\src\Meridian.Contracts\Domain\Events\MarketEventPayload.cs(8,22): warning CS1574: XML c...`
+      - `2026-03-19T23:52:31.5482771Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The v...`
+      - `2026-03-19T23:53:06.3705681Z ##[warning]D:\a\Meridian\Meridian\src\Meridian.Contracts\Domain\Events\MarketEventPayload.cs(8,22): warning CS1574: XML c...`
+      - `2026-03-19T23:53:06.3790647Z ##[warning]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The v...`
+      - `2026-03-19T23:50:27.8953080Z ##[warning]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning...`
 
 
       ## Error Codes
-      - `NU1109`
+      - `CS0103`
+      - `CS0104`
+      - `CS0118`
+      - `CS0219`
+      - `CS0234`
+      - `CS0246`
+      - `CS0535`
+      - `CS1061`
+      - `CS1574`
+      - `CS8300`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -40,7 +56,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23226734109
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23322476846
 
       Additional context:
       {{additional_context}}

@@ -156,12 +156,12 @@ Toast:     0 8px 16px rgba(0,0,0,0.2)
 ## 📁 Files Changed
 
 ### Source Files
-1. **src/MarketDataCollector/wwwroot/templates/credentials.html**
+1. **src/Meridian/wwwroot/templates/credentials.html**
    - +344 lines
    - Search, filters, stats, toast notifications
    - Enhanced styling and animations
 
-2. **src/MarketDataCollector/wwwroot/templates/index.html**
+2. **src/Meridian/wwwroot/templates/index.html**
    - +198 lines
    - Enhanced cards, buttons, metrics, tables
    - Fade-in animations and visual polish

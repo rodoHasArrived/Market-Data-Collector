@@ -60,7 +60,7 @@
 
 ### 1.3 Cost-Per-Query Estimator for Backfill — ✅ Implemented
 
-**Status (2026-03-12):** `BackfillCostEstimator` is fully implemented in `src/MarketDataCollector.Application/Backfill/BackfillCostEstimator.cs`. It estimates API call counts, wall-clock time, and provider routing given a backfill request. Exposed at `/api/backfill/cost-estimate` and integrated with `--backfill --dry-run`. The `/api/backfill/run/preview` endpoint is also live.
+**Status (2026-03-12):** `BackfillCostEstimator` is fully implemented in `src/Meridian.Application/Backfill/BackfillCostEstimator.cs`. It estimates API call counts, wall-clock time, and provider routing given a backfill request. Exposed at `/api/backfill/cost-estimate` and integrated with `--backfill --dry-run`. The `/api/backfill/run/preview` endpoint is also live.
 
 **Problem:** Users run backfill operations without understanding the API cost implications. A `--backfill-symbols SPY,AAPL,MSFT,GOOGL --backfill-from 2020-01-01` command could consume thousands of API calls against rate-limited providers, and there's no visibility into this until the operation runs.
 
@@ -119,7 +119,7 @@ Use the existing `JsonlReplayer` and `MemoryMappedJsonlReader` as building block
 
 ### 2.3 Circuit Breaker Dashboard — ✅ Implemented
 
-**Status (2026-03-12):** `CircuitBreakerStatusService` is implemented in `src/MarketDataCollector.Application/Monitoring/CircuitBreakerStatusService.cs`. It tracks state transitions (Open/Closed/HalfOpen), trip counts, last trip times, and cooldown state for each named circuit breaker. Circuit breaker state is surfaced via `/api/resilience/circuit-breakers` through `ResilienceEndpoints`. Structured log events are emitted on every state transition. The `CircuitBreakerCallbackRouter` wires Polly policy callbacks into `CircuitBreakerStatusService`.
+**Status (2026-03-12):** `CircuitBreakerStatusService` is implemented in `src/Meridian.Application/Monitoring/CircuitBreakerStatusService.cs`. It tracks state transitions (Open/Closed/HalfOpen), trip counts, last trip times, and cooldown state for each named circuit breaker. Circuit breaker state is surfaced via `/api/resilience/circuit-breakers` through `ResilienceEndpoints`. Structured log events are emitted on every state transition. The `CircuitBreakerCallbackRouter` wires Polly policy callbacks into `CircuitBreakerStatusService`.
 
 **Original problem:** The `SharedResiliencePolicies` implement circuit breakers, but their state (open/closed/half-open) isn't visible to operators. When a provider hits a circuit breaker, the only evidence is buried in debug logs.
 
@@ -191,7 +191,7 @@ The timeline visualization would immediately show gaps, coverage periods, and wh
 
 ### 4.1 Data Lineage Visualization — ✅ Implemented
 
-**Status (2026-03-12):** `DataLineageService` is implemented in `src/MarketDataCollector.Storage/Services/DataLineageService.cs` and tracks provenance chain per stored data file. Lineage information is accessible through the storage API.
+**Status (2026-03-12):** `DataLineageService` is implemented in `src/Meridian.Storage/Services/DataLineageService.cs` and tracks provenance chain per stored data file. Lineage information is accessible through the storage API.
 
 **Original problem:** `DataLineageService` tracks provenance metadata but there's no way to visualize the lineage. When debugging a data quality issue, operators need to trace: "This AAPL trade at 14:32:05 came from Alpaca, was canonicalized at 14:32:05.003, passed bad-tick filter, and was stored at 14:32:05.012."
 
@@ -203,7 +203,7 @@ The timeline visualization would immediately show gaps, coverage periods, and wh
 
 ### 4.2 Automated Data Retention Compliance Reports — ✅ Implemented
 
-**Status (2026-03-12):** `RetentionComplianceReporter` is fully implemented in `src/MarketDataCollector.Storage/Services/RetentionComplianceReporter.cs`. It scans stored data against configured policies and generates JSON, Markdown, and CSV reports. Accessible via `/api/resilience/compliance-report` and `--retention-report` CLI flag. Integrated into `ScheduledArchiveMaintenanceService` for monthly automated runs.
+**Status (2026-03-12):** `RetentionComplianceReporter` is fully implemented in `src/Meridian.Storage/Services/RetentionComplianceReporter.cs`. It scans stored data against configured policies and generates JSON, Markdown, and CSV reports. Accessible via `/api/resilience/compliance-report` and `--retention-report` CLI flag. Integrated into `ScheduledArchiveMaintenanceService` for monthly automated runs.
 
 **Original problem:** Organizations using this tool for regulated trading need proof that data retention policies are being followed. Currently there's no automated way to generate a compliance report.
 
@@ -223,7 +223,7 @@ The timeline visualization would immediately show gaps, coverage periods, and wh
 - **Lazy migration:** When reading old data (replay, export), apply upcasters on-the-fly without rewriting files
 - **Compatibility matrix:** `/api/schema/compatibility` — show which stored data files are on which schema version
 
-**Status (2026-03-12):** `ISchemaUpcaster` interface is defined in `src/MarketDataCollector.Contracts/Schema/`. `SchemaVersionManager` tracks versions in `src/MarketDataCollector.Storage/Archival/`. `SchemaUpcasterRegistry` exists in the pipeline layer for runtime upcaster registration. **Remaining:** lazy on-the-fly upcasting during replay/export reads; `/api/schema/compatibility` matrix endpoint; `--migrate-schema` CLI command.
+**Status (2026-03-12):** `ISchemaUpcaster` interface is defined in `src/Meridian.Contracts/Schema/`. `SchemaVersionManager` tracks versions in `src/Meridian.Storage/Archival/`. `SchemaUpcasterRegistry` exists in the pipeline layer for runtime upcaster registration. **Remaining:** lazy on-the-fly upcasting during replay/export reads; `/api/schema/compatibility` matrix endpoint; `--migrate-schema` CLI command.
 
 **Impact:** High — prevents "data rot" as the project evolves.
 **Effort:** M
@@ -270,7 +270,7 @@ The timeline visualization would immediately show gaps, coverage periods, and wh
 
 ### 5.3 QuantConnect Lean Tight Integration — ✅ Implemented
 
-**Status (2026-03-12):** `LeanIntegrationService` is implemented in `src/MarketDataCollector.Ui.Services/` and wires into `LeanIntegrationPage` (WPF). `LeanAutoExportService` continuously exports collected data in Lean-compatible format. `LeanSymbolMapper` handles automatic symbol format translation. Custom Lean data types (`LeanDataTypes.cs`) are defined in `src/MarketDataCollector/Integrations/Lean/`. The `IDataProvider` implementation reads stored JSONL/Parquet as Lean data feeds.
+**Status (2026-03-12):** `LeanIntegrationService` is implemented in `src/Meridian.Ui.Services/` and wires into `LeanIntegrationPage` (WPF). `LeanAutoExportService` continuously exports collected data in Lean-compatible format. `LeanSymbolMapper` handles automatic symbol format translation. Custom Lean data types (`LeanDataTypes.cs`) are defined in `src/Meridian/Integrations/Lean/`. The `IDataProvider` implementation reads stored JSONL/Parquet as Lean data feeds.
 
 **Original problem:** Lean integration exists (`Integrations/Lean/`) but the data flow is one-directional and manual. Users must export data, convert formats, and configure Lean separately.
 
@@ -338,7 +338,7 @@ Polygon, NYSE, and StockSharp inherit from this base; only their message parsing
 
 ### 7.2 End-to-End OpenTelemetry Trace Propagation — 📝 Future
 
-**Problem (G2 remainder):** The OpenTelemetry framework is wired (`TracedEventMetrics`, `MarketDataCollector.Pipeline` meter, OTLP registration), but `Activity` context is not propagated from provider receive loops through the `EventPipeline` consumer to the storage write call. Distributed traces appear as disconnected spans with no parent-child relationship across the pipeline boundaries.
+**Problem (G2 remainder):** The OpenTelemetry framework is wired (`TracedEventMetrics`, `Meridian.Pipeline` meter, OTLP registration), but `Activity` context is not propagated from provider receive loops through the `EventPipeline` consumer to the storage write call. Distributed traces appear as disconnected spans with no parent-child relationship across the pipeline boundaries.
 
 **Proposal:** Wire explicit `Activity` propagation:
 1. Provider receive loop creates a root span per batch: `Activity("provider.receive", tags: { provider, symbol })`

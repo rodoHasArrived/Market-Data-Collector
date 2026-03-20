@@ -1,12 +1,12 @@
 ---
 name: Test Writer Agent
-description: Test writer specialist for the MarketDataCollector project, generating idiomatic xUnit and FluentAssertions tests with correct async patterns and isolation for all major MDC component types.
+description: Test writer specialist for the Meridian project, generating idiomatic xUnit and FluentAssertions tests with correct async patterns and isolation for all major MDC component types.
 ---
 
 # Test Writer Agent Instructions
 
 This file contains instructions for an agent responsible for generating high-quality xUnit tests
-for the MarketDataCollector project.
+for the Meridian project.
 
 > **Claude Code equivalent:** [`.claude/skills/mdc-test-writer/SKILL.md`](../../.claude/skills/mdc-test-writer/SKILL.md) — same framework packaged as a Claude Code skill with 8 named pattern scaffolds.
 > **Navigation index:** [`docs/ai/agents/README.md`](../../docs/ai/agents/README.md)
@@ -33,8 +33,8 @@ Quality) checks without warnings.
 |------|---------|
 | **xUnit** | Test runner — all test projects |
 | **FluentAssertions** | Assertion library — preferred over `Assert.*` |
-| **Moq** | Mocking — `MarketDataCollector.Tests`, `MarketDataCollector.Wpf.Tests` |
-| **NSubstitute** | Mocking — `MarketDataCollector.Ui.Tests` (check `.csproj` first) |
+| **Moq** | Mocking — `Meridian.Tests`, `Meridian.Wpf.Tests` |
+| **NSubstitute** | Mocking — `Meridian.Ui.Tests` (check `.csproj` first) |
 | **coverlet** | Code coverage — `dotnet test --collect:"XPlat Code Coverage"` |
 
 Always check the target test project's `.csproj` for the mock library in use before writing mocks.
@@ -53,14 +53,14 @@ Before writing any code, identify the component type. The component type determi
 
 | Component | Pattern | Target Project | Key Concerns |
 |-----------|---------|---------------|-------------|
-| `IHistoricalDataProvider` impl | A | `MarketDataCollector.Tests` | HTTP errors, rate limit, cancellation, empty |
-| `IMarketDataClient` impl | B | `MarketDataCollector.Tests` | Connect/disconnect, reconnect, dispose |
-| `IStorageSink` / WAL | C | `MarketDataCollector.Tests` | Temp dir, FlushAsync, DisposeAsync, line count |
-| `EventPipeline` | D | `MarketDataCollector.Tests` | FlushAsync before assert, DisposeAsync flushes |
-| Application service (pure) | E | `MarketDataCollector.Tests` | `[Theory]` + `[InlineData]` for inputs |
-| WPF / Ui.Services | F | `MarketDataCollector.Wpf.Tests` or `Ui.Tests` | API mock (Moq or NSubstitute), null on error |
-| F# modules | G | `MarketDataCollector.FSharp.Tests` | F# module style, `Result` type assertions |
-| Endpoint integration | H | `MarketDataCollector.Tests` | `WebApplicationFactory`, JSON snapshots |
+| `IHistoricalDataProvider` impl | A | `Meridian.Tests` | HTTP errors, rate limit, cancellation, empty |
+| `IMarketDataClient` impl | B | `Meridian.Tests` | Connect/disconnect, reconnect, dispose |
+| `IStorageSink` / WAL | C | `Meridian.Tests` | Temp dir, FlushAsync, DisposeAsync, line count |
+| `EventPipeline` | D | `Meridian.Tests` | FlushAsync before assert, DisposeAsync flushes |
+| Application service (pure) | E | `Meridian.Tests` | `[Theory]` + `[InlineData]` for inputs |
+| WPF / Ui.Services | F | `Meridian.Wpf.Tests` or `Ui.Tests` | API mock (Moq or NSubstitute), null on error |
+| F# modules | G | `Meridian.FSharp.Tests` | F# module style, `Result` type assertions |
+| Endpoint integration | H | `Meridian.Tests` | `WebApplicationFactory`, JSON snapshots |
 
 ---
 
@@ -100,7 +100,7 @@ For any non-trivial component, cover at minimum:
 
 Produce a complete, compilable test file with:
 
-1. Namespace matching project convention (`MarketDataCollector.Tests.{Category}`)
+1. Namespace matching project convention (`Meridian.Tests.{Category}`)
 2. `using` directives (xUnit, FluentAssertions, mock library, types under test)
 3. A `CreateSut()` factory method — not scattered construction in each test method
 4. `IDisposable` or `IAsyncDisposable` implementation when temp resources are needed
@@ -110,7 +110,7 @@ Produce a complete, compilable test file with:
 **Example structure:**
 
 ```csharp
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 public sealed class MyProviderHistoricalDataProviderTests : IDisposable
 {
@@ -262,15 +262,15 @@ sub.DidNotReceive().FlushAsync(Arg.Any<CancellationToken>());
 
 ```bash
 # Run cross-platform tests (fastest for most changes)
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
   -c Release /p:EnableWindowsTargeting=true
 
 # Run F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj \
   -c Release /p:EnableWindowsTargeting=true
 
 # Run with coverage
-dotnet test tests/MarketDataCollector.Tests/ \
+dotnet test tests/Meridian.Tests/ \
   --collect:"XPlat Code Coverage" /p:EnableWindowsTargeting=true
 ```
 

@@ -23,8 +23,8 @@ Env vars (optional):
 $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Src  = Join-Path $Root "src\MarketDataCollector"
-$Ui   = Join-Path $Root "src\MarketDataCollector.Ui"
+$Src  = Join-Path $Root "src\Meridian"
+$Ui   = Join-Path $Root "src\Meridian.Ui"
 $Data = Join-Path $Root "data"
 $Logs = Join-Path $Root "logs"
 $Run  = Join-Path $Root "run"
@@ -183,7 +183,7 @@ if ($UseIbApi -eq "true") {
 
 $collectorArgs = @(
   "run",
-  "--project", (Join-Path $Src "MarketDataCollector.csproj"),
+  "--project", (Join-Path $Src "Meridian.csproj"),
   "--configuration", $Config,
   "--",
   "--watch-config",
@@ -199,7 +199,7 @@ if ($StartUi -eq "true") {
   Write-Host "[INFO] Starting UI..."
   $uiArgs = @(
     "run",
-    "--project", (Join-Path $Ui "MarketDataCollector.Ui.csproj"),
+    "--project", (Join-Path $Ui "Meridian.Ui.csproj"),
     "--configuration", $Config
   )
   $ui = Start-Process -FilePath "dotnet" -ArgumentList $uiArgs -PassThru -NoNewWindow `

@@ -1,7 +1,7 @@
 # Market Data Collector — Feature Inventory
 
-**Version:** 1.6.2
-**Date:** 2026-03-17
+**Version:** 1.7.0
+**Date:** 2026-03-20
 **Purpose:** Comprehensive inventory of every functional area, its current implementation status, and the remaining work required to reach full implementation.
 
 Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`IMPROVEMENTS.md`](IMPROVEMENTS.md) (per-item tracking).
@@ -285,15 +285,21 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | TimeSeriesAlignmentPage | TimeSeriesAlignmentService | Multi-symbol time alignment |
 | WorkspacePage | WorkspaceService | Workspace management |
 
-### Pages requiring live-data wiring (⚠️ Static placeholder data)
+### Trading workstation migration target (🔄 Planned / active in documentation)
 
-| Page | Issue | Remaining Work |
-|------|-------|----------------|
-| — | All known placeholder pages have been wired to live services (see completed list above) | — |
+The current WPF app exposes broad capability coverage, but the next implementation wave reorganizes those capabilities into four workflow workspaces:
+
+- **Research** — backtests, Lean engine flows, charts, replay, experiment comparison
+- **Trading** — live monitoring, orders, fills, positions, strategy operation
+- **Data Operations** — providers, symbols, backfills, schedules, storage, exports
+- **Governance** — portfolio, ledger, diagnostics, notifications, settings
+
+This migration is tracked in [`../plans/trading-workstation-migration-blueprint.md`](../plans/trading-workstation-migration-blueprint.md) and [`ROADMAP.md`](ROADMAP.md) Phases 11–13.
 
 ### Known WPF limitations
 
 - `DiagnosticsPage` reads from local process/environment; not connected to remote backend API.
+- Current functionality is still more **page-centric** than **workflow-centric**; backtesting, paper-trading, portfolio, and ledger concepts are not yet unified into a single operator-facing run model.
 
 ### WPF MVVM progress
 
@@ -331,7 +337,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Prometheus metrics export | ✅ | `/api/metrics`; event throughput, provider health, backpressure, error rates |
-| OpenTelemetry pipeline instrumentation | ✅ | `TracedEventMetrics` decorator; `MarketDataCollector.Pipeline` meter |
+| OpenTelemetry pipeline instrumentation | ✅ | `TracedEventMetrics` decorator; `Meridian.Pipeline` meter |
 | Activity spans (batch consume, backfill, WAL recovery) | ✅ | `MarketDataTracing` extension methods |
 | End-to-end trace context propagation | 🔄 | Framework complete; explicit cross-boundary wiring (provider → pipeline → storage) pending |
 | Correlation IDs in structured logs | 📝 | Not yet implemented |
@@ -368,7 +374,7 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | `QuoteValidator.fs` | ✅ | Price/size range validation |
 | `TradeValidator.fs` | ✅ | Trade sequence and sanity validation |
 | `ValidationPipeline.fs` | ✅ | Composable validation pipeline |
-| C# Interop generated types | ✅ | `MarketDataCollector.FSharp.Interop.g.cs` |
+| C# Interop generated types | ✅ | `Meridian.FSharp.Interop.g.cs` |
 
 ---
 
@@ -387,10 +393,10 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 
 | Test Project | Test Files | Methods | Focus |
 |---|---|---|---|
-| `MarketDataCollector.Tests` | 185 | ~2,663 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain, integration endpoints |
-| `MarketDataCollector.FSharp.Tests` | 6 | ~99 | F# domain validation, calculations, transforms, validation pipeline |
-| `MarketDataCollector.Wpf.Tests` | 19 | ~324 | WPF desktop services (navigation, config, status, connection) |
-| `MarketDataCollector.Ui.Tests` | 63 | ~1,007 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
+| `Meridian.Tests` | 185 | ~2,663 | Core: backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain, integration endpoints |
+| `Meridian.FSharp.Tests` | 6 | ~99 | F# domain validation, calculations, transforms, validation pipeline |
+| `Meridian.Wpf.Tests` | 19 | ~324 | WPF desktop services (navigation, config, status, connection) |
+| `Meridian.Ui.Tests` | 63 | ~1,007 | Desktop UI services (API client, backfill, fixtures, forms, health, watchlist) |
 | **Total** | **273** | **~4,093** | |
 
 ### Key test infrastructure

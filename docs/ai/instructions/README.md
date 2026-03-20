@@ -29,7 +29,7 @@ explicitly**.
 5. All JSON serialization via ADR-014 source generators — never reflection overload
 6. `EventPipelinePolicy.Default.CreateChannel<T>()` for producer-consumer queues
 7. `Span<T>` / `Memory<T>` for hot-path buffer operations — avoid LINQ allocations per tick
-8. Domain exceptions must derive from `MarketDataCollectorException`
+8. Domain exceptions must derive from `MeridianException`
 9. `_` prefix for private fields; `I` prefix for interfaces; `Async` suffix for async methods
 10. Register all new serializable DTOs in the project's `JsonSerializerContext`
 
@@ -38,7 +38,7 @@ explicitly**.
 ### WPF / MVVM Instructions
 
 **File:** [`.github/instructions/wpf.instructions.md`](../../../.github/instructions/wpf.instructions.md)
-**Applies to:** `src/MarketDataCollector.Wpf/**`
+**Applies to:** `src/Meridian.Wpf/**`
 
 10 rules enforced when editing WPF views or code-behind:
 

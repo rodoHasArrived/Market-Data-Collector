@@ -7,7 +7,7 @@ This document describes the WPF desktop application implementation, which is the
 ## Implementation Scope
 
 ### Core Application Structure
-- **Project**: `MarketDataCollector.Wpf` (located in `src/MarketDataCollector.Wpf/`)
+- **Project**: `Meridian.Wpf` (located in `src/Meridian.Wpf/`)
 - **Framework**: .NET 9.0 with WPF (Windows Presentation Foundation)
 - **Target**: Windows-only desktop deployment
 - **Architecture**: MVVM pattern with singleton services
@@ -114,7 +114,7 @@ Benefits:
 - Easy access from any component
 
 #### Namespace Alias for Navigation
-To avoid ambiguity between `System.Windows.Navigation` and `MarketDataCollector.Wpf.Services.NavigationService`:
+To avoid ambiguity between `System.Windows.Navigation` and `Meridian.Wpf.Services.NavigationService`:
 ```csharp
 using SysNavigation = System.Windows.Navigation;
 ```
@@ -124,12 +124,12 @@ using SysNavigation = System.Windows.Navigation;
 #### Current Status
 ✅ **Build**: Successful with 0 warnings, 0 errors
 ✅ **Dependencies**: All NuGet packages resolved
-✅ **Solution Integration**: Properly integrated in MarketDataCollector.sln
+✅ **Solution Integration**: Properly integrated in Meridian.sln
 ✅ **Project GUID**: Valid GUID `{6F8D3A55-3E95-4F9D-9C8F-DBA9A6230B1E}`
 
 #### Build Command
 ```bash
-dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release
+dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release
 ```
 
 ### Code Review Findings - All Resolved
@@ -170,8 +170,8 @@ Related documentation:
 
 Desktop services have comprehensive unit test coverage across two projects:
 
-- **MarketDataCollector.Wpf.Tests** (101 tests): NavigationService, ConfigService, StatusService, ConnectionService, WpfDataQualityService
-- **MarketDataCollector.Ui.Tests** (171 tests): ApiClient, Backfill, Charting, FixtureData, FormValidation, SystemHealth, Watchlist, collections, and more
+- **Meridian.Wpf.Tests** (101 tests): NavigationService, ConfigService, StatusService, ConnectionService, WpfDataQualityService
+- **Meridian.Ui.Tests** (171 tests): ApiClient, Backfill, Charting, FixtureData, FormValidation, SystemHealth, Watchlist, collections, and more
 
 Run tests with `make test-desktop-services`. See [Desktop Testing Guide](./desktop-testing-guide.md) for details.
 

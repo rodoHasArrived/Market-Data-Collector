@@ -1,7 +1,7 @@
 ---
 name: mdc-test-writer
 description: >
-  Test generation skill for the MarketDataCollector project. Use this skill whenever an agent
+  Test generation skill for the Meridian project. Use this skill whenever an agent
   needs to write new xUnit tests, expand coverage for existing components, or validate that
   test quality meets the project's standards. Triggers on: "write tests for", "add unit tests",
   "increase test coverage", "write a test for this class", "how do I test X", "the tests are
@@ -12,9 +12,9 @@ description: >
   pipeline components, WPF services, and F# interop boundaries.
 ---
 
-# MarketDataCollector — Test Writer Skill
+# Meridian — Test Writer Skill
 
-Generate high-quality, idiomatic xUnit tests for any MarketDataCollector component. Every test
+Generate high-quality, idiomatic xUnit tests for any Meridian component. Every test
 produced by this skill must pass the `mdc-code-review` Lens 4 (Test Code Quality) checks.
 
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md)
@@ -34,7 +34,7 @@ produced by this skill must pass the `mdc-code-review` Lens 4 (Test Code Quality
 | coverlet | Coverage collection | `coverlet.collector` |
 
 Check the project's test project `.csproj` for which mock library is in use before choosing.
-Most tests in `MarketDataCollector.Tests` use Moq; WPF tests use NSubstitute.
+Most tests in `Meridian.Tests` use Moq; WPF tests use NSubstitute.
 
 ---
 
@@ -47,35 +47,35 @@ What type of component am I testing?
 │
 ├── IHistoricalDataProvider implementation
 │   → Pattern A: Historical Provider Tests
-│   → Test file: tests/MarketDataCollector.Tests/Infrastructure/Providers/
+│   → Test file: tests/Meridian.Tests/Infrastructure/Providers/
 │
 ├── IMarketDataClient (streaming) implementation
 │   → Pattern B: Streaming Provider Tests
-│   → Test file: tests/MarketDataCollector.Tests/Infrastructure/Providers/
+│   → Test file: tests/Meridian.Tests/Infrastructure/Providers/
 │
 ├── IStorageSink / WAL / AtomicFileWriter
 │   → Pattern C: Storage Tests
-│   → Test file: tests/MarketDataCollector.Tests/Storage/
+│   → Test file: tests/Meridian.Tests/Storage/
 │
 ├── EventPipeline / pipeline component
 │   → Pattern D: Pipeline Tests
-│   → Test file: tests/MarketDataCollector.Tests/Application/Pipeline/
+│   → Test file: tests/Meridian.Tests/Application/Pipeline/
 │
 ├── Application service (no HTTP, pure logic)
 │   → Pattern E: Application Service Tests
-│   → Test file: tests/MarketDataCollector.Tests/Application/Services/
+│   → Test file: tests/Meridian.Tests/Application/Services/
 │
 ├── WPF ViewModel or Ui.Services class
 │   → Pattern F: WPF/UI Service Tests
-│   → Test file: tests/MarketDataCollector.Wpf.Tests/ or MarketDataCollector.Ui.Tests/
+│   → Test file: tests/Meridian.Wpf.Tests/ or Meridian.Ui.Tests/
 │
 ├── F# module called from C#
 │   → Pattern G: F# Interop Tests
-│   → Test file: tests/MarketDataCollector.FSharp.Tests/
+│   → Test file: tests/Meridian.FSharp.Tests/
 │
 └── Endpoint / HTTP integration
     → Pattern H: Endpoint Integration Tests
-    → Test file: tests/MarketDataCollector.Tests/Integration/EndpointTests/
+    → Test file: tests/Meridian.Tests/Integration/EndpointTests/
 ```
 
 ---
@@ -187,7 +187,7 @@ public void Dispose() => Directory.Delete(_tempDir, recursive: true);
 ## Pattern A: Historical Provider Tests
 
 ```csharp
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 public sealed class MyProviderHistoricalDataProviderTests
 {
@@ -295,7 +295,7 @@ public sealed class MyProviderHistoricalDataProviderTests
 ## Pattern B: Streaming Provider Tests
 
 ```csharp
-namespace MarketDataCollector.Tests.Infrastructure.Providers;
+namespace Meridian.Tests.Infrastructure.Providers;
 
 public sealed class MyStreamingProviderClientTests : IAsyncDisposable
 {
@@ -376,7 +376,7 @@ public sealed class MyStreamingProviderClientTests : IAsyncDisposable
 ## Pattern C: Storage Sink Tests
 
 ```csharp
-namespace MarketDataCollector.Tests.Storage;
+namespace Meridian.Tests.Storage;
 
 public sealed class JsonlStorageSinkTests : IDisposable
 {
@@ -470,7 +470,7 @@ public sealed class JsonlStorageSinkTests : IDisposable
 ## Pattern D: Pipeline / EventPipeline Tests
 
 ```csharp
-namespace MarketDataCollector.Tests.Application.Pipeline;
+namespace Meridian.Tests.Application.Pipeline;
 
 public sealed class EventPipelineTests : IAsyncDisposable
 {
@@ -527,7 +527,7 @@ public sealed class EventPipelineTests : IAsyncDisposable
 ## Pattern E: Application Service Tests
 
 ```csharp
-namespace MarketDataCollector.Tests.Application.Services;
+namespace Meridian.Tests.Application.Services;
 
 public sealed class TradingCalendarTests
 {
@@ -570,7 +570,7 @@ public sealed class TradingCalendarTests
 ## Pattern F: WPF / UI Service Tests
 
 ```csharp
-namespace MarketDataCollector.Wpf.Tests.Services;
+namespace Meridian.Wpf.Tests.Services;
 
 public sealed class StatusServiceTests
 {
@@ -623,7 +623,7 @@ public sealed class StatusServiceTests
 ## Pattern G: F# Interop Tests
 
 ```csharp
-namespace MarketDataCollector.FSharp.Tests;
+namespace Meridian.FSharp.Tests;
 
 // F# test style using Xunit or Expecto
 module ValidationTests =
@@ -670,7 +670,7 @@ Use `TestDataBuilder` (or create one) for reusable test event construction:
 
 ```csharp
 // If TestMarketEventPublisher exists in tests/TestHelpers/, use it:
-// File: tests/MarketDataCollector.Tests/TestHelpers/TestMarketEventPublisher.cs
+// File: tests/Meridian.Tests/TestHelpers/TestMarketEventPublisher.cs
 
 internal static class TestDataBuilder
 {
@@ -702,12 +702,12 @@ internal static class TestDataBuilder
 
 | Component Type | Test Project | Subdirectory |
 |---------------|-------------|-------------|
-| Historical provider | `MarketDataCollector.Tests` | `Infrastructure/Providers/` |
-| Streaming provider | `MarketDataCollector.Tests` | `Infrastructure/Providers/` |
-| Storage sink / WAL | `MarketDataCollector.Tests` | `Storage/` |
-| Pipeline component | `MarketDataCollector.Tests` | `Application/Pipeline/` |
-| Application service | `MarketDataCollector.Tests` | `Application/Services/` |
-| WPF services | `MarketDataCollector.Wpf.Tests` | `Services/` |
-| Ui.Services classes | `MarketDataCollector.Ui.Tests` | `Services/` |
-| F# modules | `MarketDataCollector.FSharp.Tests` | (root) |
-| Endpoint integration | `MarketDataCollector.Tests` | `Integration/EndpointTests/` |
+| Historical provider | `Meridian.Tests` | `Infrastructure/Providers/` |
+| Streaming provider | `Meridian.Tests` | `Infrastructure/Providers/` |
+| Storage sink / WAL | `Meridian.Tests` | `Storage/` |
+| Pipeline component | `Meridian.Tests` | `Application/Pipeline/` |
+| Application service | `Meridian.Tests` | `Application/Services/` |
+| WPF services | `Meridian.Wpf.Tests` | `Services/` |
+| Ui.Services classes | `Meridian.Ui.Tests` | `Services/` |
+| F# modules | `Meridian.FSharp.Tests` | (root) |
+| Endpoint integration | `Meridian.Tests` | `Integration/EndpointTests/` |

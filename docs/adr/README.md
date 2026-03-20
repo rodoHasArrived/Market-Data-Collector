@@ -18,7 +18,7 @@ An ADR is a document that captures an important architectural decision along wit
 | [ADR-006](006-domain-events-polymorphic-payload.md) | Domain Events Polymorphic Payload | Accepted | `MarketEvent`, `IMarketEventPayload` |
 | [ADR-007](007-write-ahead-log-durability.md) | Write-Ahead Log Durability | Accepted | `WriteAheadLog`, `EventPipeline` |
 | [ADR-008](008-multi-format-composite-storage.md) | Multi-Format Composite Storage | Accepted | `CompositeSink`, `IStorageSink` |
-| [ADR-009](009-fsharp-interop.md) | F# Type-Safe Domain with C# Interop | Accepted | `MarketDataCollector.FSharp`, `Interop.fs` |
+| [ADR-009](009-fsharp-interop.md) | F# Type-Safe Domain with C# Interop | Accepted | `Meridian.FSharp`, `Interop.fs` |
 | [ADR-010](010-httpclient-factory.md) | HttpClientFactory Lifecycle | Accepted | `HttpClientConfiguration`, `HttpClientNames` |
 | [ADR-011](011-centralized-configuration-and-credentials.md) | Centralized Configuration & Credentials | Accepted | `IConfigurationProvider`, `ICredentialStore` |
 | [ADR-012](012-monitoring-and-alerting-pipeline.md) | Unified Monitoring & Alerting | Accepted | `IHealthCheckProvider`, `IAlertDispatcher` |

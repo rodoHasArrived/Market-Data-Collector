@@ -241,7 +241,7 @@ Test order matters here and parallel execution can cause interference.
 ### Finding 4.3: Inconsistent Test Naming Conventions (WARNING)
 
 Three different naming patterns across test projects:
-- **Good:** `MethodName_Scenario_ExpectedResult` (majority of MarketDataCollector.Tests)
+- **Good:** `MethodName_Scenario_ExpectedResult` (majority of Meridian.Tests)
 - **Inconsistent:** `MethodName_ShouldXxx` without scenario clause (Wpf.Tests, Ui.Tests)
 - **Ambiguous:** `TestXxx_` prefix in SymbolMappingServiceTests, SystemHealthServiceTests
 

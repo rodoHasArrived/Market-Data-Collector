@@ -1,7 +1,7 @@
 # Market Data Collector Documentation
 
 **Version:** 1.7.0  
-**Last Updated:** 2026-03-15
+**Last Updated:** 2026-03-20
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need, whether you're a developer, operator, or user.
 
@@ -13,6 +13,7 @@ Welcome to the Market Data Collector documentation. This guide will help you fin
 
 - **New Users** → [Getting Started Guide](getting-started/README.md)
 - **Developers** → [Repository Organization Guide](development/repository-organization-guide.md)
+- **Trading workstation migration** → [Migration Blueprint](plans/trading-workstation-migration-blueprint.md)
 - **Operators** → [Operator Runbook](operations/operator-runbook.md)
 - **Contributors** → See [Contributing](#contributing) section below or [Where should this doc go?](development/documentation-contribution-guide.md#where-should-this-doc-go)
 
@@ -88,6 +89,7 @@ Deploying, monitoring, and maintaining the system.
 Understanding system design.
 
 - [Architecture Overview](architecture/overview.md) — High-level system architecture
+- [Trading Workstation Migration Blueprint](plans/trading-workstation-migration-blueprint.md) — Target product, workspace, and run-model migration
 - [Layer Boundaries](architecture/layer-boundaries.md) — Project dependency rules
 - [Storage Design](architecture/storage-design.md) — Storage architecture
 - [Deterministic Canonicalization](architecture/deterministic-canonicalization.md) — Data normalization
@@ -100,6 +102,7 @@ Understanding system design.
 ## Project Status & Planning
 
 - [**Project Roadmap**](status/ROADMAP.md) — **Primary planning document**
+- [Trading Workstation Migration Blueprint](plans/trading-workstation-migration-blueprint.md) — Workflow-centric product migration plan
 - [**Feature Inventory**](status/FEATURE_INVENTORY.md) — Per-feature implementation status
 - [**Improvements Tracker**](status/IMPROVEMENTS.md) — Consolidated improvement tracking
 - [TODO Tracking](status/TODO.md) — Auto-scanned TODO comments
@@ -158,9 +161,10 @@ In-depth assessments of architecture, providers, and code quality.
 
 ## Archived Documentation
 
-Historical documentation superseded by newer guides.
+Historical or deprecated documentation superseded by newer guides. Active documents may carry a temporary deprecation banner before they are moved, but the long-term home for those records is always `docs/archived/`.
 
-- [Archived Documentation Index](archived/INDEX.md) — Complete list with context
+- [Archived Documentation Index](archived/INDEX.md) — Complete list with context and replacement pointers
+- [Archived Documentation README](archived/README.md) — Archive policy, categories, and current contents
 
 ---
 
@@ -251,4 +255,4 @@ docs/
 
 ---
 
-*Documentation maintained by core team. Last update: 2026-03-17*
+*Documentation maintained by core team. Last update: 2026-03-20*

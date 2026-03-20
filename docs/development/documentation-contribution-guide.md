@@ -46,6 +46,7 @@ Documentation debt is real. When making code changes:
 - Update related documentation in the same PR
 - Mark deprecated information clearly
 - Archive outdated documents rather than deleting them
+- Use `docs/archived/` as the single home for historical records (do not create parallel `docs/archive/` locations)
 
 ### 4. Make It Findable
 
@@ -158,7 +159,7 @@ Is it a step-by-step guide for end users or operators?
 | Security vulnerabilities, known issues | `security/` |
 | AI assistant guides and known errors | `ai/` |
 | Auto-generated output (do not edit) | `generated/` |
-| Outdated / superseded content | `archived/` |
+| Outdated / superseded content | `archived/` (single canonical archive location) |
 | Diagrams (DOT/Graphviz) | `diagrams/` |
 | UML diagrams (PlantUML) | `diagrams/uml/` |
 
@@ -392,7 +393,7 @@ Include descriptive text, not bare URLs:
 
 ```markdown
 # Reference code
-See `src/MarketDataCollector.Core/Config/AppConfig.cs` for implementation.
+See `src/Meridian.Core/Config/AppConfig.cs` for implementation.
 
 # Reference other docs
 See [ROADMAP Phase 6](../status/ROADMAP.md#phase-6-duplicate--unused-code-cleanup).
@@ -409,7 +410,7 @@ Based on [ADR-001](../adr/001-provider-abstraction.md).
 
 Use backticks for:
 - Commands: `dotnet build`
-- File paths: `src/MarketDataCollector/Program.cs`
+- File paths: `src/Meridian/Program.cs`
 - Code identifiers: `IMarketDataClient`
 - Environment variables: `$ALPACA_API_KEY`
 
@@ -471,12 +472,12 @@ Show actual commands with expected output:
 
 ````markdown
 ```bash
-$ dotnet run --project src/MarketDataCollector -- --help
+$ dotnet run --project src/Meridian -- --help
 
 Market Data Collector v1.6.1
 
 Usage:
-  MarketDataCollector [options]
+  Meridian [options]
 
 Options:
   --help                 Show help information

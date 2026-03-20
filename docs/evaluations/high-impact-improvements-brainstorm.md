@@ -118,7 +118,7 @@ pipeline.Use<MetricsMiddleware>()
 
 **Current state:** The domain is split across two type systems:
 - C# records in `Contracts/Domain/` and `Domain/Events/` (`Trade`, `BboQuotePayload`, `LOBSnapshot`, `MarketEvent`)
-- F# records in `MarketDataCollector.FSharp/Domain/` (`TradeEvent`, `QuoteEvent`, `OrderBookSnapshot`)
+- F# records in `Meridian.FSharp/Domain/` (`TradeEvent`, `QuoteEvent`, `OrderBookSnapshot`)
 - The `Interop.fs` file provides manual wrappers (`TradeEventWrapper`, `QuoteEventWrapper`) to bridge between them.
 
 **Problem:** There are two parallel representations of every core domain concept. A trade is both a C# `Trade` record and an F# `TradeEvent` record. Conversion between them is manual and fragile. The F# validation library (`TradeValidator`, `QuoteValidator`) operates on F# types, so C# code must convert to F# types, validate, then convert back. This dual model increases surface area for bugs and makes it unclear which representation is canonical.
@@ -436,7 +436,7 @@ public sealed class ConnectionStateMachine
 public void Domain_Should_Not_Reference_Infrastructure()
 {
     var result = Types.InAssembly(typeof(MarketEvent).Assembly)
-        .Should().NotHaveDependencyOn("MarketDataCollector.Infrastructure")
+        .Should().NotHaveDependencyOn("Meridian.Infrastructure")
         .GetResult();
     result.IsSuccessful.Should().BeTrue();
 }
@@ -896,3 +896,37 @@ public sealed record ProviderCapabilities(
 **Top 5 by pure output quality improvement:** #1 (schema), #3 (validation), #4 (WAL), #6 (contract tests), #14 (reconciliation)
 
 **Top 5 by code generalization improvement:** #2 (strong types), #5 (query abstraction), #9 (analyzers), #8 (capabilities), #12 (reconnection)
+
+---
+
+## Implementation Status Summary (2026-03-19)
+
+This brainstorm identified 16 high-impact improvements that have been incorporated into the ongoing ROADMAP and quarterly planning:
+
+### Implemented (Complete or Substantial Progress)
+
+| # | Improvement | Status | Details |
+|---|------------|--------|---------|
+| 1 | Schema evolution | ✅ Complete | `SchemaUpcasterRegistry` + transparent migration on read |
+| 3 | F# validation in pipeline | 🔄 Partial | Validation layer exists; deeper integration deferred |
+| 4 | WAL corruption recovery | ✅ Complete | `WalCorruptionMode` enum (Skip/Alert/Halt); configurable behavior |
+| 6 | End-to-end contract tests | 🔄 Partial | Provider contract tests framework; not all providers covered |
+| 10 | Deterministic replay testing | 🔄 Partial | `EventReplayService` + infrastructure; golden master tests pending |
+| 12 | Unified reconnection | 🔄 Partial | `WebSocketReconnectionHelper` standardized; consolidation planned |
+
+### Roadmapped for Future Phases
+
+| # | Improvement | Roadmap Phase | Timeframe |
+|---|------------|---------------|-----------|
+| 2 | Strong-typed identifiers | Phase 13 | Q3-Q4 2026 |
+| 5 | Unified query abstraction | Phase 14 | Q4 2026+ |
+| 7 | Composite sink failure model | Phase 10 | Q2 2026 |
+| 8 | Structured capabilities | Phase 12 | Q3 2026 |
+| 9 | Roslyn analyzers for validation | Phase 12 | Q3 2026 |
+| 11 | Eliminate stub endpoints | Phase 11 | Q2-Q3 2026 |
+| 13 | Property-based testing | Phase 10 | Q2 2026 |
+| 14 | Cross-provider reconciliation | Phase 15 | Q4 2026+ |
+| 15 | Decouple API from collector | Phase 10 | Q2 2026 |
+| 16 | Structured concurrency for providers | Phase 9 | Q2 2026 |
+
+**Verdict:** Original brainstorm provided valuable input into long-term architectural planning. 6 improvements complete or substantially progressed. 10 improvements roadmapped across Phases 9-15 with clear delivery targets. Most critical output quality improvements (schema, validation, WAL) already complete.

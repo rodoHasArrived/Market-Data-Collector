@@ -1,13 +1,13 @@
 # Market Data Collector - Project Roadmap
 
-**Version:** 1.6.2
-**Last Updated:** 2026-03-17
-**Status:** Development / Pilot Ready (hardening and scale-up in progress)
+**Version:** 1.7.0
+**Last Updated:** 2026-03-20
+**Status:** Development / Pilot Ready (hardening, scale-up, and trading workstation migration planning in progress)
 **Repository Snapshot:** `src/` files: **832** | `tests/` files: **273** | HTTP route constants: **309** | Remaining stub routes: **0** | Test methods: **~4,093**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
-For a complete per-feature status breakdown see [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md).
+For a complete per-feature status breakdown see [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md). For the workflow-centric UX and shared run-model migration plan, see [`../plans/trading-workstation-migration-blueprint.md`](../plans/trading-workstation-migration-blueprint.md).
 
 ---
 
@@ -41,7 +41,7 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
   - ✅ Completed: 7 (J1–J7 — design, MarketEvent fields, canonicalizer, condition codes, venue normalization, provider wiring, metrics)
   - 🔄 Partial: 1 (J8 — Golden fixture test suite; curated fixtures + fixture-runner tests added, drift-canary CI still pending)
 - Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete. C3 partially resolved — Polygon now uses `WebSocketProviderBase`; NYSE and StockSharp pending.
-- **WPF UX parity**: Navigation complete; ~6 pages still show static placeholder data instead of live service data.
+- **Trading workstation migration**: Core functionality exists, but the UX remains page-centric. The next major delivery wave consolidates Meridian into Research, Trading, Data Operations, and Governance workspaces with a shared run / portfolio / ledger model.
 - **Provider completeness**: Polygon and StockSharp functional with credentials; IB and NYSE require external setup steps.
 
 ---
@@ -61,9 +61,9 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
 | Phase 9: Final Production Release | 🔄 Active target | 94.3% of core improvements complete; C3 WebSocket refactor partial (Polygon done; NYSE/StockSharp pending), G2 trace propagation pending. |
 | Phase 10: Scalability & Multi-Instance | 📝 Planned | New phase for horizontal scaling and multi-instance coordination. |
-| Phase 11: WPF Full UX Parity | 📝 Planned | Wire live data to remaining static-data pages. |
-| Phase 12: Provider Completeness | 📝 Planned | Validate Polygon/StockSharp feeds; simplify IB/NYSE setup. |
-| Phase 13: Observability Completion | 📝 Planned | End-to-end OTel trace propagation; correlation IDs. |
+| Phase 11: Trading Workstation Structure | 📝 Planned | Reorganize UX around Research, Trading, Data Operations, and Governance workspaces. |
+| Phase 12: Shared Run / Portfolio / Ledger Model | 📝 Planned | Standardize run browser, portfolio summaries, and ledger-first read models. |
+| Phase 13: Backtest + Paper Trading Unification | 📝 Planned | Unify native + Lean backtesting and harden paper-trading operator workflows. |
 | Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
 | Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
 | Phase 16: Assembly-Level Performance | 📝 Planned | Byte-level SIMD, algorithmic, and allocation improvements from `docs/evaluations/assembly-performance-opportunities.md`. |
@@ -146,7 +146,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | I1 | Integration Test Harness with Fixture Providers | ✅ Complete | `FixtureMarketDataClient` and `InMemoryStorageSink` enable full pipeline integration testing without live API connections. See `tests/.../Integration/FixtureProviderTests.cs`. |
 | I2 | CLI Progress Reporting | ✅ Complete | `ProgressDisplayService` provides progress bars with ETA/throughput, Unicode spinners, multi-step checklists, and formatted tables. Supports interactive and CI/CD (non-interactive) modes. |
 | I3 | Configuration Schema Validation at Startup | 🔄 Partial | `SchemaValidationService` validates stored data formats against schema versions at startup (`--validate-schemas`, `--strict-schemas`). Missing: JSON Schema generation from C# models for config file validation. |
-| I4 | Provider SDK Documentation Generator | ✅ Complete | `generate-structure-docs.py` `extract_providers()` now reads from the correct `src/MarketDataCollector.Infrastructure/Providers` path, handles both positional and named `[DataSource]` attribute params, and emits a richer table with Class/Type/Category columns. Historical providers fall back to a curated static list. Run via `make gen-providers`. |
+| I4 | Provider SDK Documentation Generator | ✅ Complete | `generate-structure-docs.py` `extract_providers()` now reads from the correct `src/Meridian.Infrastructure/Providers` path, handles both positional and named `[DataSource]` attribute params, and emits a richer table with Class/Type/Category columns. Historical providers fall back to a curated static list. Run via `make gen-providers`. |
 
 ### Theme J: Data Canonicalization (New)
 
@@ -228,53 +228,52 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ---
 
-## Phases 11–13: Full-Implementation Roadmap
+## Phases 11–13: Trading Workstation Migration Roadmap
 
-These phases capture all remaining work identified in the [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md) full-inventory audit. They bring every started feature to complete implementation.
+These phases convert Meridian from a broad feature suite into a workflow-centric trading workstation. The target state is documented in [`../plans/trading-workstation-migration-blueprint.md`](../plans/trading-workstation-migration-blueprint.md).
 
-### Phase 11: WPF Full UX Parity
+### Phase 11: Trading Workstation Structure
 
-**Goal:** Replace all static placeholder values with live data from backend services.
-
-| Item | File(s) | Work |
-|------|---------|------|
-| P11-1 | `StoragePage.xaml` / `.cs` | Wire storage stats (total size, record count, symbol count, tier sizes) to `StorageServiceBase`; replace hardcoded strings with bound properties |
-| P11-2 | `WelcomePage.xaml` / `.cs` | Wire connection status, symbol count, and storage path to `StatusService` / `ConnectionService` / `ConfigService`; remove placeholder comments |
-| P11-3 | `TradingHoursPage.xaml` / `.cs` | Verify `TradingCalendar` integration is driving market hours display; add live next-open / next-close countdowns |
-| P11-4 | All pages | Audit remaining pages for static text masquerading as live data; update or remove as appropriate |
-
-**Exit criteria:** Every page in the WPF application shows live data or clearly-labeled static reference content. No hardcoded metric values remain.
-
----
-
-### Phase 12: Provider Completeness
-
-**Goal:** Bring all 5 streaming providers to verified, documentable production status.
-
-| Item | Provider | Work |
-|------|----------|------|
-| P12-1 | **Polygon** | Capture a recorded Polygon v2 WebSocket session (free or paying account); add a replay-based integration test that validates message parsing for trades, quotes, aggregates, and status messages end-to-end |
-| P12-2 | **StockSharp** | Document all supported `ConnectorType` values (QuikJson, Transaq, LMAX, etc.) in `docs/providers/`; add a validated `appsettings.sample.stocksharp.json`; fix `NotSupportedException` paths when connector type is unset |
-| P12-3 | **Interactive Brokers** | Write `docs/providers/interactive-brokers-build.md` with step-by-step IBAPI download, reference, and build instructions (`dotnet build -p:DefineConstants=IBAPI`); add a CI matrix job that builds with a mocked IBApi stub |
-| P12-4 | **NYSE** | Document NYSE Connect credential registration process; add connectivity smoke-test to `--test-connectivity` output |
-| P12-5 | **All WebSocket (C3)** | ✅ Polygon: `PolygonMarketDataClient` now extends `WebSocketProviderBase`. Remaining: refactor NYSE and StockSharp to extend `WebSocketProviderBase`; eliminate remaining ~500 LOC of duplicated connection-lifecycle code; verify provider tests pass after refactor |
-
-**Exit criteria:** All 5 streaming providers have documented setup paths. Polygon parsing validated against recorded feed. C3 refactor complete.
-
----
-
-### Phase 13: Observability Completion
-
-**Goal:** Complete end-to-end distributed tracing and improve log correlation.
+**Goal:** Restructure the desktop and web UX around operator workflows instead of a long list of loosely-related pages.
 
 | Item | Area | Work |
 |------|------|------|
-| P13-1 | **G2 trace propagation** | Wire `System.Diagnostics.Activity` context from each provider's receive loop through `EventPipeline.PublishAsync` to `IStorageSink.AppendAsync`; use `Activity.Current` baggage or W3C TraceContext headers for cross-component propagation |
-| P13-2 | **Correlation IDs in logs** | Add `correlation_id` / `trace_id` structured log properties to all `ILogger` call sites in the pipeline hot path (`EventPipeline`, `JsonlStorageSink`, provider adapters) |
-| P13-3 | **Backfill worker tracing** | Wire `StartBackfillActivity` spans per-symbol in `BackfillWorkerService`; propagate through `CompositeHistoricalDataProvider` |
-| P13-4 | **OTLP export docs** | Add `docs/operations/opentelemetry-setup.md` with OTLP collector configuration for Jaeger and Zipkin; include Docker Compose sample |
+| P11-1 | **Navigation / IA** | Reorganize primary navigation into `Research`, `Trading`, `Data Operations`, and `Governance` workspaces; keep existing pages reachable through workspace tabs and command palette actions |
+| P11-2 | **Discoverability** | Register all major trading/backtesting pages consistently in WPF navigation and command palette; eliminate orphan functionality that exists only as a page type or deep-link target |
+| P11-3 | **Workflow shell** | Add workspace-level headers, quick actions, and cross-links between backtest, portfolio import, live monitoring, and diagnostics flows |
+| P11-4 | **Documentation / UX truth** | Replace placeholder-page-centric status tracking with workflow-centric status tracking in docs and status dashboards |
 
-**Exit criteria:** A single live request can be traced from provider receive → pipeline publish → storage write in Jaeger/Zipkin. Correlation IDs appear in all pipeline log entries.
+**Exit criteria:** All major capabilities are discoverable through the four top-level workspaces, and workflow entry points exist for research, paper trading, and governance.
+
+---
+
+### Phase 12: Shared Run / Portfolio / Ledger Model
+
+**Goal:** Standardize Meridian around a shared strategy-run lifecycle and elevate portfolio + ledger state to first-class product objects.
+
+| Item | Area | Work |
+|------|------|------|
+| P12-1 | **Run model** | Introduce shared `StrategyRun` contracts covering backtest, paper, and live modes with common identifiers, timestamps, parameters, metrics, and status |
+| P12-2 | **Portfolio model** | Add shared read models for cash, exposure, positions, realized/unrealized P&L, commissions, financing, and equity history |
+| P12-3 | **Ledger model** | Add journal, trial-balance, account-summary, and per-symbol ledger read services so accounting is directly visible in product surfaces |
+| P12-4 | **Run browser** | Build a comparison-friendly run browser and detail flow reusable by native backtest, Lean backtest, and paper-trading history |
+
+**Exit criteria:** Backtest, paper, and live-facing experiences share a recognizable run model, and users can inspect portfolio and ledger state from product UI surfaces.
+
+---
+
+### Phase 13: Backtest + Paper Trading Unification
+
+**Goal:** Make research and execution feel like one lifecycle rather than parallel systems.
+
+| Item | Area | Work |
+|------|------|------|
+| P13-1 | **Backtest Studio** | Unify native Meridian backtests and Lean backtests behind a single operator-facing Backtest Studio with engine selection, parameters, comparisons, and “open portfolio / open ledger” actions |
+| P13-2 | **Trading cockpit** | Promote current live viewer and execution primitives into a proper paper-trading cockpit with strategies, orders, fills, positions, exposure, and risk panels |
+| P13-3 | **Execution realism** | Replace scaffold-only paper fill assumptions with feed-aware simulated pricing and make execution assumptions visible in the UI |
+| P13-4 | **Promotion workflow** | Add controlled workflow states and safety checks for Backtest → Paper → Live progression |
+
+**Exit criteria:** Meridian presents one coherent strategy lifecycle from research through paper trading, with explicit promotion and audit surfaces.
 
 ---
 
@@ -334,15 +333,15 @@ realistic workload.
 
 | Item | File(s) | Work |
 |------|---------|------|
-| P16-1 | `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` | Replace scalar `buffer[i] == '\n'` loop with `ReadOnlySpan<byte>.IndexOf` backed by `SearchValues<byte>`; add AVX2 fast path gated by `Avx2.IsSupported` with a static readonly dispatch delegate |
-| P16-2 | `src/MarketDataCollector.Storage/Replay/MemoryMappedJsonlReader.cs` | Defer `Encoding.UTF8.GetString` — pass `ReadOnlyMemory<byte>` slices to `DeserializeLines`; decode only after a line passes downstream filters. Deliver after P16-1 is merged and benchmarked |
-| P16-3 | `src/MarketDataCollector.Storage/Services/DataQualityScoringService.cs` | Replace `File.ReadLinesAsync` + `string.IndexOf` + `char.IsDigit` with a `PipeReader` / `ArrayPool<byte>` reader and a `TryExtractSequenceUtf8(ReadOnlySpan<byte>, out long)` helper; use `u8` string literals for key probes |
-| P16-4a | `src/MarketDataCollector.Application/Monitoring/LatencyHistogram.cs` | Replace linear `for` bucket scan with `Array.BinarySearch`; add `[MethodImpl(AggressiveInlining)]` |
-| P16-4b | `src/MarketDataCollector.Application/Monitoring/LatencyHistogram.cs` | Replace `List<LatencySample>` + `RemoveAt(0)` overflow with a fixed-size `LatencySample[]` circular ring indexed by `_sampleHead % MaxSamples` |
-| P16-5 | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Introduce a ring-buffer backed `Drain(int maxCount)` overload using a power-of-two array with `_head`/`_tail` indices; retain existing path for callers that pass no pooled buffer |
-| P16-6 | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Replace `DrainBySymbol` two-list reconstruction with an in-place partition using `SymbolTable.GetOrAdd` for integer symbol comparison; expose `DrainBySymbolId(int)` as the preferred API |
-| P16-7 | `src/MarketDataCollector.Application/Monitoring/DataQuality/AnomalyDetector.cs` | **Profile first.** If `SymbolStatistics.RecordTrade` is confirmed CPU-hot, apply `Vector<double>` horizontal-add for rolling mean/stddev and switch price window to struct-of-arrays layout |
-| P16-8 | `benchmarks/MarketDataCollector.Benchmarks/` | Add benchmark cases: newline scan (1 KB / 64 KB / 4 MB), sequence parse (1 K / 10 K lines), bucket selection (8 / 16 / 32 boundaries), `Drain` ring vs `GetRange`, `DrainBySymbol` two-list vs in-place partition |
+| P16-1 | `src/Meridian.Storage/Replay/MemoryMappedJsonlReader.cs` | Replace scalar `buffer[i] == '\n'` loop with `ReadOnlySpan<byte>.IndexOf` backed by `SearchValues<byte>`; add AVX2 fast path gated by `Avx2.IsSupported` with a static readonly dispatch delegate |
+| P16-2 | `src/Meridian.Storage/Replay/MemoryMappedJsonlReader.cs` | Defer `Encoding.UTF8.GetString` — pass `ReadOnlyMemory<byte>` slices to `DeserializeLines`; decode only after a line passes downstream filters. Deliver after P16-1 is merged and benchmarked |
+| P16-3 | `src/Meridian.Storage/Services/DataQualityScoringService.cs` | Replace `File.ReadLinesAsync` + `string.IndexOf` + `char.IsDigit` with a `PipeReader` / `ArrayPool<byte>` reader and a `TryExtractSequenceUtf8(ReadOnlySpan<byte>, out long)` helper; use `u8` string literals for key probes |
+| P16-4a | `src/Meridian.Application/Monitoring/LatencyHistogram.cs` | Replace linear `for` bucket scan with `Array.BinarySearch`; add `[MethodImpl(AggressiveInlining)]` |
+| P16-4b | `src/Meridian.Application/Monitoring/LatencyHistogram.cs` | Replace `List<LatencySample>` + `RemoveAt(0)` overflow with a fixed-size `LatencySample[]` circular ring indexed by `_sampleHead % MaxSamples` |
+| P16-5 | `src/Meridian.Storage/Services/EventBuffer.cs` | Introduce a ring-buffer backed `Drain(int maxCount)` overload using a power-of-two array with `_head`/`_tail` indices; retain existing path for callers that pass no pooled buffer |
+| P16-6 | `src/Meridian.Storage/Services/EventBuffer.cs` | Replace `DrainBySymbol` two-list reconstruction with an in-place partition using `SymbolTable.GetOrAdd` for integer symbol comparison; expose `DrainBySymbolId(int)` as the preferred API |
+| P16-7 | `src/Meridian.Application/Monitoring/DataQuality/AnomalyDetector.cs` | **Profile first.** If `SymbolStatistics.RecordTrade` is confirmed CPU-hot, apply `Vector<double>` horizontal-add for rolling mean/stddev and switch price window to struct-of-arrays layout |
+| P16-8 | `benchmarks/Meridian.Benchmarks/` | Add benchmark cases: newline scan (1 KB / 64 KB / 4 MB), sequence parse (1 K / 10 K lines), bucket selection (8 / 16 / 32 boundaries), `Drain` ring vs `GetRange`, `DrainBySymbol` two-list vs in-place partition |
 
 #### Delivery Notes
 

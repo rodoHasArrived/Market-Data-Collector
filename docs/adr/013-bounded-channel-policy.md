@@ -64,12 +64,12 @@ var channel = customPolicy.CreateChannel<MyEvent>();
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Policy Class | `src/MarketDataCollector.Core/Pipeline/EventPipelinePolicy.cs:26` | Preset definitions |
-| Constants | `src/MarketDataCollector.Contracts/Pipeline/PipelinePolicyConstants.cs` | Capacity constants |
-| EventPipeline | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Main event pipeline |
-| StockSharp Buffer | `src/MarketDataCollector.Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs` | MessageBuffer usage |
-| Backfill Coordinator | `src/MarketDataCollector.Application/Backfill/BackfillCoordinator.cs` | CompletionQueue usage |
-| Tests | `tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs` | Policy verification |
+| Policy Class | `src/Meridian.Core/Pipeline/EventPipelinePolicy.cs:26` | Preset definitions |
+| Constants | `src/Meridian.Contracts/Pipeline/PipelinePolicyConstants.cs` | Capacity constants |
+| EventPipeline | `src/Meridian.Application/Pipeline/EventPipeline.cs` | Main event pipeline |
+| StockSharp Buffer | `src/Meridian.Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs` | MessageBuffer usage |
+| Backfill Coordinator | `src/Meridian.Application/Backfill/BackfillCoordinator.cs` | CompletionQueue usage |
+| Tests | `tests/Meridian.Tests/Application/Pipeline/EventPipelineTests.cs` | Policy verification |
 
 ## Rationale
 

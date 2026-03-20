@@ -19,39 +19,39 @@ The Portable Data Packager provides:
 
 ```bash
 # Create a package with all data
-MarketDataCollector --package
+Meridian --package
 
 # Create a package with specific symbols
-MarketDataCollector --package --package-symbols AAPL,MSFT,SPY
+Meridian --package --package-symbols AAPL,MSFT,SPY
 
 # Create a package with date range
-MarketDataCollector --package --package-from 2024-01-01 --package-to 2024-12-31
+Meridian --package --package-from 2024-01-01 --package-to 2024-12-31
 
 # Create a named package with maximum compression
-MarketDataCollector --package --package-name my-research-data --package-compression max
+Meridian --package --package-name my-research-data --package-compression max
 ```
 
 ### Importing a Package
 
 ```bash
 # Import a package to the default data directory
-MarketDataCollector --import-package ./packages/my-data.zip
+Meridian --import-package ./packages/my-data.zip
 
 # Import to a specific directory
-MarketDataCollector --import-package ./packages/my-data.zip --import-destination /data/imported
+Meridian --import-package ./packages/my-data.zip --import-destination /data/imported
 
 # Import without checksum validation (faster, less safe)
-MarketDataCollector --import-package ./packages/my-data.zip --skip-validation
+Meridian --import-package ./packages/my-data.zip --skip-validation
 ```
 
 ### Viewing Package Contents
 
 ```bash
 # List package contents
-MarketDataCollector --list-package ./packages/my-data.zip
+Meridian --list-package ./packages/my-data.zip
 
 # Validate package integrity
-MarketDataCollector --validate-package ./packages/my-data.zip
+Meridian --validate-package ./packages/my-data.zip
 ```
 
 ## Command Line Options

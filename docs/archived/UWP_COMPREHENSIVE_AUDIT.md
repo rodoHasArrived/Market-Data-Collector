@@ -1,15 +1,15 @@
-# MarketDataCollector.UWP — Comprehensive Code Audit Report
+# Meridian.UWP — Comprehensive Code Audit Report
 
 **Date:** 2026-02-10
 **Auditor:** Claude (Automated Architecture & Code Quality Audit)
-**Scope:** `src/MarketDataCollector.Uwp/` — 47 Views, 5 ViewModels, 31 Services, 8 Controls, 3 Helpers/Converters
+**Scope:** `src/Meridian.Uwp/` — 47 Views, 5 ViewModels, 31 Services, 8 Controls, 3 Helpers/Converters
 **Total UWP LOC:** ~40,000+ (22,169 in code-behind alone)
 
 ---
 
 ## Executive Summary
 
-The MarketDataCollector.UWP application demonstrates solid functionality and thoughtful feature design, but suffers from **systemic architectural issues** that impair testability, maintainability, and scalability. The core problems are:
+The Meridian.UWP application demonstrates solid functionality and thoughtful feature design, but suffers from **systemic architectural issues** that impair testability, maintainability, and scalability. The core problems are:
 
 1. **Hybrid DI Transition (Partial Adoption)** — `ServiceLocator` + `Microsoft.Extensions.DependencyInjection` are now present, but most call sites still use static `.Instance`
 2. **Massive MVVM Violations** — 47 View code-behind files contain business logic; only 5 ViewModels exist
@@ -483,7 +483,7 @@ No ViewModel accepts interfaces via constructor injection. All depend on concret
 
 #### Finding 4.3.2: Only 1 UWP Integration Test Exists
 
-`tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` exists but tests the shared contracts, not UWP-specific logic. There are **zero unit tests** for any UWP ViewModel or Service.
+`tests/Meridian.Tests/Integration/UwpCoreIntegrationTests.cs` exists but tests the shared contracts, not UWP-specific logic. There are **zero unit tests** for any UWP ViewModel or Service.
 
 #### Finding 4.3.3: Interface Coverage Is Minimal
 
@@ -653,7 +653,7 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 #### C2: Fix Blocking Async Call
 
 - **Finding:** `.GetAwaiter().GetResult()` in `ArchiveHealthService.cs:422`
-- **Location:** `src/MarketDataCollector.Uwp/Services/ArchiveHealthService.cs:422`
+- **Location:** `src/Meridian.Uwp/Services/ArchiveHealthService.cs:422`
 - **Current Code:**
   ```csharp
   var analytics = analyticsService.GetAnalyticsAsync(false).GetAwaiter().GetResult();
@@ -668,7 +668,7 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 #### C3: Fix Inconsistent Service Instantiation
 
 - **Finding:** 1 remaining location creates `new ConfigService()` instead of using the registered singleton
-- **Location:** `src/MarketDataCollector.Uwp/Services/ArchiveHealthService.cs:47`
+- **Location:** `src/Meridian.Uwp/Services/ArchiveHealthService.cs:47`
 - **Recommended Fix:** Replace direct construction with DI/service-locator resolution for consistency
 - **Effort:** 30 minutes
 - **Risk:** Low — direct replacement
@@ -694,7 +694,7 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 
 - **Category:** Testability, Extensibility
 - **Finding:** Interface coverage has improved to 10 UWP service interfaces, but many services/pages still bypass interface injection
-- **Location:** `src/MarketDataCollector.Uwp/Contracts/`
+- **Location:** `src/Meridian.Uwp/Contracts/`
 - **Recommended Pattern:** Create `I{ServiceName}` interface for each service, extracting the public API. Move to `Contracts/` directory.
 - **Expected Benefit:** Enables unit testing with mocks; enables DI registration by interface
 - **Effort:** 3-4 days

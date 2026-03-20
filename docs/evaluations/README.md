@@ -1,8 +1,9 @@
 # Technology Evaluations
 
-**Owner:** Core Team  
-**Scope:** Governance — Architecture Reviews  
+**Owner:** Core Team
+**Scope:** Governance — Architecture Reviews
 **Review Cadence:** As evaluations are completed or superseded
+**Last Audited:** 2026-03-19
 
 This directory contains in-depth evaluations of architecture components, providers, and improvement proposals.
 
@@ -29,10 +30,11 @@ This directory contains in-depth evaluations of architecture components, provide
 
 | Document | Description |
 |----------|-------------|
-| [Desktop End-User Improvements](desktop-end-user-improvements.md) | Comprehensive desktop UX assessment: 49 pages, 104 services, gap analysis |
 | [Windows Desktop Provider Configurability](windows-desktop-provider-configurability-assessment.md) | Provider configuration assessment and phased improvement roadmap |
 | [Desktop Platform Improvements Guide](desktop-platform-improvements-implementation-guide.md) | Implementation guide: test infrastructure, fixture mode, DI modernization |
 | [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) | Impact analysis, phase status, quick reference, and success criteria |
+
+**Archived:** [Desktop End-User Improvements](../archived/desktop-end-user-improvements.md) — Comprehensive desktop UX assessment retained for historical reference
 
 ## Improvement Proposals & Brainstorms
 

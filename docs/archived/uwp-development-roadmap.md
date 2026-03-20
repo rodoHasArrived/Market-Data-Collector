@@ -13,7 +13,7 @@ This document outlines feature refinements and development roadmap for the Marke
 Fixed long-standing build failure in GitHub Actions Desktop App Build workflow:
 
 - **Problem**: All 81+ desktop app workflow runs were failing with `XamlCompiler.exe` exit code 1
-- **Root Cause**: WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process C# 11 features used extensively in `MarketDataCollector.Contracts` (e.g., `MarketEvent`, `CredentialFieldInfo`, `FieldError`, etc.)
+- **Root Cause**: WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process C# 11 features used extensively in `Meridian.Contracts` (e.g., `MarketEvent`, `CredentialFieldInfo`, `FieldError`, etc.)
 - **Solution**: Added `<XamlCompilerPlatform>Managed</XamlCompilerPlatform>` to project file to use managed (.NET) XAML compiler instead
   - Note: Previous attempts with `<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>` were ineffective
   - For Windows App SDK 1.6+, `XamlCompilerPlatform=Managed` is the correct property
@@ -31,9 +31,9 @@ This fix unblocks desktop app deployment and CI/CD automation.
 Applied CLAUDE.md guidelines requiring all classes to be `sealed` unless designed for inheritance:
 
 - **Exception Classes**: Sealed `StorageException`, `ConnectionException`, `ConfigurationException`, `IBPacingViolationException`, `IBMarketDataNotSubscribedException`, `IBSecurityNotFoundException`
-  - Note: Base exception classes (`MarketDataCollectorException`, `DataProviderException`, `IBApiException`) remain unsealed as they have subclasses
+  - Note: Base exception classes (`MeridianException`, `DataProviderException`, `IBApiException`) remain unsealed as they have subclasses
 - **Validator Classes**: Sealed all FluentValidation validators in `ConfigValidationHelper.cs` (`AppConfigValidator`, `AlpacaOptionsValidator`, `StorageConfigValidator`, `SymbolConfigValidator`)
-- **Lean Integration Classes**: Sealed `MarketDataCollectorDataProvider`, `MarketDataCollectorTradeData`, `MarketDataCollectorQuoteData`
+- **Lean Integration Classes**: Sealed `MeridianDataProvider`, `MeridianTradeData`, `MeridianQuoteData`
 - **Storage/Export Classes** (18 classes): `AnalysisQualityReportGenerator`, `AnalysisQualityReport`, `FileQualityAnalysis`, `DescriptiveStats`, `TimeStats`, `DataOutlier`, `DataGap`, `QualityIssue`, `AnalysisRecommendation`, `ExportProfile`, `CompressionSettings`, `TimestampSettings`, `ExportRequest`, `AggregationSettings`, `FeatureSettings`, `ExportResult`, `ExportDateRange`, `ExportedFile`, `ExportQualitySummary`, `AnalysisExportService`
 - **Storage/Archival Classes** (16 classes): `SchemaVersionManager`, `SchemaDefinition`, `SchemaField`, `FieldConstraints`, `SchemaMigration`, `MigrationResult`, `SchemaValidationResult`, `SchemaRegistry`, `SchemaRegistryEntry`, `CompressionProfileManager`, `CompressionProfile`, `CompressionContext`, `CompressionResult`, `CompressionBenchmarkResult`, `WalRecord`, `WalOptions`, `ArchivalStorageOptions`, `ArchivalStorageStats`
 - **Infrastructure Classes**: `WebSocketHeartbeat`, `DataSourceAttribute`
@@ -1674,9 +1674,9 @@ The UWP project uses **shared source files** instead of assembly references for 
 
 **Solution:**
 ```xml
-<!-- In MarketDataCollector.Uwp.csproj -->
+<!-- In Meridian.Uwp.csproj -->
 <ItemGroup Condition="'$(IsWindows)' == 'true'">
-  <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+  <Compile Include="..\Meridian.Contracts\Configuration\*.cs"
            Link="SharedModels\Configuration\%(Filename)%(Extension)" />
 </ItemGroup>
 ```

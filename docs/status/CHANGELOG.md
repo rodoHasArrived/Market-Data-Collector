@@ -1,16 +1,16 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-03-17
-**Current Version:** 1.6.2
+**Last Updated:** 2026-03-20
+**Current Version:** 1.7.0
 
 This changelog summarizes the current repository snapshot. Historical release notes are not curated in this repo; use git history for detailed diffs.
 
 ---
 
-## Current Snapshot (2026-03-17)
+## Current Snapshot (2026-03-20)
 
 ### Project Scale
-- 832 source files (818 C#, 14 F#), 273 test files (267 C#, 6 F#), 163 documentation files
+- 870 source files, 266 test files, 172 documentation files
 - 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
 - 29 CI/CD workflows, 96 Makefile targets, 309 API route constants
 
@@ -41,11 +41,11 @@ This changelog summarizes the current repository snapshot. Historical release no
 
 ### UI & Integrations
 - Web dashboard for status/metrics and API-backed backfill actions
-- WPF desktop application (Windows-only; workspace/navigation implemented; some pages remain placeholder-only)
+- WPF desktop application (Windows-only; broad page coverage present; documentation now aligned around a workflow-centric trading workstation migration)
 - UWP desktop application removed (WPF is the sole desktop client)
-- Shared UI services project (`MarketDataCollector.Ui.Services`)
+- Shared UI services project (`Meridian.Ui.Services`)
 - QuantConnect Lean integration types and data provider
-- MCP server (`MarketDataCollector.McpServer`) for AI agent tool integration
+- MCP server (`Meridian.McpServer`) for AI agent tool integration
 
 ### Data Quality & Monitoring
 - Comprehensive data quality monitoring with SLA enforcement
@@ -56,7 +56,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Provider degradation scoring for intelligent failover
 
 ### Testing & Quality
-- 273 test files across 4 test projects with ~4,093 test methods
+- 266 test files across 4 test projects with ~4,093 test methods
 - Core tests: includes backfill, storage, pipeline, monitoring, providers, symbol search, serialization
 - F# tests: domain validation, calculations, transforms, validation pipeline
 - WPF desktop service tests: navigation, config, status, connection
@@ -73,6 +73,8 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Category-accurate process exit codes for CI/CD integration
 
 ### Documentation
+- Trading workstation migration blueprint added (`docs/plans/trading-workstation-migration-blueprint.md`)
+- Architecture, roadmap, status, README, and WPF docs aligned to the new Research / Trading / Data Operations / Governance target model
 - L3 inference implementation plan expanded (§11.6 WPF explorer, §12.2 F# validation, §18 extension roadmap through §18.11)
 - Assembly-level performance roadmap added (`docs/plans/assembly-performance-roadmap.md`)
 - DocFX configuration fixed to include subdirectory markdown files
@@ -132,7 +134,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 - Web dashboard for status/metrics and API-backed backfill actions
 - WPF desktop application (recommended for Windows; workspace/navigation is implemented but some pages remain placeholder-only)
 - UWP desktop application removed (WPF is the sole desktop client)
-- Shared UI services project (`MarketDataCollector.Ui.Services`)
+- Shared UI services project (`Meridian.Ui.Services`)
 - QuantConnect Lean integration types and data provider
 
 ### Data Quality & Monitoring
@@ -211,6 +213,6 @@ This changelog summarizes the current repository snapshot. Historical release no
 
 ## Notes
 
-- Version numbers are defined in project files (e.g., `src/MarketDataCollector/MarketDataCollector.csproj`).
+- Version numbers are defined in project files (e.g., `src/Meridian/Meridian.csproj`).
 - Use `docs/status/production-status.md` for readiness and implementation status details.
 - Use `docs/status/IMPROVEMENTS.md` for detailed improvement item tracking.

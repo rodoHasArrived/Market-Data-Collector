@@ -1,7 +1,7 @@
 # Market Data Collector - Consolidated Evaluations & Audits
 
-**Version:** 1.6.2
-**Last Updated:** 2026-03-17
+**Version:** 1.7.0
+**Last Updated:** 2026-03-19
 **Status:** Consolidated reference document
 
 This document consolidates all architecture evaluations, code audits, desktop assessments, improvement brainstorms, and architecture proposals into a single navigable reference. It replaces the need to read 20+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
@@ -121,9 +121,11 @@ This document consolidates all architecture evaluations, code audits, desktop as
 ### Data Quality Monitoring
 
 > Source: `docs/evaluations/data-quality-monitoring-evaluation.md`
-> Date: 2026-02-03 | Status: Evaluation Complete
+> Date: 2026-02-03 | Updated: 2026-03-19 | Status: Evaluation Complete
 
 **Verdict:** Comprehensive and well-designed; 12+ specialized services.
+
+**Latest Status (2026-03-19):** All core services operational and integrated with alerting pipeline. SLA monitoring fully implemented. Remaining recommendations (automated remediation, ML-based detection) roadmapped for Phase 15+.
 
 **Service Inventory:**
 
@@ -220,9 +222,11 @@ This document consolidates all architecture evaluations, code audits, desktop as
 ### Operational Readiness
 
 > Source: `docs/evaluations/operational-readiness-evaluation.md`
-> Date: 2026-02-12 | Status: Evaluation Complete
+> Date: 2026-02-12 | Updated: 2026-03-19 | Status: P0 Substantially Complete, P1 In Progress
 
-**Verdict:** Development / Pilot Ready. Good monitoring baseline; needs operational hardening.
+**Verdict:** Production-ready with good observability and incident response foundations.
+
+**Latest Status (2026-03-19):** SLO framework operational (7 SLO definitions), alert-to-runbook linkage implemented (`AlertRunbookRegistry`), health checks operational, operator runbook comprehensive. Remaining: formal post-incident review process, standardized rollback testing per release.
 
 **Strengths:**
 - Docker and systemd deployment artifacts present
@@ -252,8 +256,8 @@ This document consolidates all architecture evaluations, code audits, desktop as
 
 ### Desktop UX Assessment
 
-> Source: `docs/evaluations/desktop-end-user-improvements.md`
-> Date: 2026-02-21 | Status: Partial Implementation In Progress
+> Source: `docs/archived/desktop-end-user-improvements.md`
+> Date: 2026-03-20 | Status: Archived historical assessment
 
 **Scope:** 49 XAML pages, 104 services (72 shared + 32 WPF-specific), 1,266 tests
 
@@ -284,14 +288,16 @@ This document consolidates all architecture evaluations, code audits, desktop as
 ### Desktop Provider Configurability
 
 > Source: `docs/evaluations/windows-desktop-provider-configurability-assessment.md`
-> Date: 2026-02-13 | Status: Proposed
+> Date: 2026-02-13 | Updated: 2026-03-19 | Status: Infrastructure Complete, UI In Progress
 
 **Key Finding:** Provider abstraction is solid (`IHistoricalDataProvider`, `CompositeHistoricalDataProvider`), but WPF Backfill page is mostly demo/static and lacks per-provider operational settings UI.
 
-**Changes Introduced:**
-- New shared DTOs: `BackfillConfigDto.Providers`, `BackfillProvidersConfigDto`, `BackfillProviderOptionsDto`
-- Typed contract for per-provider options: Enabled, Priority, RateLimitPerMinute
-- Desktop backfill provider config service for UI editing
+**Implementation Status (2026-03-19):**
+- ✅ Type-safe DTOs: `BackfillConfigDto.Providers`, `BackfillProvidersConfigDto`, `BackfillProviderOptionsDto`
+- ✅ Config service methods: `GetBackfillProvidersConfigAsync()`, `SetBackfillProviderOptionsAsync()`
+- ✅ WPF ViewModels: `BackfillProviderSettingsViewModel` with ObservableCollection binding
+- ✅ Provider health dashboard: `/api/providers/dashboard` for runtime state visibility
+- 🔄 UI implementation: Provider list and reordering partial; full settings workflow in Phase 11
 
 ---
 
@@ -741,7 +747,7 @@ All source documents that feed into this consolidation:
 | Historical Data Providers Evaluation | `docs/evaluations/historical-data-providers-evaluation.md` | Evaluation | Current |
 | Ingestion Orchestration Evaluation | `docs/evaluations/ingestion-orchestration-evaluation.md` | Evaluation | Current |
 | Operational Readiness Evaluation | `docs/evaluations/operational-readiness-evaluation.md` | Evaluation | Current |
-| Desktop End-User Improvements | `docs/evaluations/desktop-end-user-improvements.md` | Assessment | Current |
+| Desktop End-User Improvements | `docs/archived/desktop-end-user-improvements.md` | Assessment | Archived |
 | Desktop Provider Configurability | `docs/evaluations/windows-desktop-provider-configurability-assessment.md` | Assessment | Current |
 | High-Impact Improvement Brainstorm (Mar 2026) | `docs/evaluations/high-impact-improvement-brainstorm-2026-03.md` | Brainstorm | Active |
 | High-Impact Improvements Brainstorm | `docs/evaluations/high-impact-improvements-brainstorm.md` | Brainstorm | Active |
@@ -762,4 +768,4 @@ All source documents that feed into this consolidation:
 
 ---
 
-*Last Updated: 2026-03-14*
+*Last Updated: 2026-03-19*

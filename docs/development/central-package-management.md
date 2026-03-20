@@ -137,9 +137,9 @@ If this returns any results (except commented lines), those projects need to be 
 
 ## Historical Context
 
-### Issue: NU1008 in MarketDataCollector.Wpf (Feb 2026)
+### Issue: NU1008 in Meridian.Wpf (Feb 2026)
 
-**Problem**: The nightly test workflow failed on Windows with NU1008 error because `MarketDataCollector.Wpf.csproj` had explicit version numbers on PackageReference items.
+**Problem**: The nightly test workflow failed on Windows with NU1008 error because `Meridian.Wpf.csproj` had explicit version numbers on PackageReference items.
 
 **Solution**: Removed all `Version` attributes from PackageReference items in the project file. The versions were already correctly defined in `Directory.Packages.props`.
 

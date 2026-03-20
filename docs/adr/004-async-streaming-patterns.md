@@ -32,13 +32,13 @@ Use `System.Threading.Channels` for producer-consumer scenarios with backpressur
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Streaming Interface | `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs` | Event streaming |
-| Event Pipeline | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs` | Channel-based routing |
-| Trade Collector | `src/MarketDataCollector.Domain/Collectors/TradeDataCollector.cs` | Stream consumer |
-| Quote Collector | `src/MarketDataCollector.Domain/Collectors/QuoteCollector.cs` | Stream consumer |
-| Event Buffer | `src/MarketDataCollector.Storage/Services/EventBuffer.cs` | Bounded buffering |
-| Backfill Streaming | `src/MarketDataCollector.Infrastructure/Adapters/Core/` | Historical streaming |
-| Async Tests | `tests/MarketDataCollector.Tests/Application/Pipeline/` | Pattern verification |
+| Streaming Interface | `src/Meridian.ProviderSdk/IMarketDataClient.cs` | Event streaming |
+| Event Pipeline | `src/Meridian.Application/Pipeline/EventPipeline.cs` | Channel-based routing |
+| Trade Collector | `src/Meridian.Domain/Collectors/TradeDataCollector.cs` | Stream consumer |
+| Quote Collector | `src/Meridian.Domain/Collectors/QuoteCollector.cs` | Stream consumer |
+| Event Buffer | `src/Meridian.Storage/Services/EventBuffer.cs` | Bounded buffering |
+| Backfill Streaming | `src/Meridian.Infrastructure/Adapters/Core/` | Historical streaming |
+| Async Tests | `tests/Meridian.Tests/Application/Pipeline/` | Pattern verification |
 
 ## Rationale
 
@@ -62,7 +62,7 @@ var highValueTrades = client.GetTradesAsync(ct)
 Use `EventPipelinePolicy` for consistent channel configuration across the codebase:
 
 ```csharp
-using MarketDataCollector.Application.Pipeline;
+using Meridian.Application.Pipeline;
 
 // Preferred: Use centralized policy with factory method
 var channel = EventPipelinePolicy.Default.CreateChannel<MarketEvent>();

@@ -49,7 +49,7 @@
 
 **Value:** High -- eliminates the #1 "why won't it start?" question for new users.
 **Cost:** ~4-8 hours. The registry and attribute metadata already exist.
-**Files:** `src/MarketDataCollector.Application/Services/PreflightChecker.cs`, `src/MarketDataCollector.ProviderSdk/CredentialValidator.cs`
+**Files:** `src/Meridian.Application/Services/PreflightChecker.cs`, `src/Meridian.ProviderSdk/CredentialValidator.cs`
 
 ---
 
@@ -63,7 +63,7 @@
 
 **Value:** Medium -- prevents silent misconfiguration.
 **Cost:** ~1-2 hours. Single conditional in `ConfigurationPipeline`.
-**Files:** `src/MarketDataCollector.Application/Config/ConfigurationPipeline.cs`
+**Files:** `src/Meridian.Application/Config/ConfigurationPipeline.cs`
 
 ---
 
@@ -75,7 +75,7 @@
 
 **Value:** Medium -- reduces misconfiguration confusion.
 **Cost:** ~3-4 hours. Build a small lookup of which fields belong to which provider.
-**Files:** `src/MarketDataCollector.Application/Config/ConfigValidationHelper.cs`
+**Files:** `src/Meridian.Application/Config/ConfigValidationHelper.cs`
 
 ---
 
@@ -109,7 +109,7 @@
 
 **Value:** High -- immediate operational confidence at startup; easy to screenshot for support.
 **Cost:** ~4-6 hours. The data is already available from existing services.
-**Files:** `src/MarketDataCollector.Application/Services/StartupSummary.cs`
+**Files:** `src/Meridian.Application/Services/StartupSummary.cs`
 
 ---
 
@@ -133,7 +133,7 @@ Credentials should be masked (already have `SensitiveValueMasker`).
 
 **Value:** High -- eliminates "which setting is winning?" debugging.
 **Cost:** ~6-8 hours. Build a config source tracker in `ConfigurationPipeline`.
-**Files:** `src/MarketDataCollector.Application/Config/ConfigurationPipeline.cs`, new endpoint in `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs`
+**Files:** `src/Meridian.Application/Config/ConfigurationPipeline.cs`, new endpoint in `src/Meridian.Ui.Shared/Endpoints/ConfigEndpoints.cs`
 
 ---
 
@@ -148,7 +148,7 @@ Credentials should be masked (already have `SensitiveValueMasker`).
 
 **Value:** Medium -- critical for understanding restart behavior and data loss risk.
 **Cost:** ~2-3 hours. The recovery logic already exists; just add instrumentation.
-**Files:** `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs`, `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs`
+**Files:** `src/Meridian.Storage/Archival/WriteAheadLog.cs`, `src/Meridian.Application/Monitoring/PrometheusMetrics.cs`
 
 ---
 
@@ -167,7 +167,7 @@ Also emit a Prometheus counter `provider_reconnection_attempts_total{provider, o
 
 **Value:** Medium -- makes reconnection debugging self-service.
 **Cost:** ~3-4 hours. Standardize the log format across providers.
-**Files:** `src/MarketDataCollector.Infrastructure/Shared/WebSocketReconnectionHelper.cs`, individual provider files
+**Files:** `src/Meridian.Infrastructure/Shared/WebSocketReconnectionHelper.cs`, individual provider files
 
 ---
 
@@ -210,7 +210,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 **Value:** Medium -- enables CI/CD config validation without live providers.
 **Cost:** ~4-6 hours. Most validation logic exists; wire it into a clean CLI path.
-**Files:** `src/MarketDataCollector.Application/Commands/DryRunCommand.cs`, `src/MarketDataCollector.Application/Services/DryRunService.cs`
+**Files:** `src/Meridian.Application/Commands/DryRunCommand.cs`, `src/Meridian.Application/Services/DryRunService.cs`
 
 ---
 
@@ -263,7 +263,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 **Value:** High -- directly improves data completeness, which is the project's core value proposition.
 **Cost:** ~6-8 hours. The backfill infrastructure exists; wire it to the reconnection event.
-**Files:** `src/MarketDataCollector.Infrastructure/Shared/WebSocketReconnectionHelper.cs`, `src/MarketDataCollector.Application/Backfill/HistoricalBackfillService.cs`
+**Files:** `src/Meridian.Infrastructure/Shared/WebSocketReconnectionHelper.cs`, `src/Meridian.Application/Backfill/HistoricalBackfillService.cs`
 
 ---
 
@@ -277,7 +277,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 **Value:** Medium -- early warning for stale feeds or provider issues.
 **Cost:** ~4-6 hours. The comparison service has the logic; add a real-time check.
-**Files:** `src/MarketDataCollector.Application/Monitoring/DataQuality/CrossProviderComparisonService.cs`
+**Files:** `src/Meridian.Application/Monitoring/DataQuality/CrossProviderComparisonService.cs`
 
 ---
 
@@ -289,7 +289,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 **Value:** Medium -- catches silent data corruption before it reaches downstream consumers.
 **Cost:** ~4-6 hours. Checksum computation exists; add verification in read paths.
-**Files:** `src/MarketDataCollector.Storage/Replay/JsonlReplayer.cs`, `src/MarketDataCollector.Storage/Services/StorageChecksumService.cs`
+**Files:** `src/Meridian.Storage/Replay/JsonlReplayer.cs`, `src/Meridian.Storage/Services/StorageChecksumService.cs`
 
 ---
 
@@ -331,13 +331,13 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 **Value:** Medium -- catches performance regressions before they reach production.
 **Cost:** ~4-6 hours. BenchmarkDotNet has comparison support; wire to CI.
-**Files:** `.github/workflows/benchmark.yml`, `benchmarks/MarketDataCollector.Benchmarks/`
+**Files:** `.github/workflows/benchmark.yml`, `benchmarks/Meridian.Benchmarks/`
 
 ---
 
 ### 5.4 Integration test for graceful shutdown data integrity — ✅ Implemented
 
-**Status (2026-03-15):** `tests/MarketDataCollector.Tests/Integration/GracefulShutdownIntegrationTests.cs` contains `GracefulShutdown_AllPublishedEventsReachStorage()` which verifies zero data loss during shutdown with in-flight events.
+**Status (2026-03-15):** `tests/Meridian.Tests/Integration/GracefulShutdownIntegrationTests.cs` contains `GracefulShutdown_AllPublishedEventsReachStorage()` which verifies zero data loss during shutdown with in-flight events.
 
 **Problem:** `GracefulShutdownService` coordinates flushing WAL, closing sinks, and disconnecting providers. But there's no integration test that verifies zero data loss during a shutdown sequence with in-flight events.
 
@@ -349,7 +349,7 @@ The `--dry-run --offline` combination already exists but may not cover all these
 
 **Value:** High -- validates the most critical operational scenario.
 **Cost:** ~6-8 hours. Uses existing `InMemoryStorageSink` test infrastructure.
-**Files:** `tests/MarketDataCollector.Tests/Integration/`
+**Files:** `tests/Meridian.Tests/Integration/`
 
 ---
 
@@ -413,7 +413,7 @@ This enables deterministic time-based tests without `Thread.Sleep` or flaky timi
 
 **Value:** Medium -- consistent API error responses; less boilerplate.
 **Cost:** ~6-8 hours for full migration; can be done incrementally.
-**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/*.cs`
+**Files:** `src/Meridian.Ui.Shared/Endpoints/*.cs`
 
 ---
 
@@ -435,7 +435,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 **Value:** High -- prevents the #1 security anti-pattern.
 **Cost:** ~3-4 hours. Add check in `ConfigValidationHelper`.
-**Files:** `src/MarketDataCollector.Application/Config/ConfigValidationHelper.cs`
+**Files:** `src/Meridian.Application/Config/ConfigValidationHelper.cs`
 
 ---
 
@@ -451,7 +451,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 **Value:** Medium -- operational security improvement.
 **Cost:** ~4-6 hours.
-**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/ApiKeyMiddleware.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/AdminEndpoints.cs`
+**Files:** `src/Meridian.Ui.Shared/Endpoints/ApiKeyMiddleware.cs`, `src/Meridian.Ui.Shared/Endpoints/AdminEndpoints.cs`
 
 ---
 
@@ -467,7 +467,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 **Value:** Medium -- reduces startup time proportional to provider count.
 **Cost:** ~2-3 hours. Change sequential loop to parallel.
-**Files:** `src/MarketDataCollector/Program.cs` (provider initialization section)
+**Files:** `src/Meridian/Program.cs` (provider initialization section)
 
 ---
 
@@ -481,7 +481,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 **Value:** Medium -- reduces CPU and I/O overhead for real-time deployments.
 **Cost:** ~2-3 hours. Add config flag, conditional registration in DI.
-**Files:** `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`, `config/appsettings.sample.json`
+**Files:** `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`, `config/appsettings.sample.json`
 
 ---
 
@@ -493,7 +493,7 @@ Optionally, add a `--strict-credentials` flag that makes this a hard error.
 
 **Value:** Low -- saves ~10-50ms of startup I/O.
 **Cost:** ~2-3 hours.
-**Files:** `src/MarketDataCollector/Program.cs`
+**Files:** `src/Meridian/Program.cs`
 
 ---
 
@@ -517,7 +517,7 @@ The data is already available from `/api/status` and `/api/providers/status`. Th
 
 **Value:** High -- the #1 user question is "is the system actually running?"
 **Cost:** ~3-4 hours. Modify the HTML template in `wwwroot/templates/` to poll `/api/status` and render the bar.
-**Files:** `src/MarketDataCollector/wwwroot/templates/`, `src/MarketDataCollector.Application/Http/HtmlTemplates.cs`
+**Files:** `src/Meridian/wwwroot/templates/`, `src/Meridian.Application/Http/HtmlTemplates.cs`
 
 ---
 
@@ -535,7 +535,7 @@ The data is already available from `/api/status` and `/api/providers/status`. Th
 
 **Value:** High -- backfills can take hours; losing progress is the #2 user complaint.
 **Cost:** ~6-8 hours. The checkpoint service is built; this is integration work.
-**Files:** `src/MarketDataCollector.Application/Backfill/HistoricalBackfillService.cs`, `src/MarketDataCollector.Ui.Services/Services/BackfillCheckpointService.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/BackfillEndpoints.cs`
+**Files:** `src/Meridian.Application/Backfill/HistoricalBackfillService.cs`, `src/Meridian.Ui.Services/Services/BackfillCheckpointService.cs`, `src/Meridian.Ui.Shared/Endpoints/BackfillEndpoints.cs`
 
 ---
 
@@ -563,7 +563,7 @@ MDC-AUTH-002: Authentication failed for Alpaca provider
 
 **Value:** High -- transforms cryptic errors into self-service debugging.
 **Cost:** ~4-6 hours. The formatter exists; wire it to the 3 error surface areas.
-**Files:** `src/MarketDataCollector/Program.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/EndpointHelpers.cs`, provider `ConnectAsync` methods
+**Files:** `src/Meridian/Program.cs`, `src/Meridian.Ui.Shared/Endpoints/EndpointHelpers.cs`, provider `ConnectAsync` methods
 
 ---
 
@@ -586,7 +586,7 @@ Each preset sets ~15 config values at once. Users can customize after applying a
 
 **Value:** High -- reduces time-to-value from 30+ minutes of config to 2 minutes.
 **Cost:** ~4-6 hours. Define preset dictionaries, add `--preset <name>` CLI flag.
-**Files:** `src/MarketDataCollector.Application/Services/ConfigurationWizard.cs`, `src/MarketDataCollector.Application/Services/AutoConfigurationService.cs`
+**Files:** `src/Meridian.Application/Services/ConfigurationWizard.cs`, `src/Meridian.Application/Services/AutoConfigurationService.cs`
 
 ---
 
@@ -607,7 +607,7 @@ Also add `--symbols-export <file>` to export the current symbol list for sharing
 
 **Value:** High -- users with large portfolios save hours of manual entry.
 **Cost:** ~4-6 hours. File parsing is trivial; symbol validation uses existing `ISymbolSearchProvider`.
-**Files:** `src/MarketDataCollector.Application/Commands/SymbolCommands.cs`
+**Files:** `src/Meridian.Application/Commands/SymbolCommands.cs`
 
 ---
 
@@ -626,7 +626,7 @@ Also add `--symbols-export <file>` to export the current symbol list for sharing
 
 **Value:** Medium-High -- keeps users informed without requiring dashboard checks.
 **Cost:** ~6-8 hours. Daily webhook exists; extend with weekly aggregation and email transport.
-**Files:** `src/MarketDataCollector.Application/Services/DailySummaryWebhook.cs`
+**Files:** `src/Meridian.Application/Services/DailySummaryWebhook.cs`
 
 ---
 
@@ -647,7 +647,7 @@ The backend endpoints already exist. This is a frontend-only addition.
 
 **Value:** High -- makes headless server deployments fully self-service.
 **Cost:** ~6-8 hours. HTML/JS template work; all backend endpoints exist.
-**Files:** `src/MarketDataCollector/wwwroot/templates/`, `src/MarketDataCollector.Application/Http/HtmlTemplates.cs`
+**Files:** `src/Meridian/wwwroot/templates/`, `src/Meridian.Application/Http/HtmlTemplates.cs`
 
 ---
 
@@ -672,7 +672,7 @@ Recommended providers for your 15 symbols:
 
 **Value:** Medium-High -- eliminates the "which provider?" analysis paralysis.
 **Cost:** ~6-8 hours. Provider metadata exists in `DataSourceRegistry`; build scoring logic.
-**Files:** `src/MarketDataCollector.Application/Commands/` (new command), `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs`
+**Files:** `src/Meridian.Application/Commands/` (new command), `src/Meridian.ProviderSdk/DataSourceRegistry.cs`
 
 ---
 
@@ -689,7 +689,7 @@ Recommended providers for your 15 symbols:
 
 **Value:** Medium-High -- prevents alert fatigue, which causes users to ignore real problems.
 **Cost:** ~6-8 hours. Add a batching/windowing layer before webhook dispatch.
-**Files:** `src/MarketDataCollector.Application/Monitoring/ConnectionStatusWebhook.cs`, `src/MarketDataCollector.Application/Monitoring/DataQuality/DataFreshnessSlaMonitor.cs`
+**Files:** `src/Meridian.Application/Monitoring/ConnectionStatusWebhook.cs`, `src/Meridian.Application/Monitoring/DataQuality/DataFreshnessSlaMonitor.cs`
 
 ---
 
@@ -716,7 +716,7 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 **Value:** Medium-High -- gives immediate feedback on session quality without additional tools.
 **Cost:** ~3-4 hours. Wire existing metrics into `GracefulShutdownService` summary.
-**Files:** `src/MarketDataCollector.Application/Services/GracefulShutdownService.cs`
+**Files:** `src/Meridian.Application/Services/GracefulShutdownService.cs`
 
 ---
 
@@ -734,7 +734,7 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 **Value:** Medium -- prevents data loss from full disks.
 **Cost:** ~4-6 hours. Storage metrics exist; add trend calculation and alert.
-**Files:** `src/MarketDataCollector.Storage/Services/QuotaEnforcementService.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/StorageEndpoints.cs`
+**Files:** `src/Meridian.Storage/Services/QuotaEnforcementService.cs`, `src/Meridian.Ui.Shared/Endpoints/StorageEndpoints.cs`
 
 ---
 
@@ -752,7 +752,7 @@ The data is available from `Metrics`, `DataQualityMonitoringService`, and `Stora
 
 **Value:** Medium -- transforms the desktop app from click-heavy to keyboard-driven.
 **Cost:** ~2-3 hours. The services exist and are tested; this is event wiring.
-**Files:** `src/MarketDataCollector.Wpf/MainWindow.xaml.cs`, `src/MarketDataCollector.Wpf/Views/CommandPaletteWindow.xaml.cs`
+**Files:** `src/Meridian.Wpf/MainWindow.xaml.cs`, `src/Meridian.Wpf/Views/CommandPaletteWindow.xaml.cs`
 
 ---
 
@@ -782,7 +782,7 @@ dotnet run -- --query "summary SPY --from 2026-02-01"
 
 **Value:** High -- enables instant data verification without leaving the terminal.
 **Cost:** ~6-8 hours. Use `HistoricalDataQueryService` and `StorageCatalogService` as backends.
-**Files:** `src/MarketDataCollector.Application/Commands/` (new query command)
+**Files:** `src/Meridian.Application/Commands/` (new query command)
 
 ---
 
@@ -802,7 +802,7 @@ This separates the write-optimized hot path (JSONL) from the read-optimized arch
 
 **Value:** Medium-High -- gives users analysis-ready files automatically.
 **Cost:** ~6-8 hours. Both JSONL reading and Parquet writing exist; add a scheduled converter.
-**Files:** `src/MarketDataCollector.Storage/Services/`, `src/MarketDataCollector.Application/Scheduling/`
+**Files:** `src/Meridian.Storage/Services/`, `src/Meridian.Application/Scheduling/`
 
 ---
 
@@ -836,7 +836,7 @@ def load_trades(symbol: str) -> pd.DataFrame:
 
 **Value:** Medium -- bridges the gap from "collected data" to "usable data" in 10 seconds.
 **Cost:** ~3-4 hours. Template-based generation; the storage path conventions are well-defined.
-**Files:** `src/MarketDataCollector.Application/Commands/` (new command), or extend `PortableDataPackager.Scripts.cs`
+**Files:** `src/Meridian.Application/Commands/` (new command), or extend `PortableDataPackager.Scripts.cs`
 
 ---
 
@@ -857,7 +857,7 @@ The export service itself is fully implemented with 7 format writers. Only the H
 
 **Value:** High -- without this, the web API export feature literally doesn't work.
 **Cost:** ~6-8 hours. The export service is built and tested; this is plumbing.
-**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/ExportEndpoints.cs`, `src/MarketDataCollector.Storage/Export/AnalysisExportService.cs`
+**Files:** `src/Meridian.Ui.Shared/Endpoints/ExportEndpoints.cs`, `src/Meridian.Storage/Export/AnalysisExportService.cs`
 
 ---
 
@@ -885,7 +885,7 @@ The export service itself is fully implemented with 7 format writers. Only the H
 
 **Value:** Medium-High -- prevents wasted exports and builds trust in the export pipeline.
 **Cost:** ~4-6 hours. Reuse `HistoricalDataQueryService` with a limit, add size estimation.
-**Files:** `src/MarketDataCollector.Ui.Shared/Endpoints/ExportEndpoints.cs`, `src/MarketDataCollector.Application/Services/HistoricalDataQueryService.cs`
+**Files:** `src/Meridian.Ui.Shared/Endpoints/ExportEndpoints.cs`, `src/Meridian.Application/Services/HistoricalDataQueryService.cs`
 
 ---
 
@@ -904,7 +904,7 @@ This turns the export from a raw data dump into an analysis-ready dataset.
 
 **Value:** High -- transforms exports from "raw firehose" into analysis-ready data, which is what researchers actually need.
 **Cost:** ~8-12 hours. `TechnicalIndicatorService` exists; wire it into the export format pipeline.
-**Files:** `src/MarketDataCollector.Storage/Export/AnalysisExportService.Formats.cs`, `src/MarketDataCollector.Application/Indicators/TechnicalIndicatorService.cs`
+**Files:** `src/Meridian.Storage/Export/AnalysisExportService.Formats.cs`, `src/Meridian.Application/Indicators/TechnicalIndicatorService.cs`
 
 ---
 
@@ -936,7 +936,7 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 
 **Value:** Medium-High -- essential for research reproducibility and compliance.
 **Cost:** ~4-6 hours. Assemble existing metadata into a JSON manifest alongside export output.
-**Files:** `src/MarketDataCollector.Storage/Export/AnalysisExportService.IO.cs`, `src/MarketDataCollector.Storage/Services/DataLineageService.cs`
+**Files:** `src/Meridian.Storage/Export/AnalysisExportService.IO.cs`, `src/Meridian.Storage/Services/DataLineageService.cs`
 
 ---
 
@@ -954,7 +954,7 @@ The data for this already exists in `DataLineageService`, `DataQualityScoringSer
 
 **Value:** Medium-High -- eliminates false alarms that erode user trust.
 **Cost:** ~3-4 hours. `TradingCalendar` is fully implemented; expose it.
-**Files:** `src/MarketDataCollector.Application/Services/TradingCalendar.cs`, `src/MarketDataCollector.Ui.Shared/Endpoints/`
+**Files:** `src/Meridian.Application/Services/TradingCalendar.cs`, `src/Meridian.Ui.Shared/Endpoints/`
 
 ---
 

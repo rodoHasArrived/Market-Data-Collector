@@ -60,7 +60,7 @@ UI / API Layer
 
 ### IProviderMetadata
 
-**Location:** `src/MarketDataCollector.ProviderSdk/IProviderMetadata.cs`
+**Location:** `src/Meridian.ProviderSdk/IProviderMetadata.cs`
 
 Unified metadata interface implemented by all three provider categories. Enables consistent discovery, routing, and UI presentation without provider-specific code paths.
 
@@ -79,7 +79,7 @@ Unified metadata interface implemented by all three provider categories. Enables
 
 ### ProviderCapabilities
 
-**Location:** `src/MarketDataCollector.ProviderSdk/IProviderMetadata.cs`
+**Location:** `src/Meridian.ProviderSdk/IProviderMetadata.cs`
 
 Strongly-typed record that consolidates capabilities across all provider types. Replaces the previous bit-flag enum style with boolean properties and optional metadata.
 
@@ -96,7 +96,7 @@ Strongly-typed record that consolidates capabilities across all provider types. 
 
 ### IDataSource
 
-**Location:** `src/MarketDataCollector.ProviderSdk/IDataSource.cs`
+**Location:** `src/Meridian.ProviderSdk/IDataSource.cs`
 
 Unified base interface for all data sources with lifecycle and health support.
 
@@ -172,7 +172,7 @@ The attribute captures: `Id`, `DisplayName`, `Type`, `Category`, `Priority`, `En
 
 ### DataSourceRegistry
 
-**Location:** `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs`
+**Location:** `src/Meridian.ProviderSdk/DataSourceRegistry.cs`
 
 Central registry responsible for:
 
@@ -183,7 +183,7 @@ Central registry responsible for:
 
 ### IProviderModule
 
-**Location:** `src/MarketDataCollector.ProviderSdk/IProviderModule.cs`
+**Location:** `src/Meridian.ProviderSdk/IProviderModule.cs`
 
 Providers that require custom DI registration (e.g., `HttpClient` configuration, options binding) implement `IProviderModule`:
 
@@ -209,7 +209,7 @@ public interface IProviderModule
 | Failover | `FailoverAwareMarketDataClient` | `Streaming/Failover/` | Delegated | Delegated | Delegated | Composite wrapper |
 | NoOp | `NoOpMarketDataClient` | `Infrastructure/` | N/A | N/A | N/A | Placeholder |
 
-All locations relative to `src/MarketDataCollector.Infrastructure/Adapters/`.
+All locations relative to `src/Meridian.Infrastructure/Adapters/`.
 
 ---
 
@@ -228,7 +228,7 @@ All locations relative to `src/MarketDataCollector.Infrastructure/Adapters/`.
 | Interactive Brokers | `IBHistoricalDataProvider` | With account | IB pacing | All types |
 | StockSharp | `StockSharpHistoricalDataProvider` | With account | Varies | Multi-exchange |
 
-All located under `src/MarketDataCollector.Infrastructure/Adapters/`.
+All located under `src/Meridian.Infrastructure/Adapters/`.
 
 ---
 
@@ -242,7 +242,7 @@ All located under `src/MarketDataCollector.Infrastructure/Adapters/`.
 | OpenFIGI | `OpenFigiClient` | No | Global (ID mapping) | Varies |
 | StockSharp | `StockSharpSymbolSearchProvider` | No | Multi-exchange | Varies |
 
-All located under `src/MarketDataCollector.Infrastructure/Adapters/Core/`.
+All located under `src/Meridian.Infrastructure/Adapters/Core/`.
 
 ---
 
@@ -250,7 +250,7 @@ All located under `src/MarketDataCollector.Infrastructure/Adapters/Core/`.
 
 ### StreamingFailoverService
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/StreamingFailoverService.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/Failover/StreamingFailoverService.cs`
 
 Orchestrates automatic failover between streaming providers. Monitors provider health via `IConnectionHealthMonitor`, evaluates configured failover rules, and triggers switchover when failures exceed the threshold.
 
@@ -273,7 +273,7 @@ Orchestrates automatic failover between streaming providers. Monitors provider h
 
 ### FailoverAwareMarketDataClient
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/FailoverAwareMarketDataClient.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/Failover/FailoverAwareMarketDataClient.cs`
 
 A composite `IMarketDataClient` that wraps multiple provider clients and delegates to the currently active one. Transparent to callers.
 
@@ -287,7 +287,7 @@ A composite `IMarketDataClient` that wraps multiple provider clients and delegat
 
 ### StreamingFailoverRegistry
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Failover/StreamingFailoverRegistry.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/Failover/StreamingFailoverRegistry.cs`
 
 Singleton that holds the runtime `StreamingFailoverService` instance, allowing API endpoint handlers to query failover state without direct project references.
 
@@ -297,7 +297,7 @@ Singleton that holds the runtime `StreamingFailoverService` instance, allowing A
 
 ### CompositeHistoricalDataProvider
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs`
 
 Multi-provider router for historical data with automatic failover. Chains providers ordered by priority and routes requests with:
 
@@ -310,7 +310,7 @@ Multi-provider router for historical data with automatic failover. Chains provid
 
 ### PriorityBackfillQueue
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Queue/PriorityBackfillQueue.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/Queue/PriorityBackfillQueue.cs`
 
 Backfill job queue with priority-based ordering:
 
@@ -321,7 +321,7 @@ Backfill job queue with priority-based ordering:
 
 ### BackfillWorkerService
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/Queue/BackfillWorkerService.cs`
 
 Background service that dequeues jobs from `PriorityBackfillQueue` (or `BackfillRequestQueue`) and executes them through `CompositeHistoricalDataProvider`.
 
@@ -335,7 +335,7 @@ Background service that dequeues jobs from `PriorityBackfillQueue` (or `Backfill
 
 ### DataGapAnalyzer
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/GapAnalysis/DataGapAnalyzer.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/GapAnalysis/DataGapAnalyzer.cs`
 
 Analyzes expected vs. stored data periods and classifies gaps:
 
@@ -346,13 +346,13 @@ Analyzes expected vs. stored data periods and classifies gaps:
 
 ### DataGapRepair
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/GapAnalysis/DataGapRepair.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/GapAnalysis/DataGapRepair.cs`
 
 Attempts automated repair using the preferred provider chain. Writes repaired bars through `IHistoricalBarWriter` (defined in `ProviderSdk` to break the Infrastructure-Storage circular dependency).
 
 ### DataQualityMonitor
 
-**Location:** `src/MarketDataCollector.Infrastructure/Adapters/GapAnalysis/DataQualityMonitor.cs`
+**Location:** `src/Meridian.Infrastructure/Adapters/GapAnalysis/DataQualityMonitor.cs`
 
 Computes weighted quality scores across dimensions: completeness, accuracy, timeliness, consistency, and validity. Scores drive follow-up repair flows and operational dashboards.
 
@@ -362,7 +362,7 @@ Computes weighted quality scores across dimensions: completeness, accuracy, time
 
 ### ConnectionHealthMonitor
 
-**Location:** `src/MarketDataCollector.Application/Monitoring/ConnectionHealthMonitor.cs`
+**Location:** `src/Meridian.Application/Monitoring/ConnectionHealthMonitor.cs`
 
 Monitors connection health for streaming providers:
 
@@ -375,7 +375,7 @@ Monitors connection health for streaming providers:
 
 ### ProviderLatencyService
 
-**Location:** `src/MarketDataCollector.Application/Monitoring/ProviderLatencyService.cs`
+**Location:** `src/Meridian.Application/Monitoring/ProviderLatencyService.cs`
 
 Tracks per-provider latency with full percentile histograms:
 
@@ -388,7 +388,7 @@ Tracks per-provider latency with full percentile histograms:
 
 ### ProviderDegradationScorer
 
-**Location:** `src/MarketDataCollector.Application/Monitoring/ProviderDegradationScorer.cs`
+**Location:** `src/Meridian.Application/Monitoring/ProviderDegradationScorer.cs`
 
 Computes a composite health/degradation score (0.0 = fully healthy, 1.0 = fully degraded) per provider by combining four weighted components:
 
@@ -411,7 +411,7 @@ Computes a composite health/degradation score (0.0 = fully healthy, 1.0 = fully 
 
 ### ProviderMetricsStatus
 
-**Location:** `src/MarketDataCollector.Application/Monitoring/ProviderMetricsStatus.cs`
+**Location:** `src/Meridian.Application/Monitoring/ProviderMetricsStatus.cs`
 
 Aggregates provider metrics for the `/api/providers/metrics` endpoint.
 
@@ -421,7 +421,7 @@ Aggregates provider metrics for the `/api/providers/metrics` endpoint.
 
 ### CredentialValidator
 
-**Location:** `src/MarketDataCollector.ProviderSdk/CredentialValidator.cs`
+**Location:** `src/Meridian.ProviderSdk/CredentialValidator.cs`
 
 Centralized credential validation utilities:
 
@@ -451,7 +451,7 @@ Providers override `IProviderMetadata.ProviderCredentialFields` to declare their
 
 ### ProviderManagementService
 
-**Location:** `src/MarketDataCollector.Ui.Services/Services/ProviderManagementService.cs`
+**Location:** `src/Meridian.Ui.Services/Services/ProviderManagementService.cs`
 
 Desktop/UI service for managing multi-provider configurations:
 
@@ -463,7 +463,7 @@ Desktop/UI service for managing multi-provider configurations:
 
 ### ProviderHealthService
 
-**Location:** `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs`
+**Location:** `src/Meridian.Ui.Services/Services/ProviderHealthService.cs`
 
 UI-side health monitoring service:
 

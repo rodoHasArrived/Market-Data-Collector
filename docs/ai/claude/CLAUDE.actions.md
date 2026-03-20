@@ -4,7 +4,7 @@ This guide covers the CI/CD pipeline for the Market Data Collector, including wo
 
 ## Workflow Inventory
 
-The project uses 29 GitHub Actions workflows in `.github/workflows/`:
+The project uses 34 GitHub Actions workflows in `.github/workflows/`:
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
@@ -16,6 +16,7 @@ The project uses 29 GitHub Actions workflows in `.github/workflows/`:
 | Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths), manual | WPF builds, MSIX packaging |
 | Build & Release | `dotnet-desktop.yml` | Manual dispatch | Multi-platform publish (Linux/Windows/macOS) |
 | Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, GHCR push |
+| Docker Image | `docker-image.yml` | Reusable workflow | Shared Docker build/publish pipeline |
 | Release | `release.yml` | Manual dispatch | Semver validation, changelog, GitHub release |
 | Benchmark | `benchmark.yml` | Manual dispatch | BenchmarkDotNet performance tracking |
 | Bottleneck Detection | `bottleneck-detection.yml` | Manual dispatch | Performance bottleneck analysis |
@@ -26,13 +27,18 @@ The project uses 29 GitHub Actions workflows in `.github/workflows/`:
 | Stale | `stale.yml` | Daily (midnight UTC), manual | Stale issue/PR management |
 | Docs Check | `docs-check.yml` | Push/PRs (docs paths) | Documentation link and format validation |
 | Export Project Artifact | `export-project-artifact.yml` | Manual dispatch | Project artifact export |
+| Golden Path Validation | `golden-path-validation.yml` | Manual dispatch | End-to-end smoke validation for the recommended developer path |
 | Build Observability | `build-observability.yml` | Manual dispatch | Build diagnostics, metrics, fingerprints |
 | Scheduled Maintenance | `scheduled-maintenance.yml` | Weekly (Sun), manual | Tests, cache cleanup, dependency health, AI recommendations |
+| Makefile Validation | `makefile.yml` | Push/PRs (Makefile/build tooling), manual | Ensures documented make targets stay healthy |
 | Copilot Setup | `copilot-setup-steps.yml` | Called by Copilot | Copilot environment setup |
 | Prompt Generation | `prompt-generation.yml` | Push/PRs (prompt files), manual | AI prompt template generation |
+| Python Package (Conda) | `python-package-conda.yml` | Manual dispatch | Builds and validates the conda-based Python package flow |
 | Ticker Data Collection | `ticker-data-collection.yml` | Scheduled, manual | Automated ticker data collection |
 | Update Diagrams | `update-diagrams.yml` | Push/PRs (source changes), manual | Architecture diagram generation |
 | Update UML Diagrams | `update-uml-diagrams.yml` | Push/PRs (source changes), manual | UML diagram generation |
+| Skill Evaluations | `skill-evals.yml` | Manual dispatch | Runs Codex skill evaluation scenarios and captures artifacts |
+| Static Site Checks | `static.yml` | Push/PRs (docs/site changes), manual | Validates static documentation/site generation assets |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | Called by other workflows | Shared build/test steps |
 | Copilot PR Reviewer | `copilot-pull-request-reviewer.yml` | PR opened/synchronize | AI-powered code review on every PR |
 | Copilot SWE Agent | `copilot-swe-agent-copilot.yml` | Manual dispatch | GitHub Copilot coding agent workflow |
@@ -122,4 +128,4 @@ done
 
 ---
 
-*Last Updated: 2026-03-16*
+*Last Updated: 2026-03-20*

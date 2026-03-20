@@ -7,7 +7,7 @@
 The Test Matrix workflow on main was failing with 22 reported test failures. Upon investigation:
 
 - The workflow uses `--filter "Category!=Integration"` (line 75 of `.github/workflows/test-matrix.yml`) to exclude integration tests from unit test runs
-- However, integration test classes in `tests/MarketDataCollector.Tests/Integration/` were missing the `[Trait("Category", "Integration")]` attribute
+- However, integration test classes in `tests/Meridian.Tests/Integration/` were missing the `[Trait("Category", "Integration")]` attribute
 - As a result, integration tests were running in the unit test job and failing
 
 ### Failing Tests
@@ -21,8 +21,8 @@ These failures were causing CI to fail on pushes to main.
 ## Root Cause
 
 Integration tests in the following directory lacked the proper xUnit trait attribute:
-- `tests/MarketDataCollector.Tests/Integration/EndpointTests/` (16 test classes)
-- `tests/MarketDataCollector.Tests/Integration/` (3 test classes)
+- `tests/Meridian.Tests/Integration/EndpointTests/` (16 test classes)
+- `tests/Meridian.Tests/Integration/` (3 test classes)
 
 Without this attribute, the `--filter "Category!=Integration"` filter had no effect, and integration tests ran alongside unit tests.
 
@@ -72,7 +72,7 @@ Added `[Trait("Category", "Integration")]` attribute to **19 integration test cl
 
 **Test command:**
 ```bash
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj \
   -c Release \
   --filter "Category!=Integration"
 ```
@@ -86,7 +86,7 @@ dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
 
 ## Pattern for Future Tests
 
-All integration tests in `tests/MarketDataCollector.Tests/Integration/` **must** include:
+All integration tests in `tests/Meridian.Tests/Integration/` **must** include:
 
 ```csharp
 /// <summary>
@@ -104,7 +104,7 @@ This ensures they are properly filtered by the CI workflow's `--filter "Category
 ## Related Files
 
 - `.github/workflows/test-matrix.yml` - Contains the filter configuration
-- `tests/MarketDataCollector.Tests/Integration/` - Integration test directory
+- `tests/Meridian.Tests/Integration/` - Integration test directory
 - `.github/TEST_MATRIX_FIX_SUMMARY.md` - This document
 
 ## Commits

@@ -1,8 +1,8 @@
 ## Desktop Change Checklist
 
 Use this checklist for PRs that touch:
-- `src/MarketDataCollector.Wpf/**`
-- `src/MarketDataCollector.Ui.Services/**`
+- `src/Meridian.Wpf/**`
+- `src/Meridian.Ui.Services/**`
 
 ### Validation
 

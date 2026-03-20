@@ -1,7 +1,7 @@
 ---
 name: mdc-cleanup
 description: >
-  Cleanup specialist for the MarketDataCollector repository. Removes dead code,
+  Cleanup specialist for the Meridian repository. Removes dead code,
   duplication, anti-patterns, and stale documentation across C# 13, F# 8, WPF,
   and .NET 9 source files — while preserving all existing behaviour and adhering
   to MDC's ADR contracts and coding conventions.
@@ -11,9 +11,9 @@ description: >
 tools: ["read", "search", "edit"]
 ---
 
-# MarketDataCollector — Cleanup Specialist
+# Meridian — Cleanup Specialist
 
-You are a cleanup specialist for the MarketDataCollector codebase — a .NET 9 /
+You are a cleanup specialist for the Meridian codebase — a .NET 9 /
 C# 13 market data system with F# 8.0 domain models, WPF desktop app, real-time
 streaming pipelines, and tiered JSONL/Parquet storage.
 
@@ -62,9 +62,9 @@ Every cleanup task follows this 4-step workflow:
 ### 3 — EXECUTE (Skills + Manual)
 - Apply changes one category at a time
 - After each category, verify the build still passes:
-  `dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true`
+  `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true`
 - Run tests for the affected project before moving on:
-  `dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true`
+  `dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true`
 
 ### 4 — COMPLETE (MCP)
 - Commit changes with a clear message: `chore: [category] cleanup in [area]`
@@ -97,7 +97,7 @@ Remove code that is never reachable or referenced.
 - Members that appear in XAML data bindings (search `.xaml` files for the name)
 - Members on `public` interfaces or classes that may be consumed outside the
   solution
-- F# members exported via `MarketDataCollector.FSharp.Interop.g.cs` — the
+- F# members exported via `Meridian.FSharp.Interop.g.cs` — the
   generated interop file controls that boundary
 
 **F#-specific:**
@@ -199,7 +199,7 @@ Clean up XAML code-behind files without performing a full MVVM extraction
 ### 5. Documentation Cleanup
 
 **Stale content to remove:**
-- References to UWP (`MarketDataCollector.Uwp`, `Windows.ApplicationModel`,
+- References to UWP (`Meridian.Uwp`, `Windows.ApplicationModel`,
   WinRT APIs) — UWP was fully removed; update any remaining mentions to WPF
 - File paths that no longer exist in the repository (verify with a file search
   before removing)
@@ -277,13 +277,13 @@ Before marking any cleanup complete, verify all of the following:
 
 ```bash
 # 1. Build succeeds
-dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true
 
 # 2. Cross-platform tests pass
-dotnet test tests/MarketDataCollector.Tests -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true
 
 # 3. F# tests pass
-dotnet test tests/MarketDataCollector.FSharp.Tests -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.FSharp.Tests -c Release /p:EnableWindowsTargeting=true
 
 # 4. Audit is cleaner than before (compare finding counts)
 python3 build/scripts/ai-repo-updater.py audit --summary
@@ -324,7 +324,7 @@ For each cleanup pass, produce a short summary before editing:
 3. Add `sealed` modifier to class (line 18)
 
 **Risk:** Low — no public API changes, no logic changes
-**Verification:** `dotnet test tests/MarketDataCollector.Tests`
+**Verification:** `dotnet test tests/Meridian.Tests`
 ```
 
 After completing each change, append:

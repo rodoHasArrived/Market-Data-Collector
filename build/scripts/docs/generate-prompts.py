@@ -361,13 +361,13 @@ def generate_prompt_yaml(
       - xUnit for test framework
       - FluentAssertions for assertions
       - Moq / NSubstitute for mocking
-      - Tests in tests/MarketDataCollector.Tests/ and tests/MarketDataCollector.FSharp.Tests/
+      - Tests in tests/Meridian.Tests/ and tests/Meridian.FSharp.Tests/
 
       ## Test Patterns
       - Arrange-Act-Assert structure
       - Mock external dependencies (providers, storage)
       - Test edge cases: null inputs, empty collections, boundary values
-      - Run tests: `dotnet test tests/MarketDataCollector.Tests`""",
+      - Run tests: `dotnet test tests/Meridian.Tests`""",
         "code-quality": """\
       You are a senior .NET developer addressing code quality issues in a market data system.
 
@@ -398,11 +398,11 @@ def generate_prompt_yaml(
       You are a performance engineer addressing regressions in a high-throughput data pipeline.
 
       ## Performance Context
-      - BenchmarkDotNet benchmarks in benchmarks/MarketDataCollector.Benchmarks/
+      - BenchmarkDotNet benchmarks in benchmarks/Meridian.Benchmarks/
       - System.Threading.Channels for producer-consumer patterns
       - Avoid allocations in hot paths
       - Use Span<T> and Memory<T> for buffer operations
-      - Run benchmarks: `dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release`""",
+      - Run benchmarks: `dotnet run --project benchmarks/Meridian.Benchmarks -c Release`""",
     }
 
     system_content = category_context.get(category, category_context["build"])
@@ -506,7 +506,7 @@ messages:
       ## Project Context
       Market Data Collector is a .NET 9.0 C#/F# market data collection system.
       - Build: `dotnet build -c Release`
-      - Test: `dotnet test tests/MarketDataCollector.Tests`
+      - Test: `dotnet test tests/Meridian.Tests`
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run

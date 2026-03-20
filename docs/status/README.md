@@ -1,61 +1,45 @@
 # Project Status Documentation
 
-This folder contains project status, roadmap, and changelog documentation for the Market Data Collector.
+**Last Updated:** 2026-03-20
+**Version:** 1.7.0
+**Current Delivery Theme:** Trading workstation migration planning + pilot hardening
+
+This folder contains the repository's authoritative status, roadmap, improvement tracking, and readiness documents.
 
 ## Documents
 
 | Document | Description |
 |----------|-------------|
-| [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) | **New** — Complete inventory of every feature area with implementation status |
-| [ROADMAP.md](ROADMAP.md) | Feature backlog, development priorities, sprint plans, and Phases 11–15 |
-| [IMPROVEMENTS.md](IMPROVEMENTS.md) | Consolidated improvement tracking (35 items across 7+ themes) |
-| [EVALUATIONS_AND_AUDITS.md](EVALUATIONS_AND_AUDITS.md) | Consolidated architecture evaluations, code audits, and assessments |
-| [production-status.md](production-status.md) | Architecture assessment and production readiness |
-| [CHANGELOG.md](CHANGELOG.md) | Version history and implemented improvements |
-| [TODO.md](TODO.md) | Auto-generated TODO tracking from code comments |
+| [ROADMAP.md](ROADMAP.md) | Primary planning document, including the trading workstation migration phases |
+| [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) | Per-feature implementation audit and current-vs-target product notes |
+| [IMPROVEMENTS.md](IMPROVEMENTS.md) | Consolidated improvement tracking, now including trading workstation migration work |
+| [production-status.md](production-status.md) | Production readiness plus current UX / execution caveats |
+| [EVALUATIONS_AND_AUDITS.md](EVALUATIONS_AND_AUDITS.md) | Consolidated architecture evaluations, audits, and desktop assessments |
+| [CHANGELOG.md](CHANGELOG.md) | Repository snapshot and documentation-status changes |
+| [TODO.md](TODO.md) | Auto-generated TODO tracking from source comments |
 | [health-dashboard.md](health-dashboard.md) | Auto-generated documentation health report |
 
-## Quick Links
+## Recommended Reading Order
 
-### Current Status
-- **Version:** 1.6.2
-- **Status:** Development / Pilot Ready
-- **Improvements:** 33/35 completed, 1 partial (G2), 1 open (C3)
-- **Last Updated:** 2026-02-26
+1. [Trading Workstation Migration Blueprint](../plans/trading-workstation-migration-blueprint.md)
+2. [ROADMAP.md](ROADMAP.md)
+3. [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md)
+4. [production-status.md](production-status.md)
+5. [IMPROVEMENTS.md](IMPROVEMENTS.md)
 
-### Key Metrics
-- See [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) for a per-feature breakdown of what is complete, partial, or pending.
-- See [production-status.md](production-status.md) for provider readiness, build-time requirements, and desktop UX parity caveats.
-- See [ROADMAP.md](ROADMAP.md) for planned work and backlog tracking (Phases 11–15 for full implementation).
-- See [IMPROVEMENTS.md](IMPROVEMENTS.md) for detailed improvement item status across all themes.
-- See [EVALUATIONS_AND_AUDITS.md](EVALUATIONS_AND_AUDITS.md) for architecture evaluations, audit results, and desktop assessments.
+## Current Status Summary
 
-## How Documents Relate
-
-```
-FEATURE_INVENTORY.md    — What exists and its current status (per-feature audit)
-    │
-ROADMAP.md              — What we're building and when (phases, sprints, objectives)
-    │
-    ├── IMPROVEMENTS.md — Detailed per-item tracking (35 items, themes A-J)
-    │
-    ├── EVALUATIONS_AND_AUDITS.md — Why and where (evaluations, audits, assessments)
-    │       │
-    │       ├── docs/evaluations/*.md    — Full evaluation documents (source detail)
-    │       ├── docs/audits/*.md         — Full audit documents (source detail)
-    │       └── docs/development/*.md    — Implementation guides
-    │
-    └── production-status.md — Current readiness assessment
-```
+- **Platform state:** Development / Pilot Ready
+- **Architecture state:** Core data, backtesting, execution, and strategy modules exist
+- **UX state:** Broad desktop functionality exists, but the operator experience is being migrated from page-centric navigation to workflow-centric workspaces
+- **Migration state:** Documentation aligned; implementation phases pending
 
 ## Related Documentation
 
-- [Architecture Overview](../architecture/overview.md)
-- [Getting Started Guide](../getting-started/README.md)
-- [User Guide](../HELP.md)
-- [Desktop Development](../development/wpf-implementation-notes.md)
-- [Audits Directory](../audits/README.md)
-- [Evaluations Directory](../evaluations/)
+- [Trading Workstation Migration Blueprint](../plans/trading-workstation-migration-blueprint.md)
+- [Architecture UI Redesign Notes](../architecture/ui-redesign.md)
+- [WPF Desktop README](../../src/Meridian.Wpf/README.md)
+- [Main Documentation Index](../README.md)
 
 ---
 

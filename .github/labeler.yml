@@ -23,17 +23,17 @@ ci/cd:
 performance:
   - changed-files:
     - any-glob-to-any-file: 'benchmarks/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Application/Pipeline/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Domain/Collectors/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Core/Performance/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Core/Serialization/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Application/Pipeline/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Domain/Collectors/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Core/Performance/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Core/Serialization/**/*'
 
 # Event pipeline and data flow
 pipeline:
   - changed-files:
-    - any-glob-to-any-file: 'src/MarketDataCollector.Application/Pipeline/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Domain/Events/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Application/Canonicalization/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Application/Pipeline/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Domain/Events/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Application/Canonicalization/**/*'
 
 # Docker related
 docker:
@@ -56,8 +56,8 @@ storage:
 # UI changes
 ui:
   - changed-files:
-    - any-glob-to-any-file: 'src/MarketDataCollector.Ui/**/*'
-    - any-glob-to-any-file: 'src/MarketDataCollector.Wpf/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Ui/**/*'
+    - any-glob-to-any-file: 'src/Meridian.Wpf/**/*'
 
 # Configuration files
 configuration:

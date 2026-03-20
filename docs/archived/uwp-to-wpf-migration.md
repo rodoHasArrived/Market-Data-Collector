@@ -76,7 +76,7 @@ WPF offers significant advantages for desktop applications:
 
 ### Phase 1: Project Setup ✅
 
-- [x] Created `MarketDataCollector.Wpf` project
+- [x] Created `Meridian.Wpf` project
 - [x] Configured .NET 9.0 targeting with `net9.0-windows`
 - [x] Added WPF support with `<UseWPF>true</UseWPF>`
 - [x] Added platform detection for cross-platform builds
@@ -155,14 +155,14 @@ All 23 services implemented:
 **Before (UWP):**
 ```xml
 <!-- Source file linking workaround -->
-<Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+<Compile Include="..\Meridian.Contracts\Configuration\*.cs"
          Link="SharedModels\Configuration\%(Filename)%(Extension)" />
 ```
 
 **After (WPF):**
 ```xml
 <!-- Direct project reference -->
-<ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+<ProjectReference Include="..\Meridian.Contracts\Meridian.Contracts.csproj" />
 ```
 
 ### 2. XAML Namespaces
@@ -171,14 +171,14 @@ All 23 services implemented:
 ```xml
 <Application xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="using:MarketDataCollector.Uwp">
+             xmlns:local="using:Meridian.Uwp">
 ```
 
 **After (WPF):**
 ```xml
 <Application xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:MarketDataCollector.Wpf">
+             xmlns:local="clr-namespace:Meridian.Wpf">
 ```
 
 ### 3. Application Lifecycle
@@ -320,13 +320,13 @@ Common control migrations from UWP to WPF:
 ### Development Builds
 
 ```bash
-dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Debug
+dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Debug
 ```
 
 ### Release Builds
 
 ```bash
-dotnet publish src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj \
+dotnet publish src/Meridian.Wpf/Meridian.Wpf.csproj \
   -c Release \
   -r win-x64 \
   --self-contained \

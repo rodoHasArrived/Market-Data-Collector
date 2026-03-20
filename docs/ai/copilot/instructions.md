@@ -57,22 +57,22 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 
 ```bash
 # Restore dependencies (ALWAYS run first)
-dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
 
 # Build
-dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
 # Run core tests
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj -c Release /p:EnableWindowsTargeting=true
 
 # Run F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
 
 # Run WPF tests (Windows only)
-dotnet test tests/MarketDataCollector.Wpf.Tests/MarketDataCollector.Wpf.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Wpf.Tests/Meridian.Wpf.Tests.csproj -c Release /p:EnableWindowsTargeting=true
 
 # Run UI service tests (Windows only)
-dotnet test tests/MarketDataCollector.Ui.Tests/MarketDataCollector.Ui.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Ui.Tests/Meridian.Ui.Tests.csproj -c Release /p:EnableWindowsTargeting=true
 
 # Run all tests
 dotnet test -c Release /p:EnableWindowsTargeting=true
@@ -100,13 +100,13 @@ make doctor         # Run environment diagnostics
 
 ```bash
 # Basic run (smoke test with no provider)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 
 # Run with web dashboard
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --ui --http-port 8080
 
 # Historical backfill
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL
+dotnet run --project src/Meridian/Meridian.csproj -- --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL
 ```
 
 ## Project Structure
@@ -116,24 +116,24 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --bac
 ```
 Market-Data-Collector/
 ├── src/
-│   ├── MarketDataCollector/              # Main console application & entry point
-│   ├── MarketDataCollector.Application/  # Application services, commands, pipelines
-│   ├── MarketDataCollector.Core/         # Core domain models, exceptions, config
-│   ├── MarketDataCollector.Domain/       # Domain collectors, events, models
-│   ├── MarketDataCollector.Contracts/    # Shared contracts, DTOs, API models (leaf, no deps)
-│   ├── MarketDataCollector.Infrastructure/ # Provider implementations, data sources
-│   ├── MarketDataCollector.ProviderSdk/  # Provider SDK interfaces & attributes
-│   ├── MarketDataCollector.Storage/      # Storage sinks, archival, packaging
-│   ├── MarketDataCollector.FSharp/       # F# domain library (12 files)
-│   ├── MarketDataCollector.Ui/           # Web dashboard UI
-│   ├── MarketDataCollector.Ui.Services/  # Shared UI services (cross-platform)
-│   ├── MarketDataCollector.Ui.Shared/    # Shared UI endpoints & contracts
-│   └── MarketDataCollector.Wpf/          # WPF desktop app (Windows)
+│   ├── Meridian/              # Main console application & entry point
+│   ├── Meridian.Application/  # Application services, commands, pipelines
+│   ├── Meridian.Core/         # Core domain models, exceptions, config
+│   ├── Meridian.Domain/       # Domain collectors, events, models
+│   ├── Meridian.Contracts/    # Shared contracts, DTOs, API models (leaf, no deps)
+│   ├── Meridian.Infrastructure/ # Provider implementations, data sources
+│   ├── Meridian.ProviderSdk/  # Provider SDK interfaces & attributes
+│   ├── Meridian.Storage/      # Storage sinks, archival, packaging
+│   ├── Meridian.FSharp/       # F# domain library (12 files)
+│   ├── Meridian.Ui/           # Web dashboard UI
+│   ├── Meridian.Ui.Services/  # Shared UI services (cross-platform)
+│   ├── Meridian.Ui.Shared/    # Shared UI endpoints & contracts
+│   └── Meridian.Wpf/          # WPF desktop app (Windows)
 ├── tests/
-│   ├── MarketDataCollector.Tests/        # Core C# unit tests
-│   ├── MarketDataCollector.FSharp.Tests/ # F# unit tests
-│   ├── MarketDataCollector.Wpf.Tests/    # WPF service tests (Windows only)
-│   └── MarketDataCollector.Ui.Tests/     # UI service tests
+│   ├── Meridian.Tests/        # Core C# unit tests
+│   ├── Meridian.FSharp.Tests/ # F# unit tests
+│   ├── Meridian.Wpf.Tests/    # WPF service tests (Windows only)
+│   └── Meridian.Ui.Tests/     # UI service tests
 ├── benchmarks/                           # BenchmarkDotNet performance tests
 ├── build/                                # Build tooling (Python, Node.js, .NET)
 ├── config/                               # Configuration files
@@ -193,12 +193,12 @@ For the full conventions reference, see [`CLAUDE.md`](../../../CLAUDE.md) § Cri
 |------|---------------|
 | Adding new functionality | Appropriate layer in `src/`, follow existing patterns |
 | Fixing a bug | Add test first in `tests/`, then fix |
-| Working with providers | `src/MarketDataCollector.Infrastructure/Adapters/` |
-| Storage changes | `src/MarketDataCollector.Storage/` |
-| WPF desktop | `src/MarketDataCollector.Wpf/` |
-| Run tests | `dotnet test tests/MarketDataCollector.Tests/` |
+| Working with providers | `src/Meridian.Infrastructure/Adapters/` |
+| Storage changes | `src/Meridian.Storage/` |
+| WPF desktop | `src/Meridian.Wpf/` |
+| Run tests | `dotnet test tests/Meridian.Tests/` |
 | Build | `dotnet restore && dotnet build -c Release` (both with `/p:EnableWindowsTargeting=true`) |
-| Start app | `dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui` |
+| Start app | `dotnet run --project src/Meridian/Meridian.csproj -- --ui` |
 
 ## Related Resources
 

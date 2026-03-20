@@ -32,8 +32,8 @@ messages:
       - Mock external dependencies (providers, storage)
 
       ## Directory Structure
-      - `tests/MarketDataCollector.Tests/` - Unit tests
-      - `tests/MarketDataCollector.IntegrationTests/` - Integration tests
+      - `tests/Meridian.Tests/` - Unit tests
+      - `tests/Meridian.IntegrationTests/` - Integration tests
 
       ## Example Test Structure
       ```csharp

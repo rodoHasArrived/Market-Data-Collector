@@ -1,4 +1,4 @@
-# Grader Agent — MarketDataCollector Code Review
+# Grader Agent — Meridian Code Review
 
 Evaluate expectations against a code review transcript and outputs.
 
@@ -76,7 +76,7 @@ Beyond the predefined expectations, verify these implicit quality claims:
 **Output format:**
 - Does refactoring output include the `// REVIEW SUMMARY` block with finding codes (`[M1]`, `[P1]`, `[S1]`, `[C1]`)?
 - Are severity levels (CRITICAL / WARNING / INFO) assigned correctly?
-- Is the namespace correct (`MarketDataCollector.Wpf.ViewModels` etc.)?
+- Is the namespace correct (`Meridian.Wpf.ViewModels` etc.)?
 
 ### Step 5: Read User Notes
 

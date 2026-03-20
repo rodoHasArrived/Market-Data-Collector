@@ -9,6 +9,32 @@ registries:
     url: https://api.nuget.org/v3/index.json
 
 updates:
+  # npm tooling dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    reviewers:
+      - "rodoHasArrived"
+    groups:
+      tooling:
+        patterns:
+          - "@viz-js/*"
+          - "sharp"
+        update-types:
+          - "minor"
+          - "patch"
+
   # NuGet packages (main project)
   - package-ecosystem: "nuget"
     directory: "/"
@@ -135,9 +161,34 @@ updates:
           - "minor"
           - "patch"
 
+  # Root npm tooling
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    reviewers:
+      - "rodoHasArrived"
+    groups:
+      root-tooling:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   # Benchmark project
   - package-ecosystem: "nuget"
-    directory: "/benchmarks/MarketDataCollector.Benchmarks"
+    directory: "/benchmarks/Meridian.Benchmarks"
     schedule:
       interval: "monthly"
       day: "monday"

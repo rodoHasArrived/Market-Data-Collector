@@ -342,7 +342,7 @@ jobs:
 
       - name: Detect changed areas
         id: filter
-        uses: dorny/paths-filter@v3.0.2
+        uses: dorny/paths-filter@v4.0.1
         with:
           filters: |
             docs:
@@ -359,10 +359,10 @@ jobs:
               - added|deleted: 'src/**'
               - added|deleted: 'docs/**'
             providers:
-              - 'src/MarketDataCollector/Infrastructure/Adapters/**'
+              - 'src/Meridian/Infrastructure/Adapters/**'
             interfaces:
-              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
-              - 'src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider*.cs'
+              - 'src/Meridian/Infrastructure/IMarketDataClient.cs'
+              - 'src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider*.cs'
             adrs:
               - 'docs/adr/**'
             config:
@@ -497,8 +497,8 @@ jobs:
       - name: Build project for metadata extraction
         run: |
           set -euo pipefail
-          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-          dotnet build src/MarketDataCollector/MarketDataCollector.csproj -c Release --no-restore /p:EnableWindowsTargeting=true /p:GenerateDocumentationFile=true
+          dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
+          dotnet build src/Meridian/Meridian.csproj -c Release --no-restore /p:EnableWindowsTargeting=true /p:GenerateDocumentationFile=true
         continue-on-error: true
 
       # --- Structure docs ---
@@ -620,7 +620,7 @@ jobs:
           if [ -d "build/dotnet/DocGenerator" ]; then
             dotnet restore build/dotnet/DocGenerator/DocGenerator.csproj
             dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
-            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/MarketDataCollector --output docs/generated/project-context.md || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/Meridian --output docs/generated/project-context.md || true
           fi
 
       # --- AI instruction sync ---
@@ -727,10 +727,7 @@ jobs:
         run: |
           set -euo pipefail
           watched=(
-            "docs/generated/"
-            "docs/generated/adr-index.md"
-            "docs/generated/configuration-schema.md"
-            "docs/status/health-dashboard.md"
+            "docs/"
             "CLAUDE.md"
             "docs/ai/copilot/instructions.md"
             ".github/agents/documentation-agent.md"
@@ -761,6 +758,18 @@ jobs:
             echo "${{ steps.ai-doc-review.outputs.response }}"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Upload generated documentation snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-generated-snapshot
+          path: |
+            docs/generated/*.md
+            docs/status/health-dashboard.md
+            docs-health.json
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Show dry-run diff
         if: |
           steps.changes.outputs.has_changes == 'true' &&
@@ -768,7 +777,7 @@ jobs:
           github.event.inputs.dry_run == 'true'
         run: |
           set -euo pipefail
-          git --no-pager diff -- docs/generated/ docs/status/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git --no-pager diff -- docs/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
 
       - name: Upload dry-run patch artifact
         if: |
@@ -777,7 +786,7 @@ jobs:
           github.event.inputs.dry_run == 'true'
         run: |
           set -euo pipefail
-          git --no-pager diff --binary -- docs/generated/ docs/status/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md > docs-automation.patch
+          git --no-pager diff --binary -- docs/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md > docs-automation.patch
 
       - name: Publish dry-run patch artifact
         if: |
@@ -800,7 +809,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/generated/ docs/status/health-dashboard.md \
+          git add docs/ \
                   CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
           git commit -m "docs: consolidated documentation automation updates
@@ -856,7 +865,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/generated/ docs/status/health-dashboard.md \
+          git add docs/ \
                   CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
 
@@ -1518,8 +1527,8 @@ jobs:
       - name: Build project for XML documentation
         run: |
           set -euo pipefail
-          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-          dotnet build MarketDataCollector.sln -c Release --no-restore \
+          dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
+          dotnet build Meridian.sln -c Release --no-restore \
             /p:EnableWindowsTargeting=true \
             /p:GenerateDocumentationFile=true
         continue-on-error: true
@@ -1536,7 +1545,7 @@ jobs:
         if: steps.configure-pages.outcome == 'success'
         uses: actions/upload-pages-artifact@v4
         with:
-          path: docs/docfx/_site
+          path: _site
         continue-on-error: true
 
   # ─── Deploy to GitHub Pages ──────────────────────────────────────────
@@ -1702,3 +1711,59 @@ jobs:
           echo "| Total TODOs | ${{ needs.scan-todos.outputs.total_count || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Untracked TODOs | ${{ needs.scan-todos.outputs.new_todos || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| TODO doc updated | ${{ needs.scan-todos.outputs.has_changes || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR automation summary comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        env:
+          ANY_CHANGED: ${{ needs.detect-changes.outputs.any_changed }}
+          HAS_GENERATED_CHANGES: ${{ needs.regenerate-docs.outputs.has_changes || 'false' }}
+          CHANGED_FILES: ${{ needs.regenerate-docs.outputs.changed_files || 'none' }}
+          TODO_TOTAL: ${{ needs.scan-todos.outputs.total_count || 'N/A' }}
+          TODO_UNTRACKED: ${{ needs.scan-todos.outputs.new_todos || 'N/A' }}
+          BUILD_DOCFX_RESULT: ${{ needs.build-docfx.result }}
+          DEPLOY_PAGES_RESULT: ${{ needs.deploy-pages.result }}
+        with:
+          script: |
+            const marker = '<!-- docs-automation-report -->';
+            const body = `${marker}
+            ## 📚 Documentation Automation Summary
+
+            | Metric | Value |
+            |--------|-------|
+            | Any changes detected | ${process.env.ANY_CHANGED} |
+            | Generated docs changed | ${process.env.HAS_GENERATED_CHANGES} |
+            | Changed files | ${process.env.CHANGED_FILES} |
+            | Total TODOs | ${process.env.TODO_TOTAL} |
+            | Untracked TODOs | ${process.env.TODO_UNTRACKED} |
+            | DocFX build | ${process.env.BUILD_DOCFX_RESULT} |
+            | Pages deploy | ${process.env.DEPLOY_PAGES_RESULT} |
+
+            _This comment is updated automatically by the Documentation Automation workflow._`;
+
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+
+            const existing = comments.find(comment =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }

@@ -1,4 +1,4 @@
-"""Code-defined skills provider for MarketDataCollector.
+"""Code-defined skills provider for Meridian.
 
 Creates a :class:`SkillsProvider` that exposes three skills:
 
@@ -174,11 +174,11 @@ def _read(path: Path) -> str:
 mdc_code_review_skill = Skill(
     name="mdc-code-review",
     description=dedent("""\
-        Code review and architecture compliance skill for the MarketDataCollector
+        Code review and architecture compliance skill for the Meridian
         project — a .NET 9 / C# 13 market data system with WPF desktop app, F# 8.0
         domain models, real-time streaming pipelines, and tiered JSONL/Parquet
         storage. Use this skill whenever the user asks to review, audit, refactor,
-        or improve C# or F# code from MarketDataCollector, or when they share
+        or improve C# or F# code from Meridian, or when they share
         .cs/.fs files and want feedback.
         Also trigger on: MVVM compliance, ViewModel extraction, code-behind cleanup,
         real-time performance, hot-path optimization, pipeline throughput, provider
@@ -186,7 +186,7 @@ mdc_code_review_skill = Skill(
         handling patterns, test code quality, unit test review, ProviderSdk
         compliance, dependency violations, JSON source generator usage, hot config
         reload, or WPF architecture — even without naming the project. If code
-        references MarketDataCollector namespaces, BindableBase, EventPipeline,
+        references Meridian namespaces, BindableBase, EventPipeline,
         IMarketDataClient, IStorageSink, or ProviderSdk types, use this skill.
     """),
     # Full skill instructions — identical to what is in SKILL.md so the
@@ -240,7 +240,7 @@ mdc_code_review_skill = Skill(
 ai_docs_maintain_skill = Skill(
     name="ai-docs-maintain",
     description=dedent("""\
-        AI documentation maintenance skill for the MarketDataCollector project.
+        AI documentation maintenance skill for the Meridian project.
         Use this skill when the user asks to check AI doc freshness, detect drift
         between documentation and code, archive stale docs, validate cross-references,
         or generate a sync report for AI-related files. Also trigger when asked to
@@ -251,7 +251,7 @@ ai_docs_maintain_skill = Skill(
         # AI Documentation Maintenance
 
         This skill maintains the health of AI assistant documentation in the
-        MarketDataCollector repository.
+        Meridian repository.
 
         ## Available Commands
 
@@ -692,7 +692,7 @@ _BLUEPRINT_REFS_DIR = _BLUEPRINT_SKILL_DIR / "references"
 mdc_blueprint_skill = Skill(
     name="mdc-blueprint",
     description=(
-        "Blueprint Mode skill for the MarketDataCollector project. "
+        "Blueprint Mode skill for the Meridian project. "
         "Translates a single prioritized idea into a complete, code-ready technical "
         "design document — interfaces, component designs, data flows, XAML sketches, "
         "test plans, and implementation checklists — grounded in MDC's actual stack: "
@@ -1149,7 +1149,7 @@ class SkillsProviderCli:
 
     _SKILL_DESCRIPTIONS: dict[str, str] = {
         "mdc-code-review": (
-            "Code review and architecture compliance for the MarketDataCollector project."
+            "Code review and architecture compliance for the Meridian project."
         ),
         "ai-docs-maintain": (
             "AI documentation maintenance: freshness checks, drift detection, archiving."
@@ -1179,7 +1179,7 @@ class SkillsProviderCli:
         p = _argparse.ArgumentParser(
             prog="skills_provider.py",
             description=(
-                "MarketDataCollector skills provider CLI.\n\n"
+                "Meridian skills provider CLI.\n\n"
                 "Manage, inspect, and execute skill scripts and resources "
                 "directly from the command line."
             ),

@@ -1,0 +1,55 @@
+name: Repo Health
+
+on:
+  schedule:
+    - cron: '30 5 * * 2,5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-health-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  full-maintenance:
+    name: Full Maintenance Lane
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache-suffix: repo-health
+
+      - name: Run full maintenance lane
+        run: |
+          bash scripts/ai/maintenance.sh \
+            --full \
+            --status-file .ai/maintenance-status.json \
+            --summary-file .ai/MAINTENANCE_STATUS.md
+
+      - name: Upload maintenance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-health-maintenance
+          path: |
+            .ai/maintenance-status.json
+            .ai/MAINTENANCE_STATUS.md
+          retention-days: 14
+
+      - name: Publish maintenance summary
+        if: always()
+        run: cat .ai/MAINTENANCE_STATUS.md >> "$GITHUB_STEP_SUMMARY"

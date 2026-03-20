@@ -394,7 +394,7 @@ def _check_config_documentation(
 def _scan_providers(root: Path) -> List[SourceItem]:
     """Identify provider implementation directories under Infrastructure/Providers."""
     providers_root = (
-        root / "src" / "MarketDataCollector.Infrastructure" / "Providers"
+        root / "src" / "Meridian.Infrastructure" / "Providers"
     )
     if not providers_root.is_dir():
         return []

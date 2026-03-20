@@ -41,15 +41,15 @@ The Interactive Brokers API is **not available as a standard NuGet package** and
 3. **Copy the DLL to Your Project**
    ```bash
    # Create a lib directory in your solution
-   mkdir -p MarketDataCollector/lib/IBApi
+   mkdir -p Meridian/lib/IBApi
 
    # Copy the DLL
-   cp path/to/CSharpAPI/bin/Release/net6.0/CSharpAPI.dll MarketDataCollector/lib/IBApi/
+   cp path/to/CSharpAPI/bin/Release/net6.0/CSharpAPI.dll Meridian/lib/IBApi/
    ```
 
-4. **Update MarketDataCollector.csproj**
+4. **Update Meridian.csproj**
 
-   Uncomment and modify the IBApi reference in `MarketDataCollector.csproj`:
+   Uncomment and modify the IBApi reference in `Meridian.csproj`:
 
    ```xml
    <ItemGroup>
@@ -71,17 +71,17 @@ The Interactive Brokers API is **not available as a standard NuGet package** and
    ```bash
    # Download and extract TWS API
    # Copy the CSharpClient folder to your solution
-   cp -r "TWS API/source/CSharpClient" MarketDataCollector/external/IBApi
+   cp -r "TWS API/source/CSharpClient" Meridian/external/IBApi
    ```
 
 2. **Add as Project Reference**
 
-   Add to `MarketDataCollector.sln`:
+   Add to `Meridian.sln`:
    ```
-   dotnet sln MarketDataCollector.sln add external/IBApi/CSharpAPI.csproj
+   dotnet sln Meridian.sln add external/IBApi/CSharpAPI.csproj
    ```
 
-3. **Reference in MarketDataCollector.csproj**
+3. **Reference in Meridian.csproj**
    ```xml
    <ItemGroup>
      <ProjectReference Include="..\..\external\IBApi\CSharpAPI.csproj" />
@@ -263,7 +263,7 @@ Customize in `appsettings.json`:
 Build without `IBAPI` defined to use the stub implementation:
 
 ```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 ```
 
 The `IBMarketDataClient` will automatically delegate to `NoOpMarketDataClient`.
@@ -273,7 +273,7 @@ The `IBMarketDataClient` will automatically delegate to `NoOpMarketDataClient`.
 Run built-in self-tests:
 
 ```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
+dotnet run --project src/Meridian/Meridian.csproj -- --selftest
 ```
 
 This tests the data pipeline without requiring any provider connection.

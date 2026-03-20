@@ -1,6 +1,6 @@
 # Archived Documentation Index
 
-**Last Updated:** 2026-03-15
+**Last Updated:** 2026-03-20
 
 This folder contains historical documentation that has been superseded by newer guides or is no longer actively maintained. These documents are preserved for historical reference and to understand the evolution of the project.
 
@@ -22,7 +22,7 @@ Documents are archived when:
 
 | Document | Date Archived | Reason | Current Reference |
 |----------|---------------|--------|-------------------|
-| **DUPLICATE_CODE_ANALYSIS.md** | 2026-02-12 | Analysis complete, most items resolved | [ROADMAP.md Phase 6](../status/ROADMAP.md#phase-6-duplicate--unused-code-cleanup) |
+| **DUPLICATE_CODE_ANALYSIS.md** | 2026-02-12 | Analysis complete, most items resolved | [ROADMAP.md](../status/ROADMAP.md) |
 | **REPOSITORY_REORGANIZATION_PLAN.md** | 2026-02-12 | Superseded by new organization guide | [Repository Organization Guide](../development/repository-organization-guide.md) |
 | **consolidation.md** | 2026-02-12 | Consolidation work completed | — |
 | **desktop-ui-alternatives-evaluation.md** | 2026-02-12 | Decision made: WPF is primary desktop platform | [UI Redesign](../architecture/ui-redesign.md) |
@@ -78,7 +78,8 @@ Documents are archived when:
 
 | Document | Date Archived | Reason | Current Reference |
 |----------|---------------|--------|-------------------|
-| **desktop-end-user-improvements-shortlist.md** | 2026-03-04 | Subset of full desktop evaluation | [Desktop End-User Improvements](../evaluations/desktop-end-user-improvements.md) |
+| **desktop-end-user-improvements.md** | 2026-03-20 | Full desktop UX assessment superseded by the active desktop evaluation set | [Desktop Improvements Executive Summary](../evaluations/desktop-improvements-executive-summary.md) |
+| **desktop-end-user-improvements-shortlist.md** | 2026-03-04 | Subset of full desktop evaluation, superseded by the active desktop summary | [Desktop Improvements Executive Summary](../evaluations/desktop-improvements-executive-summary.md) |
 
 ### Design Documents
 

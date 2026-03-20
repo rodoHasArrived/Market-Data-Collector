@@ -113,8 +113,8 @@ function Write-Warn($message) { Write-Host "[WARNING] $message" -ForegroundColor
 function Write-Err($message) { Write-Host "[ERROR] $message" -ForegroundColor Red }
 
 # Desktop app package identity
-$DesktopAppPackageName = "MarketDataCollector.Desktop"
-$DesktopAppPublisher = "CN=MarketDataCollector"
+$DesktopAppPackageName = "Meridian.Desktop"
+$DesktopAppPublisher = "CN=Meridian"
 
 function Test-WingetAvailable {
     try {
@@ -663,7 +663,7 @@ function Install-Native {
     Push-Location $RepoRoot
 
     try {
-        $projectPath = Join-Path $RepoRoot "src\MarketDataCollector\MarketDataCollector.csproj"
+        $projectPath = Join-Path $RepoRoot "src\Meridian\Meridian.csproj"
 
         # Restore and build
         Write-Info "Restoring dependencies..."
@@ -691,11 +691,11 @@ function Install-Native {
         Write-Host "                    Installation Complete!                            " -ForegroundColor Green
         Write-Host "======================================================================" -ForegroundColor Green
         Write-Host "  Start dashboard:" -ForegroundColor White
-        Write-Host "    dotnet run --project src\MarketDataCollector\MarketDataCollector.csproj -- --ui" -ForegroundColor Gray
+        Write-Host "    dotnet run --project src\Meridian\Meridian.csproj -- --ui" -ForegroundColor Gray
         Write-Host "" -ForegroundColor White
         Write-Host "  Or use the publish script for a standalone executable:" -ForegroundColor White
         Write-Host "    .\publish.ps1 win-x64" -ForegroundColor Gray
-        Write-Host "    .\publish\win-x64\MarketDataCollector.exe --ui" -ForegroundColor Gray
+        Write-Host "    .\publish\win-x64\Meridian.exe --ui" -ForegroundColor Gray
         Write-Host "======================================================================" -ForegroundColor Green
     }
     finally {
@@ -744,7 +744,7 @@ function Install-Desktop {
     $buildSuccess = $false
 
     try {
-        $desktopProjectPath = Join-Path $RepoRoot "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
+        $desktopProjectPath = Join-Path $RepoRoot "src\Meridian.Uwp\Meridian.Uwp.csproj"
         $outputPath = Join-Path $RepoRoot "dist\$runtimeId\msix"
         $diagnosticLogDir = Join-Path $RepoRoot "diagnostic-logs"
 

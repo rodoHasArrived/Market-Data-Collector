@@ -1,14 +1,24 @@
 # Known Vulnerabilities
 
-This document tracks known security vulnerabilities in dependencies that have been assessed and accepted with documented mitigations.
+This document is the central registry for dependency vulnerabilities that have been assessed, risk-accepted, or remediated in Meridian.
+
+## Registry Policy
+
+- **Scope:** NuGet, npm, Docker image, GitHub Action, and other third-party dependency findings.
+- **Single source of truth:** Security workflow exceptions must point back to this file rather than duplicating rationale inline.
+- **Required fields for accepted risk:** package, advisory/CVE, source, justification, mitigation, review cadence, and named owner/approver.
+- **Review cadence:** Accepted vulnerabilities must be reviewed at least quarterly and removed promptly when an upstream fix becomes available.
+- **Workflow integration:** `.github/workflows/security.yml` may filter or annotate accepted findings only when they are documented here.
 
 ## Accepted Vulnerabilities
 
-### DotNetZip 1.16.0 - Path Traversal (GHSA-xhg6-9j5j-w4vf)
+### KV-2026-001 — DotNetZip 1.16.0 - Path Traversal (GHSA-xhg6-9j5j-w4vf)
 
 **CVE:** CVE-2024-48510  
 **Severity:** High  
 **Advisory:** https://github.com/advisories/GHSA-xhg6-9j5j-w4vf
+**Ecosystem:** NuGet (transitive)  
+**Affected Package:** DotNetZip 1.16.0
 
 **Description:**  
 DotNetZip 1.16.0 contains a path traversal vulnerability that allows a remote attacker to potentially execute arbitrary code by crafting malicious paths in zip archives.
@@ -39,9 +49,10 @@ Transitive dependency from QuantConnect.Lean packages (required for backtesting 
 - Consider submitting PR to QuantConnect to update their dependency
 - Re-evaluate if application requirements change to include zip extraction from external sources
 
+**Tracking Reference:** Filtered in `.github/workflows/security.yml` during the NuGet vulnerability scan.  
 **Review Date:** 2026-02-10  
 **Next Review:** 2026-05-10 (quarterly)  
-**Approved By:** Security scan workflow configuration
+**Approved By:** Security maintainers / repository owners
 
 ---
 

@@ -80,7 +80,7 @@ byte of data the system collects.
 
 ### 1.1 EventPipeline Flush Semantics Are Broken — ✅ Done (2026-03-12)
 
-**File**: `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`
+**File**: `src/Meridian.Application/Pipeline/EventPipeline.cs`
 
 The `FlushAsync()` completion condition counts dropped events as "accounted
 for":
@@ -104,7 +104,7 @@ tracked separately and reported, not conflated with successful persistence.
 
 ### 1.2 WAL-to-Sink Transaction Gap — 📝 Open
 
-**File**: `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs` and
+**File**: `src/Meridian.Storage/Archival/WriteAheadLog.cs` and
 `EventPipeline.cs`
 
 The consumer loop appends to the WAL, then writes to the sink, then commits the
@@ -130,7 +130,7 @@ persistence.
 
 ### 1.3 Alpaca Price Precision Loss — ✅ Done (2026-03-10)
 
-**File**: `src/MarketDataCollector.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
+**File**: `src/Meridian.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs`
 
 Trade prices are parsed via `GetDouble()` and then cast to `decimal`:
 
@@ -172,7 +172,7 @@ set for memory efficiency.
 
 ### 1.5 Completeness Score Miscalculation — 🔄 Partial (2026-03-12)
 
-**File**: `src/MarketDataCollector.Application/Monitoring/DataQuality/CompletenessScoreCalculator.cs`
+**File**: `src/Meridian.Application/Monitoring/DataQuality/CompletenessScoreCalculator.cs`
 
 Expected events per hour is determined at the moment of the **first event of
 the day**. If no liquidity profile has been registered by then, the default
@@ -304,7 +304,7 @@ mechanism.
 
 ### 2.6 No Provider Connection Timeout — ✅ Done (2026-03-11)
 
-**File**: `src/MarketDataCollector/Program.cs`
+**File**: `src/Meridian/Program.cs`
 
 The startup flow calls `await dataClient.ConnectAsync()` with no timeout. If a
 provider hangs (firewall silently dropping packets, DNS resolution stalling),
@@ -535,7 +535,7 @@ FsCheck or Hedgehog work well with the existing xUnit setup.
 
 ### 6.1 Eliminate 42-Service Singleton Anti-Pattern — 📝 Open
 
-**Files**: All services in `src/MarketDataCollector.Ui.Services/Services/`
+**Files**: All services in `src/Meridian.Ui.Services/Services/`
 
 42 services use manual `Lazy<T>` singleton patterns:
 
@@ -554,7 +554,7 @@ visible and verifiable.
 
 ### 6.2 ServiceCompositionRoot Decomposition — 📝 Open
 
-**File**: `src/MarketDataCollector.Application/Composition/ServiceCompositionRoot.cs`
+**File**: `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
 This single file registers 50-100+ services with complex dependency wiring. No
 validation that the dependency graph is acyclic. No documentation of
@@ -678,7 +678,7 @@ Test coverage:
 |------|--------|----------------|
 | 2.6 — Provider connection timeout | ✅ Done | `Program.cs`: `dataClient.ConnectAsync()` is now wrapped in a 30-second `CancellationTokenSource` timeout. On timeout an `OperationCanceledException` is caught separately and surfaced as a clear `ErrorCode.ConnectionTimeout` exit code with an actionable log message. |
 | 2.3 — Periodic sink flush timeout | ✅ Done | `EventPipeline`: new `sinkFlushTimeout` constructor parameter (default 60 s). Each periodic flush call is wrapped in a `CancellationTokenSource.CreateLinkedTokenSource` that adds the per-flush deadline on top of the pipeline shutdown token. A hung sink now times out and logs a `Warning` instead of stalling the pipeline indefinitely. Pipeline-shutdown cancellation is still distinguished from flush-timeout cancellation via a `when` guard. |
-| 3.6 — Backpressure feedback loop | ✅ Done | `EventPipeline.TryPublishWithResult()` added returning a new `PublishResult` enum (`Accepted` / `AcceptedUnderPressure` / `Dropped`). `TryPublish()` is unchanged for backward compatibility. `PublishResult` is defined in `MarketDataCollector.Domain.Events` so all provider adapters can reference it without circular dependencies. |
+| 3.6 — Backpressure feedback loop | ✅ Done | `EventPipeline.TryPublishWithResult()` added returning a new `PublishResult` enum (`Accepted` / `AcceptedUnderPressure` / `Dropped`). `TryPublish()` is unchanged for backward compatibility. `PublishResult` is defined in `Meridian.Domain.Events` so all provider adapters can reference it without circular dependencies. |
 | 4.4 — Provider health dashboard | ✅ Done | New `GET /api/providers/dashboard` endpoint (`UiApiRoutes.ProvidersDashboard`) added to `ProviderExtendedEndpoints`. Returns an `overallTrafficLight` (`green`/`yellow`/`red`), human-readable `summary`, and per-provider detail including latency from stored metrics. |
 | 5.1 — Fix timing-dependent skipped tests | ✅ Done | `QueueUtilization_ReflectsQueueFill`: rewritten using `BlockingStorageSink` + `batchSize: 1` so 49 events remain in the channel while the consumer is blocked on the first. `ValidateFileAsync_SupportsCancellation`: fixed by adding `ct.ThrowIfCancellationRequested()` at the top of `ValidateFileAsync` to honour pre-cancelled tokens before the file is opened. Both tests pass deterministically. |
 
@@ -712,5 +712,59 @@ Test coverage added:
 
 ---
 
-*Generated 2026-03-02 from deep codebase analysis across pipeline, WAL,
-providers, monitoring, configuration, tests, and domain model.*
+## Implementation Summary (2026-03-19)
+
+**Overall Status:** 15 of 31 items fully complete; 1 item partial; 15 items open
+
+### Completion Rate by Category
+
+| Category | Complete | Partial | Open | Total | % Done |
+|----------|----------|---------|------|-------|--------|
+| Data Integrity & Correctness | 3 | 1 | 1 | 5 | 60% |
+| Resource Management & Stability | 6 | 0 | 0 | 6 | 100% ✅ |
+| Architectural Improvements | 1 | 0 | 5 | 6 | 17% |
+| Observability & Operational Excellence | 4 | 0 | 0 | 4 | 100% ✅ |
+| Test Infrastructure | 1 | 0 | 3 | 4 | 25% |
+| Code Quality & Maintainability | 0 | 0 | 3 | 3 | 0% |
+| Correctness by Construction | 0 | 0 | 3 | 3 | 0% |
+| **Total** | **15** | **1** | **15** | **31** | **48% + 3% partial** |
+
+### Categories Fully Complete (100%)
+
+1. **Resource Management & Stability** (6/6) ✅
+   - All memory leaks, timeout issues, and race conditions addressed
+   - Monitoring services evict stale entries; flush timeouts enforced; reconnection race closed
+
+2. **Observability & Operational Excellence** (4/4) ✅
+   - Alert-to-runbook linkage wired into rules and registry
+   - Backpressure alerting sustained and episodic
+   - WAL corruption alerting configurable (Skip/Alert/Halt)
+   - Provider health dashboard operational
+
+### High-Value Remaining Work
+
+**Category 3 — Architectural Improvements:**
+| Item | Benefit | Effort | Blocked By |
+|------|---------|--------|-----------|
+| 3.1 — Trace context propagation via `System.Diagnostics.Activity` | Enable E2E tracing across collectors/pipeline/storage | Medium | None |
+| 3.2 — WebSocket provider base class consolidation | Reduce 200-300 LOC duplication across Polygon/NYSE/StockSharp | Low-Med | Design phase |
+| 3.4 — Idempotent storage writes (bloom filter dedup) | Prevent sink-layer duplicates on replay | Medium | High-performance encoding choice |
+
+**Category 6 & 7 — Code Quality & Correctness by Construction:**
+| Item | Benefit | Effort |
+|------|---------|--------|
+| 6.1 — Replace 42-service `Lazy<T>` singletons with DI | Better testability, no tight coupling | High |
+| 7.1 — Typed symbol keys (value-object wrappers) | Eliminate string-based symbol confusion | High |
+| 7.2 — Sequence number domain separation | Type-safe pipeline vs exchange sequences | Medium |
+
+### Recommendations for Phase Execution
+
+1. **Next Sprint:** Complete Categories 3-4 items (trace context, WebSocket base class)
+2. **High-Priority Debt:** Code Quality items 6.1-6.3 should be roadmapped for Phase 8+
+3. **Long-term Architecture:** Correctness items 7.1-7.3 should be considered in Phase 14+ refactoring
+
+**Overall Assessment:** Core improvements (48% + 3% partial = 51% completion) addressing highest-risk areas (data integrity, stability, operations). Remaining work is architectural refinement and technical debt rather than critical defects.
+
+---
+
+*Initial Brainstorm: 2026-03-02 | Follow-ups: 2026-03-10, 2026-03-11, 2026-03-12 | Summary: 2026-03-19*

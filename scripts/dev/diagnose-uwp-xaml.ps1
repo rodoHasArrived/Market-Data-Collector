@@ -12,7 +12,7 @@ function Ok([string]$Message) { Write-Host "[OK]   $Message" -ForegroundColor Gr
 function Info([string]$Message) { Write-Host "[INFO] $Message" -ForegroundColor Gray }
 
 $packagesFile = "Directory.Packages.props"
-$uwpProject = "src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj"
+$uwpProject = "src/Meridian.Uwp/Meridian.Uwp.csproj"
 
 if (-not (Test-Path $packagesFile)) { throw "Missing $packagesFile" }
 if (-not (Test-Path $uwpProject)) { throw "Missing $uwpProject" }
@@ -46,7 +46,7 @@ else { Warn "AppendTargetFrameworkToOutputPath should be disabled for known XAML
 
 Info "Validating UWP XAML files are well-formed XML"
 $parseErrors = @()
-Get-ChildItem -Path src/MarketDataCollector.Uwp -Filter *.xaml -Recurse | ForEach-Object {
+Get-ChildItem -Path src/Meridian.Uwp -Filter *.xaml -Recurse | ForEach-Object {
     try {
         [xml](Get-Content $_.FullName -Raw) | Out-Null
     }

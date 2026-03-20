@@ -1,8 +1,8 @@
 name: Address Code Quality Issues From Ci Analysis
 description: Address code quality issues from CI analysis
-# Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23222443454
+# Auto-generated prompt from workflow results - code-quality
+# Generated: 2026-03-20
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23323946263
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -17,7 +17,10 @@ messages:
       - Classes sealed unless designed for inheritance
 
       ## Failure Patterns
-      - `2026-03-18T00:10:55.1962184Z ##[warning]D:\a\Market-Data-Collector\Market-Data-Collector\tests\MarketDataCollector.Ui.Tests\Services\ApiClientServiceTests.cs(99,13): warning CS0219: The variable 'even...`
+      - `2 /home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute 'MarketEvent' that could not be resolved [/home/r...`
+      - `2026-03-20T00:45:00.3221980Z - **Warning CS1574**: This warning indicates an unresolved XML comment reference for 'MarketEvent'. Resolve this by ensuring that 'MarketEvent' is defined in your codebase...`
+      - `2026-03-20T00:45:00.4102096Z [36;1m- **Warning CS1574**: This warning indicates an unresolved XML comment reference for 'MarketEvent'. Resolve this by ensuring that 'MarketEvent' is defined in your c...`
+      - `2026-03-20T00:45:00.5875532Z Temporarily overriding HOME='/home/runner/work/_temp/db61db2a-fc57-43dd-9403-293aca62775a' before making global git config changes`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
@@ -29,7 +32,7 @@ messages:
 
   - role: user
     content: |
-      The CI workflow `test-matrix` has reported failures that need attention.
+      The CI workflow `code-quality` has reported failures that need attention.
 
       Error details:
       ```

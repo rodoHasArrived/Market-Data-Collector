@@ -1,6 +1,6 @@
 # Archived Documentation
 
-This folder contains historical documentation that is no longer actively maintained but preserved for reference.
+This folder contains historical and deprecated documentation that is no longer actively maintained but preserved for reference. Deprecated documents should either point to an active replacement or be moved here once their transition period ends.
 
 ## Why Documents Are Archived
 
@@ -30,6 +30,7 @@ Documents are moved here when they:
 | `H3_DEBUG_CODE_ANALYSIS.md` | `audits/` | Complete — no action required; historical reference only | 2026-03-15 |
 | `CLEANUP_OPPORTUNITIES.md` | `audits/` | All platform cleanup items fully completed; historical reference only | 2026-03-15 |
 | `repository-cleanup-action-plan.md` | `development/` | All phases (1–6) complete; historical record of completed cleanup work | 2026-03-15 |
+| `desktop-end-user-improvements.md` | `evaluations/` | Superseded by current desktop evaluation set and implementation guide | 2026-03-20 |
 
 ## Current Documentation
 
@@ -44,4 +45,4 @@ These documents may contain outdated information. If you need to understand hist
 
 ---
 
-*Last Updated: 2026-03-15*
+*Last Updated: 2026-03-20*

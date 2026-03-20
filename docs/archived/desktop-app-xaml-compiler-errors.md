@@ -2,7 +2,7 @@
 
 > **Note: Historical Reference**
 >
-> The UWP desktop application (`MarketDataCollector.Uwp`) has been fully removed from the codebase. WPF is the sole desktop client.
+> The UWP desktop application (`Meridian.Uwp`) has been fully removed from the codebase. WPF is the sole desktop client.
 > This document is retained as a historical reference for XAML compiler troubleshooting. The general diagnostic steps
 > and WindowsAppSDK version guidance may still be useful for WPF XAML compilation issues, but UWP-specific paths
 > and project references below no longer apply.
@@ -42,7 +42,7 @@
 **Solution**: Add explicit `TargetPlatformVersion` property to match your `TargetFramework`.
 
 ```xml
-<!-- Example .csproj (previously applied to MarketDataCollector.Uwp, now removed) -->
+<!-- Example .csproj (previously applied to Meridian.Uwp, now removed) -->
 <PropertyGroup Condition="'$(IsWindows)' == 'true'">
   <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
   <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
@@ -62,7 +62,7 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
 **Solution**: Disable automatic path appending in the project file.
 
 ```xml
-<!-- Example .csproj (previously applied to MarketDataCollector.Uwp, now removed) -->
+<!-- Example .csproj (previously applied to Meridian.Uwp, now removed) -->
 <PropertyGroup Condition="'$(IsWindows)' == 'true'">
   <!-- Prevent MSBuild from appending RuntimeIdentifier and TargetFramework to paths -->
   <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
@@ -100,7 +100,7 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
 2. **Verify Project Targeting**
    ```bash
    # Check project file for explicit platform version
-   grep -A 3 "TargetFramework" src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+   grep -A 3 "TargetFramework" src/Meridian.Wpf/Meridian.Wpf.csproj
    ```
 
    Ensure both `TargetFramework` and `TargetPlatformVersion` are set.
@@ -112,7 +112,7 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
    import os
    import xml.etree.ElementTree as ET
 
-   for root, dirs, files in os.walk('src/MarketDataCollector.Wpf'):
+   for root, dirs, files in os.walk('src/Meridian.Wpf'):
        for file in files:
            if file.endswith('.xaml'):
                filepath = os.path.join(root, file)

@@ -21,6 +21,8 @@ Commands:
     audit-config       Configuration and CI/CD analysis.
     audit-providers    Provider implementation completeness.
     audit-ai-docs      AI documentation freshness and drift detection.
+    maintenance-light  Run the fast maintenance lane and emit status artifacts.
+    maintenance-full   Run the full maintenance lane and emit status artifacts.
     verify             Run build + tests + lint to validate changes.
     report             Generate a markdown improvement report.
     known-errors       List known AI errors to avoid repeating.
@@ -65,7 +67,11 @@ DOC_EXTENSIONS: frozenset[str] = frozenset({".md"})
 CONFIG_EXTENSIONS: frozenset[str] = frozenset({".json", ".yml", ".yaml", ".xml", ".props", ".csproj", ".fsproj"})
 
 # Architecture conventions from CLAUDE.md
-REQUIRED_ASYNC_TOKEN = re.compile(r"async\s+Task", re.IGNORECASE)
+ASYNC_TASK_SIGNATURE_START = re.compile(
+    r"^\s*(?:(?:public|private|protected|internal|static|virtual|sealed|partial|unsafe|new|extern)\s+)*"
+    r"async\s+Task(?:<[^;{=]+?>)?\s+\w+\s*\(",
+    re.IGNORECASE,
+)
 CANCELLATION_TOKEN_PARAM = re.compile(r"CancellationToken\s+\w+")
 SEALED_CLASS = re.compile(r"\bsealed\s+class\b")
 UNSEALED_CLASS = re.compile(r"(?<!\bsealed\s)(?<!\babstract\s)(?<!\bstatic\s)\bclass\s+\w+")
@@ -162,6 +168,33 @@ class AuditReport:
         }
 
 
+@dataclass
+class MaintenanceStep:
+    """A single maintenance step execution record."""
+    name: str
+    command: list[str]
+    required: bool
+    ok: bool
+    return_code: int | None = None
+    skipped: bool = False
+    error: str = ""
+    stdout_tail: str = ""
+    stderr_tail: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "command": self.command,
+            "required": self.required,
+            "ok": self.ok,
+            "return_code": self.return_code,
+            "skipped": self.skipped,
+            "error": self.error,
+            "stdout_tail": self.stdout_tail,
+            "stderr_tail": self.stderr_tail,
+        }
+
+
 # ---------------------------------------------------------------------------
 # File Walking
 # ---------------------------------------------------------------------------
@@ -186,6 +219,24 @@ def read_lines(path: Path) -> list[str]:
         return []
 
 
+def is_inside_string_literal(line: str, index: int) -> bool:
+    """Return True when the given character index falls within a double-quoted string."""
+    in_string = False
+    escaped = False
+    for i, ch in enumerate(line):
+        if i >= index:
+            break
+        if escaped:
+            escaped = False
+            continue
+        if ch == '\\':
+            escaped = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+    return in_string
+
+
 # ---------------------------------------------------------------------------
 # Analysers
 # ---------------------------------------------------------------------------
@@ -206,19 +257,38 @@ def audit_code(root: Path, report: AuditReport) -> None:
             continue
 
         # --- Check: async methods missing CancellationToken ---
-        for i, line in enumerate(lines, 1):
-            if REQUIRED_ASYNC_TOKEN.search(line) and not CANCELLATION_TOKEN_PARAM.search(line):
-                # Skip interface declarations and very short lines
-                stripped = line.strip()
-                if stripped.startswith("//") or stripped.startswith("*"):
-                    continue
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("*") or not ASYNC_TASK_SIGNATURE_START.match(line):
+                i += 1
+                continue
+
+            signature_lines = [line]
+            paren_depth = line.count("(") - line.count(")")
+            j = i
+            while paren_depth > 0 and j + 1 < len(lines):
+                j += 1
+                next_line = lines[j]
+                signature_lines.append(next_line)
+                paren_depth += next_line.count("(") - next_line.count(")")
+
+            signature = " ".join(part.strip() for part in signature_lines)
+            if re.search(r"\b(?:Main|InvokeAsync)\s*\(", signature):
+                i = j + 1
+                continue
+
+            if not CANCELLATION_TOKEN_PARAM.search(signature):
                 report.add(Finding(
                     category="missing-cancellation-token",
                     severity="warning",
-                    file=rel, line=i,
+                    file=rel, line=i + 1,
                     message="Async method appears to lack CancellationToken parameter.",
                     fix_hint="Add 'CancellationToken ct = default' parameter.",
                 ))
+
+            i = j + 1
 
         # --- Check: string interpolation in logging ---
         for i, line in enumerate(lines, 1):
@@ -244,9 +314,12 @@ def audit_code(root: Path, report: AuditReport) -> None:
 
         # --- Check: blocking async (.Result / .Wait()) ---
         for i, line in enumerate(lines, 1):
-            if BLOCKING_ASYNC.search(line) and "Task" in line:
+            match = BLOCKING_ASYNC.search(line)
+            if match and "Task" in line:
                 stripped = line.strip()
                 if stripped.startswith("//") or stripped.startswith("*"):
+                    continue
+                if is_inside_string_literal(line, match.start()):
                     continue
                 report.add(Finding(
                     category="blocking-async",
@@ -481,7 +554,7 @@ def audit_config(root: Path, report: AuditReport) -> None:
 
 def audit_providers(root: Path, report: AuditReport) -> None:
     """Check provider implementations for completeness."""
-    providers_dir = root / "src" / "MarketDataCollector.Infrastructure" / "Providers"
+    providers_dir = root / "src" / "Meridian.Infrastructure" / "Providers"
     if not providers_dir.exists():
         return
 
@@ -584,7 +657,7 @@ def run_verify(root: Path) -> dict[str, Any]:
     results: dict[str, Any] = {"timestamp": datetime.now(timezone.utc).isoformat()}
     steps = [
         ("build", ["dotnet", "build", "-c", "Release", "--nologo", "-v", "quiet"]),
-        ("test", ["dotnet", "test", "tests/MarketDataCollector.Tests", "-c", "Release",
+        ("test", ["dotnet", "test", "tests/Meridian.Tests", "-c", "Release",
                    "--nologo", "-v", "quiet", "--no-build"]),
         ("lint", ["dotnet", "format", "--verify-no-changes", "--no-restore"]),
     ]
@@ -612,6 +685,319 @@ def run_verify(root: Path) -> dict[str, Any]:
 
     results["overall_ok"] = overall_ok
     return results
+
+
+def command_exists(name: str) -> bool:
+    """Return True when the executable is available on PATH."""
+    try:
+        subprocess.run(
+            [name, "--version"],
+            cwd=root if (root := REPO_ROOT).exists() else None,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        return True
+    except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError, OSError):
+        return False
+
+
+def detect_environment(root: Path) -> dict[str, Any]:
+    """Collect environment readiness for maintenance reporting."""
+    dotnet_ok = command_exists("dotnet")
+    node_ok = command_exists("node")
+    make_ok = command_exists("make")
+    python_ok = command_exists("python3")
+
+    dotnet_version = ""
+    if dotnet_ok:
+        try:
+            proc = subprocess.run(
+                ["dotnet", "--version"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+            dotnet_version = proc.stdout.strip()
+        except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError, OSError):
+            dotnet_version = ""
+
+    return {
+        "repo_root": str(root),
+        "dotnet_available": dotnet_ok,
+        "dotnet_version": dotnet_version,
+        "node_available": node_ok,
+        "make_available": make_ok,
+        "python_available": python_ok,
+    }
+
+
+def run_maintenance_step(
+    root: Path,
+    name: str,
+    command: list[str],
+    *,
+    required: bool,
+    env_ready: bool = True,
+    timeout: int = 300,
+) -> MaintenanceStep:
+    """Run one maintenance step and capture a compact result."""
+    if not env_ready:
+        return MaintenanceStep(
+            name=name,
+            command=command,
+            required=required,
+            ok=not required,
+            skipped=True,
+            error="environment not ready",
+        )
+
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+        ok = proc.returncode == 0
+        return MaintenanceStep(
+            name=name,
+            command=command,
+            required=required,
+            ok=ok,
+            return_code=proc.returncode,
+            stdout_tail=proc.stdout[-1200:] if proc.stdout else "",
+            stderr_tail=proc.stderr[-1200:] if proc.stderr else "",
+        )
+    except subprocess.TimeoutExpired:
+        return MaintenanceStep(
+            name=name,
+            command=command,
+            required=required,
+            ok=False,
+            error="timeout",
+        )
+    except FileNotFoundError:
+        return MaintenanceStep(
+            name=name,
+            command=command,
+            required=required,
+            ok=False,
+            error="command not found",
+        )
+
+
+def build_maintenance_status(
+    root: Path,
+    lane: str,
+    env_info: dict[str, Any],
+    step_groups: dict[str, list[MaintenanceStep]],
+) -> dict[str, Any]:
+    """Assemble the canonical maintenance status document."""
+    environment_ready = env_info.get("dotnet_available", False)
+    required_steps = [
+        step
+        for steps in step_groups.values()
+        for step in steps
+        if step.required
+    ]
+    overall_ok = all(step.ok for step in required_steps)
+
+    docs_steps = step_groups.get("docs_health", [])
+    docs_complete = bool(docs_steps) and all(step.ok for step in docs_steps if not step.skipped)
+    code_steps = step_groups.get("code_health", [])
+    code_complete = bool(code_steps) and all(step.ok for step in code_steps if step.required)
+
+    recommended_next_action = "maintenance complete"
+    if not environment_ready:
+        recommended_next_action = "install .NET 9 SDK and rerun maintenance"
+    elif any(not step.ok and step.required for step in required_steps):
+        failing = next(step.name for step in required_steps if not step.ok)
+        recommended_next_action = f"inspect failing required step: {failing}"
+
+    return {
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "lane": lane,
+        "environment": {
+            **env_info,
+            "ready": environment_ready,
+        },
+        "environment_doctoring": {
+            "ready": environment_ready,
+            "status": "ready" if environment_ready else "missing-dotnet-sdk",
+        },
+        "code_health": {
+            "complete": code_complete,
+            "steps": [step.to_dict() for step in code_steps],
+        },
+        "docs_health": {
+            "complete": docs_complete,
+            "steps": [step.to_dict() for step in docs_steps],
+        },
+        "context": {
+            "diff_summary": generate_diff_summary(root),
+            "known_error_count": len(load_known_errors(root)),
+        },
+        "overall_ok": overall_ok,
+        "environment_ok": environment_ready,
+        "recommended_next_action": recommended_next_action,
+    }
+
+
+def generate_maintenance_markdown(status: dict[str, Any]) -> str:
+    """Generate a human-readable maintenance summary."""
+    env = status["environment"]
+    lines = [
+        "# Meridian Maintenance Status",
+        "",
+        f"Generated: {status['timestamp']}",
+        "",
+        f"- Lane: {status['lane']}",
+        f"- Repo root: {env['repo_root']}",
+        f"- dotnet available: {int(env['dotnet_available'])}",
+        f"- dotnet version: {env.get('dotnet_version') or 'missing'}",
+        f"- node available: {int(env['node_available'])}",
+        f"- make available: {int(env['make_available'])}",
+        f"- python available: {int(env['python_available'])}",
+        f"- recommended next action: {status['recommended_next_action']}",
+        "",
+        "## Steps",
+        "",
+    ]
+
+    for group_name in ("code_health", "docs_health"):
+        group = status[group_name]
+        pretty_name = group_name.replace("_", " ").title()
+        lines.append(f"### {pretty_name}")
+        if not group["steps"]:
+            lines.append("- No steps recorded")
+            lines.append("")
+            continue
+        for step in group["steps"]:
+            if step["skipped"]:
+                state = "skipped"
+            elif step["ok"]:
+                state = "passed"
+            else:
+                state = "failed"
+            lines.append(f"- {step['name']}: {state}")
+        lines.append("")
+
+    lines.extend([
+        "Commands:",
+        f"- python3 build/scripts/ai-repo-updater.py maintenance-light --summary",
+        f"- python3 build/scripts/ai-repo-updater.py maintenance-full --summary",
+    ])
+    return "\n".join(lines)
+
+
+def run_maintenance(root: Path, lane: str) -> dict[str, Any]:
+    """Run either the fast or full maintenance lane."""
+    env_info = detect_environment(root)
+    dotnet_ready = env_info["dotnet_available"]
+
+    code_steps = [
+        run_maintenance_step(
+            root,
+            "known-errors",
+            [sys.executable, "build/scripts/ai-repo-updater.py", "known-errors"],
+            required=True,
+            timeout=60,
+        ),
+        run_maintenance_step(
+            root,
+            "diff-summary",
+            [sys.executable, "build/scripts/ai-repo-updater.py", "diff-summary"],
+            required=True,
+            timeout=60,
+        ),
+        run_maintenance_step(
+            root,
+            "audit-code",
+            [sys.executable, "build/scripts/ai-repo-updater.py", "audit-code"],
+            required=True,
+            timeout=120,
+        ),
+    ]
+
+    docs_steps = [
+        run_maintenance_step(
+            root,
+            "ai-docs-drift",
+            [sys.executable, "build/scripts/docs/ai-docs-maintenance.py", "drift", "--root", str(root)],
+            required=False,
+            timeout=120,
+        ),
+    ]
+
+    if lane == "full":
+        code_steps.extend([
+            run_maintenance_step(
+                root,
+                "dotnet-restore",
+                ["dotnet", "restore", "Meridian.sln", "/p:EnableWindowsTargeting=true", "--verbosity", "minimal"],
+                required=True,
+                env_ready=dotnet_ready,
+                timeout=900,
+            ),
+            run_maintenance_step(
+                root,
+                "dotnet-build",
+                ["dotnet", "build", "Meridian.sln", "-c", "Release", "--no-restore", "/p:EnableWindowsTargeting=true", "--verbosity", "minimal"],
+                required=True,
+                env_ready=dotnet_ready,
+                timeout=1200,
+            ),
+            run_maintenance_step(
+                root,
+                "dotnet-test",
+                ["dotnet", "test", "tests/Meridian.Tests/Meridian.Tests.csproj", "-c", "Release", "--no-build", "--verbosity", "minimal", "--filter", "Category!=Integration"],
+                required=True,
+                env_ready=dotnet_ready,
+                timeout=1200,
+            ),
+            run_maintenance_step(
+                root,
+                "ai-verify",
+                [sys.executable, "build/scripts/ai-repo-updater.py", "verify"],
+                required=False,
+                env_ready=dotnet_ready,
+                timeout=1200,
+            ),
+        ])
+        docs_steps.extend([
+            run_maintenance_step(
+                root,
+                "verify-adrs",
+                ["make", "verify-adrs"],
+                required=False,
+                env_ready=dotnet_ready and env_info["make_available"],
+                timeout=300,
+            ),
+            run_maintenance_step(
+                root,
+                "doctor",
+                ["make", "doctor-ci"],
+                required=False,
+                env_ready=dotnet_ready and env_info["make_available"],
+                timeout=600,
+            ),
+        ])
+
+    return build_maintenance_status(
+        root,
+        lane,
+        env_info,
+        {
+            "code_health": code_steps,
+            "docs_health": docs_steps,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -775,6 +1161,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=[
             "audit", "audit-docs", "audit-code", "audit-tests",
             "audit-config", "audit-providers", "audit-ai-docs",
+            "maintenance-light", "maintenance-full",
             "verify", "report", "known-errors", "diff-summary",
         ],
         help="Command to run.",
@@ -787,6 +1174,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="Write JSON results to this path.")
     parser.add_argument("--summary", "-s", action="store_true",
                         help="Print a short summary to stdout.")
+    parser.add_argument("--status-file", type=Path,
+                        help="Write canonical maintenance JSON to this path.")
+    parser.add_argument("--summary-file", type=Path,
+                        help="Write markdown maintenance summary to this path.")
     args = parser.parse_args(argv)
 
     if args.command in (
@@ -820,6 +1211,25 @@ def main(argv: list[str] | None = None) -> int:
             args.json_output.parent.mkdir(parents=True, exist_ok=True)
             args.json_output.write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result, indent=2))
+        return 0 if result.get("overall_ok") else 1
+
+    elif args.command in ("maintenance-light", "maintenance-full"):
+        lane = "light" if args.command == "maintenance-light" else "full"
+        result = run_maintenance(args.root, lane)
+        status_file = args.status_file or args.json_output or (args.root / ".ai" / "maintenance-status.json")
+        summary_file = args.summary_file or (args.root / ".ai" / "MAINTENANCE_STATUS.md")
+
+        status_file.parent.mkdir(parents=True, exist_ok=True)
+        status_file.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+
+        summary_text = generate_maintenance_markdown(result)
+        summary_file.parent.mkdir(parents=True, exist_ok=True)
+        summary_file.write_text(summary_text + "\n", encoding="utf-8")
+
+        if args.summary or not args.status_file:
+            print(summary_text)
+        else:
+            print(json.dumps(result, indent=2))
         return 0 if result.get("overall_ok") else 1
 
     elif args.command == "known-errors":
