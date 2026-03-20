@@ -4,7 +4,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ## Consolidation Summary
 
-Workflows have been consolidated from 37 to 34 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
+Workflows have been consolidated from 37 to 33 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|

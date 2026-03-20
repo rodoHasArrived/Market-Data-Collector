@@ -485,7 +485,7 @@ export ALPACA__SECRETKEY=your-secret-key
 
 ## CI/CD and Automation
 
-The repository currently includes **25 GitHub Actions workflows** for automated testing, security, documentation, and deployment:
+The repository includes **33 GitHub Actions workflow files** for automated testing, security, documentation, and deployment:
 
 - **Build & Release** - Automated builds, cross-platform releases, and reusable build workflow
 - **Security** - CodeQL analysis, dependency auditing, and vulnerability scanning
@@ -570,7 +570,7 @@ docker run -d -p 8080:8080 \
 
 ```
 Meridian/
-├── .github/              # 25 CI/CD workflows, AI prompts, Dependabot
+├── .github/              # 33 workflow files, AI prompts, Dependabot
 ├── docs/                 # 214 documentation files, ADRs, status tracking, guides
 ├── build/                # Python scripts, Node generators, build automation
 ├── deploy/               # Docker, Kubernetes, systemd, monitoring configs
