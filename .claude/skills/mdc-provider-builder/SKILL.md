@@ -11,8 +11,15 @@ description: >
   compliant provider implementations with rate limiting, reconnection logic, attribute decoration,
   DI registration, and a matching test scaffold — all anchored to the repository's existing
   patterns and ADR contracts.
+license: See repository LICENSE
+compatibility: >
+  Portable Agent Skill package for Agent Skills-compatible hosts. Requires repository source access
+  and optionally reads reference patterns plus companion review/test skills when deeper guidance is needed.
+metadata:
+  owner: meridian-ai
+  version: "1.1"
+  spec: open-agent-skills-v1
 ---
-
 # Meridian — Provider Builder Skill
 
 Build complete, architecturally compliant data provider adapters for Meridian.

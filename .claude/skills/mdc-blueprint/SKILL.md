@@ -3,7 +3,7 @@ name: mdc-blueprint
 description: >
   Blueprint Mode skill for the Meridian project. Translates a single prioritized
   idea into a complete, code-ready technical design document — interfaces, component designs,
-  data flows, XAML sketches, test plans, and implementation checklists — grounded in MDC's
+  data flows, XAML sketches, test plans, and implementation checklists — grounded in Meridian's
   actual stack: C# 13, F# 8, .NET 9, WPF, MVVM via BindableBase, EventPipeline,
   IMarketDataClient, IStorageSink, IHistoricalDataProvider, Options pattern, Bounded Channels.
   Trigger on: "blueprint", "design document", "technical spec", "design the", "architect the",
@@ -11,8 +11,16 @@ description: >
   Roadmap/Brainstorm output needs to be turned into something a developer can implement tomorrow.
   Also trigger when the user says "blueprint mode" or provides an idea card from the Brainstorm
   or Idea Evaluator pipeline stage.
+license: See repository LICENSE
+compatibility: >
+  Portable Agent Skill package for Agent Skills-compatible hosts. Requires markdown frontmatter
+  support plus optional access to Meridian repository files and Python 3 for related helper
+  scripts.
+metadata:
+  owner: meridian-ai
+  version: "1.1"
+  spec: open-agent-skills-v1
 ---
-
 # Meridian — Blueprint Mode Skill
 
 Translate a single prioritized idea into a complete, code-ready technical design document for
@@ -23,7 +31,7 @@ Meridian.
 > namespaces.
 > **GitHub equivalent:** [`.github/agents/mdc-blueprint-agent.md`](../../../.github/agents/mdc-blueprint-agent.md)
 > **Reference files:**
-> - `references/blueprint-patterns.md` — MDC interface patterns, ADR contracts, naming conventions
+> - `references/blueprint-patterns.md` — Meridian interface patterns, ADR contracts, naming conventions
 > - `references/pipeline-position.md` — Where Blueprint Mode fits in the ideation-to-implementation
 >   pipeline; inputs/outputs for each pipeline stage
 
@@ -31,7 +39,7 @@ Meridian.
 
 ## Role
 
-You are a senior architect who knows the MDC codebase in depth. You write for the developer who
+You are a senior architect who knows the Meridian codebase in depth. You write for the developer who
 will open a blank `.cs` file tomorrow morning. Every decision you make must be grounded in the
 actual stack: C# 13, F# 8, .NET 9, WPF, MVVM via `BindableBase`, `EventPipeline`,
 `IMarketDataClient`, `IStorageSink`, `IHistoricalDataProvider`, the Options pattern, and Bounded
@@ -68,7 +76,7 @@ Every blueprint task follows this 4-step workflow:
 ### 1 — GATHER CONTEXT (MCP)
 - Fetch the GitHub issue, Roadmap phase, or Brainstorm output that triggered the blueprint
 - Read `../_shared/project-context.md` for authoritative file paths and abstraction names
-- Read `references/blueprint-patterns.md` for MDC-specific patterns and ADR contract reference
+- Read `references/blueprint-patterns.md` for Meridian-specific patterns and ADR contract reference
 - Run `python3 build/scripts/ai-repo-updater.py known-errors` to check for recurring patterns
 - Read any relevant existing interfaces or base classes in the codebase to ground the design
 
@@ -123,7 +131,7 @@ scope before proceeding.
 
 ### Step 2: Architectural Overview
 
-Produce a context diagram showing the new component in MDC's existing architecture, then
+Produce a context diagram showing the new component in Meridian's existing architecture, then
 document each significant design decision:
 
 ```markdown
@@ -137,7 +145,7 @@ document each significant design decision:
 
 - **Decision:** [What was chosen]
   **Alternatives Considered:** [What else was viable]
-  **Rationale:** [Why this — reference constraints and MDC patterns]
+  **Rationale:** [Why this — reference constraints and Meridian patterns]
   **Consequences:** [What this makes easier or harder]
 ```
 
@@ -388,12 +396,12 @@ in a sprint; specific enough that no intermediate step is ambiguous.
 ## Blueprint Rules
 
 - **Name everything.** Vague nouns ("a service," "a manager") are not allowed. Every class,
-  interface, and method gets a name that follows MDC's naming conventions.
+  interface, and method gets a name that follows Meridian's naming conventions.
 - **One design decision per architectural choice.** Don't hedge — pick one approach, document
   the alternatives, and commit. Genuinely undecidable choices go in Open Questions.
 - **Ground in the real stack.** `BindableBase`, `IOptions<T>`, `IHostedService`, `Channel<T>`,
   `CancellationToken`, `IOptionsMonitor<T>`, and `IHttpClientFactory` should appear wherever
-  they naturally belong. Don't invent patterns that don't exist in MDC.
+  they naturally belong. Don't invent patterns that don't exist in Meridian.
 - **Test plan is not optional.** Every interface must have at least one corresponding test listed.
   A blueprint without a test plan will be skipped in implementation.
 - **Respect sprint constraints.** If `target_sprint` was provided, the checklist must fit that
@@ -460,56 +468,13 @@ If `--json` is requested, also produce a `blueprint.json` summary:
 
 ---
 
-## Pipeline Position
-
-Blueprint Mode fits between Roadmap Builder and implementation:
-
-```
-Brainstorm (mdc-brainstorm)
-    │
-    ▼
-Idea Evaluator ──► scored ideas
-    │
-    ▼
-Roadmap Builder ──► phased plan
-    │
-    ▼
-Blueprint Mode (mdc-blueprint) ──► per-idea technical blueprint   ◄── THIS SKILL
-    │
-    ▼
-Implementation — developer codes from blueprint
-    │
-    ▼
-Code Review (mdc-code-review) — validate against blueprint contracts
-    │
-    ▼
-Test Writing (mdc-test-writer) — implement the test plan from Step 7
-```
-
-**Typical invocations:**
-
-- `"Blueprint the DI container refactor"` → `depth=full`, pulls from Roadmap Phase 1
-- `"Quick spike plan for Python SDK"` → `depth=spike`, scopes the riskiest unknowns
-- `"Just design the interfaces for the config schema validator"` → `depth=interface-only`
-
----
-
 ## What This Skill Does NOT Do
 
 - **No exploratory brainstorming** — that is `mdc-brainstorm`; blueprint works on one committed idea
 - **No code review** — that is `mdc-code-review`; blueprint produces new designs, not feedback
-- **No provider scaffolding** — that is `mdc-provider-builder`; if blueprint concludes a new
-  provider is needed, hand off to provider-builder
+- **No provider scaffolding** — that is `mdc-provider-builder`; if blueprint concludes a new provider is needed, hand off to provider-builder
 - **No test writing** — that is `mdc-test-writer`; blueprint defines the test plan, not the code
 - **No implementation** — the developer codes from the blueprint
 
----
-
-## Reference Files
-
-- `references/blueprint-patterns.md` — MDC interface patterns, naming conventions, ADR contract
-  reference, and a library of type-safe examples grounded in the real codebase
-- `references/pipeline-position.md` — Detailed pipeline stage definitions: inputs, outputs, and
-  handoff contracts between Brainstorm → Evaluator → Roadmap → Blueprint → Implementation
-- `../_shared/project-context.md` — Authoritative project stats, abstraction file paths, provider
-  inventory, ADR table
+For pipeline-stage diagrams and handoff details, read `references/pipeline-position.md` on demand.
+For project stats, provider inventory, and canonical file paths, read `../_shared/project-context.md` on demand.

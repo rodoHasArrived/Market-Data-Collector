@@ -1,6 +1,6 @@
-# Competitive Landscape — MDC Brainstorm Reference
+# Competitive Landscape — Meridian Brainstorm Reference
 
-Understanding the market helps identify where MDC can differentiate vs. where it needs feature parity.
+Understanding the market helps identify where Meridian can differentiate vs. where it needs feature parity.
 
 ---
 
@@ -10,20 +10,20 @@ Understanding the market helps identify where MDC can differentiate vs. where it
 
 - Gold standard for institutional data; real-time + historical across all asset classes
 - Costs $20K-$24K/user/year
-- MDC opportunity: target long tail who cannot justify this cost — hobbyists, small funds, academic labs
+- Meridian opportunity: target long tail who cannot justify this cost — hobbyists, small funds, academic labs
 - Features worth borrowing: data lineage tagging, real-time anomaly flagging
 
 ### Databento
 
 - Modern developer-first market data API; pay-per-use; MBO + MBP data; DBN binary format
 - Pricing: ~$0.10-$1.00/symbol-day historical; real-time from $150/month
-- MDC advantage: cloud-only with no self-hosted option; MDC wins on on-premise, no per-tick fees for self-collected data
+- Meridian advantage: cloud-only with no self-hosted option; Meridian wins on on-premise, no per-tick fees for self-collected data
 - Features worth borrowing: DBN format, databento-python ergonomics, MBO data model
 
 ### Polygon.io
 
 - REST + WebSocket for US equities, options, forex, crypto; free tier available
-- MDC advantage: Polygon does not enable structured local storage; MDC local-first means no ongoing per-query cost
+- Meridian advantage: Polygon does not enable structured local storage; Meridian local-first means no ongoing per-query cost
 - Features worth borrowing: aggregates/OHLCV API design, options chain endpoint
 
 ---
@@ -33,25 +33,25 @@ Understanding the market helps identify where MDC can differentiate vs. where it
 ### QuestDB
 
 - Open-source time-series SQL database; ILP ingest; nanosecond timestamp support
-- Natural MDC storage backend replacing JSONL for query-heavy use cases
-- Integration: MDC to QuestDB sink (ILP over TCP) alongside JSONL
+- Natural Meridian storage backend replacing JSONL for query-heavy use cases
+- Integration: Meridian to QuestDB sink (ILP over TCP) alongside JSONL
 
 ### QuantConnect LEAN / Backtrader / Zipline
 
 - Open-source backtesting frameworks with their own data ingestion pipelines
-- None have a good live-data collection layer — MDC can be "the collector that feeds your backtesting framework"
+- None have a good live-data collection layer — Meridian can be "the collector that feeds your backtesting framework"
 - LEAN bridge is highest-value (large QuantConnect community)
 
 ### OpenBB Terminal
 
 - Open-source Bloomberg Terminal alternative; Python-based; no persistent storage
-- MDC could be an OpenBB data provider backend, giving OpenBB users high-quality local storage
+- Meridian could be an OpenBB data provider backend, giving OpenBB users high-quality local storage
 
 ---
 
 ## Differentiation Matrix
 
-| Capability          | Bloomberg | Databento | Polygon | MDC now | MDC potential |
+| Capability          | Bloomberg | Databento | Polygon | Meridian now | Meridian potential |
 |---------------------|-----------|-----------|---------|---------|---------------|
 | Self-hosted         | No        | No        | No      | Yes     | Yes           |
 | Multi-provider      | Yes       | No        | No      | Yes (5) | Yes (90+)     |
@@ -68,7 +68,7 @@ Understanding the market helps identify where MDC can differentiate vs. where it
 | Academic citation   | No        | No        | No      | No      | Opportunity   |
 | MCP / AI tooling    | No        | No        | No      | Yes     | Yes           |
 
-MDC defensible moats:
+Meridian defensible moats:
 
 1. Self-hosted, no per-query cloud fees
 2. Multi-provider failover and reconciliation (no competitor does this affordably)

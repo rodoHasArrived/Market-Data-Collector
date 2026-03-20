@@ -13,8 +13,8 @@
 - **JSON output** — Optional `blueprint.json` summary with interface list, component list,
   config schema, checklist, and test counts
 - **4-step integration pattern** — GATHER CONTEXT → ANALYZE & PLAN → EXECUTE → COMPLETE
-  (matching other MDC skills)
-- **`references/blueprint-patterns.md`** — MDC naming conventions, ADR contract reference,
+  (matching other Meridian skills)
+- **`references/blueprint-patterns.md`** — Meridian naming conventions, ADR contract reference,
   DI registration patterns, Options pattern, Channel/pipeline pattern, WPF/MVVM patterns,
   F# domain type patterns, error handling and structured logging patterns, storage sink pattern,
   historical provider pattern, and breaking change checklist

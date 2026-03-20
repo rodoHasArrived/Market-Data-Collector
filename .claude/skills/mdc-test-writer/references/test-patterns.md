@@ -8,7 +8,7 @@ description: >
   missing for", or when reviewing code that lacks corresponding test coverage. Also triggers
   when a code review (mdc-code-review) has identified test gaps. This skill produces
   idiomatic xUnit + FluentAssertions tests with correct async patterns, isolation, naming
-  conventions, and mock setup for all major MDC component types: providers, storage sinks,
+  conventions, and mock setup for all major Meridian component types: providers, storage sinks,
   pipeline components, WPF services, and F# interop boundaries.
 ---
 

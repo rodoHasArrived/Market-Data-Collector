@@ -4,7 +4,7 @@
 
 ### Added
 
-- Initial skill release targeting all major MDC component types across 4 test projects
+- Initial skill release targeting all major Meridian component types across 4 test projects
 - **Component type decision tree** — maps component to test project, subdirectory, pattern
   letter (A–H), and mock library (Moq vs NSubstitute)
 - **7 universal test quality rules** with code examples for each:
