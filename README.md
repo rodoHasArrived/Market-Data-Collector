@@ -14,7 +14,9 @@ A high-performance, self-hosted algorithmic trading platform — **collect**, **
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 [![Copilot SWE Agent](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/copilot-swe-agent-copilot.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/copilot-swe-agent-copilot.yml)
 
-**Status**: Development / Pilot Ready (v1.7.x docs baseline)
+**Status**: Development / Pilot Ready (trading workstation migration planning active)
+
+> **Migration direction:** Meridian is actively migrating toward a workflow-centric **Trading Workstation** experience that unifies research, backtesting, paper trading, portfolio analysis, and ledger auditability. See [docs/plans/trading-workstation-migration-blueprint.md](docs/plans/trading-workstation-migration-blueprint.md).
 
 ---
 
@@ -42,7 +44,8 @@ Meridian is a self-hosted, multi-pillar algorithmic trading platform. It provide
 | **📦 Data Packaging** | Export and package your data for sharing, backup, or use in other tools |
 | **📊 Live Dashboards** | Monitor collection status, throughput, and data quality through a web dashboard or Windows desktop app |
 | **🔬 Backtesting Engine** | Replay tick-level historical data through strategy plugins; compute Sharpe, drawdown, XIRR, and full fill tape |
-| **⚡ Paper Trading** | Run strategies against a live feed with zero financial risk using `PaperTradingGateway` (ADR-015) |
+| **📒 Portfolio Ledger** | Record cash, positions, commissions, financing, and realized P&L through double-entry accounting for audit and analysis |
+| **⚡ Paper Trading** | Run strategies against a live feed with zero financial risk using `PaperTradingGateway` (ADR-015); execution UX is being migrated into a dedicated trading cockpit |
 | **🗂️ Strategy Lifecycle** | Register, start, pause, stop, and archive strategy runs with full audit trail and promotion workflow |
 
 ### Who Is This For?
@@ -202,7 +205,7 @@ Meridian is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 so
 
 ### Implementation Status Snapshot
 
-**Version:** 1.7.x | **Status:** Development / Pilot Ready (Phase 9: Final Production Release in progress)
+**Version:** 1.7.x | **Status:** Development / Pilot Ready (workflow-centric trading workstation migration in planning)
 
 - ✅ **Core event pipeline** — bounded channels, backpressure, 100K capacity, nanosecond timing
 - ✅ **Multi-provider ingest** — 90+ streaming sources (Alpaca, Interactive Brokers, Polygon, NYSE, StockSharp, etc.)
@@ -211,8 +214,8 @@ Meridian is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 so
 - ✅ **Backtesting engine** — Tick-by-tick replay with multiple fill models and performance metrics (Sharpe, drawdown, XIRR)
 - ✅ **Paper trading gateway** — Risk-free strategy validation against live feeds
 - ✅ **Strategy lifecycle** — Register, backtest, paper-trade, promote workflows with full audit trail
-- ✅ **WPF desktop app** — Windows-native client with 42+ pages wired to live services
-- ✅ **Web dashboard** — Real-time monitoring, backfill controls, HTML + Prometheus + JSON status
+- 🔄 **WPF desktop app** — Windows-native client with broad feature coverage; next migration phase consolidates pages into Research, Trading, Data Operations, and Governance workspaces
+- 🔄 **Web dashboard** — Real-time monitoring, backfill controls, HTML + Prometheus + JSON status; planned to gain run, portfolio, and ledger visibility as part of the trading workstation migration
 - ✅ **Data quality monitoring** — Completeness, gap analysis, anomaly detection, SLA enforcement
 - ⚠️ Some providers require credentials or build flags (Interactive Brokers needs `IBAPI` constant; NYSE/Polygon need API keys)
 - 📝 End-to-end OpenTelemetry trace propagation and multi-instance coordination (planned for Phase 13–15)
@@ -242,14 +245,15 @@ Strategy execution framework with paper trading ready for live integration:
 - **Paper trading gateway** — Risk-free validation of strategies against live market feeds
 - **Order management system** — Limit/market orders, position tracking, cash management
 - **Portfolio state tracking** — Real-time position and performance metrics
-- **Fill simulation** — Realistic order fills based on collected market data
+- **Execution migration** — Current paper-trading infrastructure is being elevated into a full trading cockpit with positions, orders, fills, risk, and ledger surfaces
 - **Integration pathway** — Designed for live broker adapter implementation (e.g., Interactive Brokers, Alpaca)
 
 ### 🗂️ Strategy Lifecycle (Fully Implemented)
 End-to-end strategy management from development to production:
 - **Registration & versioning** — Store and version control strategies
-- **Backtest → Paper-Trade → Live promotion workflow** — Formalized promotion path with audit trail
+- **Backtest → Paper-Trade → Live promotion workflow** — Formalized promotion path with audit trail; being standardized around a shared `StrategyRun` model
 - **Multi-run comparison** — Compare performance across multiple backtest and paper-trading runs
+- **Portfolio + ledger auditability** — Migration target promotes journals, trial balances, and P&L attribution to first-class user workflows
 - **Performance analytics** — Aggregate metrics and performance tracking across strategy versions
 - **Audit trail** — Complete history of strategy changes, runs, and promotions
 

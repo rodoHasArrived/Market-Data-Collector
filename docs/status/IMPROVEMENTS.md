@@ -840,9 +840,11 @@ No clear contract for what each validates or when it runs.
 **Problem:** WPF consolidated into 5 workspaces (~15 navigation items) with command palette (Ctrl+K). UWP had 40+ pages in flat navigation list.
 
 **Solution Implemented:**
-- WPF has workspace model (Monitor, Collect, Storage, Quality, Settings)
+- WPF has a first-stage workspace model (Monitor, Collect, Storage, Quality, Settings)
 - WPF command palette functional (Ctrl+K)
 - UWP project removed — no remaining flat navigation to consolidate
+
+**Follow-on migration:** The next UX phase upgrades this first-stage consolidation into the workflow-centric Trading Workstation model (`Research`, `Trading`, `Data Operations`, `Governance`). See Theme K.
 
 **Files:**
 - `Meridian.Wpf/Views/MainPage.xaml`
@@ -1352,3 +1354,51 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 **Maintainer:** Project Team
 **Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (7/8)
 **Next Review:** Weekly engineering sync (or immediately after any status change)
+
+
+---
+
+## Theme K: Trading Workstation Migration
+
+### K1. 📝 Workflow-Centric Workspace Migration
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 PLANNED
+
+**Problem:** Meridian functionality is broad but still exposed through many page-centric entry points. Users can backtest, inspect live data, configure Lean, and manage storage, but the product does not yet present a unified research → trading → governance workflow.
+
+**Planned Solution:**
+- Consolidate top-level UX into `Research`, `Trading`, `Data Operations`, and `Governance` workspaces
+- Ensure all major capabilities are reachable from primary navigation and command palette
+- Add workflow-level entry points instead of orphan feature pages
+
+**ROADMAP:** Phase 11
+
+---
+
+### K2. 📝 Shared Run / Portfolio / Ledger Read Models
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 PLANNED
+
+**Problem:** Backtests, paper-trading sessions, and future live runs do not yet share one operator-facing run model. The ledger exists internally but is not first-class in the product.
+
+**Planned Solution:**
+- Introduce shared `StrategyRun` contracts
+- Add shared portfolio summaries and ledger read services
+- Make run history, portfolio state, and ledger drill-down reusable across engines and modes
+
+**ROADMAP:** Phase 12
+
+---
+
+### K3. 📝 Backtest + Paper-Trading Experience Unification
+
+**Impact:** High | **Effort:** High | **Priority:** P1 | **Status:** 📝 PLANNED
+
+**Problem:** Native backtesting, Lean integration, and paper-trading infrastructure exist, but the user experience is split across separate surfaces and does not yet feel like one strategy lifecycle.
+
+**Planned Solution:**
+- Build a unified Backtest Studio with engine selection and run comparison
+- Promote paper-trading infrastructure into a real trading cockpit
+- Add explicit promotion flow from Backtest → Paper → Live with safety guardrails
+
+**ROADMAP:** Phase 13
