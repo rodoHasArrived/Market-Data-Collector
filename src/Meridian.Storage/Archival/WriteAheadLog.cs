@@ -39,6 +39,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     private FileStream? _currentWalFile;
     private StreamWriter? _currentWriter;
     private string? _currentWalPath;
+    private string? _lastRecoveredWalPath;
     private long _currentSequence;
     private long _currentFileSize;
     private DateTime _currentFileCreationTime;
@@ -109,6 +110,9 @@ public sealed class WriteAheadLog : IAsyncDisposable
             {
                 totalRecoveredEvents += await RecoverWalFileAsync(walFile, ct);
             }
+            // Track the last file that was open at crash time; RepairAsync must not
+            // rewrite it in-place because it may still be partially open / active.
+            _lastRecoveredWalPath = walFiles[walFiles.Count - 1];
         }
 
         recoveryStopwatch.Stop();
@@ -718,8 +722,11 @@ public sealed class WriteAheadLog : IAsyncDisposable
         {
             ct.ThrowIfCancellationRequested();
 
-            // Skip the currently active WAL file
-            if (string.Equals(walFile, _currentWalPath, StringComparison.OrdinalIgnoreCase))
+            // Skip the currently active WAL file and the last-recovered file (which
+            // was still open when the process last exited and is not a cleanly rotated
+            // file eligible for in-place repair).
+            if (string.Equals(walFile, _currentWalPath, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(walFile, _lastRecoveredWalPath, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

@@ -95,6 +95,16 @@ public sealed partial class PortableDataPackager
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
             var allowedEntries = BuildAllowedEntryPaths(manifest);
 
+            // Pre-scan all entries for path traversal before extracting anything.
+            // This ensures no files reach the destination directory if any entry is malicious.
+            foreach (var entry in archive.Entries)
+            {
+                if (string.IsNullOrEmpty(entry.Name))
+                    continue; // Skip directories
+
+                ResolveSafeExtractionPath(stagingRoot, entry.FullName);
+            }
+
             Directory.CreateDirectory(stagingRoot);
 
             try

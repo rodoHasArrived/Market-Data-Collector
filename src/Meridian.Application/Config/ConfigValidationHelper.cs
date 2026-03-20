@@ -131,7 +131,7 @@ public sealed class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 public sealed class StockSharpConfigValidator : AbstractValidator<StockSharpConfig>
 {
     private static readonly string[] SupportedConnectors =
-        ["rithmic", "iqfeed", "cqg", "interactivebrokers", "ib", "custom"];
+        ["rithmic", "iqfeed", "cqg", "interactivebrokers", "ib"];
 
     private static bool HasCustomAdapter(StockSharpConfig config)
     {
