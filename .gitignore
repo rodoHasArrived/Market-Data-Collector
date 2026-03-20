@@ -99,6 +99,7 @@ BenchmarkDotNet.Artifacts/
 appsettings.json
 appsettings.*.json
 !appsettings.sample.json
+!config/appsettings.schema.json
 credentials.json
 *.pfx
 *.key

@@ -190,6 +190,7 @@ FIRST-TIME SETUP:
     --auto-config           Auto-configure from environment variables
     --detect-providers      Show available providers and their status
     --generate-config       Generate a config template
+    --generate-config-schema Generate JSON Schema for appsettings.json
     --template <name>       Template: minimal, full, alpaca, stocksharp,
                             backfill, production, docker
 
@@ -205,6 +206,9 @@ EXAMPLES:
 
     # Generate a template
     Meridian --generate-config --template alpaca
+
+    # Generate JSON Schema for IDE validation
+    Meridian --generate-config-schema --output config/appsettings.schema.json
 ");
     }
 
@@ -386,6 +390,7 @@ AUTO-CONFIGURATION (First-time setup):
     --detect-providers      Show available data providers and their status
     --validate-credentials  Validate configured API credentials
     --generate-config       Generate a configuration template
+    --generate-config-schema Generate JSON Schema for appsettings.json
 
 DIAGNOSTICS & TROUBLESHOOTING:
     --quick-check           Fast configuration health check
@@ -463,7 +468,8 @@ DATA QUERY & EXPORT TOOLS:
 AUTO-CONFIGURATION OPTIONS:
     --template <name>       Template for --generate-config: minimal, full, alpaca,
                             stocksharp, backfill, production, docker (default: minimal)
-    --output <path>         Output path for generated config (default: config/appsettings.generated.json)
+    --output <path>         Output path for generated config/schema
+                            (config/appsettings.generated.json or config/appsettings.schema.json)
 
 EXAMPLES:
     # Start web dashboard on default port

@@ -218,7 +218,7 @@ public sealed record DeploymentContext
         var oneShotFlags = new[]
         {
             "--help", "-h", "--wizard", "--auto-config", "--detect-providers",
-            "--validate-credentials", "--generate-config", "--quick-check",
+            "--validate-credentials", "--generate-config", "--generate-config-schema", "--quick-check",
             "--test-connectivity", "--error-codes", "--check-schemas",
             "--show-config", "--symbols", "--symbols-monitored", "--symbols-archived",
             "--symbols-add", "--symbols-remove", "--symbol-status",
@@ -242,6 +242,7 @@ public sealed record DeploymentContext
             ["--detect-providers"] = "detect-providers",
             ["--validate-credentials"] = "validate-credentials",
             ["--generate-config"] = "generate-config",
+            ["--generate-config-schema"] = "generate-config-schema",
             ["--quick-check"] = "quick-check",
             ["--test-connectivity"] = "test-connectivity",
             ["--error-codes"] = "error-codes",

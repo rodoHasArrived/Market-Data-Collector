@@ -7,7 +7,7 @@ namespace Meridian.Application.Commands;
 
 /// <summary>
 /// Handles configuration setup CLI commands:
-/// --wizard, --auto-config, --detect-providers, --generate-config
+/// --wizard, --auto-config, --detect-providers, --generate-config, --generate-config-schema
 /// </summary>
 internal sealed class ConfigCommands : ICliCommand
 {
@@ -27,6 +27,7 @@ internal sealed class ConfigCommands : ICliCommand
             CliArguments.HasFlag(args, "--quickstart") ||
             CliArguments.HasFlag(args, "--detect-providers") ||
             CliArguments.HasFlag(args, "--generate-config") ||
+            CliArguments.HasFlag(args, "--generate-config-schema") ||
             CliArguments.HasFlag(args, "--preset") ||
             CliArguments.HasFlag(args, "--list-presets");
     }
@@ -63,6 +64,11 @@ internal sealed class ConfigCommands : ICliCommand
         if (CliArguments.HasFlag(args, "--generate-config"))
         {
             return RunGenerateConfig(args);
+        }
+
+        if (CliArguments.HasFlag(args, "--generate-config-schema"))
+        {
+            return RunGenerateConfigSchema(args);
         }
 
         if (CliArguments.HasFlag(args, "--list-presets"))
@@ -171,6 +177,19 @@ internal sealed class ConfigCommands : ICliCommand
             foreach (var (key, desc) in template.EnvironmentVariables)
                 Console.WriteLine($"  {key}: {desc}");
         }
+
+        return CliResult.Ok();
+    }
+
+    private static CliResult RunGenerateConfigSchema(string[] args)
+    {
+        var outputPath = CliArguments.GetValue(args, "--output") ?? "config/appsettings.schema.json";
+
+        var generator = new ConfigJsonSchemaGenerator();
+        generator.WriteSchema(outputPath);
+
+        Console.WriteLine($"Generated configuration schema: {outputPath}");
+        Console.WriteLine("Use \"$schema\": \"./appsettings.schema.json\" in your config file for IDE validation.");
 
         return CliResult.Ok();
     }
