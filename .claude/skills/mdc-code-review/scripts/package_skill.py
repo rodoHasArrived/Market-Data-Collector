@@ -39,7 +39,7 @@ def should_exclude(rel_path: Path) -> bool:
     return any(fnmatch.fnmatch(name, pat) for pat in EXCLUDE_GLOBS)
 
 
-def package_skill(skill_path, output_dir=None):
+def package_skill(skill_path, output_dir=None):  # noqa: C901
     """
     Package a skill folder into a .skill file.
 

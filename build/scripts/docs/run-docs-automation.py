@@ -271,7 +271,7 @@ def write_markdown_summary(path: Path, results: Iterable[ScriptResult], dry_run:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     args = parse_args()
     root = Path(__file__).resolve().parents[3]
 

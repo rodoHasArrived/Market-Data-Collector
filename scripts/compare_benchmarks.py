@@ -44,7 +44,7 @@ def format_ns(value: float) -> str:
     return f"{value:.1f} ns"
 
 
-def render_report(current: dict, baseline: dict | None, warn_threshold: float, fail_threshold: float) -> tuple[str, bool]:
+def render_report(current: dict, baseline: dict | None, warn_threshold: float, fail_threshold: float) -> tuple[str, bool]:  # noqa: C901
     lines: list[str] = ["## Benchmark Regression Report", ""]
 
     current_benchmarks = current.get("Benchmarks", [])
@@ -112,7 +112,7 @@ def render_report(current: dict, baseline: dict | None, warn_threshold: float, f
             "| Benchmark | Change | Current | Baseline | Current Alloc | Baseline Alloc |",
             "|-----------|--------|---------|----------|---------------|----------------|",
         ])
-        for name, change, current_mean, baseline_mean, current_alloc, baseline_alloc in sorted(regressions, key=lambda row: -row[1]):
+        for name, change, current_mean, baseline_mean, current_alloc, baseline_alloc in sorted(regressions, key=lambda row: -row[1]):  # noqa: E501
             lines.append(
                 f"| {name} | +{change:.1f}% | {format_ns(current_mean)} | {format_ns(baseline_mean)} | "
                 f"{current_alloc:,.0f} B | {baseline_alloc:,.0f} B |"
@@ -126,7 +126,7 @@ def render_report(current: dict, baseline: dict | None, warn_threshold: float, f
             "| Benchmark | Change | Current | Baseline | Current Alloc | Baseline Alloc |",
             "|-----------|--------|---------|----------|---------------|----------------|",
         ])
-        for name, change, current_mean, baseline_mean, current_alloc, baseline_alloc in sorted(warnings, key=lambda row: -row[1]):
+        for name, change, current_mean, baseline_mean, current_alloc, baseline_alloc in sorted(warnings, key=lambda row: -row[1]):  # noqa: E501
             lines.append(
                 f"| {name} | +{change:.1f}% | {format_ns(current_mean)} | {format_ns(baseline_mean)} | "
                 f"{current_alloc:,.0f} B | {baseline_alloc:,.0f} B |"

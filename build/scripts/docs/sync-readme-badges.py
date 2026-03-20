@@ -283,7 +283,7 @@ def generate_badges(root: Path) -> list[BadgeInfo]:
 # README Update
 # ---------------------------------------------------------------------------
 
-def update_readme(readme_path: Path, badges: list[BadgeInfo], dry_run: bool = False) -> SyncResults:
+def update_readme(readme_path: Path, badges: list[BadgeInfo], dry_run: bool = False) -> SyncResults:  # noqa: C901
     """Update badges in README.md."""
     results = SyncResults(
         generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")

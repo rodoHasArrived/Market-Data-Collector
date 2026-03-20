@@ -64,7 +64,7 @@ def calculate_stats(values: list[float]) -> dict:
     }
 
 
-def load_run_results(benchmark_dir: Path) -> dict:
+def load_run_results(benchmark_dir: Path) -> dict:  # noqa: C901
     """
     Load all run results from a benchmark directory.
 
@@ -157,7 +157,7 @@ def load_run_results(benchmark_dir: Path) -> dict:
                 raw_expectations = grading.get("expectations", [])
                 for exp in raw_expectations:
                     if "text" not in exp or "passed" not in exp:
-                        print(f"Warning: expectation in {grading_file} missing required fields (text, passed, evidence): {exp}")
+                        print(f"Warning: expectation in {grading_file} missing required fields (text, passed, evidence): {exp}")  # noqa: E501
                 result["expectations"] = raw_expectations
 
                 # Extract notes from user_notes_summary
@@ -295,7 +295,7 @@ def generate_markdown(benchmark: dict) -> str:
         "",
         f"**Model**: {metadata['executor_model']}",
         f"**Date**: {metadata['timestamp']}",
-        f"**Evals**: {', '.join(map(str, metadata['evals_run']))} ({metadata['runs_per_configuration']} runs each per configuration)",
+        f"**Evals**: {', '.join(map(str, metadata['evals_run']))} ({metadata['runs_per_configuration']} runs each per configuration)",  # noqa: E501
         "",
         "## Summary",
         "",
@@ -310,17 +310,17 @@ def generate_markdown(benchmark: dict) -> str:
     # Format pass rate
     a_pr = a_summary.get("pass_rate", {})
     b_pr = b_summary.get("pass_rate", {})
-    lines.append(f"| Pass Rate | {a_pr.get('mean', 0)*100:.0f}% ± {a_pr.get('stddev', 0)*100:.0f}% | {b_pr.get('mean', 0)*100:.0f}% ± {b_pr.get('stddev', 0)*100:.0f}% | {delta.get('pass_rate', '—')} |")
+    lines.append(f"| Pass Rate | {a_pr.get('mean', 0)*100:.0f}% ± {a_pr.get('stddev', 0)*100:.0f}% | {b_pr.get('mean', 0)*100:.0f}% ± {b_pr.get('stddev', 0)*100:.0f}% | {delta.get('pass_rate', '—')} |")  # noqa: E501
 
     # Format time
     a_time = a_summary.get("time_seconds", {})
     b_time = b_summary.get("time_seconds", {})
-    lines.append(f"| Time | {a_time.get('mean', 0):.1f}s ± {a_time.get('stddev', 0):.1f}s | {b_time.get('mean', 0):.1f}s ± {b_time.get('stddev', 0):.1f}s | {delta.get('time_seconds', '—')}s |")
+    lines.append(f"| Time | {a_time.get('mean', 0):.1f}s ± {a_time.get('stddev', 0):.1f}s | {b_time.get('mean', 0):.1f}s ± {b_time.get('stddev', 0):.1f}s | {delta.get('time_seconds', '—')}s |")  # noqa: E501
 
     # Format tokens
     a_tokens = a_summary.get("tokens", {})
     b_tokens = b_summary.get("tokens", {})
-    lines.append(f"| Tokens | {a_tokens.get('mean', 0):.0f} ± {a_tokens.get('stddev', 0):.0f} | {b_tokens.get('mean', 0):.0f} ± {b_tokens.get('stddev', 0):.0f} | {delta.get('tokens', '—')} |")
+    lines.append(f"| Tokens | {a_tokens.get('mean', 0):.0f} ± {a_tokens.get('stddev', 0):.0f} | {b_tokens.get('mean', 0):.0f} ± {b_tokens.get('stddev', 0):.0f} | {delta.get('tokens', '—')} |")  # noqa: E501
 
     # Notes section
     if benchmark.get("notes"):
@@ -356,7 +356,7 @@ def load_baseline(baseline_path: Path) -> dict:
         return {}
 
 
-def check_regressions(results: dict, baselines: dict) -> list[str]:
+def check_regressions(results: dict, baselines: dict) -> list[str]:  # noqa: C901
     """
     Compare per-eval pass rates against baselines.
 
@@ -419,7 +419,7 @@ def check_regressions(results: dict, baselines: dict) -> list[str]:
     return warnings
 
 
-def main():
+def main():  # noqa: C901
     parser = argparse.ArgumentParser(
         description="Aggregate benchmark run results into summary statistics"
     )

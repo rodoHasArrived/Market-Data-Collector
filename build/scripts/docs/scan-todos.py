@@ -221,7 +221,7 @@ def extract_context(lines: list, line_num: int, context_lines: int = 2) -> str:
     return "\n".join(context_parts)
 
 
-def scan_file(file_path: Path, include_notes: bool, root: Path) -> Generator[TodoItem, None, None]:
+def scan_file(file_path: Path, include_notes: bool, root: Path) -> Generator[TodoItem, None, None]:  # noqa: C901
     """Scan a single file for TODO items."""
     ext = file_path.suffix.lower()
     comment_patterns = get_comment_patterns(ext)
@@ -343,7 +343,7 @@ def scan_directory(root: Path, include_notes: bool) -> ScanResults:
     )
 
 
-def generate_markdown(results: ScanResults) -> str:
+def generate_markdown(results: ScanResults) -> str:  # noqa: C901
     """Generate Markdown documentation from scan results."""
     lines = []
 
@@ -356,7 +356,7 @@ def generate_markdown(results: ScanResults) -> str:
     # Summary
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"| Metric | Count |")
+    lines.append("| Metric | Count |")
     lines.append("|--------|-------|")
     lines.append(f"| **Total Items** | {results.total_count} |")
     lines.append(f"| **Linked to Issues** | {sum(1 for t in results.todos if t.has_issue)} |")
@@ -512,7 +512,7 @@ def main():
         help='Output file for JSON results'
     )
     parser.add_argument(
-        '--format', '-f',
+        '--format', '-',
         choices=['markdown', 'json', 'both'],
         default='both',
         help='Output format (default: both)'

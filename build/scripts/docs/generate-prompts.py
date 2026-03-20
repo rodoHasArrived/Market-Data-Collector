@@ -409,7 +409,7 @@ def generate_prompt_yaml(
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    yaml = f"""name: {name}
+    yaml = """name: {name}
 description: {description}
 # Auto-generated prompt from workflow results - {workflow_name}
 # Generated: {now}
@@ -477,7 +477,7 @@ def generate_workflow_summary_prompt(
     test_section = ""
     if all_failed_tests:
         test_lines = "\n".join(f"      - `{t}`" for t in all_failed_tests[:15])
-        test_section = f"""
+        test_section = """
       ## Failed Tests
 {test_lines}
 """
@@ -485,12 +485,12 @@ def generate_workflow_summary_prompt(
     code_section = ""
     if all_error_codes:
         code_lines = "\n".join(f"      - `{c}`" for c in all_error_codes[:15])
-        code_section = f"""
+        code_section = """
       ## Error Codes
 {code_lines}
 """
 
-    yaml = f"""name: Workflow Results - {workflow_name}
+    yaml = """name: Workflow Results - {workflow_name}
 description: Address issues found in the {workflow_name} workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: {now}
@@ -542,7 +542,7 @@ messages:
 # ---------------------------------------------------------------------------
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(
         description="Auto-generate AI prompts from workflow run results"
     )
@@ -764,35 +764,35 @@ def main() -> int:
 
     # --- Summary ---
     if args.summary:
-        print(f"\n## Prompt Generation Results")
-        print(f"")
+        print("\n## Prompt Generation Results")
+        print("")
         print(f"**Workflow:** `{workflow}`")
         print(f"**Run:** #{run_id} ({run_conclusion})")
         print(f"**Repository:** {repo}")
-        print(f"")
-        print(f"| Metric | Value |")
-        print(f"|--------|-------|")
+        print("")
+        print("| Metric | Value |")
+        print("|--------|-------|")
         print(f"| Failure categories found | {len(findings)} |")
         print(f"| Error codes extracted | {len(error_codes)} |")
         print(f"| Failed tests found | {len(failed_tests)} |")
         print(f"| Prompts generated/updated | {len(generated)} |")
         print(f"| Existing prompts | {len(existing_prompts)} |")
-        print(f"")
+        print("")
 
         if generated:
-            print(f"### Generated Prompts")
-            print(f"")
-            print(f"| File | Category | Action | Findings |")
-            print(f"|------|----------|--------|----------|")
+            print("### Generated Prompts")
+            print("")
+            print("| File | Category | Action | Findings |")
+            print("|------|----------|--------|----------|")
             for g in generated:
                 print(
                     f"| `{g['file']}` | {g['category']} | {g['action']} | {g['findings_count']} |"
                 )
 
         if failed_job_names:
-            print(f"")
-            print(f"### Failed Jobs")
-            print(f"")
+            print("")
+            print("### Failed Jobs")
+            print("")
             for name in failed_job_names:
                 print(f"- {name}")
 

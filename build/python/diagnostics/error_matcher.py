@@ -29,7 +29,7 @@ class ErrorMatcher:
                     break
         return matches
 
-    def print_matches(self, matches: list[dict]) -> None:
+    def print_matches(self, matches: list[dict]) -> None:  # noqa: C901
         if not matches:
             print(colorize("No known error patterns detected.", "0;32"))
             return

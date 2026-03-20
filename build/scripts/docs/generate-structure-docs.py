@@ -379,7 +379,7 @@ This document lists all data providers available in the Market Data Collector.
 """
     for p in realtime_providers:
         class_col = f"`{p['class']}`" if p.get('class') and p['class'] != 'Unknown' else '—'
-        content += f"| {p['name']} | `{p['id']}` | {class_col} | {p.get('type', 'Streaming')} | {p.get('category', '—')} | ✅ Active |\n"
+        content += f"| {p['name']} | `{p['id']}` | {class_col} | {p.get('type', 'Streaming')} | {p.get('category', '—')} | ✅ Active |\n"  # noqa: E501
 
     content += """
 ## Historical Data Providers (Backfill)

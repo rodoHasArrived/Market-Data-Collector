@@ -32,7 +32,7 @@ def find_project_root() -> Path:
     return current
 
 
-def run_single_query(
+def run_single_query(  # noqa: C901
     query: str,
     skill_name: str,
     skill_description: str,

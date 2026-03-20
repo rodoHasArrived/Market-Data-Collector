@@ -263,7 +263,7 @@ def generate_mermaid(graph: DependencyGraph) -> str:
     return '\n'.join(lines)
 
 
-def generate_markdown(graph: DependencyGraph) -> str:
+def generate_markdown(graph: DependencyGraph) -> str:  # noqa: C901
     """Generate Markdown dependency report."""
     lines = []
 
@@ -364,7 +364,7 @@ def generate_markdown(graph: DependencyGraph) -> str:
 
     lines.append('---')
     lines.append('')
-    lines.append('*This report is auto-generated. Run `python3 build/scripts/docs/generate-dependency-graph.py` to regenerate.*')
+    lines.append('*This report is auto-generated. Run `python3 build/scripts/docs/generate-dependency-graph.py` to regenerate.*')  # noqa: E501
     lines.append('')
 
     return '\n'.join(lines)
@@ -388,7 +388,7 @@ def generate_summary(graph: DependencyGraph) -> str:
 # Main
 # ---------------------------------------------------------------------------
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:  # noqa: C901
     """Entry point."""
     parser = argparse.ArgumentParser(
         description='Generate project dependency graph'

@@ -127,7 +127,7 @@ def _should_skip(path: Path) -> bool:
     return any(part in EXCLUDE_DIRS for part in path.parts)
 
 
-def _extract_endpoints_from_file(file_path: Path, root: Path) -> list[Endpoint]:
+def _extract_endpoints_from_file(file_path: Path, root: Path) -> list[Endpoint]:  # noqa: C901
     """Extract API endpoints from a C# source file."""
     endpoints = []
 

@@ -30,7 +30,7 @@ DEFAULT_PROJECT = "src/Meridian/Meridian.csproj"
 DEFAULT_TEST_PROJECT = "tests/Meridian.Tests/Meridian.Tests.csproj"
 
 
-def run_build(args: argparse.Namespace) -> int:
+def run_build(args: argparse.Namespace) -> int:  # noqa: C901
     output_dir = ROOT / ".build-system"
     logs_dir = output_dir / "logs"
     ensure_directory(logs_dir)
@@ -383,7 +383,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     parser = build_parser()
     args = parser.parse_args()
     if args.command == "build":

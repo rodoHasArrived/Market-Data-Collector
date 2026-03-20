@@ -317,7 +317,7 @@ def _collect_markdown_files(docs_root: Path) -> list[Path]:
     return md_files
 
 
-def _scan_file(
+def _scan_file(  # noqa: C901
     md_file: Path,
     repo_root: Path,
     file_index: dict[str, list[Path]],

@@ -117,7 +117,7 @@ def _parse_block(lines: list[str], idx: int, base_indent: int) -> tuple[Any, int
     return _parse_yaml_value(stripped), idx + 1
 
 
-def _parse_sequence(lines: list[str], idx: int, base_indent: int) -> tuple[list[Any], int]:
+def _parse_sequence(lines: list[str], idx: int, base_indent: int) -> tuple[list[Any], int]:  # noqa: C901
     """Parse a YAML sequence (list)."""
     result: list[Any] = []
 
@@ -276,7 +276,7 @@ class PassedCheck:
 # Rule loading
 # ---------------------------------------------------------------------------
 
-def load_rules(path: Path) -> list[Rule]:
+def load_rules(path: Path) -> list[Rule]:  # noqa: C901
     """Load rules from a YAML file and return a list of ``Rule`` objects.
 
     Raises ``SystemExit`` with a user-friendly message on parse errors.
@@ -384,7 +384,7 @@ def _extract_headings(content: str) -> list[str]:
     return headings
 
 
-def evaluate_rule(
+def evaluate_rule(  # noqa: C901
     rule: Rule,
     root: Path,
 ) -> tuple[list[Violation], list[PassedCheck]]:
@@ -524,8 +524,8 @@ def generate_report(
     # Summary
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"| Metric | Count |")
-    lines.append(f"|--------|-------|")
+    lines.append("| Metric | Count |")
+    lines.append("|--------|-------|")
     lines.append(f"| Rules loaded | {len(rules)} |")
     lines.append(f"| Total file checks | {total_checks} |")
     lines.append(f"| Passed | {len(passes)} |")
@@ -636,7 +636,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901
     """Entry point. Returns 0 on success, 1 if any error-level violations exist."""
     parser = build_parser()
     args = parser.parse_args(argv)

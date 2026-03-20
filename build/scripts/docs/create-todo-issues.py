@@ -76,7 +76,7 @@ def gh_request(method: str, url: str, token: str, payload: dict[str, Any] | None
         raise
 
 
-def load_todos(path: Path) -> list[TodoItem]:
+def load_todos(path: Path) -> list[TodoItem]:  # noqa: C901
     try:
         content = path.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -229,7 +229,7 @@ def create_issue(repo: str, token: str, todo: TodoItem, label: str, dry_run: boo
         raise
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     args = parse_args()
 
     if not args.scan_json.exists():

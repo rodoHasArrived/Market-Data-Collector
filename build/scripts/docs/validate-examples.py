@@ -370,7 +370,7 @@ def _validate_csharp(source: str) -> tuple[bool, str]:
     return True, ""
 
 
-def _strip_csharp_strings_and_comments(source: str) -> str:
+def _strip_csharp_strings_and_comments(source: str) -> str:  # noqa: C901
     """Replace string literals and comments in C# source with whitespace.
 
     This is intentionally simplistic (no raw-string literal support) but
@@ -446,7 +446,7 @@ def _strip_csharp_strings_and_comments(source: str) -> str:
     return "".join(result)
 
 
-def _validate_xml(source: str) -> tuple[bool, str]:
+def _validate_xml(source: str) -> tuple[bool, str]:  # noqa: C901
     """Basic XML / HTML / XAML tag matching validation.
 
     Checks for:

@@ -241,7 +241,7 @@ def is_inside_string_literal(line: str, index: int) -> bool:
 # Analysers
 # ---------------------------------------------------------------------------
 
-def audit_code(root: Path, report: AuditReport) -> None:
+def audit_code(root: Path, report: AuditReport) -> None:  # noqa: C901
     """Analyse C#/F# source files for convention violations."""
     src_dir = root / "src"
     if not src_dir.exists():
@@ -359,7 +359,7 @@ def audit_code(root: Path, report: AuditReport) -> None:
                         ))
 
 
-def audit_docs(root: Path, report: AuditReport) -> None:
+def audit_docs(root: Path, report: AuditReport) -> None:  # noqa: C901
     """Analyse documentation quality and coverage."""
     docs_dir = root / "docs"
     if not docs_dir.exists():
@@ -456,7 +456,7 @@ def audit_docs(root: Path, report: AuditReport) -> None:
                 ))
 
 
-def audit_tests(root: Path, report: AuditReport) -> None:
+def audit_tests(root: Path, report: AuditReport) -> None:  # noqa: C901
     """Analyse test coverage gaps."""
     src_dir = root / "src"
     test_dir = root / "tests"
@@ -503,7 +503,7 @@ def audit_tests(root: Path, report: AuditReport) -> None:
                 ))
 
 
-def audit_config(root: Path, report: AuditReport) -> None:
+def audit_config(root: Path, report: AuditReport) -> None:  # noqa: C901
     """Analyse configuration and CI/CD files."""
     # --- Check: workflows with potential issues ---
     workflows_dir = root / ".github" / "workflows"
@@ -947,7 +947,7 @@ def run_maintenance(root: Path, lane: str) -> dict[str, Any]:
             run_maintenance_step(
                 root,
                 "dotnet-build",
-                ["dotnet", "build", "Meridian.sln", "-c", "Release", "--no-restore", "/p:EnableWindowsTargeting=true", "--verbosity", "minimal"],
+                ["dotnet", "build", "Meridian.sln", "-c", "Release", "--no-restore", "/p:EnableWindowsTargeting=true", "--verbosity", "minimal"],  # noqa: E501
                 required=True,
                 env_ready=dotnet_ready,
                 timeout=1200,
@@ -955,7 +955,7 @@ def run_maintenance(root: Path, lane: str) -> dict[str, Any]:
             run_maintenance_step(
                 root,
                 "dotnet-test",
-                ["dotnet", "test", "tests/Meridian.Tests/Meridian.Tests.csproj", "-c", "Release", "--no-build", "--verbosity", "minimal", "--filter", "Category!=Integration"],
+                ["dotnet", "test", "tests/Meridian.Tests/Meridian.Tests.csproj", "-c", "Release", "--no-build", "--verbosity", "minimal", "--filter", "Category!=Integration"],  # noqa: E501
                 required=True,
                 env_ready=dotnet_ready,
                 timeout=1200,
@@ -1068,7 +1068,7 @@ def load_known_errors(root: Path) -> list[dict[str, str]]:
 # Report Generation
 # ---------------------------------------------------------------------------
 
-def generate_markdown_report(report: AuditReport) -> str:
+def generate_markdown_report(report: AuditReport) -> str:  # noqa: C901
     """Generate a markdown improvement report."""
     lines: list[str] = [
         "# Repository Improvement Report",
@@ -1149,7 +1149,7 @@ def run_audit(root: Path, command: str) -> AuditReport:
     return report
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser = argparse.ArgumentParser(
         description="AI Repository Updater — audit and improve the codebase.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

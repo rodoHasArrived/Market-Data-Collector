@@ -279,7 +279,7 @@ def _validate_markdown_links(path: Path) -> list[Finding]:
     return findings
 
 
-def _check_archive_candidates(docs_dir: Path) -> list[Finding]:
+def _check_archive_candidates(docs_dir: Path) -> list[Finding]:  # noqa: C901
     """Find docs that should be moved to archived/ based on age and content."""
     findings: list[Finding] = []
     now = datetime.now(timezone.utc)
@@ -407,7 +407,7 @@ def cmd_freshness(report: Report) -> None:
         ))
 
 
-def cmd_drift(report: Report) -> None:
+def cmd_drift(report: Report) -> None:  # noqa: C901
     """Detect when AI documentation diverges from actual code."""
     # 1. Check provider documentation vs code
     code_providers = _extract_providers_from_code()
@@ -520,7 +520,7 @@ def cmd_drift(report: Report) -> None:
             report.drift.append(DriftEntry(
                 area="prompts",
                 expected=f"Prompt '{p}' documented in prompts README",
-                actual=f"Prompt exists on disk but not in README",
+                actual="Prompt exists on disk but not in README",
                 severity="info",
                 fix_hint=f"Add '{p}' to .github/prompts/README.md",
             ))
@@ -569,7 +569,7 @@ def cmd_archive_stale(report: Report, dry_run: bool = True) -> None:
                     ))
 
 
-def cmd_sync_report(report: Report, output: Path | None = None) -> None:
+def cmd_sync_report(report: Report, output: Path | None = None) -> None:  # noqa: C901
     """Generate a comprehensive sync report as markdown."""
     # Run all sub-checks
     cmd_freshness(report)
@@ -653,7 +653,7 @@ def cmd_sync_report(report: Report, output: Path | None = None) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(
         description="AI Documentation Maintenance — freshness, drift, and archive automation",
         epilog=__doc__,

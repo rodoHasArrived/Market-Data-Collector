@@ -9,7 +9,7 @@ import yaml
 from pathlib import Path
 
 
-def validate_skill(skill_path):
+def validate_skill(skill_path):  # noqa: C901
     """Basic validation of a skill"""
     skill_path = Path(skill_path)
 

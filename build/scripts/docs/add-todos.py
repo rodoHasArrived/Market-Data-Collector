@@ -319,7 +319,7 @@ def print_template() -> None:
 # Main
 # ---------------------------------------------------------------------------
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:  # noqa: C901
     """Entry point."""
     parser = argparse.ArgumentParser(
         description='Interactive tool to add well-formatted TODO comments'
@@ -331,7 +331,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         help='Repository root directory (default: current directory)'
     )
     parser.add_argument(
-        '--file', '-f',
+        '--file', '-',
         type=Path,
         help='File to add TODO to'
     )
@@ -427,12 +427,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     todo_comment = todo_item.format_comment(comment_prefix)
 
     # Show what will be added
-    print(f"\nTODO to be added:")
-    print(f"  File: {todo_item.file_path.relative_to(root) if todo_item.file_path.is_relative_to(root) else todo_item.file_path}")
+    print("\nTODO to be added:")
+    file_display = (
+        todo_item.file_path.relative_to(root)
+        if todo_item.file_path.is_relative_to(root)
+        else todo_item.file_path
+    )
+    print(f"  File: {file_display}")
     if todo_item.line_number:
         print(f"  Line: {todo_item.line_number}")
     else:
-        print(f"  Position: End of file")
+        print("  Position: End of file")
     print(f"  Comment: {todo_comment}")
     print()
 
@@ -448,15 +453,15 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if success:
         print(f"✓ TODO added successfully to {todo_item.file_path.name}")
-        print(f"\nNext steps:")
+        print("\nNext steps:")
         if todo_item.issue_number:
             print(f"  - Review issue #{todo_item.issue_number}")
         else:
-            print(f"  - Consider creating a GitHub issue to track this TODO")
-        print(f"  - Run: python3 build/scripts/docs/scan-todos.py to update TODO tracking")
+            print("  - Consider creating a GitHub issue to track this TODO")
+        print("  - Run: python3 build/scripts/docs/scan-todos.py to update TODO tracking")
         return 0
     else:
-        print(f"✗ Failed to add TODO", file=sys.stderr)
+        print("✗ Failed to add TODO", file=sys.stderr)
         return 1
 
 

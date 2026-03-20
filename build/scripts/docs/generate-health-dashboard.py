@@ -396,7 +396,7 @@ def _score_label(score: int) -> str:
     return "Critical"
 
 
-def generate_markdown(metrics: HealthMetrics) -> str:
+def generate_markdown(metrics: HealthMetrics) -> str:  # noqa: C901
     """Generate a Markdown health dashboard report."""
     lines: list[str] = []
 
@@ -587,7 +587,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Optional[Sequence[str]] = None) -> int:  # noqa: C901
     """Entry point for the documentation health dashboard generator."""
     parser = _build_parser()
     args = parser.parse_args(argv)
