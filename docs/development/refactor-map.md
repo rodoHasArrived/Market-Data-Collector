@@ -249,6 +249,24 @@
 
 ---
 
+## Test Topology Guardrails
+
+Use these placement rules when adding or moving tests so cross-platform coverage does not drift into Windows-only assemblies:
+
+| Test layer / concern | Test project | Rationale |
+| --- | --- | --- |
+| Startup, DI composition, host wiring that is not WPF-specific, provider contracts, endpoint-shape/schema snapshots | `tests/Meridian.Tests` | Must stay runnable without Windows desktop support. |
+| Shared desktop services, base classes, collection helpers, mapping/filtering logic, refresh orchestration with an injected scheduler abstraction | `tests/Meridian.Ui.Tests` | Shared desktop logic should stay out of page code-behind and out of WPF-only tests. |
+| WPF-only binding behavior, navigation/page registration, resource usage, and desktop host wiring | `tests/Meridian.Wpf.Tests` | These tests genuinely depend on WPF types and Windows targeting. |
+
+### Data quality refresh rule
+
+- Keep mapping, filtering, and refresh behavior in platform-neutral services or plain viewmodel logic.
+- Isolate recurring scheduling behind an interface so the core logic can be tested without `DispatcherTimer` or page lifecycle hooks.
+- Add WPF-specific tests only for the binding/navigation/host-wiring seam that connects the shared logic to the desktop shell.
+
+---
+
 ## Related Documentation
 
 - **Architecture and Planning:**
