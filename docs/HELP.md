@@ -89,19 +89,19 @@ If this is your first run, use the installer orchestrator first so dependencies 
 
 ```bash
 # Interactive installer (Docker or Native)
-./scripts/install/install.sh
+./build/scripts/install/install.sh
 
 # Or choose a mode explicitly
-./scripts/install/install.sh --docker
-./scripts/install/install.sh --native
+./build/scripts/install/install.sh --docker
+./build/scripts/install/install.sh --native
 ```
 
 On Windows, use the equivalent PowerShell installer:
 
 ```powershell
-.\scripts\install\install.ps1
-.\scripts\install\install.ps1 -Mode Docker
-.\scripts\install\install.ps1 -Mode Native
+.\build\scripts\install\install.ps1
+.\build\scripts\install\install.ps1 -Mode Docker
+.\build\scripts\install\install.ps1 -Mode Native
 ```
 
 **Option A: Web Dashboard (Cross-platform)**
@@ -262,11 +262,11 @@ Use the installation orchestrator script for all setups. It keeps Docker and nat
 
 ```bash
 # Interactive installer (Docker or Native)
-./scripts/install/install.sh
+./build/scripts/install/install.sh
 
 # Or choose a mode explicitly
-./scripts/install/install.sh --docker
-./scripts/install/install.sh --native
+./build/scripts/install/install.sh --docker
+./build/scripts/install/install.sh --native
 ```
 
 Access the dashboard at `http://localhost:8080`.
@@ -277,11 +277,11 @@ The PowerShell installer mirrors the same workflow on Windows.
 
 ```powershell
 # Interactive installation
-.\scripts\install\install.ps1
+.\build\scripts\install\install.ps1
 
 # Or specify mode directly
-.\scripts\install\install.ps1 -Mode Docker
-.\scripts\install\install.ps1 -Mode Native
+.\build\scripts\install\install.ps1 -Mode Docker
+.\build\scripts\install\install.ps1 -Mode Native
 ```
 
 ### Optional Make Wrappers
