@@ -4,8 +4,8 @@
   "private": true,
   "description": "Build tools for Market Data Collector",
   "scripts": {
-    "generate-icons": "node scripts/generate-icons.mjs",
-    "generate-diagrams": "node scripts/generate-diagrams.mjs"
+    "generate-icons": "node build/node/generate-icons.mjs",
+    "generate-diagrams": "node build/node/generate-diagrams.mjs"
   },
   "devDependencies": {
     "@viz-js/viz": "^3.25.0",
