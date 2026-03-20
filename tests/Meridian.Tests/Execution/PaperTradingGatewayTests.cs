@@ -63,7 +63,7 @@ public sealed class PaperTradingGatewayTests
         var acknowledgement = await gateway.SubmitAsync(request);
 
         acknowledgement.Status.Should().Be(Meridian.Execution.Models.OrderStatus.Accepted);
-        gateway.Capabilities.SupportedOrderTypes.Should().Contain(Meridian.Execution.Models.OrderType.StopLimit);
+        gateway.Capabilities.SupportedOrderTypes.Should().Contain(Meridian.Execution.Sdk.OrderType.StopLimit);
         gateway.Capabilities.SupportedTimeInForce.Should().Contain(TimeInForce.GoodTilCancelled);
     }
 }

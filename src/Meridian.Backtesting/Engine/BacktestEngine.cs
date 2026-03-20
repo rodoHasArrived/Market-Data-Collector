@@ -192,7 +192,6 @@ public sealed class BacktestEngine(
         DateOnly fromDay,
         DateOnly toDay,
         SimulatedPortfolio portfolio,
-        List<Order> pendingOrders,
         BacktestContext ctx,
         IBacktestStrategy strategy,
         List<Order> pendingOrders,
