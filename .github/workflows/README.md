@@ -4,17 +4,24 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ## Consolidation Summary
 
-Workflows have been consolidated from 25 to 21 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
+Workflows have been consolidated from 37 to 34 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|
-| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml` | AI documentation quality review, AI TODO triage |
+| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml`, `docs-check.yml` | AI documentation quality review, AI TODO triage |
+| `update-diagrams.yml` | absorbed `update-uml-diagrams.yml` | — |
 | `desktop-builds.yml` | `desktop-app.yml`, `wpf-desktop.yml`, `wpf-commands.yml` | AI build failure diagnosis |
 | `security.yml` | absorbed `dependency-review.yml` | AI vulnerability assessment |
 | `scheduled-maintenance.yml` | absorbed `cache-management.yml` | AI dependency upgrade recommendations |
 | `pr-checks.yml` | (enhanced) | AI PR review summary |
 | `nightly.yml` | (enhanced) | AI failure diagnosis |
 | `code-quality.yml` | (enhanced) | AI code quality suggestions |
+
+### Removed stub workflows
+
+| Removed | Reason |
+|---------|--------|
+| `docker-image.yml` | 316-byte stub with no real implementation; functionality fully covered by `docker.yml` |
 
 ## Workflows Overview
 
@@ -142,28 +149,19 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Optional GitHub issue creation for untracked TODOs
   - **AI**: Documentation quality review, TODO triage recommendations
 
-#### 12. **Documentation Checks** (`docs-check.yml`)
-- **Trigger**: Push/PRs touching markdown/docs files, manual dispatch
-- **Purpose**: Provides fast, focused documentation validation for markdown-heavy changes
+#### 12. **Update Diagram Artifacts** (`update-diagrams.yml`) *(consolidated)*
+- **Trigger**: Push to `main` touching `docs/diagrams/*.dot`, `docs/diagrams/uml/*.puml`, or WPF source files; manual dispatch
+- **Absorbed**: `update-uml-diagrams.yml`
+- **Purpose**: Automatically regenerates SVG and PNG diagram artifacts from DOT and PlantUML sources
 - **Features**:
-  - Markdown linting on changed files for quick PR feedback
-  - Manual full-repo markdown lint mode via workflow dispatch
-  - Non-blocking link-repair analysis report
-  - Non-blocking fenced code example validation report
-  - Report artifact uploads for reviewer download
-
-#### 13. **Update Diagram Artifacts** (`update-diagrams.yml`)
-- **Trigger**: Push to `main` touching `docs/diagrams/*.dot` files, manual dispatch
-- **Purpose**: Automatically regenerates PNG and SVG diagram artifacts from DOT source files
-- **Features**:
-  - Installs Graphviz for diagram generation
-  - Converts all DOT files to PNG and SVG formats
+  - `regenerate-diagrams` job: Installs Graphviz and converts DOT files to SVG; also runs `npm run generate-diagrams` to regenerate auto-generated UI diagram DOT sources
+  - `regenerate-uml-diagrams` job: Installs PlantUML and converts `.puml` files to PNG
   - Auto-commits regenerated artifacts to keep them in sync with sources
-  - Prevents manual diagram artifact editing drift
+  - Both jobs run independently to avoid blocking each other
 
 ### Automation and Maintenance Workflows
 
-#### 14. **Auto Label PRs** (`labeling.yml`)
+#### 13. **Auto Label PRs** (`labeling.yml`)
 - **Trigger**: PR opened, edited, synchronized, reopened
 - **Purpose**: Automatically categorizes pull requests
 - **Features**:
@@ -172,7 +170,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Warns about large PRs
   - Uses `.github/labeler.yml` configuration
 
-#### 15. **Manage Stale Issues and PRs** (`stale.yml`)
+#### 14. **Manage Stale Issues and PRs** (`stale.yml`)
 - **Trigger**: Daily at midnight UTC, Manual dispatch
 - **Purpose**: Keeps issue tracker clean
 - **Features**:
@@ -182,7 +180,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
-#### 16. **Scheduled Maintenance** (`scheduled-maintenance.yml`) *(consolidated)*
+#### 15. **Scheduled Maintenance** (`scheduled-maintenance.yml`) *(consolidated)*
 - **Trigger**: Weekly schedule, Manual dispatch
 - **Purpose**: Runs periodic tests, dependency health checks, and cache management
 - **Absorbed**: `cache-management.yml`
@@ -193,7 +191,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Manual cache management options (list/clean-old/clean-all)
   - **AI**: Dependency upgrade recommendations with risk assessment
 
-#### 17. **Build Observability** (`build-observability.yml`)
+#### 16. **Build Observability** (`build-observability.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Generates build diagnostics and observability bundles
 - **Features**:
@@ -201,7 +199,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Collects build fingerprints and metrics
   - Uploads debug artifacts
 
-#### 18. **Workflow Validation** (`validate-workflows.yml`)
+#### 17. **Workflow Validation** (`validate-workflows.yml`)
 - **Trigger**: Pull requests touching workflows or manual dispatch
 - **Purpose**: Validates workflow syntax and checks reusable references
 - **Features**:
@@ -211,7 +209,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Catches invalid reusable workflow usage
   - Fast feedback for workflow edits
 
-#### 19. **Prompt Generation** (`prompt-generation.yml`)
+#### 18. **Prompt Generation** (`prompt-generation.yml`)
 - **Trigger**: Manual dispatch with workflow name input, automatic after workflow failures
 - **Purpose**: Auto-generates AI assistant prompts from CI/CD workflow run analysis
 - **Features**:
@@ -224,7 +222,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
 
 ### Shared Workflows
 
-#### 20. **Copilot SWE Agent Visibility** (`copilot-swe-agent-copilot.yml`)
+#### 19. **Copilot SWE Agent Visibility** (`copilot-swe-agent-copilot.yml`)
 - **Trigger**: Manual workflow dispatch, issue comments containing `@copilot` or `/copilot`
 - **Purpose**: Makes Copilot SWE requests easier to execute and easier for reviewers to discover
 - **Features**:
@@ -233,7 +231,7 @@ Workflows have been consolidated from 25 to 21 files, reducing duplication and a
   - Publishes a workflow summary with direct run/artifact guidance
   - Posts an issue/PR comment linking to run results for improved visibility
 
-#### 21. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
+#### 20. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
 - **Trigger**: Reusable workflow (called by other workflows)
 - **Purpose**: Standardizes build/test steps for .NET jobs
 - **Called by**: `pr-checks.yml`, `dotnet-desktop.yml`, `nightly.yml`

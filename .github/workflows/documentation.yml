@@ -6,6 +6,7 @@
 #   - docs-structure-sync.yml (Docs Structure Sync)
 #   - ai-instructions-sync.yml (AI Instructions Sync)
 #   - todo-automation.yml (TODO Scanning & Documentation)
+#   - docs-check.yml (Documentation Checks — markdown lint, link repair, example validation)
 #
 # All documentation generation, validation, AI instruction sync,
 # known-error intake, and TODO scanning is unified here.
@@ -17,6 +18,7 @@
 #   - New expansion jobs: health-dashboard, link-repair, validate-examples,
 #     rules-engine, generate-changelog, coverage-report
 #   - Improved error diagnostics and GITHUB_STEP_SUMMARY
+#   - validate-docs uses changed-file detection to lint only modified markdown on PRs
 
 name: Documentation Automation
 
@@ -409,8 +411,48 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Markdown lint
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect changed markdown files
+        id: changed_markdown
+        uses: tj-actions/changed-files@v47
+        with:
+          separator: "\n"
+          files: |
+            **/*.md
+
+      - name: Install markdown linter
+        if: steps.changed_markdown.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
+        run: npm install --global markdownlint-cli2
+
+      - name: Markdown lint (changed files only)
+        if: steps.changed_markdown.outputs.any_changed == 'true' && github.event_name != 'workflow_dispatch'
+        run: |
+          mapfile -t changed_files << 'EOF'
+          ${{ steps.changed_markdown.outputs.all_changed_files }}
+          EOF
+
+          if [ "${#changed_files[@]}" -eq 0 ]; then
+            echo "No markdown files changed."
+            exit 0
+          fi
+
+          echo "Linting ${#changed_files[@]} markdown file(s)."
+          markdownlint-cli2 "${changed_files[@]}"
+
+      - name: Markdown lint (full scan on manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
         uses: DavidAnson/markdownlint-cli2-action@v22.0.0
         with:
           globs: |
@@ -464,6 +506,34 @@ jobs:
           else
             echo "validate-docs-structure.py not found, skipping." >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Link repair analysis (non-blocking)
+        continue-on-error: true
+        run: |
+          mkdir -p .artifacts
+          python3 build/scripts/docs/repair-links.py \
+            --root . \
+            --docs-dir docs \
+            --output .artifacts/link-repair-report.md \
+            --summary | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Code example validation report (non-blocking)
+        continue-on-error: true
+        run: |
+          mkdir -p .artifacts
+          python3 build/scripts/docs/validate-examples.py \
+            --root . \
+            --docs-dir docs \
+            --output .artifacts/examples-validation-report.md \
+            --summary | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload docs validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-validation-reports
+          path: .artifacts/
+          if-no-files-found: ignore
 
   # ─── Regenerate All Documentation ────────────────────────────────────
   # Runs in PARALLEL with validate-docs and scan-todos

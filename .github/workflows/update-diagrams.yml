@@ -1,3 +1,8 @@
+# Consolidated diagram artifact workflow
+# Replaces and combines:
+#   - update-diagrams.yml (Graphviz/DOT → SVG)
+#   - update-uml-diagrams.yml (PlantUML → PNG)
+
 name: Update Diagram Artifacts
 
 on:
@@ -6,6 +11,7 @@ on:
       - main
     paths:
       - 'docs/diagrams/*.dot'
+      - 'docs/diagrams/uml/*.puml'
       - 'src/Meridian.Wpf/App.xaml.cs'
       - 'src/Meridian.Wpf/MainWindow.xaml.cs'
       - 'src/Meridian.Wpf/Services/NavigationService.cs'
@@ -72,3 +78,48 @@ jobs:
         with:
           commit_message: 'docs(diagrams): regenerate SVG from DOT sources'
           file_pattern: docs/diagrams/*.dot docs/diagrams/*.svg
+
+  regenerate-uml-diagrams:
+    name: Regenerate PNG diagrams from PlantUML sources
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jre-headless wget
+          PLANTUML_VERSION="1.2024.8"
+          wget -q "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" \
+            -O /usr/local/share/plantuml.jar
+          printf '#!/bin/sh\nexec java -jar /usr/local/share/plantuml.jar "$@"\n' \
+            | sudo tee /usr/local/bin/plantuml > /dev/null
+          sudo chmod +x /usr/local/bin/plantuml
+          plantuml -version
+
+      - name: Regenerate UML PNG artifacts
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          puml_files=(docs/diagrams/uml/*.puml)
+
+          if [ ${#puml_files[@]} -eq 0 ]; then
+            echo "No PlantUML files found in docs/diagrams/uml"
+            exit 0
+          fi
+
+          for file in "${puml_files[@]}"; do
+            echo "Rendering ${file}"
+            plantuml -tpng "$file"
+          done
+
+      - name: Commit regenerated UML diagrams
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs(uml): regenerate PNG diagrams from PlantUML sources'
+          file_pattern: docs/diagrams/uml/*.png
