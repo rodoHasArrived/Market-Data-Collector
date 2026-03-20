@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-20
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23334483101
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23334831002
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -26,9 +26,15 @@ messages:
       - `CS0509`
 
       ## Failure Patterns
-      - `2026-03-20T08:17:29.7029594Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from seal...`
-      - `2026-03-20T08:17:31.3449262Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from seal...`
-      - `2026-03-20T08:17:31.3441484Z Build FAILED.`
+      - `2026-03-20T08:31:13.6146667Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Contracts\Configuration\AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from sealed type 'Symb...`
+      - `2026-03-20T08:31:14.6643152Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Contracts\Configuration\AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from sealed type 'Symb...`
+      - `2026-03-20T08:27:28.7243570Z ##[error]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from sea...`
+      - `2026-03-20T08:27:30.0078990Z ##[error]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from sea...`
+      - `2026-03-20T08:31:53.7587250Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from seal...`
+      - `2026-03-20T08:31:55.3202089Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from seal...`
+      - `2026-03-20T08:31:14.6638577Z Build FAILED.`
+      - `2026-03-20T08:27:30.0016080Z Build FAILED.`
+      - `2026-03-20T08:31:55.3186553Z Build FAILED.`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

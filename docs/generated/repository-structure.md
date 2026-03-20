@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 08:33:23 UTC
+> Auto-generated on 2026-03-20 09:23:49 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -475,6 +475,15 @@ Meridian/
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   ├── storage-architecture-evaluation.md
 │   │   └── windows-desktop-provider-configurability-assessment.md
+│   ├── examples/
+│   │   └── provider-template/
+│   │       ├── README.md
+│   │       ├── TemplateConfig.cs
+│   │       ├── TemplateConstants.cs
+│   │       ├── TemplateFactory.cs
+│   │       ├── TemplateHistoricalDataProvider.cs
+│   │       ├── TemplateMarketDataClient.cs
+│   │       └── TemplateSymbolSearchProvider.cs
 │   ├── generated/
 │   │   ├── adr-index.md
 │   │   ├── configuration-schema.md
@@ -974,8 +983,6 @@ Meridian/
 │   │   └── Meridian.FSharp.fsproj
 │   ├── Meridian.Infrastructure/
 │   │   ├── Adapters/
-│   │   │   ├── _Template/
-│   │   │   │   ...
 │   │   │   ├── Alpaca/
 │   │   │   │   ...
 │   │   │   ├── AlphaVantage/
@@ -1671,6 +1678,7 @@ Meridian/
 │   │   │   └── Golden/
 │   │   │       ...
 │   │   ├── TestHelpers/
+│   │   │   ├── PolygonStubClient.cs
 │   │   │   └── TestMarketEventPublisher.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── Meridian.Tests.csproj

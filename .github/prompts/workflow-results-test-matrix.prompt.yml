@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-20
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23334483101
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23334831002
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,9 +19,11 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-20T08:17:29.7029594Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: ...`
-      - `2026-03-20T08:17:31.3449262Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: ...`
-      - `2026-03-20T08:17:31.3441484Z Build FAILED.`
+      - `2026-03-20T08:31:13.6146667Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Contracts\Configuration\AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymb...`
+      - `2026-03-20T08:31:14.6643152Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Contracts\Configuration\AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymb...`
+      - `2026-03-20T08:27:28.7243570Z ##[error]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509:...`
+      - `2026-03-20T08:27:30.0078990Z ##[error]/Users/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509:...`
+      - `2026-03-20T08:31:53.7587250Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: ...`
 
 
       ## Error Codes
@@ -38,7 +40,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23334483101
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23334831002
 
       Additional context:
       {{additional_context}}

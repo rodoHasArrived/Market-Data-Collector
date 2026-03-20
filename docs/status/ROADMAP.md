@@ -31,8 +31,8 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 
 - **35 tracked improvement items total** (core themes A–G)
   - ✅ Completed: 33
-  - 🔄 Partial: 1 (G2 — OpenTelemetry trace context propagation)
-  - 📝 Open: 1 (C3 — WebSocket Provider Base Class Adoption)
+  - 🔄 Partial: 2 (C3 — WebSocket lifecycle consolidation, G2 — OpenTelemetry trace context propagation)
+  - 📝 Open: 0
 - **8 new theme items** (themes H–I)
   - ✅ Completed: 6 (H1, H3, H4, I1, I2, I4)
   - 🔄 Partial: 1 (I3 — Configuration Schema Validation)
@@ -40,7 +40,7 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 - **8 canonicalization items** (theme J)
   - ✅ Completed: 7 (J1–J7 — design, MarketEvent fields, canonicalizer, condition codes, venue normalization, provider wiring, metrics)
   - 🔄 Partial: 1 (J8 — Golden fixture test suite; curated fixtures + fixture-runner tests added, drift-canary CI still pending)
-- Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete. C3 partially resolved — Polygon now uses `WebSocketProviderBase`; NYSE and StockSharp pending.
+- Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete. C3 is now explicitly partial: Polygon uses `WebSocketProviderBase`, NYSE remains pending, and StockSharp is tracked as a separate connector-oriented concern.
 - **Trading workstation migration**: Core functionality exists, but the UX remains page-centric. The next major delivery wave consolidates Meridian into Research, Trading, Data Operations, and Governance workspaces with a shared run / portfolio / ledger model.
 - **Provider completeness**: Polygon and StockSharp functional with credentials; IB and NYSE require external setup steps.
 
@@ -59,7 +59,7 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 6: Duplicate & Unused Code Cleanup | ✅ Completed | Cleanup phase closed; residual cleanup now folded into normal maintenance. |
 | Phase 7: Extended Capabilities | ⏸️ Optional / rolling | Scheduled as capacity permits. |
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
-| Phase 9: Final Production Release | 🔄 Active target | 94.3% of core improvements complete; C3 WebSocket refactor partial (Polygon done; NYSE/StockSharp pending), G2 trace propagation pending. |
+| Phase 9: Final Production Release | 🔄 Active target | 94.3% of core improvements complete; C3 lifecycle consolidation partial (Polygon done; NYSE pending, StockSharp re-scoped), G2 trace propagation pending. |
 | Phase 10: Scalability & Multi-Instance | 📝 Planned | New phase for horizontal scaling and multi-instance coordination. |
 | Phase 11: Trading Workstation Structure | 📝 Planned | Reorganize UX around Research, Trading, Data Operations, and Governance workspaces. |
 | Phase 12: Shared Run / Portfolio / Ledger Model | 📝 Planned | Standardize run browser, portfolio summaries, and ledger-first read models. |

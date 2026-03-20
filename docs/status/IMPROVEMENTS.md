@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
-**Version:** 1.6.2
-**Last Updated:** 2026-02-25
+**Version:** 1.7.0
+**Last Updated:** 2026-03-20
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -24,6 +24,7 @@ This document consolidates **functional improvements** (features, reliability, U
 - [Dependency Map](#dependency-map)
 - [Definition of Done Checklist](#definition-of-done-checklist)
 - [Review Cadence & Reporting](#review-cadence--reporting)
+- [Theme K: Trading Workstation Migration](#theme-k-trading-workstation-migration)
 
 ---
 
@@ -34,8 +35,8 @@ This document consolidates **functional improvements** (features, reliability, U
 | Status | Count | Items |
 |--------|-------|-------|
 | ✅ **Completed** | 33 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B3, B4, B5, C1, C2, C4, C5, C6, C7, D1, D2, D3, D4, D5, D6, D7, E1, E2, E3, F1, F2, F3, G1, G3 |
-| 🔄 **Partially Complete** | 1 | G2 |
-| 📝 **Open** | 1 | C3 |
+| 🔄 **Partially Complete** | 2 | C3, G2 |
+| 📝 **Open** | 0 | None |
 | **Total** | 35 | All improvement items (core) |
 
 ### By Theme
@@ -44,7 +45,7 @@ This document consolidates **functional improvements** (features, reliability, U
 |-------|-----------|---------|------|-------|
 | A: Reliability & Resilience | 7 | 0 | 0 | 7 |
 | B: Testing & Quality | 5 | 0 | 0 | 5 |
-| C: Architecture & Modularity | 6 | 0 | 1 | 7 |
+| C: Architecture & Modularity | 6 | 1 | 0 | 7 |
 | D: API & Integration | 7 | 0 | 0 | 7 |
 | E: Performance & Scalability | 3 | 0 | 0 | 3 |
 | F: User Experience | 3 | 0 | 0 | 3 |
@@ -53,10 +54,10 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 94.3% complete (33/35), 2.9% partial (1/35), 2.9% open (1/35).
-- **Remaining open item:** C3 (WebSocket Provider Base Class Adoption) — refactor to reduce ~200-300 LOC duplication across WebSocket providers.
-- **Remaining partial item:** G2 (OpenTelemetry trace context propagation) — framework complete, explicit cross-boundary propagation pending.
-- **Recommended focus:** C3 refactor (1 week), G2 trace propagation (1 week), then shift to Theme H/I new capabilities.
+- **Completion ratio:** 94.3% complete (33/35), 5.7% partial (2/35), 0% open (0/35).
+- **Remaining partial items:** C3 (WebSocket provider lifecycle consolidation) and G2 (OpenTelemetry trace context propagation).
+- **C3 scope update:** Polygon now extends `WebSocketProviderBase`; the remaining structural work is the NYSE streaming migration, while StockSharp is now treated as a separate connector-based pattern rather than a direct WebSocket-base candidate.
+- **Recommended focus:** finish NYSE-side C3 consolidation, complete G2 trace propagation, then continue Theme J fixture drift detection and Theme K workstation migration planning.
 
 ### Next Sprint Backlog (Recommended)
 
@@ -68,8 +69,8 @@ This document consolidates **functional improvements** (features, reliability, U
 | 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
 | 5 | B2 tranche 1, D7 remainder | Negative-path + schema validation tests; typed annotations across all endpoint families | ✅ Done |
 | 6 | C1/C2, H1, H4, I1 | Provider registration unified under DI; per-provider backfill rate limiting; degradation scoring; test harness | ✅ Done |
-| 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 🔄 Partial (B3 tranche 2 done; H2 pending) |
-| 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 🔄 Partial (H3 done; G2 trace propagation pending) |
+| 7 | C3 remainder, B3 tranche 2 | NYSE WebSocket lifecycle consolidation; IB + Alpaca provider tests | 🔄 Partial (Polygon done; NYSE pending; B3 tranche 2 done) |
+| 8 | G2 remainder, J8 canary | Full trace propagation and canonicalization drift detection | 🔄 Partial (G2 trace propagation pending; J8 CI canary pending) |
 
 ---
 
@@ -460,33 +461,29 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### C3. 📝 WebSocket Provider Base Class Adoption (OPEN)
+### C3. 🔄 WebSocket Provider Lifecycle Consolidation (PARTIALLY COMPLETE)
 
-**Impact:** High | **Effort:** High | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 🔄 PARTIAL
 
-**Problem:** `WebSocketProviderBase` exists with connection lifecycle, heartbeat, resilience, reconnection logic. However, none of the major WebSocket providers use it:
-- Polygon (1,263 lines) manages `ClientWebSocket` directly
-- NYSE manages `ClientWebSocket` directly
-- StockSharp (1,325 lines) has custom task-based reconnection
-- Only Alpaca uses separate `WebSocketConnectionManager` helper
+**Problem:** WebSocket lifecycle management was historically duplicated across streaming providers, increasing maintenance cost around reconnect, heartbeat, and subscription recovery behavior.
 
-~800 lines of WebSocket management are duplicated across providers.
+**Current State:**
+- ✅ `PolygonMarketDataClient` now extends `WebSocketProviderBase`, removing large amounts of bespoke connection-management code.
+- 📝 `NYSEDataSource` still carries its own lifecycle path and remains the primary remaining C3 follow-up.
+- ℹ️ `StockSharpMarketDataClient` is now treated separately: it wraps a third-party connector rather than a raw WebSocket, so direct `WebSocketProviderBase` adoption is no longer the right target.
 
-**Proposed Solution:**
-- Refactor Polygon, NYSE, StockSharp to extend `WebSocketProviderBase`
-- Override `ConnectionUri`, `ProviderName`, and message handling hooks
-- Move reconnection, heartbeat, receive loop into base class
-- Keep provider-specific auth and message parsing in subclasses
+**Remaining Work:**
+- Refactor NYSE streaming lifecycle onto the shared provider base or an equivalent shared abstraction after interface alignment.
+- Keep Polygon as the reference implementation/template for future raw WebSocket providers.
+- Reassess whether StockSharp needs a connector-oriented base abstraction instead of participating in C3 directly.
 
 **Files:**
-- `Infrastructure/Shared/WebSocketProviderBase.cs`
-- `Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
-- `Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs`
-- `Infrastructure/Adapters/NYSE/NYSEDataSource.cs`
+- `src/Meridian.Infrastructure/Adapters/Core/WebSocketProviderBase.cs`
+- `src/Meridian.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs`
+- `src/Meridian.Infrastructure/Adapters/NYSE/NYSEDataSource.cs`
+- `docs/development/refactor-map.md`
 
-**Benefit:** Eliminates ~800 lines duplicated connection management. Bug fixes apply everywhere.
-
-**ROADMAP:** Phase 2 (Architecture) - Item 2C
+**ROADMAP:** Phase 2 (Architecture)
 
 ---
 
@@ -1178,7 +1175,7 @@ No clear contract for what each validates or when it runs.
 |----------|-------|-------------|
 | **P0** | A1-A4 | Critical reliability fixes - ALL DONE ✅ |
 | **P1** | A3, A5, B1-B2, C1-C2, C4-C6, D4, G1 | High impact, low-medium effort - A3, B2 DONE ✅ |
-| **P2** | A6-A7, B3-B5, C3, D5-D6, E1, F2-F3, G2-G3 | Medium impact or higher effort - B5, F2 DONE ✅ |
+| **P2** | A6-A7, B3-B5, C3, D5-D6, E1, F2-F3, G2-G3, J8 | Medium impact or higher effort - most complete; C3/G2/J8 remain active 🔄 |
 | **P3** | D7, E3 | Lower priority or high effort - C7, F1 DONE ✅ |
 
 ### Recommended Execution Order
@@ -1202,7 +1199,7 @@ No clear contract for what each validates or when it runs.
 12. B5 — Provider SDK tests
 
 **Phase 4 — Larger Refactors (12-16 weeks):**
-13. C3 — WebSocket base class adoption
+13. C3 — NYSE-side WebSocket lifecycle consolidation
 14. ~~C7 — WPF/UWP service deduplication~~ ✅ Done (UWP removed)
 15. E3 — GC pressure reduction (Polygon optimization)
 16. ~~F1 — UWP navigation consolidation~~ ✅ Done (UWP removed)
@@ -1292,7 +1289,7 @@ Each item should not be marked complete until all gates are met:
 2. ~~C6, A7~~ ✅ Done
 3. ~~B2 → B3 (provider confidence)~~ ✅ Done
 4. ~~C1/C2 (composition + provider extensibility)~~ ✅ Done
-5. C3 (WebSocket base class) → G2 remainder (trace propagation)
+5. C3 remainder (NYSE lifecycle consolidation) → G2 remainder (trace propagation)
 
 ---
 
@@ -1352,9 +1349,9 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-25
+**Last Updated:** 2026-03-20
 **Maintainer:** Project Team
-**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items) + Theme J canonicalization (7/8)
+**Status:** ✅ Active tracking document — 94.3% complete (33/35 core items), 2 partial core items remaining, Theme J canonicalization at 7/8, Theme K planning active
 **Next Review:** Weekly engineering sync (or immediately after any status change)
 
 

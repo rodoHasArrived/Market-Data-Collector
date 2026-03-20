@@ -1,8 +1,8 @@
 # Market Data Collector - Consolidated Evaluations & Audits
 
 **Version:** 1.7.0
-**Last Updated:** 2026-03-19
-**Status:** Consolidated reference document
+**Last Updated:** 2026-03-20
+**Status:** Consolidated reference document (aligned with current roadmap/status docs)
 
 This document consolidates all architecture evaluations, code audits, desktop assessments, improvement brainstorms, and architecture proposals into a single navigable reference. It replaces the need to read 20+ individual files across `docs/evaluations/`, `docs/audits/`, and `docs/development/` for a complete project health picture.
 
@@ -16,6 +16,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 ## Table of Contents
 
 - [Project Health Summary](#project-health-summary)
+- [Refresh Highlights](#refresh-highlights)
 - [Architecture Evaluations](#architecture-evaluations)
   - [Real-Time Streaming Architecture](#real-time-streaming-architecture)
   - [Storage Architecture](#storage-architecture)
@@ -26,6 +27,8 @@ This document consolidates all architecture evaluations, code audits, desktop as
 - [Desktop Assessments](#desktop-assessments)
   - [Desktop UX Assessment](#desktop-ux-assessment)
   - [Desktop Provider Configurability](#desktop-provider-configurability)
+  - [Desktop Platform Improvements Guide](#desktop-platform-improvements-guide)
+  - [Desktop Improvements Executive Summary](#desktop-improvements-executive-summary)
 - [Code Audits](#code-audits)
   - [Repository Hygiene (H1-H3)](#repository-hygiene-h1-h3)
   - [Debug Code Analysis (H3)](#debug-code-analysis-h3)
@@ -65,6 +68,16 @@ This document consolidates all architecture evaluations, code audits, desktop as
 | Code Generalization | Strong domain types needed | Stringly-typed identifiers, thin singletons, and duplicated WebSocket lifecycle code are top risks | [Brainstorm](#high-impact-improvements-brainstorm-febmar-2026) |
 | Nautilus-Inspired Restructuring | Partially Implemented | 5/12 proposals implemented; co-located provider configs, parsing layer, FSM base still open | [Proposal](#nautilus-inspired-restructuring) |
 | Next Frontier (March 2026) | 94%+ core complete | 11 capabilities shipped; correlation engine, ML anomaly detection, cloud sinks remain future work | [Brainstorm](#next-frontier-brainstorm-march-2026) |
+
+## Refresh Highlights
+
+**This 2026-03-20 refresh aligns the consolidated document with the current planning set:**
+
+- C1/C2 provider registration and DI composition are now reflected as **completed**, matching `IMPROVEMENTS.md` and `ROADMAP.md`.
+- Operational readiness now reflects the shipped SLO registry, alert-to-runbook linkage, and current remaining work (release gates, rollback drills).
+- Desktop coverage now includes the implementation guide and executive summary alongside the historical UX assessment and configurability review.
+- Cross-cutting findings now distinguish between **completed foundations** and **still-open follow-through work**, instead of pointing at superseded statuses.
+- Repository cleanup notes now call out that generated documentation has been refreshed since the original cleanup audit, leaving HtmlTemplateGenerator asset extraction as the main residual cleanup idea.
 
 ---
 
@@ -299,6 +312,31 @@ This document consolidates all architecture evaluations, code audits, desktop as
 - ✅ Provider health dashboard: `/api/providers/dashboard` for runtime state visibility
 - 🔄 UI implementation: Provider list and reordering partial; full settings workflow in Phase 11
 
+### Desktop Platform Improvements Guide
+
+> Source: `docs/evaluations/desktop-platform-improvements-implementation-guide.md`
+> Date: 2026-02-22 | Status: Implementation guide retained for active migration work
+
+**Purpose:** Turns the desktop evaluations into concrete delivery work across testing, fixture mode, DI cleanup, and workflow-focused operator UX.
+
+**Most relevant active guidance:**
+- Establish deterministic desktop testing paths before expanding workflow surfaces further
+- Prefer fixture/live provenance cues over simulated placeholder values
+- Continue moving page-specific logic into testable services/view models
+- Use the guide as the implementation bridge between historical desktop audits and Phases 11-13 in `ROADMAP.md`
+
+### Desktop Improvements Executive Summary
+
+> Source: `docs/evaluations/desktop-improvements-executive-summary.md`
+> Date: 2026-02-22 | Updated: 2026-03-19 | Status: Current summary for desktop modernization
+
+**Executive Takeaway:** The desktop stack has broad functional coverage already, but the highest-value remaining work is UX consolidation, stronger live-state trust signals, and a workflow-centric trading workstation structure.
+
+**Current planning alignment:**
+- Phase 11 — Reorganize the UX around Research, Trading, Data Operations, and Governance workspaces
+- Phase 12 — Standardize shared run / portfolio / ledger read models
+- Phase 13 — Unify native backtesting, Lean integration, and paper-trading workflows
+
 ---
 
 ## Code Audits
@@ -352,7 +390,7 @@ This document consolidates all architecture evaluations, code audits, desktop as
 | Architecture Debt (DataGapRepair DI, SubscriptionManager rename) | Done |
 
 **Remaining:**
-- Generated docs not yet refreshed to reflect post-UWP state
+- Historical note: the original audit flagged generated docs as stale, but `docs/generated/` has since been refreshed and expanded
 - HtmlTemplateGenerator still embeds CSS/JS inline (2,533 LOC) — could move to `wwwroot/`
 
 ---
@@ -682,33 +720,39 @@ paths.
 
 ---
 
+## Cross-Cutting Findings
 
-
-These themes recur across multiple evaluations:
+These themes recur across multiple evaluations and are now aligned to the current planning set.
 
 ### 1. Provider Registration Unification (Theme C)
 
-Multiple evaluations (streaming, historical, desktop configurability) identify fragmented provider registration as a friction point. Currently 3 separate creation mechanisms exist.
+Multiple evaluations (streaming, historical, desktop configurability) identified fragmented provider registration as a friction point. That foundation work is now substantially complete.
 
-**Tracked as:** C1 (Unified Provider Registry), C2 (Single DI Composition Path) in IMPROVEMENTS.md — both Open.
+**Current state:** C1 (Unified Provider Registry) and C2 (Single DI Composition Path) are completed; remaining provider-architecture follow-through is concentrated in C3 (`WebSocketProviderBase` adoption for NYSE and StockSharp) and adjacent provider-local cleanup.
 
 ### 2. Operational SLO Standardization
 
-Both the operational readiness and data quality evaluations recommend formal SLO definitions per subsystem to improve alert quality and incident response.
+Operational readiness and data quality evaluations both called for formal SLO definitions and tighter alert/runbook linkage.
 
-**Tracked as:** Part of Phase 9 (Final Production Release) in ROADMAP.md.
+**Current state:** The SLO registry and alert-to-runbook linkage are implemented. Remaining work is operational process hardening: release gates, rollback drills, and post-incident review discipline.
 
-### 3. Unified Job/Orchestration Model
+### 3. Unified Job / Orchestration Model
 
-The ingestion orchestration and desktop UX evaluations both highlight the need for a unified job state machine covering both realtime and historical workloads.
+The ingestion orchestration and desktop UX evaluations both highlighted the need for a single job model spanning realtime and backfill workloads.
 
-**Tracked as:** H3 (Event Replay Infrastructure) and Objective 5 (Scalability) in ROADMAP.md.
+**Current state:** The core lifecycle is in place through `IngestionJobService`, checkpoint semantics, and resumable job endpoints. The remaining work is operator-facing UX consolidation and broader workflow integration in roadmap Phases 11-13.
 
 ### 4. Code Simplification Backlog
 
-The further simplification audit identified ~2,800-3,400 lines of removable code. High-priority items (`Task.Run` misuse, bare catches, dead code) should be addressed before the next release.
+The simplification audit still identifies ~2,800-3,400 lines of removable or reducible code, especially around bare catches, dead code, and unnecessary async wrappers.
 
-**Tracked as:** Not yet in IMPROVEMENTS.md themes — recommended for inclusion in Phase 8 (Repository Organization).
+**Current state:** This remains active technical debt. It is best treated as rolling Phase 8 maintenance and should be pulled forward whenever adjacent feature work touches those areas.
+
+### 5. Desktop Modernization Throughline
+
+The desktop assessment set is consistent: infrastructure and coverage are much stronger than the remaining operator experience.
+
+**Current state:** The strongest path forward is not net-new page sprawl; it is workflow consolidation, view-model/service extraction, stronger provenance/staleness signals, and alignment to the trading workstation migration blueprint.
 
 ---
 
@@ -768,4 +812,4 @@ All source documents that feed into this consolidation:
 
 ---
 
-*Last Updated: 2026-03-19*
+*Last Updated: 2026-03-20*
