@@ -1,7 +1,7 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-20T02:02:32.855702+00:00
+> Last updated: 2026-03-20T02:09:09.071663+00:00
 
 ## Overall Health Score
 
@@ -14,9 +14,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 225 |
-| Total lines | 88,347 |
-| Average file size (lines) | 392.7 |
+| Total documentation files | 226 |
+| Total lines | 88,160 |
+| Average file size (lines) | 390.1 |
 | Orphaned files | 41 |
 | Files without headings | 2 |
 | Stale files (>90 days) | 0 |
@@ -74,7 +74,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-20 | 91 | 225 | 41 | 0 |
+| 2026-03-20 | 91 | 226 | 41 | 0 |
 
 ---
 

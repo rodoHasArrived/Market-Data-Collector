@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 02:02:28 UTC
+> Auto-generated on 2026-03-20 02:09:04 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -502,7 +502,8 @@ Meridian/
 │   │   ├── assembly-performance-roadmap.md
 │   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
-│   │   └── quant-script-environment-blueprint.md
+│   │   ├── quant-script-environment-blueprint.md
+│   │   └── trading-workstation-migration-blueprint.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
 │   │   ├── backfill-guide.md
@@ -725,7 +726,8 @@ Meridian/
 │   │   ├── FillModels/
 │   │   │   ├── BarMidpointFillModel.cs
 │   │   │   ├── IFillModel.cs
-│   │   │   └── OrderBookFillModel.cs
+│   │   │   ├── OrderBookFillModel.cs
+│   │   │   └── OrderFillResult.cs
 │   │   ├── Metrics/
 │   │   │   ├── BacktestMetricsEngine.cs
 │   │   │   └── XirrCalculator.cs
@@ -892,6 +894,8 @@ Meridian/
 │   ├── Meridian.Execution/
 │   │   ├── Adapters/
 │   │   │   └── PaperTradingGateway.cs
+│   │   ├── Exceptions/
+│   │   │   └── UnsupportedOrderRequestException.cs
 │   │   ├── Interfaces/
 │   │   │   ├── IExecutionContext.cs
 │   │   │   ├── ILiveFeedAdapter.cs
@@ -901,6 +905,7 @@ Meridian/
 │   │   │   ├── ExecutionPosition.cs
 │   │   │   ├── IPortfolioState.cs
 │   │   │   ├── OrderAcknowledgement.cs
+│   │   │   ├── OrderGatewayCapabilities.cs
 │   │   │   ├── OrderStatus.cs
 │   │   │   ├── OrderStatusUpdate.cs
 │   │   │   └── OrderType.cs
@@ -1001,12 +1006,16 @@ Meridian/
 │   │   ├── GlobalUsings.cs
 │   │   ├── IReadOnlyLedger.cs
 │   │   ├── JournalEntry.cs
+│   │   ├── JournalEntryMetadata.cs
 │   │   ├── Ledger.cs
 │   │   ├── LedgerAccount.cs
 │   │   ├── LedgerAccounts.cs
 │   │   ├── LedgerAccountSummary.cs
 │   │   ├── LedgerAccountType.cs
+│   │   ├── LedgerBalancePoint.cs
 │   │   ├── LedgerEntry.cs
+│   │   ├── LedgerQuery.cs
+│   │   ├── LedgerSnapshot.cs
 │   │   ├── LedgerValidationException.cs
 │   │   └── Meridian.Ledger.csproj
 │   ├── Meridian.Mcp/
@@ -1562,6 +1571,8 @@ Meridian/
 │   │   │   ├── Models/
 │   │   │   │   ...
 │   │   │   └── StrongDomainTypeTests.cs
+│   │   ├── Execution/
+│   │   │   └── PaperTradingGatewayTests.cs
 │   │   ├── Infrastructure/
 │   │   │   ├── DataSources/
 │   │   │   │   ...
