@@ -84,6 +84,7 @@ Meridian/
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
 │   │   └── skills_provider.py
+│   ├── settings.json
 │   └── settings.local.json
 ├── .devcontainer/
 │   └── devcontainer.json
@@ -407,6 +408,7 @@ Meridian/
 │   │   ├── documentation-automation.md
 │   │   ├── documentation-contribution-guide.md
 │   │   ├── expanding-scripts.md
+│   │   ├── fsharp-decision-rule.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
@@ -536,6 +538,8 @@ Meridian/
 │   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
 │   │   ├── quant-script-environment-blueprint.md
+│   │   ├── readability-refactor-roadmap.md
+│   │   ├── readability-refactor-technical-design-pack.md
 │   │   └── trading-workstation-migration-blueprint.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
