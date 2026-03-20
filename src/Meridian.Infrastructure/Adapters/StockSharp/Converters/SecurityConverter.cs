@@ -73,6 +73,13 @@ public static class SecurityConverter
             "COMEX" => ExchangeBoard.Comex,
             "CBOT" => ExchangeBoard.Cbot,
             "ICE" => ExchangeBoard.Ice,
+            "ICEUS" => ExchangeBoard.Ice,
+            "ICEEU" => ExchangeBoard.Ice,
+
+            // European derivatives aliases
+            "EUREX" => ExchangeBoard.Associated,
+            "EFE" => ExchangeBoard.Associated,
+            "FFE" => ExchangeBoard.Associated,
 
             // US Equities
             "NYSE" => ExchangeBoard.Nyse,
@@ -111,10 +118,15 @@ public static class SecurityConverter
         {
             "STK" => SecurityTypes.Stock,
             "STOCK" => SecurityTypes.Stock,
+            "ETF" => SecurityTypes.Etf,
+            "FUND" => SecurityTypes.Etf,
             "FUT" => SecurityTypes.Future,
             "FUTURE" => SecurityTypes.Future,
+            "SSF" => SecurityTypes.Future,
             "OPT" => SecurityTypes.Option,
             "OPTION" => SecurityTypes.Option,
+            "IND_OPT" => SecurityTypes.Option,
+            "IOPT" => SecurityTypes.Option,
             "FOP" => SecurityTypes.Option, // Futures option
             "CASH" => SecurityTypes.Currency,
             "FOREX" => SecurityTypes.Currency,
@@ -122,9 +134,12 @@ public static class SecurityConverter
             "CRYPTO" => SecurityTypes.CryptoCurrency,
             "IND" => SecurityTypes.Index,
             "INDEX" => SecurityTypes.Index,
-            "ETF" => SecurityTypes.Etf,
             "BOND" => SecurityTypes.Bond,
             "CFD" => SecurityTypes.Cfd,
+            "MARGIN" => SecurityTypes.Cfd,
+            "CMDTY" => SecurityTypes.Future,
+            "WAR" => SecurityTypes.Option,
+            "BAG" => SecurityTypes.Option,
             _ => null
         };
     }

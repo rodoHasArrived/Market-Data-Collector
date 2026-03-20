@@ -330,7 +330,7 @@ public sealed class ConfigValidatorCli
             "StockSharp.InteractiveBrokers.Host" => "Set MDC_STOCKSHARP_IB_HOST or update StockSharp:InteractiveBrokers:Host",
             var p when p.Contains("Symbol") => "Symbol must be 1-20 uppercase characters",
             var p when p.Contains("DepthLevels") => "Depth levels should be between 1 and 50",
-            var p when p.Contains("SecurityType") => "Valid types: STK, OPT, FUT, CASH, IND, CFD, BOND",
+            var p when p.Contains("SecurityType") => "Valid types: STK, OPT, IND_OPT, FUT, FOP, SSF, CASH, FOREX, FX, IND, CFD, BOND, CMDTY, CRYPTO, ETF, FUND, WAR, BAG, MARGIN",
             var p when p.Contains("Currency") => "Valid currencies: USD, EUR, GBP, JPY, CHF, CAD, AUD",
             _ => null
         };

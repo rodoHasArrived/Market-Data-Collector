@@ -348,7 +348,11 @@ public sealed class StorageConfigValidator : AbstractValidator<StorageConfig>
 /// </summary>
 public sealed class SymbolConfigValidator : AbstractValidator<SymbolConfig>
 {
-    private static readonly string[] ValidSecurityTypes = { "STK", "OPT", "FUT", "CASH", "IND", "FOP", "CFD", "BOND", "CMDTY", "CRYPTO" };
+    private static readonly string[] ValidSecurityTypes =
+    {
+        "STK", "OPT", "IND_OPT", "FUT", "FOP", "SSF", "CASH", "FOREX", "FX", "IND",
+        "CFD", "BOND", "CMDTY", "CRYPTO", "ETF", "FUND", "WAR", "BAG", "MARGIN"
+    };
 
     public SymbolConfigValidator()
     {

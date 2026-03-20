@@ -419,7 +419,9 @@ async function loadConfig() {{
     for (const s of symbols) {{
       const tr = document.createElement('tr');
       const secType = s.securityType || 'STK';
-      const typeColor = secType === 'OPT' || secType === 'IND_OPT' ? 'var(--accent-purple)' : (secType === 'FUT' ? 'var(--accent-orange)' : 'var(--text-secondary)');
+      const optionTypes = ['OPT', 'IND_OPT', 'FOP'];
+      const futureTypes = ['FUT', 'SSF'];
+      const typeColor = optionTypes.includes(secType) ? 'var(--accent-purple)' : (futureTypes.includes(secType) ? 'var(--accent-orange)' : 'var(--text-secondary)');
       tr.innerHTML = `
         <td><span style=""font-weight: 600; font-family: var(--font-mono); color: var(--accent-cyan);"">${{s.symbol}}</span></td>
         <td><span style=""font-family: var(--font-mono); font-size: 11px; color: ${{typeColor}};"">${{secType}}</span></td>
@@ -710,7 +712,7 @@ async function runBackfill() {{
 
 function toggleOptionsFields() {{
   const secType = document.getElementById('secType').value;
-  const isOption = secType === 'OPT' || secType === 'IND_OPT';
+  const isOption = ['OPT', 'IND_OPT', 'FOP'].includes(secType);
   document.getElementById('optionFields').classList.toggle('hidden', !isOption);
   if (isOption && secType === 'IND_OPT') {{
     document.getElementById('optStyle').value = 'European';
@@ -856,7 +858,7 @@ async function addSymbol() {{
   }}
 
   const secType = document.getElementById('secType').value;
-  const isOption = secType === 'OPT' || secType === 'IND_OPT';
+  const isOption = ['OPT', 'IND_OPT', 'FOP'].includes(secType);
 
   const payload = {{
     symbol: symbol,
