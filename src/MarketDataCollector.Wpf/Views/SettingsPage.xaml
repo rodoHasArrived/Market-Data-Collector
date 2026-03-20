@@ -569,7 +569,7 @@
                     <StackPanel>
                         <TextBlock Text="About" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
 
-                        <TextBlock Text="Market Data Collector"
+                        <TextBlock Text="Meridian"
                                    FontWeight="SemiBold"
                                    FontSize="16"
                                    Foreground="{StaticResource ConsoleTextPrimaryBrush}" />

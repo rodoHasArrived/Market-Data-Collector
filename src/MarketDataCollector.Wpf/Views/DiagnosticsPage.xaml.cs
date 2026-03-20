@@ -14,7 +14,7 @@ namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
 /// Diagnostics page providing system information, configuration checks,
-/// and diagnostic actions for troubleshooting the Market Data Collector.
+/// and diagnostic actions for troubleshooting Meridian.
 /// </summary>
 public partial class DiagnosticsPage : Page
 {
@@ -172,7 +172,7 @@ public partial class DiagnosticsPage : Page
         var output = new StringBuilder();
         output.AppendLine("=== Full Diagnostic Report ===");
         output.AppendLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-        output.AppendLine($"Application: Market Data Collector v{AppVersion}");
+        output.AppendLine($"Application: Meridian v{AppVersion}");
         output.AppendLine();
 
         // System Information

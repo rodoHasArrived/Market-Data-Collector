@@ -31,7 +31,7 @@
                            VerticalAlignment="Center" />
             </StackPanel>
 
-            <TextBlock Text="Learn how to use Market Data Collector with interactive tutorials, documentation, and keyboard shortcuts."
+            <TextBlock Text="Learn how to use Meridian with interactive tutorials, documentation, and keyboard shortcuts."
                        Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                        Margin="0,0,0,24" />
 
@@ -62,7 +62,7 @@
                                 Click="StartTutorial_Click" />
                     </Grid>
 
-                    <TextBlock Text="New to Market Data Collector? Follow our step-by-step tutorial to get up and running in minutes."
+                    <TextBlock Text="New to Meridian? Follow our step-by-step tutorial to get up and running in minutes."
                                TextWrapping="Wrap"
                                Foreground="{StaticResource ConsoleTextSecondaryBrush}"
                                Margin="0,0,0,16" />

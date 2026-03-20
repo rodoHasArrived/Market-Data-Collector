@@ -1,6 +1,6 @@
-# Market Data Collector - WPF Desktop Application
+# Meridian - WPF Desktop Application
 
-This is the WPF (.NET 9) desktop application for Market Data Collector, providing a modern Windows desktop experience with maximum stability and compatibility.
+This is the WPF (.NET 9) desktop application for Meridian, providing a modern Windows desktop experience with maximum stability and compatibility.
 
 ## Overview
 

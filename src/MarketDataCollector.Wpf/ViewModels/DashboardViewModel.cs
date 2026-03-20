@@ -434,11 +434,11 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
         {
             if (!isReachable)
             {
-                AddActivityItem("Backend unreachable", "Cannot connect to the Market Data Collector service");
+                AddActivityItem("Backend unreachable", "Cannot connect to the Meridian service");
             }
             else
             {
-                AddActivityItem("Backend connected", "Successfully connected to the Market Data Collector service");
+                AddActivityItem("Backend connected", "Successfully connected to the Meridian service");
             }
         });
     }

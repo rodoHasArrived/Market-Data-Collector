@@ -35,8 +35,8 @@
     <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
     <Version>1.0.0</Version>
     <Authors>MarketDataCollector Team</Authors>
-    <Description>Windows Desktop Application for Market Data Collector (WPF)</Description>
-    <Product>Market Data Collector Desktop</Product>
+    <Description>Windows Desktop Application for Meridian (WPF)</Description>
+    <Product>Meridian Desktop</Product>
     <Copyright>Copyright 2024-2026 MarketDataCollector Team</Copyright>
 
     <!-- Windows Desktop Deployment Settings -->

@@ -256,7 +256,7 @@ public partial class SettingsPage : Page
     {
         _notificationService.ShowNotification(
             "Test Notification",
-            "This is a test notification from Market Data Collector.",
+            "This is a test notification from Meridian.",
             NotificationType.Info);
     }
 

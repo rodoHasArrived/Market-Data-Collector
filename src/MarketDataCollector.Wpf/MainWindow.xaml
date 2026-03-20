@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:MarketDataCollector.Wpf"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="Market Data Collector"
+        Title="Meridian"
         Height="900" Width="1400"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"

@@ -13,7 +13,7 @@ using MarketDataCollector.Ui.Services;
 namespace MarketDataCollector.Wpf;
 
 /// <summary>
-/// Market Data Collector WPF Application
+/// Meridian WPF Application
 /// Provides maximum stability through WPF (.NET 9) for Windows-only deployment.
 /// </summary>
 public partial class App : Application
