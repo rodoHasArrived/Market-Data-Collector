@@ -20,7 +20,7 @@ public sealed class TestWriterPrompts(RepoPathService repo)
         sb.AppendLine("- Framework: **xUnit** with **FluentAssertions**");
         sb.AppendLine("- Mocking: **NSubstitute** (preferred) or **Moq**");
         sb.AppendLine("- Test naming: `MethodName_StateUnderTest_ExpectedBehavior`");
-        sb.AppendLine("- Async tests: `async Task` return, proper `await`, never `.Result`");
+        sb.AppendLine("- Async tests: `async Task` return, proper `await`, never block on task completion APIs");
         sb.AppendLine("- One assertion concept per test — use `FluentAssertions` `.Should().Be()` etc.");
         sb.AppendLine("- `CancellationToken.None` in tests (or `CancellationToken ct = default` at boundary)");
         sb.AppendLine("- No shared mutable state between tests — use `IClassFixture<T>` for expensive setup");

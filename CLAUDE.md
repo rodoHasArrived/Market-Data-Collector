@@ -14,6 +14,7 @@
 - Real-time streaming: Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ sources)
 - Historical backfill: 10+ providers with automatic fallback chain
 - Symbol search: 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp)
+- Current provider implementation inventory documented below for audit parity (streaming, historical, symbol-search, base, and template classes)
 - Data quality monitoring with SLA enforcement
 - WAL + tiered JSONL/Parquet storage
 - Backtesting engine with tick-by-tick replay and fill models
@@ -100,7 +101,7 @@ Meridian/
 ├── tests/                   # 4 test projects, ~4,135 tests
 ├── benchmarks/              # BenchmarkDotNet performance benchmarks
 ├── docs/                    # 214 documentation files
-│   ├── adr/                 # Architecture Decision Records (ADR-001…ADR-016)
+│   ├── adr/                 # 17 Architecture Decision Record docs (ADR-001…ADR-016 plus platform restructuring)
 │   ├── ai/claude/           # AI sub-documents (see table below)
 │   ├── architecture/        # System design docs
 │   ├── status/              # Production status and roadmap
@@ -240,7 +241,59 @@ Located in `docs/adr/`. Use `[ImplementsAdr("ADR-XXX", "reason")]` on implementi
 | ADR-013 | Bounded channel pipeline policy — consistent backpressure |
 | ADR-014 | JSON source generators — no-reflection serialization |
 | ADR-015 | Paper trading gateway — risk-free strategy validation for live + backtest parity |
+| ADR-015 | Repository rename and platform restructuring guidance retained as a companion ADR-015 document |
 | ADR-016 | Platform architecture migration — repository-wide mandate |
+
+---
+
+## Provider Class Inventory
+
+The following provider-related classes are the current canonical inventory used by the AI docs audit.
+
+### Streaming / hybrid implementations
+| Provider Class | Role |
+|----------------|------|
+| `AlpacaMarketDataClient` | Alpaca real-time streaming market data |
+| `IBMarketDataClient` | Interactive Brokers live market data |
+| `IBSimulationClient` | Interactive Brokers simulation/testing client |
+| `NYSEDataSource` | NYSE direct data source |
+| `PolygonMarketDataClient` | Polygon live market data |
+| `StockSharpMarketDataClient` | StockSharp streaming market data |
+| `FailoverAwareMarketDataClient` | Streaming failover wrapper |
+
+### Historical implementations
+| Provider Class | Role |
+|----------------|------|
+| `AlpacaHistoricalDataProvider` | Alpaca historical bars |
+| `AlphaVantageHistoricalDataProvider` | Alpha Vantage historical bars |
+| `CompositeHistoricalDataProvider` | Multi-provider historical failover |
+| `FinnhubHistoricalDataProvider` | Finnhub historical bars |
+| `IBHistoricalDataProvider` | Interactive Brokers historical bars |
+| `NasdaqDataLinkHistoricalDataProvider` | Nasdaq Data Link historical bars |
+| `PolygonHistoricalDataProvider` | Polygon historical bars |
+| `StockSharpHistoricalDataProvider` | StockSharp historical bars |
+| `StooqHistoricalDataProvider` | Stooq historical bars |
+| `TiingoHistoricalDataProvider` | Tiingo historical bars |
+| `TwelveDataHistoricalDataProvider` | Twelve Data historical bars |
+| `YahooFinanceHistoricalDataProvider` | Yahoo Finance historical bars |
+
+### Symbol search implementations
+| Provider Class | Role |
+|----------------|------|
+| `AlpacaSymbolSearchProviderRefactored` | Alpaca symbol search |
+| `FinnhubSymbolSearchProviderRefactored` | Finnhub symbol search |
+| `OpenFigiClient` | OpenFIGI symbol resolution/search |
+| `PolygonSymbolSearchProvider` | Polygon symbol search |
+| `StockSharpSymbolSearchProvider` | StockSharp symbol search |
+
+### Shared base and template provider classes
+| Provider Class | Role |
+|----------------|------|
+| `BaseHistoricalDataProvider` | Shared historical provider base class |
+| `BaseSymbolSearchProvider` | Shared symbol-search provider base class |
+| `TemplateHistoricalDataProvider` | Historical provider scaffold |
+| `TemplateMarketDataClient` | Streaming provider scaffold |
+| `TemplateSymbolSearchProvider` | Symbol-search provider scaffold |
 
 ---
 

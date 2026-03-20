@@ -41,6 +41,46 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 
 ---
 
+## Current Provider Inventory (2026-03-20)
+
+The repository currently includes **20 concrete provider implementations** plus shared base and registry components.
+
+### Streaming / Hybrid Providers
+| Provider | Class | Path |
+|----------|-------|------|
+| Alpaca | `AlpacaMarketDataClient` | `src/Meridian.Infrastructure/Adapters/Alpaca/AlpacaMarketDataClient.cs` |
+| Interactive Brokers | `IBMarketDataClient` | `src/Meridian.Infrastructure/Adapters/InteractiveBrokers/IBMarketDataClient.cs` |
+| Interactive Brokers (simulation) | `IBSimulationClient` | `src/Meridian.Infrastructure/Adapters/InteractiveBrokers/IBSimulationClient.cs` |
+| NYSE | `NYSEDataSource` | `src/Meridian.Infrastructure/Adapters/NYSE/NYSEDataSource.cs` |
+| Polygon | `PolygonMarketDataClient` | `src/Meridian.Infrastructure/Adapters/Polygon/PolygonMarketDataClient.cs` |
+| StockSharp | `StockSharpMarketDataClient` | `src/Meridian.Infrastructure/Adapters/StockSharp/StockSharpMarketDataClient.cs` |
+| Streaming failover | `FailoverAwareMarketDataClient` | `src/Meridian.Infrastructure/Adapters/Failover/FailoverAwareMarketDataClient.cs` |
+
+### Historical Providers
+| Provider | Class | Path |
+|----------|-------|------|
+| Alpaca | `AlpacaHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Alpaca/AlpacaHistoricalDataProvider.cs` |
+| Alpha Vantage | `AlphaVantageHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/AlphaVantage/AlphaVantageHistoricalDataProvider.cs` |
+| Composite failover | `CompositeHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Core/CompositeHistoricalDataProvider.cs` |
+| Finnhub | `FinnhubHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Finnhub/FinnhubHistoricalDataProvider.cs` |
+| Interactive Brokers | `IBHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/InteractiveBrokers/IBHistoricalDataProvider.cs` |
+| Nasdaq Data Link | `NasdaqDataLinkHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` |
+| Polygon | `PolygonHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Polygon/PolygonHistoricalDataProvider.cs` |
+| StockSharp | `StockSharpHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/StockSharp/StockSharpHistoricalDataProvider.cs` |
+| Stooq | `StooqHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Stooq/StooqHistoricalDataProvider.cs` |
+| Tiingo | `TiingoHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/Tiingo/TiingoHistoricalDataProvider.cs` |
+| Twelve Data | `TwelveDataHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/TwelveData/TwelveDataHistoricalDataProvider.cs` |
+| Yahoo Finance | `YahooFinanceHistoricalDataProvider` | `src/Meridian.Infrastructure/Adapters/YahooFinance/YahooFinanceHistoricalDataProvider.cs` |
+
+### Symbol Search Providers
+| Provider | Class | Path |
+|----------|-------|------|
+| Alpaca | `AlpacaSymbolSearchProviderRefactored` | `src/Meridian.Infrastructure/Adapters/Alpaca/AlpacaSymbolSearchProviderRefactored.cs` |
+| Finnhub | `FinnhubSymbolSearchProviderRefactored` | `src/Meridian.Infrastructure/Adapters/Finnhub/FinnhubSymbolSearchProviderRefactored.cs` |
+| OpenFIGI | `OpenFigiClient` | `src/Meridian.Infrastructure/Adapters/OpenFigi/OpenFigiClient.cs` |
+| Polygon | `PolygonSymbolSearchProvider` | `src/Meridian.Infrastructure/Adapters/Polygon/PolygonSymbolSearchProvider.cs` |
+| StockSharp | `StockSharpSymbolSearchProvider` | `src/Meridian.Infrastructure/Adapters/StockSharp/StockSharpSymbolSearchProvider.cs` |
+
 ## File Locations
 
 ### Core Abstractions (ProviderSdk)
@@ -157,10 +197,10 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 ### Symbol Search Providers
 | Provider | Location |
 |----------|----------|
-| Alpaca | `Infrastructure/Adapters/Core/AlpacaSymbolSearchProviderRefactored.cs` |
-| Polygon | `Infrastructure/Adapters/Core/PolygonSymbolSearchProvider.cs` |
-| Finnhub | `Infrastructure/Adapters/Core/FinnhubSymbolSearchProviderRefactored.cs` |
-| OpenFIGI | `Infrastructure/Adapters/Core/OpenFigiClient.cs` |
+| Alpaca | `Infrastructure/Adapters/Alpaca/AlpacaSymbolSearchProviderRefactored.cs` |
+| Polygon | `Infrastructure/Adapters/Polygon/PolygonSymbolSearchProvider.cs` |
+| Finnhub | `Infrastructure/Adapters/Finnhub/FinnhubSymbolSearchProviderRefactored.cs` |
+| OpenFIGI | `Infrastructure/Adapters/OpenFigi/OpenFigiClient.cs` |
 
 Supporting files:
 - `ISymbolSearchProvider.cs` - Base interface
