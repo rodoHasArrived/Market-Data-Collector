@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-20
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23330268335
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23334483101
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,23 +23,12 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
-      - `CS0103`
-      - `CS0118`
-      - `CS0246`
-      - `CS0738`
-      - `CS1061`
+      - `CS0509`
 
       ## Failure Patterns
-      - `2026-03-20T05:24:02.6200658Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(200,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
-      - `2026-03-20T05:24:02.6216653Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(238,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
-      - `2026-03-20T05:24:02.6221506Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(286,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
-      - `2026-03-20T05:24:11.8347246Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Integration/EndpointTests/EndpointTestFixture.cs(50,47): error CS0103: The name 'Environments' does not e...`
-      - `2026-03-20T05:24:11.8355298Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTests.cs(65,50): error CS1061: 'MarketEvent' does not...`
-      - `2026-03-20T05:24:11.8363574Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTests.cs(66,50): error CS1061: 'MarketEvent' does not...`
-      - `2026-03-20T05:24:11.8373329Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTests.cs(67,50): error CS1061: 'MarketEvent' does not...`
-      - `2026-03-20T05:24:12.0250942Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(200,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
-      - `2026-03-20T05:24:12.0256363Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(238,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
-      - `2026-03-20T05:24:12.0261224Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(286,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
+      - `2026-03-20T08:17:29.7029594Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from seal...`
+      - `2026-03-20T08:17:31.3449262Z ##[error]/home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Configuration/AppConfigDto.cs(693,47): error CS0509: 'ExtendedSymbolConfigDto': cannot derive from seal...`
+      - `2026-03-20T08:17:31.3441484Z Build FAILED.`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
