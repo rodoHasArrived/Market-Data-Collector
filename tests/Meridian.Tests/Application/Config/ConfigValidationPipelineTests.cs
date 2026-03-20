@@ -227,6 +227,43 @@ public class ConfigValidationPipelineTests
     }
 
     [Fact]
+    public void Validate_DuplicateSymbols_IsCaseInsensitive()
+    {
+        var pipeline = ConfigValidationPipeline.CreateDefault();
+        var config = CreateValidConfig() with
+        {
+            Symbols = new[]
+            {
+                new SymbolConfig("spy", SubscribeTrades: true),
+                new SymbolConfig("SPY", SubscribeTrades: true)
+            }
+        };
+
+        var results = pipeline.Validate(config);
+
+        results.Should().Contain(r => r.IsError && r.Message.Contains("Duplicate"));
+    }
+
+    [Fact]
+    public void Validate_StockSharpCustomConnectorWithoutAdapterType_ReturnsError()
+    {
+        var pipeline = ConfigValidationPipeline.CreateDefault();
+        var config = CreateValidConfig() with
+        {
+            DataSource = DataSourceKind.StockSharp,
+            StockSharp = new StockSharpConfig
+            {
+                Enabled = true,
+                ConnectorType = "custom"
+            }
+        };
+
+        var results = pipeline.Validate(config);
+
+        results.Should().Contain(r => r.IsError && r.Message.Contains("AdapterType"));
+    }
+
+    [Fact]
     public void ValidationResult_HasCorrectSeverityLevels()
     {
         // Arrange

@@ -140,6 +140,27 @@ public sealed class CliModeResolverTests
     }
 
     [Fact]
+    public void ResolveWithError_WithWhitespacePaddedMode_ShouldTrimAndResolve()
+    {
+        var args = new[] { "--mode", "  desktop  " };
+
+        var (mode, error) = CliModeResolver.ResolveWithError(args);
+
+        mode.Should().Be(CliModeResolver.RunMode.Desktop);
+        error.Should().BeNull();
+    }
+
+    [Fact]
+    public void TranslateLegacyFlags_WithModeMissingValue_PreservesCurrentLiteralValueBehavior()
+    {
+        var args = new[] { "--mode", "--ui" };
+
+        var result = CliModeResolver.TranslateLegacyFlags(args);
+
+        result.Should().Be("--ui");
+    }
+
+    [Fact]
     public void HasFlag_WithPresentFlag_ShouldReturnTrue()
     {
         // Arrange
