@@ -628,11 +628,11 @@ ai-verify: ## Run build + test + lint verification
 
 ai-maintenance-light: ## Run fast maintenance lane and write .ai status artifacts
 	@echo "$(BLUE)Running light maintenance lane...$(NC)"
-	@bash scripts/ai/maintenance.sh --light
+	@bash scripts/ai/maintenance-light.sh
 
 ai-maintenance-full: ## Run full maintenance lane and write .ai status artifacts
 	@echo "$(BLUE)Running full maintenance lane...$(NC)"
-	@bash scripts/ai/maintenance.sh --full
+	@bash scripts/ai/maintenance-full.sh
 
 ai-audit-ai-docs: ## Run AI documentation freshness and drift audit
 	@echo "$(BLUE)Auditing AI documentation health...$(NC)"
