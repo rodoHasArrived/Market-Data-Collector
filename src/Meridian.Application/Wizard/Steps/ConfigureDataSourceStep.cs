@@ -64,7 +64,8 @@ public sealed class ConfigureDataSourceStep : IWizardStep
         var defaultChoice = configuredRealTime.Any()
             ? options.FindIndex(o => o.Name == configuredRealTime.First().DisplayName) + 1
             : 1;
-        if (defaultChoice < 1) defaultChoice = 1;
+        if (defaultChoice < 1)
+            defaultChoice = 1;
 
         var choice = await PromptChoiceAsync("Select data source", 1, options.Count, defaultChoice, ct);
         selection.DataSource = options[choice - 1].Kind;
@@ -173,8 +174,10 @@ public sealed class ConfigureDataSourceStep : IWizardStep
             ct.ThrowIfCancellationRequested();
             _output.Write($"\n{prompt} [{min}-{max}] (default: {defaultValue}): ");
             var input = await Task.Run(() => _input.ReadLine(), ct);
-            if (string.IsNullOrWhiteSpace(input)) return defaultValue;
-            if (int.TryParse(input, out var value) && value >= min && value <= max) return value;
+            if (string.IsNullOrWhiteSpace(input))
+                return defaultValue;
+            if (int.TryParse(input, out var value) && value >= min && value <= max)
+                return value;
             _output.WriteLine($"  Please enter a number between {min} and {max}");
         }
     }
@@ -187,9 +190,12 @@ public sealed class ConfigureDataSourceStep : IWizardStep
             ct.ThrowIfCancellationRequested();
             _output.Write($"{prompt} [{defaultText}]: ");
             var input = await Task.Run(() => _input.ReadLine(), ct);
-            if (string.IsNullOrWhiteSpace(input)) return defaultValue;
-            if (input.Equals("y", StringComparison.OrdinalIgnoreCase) || input.Equals("yes", StringComparison.OrdinalIgnoreCase)) return true;
-            if (input.Equals("n", StringComparison.OrdinalIgnoreCase) || input.Equals("no", StringComparison.OrdinalIgnoreCase)) return false;
+            if (string.IsNullOrWhiteSpace(input))
+                return defaultValue;
+            if (input.Equals("y", StringComparison.OrdinalIgnoreCase) || input.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (input.Equals("n", StringComparison.OrdinalIgnoreCase) || input.Equals("no", StringComparison.OrdinalIgnoreCase))
+                return false;
             _output.WriteLine("  Please enter 'y' or 'n'");
         }
     }
@@ -204,8 +210,10 @@ public sealed class ConfigureDataSourceStep : IWizardStep
             var input = await Task.Run(() => _input.ReadLine(), ct);
             if (string.IsNullOrWhiteSpace(input))
             {
-                if (defaultValue != null) return defaultValue;
-                if (!required) return null;
+                if (defaultValue != null)
+                    return defaultValue;
+                if (!required)
+                    return null;
                 _output.WriteLine("  This field is required");
                 continue;
             }

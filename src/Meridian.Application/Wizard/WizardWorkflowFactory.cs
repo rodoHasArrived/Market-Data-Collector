@@ -38,15 +38,15 @@ public static class WizardWorkflowFactory
         // ── Declare transitions (linear flow) ────────────────────────────────
 
         coordinator
-            .AddTransition(WizardStepId.DetectProviders,       WizardStepId.CredentialGuidance)
-            .AddTransition(WizardStepId.CredentialGuidance,    WizardStepId.SelectUseCase)
-            .AddTransition(WizardStepId.SelectUseCase,         WizardStepId.ConfigureDataSource)
-            .AddTransition(WizardStepId.ConfigureDataSource,   WizardStepId.ValidateCredentials)
-            .AddTransition(WizardStepId.ValidateCredentials,   WizardStepId.ConfigureSymbols)
-            .AddTransition(WizardStepId.ConfigureSymbols,      WizardStepId.ConfigureStorage)
-            .AddTransition(WizardStepId.ConfigureStorage,      WizardStepId.ConfigureBackfill)
-            .AddTransition(WizardStepId.ConfigureBackfill,     WizardStepId.ReviewConfiguration)
-            .AddTransition(WizardStepId.ReviewConfiguration,   WizardStepId.SaveConfiguration);
+            .AddTransition(WizardStepId.DetectProviders, WizardStepId.CredentialGuidance)
+            .AddTransition(WizardStepId.CredentialGuidance, WizardStepId.SelectUseCase)
+            .AddTransition(WizardStepId.SelectUseCase, WizardStepId.ConfigureDataSource)
+            .AddTransition(WizardStepId.ConfigureDataSource, WizardStepId.ValidateCredentials)
+            .AddTransition(WizardStepId.ValidateCredentials, WizardStepId.ConfigureSymbols)
+            .AddTransition(WizardStepId.ConfigureSymbols, WizardStepId.ConfigureStorage)
+            .AddTransition(WizardStepId.ConfigureStorage, WizardStepId.ConfigureBackfill)
+            .AddTransition(WizardStepId.ConfigureBackfill, WizardStepId.ReviewConfiguration)
+            .AddTransition(WizardStepId.ReviewConfiguration, WizardStepId.SaveConfiguration);
         // SaveConfiguration → end (no further transition)
 
         return coordinator;

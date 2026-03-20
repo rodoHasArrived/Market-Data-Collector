@@ -59,8 +59,10 @@ public sealed class ConfigureBackfillStep : IWizardStep
             _output.WriteLine("\n  No premium providers configured. Using free providers (Yahoo, Stooq).");
 
         var priority = configuredProviders.Select(p => p.Name.ToLowerInvariant()).ToList();
-        if (!priority.Contains("yahoo")) priority.Add("yahoo");
-        if (!priority.Contains("stooq")) priority.Add("stooq");
+        if (!priority.Contains("yahoo"))
+            priority.Add("yahoo");
+        if (!priority.Contains("stooq"))
+            priority.Add("stooq");
 
         var enableRotation = await PromptYesNoAsync(
             "\nEnable automatic provider rotation on rate limits", defaultValue: true, ct: ct);
@@ -84,9 +86,12 @@ public sealed class ConfigureBackfillStep : IWizardStep
             ct.ThrowIfCancellationRequested();
             _output.Write($"{prompt} [{defaultText}]: ");
             var input = await Task.Run(() => _input.ReadLine(), ct);
-            if (string.IsNullOrWhiteSpace(input)) return defaultValue;
-            if (input.Equals("y", StringComparison.OrdinalIgnoreCase) || input.Equals("yes", StringComparison.OrdinalIgnoreCase)) return true;
-            if (input.Equals("n", StringComparison.OrdinalIgnoreCase) || input.Equals("no", StringComparison.OrdinalIgnoreCase)) return false;
+            if (string.IsNullOrWhiteSpace(input))
+                return defaultValue;
+            if (input.Equals("y", StringComparison.OrdinalIgnoreCase) || input.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (input.Equals("n", StringComparison.OrdinalIgnoreCase) || input.Equals("no", StringComparison.OrdinalIgnoreCase))
+                return false;
             _output.WriteLine("  Please enter 'y' or 'n'");
         }
     }

@@ -20,6 +20,7 @@ public sealed record TradeCashFlow(
 /// <param name="Amount">Net cash-flow amount (negative = outflow).</param>
 /// <param name="MarginBalance">Balance on which interest was charged.</param>
 /// <param name="AnnualRate">Annual rate (e.g. 0.05 for 5%).</param>
+/// <param name="AccountId">Optional account identifier this cash flow belongs to.</param>
 public sealed record MarginInterestCashFlow(
     DateTimeOffset Timestamp,
     decimal Amount,

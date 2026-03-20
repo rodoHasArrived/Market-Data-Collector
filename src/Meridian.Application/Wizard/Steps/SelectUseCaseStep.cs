@@ -54,8 +54,10 @@ public sealed class SelectUseCaseStep : IWizardStep
             ct.ThrowIfCancellationRequested();
             _output.Write($"\n{prompt} [{min}-{max}] (default: {defaultValue}): ");
             var input = await Task.Run(() => _input.ReadLine(), ct);
-            if (string.IsNullOrWhiteSpace(input)) return defaultValue;
-            if (int.TryParse(input, out var value) && value >= min && value <= max) return value;
+            if (string.IsNullOrWhiteSpace(input))
+                return defaultValue;
+            if (int.TryParse(input, out var value) && value >= min && value <= max)
+                return value;
             _output.WriteLine($"  Please enter a number between {min} and {max}");
         }
     }

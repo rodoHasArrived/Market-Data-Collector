@@ -16,6 +16,7 @@ namespace Meridian.Backtesting.Sdk;
 /// Optional path to a compiled strategy .dll; <c>null</c> means the strategy instance is supplied
 /// directly to <c>BacktestEngine.RunAsync</c>.
 /// </param>
+/// <param name="AssetEvents">Optional sequence of asset events (dividends, splits) to apply during the simulation.</param>
 public sealed record BacktestRequest(
     DateOnly From,
     DateOnly To,

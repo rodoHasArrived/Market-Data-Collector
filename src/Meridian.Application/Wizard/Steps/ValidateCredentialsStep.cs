@@ -34,11 +34,11 @@ public sealed class ValidateCredentialsStep : IWizardStep
 
         var hasCredentials = dataSource.DataSource switch
         {
-            DataSourceKind.Alpaca  => !string.IsNullOrWhiteSpace(dataSource.Alpaca?.KeyId) &&
+            DataSourceKind.Alpaca => !string.IsNullOrWhiteSpace(dataSource.Alpaca?.KeyId) &&
                                       !string.IsNullOrWhiteSpace(dataSource.Alpaca?.SecretKey),
             DataSourceKind.Polygon => !string.IsNullOrWhiteSpace(dataSource.Polygon?.ApiKey),
-            DataSourceKind.IB      => true,
-            _                      => true
+            DataSourceKind.IB => true,
+            _ => true
         };
 
         if (!hasCredentials)
@@ -65,7 +65,7 @@ public sealed class ValidateCredentialsStep : IWizardStep
 
             CredentialValidationService.ValidationResult? result = dataSource.DataSource switch
             {
-                DataSourceKind.Alpaca  when dataSource.Alpaca != null  =>
+                DataSourceKind.Alpaca when dataSource.Alpaca != null =>
                     await validator.ValidateAlpacaAsync(dataSource.Alpaca, ct),
                 DataSourceKind.Polygon when dataSource.Polygon != null =>
                     await validator.ValidatePolygonAsync(dataSource.Polygon, ct),
@@ -130,9 +130,12 @@ public sealed class ValidateCredentialsStep : IWizardStep
             ct.ThrowIfCancellationRequested();
             _output.Write($"{prompt} [{defaultText}]: ");
             var input = await Task.Run(() => _input.ReadLine(), ct);
-            if (string.IsNullOrWhiteSpace(input)) return defaultValue;
-            if (input.Equals("y", StringComparison.OrdinalIgnoreCase) || input.Equals("yes", StringComparison.OrdinalIgnoreCase)) return true;
-            if (input.Equals("n", StringComparison.OrdinalIgnoreCase) || input.Equals("no", StringComparison.OrdinalIgnoreCase)) return false;
+            if (string.IsNullOrWhiteSpace(input))
+                return defaultValue;
+            if (input.Equals("y", StringComparison.OrdinalIgnoreCase) || input.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (input.Equals("n", StringComparison.OrdinalIgnoreCase) || input.Equals("no", StringComparison.OrdinalIgnoreCase))
+                return false;
             _output.WriteLine("  Please enter 'y' or 'n'");
         }
     }
