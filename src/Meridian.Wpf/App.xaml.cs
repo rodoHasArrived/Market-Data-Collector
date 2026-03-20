@@ -240,7 +240,7 @@ public partial class App : Application
     /// <summary>
     /// Performs async initialization with proper exception handling.
     /// </summary>
-    private async Task SafeOnStartupAsync()
+    private async Task SafeOnStartupAsync(CancellationToken ct = default)
     {
         try
         {
@@ -289,7 +289,7 @@ public partial class App : Application
     /// <summary>
     /// Initializes offline tracking persistence and performs recovery if needed.
     /// </summary>
-    private static async Task InitializeOfflineTrackingAsync()
+    private static async Task InitializeOfflineTrackingAsync(CancellationToken ct = default)
     {
         try
         {
@@ -306,7 +306,7 @@ public partial class App : Application
     /// <summary>
     /// Initializes background services for scheduled tasks and offline queue processing.
     /// </summary>
-    private static async Task InitializeBackgroundServicesAsync()
+    private static async Task InitializeBackgroundServicesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -328,7 +328,7 @@ public partial class App : Application
     /// <summary>
     /// Restores the last workspace session state (active page, window bounds).
     /// </summary>
-    private static async Task RestoreWorkspaceSessionAsync()
+    private static async Task RestoreWorkspaceSessionAsync(CancellationToken ct = default)
     {
         try
         {
@@ -352,7 +352,7 @@ public partial class App : Application
     /// <summary>
     /// Saves the current workspace session state before shutdown.
     /// </summary>
-    private static async Task SaveWorkspaceSessionAsync()
+    private static async Task SaveWorkspaceSessionAsync(CancellationToken ct = default)
     {
         try
         {
@@ -387,7 +387,7 @@ public partial class App : Application
     /// <summary>
     /// Performs async shutdown with proper exception handling.
     /// </summary>
-    private static async Task SafeOnExitAsync()
+    private static async Task SafeOnExitAsync(CancellationToken ct = default)
     {
         const int ShutdownTimeoutMs = 5000; // 5 second timeout for graceful shutdown
 
@@ -470,7 +470,7 @@ public partial class App : Application
     /// <summary>
     /// Performs first-run initialization including config setup.
     /// </summary>
-    private static async Task InitializeFirstRunAsync()
+    private static async Task InitializeFirstRunAsync(CancellationToken ct = default)
     {
         try
         {
@@ -492,7 +492,7 @@ public partial class App : Application
     /// <summary>
     /// Initializes and validates the application configuration.
     /// </summary>
-    private static async Task InitializeConfigurationAsync()
+    private static async Task InitializeConfigurationAsync(CancellationToken ct = default)
     {
         try
         {

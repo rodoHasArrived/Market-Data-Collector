@@ -292,7 +292,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Starts the data collector service via keyboard shortcut.
     /// </summary>
-    private async Task StartCollectorAsync()
+    private async Task StartCollectorAsync(CancellationToken ct = default)
     {
         try
         {
@@ -333,7 +333,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Stops the data collector service via keyboard shortcut.
     /// </summary>
-    private async Task StopCollectorAsync()
+    private async Task StopCollectorAsync(CancellationToken ct = default)
     {
         try
         {
@@ -582,7 +582,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Tests the current provider connection as a remediation action.
     /// </summary>
-    private async Task TestConnectionAsync()
+    private async Task TestConnectionAsync(CancellationToken ct = default)
     {
         try
         {
@@ -624,7 +624,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Restores the last workspace session state (active workspace, last page, etc.)
     /// </summary>
-    private async Task RestoreWorkspaceSessionAsync()
+    private async Task RestoreWorkspaceSessionAsync(CancellationToken ct = default)
     {
         try
         {
@@ -706,7 +706,7 @@ public partial class MainWindow : Window
     /// blocking the UI thread during window close. Exceptions are handled
     /// internally so callers do not need to observe the returned task.
     /// </summary>
-    private async Task SaveWindowStateAsync()
+    private async Task SaveWindowStateAsync(CancellationToken ct = default)
     {
         try
         {

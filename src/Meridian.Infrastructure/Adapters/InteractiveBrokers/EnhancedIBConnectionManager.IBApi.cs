@@ -216,7 +216,7 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
         }
     }
 
-    public async Task DisconnectAsync()
+    public async Task DisconnectAsync(CancellationToken ct = default)
     {
         try
         {
@@ -285,7 +285,7 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
         }
     }
 
-    private async Task TriggerReconnectAsync()
+    private async Task TriggerReconnectAsync(CancellationToken ct = default)
     {
         if (_isReconnecting || _disposed) return;
         _isReconnecting = true;

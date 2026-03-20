@@ -90,7 +90,7 @@ public sealed class ChartingPageViewModel : BindableBase
         _ = LoadSymbolsAsync();
     }
 
-    private async Task LoadSymbolsAsync()
+    private async Task LoadSymbolsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -138,7 +138,7 @@ public sealed class ChartingPageViewModel : BindableBase
         UpdateIndicatorDisplay();
     }
 
-    private async Task LoadChartDataAsync()
+    private async Task LoadChartDataAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_selectedSymbol) || !_fromDate.HasValue || !_toDate.HasValue) return;
         LoadingVisible = Visibility.Visible;

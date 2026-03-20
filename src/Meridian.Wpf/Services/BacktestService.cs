@@ -32,7 +32,7 @@ public sealed class BacktestService
     public async Task<BacktestResult?> RunAsync(
         BacktestRequest request,
         IBacktestStrategy strategy,
-        IProgress<BacktestProgressEvent>? progress = null)
+        IProgress<BacktestProgressEvent>? progress = null, CancellationToken ct = default)
     {
         if (IsRunning) return null;
 

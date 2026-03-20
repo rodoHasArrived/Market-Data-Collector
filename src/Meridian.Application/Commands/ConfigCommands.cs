@@ -98,7 +98,7 @@ internal sealed class ConfigCommands : ICliCommand
         return CliResult.Ok();
     }
 
-    private async Task<CliResult> RunApplyPreset(string[] args)
+    private async Task<CliResult> RunApplyPreset(string[] args, CancellationToken ct = default)
     {
         var presetName = CliArguments.GetValue(args, "--preset");
         if (string.IsNullOrWhiteSpace(presetName))

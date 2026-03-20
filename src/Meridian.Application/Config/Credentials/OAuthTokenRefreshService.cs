@@ -66,7 +66,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     /// <summary>
     /// Stops the background refresh loop.
     /// </summary>
-    public async Task StopAsync()
+    public async Task StopAsync(CancellationToken ct = default)
     {
         if (_cts == null)
             return;

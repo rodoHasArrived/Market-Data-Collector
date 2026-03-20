@@ -153,7 +153,7 @@ public partial class SetupWizardPage : Page
         await RefreshBackendStatusAsync();
     }
 
-    private async Task RefreshBackendStatusAsync()
+    private async Task RefreshBackendStatusAsync(CancellationToken ct = default)
     {
         var serviceStatus = await _backendServiceManager.GetStatusAsync();
 
@@ -177,7 +177,7 @@ public partial class SetupWizardPage : Page
         }
     }
 
-    private async Task EnsureBackendAvailableAsync()
+    private async Task EnsureBackendAvailableAsync(CancellationToken ct = default)
     {
         var status = await _backendServiceManager.GetStatusAsync();
         if (!status.IsRunning)
@@ -195,7 +195,7 @@ public partial class SetupWizardPage : Page
         await RefreshBackendStatusAsync();
     }
 
-    private async Task<(bool isHealthy, string message, int latencyMs)> CheckBackendAsync()
+    private async Task<(bool isHealthy, string message, int latencyMs)> CheckBackendAsync(CancellationToken ct = default)
     {
         var stopwatch = Stopwatch.StartNew();
         try
@@ -301,7 +301,7 @@ public partial class SetupWizardPage : Page
         return true;
     }
 
-    private async Task<bool> SaveConfigurationAsync(string provider, string storageLocation)
+    private async Task<bool> SaveConfigurationAsync(string provider, string storageLocation, CancellationToken ct = default)
     {
         try
         {

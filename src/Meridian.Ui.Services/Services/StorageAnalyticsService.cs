@@ -29,7 +29,7 @@ public sealed class StorageAnalyticsService
     /// <summary>
     /// Gets storage analytics, using cache if available.
     /// </summary>
-    public async Task<StorageAnalytics> GetAnalyticsAsync(bool forceRefresh = false)
+    public async Task<StorageAnalytics> GetAnalyticsAsync(bool forceRefresh = false, CancellationToken ct = default)
     {
         if (!forceRefresh && _cachedAnalytics != null &&
             DateTime.UtcNow - _lastAnalysisTime < _cacheExpiration)
@@ -49,7 +49,7 @@ public sealed class StorageAnalyticsService
         return analytics;
     }
 
-    private async Task<StorageAnalytics> CalculateAnalyticsAsync()
+    private async Task<StorageAnalytics> CalculateAnalyticsAsync(CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync();
         var dataRoot = config?.DataRoot ?? "data";
@@ -263,7 +263,7 @@ public sealed class StorageAnalyticsService
         }
     }
 
-    private async Task CheckStorageWarningsAsync(StorageAnalytics analytics)
+    private async Task CheckStorageWarningsAsync(StorageAnalytics analytics, CancellationToken ct = default)
     {
         try
         {
@@ -290,7 +290,7 @@ public sealed class StorageAnalyticsService
     /// <summary>
     /// Gets storage usage for the data drive.
     /// </summary>
-    public async Task<DriveStorageInfo?> GetDriveInfoAsync()
+    public async Task<DriveStorageInfo?> GetDriveInfoAsync(CancellationToken ct = default)
     {
         try
         {

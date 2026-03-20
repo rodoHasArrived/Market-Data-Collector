@@ -149,7 +149,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     /// Handles automatic reconnection when connection is lost.
     /// Delegates to WebSocketConnectionManager for gated reconnection.
     /// </summary>
-    private async Task OnConnectionLostAsync()
+    private async Task OnConnectionLostAsync(CancellationToken ct = default)
     {
         if (_wsUri == null)
             return;
@@ -234,7 +234,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         }
     }
 
-    private async Task SendSubscribeWithLoggingAsync(string operation, string symbol)
+    private async Task SendSubscribeWithLoggingAsync(string operation, string symbol, CancellationToken ct = default)
     {
         try
         {
@@ -254,7 +254,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         _subscriptionManager.Dispose();
     }
 
-    private async Task TrySendSubscribeAsync()
+    private async Task TrySendSubscribeAsync(CancellationToken ct = default)
     {
         try
         {

@@ -243,7 +243,7 @@ public sealed class BacktestEngine(
         BacktestContext ctx,
         IBacktestStrategy strategy,
         List<PortfolioSnapshot> snapshots,
-        List<CashFlowEntry> allCashFlows)
+        List<CashFlowEntry> allCashFlows, CancellationToken ct = default)
     {
         await Task.Yield();  // allow UI thread to breathe during long replays
         portfolio.AccrueDailyInterest(date);

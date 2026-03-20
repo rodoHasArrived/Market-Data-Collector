@@ -223,7 +223,7 @@ public sealed class DataLineageService : IDataLineageService
         _ = SaveInBackgroundAsync();
     }
 
-    private async Task SaveInBackgroundAsync()
+    private async Task SaveInBackgroundAsync(CancellationToken ct = default)
     {
         try
         { await SaveAsync(); }

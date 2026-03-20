@@ -809,7 +809,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Saves a modified config back to disk.
     /// </summary>
-    public async Task SaveConfigAsync(AppConfig config, string? configPath = null)
+    public async Task SaveConfigAsync(AppConfig config, string? configPath = null, CancellationToken ct = default)
     {
         var store = new ConfigStore(configPath);
         await store.SaveAsync(config);

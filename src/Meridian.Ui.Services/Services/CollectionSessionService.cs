@@ -32,7 +32,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Loads all sessions from storage.
     /// </summary>
-    public async Task<CollectionSessionsConfig> LoadSessionsAsync()
+    public async Task<CollectionSessionsConfig> LoadSessionsAsync(CancellationToken ct = default)
     {
         if (_sessionsConfig != null)
         {
@@ -62,7 +62,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Saves sessions to storage.
     /// </summary>
-    public async Task SaveSessionsAsync()
+    public async Task SaveSessionsAsync(CancellationToken ct = default)
     {
         if (_sessionsConfig == null) return;
 
@@ -84,7 +84,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Gets all sessions.
     /// </summary>
-    public async Task<CollectionSession[]> GetSessionsAsync()
+    public async Task<CollectionSession[]> GetSessionsAsync(CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         return config.Sessions ?? Array.Empty<CollectionSession>();
@@ -93,7 +93,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Gets the currently active session, if any.
     /// </summary>
-    public async Task<CollectionSession?> GetActiveSessionAsync()
+    public async Task<CollectionSession?> GetActiveSessionAsync(CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         if (string.IsNullOrEmpty(config.ActiveSessionId))
@@ -107,7 +107,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Creates a new collection session.
     /// </summary>
-    public async Task<CollectionSession> CreateSessionAsync(string name, string? description = null, string[]? tags = null)
+    public async Task<CollectionSession> CreateSessionAsync(string name, string? description = null, string[]? tags = null, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var appConfig = await _configService.LoadConfigAsync();
@@ -140,7 +140,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Creates a daily session with auto-generated name.
     /// </summary>
-    public async Task<CollectionSession> CreateDailySessionAsync()
+    public async Task<CollectionSession> CreateDailySessionAsync(CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var pattern = config.SessionNamingPattern ?? "{date}-{mode}";
@@ -157,7 +157,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Starts a collection session.
     /// </summary>
-    public async Task StartSessionAsync(string sessionId)
+    public async Task StartSessionAsync(string sessionId, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -196,7 +196,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Stops a collection session.
     /// </summary>
-    public async Task StopSessionAsync(string sessionId, bool generateManifest = true)
+    public async Task StopSessionAsync(string sessionId, bool generateManifest = true, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -251,7 +251,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Pauses a collection session.
     /// </summary>
-    public async Task PauseSessionAsync(string sessionId)
+    public async Task PauseSessionAsync(string sessionId, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -271,7 +271,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Resumes a paused collection session.
     /// </summary>
-    public async Task ResumeSessionAsync(string sessionId)
+    public async Task ResumeSessionAsync(string sessionId, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -291,7 +291,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Updates session statistics with new event data.
     /// </summary>
-    public async Task UpdateSessionStatisticsAsync(string sessionId, long newEvents, long newBytes, string eventType)
+    public async Task UpdateSessionStatisticsAsync(string sessionId, long newEvents, long newBytes, string eventType, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -336,7 +336,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Records a gap detected during collection.
     /// </summary>
-    public async Task RecordGapDetectedAsync(string sessionId)
+    public async Task RecordGapDetectedAsync(string sessionId, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -351,7 +351,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Records a sequence error detected during collection.
     /// </summary>
-    public async Task RecordSequenceErrorAsync(string sessionId)
+    public async Task RecordSequenceErrorAsync(string sessionId, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -366,7 +366,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Deletes a session.
     /// </summary>
-    public async Task DeleteSessionAsync(string sessionId)
+    public async Task DeleteSessionAsync(string sessionId, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var sessions = config.Sessions?.ToList() ?? new List<CollectionSession>();
@@ -394,7 +394,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Updates session notes.
     /// </summary>
-    public async Task UpdateSessionNotesAsync(string sessionId, string? notes)
+    public async Task UpdateSessionNotesAsync(string sessionId, string? notes, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);
@@ -409,7 +409,7 @@ public sealed class CollectionSessionService
     /// <summary>
     /// Updates session tags.
     /// </summary>
-    public async Task UpdateSessionTagsAsync(string sessionId, string[]? tags)
+    public async Task UpdateSessionTagsAsync(string sessionId, string[]? tags, CancellationToken ct = default)
     {
         var config = await LoadSessionsAsync();
         var session = config.Sessions?.FirstOrDefault(s => s.Id == sessionId);

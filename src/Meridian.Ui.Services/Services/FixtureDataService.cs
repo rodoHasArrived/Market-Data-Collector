@@ -167,7 +167,7 @@ public sealed class FixtureDataService
     /// <summary>
     /// Simulates network delay for realistic fixture behavior.
     /// </summary>
-    public async Task SimulateNetworkDelayAsync()
+    public async Task SimulateNetworkDelayAsync(CancellationToken ct = default)
     {
         await Task.Delay(Random.Shared.Next(50, 150));
     }

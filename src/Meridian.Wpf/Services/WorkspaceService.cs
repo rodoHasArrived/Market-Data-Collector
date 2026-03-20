@@ -58,7 +58,7 @@ public sealed class WorkspaceService
         public SessionState? LastSession { get; set; }
     }
 
-    public async Task LoadWorkspacesAsync()
+    public async Task LoadWorkspacesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -97,7 +97,7 @@ public sealed class WorkspaceService
         }
     }
 
-    public async Task SaveWorkspacesAsync()
+    public async Task SaveWorkspacesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -117,7 +117,7 @@ public sealed class WorkspaceService
         }
     }
 
-    public async Task<WorkspaceTemplate> CreateWorkspaceAsync(string name, string description, WorkspaceCategory category)
+    public async Task<WorkspaceTemplate> CreateWorkspaceAsync(string name, string description, WorkspaceCategory category, CancellationToken ct = default)
     {
         var workspace = new WorkspaceTemplate
         {
@@ -139,7 +139,7 @@ public sealed class WorkspaceService
         return workspace;
     }
 
-    public async Task UpdateWorkspaceAsync(WorkspaceTemplate workspace)
+    public async Task UpdateWorkspaceAsync(WorkspaceTemplate workspace, CancellationToken ct = default)
     {
         var existing = _workspaces.FirstOrDefault(w => w.Id == workspace.Id);
         if (existing != null)
@@ -153,7 +153,7 @@ public sealed class WorkspaceService
         }
     }
 
-    public async Task DeleteWorkspaceAsync(string workspaceId)
+    public async Task DeleteWorkspaceAsync(string workspaceId, CancellationToken ct = default)
     {
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null && !workspace.IsBuiltIn)
@@ -165,7 +165,7 @@ public sealed class WorkspaceService
         }
     }
 
-    public async Task ActivateWorkspaceAsync(string workspaceId)
+    public async Task ActivateWorkspaceAsync(string workspaceId, CancellationToken ct = default)
     {
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null)
@@ -177,7 +177,7 @@ public sealed class WorkspaceService
         }
     }
 
-    public async Task<WorkspaceTemplate> CaptureCurrentStateAsync(string name, string description)
+    public async Task<WorkspaceTemplate> CaptureCurrentStateAsync(string name, string description, CancellationToken ct = default)
     {
         var workspace = new WorkspaceTemplate
         {
@@ -199,7 +199,7 @@ public sealed class WorkspaceService
         return workspace;
     }
 
-    public async Task SaveSessionStateAsync(SessionState state)
+    public async Task SaveSessionStateAsync(SessionState state, CancellationToken ct = default)
     {
         try
         {
@@ -255,7 +255,7 @@ public sealed class WorkspaceService
         return Task.FromResult(string.Empty);
     }
 
-    public async Task<WorkspaceTemplate?> ImportWorkspaceAsync(string json)
+    public async Task<WorkspaceTemplate?> ImportWorkspaceAsync(string json, CancellationToken ct = default)
     {
         try
         {

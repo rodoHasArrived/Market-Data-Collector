@@ -72,7 +72,7 @@ public partial class WatchlistPage : Page
         await LoadWatchlistsAsync();
     }
 
-    private async Task LoadWatchlistsAsync()
+    private async Task LoadWatchlistsAsync(CancellationToken ct = default)
     {
         _loadCts?.Cancel();
         _loadCts = new CancellationTokenSource();
@@ -370,7 +370,7 @@ public partial class WatchlistPage : Page
         await Task.CompletedTask;
     }
 
-    private async Task ExportWatchlistAsync(string watchlistId)
+    private async Task ExportWatchlistAsync(string watchlistId, CancellationToken ct = default)
     {
         try
         {
@@ -406,7 +406,7 @@ public partial class WatchlistPage : Page
         }
     }
 
-    private async Task DuplicateWatchlistAsync(string watchlistId)
+    private async Task DuplicateWatchlistAsync(string watchlistId, CancellationToken ct = default)
     {
         try
         {
@@ -435,7 +435,7 @@ public partial class WatchlistPage : Page
         }
     }
 
-    private async Task DeleteWatchlistAsync(string watchlistId)
+    private async Task DeleteWatchlistAsync(string watchlistId, CancellationToken ct = default)
     {
         try
         {

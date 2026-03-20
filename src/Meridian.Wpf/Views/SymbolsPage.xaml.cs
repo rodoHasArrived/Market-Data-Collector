@@ -295,7 +295,7 @@ public partial class SymbolsPage : Page
     }
 
     private async Task SyncAddSymbolToBackendAsync(
-        string symbol, bool subscribeTrades, bool subscribeDepth, int depthLevels, string exchange)
+        string symbol, bool subscribeTrades, bool subscribeDepth, int depthLevels, string exchange, CancellationToken ct = default)
     {
         try
         {

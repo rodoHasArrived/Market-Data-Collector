@@ -67,7 +67,11 @@ DOC_EXTENSIONS: frozenset[str] = frozenset({".md"})
 CONFIG_EXTENSIONS: frozenset[str] = frozenset({".json", ".yml", ".yaml", ".xml", ".props", ".csproj", ".fsproj"})
 
 # Architecture conventions from CLAUDE.md
-REQUIRED_ASYNC_TOKEN = re.compile(r"async\s+Task", re.IGNORECASE)
+ASYNC_TASK_SIGNATURE_START = re.compile(
+    r"^\s*(?:(?:public|private|protected|internal|static|virtual|sealed|partial|unsafe|new|extern)\s+)*"
+    r"async\s+Task(?:<[^;{=]+?>)?\s+\w+\s*\(",
+    re.IGNORECASE,
+)
 CANCELLATION_TOKEN_PARAM = re.compile(r"CancellationToken\s+\w+")
 SEALED_CLASS = re.compile(r"\bsealed\s+class\b")
 UNSEALED_CLASS = re.compile(r"(?<!\bsealed\s)(?<!\babstract\s)(?<!\bstatic\s)\bclass\s+\w+")
@@ -253,19 +257,38 @@ def audit_code(root: Path, report: AuditReport) -> None:
             continue
 
         # --- Check: async methods missing CancellationToken ---
-        for i, line in enumerate(lines, 1):
-            if REQUIRED_ASYNC_TOKEN.search(line) and not CANCELLATION_TOKEN_PARAM.search(line):
-                # Skip interface declarations and very short lines
-                stripped = line.strip()
-                if stripped.startswith("//") or stripped.startswith("*"):
-                    continue
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("*") or not ASYNC_TASK_SIGNATURE_START.match(line):
+                i += 1
+                continue
+
+            signature_lines = [line]
+            paren_depth = line.count("(") - line.count(")")
+            j = i
+            while paren_depth > 0 and j + 1 < len(lines):
+                j += 1
+                next_line = lines[j]
+                signature_lines.append(next_line)
+                paren_depth += next_line.count("(") - next_line.count(")")
+
+            signature = " ".join(part.strip() for part in signature_lines)
+            if re.search(r"\b(?:Main|InvokeAsync)\s*\(", signature):
+                i = j + 1
+                continue
+
+            if not CANCELLATION_TOKEN_PARAM.search(signature):
                 report.add(Finding(
                     category="missing-cancellation-token",
                     severity="warning",
-                    file=rel, line=i,
+                    file=rel, line=i + 1,
                     message="Async method appears to lack CancellationToken parameter.",
                     fix_hint="Add 'CancellationToken ct = default' parameter.",
                 ))
+
+            i = j + 1
 
         # --- Check: string interpolation in logging ---
         for i, line in enumerate(lines, 1):

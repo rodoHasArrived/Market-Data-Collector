@@ -25,7 +25,7 @@ public sealed class SearchService
     /// <summary>
     /// Performs a global search across all searchable content.
     /// </summary>
-    public async Task<SearchResults> SearchAsync(string query, SearchOptions? options = null)
+    public async Task<SearchResults> SearchAsync(string query, SearchOptions? options = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -72,7 +72,7 @@ public sealed class SearchService
     /// <summary>
     /// Gets search suggestions for autocomplete.
     /// </summary>
-    public async Task<List<SearchSuggestion>> GetSuggestionsAsync(string query)
+    public async Task<List<SearchSuggestion>> GetSuggestionsAsync(string query, CancellationToken ct = default)
     {
         var suggestions = new List<SearchSuggestion>();
         if (string.IsNullOrWhiteSpace(query)) return suggestions;
@@ -144,7 +144,7 @@ public sealed class SearchService
         return suggestions.Take(10).ToList();
     }
 
-    private async Task SearchSymbolsAsync(string query, SearchResults results)
+    private async Task SearchSymbolsAsync(string query, SearchResults results, CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync();
 
