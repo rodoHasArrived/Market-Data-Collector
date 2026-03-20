@@ -34,7 +34,7 @@ produced by this skill must pass the `mdc-code-review` Lens 4 (Test Code Quality
 | coverlet | Coverage collection | `coverlet.collector` |
 
 Check the project's test project `.csproj` for which mock library is in use before choosing.
-Most tests in `Meridian.Tests` use Moq; WPF tests use NSubstitute.
+Most tests in `Meridian.Tests`, `Meridian.Ui.Tests`, and `Meridian.McpServer.Tests` use Moq; `NSubstitute` is available in some suites, but follow the local convention in the target project.
 
 ---
 

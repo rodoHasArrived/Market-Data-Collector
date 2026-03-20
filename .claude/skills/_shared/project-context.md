@@ -2,7 +2,7 @@
 
 > **Canonical reference.** This file is the single source of truth for project statistics, provider inventory, key abstractions with file paths, and storage design. Both `mdc-brainstorm` and `mdc-code-review` skills reference this file. Update here first; do not maintain separate copies.
 >
-> **Last verified:** 2026-03-19
+> **Last verified:** 2026-03-20
 > **Refresh command:** `python3 build/scripts/ai-repo-updater.py audit`
 
 ---
@@ -11,16 +11,16 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 868 (856 C# + 12 F#) |
-| C# Files | 856 |
-| F# Files | 12 (6 modules + 6 interop) |
-| Test Projects | 4 |
-| Test Files | 261 |
+| Total Source Files | 925 (912 C# + 13 F#) |
+| C# Files | 912 |
+| F# Files | 13 |
+| Test Projects | 6 |
+| Test Files | 276 |
 | Test Methods | ~4,135 |
-| Documentation Files | 171 |
-| Main Projects | 22 (+ 4 test + 1 benchmark) |
-| CI/CD Workflows | 33 |
-| Makefile Targets | 96 |
+| Documentation Files | 177 |
+| Main Projects | 22 (+ 6 test + 1 benchmark) |
+| CI/CD Workflows | 35 |
+| Makefile Targets | 115 |
 | Provider Implementations | 5 streaming, 11 historical |
 | Symbol Search Providers | 5 |
 | API Route Constants | 309 |
@@ -28,7 +28,7 @@
 
 ---
 
-## Solution Layout (22 main projects)
+## Solution Layout (22 main projects + 6 test projects)
 
 ```
 Meridian.sln
@@ -56,10 +56,12 @@ Meridian.sln
 │   ├── Meridian.Risk/              # IRiskRule, CompositeRiskValidator, pre-trade risk checks
 │   └── Meridian.Strategies/        # IStrategyLifecycle, StrategyRunStore, promotion workflow (ADR-016)
 ├── tests/
-│   ├── Meridian.Tests/             # ~261 test files, ~4135 test methods
+│   ├── Meridian.Tests/             # Core/backend and integration-style tests
+│   ├── Meridian.Backtesting.Tests/ # Backtesting engine tests
 │   ├── Meridian.FSharp.Tests/      # F# unit tests (expecto/xUnit)
+│   ├── Meridian.McpServer.Tests/   # MCP server and tool tests
 │   ├── Meridian.Wpf.Tests/         # WPF service tests (Windows only)
-│   └── Meridian.Ui.Tests/          # UI service tests (Windows only)
+│   └── Meridian.Ui.Tests/          # Shared desktop UI service tests
 └── benchmarks/
     └── Meridian.Benchmarks/        # BenchmarkDotNet performance benchmarks
 ```

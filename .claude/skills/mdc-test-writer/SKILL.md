@@ -29,9 +29,9 @@ warnings.
 Every test-writing task follows this 4-step workflow:
 
 ### 1 — GATHER CONTEXT (MCP)
-- Fetch the GitHub issue, PR, or code review output that identified the test gap
 - Read the source file(s) under test to understand the component's contract and dependencies
-- Check the target test project's `.csproj` to confirm which mock library is in use (Moq vs. NSubstitute)
+- If available, read the issue/PR/review note that identified the gap
+- Check the target test project's `.csproj` to confirm which mock library and test packages are in use
 
 ### 2 — ANALYZE & PLAN (Agents)
 - Detect the component type using the Step 0 decision tree
@@ -44,9 +44,9 @@ Every test-writing task follows this 4-step workflow:
 - Run through the Lens 4 validation checklist before finalizing
 
 ### 4 — COMPLETE (MCP)
+- Run the most relevant `dotnet test` command(s) for the touched project
 - Commit the test file to the appropriate test project subdirectory
-- Create a PR via GitHub referencing the issue or code review finding that prompted the tests
-- Request review; confirm the new tests pass in CI before marking complete
+- Summarize which scenarios are covered, which are intentionally deferred, and any environment-specific test limits
 
 ---
 
@@ -56,11 +56,11 @@ Every test-writing task follows this 4-step workflow:
 |------|---------|
 | **xUnit** | Test runner — all test projects |
 | **FluentAssertions** | Assertion library — preferred over `Assert.*` |
-| **Moq** | Mocking — `Meridian.Tests`, `Meridian.Wpf.Tests` |
-| **NSubstitute** | Mocking — `Meridian.Ui.Tests` (check `.csproj` first) |
+| **Moq** | Common mocking library — used in `Meridian.Tests`, `Meridian.McpServer.Tests`, `Meridian.Ui.Tests`, and `Meridian.Wpf.Tests` |
+| **NSubstitute** | Also available in `Meridian.Tests` and `Meridian.Wpf.Tests`; use only when the target project or nearby tests already favor it |
 | **coverlet** | Code coverage — collected via `dotnet test --collect:"XPlat Code Coverage"` |
 
-Always check the target test project's `.csproj` for the mock library in use before writing mocks.
+Always check the target test project's `.csproj` and nearby tests before writing mocks; this repo now has 6 test projects with slightly different conventions.
 
 ---
 
@@ -72,7 +72,7 @@ Before writing any code, identify the component type using the decision tree in
 1. Which test project to target
 2. Which subdirectory to use
 3. Which pattern (A–H) to follow
-4. Whether to use Moq or NSubstitute
+4. Whether the project convention is Moq, NSubstitute, no mocks, or F#-native helpers
 5. Whether `IDisposable` / `IAsyncDisposable` cleanup is needed
 
 ---
@@ -100,9 +100,9 @@ These 7 rules apply to **every** test, regardless of component type:
 | `IStorageSink` / WAL | C | Temp dir, FlushAsync, DisposeAsync, line count |
 | `EventPipeline` | D | FlushAsync before assert, DisposeAsync flushes |
 | Application service (pure) | E | `[Theory]` for multiple inputs, `[InlineData]` |
-| WPF / Ui.Services | F | API mock (Moq or NSubstitute), null on error |
+| WPF / Ui.Services | F | API mock (Moq or NSubstitute based on local convention), null on error |
 | F# modules | G | F# test module style, `Result` type assertions |
-| Endpoint integration | H | `WebApplicationFactory`, JSON contract snapshots |
+| Endpoint / MCP integration | H | `WebApplicationFactory`, JSON contract snapshots, or MCP tool harnesses |
 
 Full scaffolding for each pattern is in `references/test-patterns.md`.
 

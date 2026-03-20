@@ -26,13 +26,13 @@ Generate high-value, implementable ideas for the Meridian platform. Every idea s
 Every brainstorming task follows this 4-step workflow:
 
 ### 1 — GATHER CONTEXT (MCP)
-- Fetch the GitHub issue, discussion, or feature request that prompted the brainstorm
+- Read the user request, pain point, or roadmap item that prompted the brainstorm
 - Read `../_shared/project-context.md` for authoritative project stats and abstraction paths
 - Review `references/competitive-landscape.md` for competitive signals relevant to the request
 
 ### 2 — ANALYZE & PLAN (Agents)
 - Detect the brainstorm mode (Open Exploration, Problem-Focused, Persona-Focused, etc.) using the mode table
-- Check the `brainstorm-history.jsonl` ledger to avoid repeating previously covered themes
+- If continuity matters, check the optional `brainstorm-history.jsonl` ledger to avoid repeating previously covered themes
 - Plan the idea set: quantity targets, audience personas, and effort tiers to cover
 
 ### 3 — EXECUTE (Skills + Manual)
@@ -41,9 +41,9 @@ Every brainstorming task follows this 4-step workflow:
 - Synthesize: call out the highest-leverage idea, platform bets, and sequencing recommendation
 
 ### 4 — COMPLETE (MCP)
-- Append a new entry to `brainstorm-history.jsonl` recording today's session themes
-- If the session produced actionable proposals, create GitHub issues for the top 1-3 ideas
-- Create a PR or discussion thread via GitHub to share the brainstorm output with stakeholders
+- If this repo is maintaining brainstorm continuity, append a concise entry to `brainstorm-history.jsonl` recording today's themes
+- End with the top recommendations, sequencing, and the next best execution skill (`mdc-blueprint`, `mdc-provider-builder`, or `mdc-test-writer`)
+- Convert only the highest-confidence ideas into concrete backlog items when the user asks for that
 
 ---
 
@@ -60,36 +60,22 @@ The best ideas for MDC aren't isolated features. They're extensions that **ampli
 
 ## Project Context
 
-**What Meridian is:**
-A provider-agnostic .NET 9 / C# 13 platform for real-time and historical market data collection, backtesting, live execution, and strategy lifecycle management. Streams from Interactive Brokers TWS, Alpaca Markets, Polygon, NYSE, and (via StockSharp) 90+ additional providers. Sub-2ms event pipeline, JSONL/Parquet storage, WebSocket + REST APIs, OpenTelemetry observability, WPF desktop app + web dashboard, MCP server for AI tooling.
+Treat Meridian as a **four-pillar trading workstation platform**, not just a collector:
 
-**Tech stack:** C# 13 (infrastructure), F# 8 (domain models), .NET 9, WPF (desktop UI), Docker, Prometheus/Grafana, OpenTelemetry, Bounded Channels, WAL storage, JSONL + Parquet (simultaneous), GitHub Actions CI/CD.
+- **Data Collection** — streaming ingest, historical backfill, provider failover, storage, data quality
+- **Backtesting** — tick replay, fill models, ledger-backed performance analysis
+- **Execution** — paper trading now, broker-agnostic execution surfaces expanding
+- **Strategies & Operations** — run lifecycle, observability, packaging, and AI/MCP tooling
 
-**Four-pillar architecture (ADR-016):**
-- **Data Collection** — streaming ingestion, historical backfill, storage, data quality monitoring
-- **Backtesting** — historical tick replay, fill simulation, portfolio metrics, Ledger-based P&L
-- **Execution** — live/simulated order routing, `IOrderGateway`, `PaperTradingGateway`, broker adapters, pre-trade risk (`Meridian.Risk`)
-- **Strategies** — strategy lifecycle management, run archive, paper→live promotion workflow
+When brainstorming, prefer ideas that strengthen one of these pillars **and** connect cleanly to the workflow-centric migration described in `README.md` and `docs/plans/trading-workstation-migration-blueprint.md`.
 
-**Current capabilities:**
+Use `../_shared/project-context.md` as the authoritative source for:
+- current file and project counts
+- provider inventory
+- key abstraction file paths
+- dependency boundaries and ADR-sensitive areas
 
-- Real-time streaming: trades, quotes, L2 order book depth from 5 providers
-- Historical backfill: 11 providers with auto-fallback chain
-- Multi-provider failover via `FailoverAwareMarketDataClient`
-- Backtesting engine with tick-by-tick replay, fill models, and double-entry `Ledger` P&L
-- Paper trading gateway (`PaperTradingGateway`) for risk-free strategy validation
-- Strategy lifecycle: register, run, pause, promote paper→live
-- Pre-trade risk validation via `CompositeRiskValidator` / `IRiskRule`
-- WPF desktop app: MVVM with `BindableBase`, real-time status, config management
-- Web dashboard: live status, data browser, API endpoints
-- MCP server layer (`Meridian.Mcp` / `Meridian.McpServer`) exposing tools + prompts for AI agents
-- Deployment: Docker Compose, systemd, Kubernetes
-- Observability: OpenTelemetry tracing, Prometheus metrics, Grafana dashboards
-- CI/CD: 33 GitHub Actions workflows for build, test, and automated documentation
-
-**What's coming:** StockSharp 90+ provider activation, Python-accessible layer, Arrow Flight / DuckDB integration, assembly-level SIMD hot-path optimizations, full WPF UX parity (6 pages still showing placeholder data), live broker adapters beyond paper trading.
-
-**Current count (authoritative: `../_shared/project-context.md`):** 868 source files (856 C# + 12 F#), 261 test files, 22 main projects, 33 CI/CD workflows.
+Do not repeat exact counts from memory inside brainstorm output; pull them from the shared context only when the numbers matter.
 
 ---
 

@@ -31,8 +31,8 @@ without warnings.
 Every provider build task follows this 4-step workflow:
 
 ### 1 — GATHER CONTEXT (MCP)
-- Fetch the GitHub issue or feature request describing the new provider
-- Read the relevant template file (`_Template/TemplateMarketDataClient.cs` or `TemplateHistoricalDataProvider.cs`)
+- Read the user request or provider brief describing the new adapter
+- Read the relevant template file (`_Template/TemplateMarketDataClient.cs`, `TemplateHistoricalDataProvider.cs`, or `TemplateSymbolSearchProvider.cs`)
 - Check `docs/ai/ai-known-errors.md` for known provider implementation mistakes
 
 ### 2 — ANALYZE & PLAN (Agents)
@@ -46,9 +46,9 @@ Every provider build task follows this 4-step workflow:
 - Write the matching test scaffold
 
 ### 4 — COMPLETE (MCP)
+- Run the provider-focused build/tests and any architecture checks relevant to the touched projects
 - Commit the new provider files and test scaffold
-- Create a PR via GitHub summarizing the provider, its capabilities, and the compliance checklist status
-- Request review; the `mdc-code-review` skill's Lens 5 checklist is the acceptance gate
+- Summarize capabilities, limitations, credentials/config needed, and compliance checklist status for review; the `mdc-code-review` skill's Lens 5 checklist is the acceptance gate
 
 ---
 

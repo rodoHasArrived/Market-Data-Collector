@@ -170,7 +170,7 @@ public sealed class MyStreamingProviderClient : IMarketDataClient
         {
             await _wsManager.ConnectAsync(_options.CurrentValue.WebSocketUri, ct);
             _logger.LogInformation("Connected to {Provider}", Name);
-            _ = Task.Run(() => ReceiveLoopAsync(_cts.Token), _cts.Token);
+            _ = ReceiveLoopAsync(_cts.Token);  // fire-and-observe background loop; avoid Task.Run for I/O-bound work
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

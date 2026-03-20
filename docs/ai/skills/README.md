@@ -1,8 +1,8 @@
 # Claude Code Skills
 
 This directory is the navigation index for **Claude Code skill definitions** used in the Market Data
-Collector project. Skills live in `.claude/skills/` so that Claude Code can discover and load them
-automatically.
+Collector / Meridian project. Skills live in `.claude/skills/` so that Claude Code can discover and load them
+automatically. The current skill set is tuned for Meridian's four-pillar scope: data collection, backtesting, execution, and strategy operations.
 
 ---
 
@@ -142,7 +142,7 @@ error table.
 
 Test generation skill for any Meridian component. Produces idiomatic xUnit +
 FluentAssertions tests with correct async patterns, isolation, naming conventions, and mock
-setup for all major component types.
+setup across the repo's six test projects, including backtesting and MCP server coverage.
 
 **Trigger conditions:**
 

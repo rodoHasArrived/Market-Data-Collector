@@ -66,11 +66,11 @@ You receive:
 Every blueprint task follows this 4-step workflow:
 
 ### 1 — GATHER CONTEXT (MCP)
-- Fetch the GitHub issue, Roadmap phase, or Brainstorm output that triggered the blueprint
+- Read the user request, roadmap note, or brainstorm output that triggered the blueprint
 - Read `../_shared/project-context.md` for authoritative file paths and abstraction names
 - Read `references/blueprint-patterns.md` for MDC-specific patterns and ADR contract reference
 - Run `python3 build/scripts/ai-repo-updater.py known-errors` to check for recurring patterns
-- Read any relevant existing interfaces or base classes in the codebase to ground the design
+- Read the closest existing interfaces, endpoints, view models, or services in the codebase to ground the design
 
 ### 2 — ANALYZE & PLAN (Agents)
 - Confirm scope: what's in, what's out, what's assumed
@@ -86,8 +86,8 @@ Every blueprint task follows this 4-step workflow:
 
 ### 4 — COMPLETE (MCP)
 - If `--json` requested, produce `blueprint.json` summary
-- Optionally open GitHub issue with blueprint summary and implementation checklist
-- Link blueprint to Roadmap phase it implements
+- End with an implementation checklist and validation plan tied to the touched projects
+- Link the design back to the roadmap, migration phase, or problem statement it implements
 
 ---
 

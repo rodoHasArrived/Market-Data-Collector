@@ -26,8 +26,8 @@ description: >
 Every code review task follows this 4-step workflow:
 
 ### 1 — GATHER CONTEXT (MCP)
-- Fetch the GitHub issue or PR to understand what changed and why
 - Read the relevant `.cs` / `.fs` / `.xaml` files that are in scope
+- If available, read the local issue/PR/task summary to understand what changed and why
 - Check `docs/ai/ai-known-errors.md` for recurring agent mistakes that apply
 
 ### 2 — ANALYZE & PLAN (Agents)
@@ -41,9 +41,9 @@ Every code review task follows this 4-step workflow:
 - For CRITICAL findings, include diff snippets showing before/after
 
 ### 4 — COMPLETE (MCP)
+- Run the most relevant validation commands for the touched code
 - Commit the refactored files (if in refactor mode)
-- Create a PR via GitHub with a summary of findings and changes
-- Request review from the appropriate team members
+- Summarize findings, risks, and follow-up checks for the reviewer
 
 ---
 
@@ -85,7 +85,7 @@ A unified code review skill that catches architecture violations, performance an
 Meridian is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. Historical backfill from 10+ providers with automatic failover. WPF desktop app (recommended) and web dashboard share services through a layered architecture.
 
 **Key facts for reviewers (authoritative counts in `../_shared/project-context.md`):**
-- **779 source files**: 769 C#, 14 F#, 266 test files, ~4,135 test methods across 4 test projects
+- **Current file/test counts live in `../_shared/project-context.md`** — do not restate stale numbers from memory
 - **WPF is the primary desktop target.** UWP was fully removed — flag ANY `using Windows.*` or `using Meridian.Uwp.*` as CRITICAL.
 - The project has strong backend patterns — bounded channels, Write-Ahead Logging, batched flushing, backpressure signals. Primary improvement area: WPF desktop layer where business logic accumulates in XAML code-behind.
 - `Meridian.ProviderSdk` defines clean interfaces for provider implementations.
