@@ -149,6 +149,7 @@ Meridian/
 │   │   ├── export-project-artifact.yml
 │   │   ├── golden-path-validation.yml
 │   │   ├── labeling.yml
+│   │   ├── maintenance.yml
 │   │   ├── makefile.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
@@ -563,6 +564,12 @@ Meridian/
 │   ├── README.md
 │   └── toc.yml
 ├── scripts/  # Automation scripts
+│   ├── ai/
+│   │   ├── common.sh
+│   │   ├── maintenance-full.sh
+│   │   ├── maintenance-light.sh
+│   │   ├── route-maintenance.sh
+│   │   └── setup-ai-agent.sh
 │   └── dev/
 │       ├── desktop-dev.ps1
 │       └── diagnose-uwp-xaml.ps1
