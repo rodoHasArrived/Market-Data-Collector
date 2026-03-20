@@ -399,15 +399,23 @@ public sealed class HostModeOrchestrator
         try
         {
             using var registration = ct.Register(() => done.TrySetCanceled(ct));
-            await done.Task;
+            try
+            {
+                await done.Task;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                _log.Information("Web dashboard shutdown requested via cancellation token");
+            }
         }
         finally
         {
             Console.CancelKeyPress -= handler;
         }
 
+        var shutdownToken = ct.IsCancellationRequested ? CancellationToken.None : ct;
         _log.Information("Stopping web dashboard...");
-        await webServer.StopAsync(ct);
+        await webServer.StopAsync(shutdownToken);
         _log.Information("Web dashboard stopped");
         return 0;
     }
