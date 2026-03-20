@@ -1758,8 +1758,11 @@ Meridian/
 │   │   │   └── WorkspaceServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── Meridian.Wpf.Tests.csproj
+│   ├── scripts/  # Automation scripts
+│   │   └── setup-verification.sh
 │   ├── coverlet.runsettings
 │   ├── Directory.Build.props
+│   ├── setup-script-tests.md
 │   └── xunit.runner.json
 ├── .editorconfig
 ├── .gitignore
