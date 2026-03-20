@@ -7,7 +7,7 @@
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
-For a complete per-feature status breakdown see [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md). For the workflow-centric UX and shared run-model migration plan, see [`../plans/trading-workstation-migration-blueprint.md`](../plans/trading-workstation-migration-blueprint.md).
+For a complete per-feature status breakdown see [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md). For the workflow-centric UX and shared run-model migration plan, see [`../plans/trading-workstation-migration-blueprint.md`](../plans/trading-workstation-migration-blueprint.md). For the consolidated non-assembly backlog across roadmap + plan documents, see [`FULL_IMPLEMENTATION_TODO_2026_03_20.md`](FULL_IMPLEMENTATION_TODO_2026_03_20.md).
 
 ---
 
@@ -39,9 +39,9 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
   - 📝 Open: 1 (H2 — Multi-Instance Coordination)
 - **8 canonicalization items** (theme J)
   - ✅ Completed: 7 (J1–J7 — design, MarketEvent fields, canonicalizer, condition codes, venue normalization, provider wiring, metrics)
-  - 🔄 Partial: 1 (J8 — Golden fixture test suite; curated fixtures + fixture-runner tests added, drift-canary CI still pending)
-- Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete. C3 is now explicitly partial: Polygon uses `WebSocketProviderBase`, NYSE remains pending, and StockSharp is tracked as a separate connector-oriented concern.
-- **Trading workstation migration**: Core functionality exists, but the UX remains page-centric. The next major delivery wave consolidates Meridian into Research, Trading, Data Operations, and Governance workspaces with a shared run / portfolio / ledger model.
+  - 🔄 Partial: 1 (J8 — curated fixtures + golden tests + baseline CI job are present; richer drift reporting / fixture refresh workflow still pending)
+- Architecture debt largely resolved; C1/C2 unified provider registry and DI composition path are complete. C3 is now explicitly partial: Polygon uses `WebSocketProviderBase`, NYSE remains pending, and StockSharp is tracked under the separate provider-capability/readability workstream rather than as a straight WebSocket-base migration.
+- **Trading workstation migration**: Core functionality exists, but the UX remains page-centric. The command palette already uses `Research`, `Trading`, `Data Ops`, and `Governance` labels, while the persisted workspace model still reflects legacy categories; the next major delivery wave needs to complete that migration in product structure, not only terminology.
 - **Provider completeness**: Polygon and StockSharp functional with credentials; IB and NYSE require external setup steps.
 
 ---
@@ -61,72 +61,53 @@ Remaining work is tracked in `docs/status/IMPROVEMENTS.md` and the new [`FEATURE
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
 | Phase 9: Final Production Release | 🔄 Active target | 94.3% of core improvements complete; C3 lifecycle consolidation partial (Polygon done; NYSE pending, StockSharp re-scoped), G2 trace propagation pending. |
 | Phase 10: Scalability & Multi-Instance | 📝 Planned | New phase for horizontal scaling and multi-instance coordination. |
-| Phase 11: Trading Workstation Structure | 📝 Planned | Reorganize UX around Research, Trading, Data Operations, and Governance workspaces. |
+| Phase 11: Trading Workstation Structure | 🔄 Planned / partially represented | Navigation language exists in the command palette, but true workspace-first UX remains to be implemented. |
 | Phase 12: Shared Run / Portfolio / Ledger Model | 📝 Planned | Standardize run browser, portfolio summaries, and ledger-first read models. |
 | Phase 13: Backtest + Paper Trading Unification | 📝 Planned | Unify native + Lean backtesting and harden paper-trading operator workflows. |
-| Phase 14: See detailed Phase 14 section below | 📝 Planned | See detailed roadmap section for Phase 14 scope. |
-| Phase 15: See detailed Phase 15 section below | 📝 Planned | See detailed roadmap section for Phase 15 scope. |
+| Phase 14: Configuration Schema & Drift Canary | 🔄 Partially started | I3 and J8 have baseline infrastructure, but schema generation and richer drift reporting remain. |
+| Phase 15: Scalability (Optional) | 📝 Planned | Multi-instance coordination remains optional for single-node deployments. |
 | Phase 16: Assembly-Level Performance | 📝 Planned | Byte-level SIMD, algorithmic, and allocation improvements from `docs/evaluations/assembly-performance-opportunities.md`. |
-| Phase 16: Assembly-Level Performance Optimizations | 📝 Planned | SIMD hot-path and algorithmic improvements — guided by BenchmarkDotNet evidence. See detailed roadmap section. |
 
 ---
 
-## Priority Roadmap (Next 6 Sprints)
+## Priority Roadmap (Current Delivery Waves)
 
-This section supersedes the prior effort model and aligns with the current active backlog.
+This section replaces the old sprint-by-sprint narrative with the current backlog ordering implied by the repository state.
 
-### Sprint 1 ✅
+### Wave 1 — Close the remaining partial items
 
-- **C4**: ✅ Remove static metrics dependency from `EventPipeline` via DI-friendly metrics abstraction.
-- **C5**: ✅ Consolidate configuration validation path into one canonical pipeline.
+- **C3 remainder**: complete NYSE lifecycle consolidation and formally document the StockSharp connector-oriented path.
+- **G2 remainder**: propagate trace context provider -> pipeline -> storage and add correlation IDs to logs.
+- **I3 remainder**: generate `config/appsettings.schema.json`, link it from sample config, and validate it in CI.
+- **J8 remainder**: keep the existing golden-fixture CI slice, then extend it with richer unmapped-code / venue drift reporting and a fixture-refresh workflow.
 
-### Sprint 2 ✅
+### Wave 2 — Finish provider completeness / current-functionality hardening
 
-- **D4**: ✅ Implement quality metrics API surface (`/api/quality/drops`, symbol-specific variants).
-- **B1 (remainder)**: ✅ Expand endpoint integration checks around newly implemented quality endpoints.
+- **Polygon**: validate WebSocket parsing against recorded production-style sessions.
+- **StockSharp**: document connector types and ship validated configuration examples.
+- **IB**: add scripted `IBAPI` setup/build instructions and a smoke-test path.
+- **Testing**: raise coverage for under-tested providers and backtesting modules.
 
-### Sprint 3 ✅
+### Wave 3 — Deliver the workflow-centric workstation baseline
 
-- **C6**: ✅ Complete multi-sink fan-out hardening for storage writes (CompositeSink with per-sink fault isolation).
-- **A7**: ✅ Standardize startup/runtime error handling conventions and diagnostics (ErrorCode-based exit codes).
+- **Phase 11**: convert navigation from page-first to true `Research` / `Trading` / `Data Operations` / `Governance` workspaces.
+- **Phase 12**: introduce shared `StrategyRun`, portfolio, and ledger read models plus a comparison-friendly run browser.
+- **UX debt cleanup**: eliminate orphan pages and placeholder-only surfaces as part of the workstation migration.
 
-### Sprint 4 ✅
+### Wave 4 — Unify research, backtest, and paper-trading workflows
 
-- **B3 (tranche 1)**: ✅ Provider-focused tests for Polygon subscription/reconnect and StockSharp lifecycle.
-- **G2 (partial)**: ✅ OpenTelemetry pipeline instrumentation via `TracedEventMetrics` decorator and OTLP meter registration.
-- **D7 (partial)**: ✅ Typed OpenAPI response annotations on core health/status endpoints.
+- **Phase 13**: deliver Backtest Studio, a paper-trading cockpit, feed-aware execution realism, and promotion workflow guardrails.
+- **Portfolio + ledger UX**: make journal/trial-balance/account-summary views first-class product surfaces.
 
-### Sprint 5 ✅
+### Wave 5 — Build the major planned capabilities that are still blueprint-only
 
-- **B2 (tranche 1)**: ✅ Negative-path endpoint tests (40+ tests) and response schema validation tests (15+ tests) for health/status/config/backfill/provider families.
-- **D7 (remainder)**: ✅ Typed `Produces<T>()` and `.WithDescription()` OpenAPI annotations extended to all endpoint families (58+ endpoints across 7 files).
+- **QuantScript**: create the project, WPF surface, compiler/runtime pipeline, tests, and example scripts.
+- **L3 inference / execution simulation**: implement contracts, reconstruction, inference, simulator, CLI/UI integration, and documentation.
 
-### Sprint 6 ✅
+### Wave 6 — Optional scale-out and structural closure
 
-- **C1/C2**: ✅ Provider registration and runtime composition unified under DI — `ProviderRegistry` is the single entry point; all services resolved via `ServiceCompositionRoot`.
-- **H1**: ✅ Rate limiting per-provider for backfill operations — already implemented via `ProviderRateLimitTracker` in orchestration layer.
-- **H4**: ✅ Provider degradation scoring — `ProviderDegradationScorer` with composite health scores and 20+ unit tests.
-- **I1**: ✅ Integration test harness — `FixtureMarketDataClient` + `InMemoryStorageSink` + 9 pipeline integration tests.
-
-### Sprint 7 (partial)
-
-- **H2**: Multi-instance coordination via distributed locking for symbol subscriptions. *(pending — not needed for single-instance deployments)*
-- **B3 (tranche 2)**: ✅ Provider tests for IB simulation client (15 tests) and Alpaca credential/reconnect behavior (10 tests).
-
-### Sprint 8 (partial)
-
-- **H3**: ✅ Event replay infrastructure — `JsonlReplayer`, `MemoryMappedJsonlReader`, `EventReplayService` with pause/resume/seek, CLI `--replay` flag, desktop `EventReplayPage`.
-- **I2**: ✅ CLI progress reporting — `ProgressDisplayService` with progress bars (ETA/throughput), spinners, checklists, and tables.
-- **G2 (remainder)**: End-to-end distributed tracing from provider through storage with trace context propagation. *(pending)*
-
-### Sprint 9 (partial)
-
-- **C3 (Polygon)**: ✅ `PolygonMarketDataClient` refactored to extend `WebSocketProviderBase` — connection lifecycle, heartbeat, and resilience logic consolidated. Template market data client updated as canonical reference.
-- **Route coverage expansion**: ✅ 26 additional route constants added (`283 → 309`) covering alignment, sampling, and extended subscription endpoints.
-- **Test suite expansion**: ✅ 691 additional test methods across all test projects (`~3,444 → ~4,135`); 47 additional test files (`219 → 266`).
-- **C3 (NYSE/StockSharp)**: Adoption of `WebSocketProviderBase` in NYSE and StockSharp providers. *(pending)*
-
----
+- **H2 / Phase 15**: add multi-instance coordination for shared symbol universes and scheduled work ownership.
+- **Readability / cleanup roadmap**: finish the remaining structural refactors, CI consolidation, placeholder labeling, and documentation freshness work.
 
 ## New Improvement Themes
 
@@ -159,7 +140,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | J5 | Venue Normalization to ISO 10383 MIC | ✅ Complete | `VenueMicMapper` with `config/venue-mapping.json` — 29 Alpaca, 17 Polygon, 17 IB venue mappings to ISO 10383 MIC codes. |
 | J6 | Provider Adapter Wiring | ✅ Complete | `CanonicalizingPublisher` decorator wraps `IMarketEventPublisher` with DI registration in `ServiceCompositionRoot`. Pilot symbol filtering, dual-write mode, lock-free metrics. |
 | J7 | Canonicalization Metrics & Monitoring | ✅ Complete | `CanonicalizationMetrics` with per-provider parity stats. API endpoints for status, parity, and config. Thread-safe counters for success/fail/unresolved. |
-| J8 | Golden Fixture Test Suite | 🔄 Partial | 8 curated fixture `.json` files added (Alpaca + Polygon: regular, extended-hours, odd-lot, cross-provider XNAS identity). `CanonicalizationGoldenFixtureTests` drives them via `[Theory][MemberData]` using production `condition-codes.json` and `venue-mapping.json`. Remaining: drift-canary CI job for detecting new unmapped codes. |
+| J8 | Golden Fixture Test Suite | 🔄 Partial | 8 curated fixture `.json` files added (Alpaca + Polygon: regular, extended-hours, odd-lot, cross-provider XNAS identity). `CanonicalizationGoldenFixtureTests` drives them via `[Theory][MemberData]` using production `condition-codes.json` and `venue-mapping.json`. A baseline CI job already runs the slice; remaining work is richer drift reporting plus fixture refresh/maintenance workflow. |
 
 ---
 
@@ -176,7 +157,7 @@ This section supersedes the prior effort model and aligns with the current activ
 - ✅ C1/C2 complete — unified `ProviderRegistry` and single DI composition path.
 - ✅ Static singletons replaced with injectable `IEventMetrics`.
 - ✅ Consolidated configuration validation pipeline.
-- 🔄 C3 (WebSocket base class) remains open — functional but duplicates ~200-300 LOC.
+- 🔄 C3 (provider lifecycle consolidation) remains open — Polygon is migrated, NYSE still needs the shared lifecycle path, and StockSharp now needs a clearly documented connector-runtime strategy rather than ambiguous roadmap wording.
 
 ### Objective 3: API Productization ✅ Achieved
 
@@ -200,7 +181,7 @@ This section supersedes the prior effort model and aligns with the current activ
 
 - ✅ Design document complete with provider field audit and 3-phase rollout plan.
 - ✅ J2–J7 fully implemented: canonical fields on `MarketEvent`, `EventCanonicalizer`, `ConditionCodeMapper`, `VenueMicMapper`, `CanonicalizingPublisher` decorator with DI wiring, `CanonicalizationMetrics` with API endpoints.
-- 🔄 J8 partial: unit tests cover correctness; golden fixture files and drift canary CI pending.
+- 🔄 J8 partial: golden fixtures and a baseline CI test job exist; remaining work is richer unmapped-code / venue reporting and fixture refresh automation.
 - Target: >= 99.5% canonical identity match rate across providers for US liquid equities.
 
 ---
@@ -284,9 +265,9 @@ These phases convert Meridian from a broad feature suite into a workflow-centric
 | Item | Area | Work |
 |------|------|------|
 | P14-1 | **I3 Config JSON Schema** | Add a build step (or `dotnet run` tool) that generates `config/appsettings.schema.json` from `AppConfig` using `NJsonSchema` or `System.Text.Json.Schema`; add `$schema` pointer to `appsettings.sample.json`; enables IDE auto-complete and validation |
-| P14-2 | **J8 Drift-canary CI** | Add a GitHub Actions workflow job that runs `CanonicalizationGoldenFixtureTests` on every push and posts a PR comment listing any new unmapped condition codes or venue identifiers found in the fixture files |
+| P14-2 | **J8 Drift-canary CI** | Extend the existing golden-fixture CI slice so it reports newly unmapped condition codes or venue identifiers in a directly actionable PR-visible summary/comment and supports fixture refresh/maintenance |
 
-**Exit criteria:** `appsettings.schema.json` present and linked; IDE shows validation on `appsettings.json`. CI fails on unrecognized condition codes or venues.
+**Exit criteria:** `appsettings.schema.json` present and linked; IDE shows validation on `appsettings.json`. CI fails on unrecognized condition codes or venues and reports the detected drift clearly enough for operators/developers to act on it.
 
 ---
 
@@ -370,6 +351,7 @@ per operation do not regress relative to the pre-optimization baseline.
 - `docs/status/production-status.md` — production readiness assessment narrative.
 - `docs/status/CHANGELOG.md` — change log by release snapshot.
 - `docs/status/TODO.md` — TODO/NOTE extraction for follow-up.
+- `docs/status/FULL_IMPLEMENTATION_TODO_2026_03_20.md` — consolidated non-assembly implementation backlog spanning roadmap + plan documents.
 - `docs/evaluations/` — detailed evaluation source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/audits/` — detailed audit source documents (summarized in EVALUATIONS_AND_AUDITS.md).
 - `docs/architecture/deterministic-canonicalization.md` — cross-provider canonicalization design.
@@ -377,4 +359,4 @@ per operation do not regress relative to the pre-optimization baseline.
 
 ---
 
-*Last Updated: 2026-03-17*
+*Last Updated: 2026-03-20*
