@@ -23,15 +23,15 @@ using Serilog;
 namespace Meridian.Application.Composition;
 
 /// <summary>
-/// Unified startup class that provides a single entry point for all host types.
-/// All hosts flow through this class, which delegates to ServiceCompositionRoot.
+/// Unified host graph surface used by the shared startup/orchestration layer.
+/// All host modes flow through this class, which delegates to <see cref="ServiceCompositionRoot"/>.
 /// </summary>
 /// <remarks>
 /// <para><b>Design Philosophy:</b></para>
 /// <list type="bullet">
-/// <item><description>Single setup path for CLI, Web, and Desktop modes</description></item>
-/// <item><description>Uses ServiceCompositionRoot for all DI registration</description></item>
-/// <item><description>Host-specific adapters customize endpoint exposure</description></item>
+/// <item><description>Single host graph construction surface for console, web, desktop, and utility flows</description></item>
+/// <item><description>Uses <see cref="ServiceCompositionRoot"/> for all DI registration</description></item>
+/// <item><description>Shared startup orchestrators choose canonical <see cref="CompositionOptions"/> presets</description></item>
 /// <item><description>Eliminates duplicated service wiring across hosts</description></item>
 /// </list>
 /// </remarks>
@@ -50,16 +50,9 @@ public sealed class HostStartup : IAsyncDisposable
         _log = log;
     }
 
-    /// <summary>
-    /// Creates a host startup for streaming data collection (CLI headless mode).
-    /// </summary>
-    /// <param name="configPath">Path to configuration file.</param>
-    /// <returns>Configured HostStartup instance.</returns>
-    public static HostStartup CreateForStreaming(string configPath)
+    private static HostStartup Create(CompositionOptions options)
     {
         var log = LoggingSetup.ForContext<HostStartup>();
-        var options = CompositionOptions.Streaming with { ConfigPath = configPath };
-
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddSerilog());
         services.AddMarketDataServices(options);
@@ -69,6 +62,26 @@ public sealed class HostStartup : IAsyncDisposable
 
         return new HostStartup(serviceProvider, options, log);
     }
+
+    /// <summary>
+    /// Creates a host startup for streaming data collection (CLI headless mode).
+    /// </summary>
+    /// <param name="configPath">Path to configuration file.</param>
+    /// <returns>Configured HostStartup instance.</returns>
+    public static HostStartup CreateForStreaming(string configPath)
+        => Create(CompositionOptions.Streaming with { ConfigPath = configPath });
+
+    /// <summary>
+    /// Creates a host startup for the web dashboard host profile.
+    /// </summary>
+    public static HostStartup CreateForWebDashboard(string configPath)
+        => Create(CompositionOptions.WebDashboard with { ConfigPath = configPath });
+
+    /// <summary>
+    /// Creates a host startup for the default/full host profile.
+    /// </summary>
+    public static HostStartup CreateDefault(string configPath)
+        => Create(CompositionOptions.Default with { ConfigPath = configPath });
 
     /// <summary>
     /// Creates a host startup for backfill-only operation.
@@ -76,19 +89,7 @@ public sealed class HostStartup : IAsyncDisposable
     /// <param name="configPath">Path to configuration file.</param>
     /// <returns>Configured HostStartup instance.</returns>
     public static HostStartup CreateForBackfill(string configPath)
-    {
-        var log = LoggingSetup.ForContext<HostStartup>();
-        var options = CompositionOptions.BackfillOnly with { ConfigPath = configPath };
-
-        var services = new ServiceCollection();
-        services.AddLogging(builder => builder.AddSerilog());
-        services.AddMarketDataServices(options);
-
-        var serviceProvider = services.BuildServiceProvider();
-        InitializeHttpClientFactory(serviceProvider, log);
-
-        return new HostStartup(serviceProvider, options, log);
-    }
+        => Create(CompositionOptions.BackfillOnly with { ConfigPath = configPath });
 
     /// <summary>
     /// Creates a host startup for minimal utility commands (validation, config checks, etc.).
@@ -96,17 +97,7 @@ public sealed class HostStartup : IAsyncDisposable
     /// <param name="configPath">Path to configuration file.</param>
     /// <returns>Configured HostStartup instance.</returns>
     public static HostStartup CreateForUtility(string configPath)
-    {
-        var log = LoggingSetup.ForContext<HostStartup>();
-        var options = CompositionOptions.Minimal with { ConfigPath = configPath };
-
-        var services = new ServiceCollection();
-        services.AddLogging(builder => builder.AddSerilog());
-        services.AddMarketDataServices(options);
-
-        var serviceProvider = services.BuildServiceProvider();
-        return new HostStartup(serviceProvider, options, log);
-    }
+        => Create(CompositionOptions.Minimal with { ConfigPath = configPath });
 
     /// <summary>
     /// Gets a required service from the DI container.
@@ -294,11 +285,24 @@ public sealed class HostStartup : IAsyncDisposable
 }
 
 /// <summary>
-/// Static entry point for unified host startup operations.
-/// Provides factory methods for different deployment modes.
+/// Static entry point for selecting canonical <see cref="CompositionOptions"/> presets
+/// and creating <see cref="HostStartup"/> instances for the shared startup layer.
 /// </summary>
 public static class HostStartupFactory
 {
+    /// <summary>
+    /// Resolves the canonical host profile for the supplied deployment context.
+    /// </summary>
+    public static CompositionOptions ResolveProfile(DeploymentContext deployment)
+    {
+        return deployment.Mode switch
+        {
+            DeploymentMode.Web => CompositionOptions.WebDashboard,
+            DeploymentMode.Desktop => CompositionOptions.Default,
+            _ => CompositionOptions.Streaming
+        };
+    }
+
     /// <summary>
     /// Creates the appropriate HostStartup based on deployment context.
     /// </summary>
@@ -307,10 +311,11 @@ public static class HostStartupFactory
     /// <returns>Configured HostStartup instance.</returns>
     public static HostStartup Create(DeploymentContext deployment, string configPath)
     {
-        return deployment.Mode switch
+        var profile = ResolveProfile(deployment);
+        return profile switch
         {
-            DeploymentMode.Web => HostStartup.CreateForStreaming(configPath), // Web mode still needs streaming services
-            DeploymentMode.Desktop => HostStartup.CreateForStreaming(configPath),
+            _ when profile == CompositionOptions.WebDashboard => HostStartup.CreateForWebDashboard(configPath),
+            _ when profile == CompositionOptions.Default => HostStartup.CreateDefault(configPath),
             _ => HostStartup.CreateForStreaming(configPath)
         };
     }

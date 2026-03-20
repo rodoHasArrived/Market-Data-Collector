@@ -7,7 +7,7 @@ namespace Meridian.Ledger;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Every economic event (fill, commission, margin interest, etc.) is recorded as
+/// Every economic event (fill, commission, margin interest, transfers, etc.) is recorded as
 /// a balanced journal entry: the sum of debits always equals the sum of credits.
 /// </para>
 /// <para>
@@ -168,6 +168,15 @@ public sealed class Ledger : IReadOnlyLedger
         if (!string.IsNullOrWhiteSpace(query.StrategyId))
             filtered = filtered.Where(entry => string.Equals(entry.Metadata.StrategyId, query.StrategyId, StringComparison.OrdinalIgnoreCase));
 
+        if (!string.IsNullOrWhiteSpace(query.FinancialAccountId))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.FinancialAccountId, query.FinancialAccountId, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.CounterpartyAccountId))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.CounterpartyAccountId, query.CounterpartyAccountId, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.Institution))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.Institution, query.Institution, StringComparison.OrdinalIgnoreCase));
+
         return filtered.ToList();
     }
 
@@ -202,12 +211,13 @@ public sealed class Ledger : IReadOnlyLedger
     }
 
     /// <summary>
-    /// Returns account summaries for every posted account, optionally filtered by account type.
+    /// Returns account summaries for every posted account, optionally filtered by account type and account scope.
     /// </summary>
-    public IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null)
+    public IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null, string? financialAccountId = null)
     {
         return _accountTotals
             .Where(pair => accountType is null || pair.Key.AccountType == accountType)
+            .Where(pair => MatchesFinancialAccount(pair.Key, financialAccountId))
             .Select(pair => new LedgerAccountSummary(
                 pair.Key,
                 CalculateNetBalance(pair.Key, pair.Value.Debits, pair.Value.Credits),
@@ -219,6 +229,7 @@ public sealed class Ledger : IReadOnlyLedger
             .OrderBy(summary => summary.Account.AccountType)
             .ThenBy(summary => summary.Account.Name, StringComparer.Ordinal)
             .ThenBy(summary => summary.Account.Symbol, StringComparer.Ordinal)
+            .ThenBy(summary => summary.Account.FinancialAccountId, StringComparer.Ordinal)
             .ToList();
     }
 
@@ -227,11 +238,14 @@ public sealed class Ledger : IReadOnlyLedger
     /// If accounting is correct the sum of asset and expense balances equals the sum of liability,
     /// equity, and revenue balances (the accounting equation holds).
     /// </summary>
-    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance()
+    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance(string? financialAccountId = null)
     {
         var result = new Dictionary<LedgerAccount, decimal>(_accountTotals.Count);
         foreach (var (account, totals) in _accountTotals)
         {
+            if (!MatchesFinancialAccount(account, financialAccountId))
+                continue;
+
             result[account] = CalculateNetBalance(account, totals.Debits, totals.Credits);
         }
 
@@ -241,7 +255,7 @@ public sealed class Ledger : IReadOnlyLedger
     /// <summary>
     /// Returns a trial balance as of the supplied timestamp.
     /// </summary>
-    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp)
+    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp, string? financialAccountId = null)
     {
         var result = new Dictionary<LedgerAccount, decimal>();
 
@@ -252,6 +266,9 @@ public sealed class Ledger : IReadOnlyLedger
 
             foreach (var line in journalEntry.Lines)
             {
+                if (!MatchesFinancialAccount(line.Account, financialAccountId))
+                    continue;
+
                 result.TryGetValue(line.Account, out var currentBalance);
                 var delta = line.Account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
                     ? line.Debit - line.Credit
@@ -313,9 +330,9 @@ public sealed class Ledger : IReadOnlyLedger
     /// <summary>
     /// Returns point-in-time balances and posting counts.
     /// </summary>
-    public LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp)
+    public LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp, string? financialAccountId = null)
     {
-        var balances = TrialBalanceAsOf(timestamp);
+        var balances = TrialBalanceAsOf(timestamp, financialAccountId);
         var journalCount = 0;
         var ledgerEntryCount = 0;
 
@@ -324,8 +341,12 @@ public sealed class Ledger : IReadOnlyLedger
             if (journalEntry.Timestamp > timestamp)
                 continue;
 
+            var scopedLines = journalEntry.Lines.Where(line => MatchesFinancialAccount(line.Account, financialAccountId)).ToList();
+            if (scopedLines.Count == 0)
+                continue;
+
             journalCount++;
-            ledgerEntryCount += journalEntry.Lines.Count;
+            ledgerEntryCount += scopedLines.Count;
         }
 
         return new LedgerSnapshot(timestamp, balances, journalCount, ledgerEntryCount);
@@ -412,6 +433,10 @@ public sealed class Ledger : IReadOnlyLedger
                 throw new LedgerValidationException($"Ledger entry '{line.EntryId}' has already been posted.");
         }
     }
+
+    private static bool MatchesFinancialAccount(LedgerAccount account, string? financialAccountId)
+        => string.IsNullOrWhiteSpace(financialAccountId)
+            || string.Equals(account.FinancialAccountId, financialAccountId.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static decimal CalculateNetBalance(LedgerAccount account, decimal debits, decimal credits)
         => account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense

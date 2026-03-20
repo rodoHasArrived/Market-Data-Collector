@@ -36,7 +36,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly WriteAheadLog? _wal;
     private readonly ILogger<EventPipeline> _logger;
     private readonly CancellationTokenSource _cts = new();
-    private readonly Task _consumer;
+    private readonly Task[] _consumers;
     private readonly Task? _flusher;
     private readonly int _capacity;
     private readonly BoundedChannelFullMode _fullMode;
@@ -46,8 +46,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     private readonly IEventValidator? _validator;
     private readonly DeadLetterSink? _deadLetterSink;
     private readonly PersistentDedupLedger? _dedupLedger;
+    private readonly int _consumerCount;
     private int _disposed;
-    private volatile bool _consumerBusy;
+    private int _activeConsumers;
+    private int _finalFlushStarted;
 
     // Performance metrics
     private long _publishedCount;
@@ -67,6 +69,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     // Configuration
     private readonly TimeSpan _flushInterval;
     private readonly int _batchSize;
+    private readonly int _maxAdaptiveBatchSize;
     private readonly bool _enablePeriodicFlush;
     private readonly TimeSpan _sinkFlushTimeout;
 
@@ -113,6 +116,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// <param name="validator">Optional event validator for pre-persistence validation.</param>
     /// <param name="deadLetterSink">Optional dead-letter sink for rejected events.</param>
     /// <param name="dedupLedger">Optional persistent deduplication ledger for suppressing duplicate events.</param>
+    /// <param name="consumerCount">Requested number of consumer tasks for the slow path. Values greater than 1 are honored only when WAL, validation, dead-letter routing, and deduplication are disabled.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -128,7 +132,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         TimeSpan? sinkFlushTimeout = null,
         IEventValidator? validator = null,
         DeadLetterSink? deadLetterSink = null,
-        PersistentDedupLedger? dedupLedger = null)
+        PersistentDedupLedger? dedupLedger = null,
+        int consumerCount = 1)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -143,7 +148,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             sinkFlushTimeout,
             validator,
             deadLetterSink,
-            dedupLedger)
+            dedupLedger,
+            consumerCount)
     {
     }
 
@@ -165,6 +171,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// are routed to the <paramref name="deadLetterSink"/> and excluded from primary storage.</param>
     /// <param name="deadLetterSink">Optional dead-letter sink for events rejected by the validator.</param>
     /// <param name="dedupLedger">Optional persistent deduplication ledger for suppressing duplicate events.</param>
+    /// <param name="consumerCount">Requested number of consumer tasks for the slow path. Values greater than 1 are honored only when WAL, validation, dead-letter routing, and deduplication are disabled.</param>
     public EventPipeline(
         IStorageSink sink,
         EventPipelinePolicy policy,
@@ -179,7 +186,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         TimeSpan? sinkFlushTimeout = null,
         IEventValidator? validator = null,
         DeadLetterSink? deadLetterSink = null,
-        PersistentDedupLedger? dedupLedger = null)
+        PersistentDedupLedger? dedupLedger = null,
+        int consumerCount = 1)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
@@ -201,16 +209,22 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         _highWaterMark50 = policy.Capacity / 2;
         _flushInterval = flushInterval ?? TimeSpan.FromSeconds(5);
         _batchSize = Math.Max(1, batchSize);
+        _maxAdaptiveBatchSize = Math.Max(_batchSize, _batchSize * 4);
         _enablePeriodicFlush = enablePeriodicFlush;
+        _consumerCount = DetermineConsumerCount(consumerCount, _wal, _validator, _deadLetterSink, _dedupLedger, _logger);
 
-        _channel = policy.CreateChannel<MarketEvent>(singleReader: true, singleWriter: false);
+        _channel = policy.CreateChannel<MarketEvent>(singleReader: _consumerCount == 1, singleWriter: false);
 
-        // Start consumer with long-running task
-        _consumer = Task.Factory.StartNew(
-            ConsumeAsync,
-            _cts.Token,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default).Unwrap();
+        // Start one or more long-running consumers. Multi-consumer mode is enabled only
+        // when WAL / dedup / validation side effects are disabled so ordering-sensitive
+        // persistence remains single-threaded by default.
+        _consumers = Enumerable.Range(0, _consumerCount)
+            .Select(_ => Task.Factory.StartNew(
+                ConsumeAsync,
+                _cts.Token,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default).Unwrap())
+            .ToArray();
 
         // Start periodic flusher if enabled
         if (_enablePeriodicFlush)
@@ -219,6 +233,31 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         }
 
         Interlocked.Exchange(ref _lastFlushTimestamp, Stopwatch.GetTimestamp());
+    }
+
+    private static int DetermineConsumerCount(
+        int requestedConsumerCount,
+        WriteAheadLog? wal,
+        IEventValidator? validator,
+        DeadLetterSink? deadLetterSink,
+        PersistentDedupLedger? dedupLedger,
+        ILogger<EventPipeline> logger)
+    {
+        if (requestedConsumerCount < 1)
+            throw new ArgumentOutOfRangeException(nameof(requestedConsumerCount), "Consumer count must be at least 1.");
+
+        if (requestedConsumerCount == 1)
+            return 1;
+
+        if (wal is not null || validator is not null || deadLetterSink is not null || dedupLedger is not null)
+        {
+            logger.LogInformation(
+                "EventPipeline requested {RequestedConsumers} consumers, but advanced persistence features require single-consumer mode. Falling back to 1 consumer.",
+                requestedConsumerCount);
+            return 1;
+        }
+
+        return requestedConsumerCount;
     }
 
     #region Public Properties - Pipeline Statistics
@@ -585,11 +624,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             // Channel is empty — check if the consumer has finished its batch.
             // This handles the DropOldest case where events were silently discarded
             // by the channel before reaching the consumer.
-            if (_channel.Reader.Count == 0 && !_consumerBusy)
+            if (_channel.Reader.Count == 0 && Volatile.Read(ref _activeConsumers) == 0)
             {
                 await Task.Delay(10, ct).ConfigureAwait(false);
                 var newConsumed = Interlocked.Read(ref _consumedCount);
-                if (_channel.Reader.Count == 0 && !_consumerBusy && newConsumed == consumed)
+                if (_channel.Reader.Count == 0 && Volatile.Read(ref _activeConsumers) == 0 && newConsumed == consumed)
                     break; // Consumer is idle, nothing left to process
             }
             else
@@ -640,18 +679,20 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
 
         try
         {
-            var batchBuffer = new List<MarketEvent>(_batchSize);
+            var batchBuffer = new List<MarketEvent>(_maxAdaptiveBatchSize);
 
             while (await _channel.Reader.WaitToReadAsync(_cts.Token).ConfigureAwait(false))
             {
-                _consumerBusy = true;
+                Interlocked.Increment(ref _activeConsumers);
                 var startTs = Stopwatch.GetTimestamp();
 
                 try
                 {
+                    var targetBatchSize = GetAdaptiveBatchSize();
+
                     // Drain up to _batchSize events from the channel
                     batchBuffer.Clear();
-                    while (batchBuffer.Count < _batchSize && _channel.Reader.TryRead(out var evt))
+                    while (batchBuffer.Count < targetBatchSize && _channel.Reader.TryRead(out var evt))
                     {
                         batchBuffer.Add(evt);
                     }
@@ -731,7 +772,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
                 }
                 finally
                 {
-                    _consumerBusy = false;
+                    Interlocked.Decrement(ref _activeConsumers);
                 }
 
                 // Track processing time amortized across the batch
@@ -742,32 +783,51 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         catch (OperationCanceledException) { }
         finally
         {
-            // Final flush on shutdown with timeout to prevent indefinite hang
-            try
+            if (Interlocked.Exchange(ref _finalFlushStarted, 1) == 0)
             {
-                using var flushTimeoutCts = new CancellationTokenSource(_finalFlushTimeout);
-                await _sink.FlushAsync(flushTimeoutCts.Token).ConfigureAwait(false);
-
-                // Final WAL commit for any remaining uncommitted records
-                if (_wal != null && _lastCommittedWalSequence > 0)
+                // Final flush on shutdown with timeout to prevent indefinite hang
+                try
                 {
-                    await _wal.CommitAsync(_lastCommittedWalSequence, flushTimeoutCts.Token).ConfigureAwait(false);
+                    using var flushTimeoutCts = new CancellationTokenSource(_finalFlushTimeout);
+                    await _sink.FlushAsync(flushTimeoutCts.Token).ConfigureAwait(false);
+
+                    // Final WAL commit for any remaining uncommitted records
+                    if (_wal != null && _lastCommittedWalSequence > 0)
+                    {
+                        await _wal.CommitAsync(_lastCommittedWalSequence, flushTimeoutCts.Token).ConfigureAwait(false);
+                    }
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogWarning(
-                    "Final flush timed out after {TimeoutSeconds}s during pipeline shutdown. Consumed {ConsumedCount} events before timeout - some buffered data may be lost",
-                    _finalFlushTimeout.TotalSeconds, _consumedCount);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Final flush failed during pipeline shutdown. Consumed {ConsumedCount} events before failure - potential data loss", _consumedCount);
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning(
+                        "Final flush timed out after {TimeoutSeconds}s during pipeline shutdown. Consumed {ConsumedCount} events before timeout - some buffered data may be lost",
+                        _finalFlushTimeout.TotalSeconds, _consumedCount);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Final flush failed during pipeline shutdown. Consumed {ConsumedCount} events before failure - potential data loss", _consumedCount);
+                }
             }
         }
     }
 
-    private async Task PeriodicFlushAsync(CancellationToken ct = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int GetAdaptiveBatchSize()
+    {
+        if (_consumerCount > 1)
+            return _maxAdaptiveBatchSize;
+
+        var queueSize = _channel.Reader.Count;
+        if (queueSize >= _highWaterMark80)
+            return _maxAdaptiveBatchSize;
+
+        if (queueSize >= _highWaterMark50)
+            return Math.Min(_maxAdaptiveBatchSize, _batchSize * 2);
+
+        return _batchSize;
+    }
+
+    private async Task PeriodicFlushAsync()
     {
         try
         {
@@ -830,24 +890,25 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         try
         {
             var completed = await Task.WhenAny(
-                _consumer,
+                Task.WhenAll(_consumers),
                 Task.Delay(_disposeTaskTimeout)).ConfigureAwait(false);
 
-            if (completed != _consumer)
+            var allConsumers = Task.WhenAll(_consumers);
+            if (completed != allConsumers)
             {
                 _logger.LogWarning(
-                    "Consumer task did not complete within {TimeoutSeconds}s during disposal. " +
+                    "{ConsumerCount} consumer task(s) did not complete within {TimeoutSeconds}s during disposal. " +
                     "Published: {PublishedCount}, consumed: {ConsumedCount}. Force-cancelling",
-                    _disposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
+                    _consumerCount, _disposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
 
                 await _cts.CancelAsync().ConfigureAwait(false);
 
                 // Give a short grace period after force-cancel
-                await Task.WhenAny(_consumer, Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
+                await Task.WhenAny(allConsumers, Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
             }
             else
             {
-                await _consumer.ConfigureAwait(false); // Observe any exception
+                await allConsumers.ConfigureAwait(false); // Observe any exception
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

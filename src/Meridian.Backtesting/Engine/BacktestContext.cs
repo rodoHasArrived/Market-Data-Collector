@@ -9,7 +9,8 @@ namespace Meridian.Backtesting.Engine;
 internal sealed class BacktestContext(
     SimulatedPortfolio portfolio,
     IReadOnlySet<string> universe,
-    BacktestLedger ledger) : IBacktestContext
+    BacktestLedger ledger,
+    string defaultBrokerageAccountId) : IBacktestContext
 {
     private readonly List<Order> _pendingOrders = [];
 
@@ -19,6 +20,7 @@ internal sealed class BacktestContext(
     public decimal Cash => portfolio.Cash;
     public decimal PortfolioValue => portfolio.ComputeCurrentEquity();
     public IReadOnlyDictionary<string, Position> Positions => portfolio.GetCurrentPositions();
+    public IReadOnlyDictionary<string, FinancialAccountSnapshot> Accounts => portfolio.GetAccountSnapshots();
     public IReadOnlyLedger Ledger => ledger;
 
     public decimal? GetLastPrice(string symbol) =>
@@ -37,6 +39,10 @@ internal sealed class BacktestContext(
         if ((request.Type is OrderType.StopMarket or OrderType.StopLimit) && (!request.StopPrice.HasValue || request.StopPrice <= 0))
             throw new ArgumentOutOfRangeException(nameof(request.StopPrice), "Stop price must be greater than zero.");
 
+        var accountId = string.IsNullOrWhiteSpace(request.AccountId)
+            ? defaultBrokerageAccountId
+            : request.AccountId.Trim();
+
         var order = new Order(
             Guid.NewGuid(),
             request.Symbol,
@@ -48,26 +54,30 @@ internal sealed class BacktestContext(
             request.TimeInForce,
             request.ExecutionModel,
             request.AllowPartialFills,
-            request.ProviderParameters);
+            request.ProviderParameters,
+            accountId);
 
         _pendingOrders.Add(order);
         return order.OrderId;
     }
 
     public Guid PlaceMarketOrder(string symbol, long quantity)
-    {
-        return PlaceOrder(new OrderRequest(symbol, quantity, OrderType.Market));
-    }
+        => PlaceOrder(new OrderRequest(symbol, quantity, OrderType.Market));
+
+    public Guid PlaceMarketOrder(string symbol, long quantity, string accountId)
+        => PlaceOrder(new OrderRequest(symbol, quantity, OrderType.Market, AccountId: accountId));
 
     public Guid PlaceLimitOrder(string symbol, long quantity, decimal limitPrice)
-    {
-        return PlaceOrder(new OrderRequest(symbol, quantity, OrderType.Limit, LimitPrice: limitPrice));
-    }
+        => PlaceOrder(new OrderRequest(symbol, quantity, OrderType.Limit, LimitPrice: limitPrice));
+
+    public Guid PlaceLimitOrder(string symbol, long quantity, decimal limitPrice, string accountId)
+        => PlaceOrder(new OrderRequest(symbol, quantity, OrderType.Limit, LimitPrice: limitPrice, AccountId: accountId));
 
     public Guid PlaceStopMarketOrder(string symbol, long quantity, decimal stopPrice)
-    {
-        return PlaceOrder(new OrderRequest(symbol, quantity, OrderType.StopMarket, StopPrice: stopPrice));
-    }
+        => PlaceOrder(new OrderRequest(symbol, quantity, OrderType.StopMarket, StopPrice: stopPrice));
+
+    public Guid PlaceStopMarketOrder(string symbol, long quantity, decimal stopPrice, string accountId)
+        => PlaceOrder(new OrderRequest(symbol, quantity, OrderType.StopMarket, StopPrice: stopPrice, AccountId: accountId));
 
     public Guid PlaceStopLimitOrder(string symbol, long quantity, decimal stopPrice, decimal limitPrice)
     {
@@ -77,6 +87,17 @@ internal sealed class BacktestContext(
             OrderType.StopLimit,
             LimitPrice: limitPrice,
             StopPrice: stopPrice));
+    }
+
+    public Guid PlaceStopLimitOrder(string symbol, long quantity, decimal stopPrice, decimal limitPrice, string accountId)
+    {
+        return PlaceOrder(new OrderRequest(
+            symbol,
+            quantity,
+            OrderType.StopLimit,
+            LimitPrice: limitPrice,
+            StopPrice: stopPrice,
+            AccountId: accountId));
     }
 
     public void CancelOrder(Guid orderId) =>

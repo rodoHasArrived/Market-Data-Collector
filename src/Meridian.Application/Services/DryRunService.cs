@@ -382,6 +382,12 @@ public sealed class DryRunService
                     polygonConfigured ? "API key set" : "API key missing",
                     polygonConfigured ? "" : "Polygon requires API key");
                 break;
+
+            case DataSourceKind.Synthetic:
+                section.AddCheck("Synthetic Configuration", config.Synthetic?.Enabled == true,
+                    config.Synthetic?.Enabled == true ? "Offline dataset enabled" : "Synthetic dataset disabled",
+                    config.Synthetic?.Enabled == true ? "" : "Enable Synthetic:Enabled to run without live providers");
+                break;
         }
 
         // Check backfill providers

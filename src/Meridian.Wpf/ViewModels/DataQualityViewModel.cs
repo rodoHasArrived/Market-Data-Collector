@@ -7,8 +7,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
-using System.Windows.Threading;
 using Meridian.Ui.Services;
+using Meridian.Ui.Services.Contracts;
+using Meridian.Ui.Services.Services;
 using Meridian.Wpf.Models;
 using WpfServices = Meridian.Wpf.Services;
 
@@ -48,8 +49,8 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     private readonly WpfServices.LoggingService _loggingService;
     private readonly WpfServices.NotificationService _notificationService;
     private readonly HttpClient _httpClient = new();
+    private readonly DataQualityRefreshCoordinator _refreshCoordinator;
 
-    private DispatcherTimer? _refreshTimer;
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
     private string _timeRange = "7d";
@@ -272,29 +273,31 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     public DataQualityViewModel(
         WpfServices.StatusService statusService,
         WpfServices.LoggingService loggingService,
-        WpfServices.NotificationService notificationService)
+        WpfServices.NotificationService notificationService,
+        IRefreshScheduler? refreshScheduler = null)
     {
         _statusService = statusService;
         _loggingService = loggingService;
         _notificationService = notificationService;
         _baseUrl = _statusService.BaseUrl;
+        _refreshCoordinator = new DataQualityRefreshCoordinator(
+            refreshScheduler ?? new PeriodicRefreshScheduler(),
+            RefreshDataAsync,
+            ex => _loggingService.LogError("Failed to refresh data quality", ex));
     }
 
     // ── Lifecycle ───────────────────────────────────────────────────────────
     public async Task StartAsync(CancellationToken ct = default)
     {
-        await RefreshDataAsync();
-
-        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
-        _refreshTimer.Tick += async (_, _) => await RefreshDataAsync();
-        _refreshTimer.Start();
+        await _refreshCoordinator.StartAsync(TimeSpan.FromSeconds(30), ct);
     }
 
     public void Stop()
     {
-        _refreshTimer?.Stop();
+        _refreshCoordinator.Stop();
         _cts?.Cancel();
         _cts?.Dispose();
+        _cts = null;
         _httpClient.Dispose();
     }
 
@@ -321,10 +324,6 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
             LastUpdateText = $"Last updated: {DateTime.Now:HH:mm:ss}";
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            _loggingService.LogError("Failed to refresh data quality", ex);
-        }
     }
 
     // ── Dashboard loading ───────────────────────────────────────────────────
@@ -1072,5 +1071,9 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
         "CrossedMarket", "InvalidPrice", "InvalidVolume"
     };
 
-    public void Dispose() => Stop();
+    public void Dispose()
+    {
+        Stop();
+        _refreshCoordinator.Dispose();
+    }
 }

@@ -42,20 +42,20 @@ public interface IReadOnlyLedger
     /// <summary>Returns a summary for a single account.</summary>
     LedgerAccountSummary GetAccountSummary(LedgerAccount account);
 
-    /// <summary>Returns summaries for all posted accounts, optionally filtered by type.</summary>
-    IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null);
+    /// <summary>Returns summaries for all posted accounts, optionally filtered by type and financial account.</summary>
+    IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null, string? financialAccountId = null);
 
     /// <summary>
     /// Returns a trial balance mapping every account that has been posted to its net balance.
     /// </summary>
-    IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance();
+    IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance(string? financialAccountId = null);
 
     /// <summary>Returns the trial balance as of <paramref name="timestamp"/>.</summary>
-    IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp);
+    IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp, string? financialAccountId = null);
 
     /// <summary>Returns running-balance checkpoints for an account across the selected range.</summary>
     IReadOnlyList<LedgerBalancePoint> GetRunningBalance(LedgerAccount account, DateTimeOffset? from = null, DateTimeOffset? to = null);
 
     /// <summary>Returns a point-in-time ledger snapshot as of <paramref name="timestamp"/>.</summary>
-    LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp);
+    LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp, string? financialAccountId = null);
 }

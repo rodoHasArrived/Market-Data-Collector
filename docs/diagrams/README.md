@@ -14,7 +14,7 @@ This folder contains architecture diagrams for the Market Data Collector system,
 ## Diagram Index
 
 | Diagram | Description | File |
-|---------|-------------|------|
+| --------- | ------------- | ------ |
 | **C4 Level 1: Context** | System context showing actors and external systems | `c4-level1-context.dot` |
 | **C4 Level 2: Containers** | High-level container view (apps, services, storage) | `c4-level2-containers.dot` |
 | **C4 Level 3: Components** | Internal component architecture of core collector | `c4-level3-components.dot` |
@@ -27,6 +27,8 @@ This folder contains architecture diagrams for the Market Data Collector system,
 | **Onboarding Flow** | User journey from first-run to operation | `onboarding-flow.dot` |
 | **CLI Commands** | All CLI flags and commands reference | `cli-commands.dot` |
 | **Project Dependencies** | Project layer dependencies and test coverage | `project-dependencies.dot` |
+| **UI Navigation Map** | Auto-generated WPF sidebar/workspace navigation map from source code without hand-maintained drift | `ui-navigation-map.dot` |
+| **UI Implementation Flow** | Auto-generated WPF shell/DI/navigation flow from source code without hand-maintained drift | `ui-implementation-flow.dot` |
 
 ---
 
@@ -35,6 +37,7 @@ This folder contains architecture diagrams for the Market Data Collector system,
 ### C4 Level 1: System Context
 
 Shows the Market Data Collector in context with:
+
 - **Users**: Operators, Quants/Analysts, and DevOps
 - **Streaming Providers**: IB, Alpaca, NYSE Direct, Polygon, StockSharp
 - **Historical Providers**: Alpaca, Alpha Vantage, Finnhub, Interactive Brokers, Nasdaq Data Link, Polygon, Stooq, Tiingo, Yahoo Finance, StockSharp (10+ total)
@@ -44,6 +47,7 @@ Shows the Market Data Collector in context with:
 ### C4 Level 2: Container Diagram
 
 Shows the major deployable units:
+
 - **Presentation Layer**: Web Dashboard, WPF Desktop App, CLI Interface
 - **Onboarding & Diagnostics Layer**: Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
 - **Core Collector Service** (.NET 9 console with 100K bounded channel policy)
@@ -55,6 +59,7 @@ Shows the major deployable units:
 ### C4 Level 3: Component Diagram
 
 Detailed view of the core collector internals:
+
 - **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, Polygon, StockSharp), Historical providers (10+), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
 - **Domain Layer**: Collectors (Trade, Quote, Depth), Domain models, F# validation pipeline
 - **Application Layer**: EventPipeline (100K bounded channel policy), Technical indicators, Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
@@ -63,6 +68,7 @@ Detailed view of the core collector internals:
 ### Data Flow Diagram
 
 Shows data moving through the system:
+
 0. **First-Time Setup**: First-run detection → Wizard/Auto-config → Generate appsettings.json
 1. **Streaming Sources**: IB, Alpaca, NYSE, Polygon, StockSharp → Real-time ingestion
 2. **Historical Sources**: Alpaca, Alpha Vantage, Finnhub, IB, Nasdaq Data Link, Polygon, Stooq, Tiingo, Yahoo Finance → Batch backfill
@@ -75,6 +81,7 @@ Shows data moving through the system:
 ### Provider Architecture
 
 Details the provider abstraction:
+
 - **Core Interfaces**: IDataSource, IRealtimeDataSource, IHistoricalDataSource
 - **Legacy Interfaces**: IMarketDataClient, IHistoricalDataProvider
 - **Streaming Providers (5)**: Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
@@ -86,6 +93,7 @@ Details the provider abstraction:
 ### Storage Architecture
 
 Details the archival-first storage pipeline:
+
 - **Write-Ahead Log**: Crash-safe journal, SHA256 checksums, NoSync/BatchedSync/EveryWrite modes
 - **Hot Storage (JSONL)**: Append-only, daily partitioning, multiple naming conventions
 - **Compression Profiles**: LZ4 (real-time), ZSTD Level 3/6/19 (high-volume/warm/cold), Gzip (portable)
@@ -97,6 +105,7 @@ Details the archival-first storage pipeline:
 ### Event Pipeline Sequence
 
 Shows the detailed event processing sequence:
+
 1. **Data Source** → Raw events from provider WebSocket
 2. **Provider Client** → Normalize to domain updates
 3. **Domain Collectors** → Process trades/quotes/depth, emit domain events
@@ -109,6 +118,7 @@ Shows the detailed event processing sequence:
 ### Resilience Patterns
 
 Shows fault tolerance mechanisms:
+
 - **Circuit Breaker**: Closed → Open → Half-Open states, configurable thresholds
 - **Retry Pattern**: Exponential backoff with jitter, max 5 attempts
 - **Provider Failover**: Priority-based, health-monitored automatic switching
@@ -120,6 +130,7 @@ Shows fault tolerance mechanisms:
 ### Deployment Options
 
 Shows deployment paths from simple to enterprise:
+
 1. **Standalone Console** - Single .NET app, local storage, simplest setup
 2. **Docker Compose** - Containerized, service orchestration, team development
 3. **System Service** - systemd (Linux) for long-running collectors
@@ -128,6 +139,7 @@ Shows deployment paths from simple to enterprise:
 ### Onboarding Flow
 
 Shows the user journey from first-run to operational:
+
 1. **First-Run Detection** - Automatic detection of new installations
 2. **Setup Options**:
    - `--wizard` - Interactive 8-step configuration wizard
@@ -148,6 +160,7 @@ Shows the user journey from first-run to operational:
 ### CLI Commands Reference
 
 Comprehensive reference for all 24+ CLI flags:
+
 - **Setup Commands**: --wizard, --auto-config, --generate-config, --detect-providers
 - **Diagnostic Commands**: --validate-credentials, --test-connectivity, --quick-check, --validate-config, --dry-run, --selftest
 - **Operation Commands**: --ui, --http-port, --watch-config, --backfill, --backfill-provider, --backfill-symbols, --backfill-from, --backfill-to
@@ -160,6 +173,7 @@ Comprehensive reference for all 24+ CLI flags:
 ### Project Dependencies
 
 Shows the project layer dependencies:
+
 - **Layer 0 (Foundation)**: Contracts, F# Domain
 - **Layer 1 (Core)**: ProviderSdk, Domain, Core
 - **Layer 2 (Infrastructure)**: Infrastructure, Storage
@@ -169,13 +183,40 @@ Shows the project layer dependencies:
 - **Tests**: 140 main tests, 4 F# tests, 19 WPF tests, 50 UI tests
 - **Benchmarks**: BenchmarkDotNet performance tests
 
+### UI Navigation Map _(auto-generated)_
+
+Shows the current WPF sidebar implementation as it exists in source control:
+
+- **Shell source**: `src/Meridian.Wpf/Views/MainPage.xaml`
+- **Navigation registry**: `src/Meridian.Wpf/Services/NavigationService.cs`
+- **Coverage**: workspace groups, sidebar-visible pages, and registered-but-hidden routes
+- **Purpose**: makes navigation drift obvious whenever pages are added, moved, or orphaned
+
+### UI Implementation Flow _(auto-generated)_
+
+Shows how the WPF desktop host wires the UI together:
+
+- **App composition**: `src/Meridian.Wpf/App.xaml.cs`
+- **Window shell**: `src/Meridian.Wpf/MainWindow.xaml.cs`
+- **Main page shell**: `src/Meridian.Wpf/Views/MainPage.xaml.cs`
+- **Page inventory**: `src/Meridian.Wpf/Views/Pages.cs`
+- **Purpose**: tracks DI composition, shell responsibilities, and navigation/page inventory as development changes progress while keeping outputs deterministic unless the underlying WPF source changes
+
 ---
 
 ## Generating Images
 
 ### Prerequisites
 
-Install Graphviz:
+The repository can regenerate diagrams with the committed Node-based renderer (recommended) or Graphviz. The Node path also refreshes the auto-generated WPF UI diagrams from source code without hand-maintained drift before rendering.
+
+Install Node dependencies:
+
+```bash
+npm ci
+```
+
+Optional Graphviz install (useful for ad-hoc manual rendering):
 
 ```bash
 # Ubuntu/Debian
@@ -188,34 +229,29 @@ brew install graphviz
 choco install graphviz
 ```
 
-### Generate PNG Images
+### Generate SVG Images (recommended)
+
+```bash
+# From the repository root
+npm run generate-diagrams
+```
+
+This command:
+
+- refreshes `ui-navigation-map.dot` and `ui-implementation-flow.dot` from the current WPF source files
+- renders the auto-generated UI diagrams to committed `.svg` artifacts
+
+To render every DOT file through the Node pipeline instead, run:
+
+```bash
+npm run generate-diagrams -- --all
+```
+
+### Generate with Graphviz manually
 
 ```bash
 cd docs/diagrams
 
-# Generate all PNGs
-for f in *.dot; do
-  dot -Tpng "$f" -o "${f%.dot}.png"
-done
-
-# Or generate individual files
-dot -Tpng c4-level1-context.dot -o c4-level1-context.png
-dot -Tpng c4-level2-containers.dot -o c4-level2-containers.png
-dot -Tpng c4-level3-components.dot -o c4-level3-components.png
-dot -Tpng data-flow.dot -o data-flow.png
-dot -Tpng provider-architecture.dot -o provider-architecture.png
-dot -Tpng storage-architecture.dot -o storage-architecture.png
-dot -Tpng event-pipeline-sequence.dot -o event-pipeline-sequence.png
-dot -Tpng resilience-patterns.dot -o resilience-patterns.png
-dot -Tpng deployment-options.dot -o deployment-options.png
-dot -Tpng onboarding-flow.dot -o onboarding-flow.png
-dot -Tpng cli-commands.dot -o cli-commands.png
-dot -Tpng project-dependencies.dot -o project-dependencies.png
-```
-
-### Generate SVG Images
-
-```bash
 # Generate all SVGs
 for f in *.dot; do
   dot -Tsvg "$f" -o "${f%.dot}.svg"
@@ -235,7 +271,7 @@ dot -Tpng -Gdpi=300 c4-level2-containers.dot -o c4-level2-containers-hd.png
 The diagrams use a consistent color palette based on Tailwind CSS colors:
 
 | Color | Hex | Usage |
-|-------|-----|-------|
+| ------- | ----- | ------- |
 | **Actors** | | |
 | Dark Blue | `#08427b` | Persons/Users |
 | **System Boundary** | | |
@@ -290,7 +326,7 @@ These diagrams follow the [C4 Model](https://c4model.com/) notation:
 UML diagrams using PlantUML (`.puml` sources + `.png` artifacts) live in [`uml/`](uml/README.md):
 
 | Diagram Type | Description |
-|---|---|
+| --- | --- |
 | Use Case | System actors and high-level use cases |
 | Sequence | Real-time data collection and backfill flows |
 | Activity | Main collection and backfill processes |
@@ -312,6 +348,6 @@ See [uml/README.md](uml/README.md) for the full inventory and rendering instruct
 
 ---
 
-*Graphviz diagrams generated with DOT language. UML diagrams generated with PlantUML.*
+_Graphviz diagrams generated with DOT language. UML diagrams generated with PlantUML._
 
-*Last Updated: 2026-03-15*
+_Last Updated: 2026-03-15_

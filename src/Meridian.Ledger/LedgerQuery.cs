@@ -11,4 +11,7 @@ public sealed record LedgerQuery(
     string? Symbol = null,
     Guid? OrderId = null,
     Guid? FillId = null,
-    string? StrategyId = null);
+    string? StrategyId = null,
+    string? FinancialAccountId = null,
+    string? CounterpartyAccountId = null,
+    string? Institution = null);

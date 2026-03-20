@@ -66,9 +66,11 @@
 - **Status:** Complete.
 - **What was done:**
   - `HostStartup.CreateStreamingClient()` delegates to `ProviderRegistry.CreateStreamingClient()`.
-  - `ServiceCompositionRoot` is the single source of truth for DI registration.
-  - `Program.cs` resolves providers through DI/registry, not `new` statements.
+  - `ServiceCompositionRoot` remains the single source of truth for DI registration.
+  - The shared startup/orchestration layer under `Application/Composition/Startup/` now owns config-path resolution, deployment selection, validation, and command dispatch planning.
+  - `Program.cs` is now a thin bootstrapper; host execution still resolves providers through `HostStartup` + DI/registry rather than `new` statements.
 - **Key files:**
+  - `src/Meridian.Application/Composition/Startup/SharedStartupBootstrapper.cs`
   - `src/Meridian.Application/Composition/HostStartup.cs`
   - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
@@ -246,6 +248,24 @@
 ### Phase 3 — WebSocket Lifecycle (Deferred Items)
 - **NYSE migration:** Requires interface refactoring (`DataSourceBase` → `IMarketDataClient`) before `WebSocketProviderBase` can be applied. Track as separate work item.
 - **StockSharp migration:** Connector-based architecture (wraps third-party `Connector` class) is fundamentally different from raw WebSocket providers. `WebSocketProviderBase` doesn't apply. Consider a separate `ConnectorProviderBase` if patterns emerge.
+
+---
+
+## Test Topology Guardrails
+
+Use these placement rules when adding or moving tests so cross-platform coverage does not drift into Windows-only assemblies:
+
+| Test layer / concern | Test project | Rationale |
+| --- | --- | --- |
+| Startup, DI composition, host wiring that is not WPF-specific, provider contracts, endpoint-shape/schema snapshots | `tests/Meridian.Tests` | Must stay runnable without Windows desktop support. |
+| Shared desktop services, base classes, collection helpers, mapping/filtering logic, refresh orchestration with an injected scheduler abstraction | `tests/Meridian.Ui.Tests` | Shared desktop logic should stay out of page code-behind and out of WPF-only tests. |
+| WPF-only binding behavior, navigation/page registration, resource usage, and desktop host wiring | `tests/Meridian.Wpf.Tests` | These tests genuinely depend on WPF types and Windows targeting. |
+
+### Data quality refresh rule
+
+- Keep mapping, filtering, and refresh behavior in platform-neutral services or plain viewmodel logic.
+- Isolate recurring scheduling behind an interface so the core logic can be tested without `DispatcherTimer` or page lifecycle hooks.
+- Add WPF-specific tests only for the binding/navigation/host-wiring seam that connects the shared logic to the desktop shell.
 
 ---
 

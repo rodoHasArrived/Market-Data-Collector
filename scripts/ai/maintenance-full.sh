@@ -1,41 +1,128 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
 
-set -euo pipefail
+log() {
+    printf '\n[maint-full] %s\n' "$*"
+}
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck disable=SC1091
-source "$SCRIPT_DIR/common.sh"
+warn() {
+    printf '\n[maint-full:warn] %s\n' "$*" >&2
+}
 
-ai::ensure_dotnet
-ai::status_init "full" "${1:-general}" "Review failing checks and repair the environment or code before merge."
-overall_status="passed"
-next_action="No further action required."
+err() {
+    printf '\n[maint-full:error] %s\n' "$*" >&2
+}
 
-ai::run_step known-errors warning python3 build/scripts/ai-repo-updater.py known-errors || overall_status="warning"
-ai::run_step diff-summary warning python3 build/scripts/ai-repo-updater.py diff-summary || overall_status="warning"
-ai::run_step doctor warning make doctor-ci || overall_status="warning"
+have() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-if ! ai::run_step dotnet-restore failed dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal; then
-    ai::status_finalize "failed" "dotnet restore failed; review .ai/logs/dotnet-restore.log and repair the SDK or NuGet state."
+ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$ROOT_DIR"
+
+[[ -f Meridian.sln ]] || {
+    err "Meridian.sln not found"
+    exit 1
+}
+
+mkdir -p .ai logs data
+STATUS_FILE=".ai/maintenance-status.json"
+SUMMARY_FILE=".ai/MAINTENANCE_STATUS.md"
+TMP_STEPS="$(mktemp)"
+
+if [[ -f .ai/env.sh ]]; then
+    # shellcheck disable=SC1091
+    source .ai/env.sh
+fi
+
+record_step() {
+    local name="$1"
+    local status="$2"
+    local details="${3:-}"
+    printf '{"name":"%s","status":"%s","details":"%s"}\n' \
+        "$name" "$status" "$(printf '%s' "$details" | tr '"' "'" )" >>"$TMP_STEPS"
+}
+
+run_step() {
+    local name="$1"
+    shift
+    log "$name"
+    if "$@"; then
+        record_step "$name" "passed"
+    else
+        warn "Failed: $name"
+        record_step "$name" "failed" "command failed"
+        return 1
+    fi
+}
+
+DOTNET_AVAILABLE=false
+NODE_AVAILABLE=false
+PYTHON_AVAILABLE=false
+MAKE_AVAILABLE=false
+
+have dotnet && DOTNET_AVAILABLE=true
+have node && have npm && NODE_AVAILABLE=true
+have python3 && PYTHON_AVAILABLE=true
+have make && MAKE_AVAILABLE=true
+
+if [[ "$DOTNET_AVAILABLE" != true ]]; then
+    err "dotnet is required for full maintenance"
     exit 1
 fi
 
-if ! ai::run_step dotnet-build failed dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true --verbosity minimal; then
-    ai::status_finalize "failed" "dotnet build failed; review .ai/logs/dotnet-build.log and repair the reported compilation errors."
-    exit 1
+if [[ "$PYTHON_AVAILABLE" == true && -f build/scripts/ai-repo-updater.py ]]; then
+    run_step "known-errors" python3 build/scripts/ai-repo-updater.py known-errors
+    run_step "diff-summary" python3 build/scripts/ai-repo-updater.py diff-summary
 fi
 
-if ! ai::run_step dotnet-test-core failed dotnet test tests/Meridian.Tests/Meridian.Tests.csproj -c Release --no-build /p:EnableWindowsTargeting=true --verbosity minimal --filter "Category!=Integration"; then
-    ai::status_finalize "failed" "Core test execution failed; review .ai/logs/dotnet-test-core.log before merging."
-    exit 1
+if [[ "$NODE_AVAILABLE" == true && -f package-lock.json ]]; then
+    run_step "npm-ci" npm ci
 fi
 
-ai::run_step dotnet-test-fsharp warning dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj -c Release --no-build /p:EnableWindowsTargeting=true --verbosity minimal || overall_status="warning"
-ai::run_step ai-verify warning make ai-verify || overall_status="warning"
+run_step "dotnet-restore" dotnet restore Meridian.sln /p:EnableWindowsTargeting=true --verbosity minimal
+run_step "dotnet-build" dotnet build Meridian.sln -c Release --no-restore --nologo /p:EnableWindowsTargeting=true
+run_step "dotnet-test" dotnet test Meridian.sln -c Release --no-build --nologo --filter "Category!=Integration" /p:EnableWindowsTargeting=true
 
-if [[ "$overall_status" == "warning" ]]; then
-    next_action="Review warnings in .ai/logs and address any remaining doctor, F#, or ai-verify issues."
+if [[ "$MAKE_AVAILABLE" == true && -f Makefile ]]; then
+    grep -qE '^[[:space:]]*doctor:' Makefile 2>/dev/null && \
+        run_step "doctor" make doctor
+    grep -qE '^[[:space:]]*ai-verify:' Makefile 2>/dev/null && \
+        run_step "ai-verify" make ai-verify
 fi
 
-ai::status_finalize "$overall_status" "$next_action"
-echo "Wrote $AI_STATUS_FILE"
+STEPS_JSON="$(paste -sd, "$TMP_STEPS")"
+rm -f "$TMP_STEPS"
+
+cat >"$STATUS_FILE" <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "mode": "full",
+  "repo_root": "$ROOT_DIR",
+  "environment": {
+    "dotnet_available": $DOTNET_AVAILABLE,
+    "node_available": $NODE_AVAILABLE,
+    "python_available": $PYTHON_AVAILABLE,
+    "make_available": $MAKE_AVAILABLE
+  },
+  "steps": [${STEPS_JSON}],
+  "summary": {
+    "status": "completed",
+    "next_action": "Review failed steps and uploaded artifacts if any."
+  }
+}
+EOF
+
+cat >"$SUMMARY_FILE" <<EOF
+# Meridian Maintenance Status
+
+- Mode: full
+- Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- Repo root: $ROOT_DIR
+- dotnet available: $DOTNET_AVAILABLE
+
+Artifacts:
+- .ai/maintenance-status.json
+EOF
+
+log "Full maintenance complete"

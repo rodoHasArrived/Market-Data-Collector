@@ -6,6 +6,14 @@ on:
       - main
     paths:
       - 'docs/diagrams/*.dot'
+      - 'src/Meridian.Wpf/App.xaml.cs'
+      - 'src/Meridian.Wpf/MainWindow.xaml.cs'
+      - 'src/Meridian.Wpf/Services/NavigationService.cs'
+      - 'src/Meridian.Wpf/Views/MainPage.xaml'
+      - 'src/Meridian.Wpf/Views/MainPage.xaml.cs'
+      - 'src/Meridian.Wpf/Views/Pages.cs'
+      - 'scripts/generate-diagrams.mjs'
+      - 'scripts/lib/ui-diagram-generator.mjs'
   workflow_dispatch:
 
 permissions:
@@ -17,7 +25,7 @@ concurrency:
 
 jobs:
   regenerate-diagrams:
-    name: Regenerate PNG and SVG diagrams
+    name: Regenerate SVG diagrams
     runs-on: ubuntu-latest
 
     steps:
@@ -26,10 +34,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install diagram tooling
+        run: npm ci
+
+      - name: Generate auto-updated UI diagram sources
+        run: npm run generate-diagrams
+
       - name: Install Graphviz
         run: sudo apt-get update && sudo apt-get install -y graphviz
 
-      - name: Regenerate diagram artifacts
+      - name: Regenerate all diagram artifacts
         run: |
           set -euo pipefail
 
@@ -43,13 +63,12 @@ jobs:
 
           for file in "${dot_files[@]}"; do
             base="${file%.dot}"
-            dot -Tpng "$file" -o "${base}.png"
             dot -Tsvg "$file" -o "${base}.svg"
-            echo "Generated ${base}.png and ${base}.svg"
+            echo "Generated ${base}.svg"
           done
 
       - name: Commit regenerated diagrams
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'docs(diagrams): regenerate PNG/SVG from DOT sources'
-          file_pattern: docs/diagrams/*.png docs/diagrams/*.svg
+          commit_message: 'docs(diagrams): regenerate SVG from DOT sources'
+          file_pattern: docs/diagrams/*.dot docs/diagrams/*.svg

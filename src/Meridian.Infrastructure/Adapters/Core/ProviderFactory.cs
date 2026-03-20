@@ -8,6 +8,7 @@ using Meridian.Infrastructure.Adapters.Finnhub;
 using Meridian.Infrastructure.Adapters.NasdaqDataLink;
 using Meridian.Infrastructure.Adapters.OpenFigi;
 using Meridian.Infrastructure.Adapters.Polygon;
+using Meridian.Infrastructure.Adapters.Synthetic;
 using Meridian.Infrastructure.Adapters.Stooq;
 using Meridian.Infrastructure.Adapters.Tiingo;
 using Meridian.Infrastructure.Adapters.YahooFinance;
@@ -102,6 +103,9 @@ public sealed class ProviderFactory
         var backfillCfg = _config.Backfill;
         var providersCfg = backfillCfg?.Providers;
 
+        // Synthetic offline dataset
+        TryAddBackfillProvider(providers, () => CreateSyntheticBackfillProvider(providersCfg?.Synthetic));
+
         // Alpaca Markets (highest priority when configured)
         TryAddBackfillProvider(providers, () => CreateAlpacaBackfillProvider(providersCfg?.Alpaca));
 
@@ -147,6 +151,15 @@ public sealed class ProviderFactory
         {
             _log.Warning(ex, "Failed to create backfill provider");
         }
+    }
+
+
+    private IHistoricalDataProvider? CreateSyntheticBackfillProvider(SyntheticMarketDataConfig? cfg)
+    {
+        if (cfg?.Enabled != true)
+            return null;
+
+        return new SyntheticHistoricalDataProvider(cfg);
     }
 
     private IHistoricalDataProvider? CreateAlpacaBackfillProvider(AlpacaBackfillConfig? cfg)
@@ -252,6 +265,9 @@ public sealed class ProviderFactory
         var providers = new List<ISymbolSearchProvider>();
         var backfillProviders = _config.Backfill?.Providers;
 
+        // Synthetic reference universe search
+        TryAddSearchProvider(providers, () => CreateSyntheticSearchProvider(backfillProviders?.Synthetic));
+
         // Alpaca Symbol Search (uses same credentials as Alpaca backfill)
         TryAddSearchProvider(providers, () => CreateAlpacaSearchProvider(backfillProviders?.Alpaca));
 
@@ -282,6 +298,15 @@ public sealed class ProviderFactory
         {
             _log.Warning(ex, "Failed to create symbol search provider");
         }
+    }
+
+
+    private ISymbolSearchProvider? CreateSyntheticSearchProvider(SyntheticMarketDataConfig? cfg)
+    {
+        if (cfg?.Enabled != true)
+            return null;
+
+        return new SyntheticMarketDataClient(new NullMarketEventPublisher(), cfg);
     }
 
     private ISymbolSearchProvider? CreateAlpacaSearchProvider(AlpacaBackfillConfig? cfg)
@@ -345,6 +370,12 @@ public sealed class ProviderFactory
             log: _log);
     }
 }
+
+internal sealed class NullMarketEventPublisher : Meridian.Domain.Events.IMarketEventPublisher
+{
+    public bool TryPublish(in Meridian.Domain.Events.MarketEvent evt) => true;
+}
+
 
 /// <summary>
 /// Result of provider creation operation.

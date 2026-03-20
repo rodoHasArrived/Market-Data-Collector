@@ -4,7 +4,7 @@ namespace Meridian.Application.Commands;
 /// Typed representation of all CLI arguments, parsed once from the raw args array.
 /// Eliminates scattered args.Any() calls throughout Program.cs.
 /// </summary>
-internal sealed record CliArguments
+public sealed record CliArguments
 {
     // Mode flags
     public bool Help { get; init; }

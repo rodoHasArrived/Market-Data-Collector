@@ -277,4 +277,43 @@ public sealed class LedgerQueryTests
         snapshot.Balances[LedgerAccounts.Securities("SPY")].Should().Be(4_000m);
         snapshot.Balances.Should().NotContainKey(LedgerAccounts.CommissionExpense);
     }
+
+
+    [Fact]
+    public void ScopedAccounts_CanBeSummarizedAndSnapshottedPerFinancialAccount()
+    {
+        var ledger = new Ledger();
+        var t1 = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
+        var broker1Cash = LedgerAccounts.CashAccount("broker-1");
+        var broker2Cash = LedgerAccounts.CashAccount("broker-2");
+
+        ledger.PostLines(
+            t1,
+            "Seed broker one",
+            [
+                (broker1Cash, 10_000m, 0m),
+                (LedgerAccounts.CapitalAccountFor("broker-1"), 0m, 10_000m)
+            ],
+            new JournalEntryMetadata(ActivityType: "capital", FinancialAccountId: "broker-1"));
+
+        ledger.PostLines(
+            t1.AddMinutes(1),
+            "Seed broker two",
+            [
+                (broker2Cash, 15_000m, 0m),
+                (LedgerAccounts.CapitalAccountFor("broker-2"), 0m, 15_000m)
+            ],
+            new JournalEntryMetadata(ActivityType: "capital", FinancialAccountId: "broker-2"));
+
+        ledger.SummarizeAccounts(financialAccountId: "broker-1")
+            .Select(summary => summary.Account.FinancialAccountId)
+            .Should()
+            .OnlyContain(id => id == "broker-1");
+
+        ledger.SnapshotAsOf(t1.AddMinutes(1), "broker-2").Balances
+            .Should()
+            .ContainKey(broker2Cash)
+            .WhoseValue.Should().Be(15_000m);
+    }
+
 }

@@ -436,9 +436,10 @@ This document consolidates **functional improvements** (features, reliability, U
 **Problem:** `ServiceCompositionRoot.cs` registered services in DI, but `Program.cs` bypassed DI for critical components — collectors created via `new`, storage pipeline created via `new`, configuration loaded twice.
 
 **Solution Implemented:**
+- `Program.cs` now delegates to the shared startup layer in `Application/Composition/Startup/`, keeping the entry point thin while reusing the same startup helpers across hosts.
 - All collectors resolved from DI: `hostStartup.GetRequiredService<QuoteCollector>()`, `GetRequiredService<TradeDataCollector>()`, `GetRequiredService<MarketDepthCollector>()`
 - Storage pipeline resolved from DI via `hostStartup.Pipeline`
-- `ServiceCompositionRoot` registers everything centrally:
+- `HostStartupFactory` maps deployment modes onto canonical `CompositionOptions` presets, and `ServiceCompositionRoot` registers everything centrally:
   - `AddCoreConfigurationServices()` — ConfigStore, ConfigurationService
   - `AddStorageServices()` — Storage sinks, file services
   - `AddProviderServices()` — ProviderRegistry, ProviderFactory
@@ -449,6 +450,7 @@ This document consolidates **functional improvements** (features, reliability, U
 
 **Files:**
 - `Program.cs` (DI-only resolution throughout)
+- `Application/Composition/Startup/SharedStartupBootstrapper.cs` (shared startup helpers and mode orchestration)
 - `Application/Composition/ServiceCompositionRoot.cs` (centralized registration)
 - `Application/Composition/HostStartup.cs` (composition host)
 

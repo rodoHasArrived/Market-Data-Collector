@@ -4,7 +4,7 @@
 
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-20 02:09:04 UTC
+> Auto-generated on 2026-03-20 03:15:12 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -12,7 +12,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 | Workflow | File | Triggers |
 |----------|------|----------|
-| Benchmark Performance | `benchmark.yml` | push, manual |
+| Benchmark Performance | `benchmark.yml` | push, PR, manual |
 | Bottleneck Detection | `bottleneck-detection.yml` | PR, manual |
 | Build Observability | `build-observability.yml` | push, PR, manual |
 | Build and Release | `dotnet-desktop.yml` | push, PR, manual |
@@ -39,7 +39,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Pull Request Checks | `pr-checks.yml` | PR, manual |
 | Python Package using Conda | `python-package-conda.yml` | unknown |
 | Release Management | `release.yml` | manual |
-| Repo Health | `repo-health.yml` | manual, scheduled |
+| Repo Health | `repo-health.yml` | PR, manual, scheduled |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | unknown |
 | Scheduled Maintenance | `scheduled-maintenance.yml` | manual, scheduled |
 | Security | `security.yml` | PR, manual, scheduled |

@@ -9,7 +9,8 @@ The documentation automation system keeps project documentation accurate and up-
 ### What It Does
 
 | Feature | Description |
-|---------|-------------|
+| --------- | ------------- |
+| **UI Diagram Refresh** | Regenerates WPF UI implementation diagrams from live source files before rendering committed SVG artifacts |
 | **Structure Generation** | Auto-generates repository structure docs from the file tree |
 | **Provider Registry** | Extracts provider metadata from `[DataSource]` attributes |
 | **ADR Indexing** | Builds an index of Architecture Decision Records |
@@ -23,6 +24,25 @@ The documentation automation system keeps project documentation accurate and up-
 | **Custom Rules Engine** | Enforces project-specific documentation rules |
 | **Automatic TODO Issue Creation** | Converts untracked TODO/FIXME items into GitHub issues automatically |
 | **Local Orchestration Runner** | Runs documentation automation profiles from one command with JSON/Markdown summaries |
+
+## Diagram Automation
+
+WPF UI implementation diagrams are generated from source code without hand-maintained drift instead of being maintained by hand:
+
+```bash
+npm run generate-diagrams
+```
+
+That command updates `docs/diagrams/ui-navigation-map.dot` and `docs/diagrams/ui-implementation-flow.dot` from these inputs:
+
+- `src/Meridian.Wpf/App.xaml.cs`
+- `src/Meridian.Wpf/MainWindow.xaml.cs`
+- `src/Meridian.Wpf/Services/NavigationService.cs`
+- `src/Meridian.Wpf/Views/MainPage.xaml`
+- `src/Meridian.Wpf/Views/MainPage.xaml.cs`
+- `src/Meridian.Wpf/Views/Pages.cs`
+
+The `update-diagrams.yml` workflow now listens for those files, so the committed UI diagrams stay synchronized as the desktop implementation evolves.
 
 ## Workflow Triggers
 
@@ -39,7 +59,7 @@ The workflow runs automatically on:
 When triggering manually via Actions UI:
 
 | Input | Default | Description |
-|-------|---------|-------------|
+| ------- | --------- | ------------- |
 | `regenerate` | false | Force regenerate all docs |
 | `update_all` | false | Update all auto-generated outputs |
 | `dry_run` | true | Show changes without committing |
@@ -52,7 +72,7 @@ When triggering manually via Actions UI:
 
 ## Job Execution Flow
 
-```
+```text
 detect-changes (always runs first)
     |
     +-- validate-docs      (parallel)
@@ -175,11 +195,12 @@ python3 build/scripts/docs/rules-engine.py \
   --output docs/status/rules-report.md
 ```
 
-#### `create-todo-issues.py` *(new)*
+#### `create-todo-issues.py` _(new)_
 
 Creates GitHub issues for untracked TODO items discovered by `scan-todos.py`.
 
 **Features:**
+
 - Validates scan-todos JSON structure with clear error messages
 - Handles network failures and HTTP errors gracefully
 - Caps issue titles at 120 characters for better readability
@@ -208,6 +229,7 @@ python3 build/scripts/docs/create-todo-issues.py \
 ```
 
 **Output JSON Structure:**
+
 ```json
 {
   "created": 5,
@@ -222,11 +244,12 @@ python3 build/scripts/docs/create-todo-issues.py \
 }
 ```
 
-#### `run-docs-automation.py` *(new)*
+#### `run-docs-automation.py` _(new)_
 
 Runs documentation tooling as a single orchestrated command with profile support.
 
 **Features:**
+
 - Orchestrates multiple documentation scripts in sequence
 - Validates prerequisites (e.g., scan-todos required for --auto-create-todos)
 - Coordinates JSON output paths for downstream automation
@@ -260,14 +283,15 @@ python3 build/scripts/docs/run-docs-automation.py \
 ### Orchestration Profiles
 
 | Profile | Included Scripts | Best For |
-|--------|------------------|----------|
+| -------- | ------------------ | ---------- |
 | `quick` | `scan-todos`, `validate-examples`, `repair-links` | Fast local verification before commits |
-| `core` *(default)* | `scan-todos`, `generate-structure-docs`, `generate-health-dashboard`, `validate-examples`, `generate-coverage` | Day-to-day documentation maintenance |
+| `core` _(default)_ | `scan-todos`, `generate-structure-docs`, `generate-health-dashboard`, `validate-examples`, `generate-coverage` | Day-to-day documentation maintenance |
 | `full` | All documented scripts, including changelog + rules engine | Scheduled runs and release prep |
 
 The runner exits non-zero if any script fails (unless `--continue-on-error` is set), making it CI-friendly for preflight checks and local automation.
 
 When `--auto-create-todos` is enabled:
+
 1. The runner validates that `scan-todos` is in the selected scripts
 2. It automatically adds `--json-output docs/status/todo-scan-results.json` to scan-todos
 3. If scan-todos fails, issue creation is skipped with a clear error message
@@ -280,7 +304,7 @@ Documentation rules are defined in `build/rules/doc-rules.yaml`. See [Adding Cus
 ## Generated Output Files
 
 | File | Generator | Purpose |
-|------|-----------|---------|
+| ------ | ----------- | --------- |
 | `docs/generated/repository-structure.md` | generate-structure-docs.py | Repository file tree |
 | `docs/generated/provider-registry.md` | generate-structure-docs.py | Data provider catalog |
 | `docs/generated/workflows-overview.md` | generate-structure-docs.py | CI/CD workflow summary |
@@ -344,4 +368,4 @@ This creates GitHub issues (label: `auto-todo`) for TODO items that do not alrea
 
 ---
 
-*This guide is part of the documentation automation system.*
+_This guide is part of the documentation automation system._

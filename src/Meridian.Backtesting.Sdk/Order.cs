@@ -55,7 +55,8 @@ public sealed record OrderRequest(
     TimeInForce TimeInForce = TimeInForce.Day,
     ExecutionModel ExecutionModel = ExecutionModel.Auto,
     bool AllowPartialFills = true,
-    IReadOnlyDictionary<string, string>? ProviderParameters = null);
+    IReadOnlyDictionary<string, string>? ProviderParameters = null,
+    string? AccountId = null);
 
 /// <summary>Immutable order record submitted to the backtest context.</summary>
 public sealed record Order(
@@ -70,6 +71,7 @@ public sealed record Order(
     ExecutionModel ExecutionModel = ExecutionModel.Auto,
     bool AllowPartialFills = true,
     IReadOnlyDictionary<string, string>? ProviderParameters = null,
+    string? AccountId = null,
     OrderStatus Status = OrderStatus.Pending,
     long FilledQuantity = 0,
     bool IsTriggered = false)

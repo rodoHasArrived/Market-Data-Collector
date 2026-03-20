@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 02:09:04 UTC
+> Auto-generated on 2026-03-20 03:15:12 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -55,6 +55,7 @@ Meridian/
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
 │   │   └── skills_provider.py
+│   ├── settings.json
 │   └── settings.local.json
 ├── .devcontainer/
 │   └── devcontainer.json
@@ -378,6 +379,7 @@ Meridian/
 │   │   ├── documentation-automation.md
 │   │   ├── documentation-contribution-guide.md
 │   │   ├── expanding-scripts.md
+│   │   ├── fsharp-decision-rule.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
@@ -451,7 +453,11 @@ Meridian/
 │   │   ├── resilience-patterns.svg
 │   │   ├── storage-architecture.dot
 │   │   ├── storage-architecture.png
-│   │   └── storage-architecture.svg
+│   │   ├── storage-architecture.svg
+│   │   ├── ui-implementation-flow.dot
+│   │   ├── ui-implementation-flow.svg
+│   │   ├── ui-navigation-map.dot
+│   │   └── ui-navigation-map.svg
 │   ├── docfx/
 │   │   ├── docfx.json
 │   │   └── README.md
@@ -503,6 +509,8 @@ Meridian/
 │   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
 │   │   ├── quant-script-environment-blueprint.md
+│   │   ├── readability-refactor-roadmap.md
+│   │   ├── readability-refactor-technical-design-pack.md
 │   │   └── trading-workstation-migration-blueprint.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
@@ -545,9 +553,14 @@ Meridian/
 │   │   ├── maintenance.sh
 │   │   ├── route-maintenance.sh
 │   │   └── setup-ai-agent.sh
-│   └── dev/
-│       ├── desktop-dev.ps1
-│       └── diagnose-uwp-xaml.ps1
+│   ├── dev/
+│   │   ├── desktop-dev.ps1
+│   │   └── diagnose-uwp-xaml.ps1
+│   ├── lib/
+│   │   ├── ui-diagram-generator.mjs
+│   │   └── ui-diagram-generator.test.mjs
+│   ├── compare_benchmarks.py
+│   └── generate-diagrams.mjs
 ├── src/  # Source code
 │   ├── Meridian/
 │   │   ├── Integrations/
@@ -746,11 +759,14 @@ Meridian/
 │   │   │   ├── LedgerAccounts.cs
 │   │   │   ├── LedgerAccountType.cs
 │   │   │   └── LedgerEntry.cs
+│   │   ├── AssetEvent.cs
 │   │   ├── BacktestProgressEvent.cs
 │   │   ├── BacktestRequest.cs
 │   │   ├── BacktestResult.cs
 │   │   ├── CashFlowEntry.cs
 │   │   ├── FillEvent.cs
+│   │   ├── FinancialAccount.cs
+│   │   ├── FinancialAccountSnapshot.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── IBacktestContext.cs
 │   │   ├── IBacktestStrategy.cs
@@ -831,6 +847,7 @@ Meridian/
 │   │   │   ├── DerivativesConfig.cs
 │   │   │   ├── IConfigurationProvider.cs
 │   │   │   ├── StockSharpConfig.cs
+│   │   │   ├── SyntheticMarketDataConfig.cs
 │   │   │   └── ValidatedConfig.cs
 │   │   ├── Exceptions/
 │   │   │   ├── ConfigurationException.cs
@@ -969,6 +986,8 @@ Meridian/
 │   │   │   ├── StockSharp/
 │   │   │   │   ...
 │   │   │   ├── Stooq/
+│   │   │   │   ...
+│   │   │   ├── Synthetic/
 │   │   │   │   ...
 │   │   │   ├── Tiingo/
 │   │   │   │   ...
@@ -1627,6 +1646,9 @@ Meridian/
 │   │   ├── SymbolSearch/
 │   │   │   ├── OpenFigiClientTests.cs
 │   │   │   └── SymbolSearchServiceTests.cs
+│   │   ├── TestData/
+│   │   │   └── Golden/
+│   │   │       ...
 │   │   ├── TestHelpers/
 │   │   │   └── TestMarketEventPublisher.cs
 │   │   ├── GlobalUsings.cs
@@ -1711,8 +1733,11 @@ Meridian/
 │   │   │   └── WorkspaceServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── Meridian.Wpf.Tests.csproj
+│   ├── scripts/  # Automation scripts
+│   │   └── setup-verification.sh
 │   ├── coverlet.runsettings
 │   ├── Directory.Build.props
+│   ├── setup-script-tests.md
 │   └── xunit.runner.json
 ├── .editorconfig
 ├── .gitignore

@@ -35,16 +35,16 @@ using Serilog;
 namespace Meridian.Application.Composition;
 
 /// <summary>
-/// Centralizes all service registration for the application.
-/// This is the single composition root that builds the service graph once,
-/// with host-specific adapters (console, web, desktop) opting into endpoints.
+/// Centralizes all shared service registration for the application.
+/// This composition root is consumed by <see cref="HostStartup"/>, <see cref="HostBuilder"/>,
+/// and the extracted startup orchestration layer so every host mode builds from the same graph.
 /// </summary>
 /// <remarks>
 /// <para><b>Design Philosophy:</b></para>
 /// <list type="bullet">
 /// <item><description>Single source of truth for service registration</description></item>
-/// <item><description>Host-agnostic core services</description></item>
-/// <item><description>Feature flags for optional capabilities (HTTP server, backfill, etc.)</description></item>
+/// <item><description>Host-agnostic core services shared across console, web, desktop, and MCP hosts</description></item>
+/// <item><description>Canonical <see cref="CompositionOptions"/> presets select optional capabilities</description></item>
 /// <item><description>Lazy initialization for expensive services</description></item>
 /// </list>
 /// </remarks>
@@ -627,6 +627,13 @@ public static class ServiceCompositionRoot
                 publisher, tradeCollector, depthCollector);
         });
 
+        // Synthetic offline data provider
+        registry.RegisterStreamingFactory(DataSourceKind.Synthetic, () =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            return new SyntheticMarketDataClient(publisher, config.Synthetic);
+        });
+
         log.Information("Registered streaming factories for {Count} data sources",
             registry.SupportedStreamingSources.Count);
     }
@@ -686,10 +693,11 @@ public static class ServiceCompositionRoot
             "polygon" => DataSourceKind.Polygon,
             "stocksharp" => DataSourceKind.StockSharp,
             "nyse" => DataSourceKind.NYSE,
+            "synthetic" => DataSourceKind.Synthetic,
             _ => default
         };
 
-        return id.ToLowerInvariant() is "ib" or "interactivebrokers" or "alpaca" or "polygon" or "stocksharp" or "nyse";
+        return id.ToLowerInvariant() is "ib" or "interactivebrokers" or "alpaca" or "polygon" or "stocksharp" or "nyse" or "synthetic";
     }
 
     /// <summary>
@@ -940,7 +948,8 @@ public static class ServiceCompositionRoot
                 wal: wal,
                 auditTrail: auditTrail,
                 validator: validator,
-                deadLetterSink: deadLetterSink);
+                deadLetterSink: deadLetterSink,
+                consumerCount: wal is null && validator is null && Environment.ProcessorCount > 2 ? 2 : 1);
         });
 
         // IMarketEventPublisher - facade for publishing events.

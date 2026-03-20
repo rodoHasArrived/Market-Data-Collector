@@ -698,34 +698,17 @@ public unsafe void GetSnapshot(Span<BookLevel> bids, Span<BookLevel> asks)
 
 ## Decision Criteria for Language Selection
 
-Use this flowchart when deciding which language to use for a new component:
+Use this explicit rule when deciding which language to use for a new component:
 
-```
-                    ┌─────────────────────────┐
-                    │ Is latency < 10μs       │
-                    │ required?               │
-                    └───────────┬─────────────┘
-                                │
-              ┌─────────────────┼─────────────────┐
-              │ Yes             │                 │ No
-              ▼                 │                 ▼
-    ┌─────────────────┐         │    ┌──────────────────────┐
-    │ Use C++         │         │    │ Is it domain logic   │
-    │ - Order book    │         │    │ with complex rules?  │
-    │ - Wire protocol │         │    └───────────┬──────────┘
-    │ - Ring buffers  │         │                │
-    └─────────────────┘         │    ┌───────────┼───────────┐
-                                │    │ Yes       │           │ No
-                                │    ▼           │           ▼
-                                │ ┌─────────────┐│   ┌──────────────┐
-                                │ │ Use F#      ││   │ Use C#       │
-                                │ │ - Validation││   │ - Integration│
-                                │ │ - Calc logic││   │ - UI/Web     │
-                                │ │ - Transforms││   │ - Orchestrate│
-                                │ └─────────────┘│   └──────────────┘
-                                │                │
-                                └────────────────┘
-```
+1. **Use C++** when the component has hard sub-10μs latency requirements or is on a wire-format / lock-free hot path.
+2. **Use F# only when all of the following are true:**
+   - the subsystem is dominated by rules-heavy, side-effect-light transforms;
+   - the logic can be expressed as deterministic input/output functions;
+   - the boundary is explicit: contracts in C#, pure transform module in F#, orchestration/integration in C#;
+   - the logic does not depend deeply on existing DI/service infrastructure.
+3. **Use C# first** for host orchestration, provider integration, storage, UI, web, scheduling, retries, metrics, or other service-heavy workflows.
+
+For the full repo-specific guidance, including the `Pipeline/Transforms.fs` classification and the F# pilot selection rule, see [F# Decision Rule for Meridian](../development/fsharp-decision-rule.md).
 
 ---
 

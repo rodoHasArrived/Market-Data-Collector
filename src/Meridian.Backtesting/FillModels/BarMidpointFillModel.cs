@@ -54,7 +54,8 @@ internal sealed class BarMidpointFillModel(
             remainingQuantity,
             fillPrice,
             commission,
-            evt.Timestamp);
+            evt.Timestamp,
+            order.AccountId);
 
         var updated = order with
         {
