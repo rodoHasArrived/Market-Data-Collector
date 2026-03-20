@@ -312,7 +312,7 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
                 new
                 {
                     type = "header",
-                    text = new { type = "plain_text", text = $"Market Data Collector - Daily Summary {summary.Date:yyyy-MM-dd}" }
+                    text = new { type = "plain_text", text = $"Meridian - Daily Summary {summary.Date:yyyy-MM-dd}" }
                 },
                 new
                 {
@@ -380,7 +380,7 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
             {
                 new
                 {
-                    title = $"Market Data Collector - Daily Summary",
+                    title = $"Meridian - Daily Summary",
                     description = $"Summary for {summary.Date:yyyy-MM-dd}",
                     color,
                     fields = new object[]
@@ -417,7 +417,7 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
         {
             @type = "MessageCard",
             themeColor,
-            summary = "Market Data Collector - Daily Summary",
+            summary = "Meridian - Daily Summary",
             sections = new[]
             {
                 new

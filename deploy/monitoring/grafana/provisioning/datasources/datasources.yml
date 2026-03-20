@@ -1,5 +1,5 @@
 # =============================================================================
-# Grafana Datasource Provisioning for Market Data Collector
+# Grafana Datasource Provisioning for Meridian
 # =============================================================================
 
 apiVersion: 1

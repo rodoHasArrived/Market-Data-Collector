@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # start-collector.sh
-# Market Data Collector – Canonical Startup Execution Plan (Linux/macOS)
+# Meridian – Canonical Startup Execution Plan (Linux/macOS)
 #
 # Features:
 #   - Builds (optional) with or without IBAPI

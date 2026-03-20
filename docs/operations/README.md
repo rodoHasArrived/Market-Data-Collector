@@ -1,6 +1,6 @@
 # Operations Documentation
 
-Guides for deploying, monitoring, and maintaining the Market Data Collector in production.
+Guides for deploying, monitoring, and maintaining the Meridian in production.
 
 ## Documents
 

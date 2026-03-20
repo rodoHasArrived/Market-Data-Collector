@@ -4,7 +4,7 @@
 **Last Updated:** 2026-03-15  
 **Status:** Active, Continuously Updated
 
-This guide provides standards and best practices for creating, organizing, and maintaining documentation in the Market Data Collector project.
+This guide provides standards and best practices for creating, organizing, and maintaining documentation in the Meridian project.
 
 ---
 
@@ -474,7 +474,7 @@ Show actual commands with expected output:
 ```bash
 $ dotnet run --project src/Meridian -- --help
 
-Market Data Collector v1.6.1
+Meridian v1.6.1
 
 Usage:
   Meridian [options]

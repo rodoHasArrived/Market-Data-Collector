@@ -1,4 +1,4 @@
-# Documentation validation rules for Market Data Collector
+# Documentation validation rules for Meridian
 # Used by: build/scripts/docs/rules-engine.py
 #
 # Rule types:
@@ -57,7 +57,7 @@ rules:
   - name: "README has project description"
     applies_to: "README.md"
     required_sections:
-      - "Market Data Collector"
+      - "Meridian"
     severity: error
 
   - name: "CLAUDE.md has quick commands"
@@ -92,7 +92,7 @@ rules:
   # ---------------------------------------------------------------------------
   - name: "AI guides reference the project name"
     applies_to: "docs/ai/claude/*.md"
-    must_contain: "Market Data Collector"
+    must_contain: "Meridian"
     severity: info
 
   # ---------------------------------------------------------------------------

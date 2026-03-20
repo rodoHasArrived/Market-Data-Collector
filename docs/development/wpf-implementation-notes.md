@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the WPF desktop application implementation, which is the sole desktop UI for Market Data Collector.
+This document describes the WPF desktop application implementation, which is the sole desktop UI for Meridian.
 
 ## Implementation Scope
 
@@ -149,7 +149,7 @@ All critical issues identified in the code review have been addressed:
 
 #### Near-Term
 1. Replace HTTP polling with WebSocket/SignalR for real-time updates
-2. Implement connection to backend Market Data Collector service
+2. Implement connection to backend Meridian service
 3. Implement actual configuration persistence (currently stub)
 
 #### Long-Term
@@ -218,7 +218,7 @@ MIT License - Same as parent project
 ### Authors
 
 - Architecture Review Team
-- Market Data Collector Contributors
+- Meridian Contributors
 
 ---
 

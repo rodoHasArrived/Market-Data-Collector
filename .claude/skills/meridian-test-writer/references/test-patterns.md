@@ -1,12 +1,12 @@
 ---
-name: mdc-test-writer
+name: meridian-test-writer
 description: >
   Test generation skill for the Meridian project. Use this skill whenever an agent
   needs to write new xUnit tests, expand coverage for existing components, or validate that
   test quality meets the project's standards. Triggers on: "write tests for", "add unit tests",
   "increase test coverage", "write a test for this class", "how do I test X", "the tests are
   missing for", or when reviewing code that lacks corresponding test coverage. Also triggers
-  when a code review (mdc-code-review) has identified test gaps. This skill produces
+  when a code review (meridian-code-review) has identified test gaps. This skill produces
   idiomatic xUnit + FluentAssertions tests with correct async patterns, isolation, naming
   conventions, and mock setup for all major Meridian component types: providers, storage sinks,
   pipeline components, WPF services, and F# interop boundaries.
@@ -15,11 +15,11 @@ description: >
 # Meridian — Test Writer Skill
 
 Generate high-quality, idiomatic xUnit tests for any Meridian component. Every test
-produced by this skill must pass the `mdc-code-review` Lens 4 (Test Code Quality) checks.
+produced by this skill must pass the `meridian-code-review` Lens 4 (Test Code Quality) checks.
 
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md)
 > **Test patterns reference:** [`references/test-patterns.md`](references/test-patterns.md)
-> **Code review skill:** [`../mdc-code-review/SKILL.md`](../mdc-code-review/SKILL.md)
+> **Code review skill:** [`../meridian-code-review/SKILL.md`](../meridian-code-review/SKILL.md)
 
 ---
 

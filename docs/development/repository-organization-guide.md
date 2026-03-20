@@ -4,7 +4,7 @@
 **Last Updated:** 2026-02-13  
 **Audience:** Developers, Contributors, Maintainers
 
-This guide establishes conventions for organizing code, documentation, and assets in the Market Data Collector repository. Following these patterns ensures consistency, maintainability, and ease of navigation.
+This guide establishes conventions for organizing code, documentation, and assets in the Meridian repository. Following these patterns ensures consistency, maintainability, and ease of navigation.
 
 ---
 

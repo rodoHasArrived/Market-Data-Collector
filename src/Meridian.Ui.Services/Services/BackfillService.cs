@@ -11,7 +11,7 @@ namespace Meridian.Ui.Services;
 
 /// <summary>
 /// Service for managing backfill operations with progress tracking.
-/// Uses real API integration with the core Market Data Collector service.
+/// Uses real API integration with the core Meridian service.
 /// </summary>
 public sealed class BackfillService
 {
@@ -249,7 +249,7 @@ public sealed class BackfillService
 
         if (result == null)
         {
-            throw new InvalidOperationException("Failed to connect to the Market Data Collector service. Please ensure the service is running.");
+            throw new InvalidOperationException("Failed to connect to the Meridian service. Please ensure the service is running.");
         }
 
         if (!result.Success)

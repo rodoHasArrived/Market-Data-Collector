@@ -234,7 +234,7 @@ public partial class SetupWizardPage : Page
 
     private void OpenInstructions_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/guides/configuration.md");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/guides/configuration.md");
     }
 
     private void UseDefaultStorage_Click(object sender, RoutedEventArgs e)

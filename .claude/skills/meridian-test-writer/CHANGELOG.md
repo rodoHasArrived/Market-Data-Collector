@@ -1,4 +1,4 @@
-# mdc-test-writer — Changelog
+# meridian-test-writer — Changelog
 
 ## v1.0.0 (2026-03-16)
 
@@ -26,7 +26,7 @@
   - Pattern H: Endpoint integration tests (WebApplicationFactory)
 - **Minimum test coverage requirements** — happy path, error path, cancellation,
   boundary conditions, disposal/cleanup (plus reconnection for streaming, flush semantics for sinks)
-- **Step 4 pre-submit checklist** aligned with `mdc-code-review` Lens 4
+- **Step 4 pre-submit checklist** aligned with `meridian-code-review` Lens 4
 - **Quick reference tables** — FluentAssertions, Moq, and NSubstitute assertion patterns
 - **Anti-patterns table** — 8 documented anti-patterns with symptoms and fixes
 - **`references/test-patterns.md`** — complete scaffolding for all 8 patterns including

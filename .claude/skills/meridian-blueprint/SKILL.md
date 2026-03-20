@@ -1,5 +1,5 @@
 ---
-name: mdc-blueprint
+name: meridian-blueprint
 description: >
   Blueprint Mode skill for the Meridian project. Translates a single prioritized
   idea into a complete, code-ready technical design document — interfaces, component designs,
@@ -29,7 +29,7 @@ Meridian.
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md) —
 > authoritative stats, file paths, provider list, ADR table. Read before naming interfaces or
 > namespaces.
-> **GitHub equivalent:** [`.github/agents/mdc-blueprint-agent.md`](../../../.github/agents/mdc-blueprint-agent.md)
+> **GitHub equivalent:** [`.github/agents/meridian-blueprint-agent.md`](../../../.github/agents/meridian-blueprint-agent.md)
 > **Reference files:**
 > - `references/blueprint-patterns.md` — Meridian interface patterns, ADR contracts, naming conventions
 > - `references/pipeline-position.md` — Where Blueprint Mode fits in the ideation-to-implementation
@@ -470,10 +470,10 @@ If `--json` is requested, also produce a `blueprint.json` summary:
 
 ## What This Skill Does NOT Do
 
-- **No exploratory brainstorming** — that is `mdc-brainstorm`; blueprint works on one committed idea
-- **No code review** — that is `mdc-code-review`; blueprint produces new designs, not feedback
-- **No provider scaffolding** — that is `mdc-provider-builder`; if blueprint concludes a new provider is needed, hand off to provider-builder
-- **No test writing** — that is `mdc-test-writer`; blueprint defines the test plan, not the code
+- **No exploratory brainstorming** — that is `meridian-brainstorm`; blueprint works on one committed idea
+- **No code review** — that is `meridian-code-review`; blueprint produces new designs, not feedback
+- **No provider scaffolding** — that is `meridian-provider-builder`; if blueprint concludes a new provider is needed, hand off to provider-builder
+- **No test writing** — that is `meridian-test-writer`; blueprint defines the test plan, not the code
 - **No implementation** — the developer codes from the blueprint
 
 For pipeline-stage diagrams and handoff details, read `references/pipeline-position.md` on demand.

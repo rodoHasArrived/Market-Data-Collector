@@ -34,7 +34,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: market-data-collector
-          image: ghcr.io/rodohasarrived/market-data-collector:latest
+          image: ghcr.io/rodohasarrived/meridian:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

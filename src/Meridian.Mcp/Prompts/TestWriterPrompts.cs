@@ -4,7 +4,7 @@ namespace Meridian.Mcp.Prompts;
 public sealed class TestWriterPrompts(RepoPathService repo)
 {
     [McpServerPrompt(Name = "write_tests")]
-    [Description("Test writing prompt with MDC xUnit + FluentAssertions patterns. Generates appropriate test scaffold for the given component type.")]
+    [Description("Test writing prompt with Meridian xUnit + FluentAssertions patterns. Generates appropriate test scaffold for the given component type.")]
     public string WriteTests(
         [Description("Component type: provider | historical-provider | service | pipeline | storage | wpf-service | endpoint")] string componentType,
         [Description("The class name to write tests for, e.g. 'AlpacaMarketDataClient'")] string className,
@@ -16,7 +16,7 @@ public sealed class TestWriterPrompts(RepoPathService repo)
         sb.AppendLine($"**Test project:** `tests/Meridian.Tests/`");
         sb.AppendLine();
 
-        sb.AppendLine("## MDC Test Conventions\n");
+        sb.AppendLine("## Meridian Test Conventions\n");
         sb.AppendLine("- Framework: **xUnit** with **FluentAssertions**");
         sb.AppendLine("- Mocking: **NSubstitute** (preferred) or **Moq**");
         sb.AppendLine("- Test naming: `MethodName_StateUnderTest_ExpectedBehavior`");
@@ -31,7 +31,7 @@ public sealed class TestWriterPrompts(RepoPathService repo)
         if (File.Exists(repo.TestingGuideFile))
         {
             sb.AppendLine("---");
-            sb.AppendLine("## MDC Testing Guide\n");
+            sb.AppendLine("## Meridian Testing Guide\n");
             sb.Append(File.ReadAllText(repo.TestingGuideFile));
             sb.AppendLine();
         }

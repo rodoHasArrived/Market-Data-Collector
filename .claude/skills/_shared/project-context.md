@@ -1,6 +1,6 @@
 # Meridian — Shared Project Context
 
-> **Canonical reference.** This file is the single source of truth for project statistics, provider inventory, key abstractions with file paths, and storage design. Both `mdc-brainstorm` and `mdc-code-review` skills reference this file. Update here first; do not maintain separate copies.
+> **Canonical reference.** This file is the single source of truth for project statistics, provider inventory, key abstractions with file paths, and storage design. Both `meridian-brainstorm` and `meridian-code-review` skills reference this file. Update here first; do not maintain separate copies.
 >
 > **Last verified:** 2026-03-19
 > **Refresh command:** `python3 build/scripts/ai-repo-updater.py audit`

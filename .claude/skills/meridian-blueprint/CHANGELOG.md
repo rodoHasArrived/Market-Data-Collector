@@ -1,4 +1,4 @@
-# mdc-blueprint — Changelog
+# meridian-blueprint — Changelog
 
 ## v1.0.0 (2026-03-17)
 
@@ -25,9 +25,9 @@
   checklist; ADR amendment guidance
 - **Sprint constraint support** — `target_sprint` constraint causes checklist to fit sprint;
   deferred tasks documented explicitly
-- **Pipeline integration** — Blueprint fits after `mdc-brainstorm`/Roadmap Builder and before
-  implementation, `mdc-code-review`, and `mdc-test-writer`
-- **Complementary agent** — `.claude/agents/mdc-blueprint.md` for use in subagent contexts
-- **GitHub agent** — `.github/agents/mdc-blueprint-agent.md` for GitHub Actions equivalence
+- **Pipeline integration** — Blueprint fits after `meridian-brainstorm`/Roadmap Builder and before
+  implementation, `meridian-code-review`, and `meridian-test-writer`
+- **Complementary agent** — `.claude/agents/meridian-blueprint.md` for use in subagent contexts
+- **GitHub agent** — `.github/agents/meridian-blueprint-agent.md` for GitHub Actions equivalence
 - **`skills_provider.py` registration** — `mdc_blueprint_skill` registered in
   `SkillsProvider`, with dynamic `blueprint-git-context` resource and `validate-skill` script

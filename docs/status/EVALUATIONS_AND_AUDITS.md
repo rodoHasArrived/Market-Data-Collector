@@ -1,4 +1,4 @@
-# Market Data Collector - Consolidated Evaluations & Audits
+# Meridian - Consolidated Evaluations & Audits
 
 **Version:** 1.7.0
 **Last Updated:** 2026-03-20

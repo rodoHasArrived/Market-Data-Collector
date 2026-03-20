@@ -2,7 +2,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Write-Host "== Market Data Collector: Desktop Dev Bootstrap ==" -ForegroundColor Cyan
+Write-Host "== Meridian: Desktop Dev Bootstrap ==" -ForegroundColor Cyan
 Write-Host ""
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")

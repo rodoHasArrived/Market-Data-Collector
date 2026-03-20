@@ -41,7 +41,7 @@ public sealed class AlertRunbookRegistry
             AlertName = "MdcDown",
             Severity = "critical",
             IncidentPriority = "P1",
-            Summary = "Market Data Collector is down",
+            Summary = "Meridian is down",
             RunbookUrl = "docs/operations/operator-runbook.md#application-down",
             SloId = "SLO-AV-001",
             ProbableCauses = new[]
@@ -66,7 +66,7 @@ public sealed class AlertRunbookRegistry
             AlertName = "MdcUnhealthy",
             Severity = "warning",
             IncidentPriority = "P2",
-            Summary = "Market Data Collector reports unhealthy",
+            Summary = "Meridian reports unhealthy",
             RunbookUrl = "docs/operations/operator-runbook.md#unhealthy-status",
             ProbableCauses = new[]
             {

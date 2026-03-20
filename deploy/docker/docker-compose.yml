@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Docker Compose Configuration
+# Meridian - Docker Compose Configuration
 # =============================================================================
 #
 # Quick Start:
@@ -13,7 +13,7 @@
 
 services:
   # ---------------------------------------------------------------------------
-  # Market Data Collector - Main Application
+  # Meridian - Main Application
   # ---------------------------------------------------------------------------
   marketdatacollector:
     build:

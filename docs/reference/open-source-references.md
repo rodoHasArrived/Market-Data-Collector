@@ -1,6 +1,6 @@
 # Open Source References and Code Improvement Resources
 
-This document catalogs publicly available codebases, libraries, and resources that can help improve the Market Data Collector project. It also notes the current integration status for items that are already represented in the codebase or docs so the list reflects the project’s current state.
+This document catalogs publicly available codebases, libraries, and resources that can help improve the Meridian project. It also notes the current integration status for items that are already represented in the codebase or docs so the list reflects the project’s current state.
 
 ## Table of Contents
 1. [Market Data Collection Systems](#market-data-collection-systems)
@@ -501,7 +501,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 2. **Extend Observability**
    - Add OpenTelemetry tracing for provider → pipeline → storage
    - Publish additional Prometheus histograms for latency hot paths
-   - Curate Grafana dashboards for MDC metrics
+   - Curate Grafana dashboards for Meridian metrics
 
 3. **Benchmark Performance**
    - Introduce BenchmarkDotNet suites for ingestion and export paths
@@ -634,5 +634,5 @@ Recent optimizations and patterns:
 
 **Version:** 1.6.1
 **Last Updated:** 2026-01-30
-**Maintainer:** Market Data Collector Team
+**Maintainer:** Meridian Team
 **See Also:** [DEPENDENCIES.md](../DEPENDENCIES.md) | [Architecture](../architecture/overview.md)

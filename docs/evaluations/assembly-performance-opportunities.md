@@ -7,7 +7,7 @@
 ---
 
 This document identifies where hand-written assembly (or .NET hardware intrinsics, which compile to
-SIMD instructions) could materially improve performance in Market Data Collector, and corrects
+SIMD instructions) could materially improve performance in Meridian, and corrects
 several inaccuracies from the initial draft by anchoring every candidate to verified production code.
 
 ## Executive Summary

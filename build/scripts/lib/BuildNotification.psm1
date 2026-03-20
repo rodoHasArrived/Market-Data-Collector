@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Build Notification Module
+# Meridian - Build Notification Module
 # =============================================================================
 #
 # Provides build progress tracking, Windows toast notifications, and detailed

@@ -1,9 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# Market Data Collector - Installation Script
+# Meridian - Installation Script
 # =============================================================================
 #
-# This script automates the installation and setup of Market Data Collector.
+# This script automates the installation and setup of Meridian.
 #
 # Usage:
 #   ./install.sh              # Interactive installation
@@ -41,7 +41,7 @@ print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 print_header() {
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════╗"
-    echo "║           Market Data Collector - Installation Script                ║"
+    echo "║           Meridian - Installation Script                ║"
     echo "║                         Version 1.1.0                                ║"
     echo "╚══════════════════════════════════════════════════════════════════════╝"
     echo ""

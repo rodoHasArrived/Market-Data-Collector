@@ -4,14 +4,14 @@ namespace Meridian.Mcp.Prompts;
 public sealed class CodeReviewPrompts(RepoPathService repo)
 {
     [McpServerPrompt(Name = "review_code")]
-    [Description("Code review prompt using MDC's 6-lens review framework. Checks MVVM, error handling, performance, provider compliance, test quality, and documentation.")]
+    [Description("Code review prompt using Meridian's 6-lens review framework. Checks MVVM, error handling, performance, provider compliance, test quality, and documentation.")]
     public string ReviewCode(
         [Description("C# source code to review (paste the full file or relevant section)")] string code,
         [Description("Focus area: mvvm | performance | provider | storage | tests | all")] string focus = "all")
     {
         var sb = new StringBuilder();
         sb.AppendLine("# Meridian Code Review\n");
-        sb.AppendLine("Review the following C# code using the MDC 6-lens framework. For each lens, identify:");
+        sb.AppendLine("Review the following C# code using the Meridian 6-lens framework. For each lens, identify:");
         sb.AppendLine("- **CRITICAL** issues (block merge, must fix)");
         sb.AppendLine("- **WARNING** issues (should fix before ship)");
         sb.AppendLine("- **SUGGESTION** items (optional improvements)");

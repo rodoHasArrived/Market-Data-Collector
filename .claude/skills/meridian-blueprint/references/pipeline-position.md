@@ -12,8 +12,8 @@ the inputs and outputs of each stage, and the handoff contracts between stages.
 │                    Meridian Ideation-to-Implementation Pipeline               │
 └─────────────────────────────────────────────────────────────────────────┘
 
-Stage 1: Brainstorm (mdc-brainstorm)
-  Skill: .claude/skills/mdc-brainstorm/SKILL.md
+Stage 1: Brainstorm (meridian-brainstorm)
+  Skill: .claude/skills/meridian-brainstorm/SKILL.md
   Input:  User prompt / pain point / persona / domain
   Output: Idea cards — narrative ideas with effort/audience/impact/depends-on table
   ↓
@@ -29,8 +29,8 @@ Stage 3: Roadmap Builder  [optional / ad-hoc]
          Ideas assigned to phases by dependencies and value
   ↓
 
-Stage 4: Blueprint Mode (mdc-blueprint)   ◄── THIS SKILL
-  Skill: .claude/skills/mdc-blueprint/SKILL.md
+Stage 4: Blueprint Mode (meridian-blueprint)   ◄── THIS SKILL
+  Skill: .claude/skills/meridian-blueprint/SKILL.md
   Input:  One idea card from Stage 1, one Roadmap phase item, or a user-specified idea
   Output: Complete technical design document (Steps 1–9)
   ↓
@@ -40,14 +40,14 @@ Stage 5: Implementation  [developer]
   Output: Working code (C# / F# / XAML)
   ↓
 
-Stage 6: Code Review (mdc-code-review)
-  Skill: .claude/skills/mdc-code-review/SKILL.md
+Stage 6: Code Review (meridian-code-review)
+  Skill: .claude/skills/meridian-code-review/SKILL.md
   Input:  Implemented code
   Output: Compliance report — MVVM, ADR, hot-path, error handling, test quality
   ↓
 
-Stage 7: Test Writing (mdc-test-writer)
-  Skill: .claude/skills/mdc-test-writer/SKILL.md
+Stage 7: Test Writing (meridian-test-writer)
+  Skill: .claude/skills/meridian-test-writer/SKILL.md
   Input:  Implemented code + test plan from Blueprint Step 7
   Output: xUnit test files with FluentAssertions, complete coverage per plan
 ```
@@ -115,7 +115,7 @@ If any of these are missing from the blueprint, the blueprint is incomplete.
 
 ## Stage 4 → Stage 6 Handoff Contract
 
-The blueprint defines the contracts that `mdc-code-review` validates against. Specifically:
+The blueprint defines the contracts that `meridian-code-review` validates against. Specifically:
 
 | Blueprint Section | Code Review Validation |
 |-------------------|----------------------|
@@ -131,14 +131,14 @@ the blueprint's Step 3 definition as the reference.
 
 ## Stage 4 → Stage 7 Handoff Contract
 
-The blueprint's **Step 7: Test Plan** is the direct input to `mdc-test-writer`. The test plan
+The blueprint's **Step 7: Test Plan** is the direct input to `meridian-test-writer`. The test plan
 defines:
 
 - Which tests to write (by name and what they verify)
 - Which test double strategy to use
 - What new test infrastructure is needed
 
-`mdc-test-writer` translates the test plan table rows into actual xUnit test methods with
+`meridian-test-writer` translates the test plan table rows into actual xUnit test methods with
 FluentAssertions and the correct mock/stub setup.
 
 ---
@@ -166,11 +166,11 @@ Blueprint Mode should **not** be invoked when:
 
 | Stage | Skill | GitHub Agent |
 |-------|-------|-------------|
-| Brainstorm | `.claude/skills/mdc-brainstorm/SKILL.md` | `.github/agents/mdc-brainstorm-agent.md` |
-| Blueprint | `.claude/skills/mdc-blueprint/SKILL.md` | `.github/agents/mdc-blueprint-agent.md` |
-| Code Review | `.claude/skills/mdc-code-review/SKILL.md` | `.github/agents/code-review-agent.md` |
-| Provider Build | `.claude/skills/mdc-provider-builder/SKILL.md` | `.github/agents/mdc-provider-builder-agent.md` |
-| Test Writing | `.claude/skills/mdc-test-writer/SKILL.md` | `.github/agents/mdc-test-writer-agent.md` |
+| Brainstorm | `.claude/skills/meridian-brainstorm/SKILL.md` | `.github/agents/meridian-brainstorm-agent.md` |
+| Blueprint | `.claude/skills/meridian-blueprint/SKILL.md` | `.github/agents/meridian-blueprint-agent.md` |
+| Code Review | `.claude/skills/meridian-code-review/SKILL.md` | `.github/agents/code-review-agent.md` |
+| Provider Build | `.claude/skills/meridian-provider-builder/SKILL.md` | `.github/agents/meridian-provider-builder-agent.md` |
+| Test Writing | `.claude/skills/meridian-test-writer/SKILL.md` | `.github/agents/meridian-test-writer-agent.md` |
 
 ---
 

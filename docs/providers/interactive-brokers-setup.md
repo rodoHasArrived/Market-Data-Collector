@@ -1,10 +1,10 @@
 # Interactive Brokers API Setup Guide
 
-This document provides instructions for setting up the Interactive Brokers API (IBApi) with the Market Data Collector project.
+This document provides instructions for setting up the Interactive Brokers API (IBApi) with the Meridian project.
 
 ## Overview
 
-The Interactive Brokers API is **not available as a standard NuGet package** and must be installed manually. The Market Data Collector uses conditional compilation (`#if IBAPI`) to allow the project to build with or without IB API support.
+The Interactive Brokers API is **not available as a standard NuGet package** and must be installed manually. The Meridian uses conditional compilation (`#if IBAPI`) to allow the project to build with or without IB API support.
 
 ## Installation Options
 

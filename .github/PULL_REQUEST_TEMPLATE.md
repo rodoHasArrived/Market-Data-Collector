@@ -1,5 +1,5 @@
 name: Pull Request
-description: Submit a pull request to contribute to the Market Data Collector
+description: Submit a pull request to contribute to the Meridian
 title: "[PR]: "
 labels: ["needs-review"]
 
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for contributing to Market Data Collector! Please fill out this template to help us review your PR.
+        Thank you for contributing to Meridian! Please fill out this template to help us review your PR.
 
   - type: textarea
     id: description

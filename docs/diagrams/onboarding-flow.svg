@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 2098.71)">
 <title>OnboardingFlow</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-2098.71 1423,-2098.71 1423,36 -36,36"/>
-<text text-anchor="middle" x="693.5" y="-2049.11" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Onboarding &amp; Diagnostics Flow</text>
+<text text-anchor="middle" x="693.5" y="-2049.11" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Onboarding &amp; Diagnostics Flow</text>
 <text text-anchor="middle" x="693.5" y="-2036.11" font-family="Helvetica,sans-Serif" font-size="12.00">User Journey from Installation to Operation | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_firstrun</title>

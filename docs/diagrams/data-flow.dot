@@ -1,5 +1,5 @@
 // Data Flow Diagram
-// Market Data Collector v1.6.1
+// Meridian v1.6.1
 // Last Updated: 2026-02-21
 //
 // This diagram shows the end-to-end data flow through the system,
@@ -16,7 +16,7 @@ digraph DataFlow {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Data Flow Diagram\nEnd-to-End Event Processing | v1.6.1";
+  label="Meridian - Data Flow Diagram\nEnd-to-End Event Processing | v1.6.1";
 
   // Onboarding Flow (First-Time Setup)
   subgraph cluster_onboarding {

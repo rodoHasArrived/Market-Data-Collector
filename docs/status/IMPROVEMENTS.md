@@ -1,4 +1,4 @@
-# Market Data Collector - Improvement Tracking
+# Meridian - Improvement Tracking
 
 **Version:** 1.7.0
 **Last Updated:** 2026-03-20

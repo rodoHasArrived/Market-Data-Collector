@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate structure documentation for the Market Data Collector repository.
+Generate structure documentation for the Meridian repository.
 
 This script analyzes the repository structure and generates documentation files
 that can be used to keep CLAUDE.md, README.md, and other docs up to date.
@@ -203,7 +203,7 @@ def generate_structure_markdown(root: Path, max_depth: int = 4) -> str:
 
 > Auto-generated on {format_timestamp()}
 
-This document provides an overview of the Market Data Collector repository structure.
+This document provides an overview of the Meridian repository structure.
 
 ## Directory Layout
 
@@ -370,7 +370,7 @@ def generate_provider_registry(root: Path, extract_attrs: bool = False) -> str:
 
 > Auto-generated on {format_timestamp()}
 
-This document lists all data providers available in the Market Data Collector.
+This document lists all data providers available in the Meridian.
 
 ## Real-Time Streaming Providers
 

@@ -57,7 +57,7 @@ def gh_request(method: str, url: str, token: str, payload: dict[str, Any] | None
     req = urllib.request.Request(url=url, method=method, data=data)
     req.add_header("Accept", "application/vnd.github+json")
     req.add_header("X-GitHub-Api-Version", "2022-11-28")
-    req.add_header("User-Agent", "market-data-collector-docs-bot")
+    req.add_header("User-Agent", "meridian-docs-bot")
     req.add_header("Authorization", f"Bearer {token}")
     if data is not None:
         req.add_header("Content-Type", "application/json")

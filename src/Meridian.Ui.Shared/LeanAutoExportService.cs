@@ -7,7 +7,7 @@ namespace Meridian.Ui.Shared;
 /// <summary>
 /// Background service that continuously exports collected market data to a Lean-compatible
 /// directory layout.  Runs on a configurable interval and converts JSONL files found under
-/// the MDC data root into the Lean zip-CSV format expected by the QuantConnect Lean Engine.
+/// the Meridian data root into the Lean zip-CSV format expected by the QuantConnect Lean Engine.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -282,7 +282,7 @@ public sealed class LeanAutoExportService : BackgroundService
     }
 
     /// <summary>
-    /// Reads a single MDC JSONL file and writes a Lean-compatible zip containing a CSV entry.
+    /// Reads a single Meridian JSONL file and writes a Lean-compatible zip containing a CSV entry.
     /// Returns the number of bytes written to the zip file, or 0 on failure.
     /// </summary>
     private static async Task<long> ExportFileToLeanZipAsync(

@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Docker Compose Override for Development
+# Meridian - Docker Compose Override for Development
 # =============================================================================
 #
 # This file automatically layers on top of docker-compose.yml when both are

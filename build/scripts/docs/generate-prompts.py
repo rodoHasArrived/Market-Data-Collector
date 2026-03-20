@@ -500,11 +500,11 @@ description: Address issues found in the {workflow_name} workflow run
 messages:
   - role: system
     content: |
-      You are a senior .NET developer analyzing CI/CD workflow results for the Market Data Collector project.
+      You are a senior .NET developer analyzing CI/CD workflow results for the Meridian project.
       The `{workflow_name}` workflow has completed with status: **{run_conclusion}**.
 
       ## Project Context
-      Market Data Collector is a .NET 9.0 C#/F# market data collection system.
+      Meridian is a .NET 9.0 C#/F# market data collection system.
       - Build: `dotnet build -c Release`
       - Test: `dotnet test tests/Meridian.Tests`
       - 14 main projects, 105 test files

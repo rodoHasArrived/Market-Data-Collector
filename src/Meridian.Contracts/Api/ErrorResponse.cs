@@ -80,7 +80,7 @@ public sealed class ErrorResponse
     {
         return new ErrorResponse
         {
-            Type = "https://market-data-collector.io/errors/validation",
+            Type = "https://meridian.io/errors/validation",
             Title = "Validation Failed",
             Status = 400,
             Detail = detail,
@@ -100,7 +100,7 @@ public sealed class ErrorResponse
     {
         return new ErrorResponse
         {
-            Type = "https://market-data-collector.io/errors/not-found",
+            Type = "https://meridian.io/errors/not-found",
             Title = $"{entityType} Not Found",
             Status = 404,
             Detail = $"The requested {entityType} with ID '{entityId}' was not found.",
@@ -124,7 +124,7 @@ public sealed class ErrorResponse
     {
         return new ErrorResponse
         {
-            Type = "https://market-data-collector.io/errors/rate-limit",
+            Type = "https://meridian.io/errors/rate-limit",
             Title = "Rate Limit Exceeded",
             Status = 429,
             Detail = $"Rate limit exceeded for provider '{provider}'. Please retry after {retryAfter?.TotalSeconds ?? 60} seconds.",
@@ -148,7 +148,7 @@ public sealed class ErrorResponse
     {
         return new ErrorResponse
         {
-            Type = "https://market-data-collector.io/errors/service-unavailable",
+            Type = "https://meridian.io/errors/service-unavailable",
             Title = "Service Unavailable",
             Status = 503,
             Detail = reason ?? $"The {service} service is currently unavailable. Please try again later.",
@@ -170,7 +170,7 @@ public sealed class ErrorResponse
     {
         return new ErrorResponse
         {
-            Type = "https://market-data-collector.io/errors/internal",
+            Type = "https://meridian.io/errors/internal",
             Title = "Internal Server Error",
             Status = 500,
             Detail = detail ?? "An unexpected error occurred. Please try again later.",
@@ -189,7 +189,7 @@ public sealed class ErrorResponse
     {
         return new ErrorResponse
         {
-            Type = "https://market-data-collector.io/errors/timeout",
+            Type = "https://meridian.io/errors/timeout",
             Title = "Operation Timed Out",
             Status = 408,
             Detail = $"The operation '{operation}' timed out after {timeout.TotalSeconds} seconds.",
@@ -217,7 +217,7 @@ public sealed class ErrorResponse
 
         return new ErrorResponse
         {
-            Type = $"https://market-data-collector.io/errors/{category.ToLowerInvariant()}",
+            Type = $"https://meridian.io/errors/{category.ToLowerInvariant()}",
             Title = message,
             Status = httpStatus,
             Detail = detail,

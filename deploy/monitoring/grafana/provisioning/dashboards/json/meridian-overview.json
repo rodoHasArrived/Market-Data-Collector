@@ -495,12 +495,12 @@
   ],
   "refresh": "10s",
   "schemaVersion": 39,
-  "tags": ["market-data-collector", "mdc"],
+  "tags": ["meridian", "meridian"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Market Data Collector - Overview",
-  "uid": "mdc-overview",
+  "title": "Meridian - Overview",
+  "uid": "meridian-overview",
   "version": 1
 }

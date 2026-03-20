@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Documentation validation rules engine for Market Data Collector.
+"""Documentation validation rules engine for Meridian.
 
 Loads validation rules from a YAML configuration file and checks documentation
 files in the repository against those rules. Produces a Markdown report of
@@ -601,7 +601,7 @@ def generate_summary(violations: list[Violation], passes: list[PassedCheck]) -> 
 def build_parser() -> argparse.ArgumentParser:
     """Build and return the argument parser."""
     parser = argparse.ArgumentParser(
-        description="Documentation validation rules engine for Market Data Collector.",
+        description="Documentation validation rules engine for Meridian.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"

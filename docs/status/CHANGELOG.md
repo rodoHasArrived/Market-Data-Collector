@@ -1,4 +1,4 @@
-# Market Data Collector - Changelog
+# Meridian - Changelog
 
 **Last Updated:** 2026-03-20
 **Current Version:** 1.7.0

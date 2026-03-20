@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This proposal identified **7 structural improvements** and **5 procedural/code enhancements** for the Market Data Collector repository, inspired by organizational patterns in the nautilus_trader trading system. All changes are **backward-compatible** — existing public APIs, namespaces, and build targets remain stable. The goal is to improve developer ergonomics, reduce coupling, and make the provider subsystem more modular and self-documenting.
+This proposal identified **7 structural improvements** and **5 procedural/code enhancements** for the Meridian repository, inspired by organizational patterns in the nautilus_trader trading system. All changes are **backward-compatible** — existing public APIs, namespaces, and build targets remain stable. The goal is to improve developer ergonomics, reduce coupling, and make the provider subsystem more modular and self-documenting.
 
 ---
 
@@ -755,7 +755,7 @@ src/Meridian.Infrastructure/Adapters/Core/ProviderFactory.cs # factory (1.5 not 
 
 | Pattern | Reason for Exclusion |
 |---------|---------------------|
-| `execution.py` per adapter | Market Data Collector doesn't handle order execution |
+| `execution.py` per adapter | Meridian doesn't handle order execution |
 | Singleton metaclass for catalog | .NET DI container handles singleton lifecycle |
 | Cython/Rust FFI layer | Not applicable to .NET; already uses source generators for perf |
 | `msgbus/` module | The bounded-channel `EventPipeline` serves this role (ADR-013) |

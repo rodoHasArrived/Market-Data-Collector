@@ -3,7 +3,7 @@
 **Last Updated:** 2026-01-30
 **Version:** 1.6.1
 
-This document provides instructions for setting up Alpaca market data with the Market Data Collector.
+This document provides instructions for setting up Alpaca market data with the Meridian.
 
 ---
 
@@ -146,7 +146,7 @@ $env:ALPACA_PAPER = "true"
 
 ### WebSocket Connection
 
-The Market Data Collector's `AlpacaMarketDataClient` handles WebSocket connections automatically:
+The Meridian's `AlpacaMarketDataClient` handles WebSocket connections automatically:
 
 ```csharp
 // Connection is managed internally

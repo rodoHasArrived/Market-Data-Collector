@@ -4,9 +4,9 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 18:04:34 UTC
+> Auto-generated on 2026-03-20 18:37:47 UTC
 
-This document provides an overview of the Market Data Collector repository structure.
+This document provides an overview of the Meridian repository structure.
 
 ## Directory Layout
 
@@ -14,24 +14,24 @@ This document provides an overview of the Market Data Collector repository struc
 Meridian/
 ├── .claude/
 │   ├── agents/
-│   │   ├── mdc-blueprint.md
-│   │   ├── mdc-cleanup.md
-│   │   └── mdc-docs.md
+│   │   ├── meridian-blueprint.md
+│   │   ├── meridian-cleanup.md
+│   │   └── meridian-docs.md
 │   ├── skills/
 │   │   ├── _shared/
 │   │   │   └── project-context.md
-│   │   ├── mdc-blueprint/
+│   │   ├── meridian-blueprint/
 │   │   │   ├── references/
 │   │   │   │   ...
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
-│   │   ├── mdc-brainstorm/
+│   │   ├── meridian-brainstorm/
 │   │   │   ├── references/
 │   │   │   │   ...
 │   │   │   ├── brainstorm-history.jsonl
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
-│   │   ├── mdc-code-review/
+│   │   ├── meridian-code-review/
 │   │   │   ├── agents/
 │   │   │   │   ...
 │   │   │   ├── eval-viewer/
@@ -44,12 +44,12 @@ Meridian/
 │   │   │   │   ...
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
-│   │   ├── mdc-provider-builder/
+│   │   ├── meridian-provider-builder/
 │   │   │   ├── references/
 │   │   │   │   ...
 │   │   │   ├── CHANGELOG.md
 │   │   │   └── SKILL.md
-│   │   ├── mdc-test-writer/
+│   │   ├── meridian-test-writer/
 │   │   │   ├── references/
 │   │   │   │   ...
 │   │   │   ├── CHANGELOG.md
@@ -241,7 +241,8 @@ Meridian/
 │       │   ├── stop-collector.ps1
 │       │   └── stop-collector.sh
 │       ├── ai-architecture-check.py
-│       └── ai-repo-updater.py
+│       ├── ai-repo-updater.py
+│       └── validate-tooling-metadata.py
 ├── config/  # Configuration files
 │   ├── appsettings.json
 │   ├── appsettings.sample.json
@@ -269,7 +270,7 @@ Meridian/
 │   │   ├── alert-rules.yml
 │   │   └── prometheus.yml
 │   └── systemd/
-│       └── marketdatacollector.service
+│       └── meridian.service
 ├── docs/  # Documentation
 │   ├── adr/
 │   │   ├── 001-provider-abstraction.md
@@ -383,6 +384,7 @@ Meridian/
 │   │   ├── README.md
 │   │   ├── refactor-map.md
 │   │   ├── repository-organization-guide.md
+│   │   ├── tooling-workflow-backlog.md
 │   │   ├── ui-fixture-mode-guide.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/

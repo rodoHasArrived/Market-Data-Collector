@@ -3,7 +3,7 @@
 AI Repository Updater — analysis and improvement toolkit for AI agents.
 
 Provides an AI agent (Claude, Copilot, etc.) with structured commands to
-analyse, audit, and improve the Market Data Collector repository.  The script
+analyse, audit, and improve the Meridian repository.  The script
 is designed to be *executed* by an AI that has shell access; it prints
 machine‑readable JSON reports that the AI can parse, then act on.
 

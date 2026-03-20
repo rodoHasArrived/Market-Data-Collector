@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Meridian.Ui.Services;
 
 /// <summary>
-/// Centralized HTTP client service for communicating with the Market Data Collector core service.
+/// Centralized HTTP client service for communicating with the Meridian core service.
 /// Provides configurable service URL, retry logic, and health monitoring.
 /// </summary>
 public sealed class ApiClientService : IDisposable

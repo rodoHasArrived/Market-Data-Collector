@@ -348,7 +348,7 @@ public sealed class LeanIntegrationService
     }
 
     /// <summary>
-    /// Resolves the Lean ticker and data path components for a given MDC symbol.
+    /// Resolves the Lean ticker and data path components for a given Meridian symbol.
     /// </summary>
     public async Task<LeanSymbolMappingResult> GetSymbolMappingAsync(
         IEnumerable<string> symbols,

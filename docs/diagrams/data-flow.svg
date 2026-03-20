@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 1404)">
 <title>DataFlow</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-1404 2906.5,-1404 2906.5,36 -36,36"/>
-<text text-anchor="middle" x="1435.25" y="-1354.4" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Data Flow Diagram</text>
+<text text-anchor="middle" x="1435.25" y="-1354.4" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Data Flow Diagram</text>
 <text text-anchor="middle" x="1435.25" y="-1341.4" font-family="Helvetica,sans-Serif" font-size="12.00">End&#45;to&#45;End Event Processing | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_onboarding</title>

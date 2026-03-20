@@ -7,7 +7,7 @@
     <AssemblyName>Meridian.FSharp</AssemblyName>
     <RootNamespace>Meridian.FSharp</RootNamespace>
     <Version>1.0.0</Version>
-    <Description>F# domain models, validation logic, and calculations for Market Data Collector. Provides type-safe discriminated unions, Railway-Oriented validation, and pure functional calculations.</Description>
+    <Description>F# domain models, validation logic, and calculations for Meridian. Provides type-safe discriminated unions, Railway-Oriented validation, and pure functional calculations.</Description>
     <Authors>Meridian Team</Authors>
     <PackageTags>fsharp;domain;validation;market-data;trading</PackageTags>
   </PropertyGroup>

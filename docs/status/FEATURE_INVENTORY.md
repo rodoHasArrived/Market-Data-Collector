@@ -1,4 +1,4 @@
-# Market Data Collector — Feature Inventory
+# Meridian — Feature Inventory
 
 **Version:** 1.7.0
 **Date:** 2026-03-20
@@ -345,7 +345,7 @@ This migration is tracked in [`../plans/trading-workstation-migration-blueprint.
 | API rate limiting | ✅ | 120 req/min sliding window; `Retry-After` header on 429 |
 | Kubernetes health probes | ✅ | `/healthz`, `/readyz`, `/livez` |
 | Grafana/Prometheus deployment assets | ✅ | `deploy/monitoring/` with alert rules and dashboard provisioning |
-| systemd service unit | ✅ | `deploy/systemd/marketdatacollector.service` |
+| systemd service unit | ✅ | `deploy/systemd/meridian.service` |
 | Docker image | ✅ | `deploy/docker/Dockerfile` + `docker-compose.yml` |
 | Daily summary webhook | ✅ | `DailySummaryWebhook`; configurable endpoint |
 | Connection status webhook | ✅ | `ConnectionStatusWebhook`; provider events |

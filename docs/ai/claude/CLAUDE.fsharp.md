@@ -1,6 +1,6 @@
 # CLAUDE.fsharp.md - F# Domain Library Guide
 
-This document provides guidance for AI assistants working with the F# domain library in Market Data Collector.
+This document provides guidance for AI assistants working with the F# domain library in Meridian.
 
 ---
 

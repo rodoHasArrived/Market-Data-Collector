@@ -1,10 +1,10 @@
 ---
-name: mdc-cleanup
+name: meridian-cleanup
 description: >
   Cleanup specialist for the Meridian repository. Removes dead code,
   duplication, anti-patterns, and stale documentation across C# 13, F# 8, WPF,
   and .NET 9 source files — while preserving all existing behaviour and adhering
-  to MDC's ADR contracts and coding conventions.
+  to Meridian's ADR contracts and coding conventions.
   Trigger on: "clean up", "remove duplication", "tidy", "refactor for clarity",
   "dead code", "unused imports", "stale docs", or when audit tooling
   (ai-repo-updater) surfaces code/doc/convention violations.
@@ -109,7 +109,7 @@ Remove code that is never reachable or referenced.
 
 ### 2. Anti-Pattern Correction
 
-Fix MDC-specific coding anti-patterns listed in `CLAUDE.md` and
+Fix Meridian-specific coding anti-patterns listed in `CLAUDE.md` and
 `docs/ai/ai-known-errors.md`. Each fix must preserve behaviour exactly.
 
 | Anti-Pattern | Safe Fix |
@@ -172,7 +172,7 @@ Find and reduce copy-pasted logic within the scope of the cleanup target.
 ### 4. WPF Code-Behind Cleanup
 
 Clean up XAML code-behind files without performing a full MVVM extraction
-(that is `mdc-code-review` territory). Focus only on mechanical cleanup.
+(that is `meridian-code-review` territory). Focus only on mechanical cleanup.
 
 **What to clean:**
 - Remove commented-out `InitializeComponent()` calls and leftover TODO comments
@@ -300,11 +300,11 @@ If any gate fails, revert the change that caused the failure before continuing.
 
 - **No new features** — cleanup only; if something is missing, note it but do
   not add it
-- **No performance optimisation** — that is the `mdc-code-review` Lens 2 domain
-- **No ViewModel extraction** — that is `mdc-code-review` Lens 1; flag it as a
+- **No performance optimisation** — that is the `meridian-code-review` Lens 2 domain
+- **No ViewModel extraction** — that is `meridian-code-review` Lens 1; flag it as a
   note instead
-- **No provider implementation** — that is `mdc-provider-builder`
-- **No test generation** — that is `mdc-test-writer`
+- **No provider implementation** — that is `meridian-provider-builder`
+- **No test generation** — that is `meridian-test-writer`
 - **No architecture changes** — do not alter project references, DI
   registrations, or ADR-governed contracts
 

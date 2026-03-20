@@ -4,13 +4,13 @@ namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// Maps between Meridian symbol format and QuantConnect Lean's SecurityIdentifier format.
-/// MDC symbols are plain tickers like "SPY" or "AAPL"; Lean uses qualified identifiers that
+/// Meridian symbols are plain tickers like "SPY" or "AAPL"; Lean uses qualified identifiers that
 /// encode market, security type, and an exchange-specific sid component.
 /// </summary>
 /// <remarks>
 /// Lean equity data paths follow the pattern:
 ///   data/{securityType}/{market}/{resolution}/{ticker}/{yyyyMMdd}_{eventType}.zip
-/// This class converts MDC tickers to the path components Lean expects and vice-versa.
+/// This class converts Meridian tickers to the path components Lean expects and vice-versa.
 /// </remarks>
 public static class LeanSymbolMapper
 {
@@ -32,24 +32,24 @@ public static class LeanSymbolMapper
     private static readonly Regex ForexPattern = new(@"^[A-Z]{3}[A-Z]{3}$", RegexOptions.Compiled);
 
     /// <summary>
-    /// Converts an MDC ticker symbol to a lowercase Lean ticker (used in data paths).
+    /// Converts an Meridian ticker symbol to a lowercase Lean ticker (used in data paths).
     /// Lean expects lower-case tickers in file/directory names.
     /// </summary>
-    /// <param name="mdcSymbol">MDC symbol such as "SPY" or "AAPL".</param>
+    /// <param name="mdcSymbol">Meridian symbol such as "SPY" or "AAPL".</param>
     /// <returns>Lean-compatible lower-case ticker, e.g. "spy".</returns>
     public static string ToLeanTicker(string mdcSymbol) =>
         (mdcSymbol ?? throw new ArgumentNullException(nameof(mdcSymbol))).Trim().ToLowerInvariant();
 
     /// <summary>
-    /// Converts a Lean lower-case ticker back to an MDC upper-case symbol.
+    /// Converts a Lean lower-case ticker back to an Meridian upper-case symbol.
     /// </summary>
     /// <param name="leanTicker">Lean ticker such as "spy".</param>
-    /// <returns>MDC symbol such as "SPY".</returns>
+    /// <returns>Meridian symbol such as "SPY".</returns>
     public static string FromLeanTicker(string leanTicker) =>
         (leanTicker ?? throw new ArgumentNullException(nameof(leanTicker))).Trim().ToUpperInvariant();
 
     /// <summary>
-    /// Detects the Lean security type folder name for the given MDC symbol.
+    /// Detects the Lean security type folder name for the given Meridian symbol.
     /// </summary>
     public static string DetectSecurityType(string mdcSymbol)
     {
@@ -109,7 +109,7 @@ public static class LeanSymbolMapper
         $"{date:yyyyMMdd}_{MapEventTypeToLean(mdcEventType)}.zip";
 
     /// <summary>
-    /// Maps an MDC event type name to the Lean data type name used in file names.
+    /// Maps an Meridian event type name to the Lean data type name used in file names.
     /// </summary>
     public static string MapEventTypeToLean(string mdcEventType)
     {
@@ -125,7 +125,7 @@ public static class LeanSymbolMapper
     }
 
     /// <summary>
-    /// Maps a Lean resolution string to an MDC-friendly description.
+    /// Maps a Lean resolution string to an Meridian-friendly description.
     /// </summary>
     public static string MapResolutionToMdc(string leanResolution) =>
         leanResolution.ToLowerInvariant() switch

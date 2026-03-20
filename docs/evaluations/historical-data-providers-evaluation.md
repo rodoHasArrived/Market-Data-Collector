@@ -1,6 +1,6 @@
 # Historical Data Providers Evaluation
 
-## Market Data Collector — Backfill Provider Assessment
+## Meridian — Backfill Provider Assessment
 
 **Date:** 2026-02-20
 **Status:** Updated | Polygon refresh: 2026-02-20
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document evaluates the 10 historical data providers integrated into the Market Data Collector system for backfill operations. The evaluation assesses data quality, coverage, rate limits, cost, and reliability to guide provider selection and fallback chain configuration.
+This document evaluates the 10 historical data providers integrated into the Meridian system for backfill operations. The evaluation assesses data quality, coverage, rate limits, cost, and reliability to guide provider selection and fallback chain configuration.
 
 **Key Finding:** The current multi-provider architecture with `CompositeHistoricalDataProvider` remains well-designed. Alpaca and Polygon should be primary providers for professional use cases, with Stooq and Yahoo Finance as free-tier fallbacks. Polygon remains the preferred provider for high-quality US tick data, but plan/rate-limit assumptions should be validated against Polygon's current docs before final production sizing.
 

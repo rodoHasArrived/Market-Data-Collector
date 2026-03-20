@@ -1,6 +1,6 @@
 # CLAUDE.storage.md - Storage System Guide
 
-This document provides guidance for AI assistants working with the storage system in Market Data Collector.
+This document provides guidance for AI assistants working with the storage system in Meridian.
 
 ---
 

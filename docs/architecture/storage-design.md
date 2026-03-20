@@ -1,6 +1,6 @@
 # Storage Organization Design: Improvements & Best Practices
 
-This document outlines storage organization improvements for the Market Data Collector, covering naming conventions, date partitioning, policies, capacity limits, and perpetual data management strategies.
+This document outlines storage organization improvements for the Meridian, covering naming conventions, date partitioning, policies, capacity limits, and perpetual data management strategies.
 
 
 > **Document status:** Living architecture reference — reflects the implemented storage layer.
@@ -11,7 +11,7 @@ This document outlines storage organization improvements for the Market Data Col
 
 > ## Primary Mission: Data Collection & Archival
 >
-> The Market Data Collector is designed as a **collection and archival system**. Its primary purpose is:
+> The Meridian is designed as a **collection and archival system**. Its primary purpose is:
 >
 > 1. **Reliable Data Collection**: Capture market data from multiple sources with minimal gaps
 > 2. **Long-Term Archival**: Store data securely with integrity verification for years or indefinitely

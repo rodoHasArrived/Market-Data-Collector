@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       skill:
-        description: 'Skill to evaluate (mdc-code-review, mdc-brainstorm, or all)'
+        description: 'Skill to evaluate (meridian-code-review, meridian-brainstorm, or all)'
         required: false
         default: 'all'
       eval_ids:
@@ -37,12 +37,12 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             skill="${{ github.event.inputs.skill }}"
-            if [ "$skill" = "all" ] || [ "$skill" = "mdc-code-review" ]; then
+            if [ "$skill" = "all" ] || [ "$skill" = "meridian-code-review" ]; then
               echo "mdc_code_review=true" >> $GITHUB_OUTPUT
             else
               echo "mdc_code_review=false" >> $GITHUB_OUTPUT
             fi
-            if [ "$skill" = "all" ] || [ "$skill" = "mdc-brainstorm" ]; then
+            if [ "$skill" = "all" ] || [ "$skill" = "meridian-brainstorm" ]; then
               echo "mdc_brainstorm=true" >> $GITHUB_OUTPUT
             else
               echo "mdc_brainstorm=false" >> $GITHUB_OUTPUT
@@ -53,13 +53,13 @@ jobs:
             git fetch origin ${{ github.base_ref }} --depth=1
             CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
 
-            if echo "$CHANGED" | grep -q '.claude/skills/mdc-code-review\|.claude/skills/_shared'; then
+            if echo "$CHANGED" | grep -q '.claude/skills/meridian-code-review\|.claude/skills/_shared'; then
               echo "mdc_code_review=true" >> $GITHUB_OUTPUT
             else
               echo "mdc_code_review=false" >> $GITHUB_OUTPUT
             fi
 
-            if echo "$CHANGED" | grep -q '.claude/skills/mdc-brainstorm\|.claude/skills/_shared'; then
+            if echo "$CHANGED" | grep -q '.claude/skills/meridian-brainstorm\|.claude/skills/_shared'; then
               echo "mdc_brainstorm=true" >> $GITHUB_OUTPUT
             else
               echo "mdc_brainstorm=false" >> $GITHUB_OUTPUT
@@ -85,10 +85,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate mdc-code-review structure
+      - name: Validate meridian-code-review structure
         if: needs.detect-changed-skills.outputs.mdc_code_review_changed == 'true'
         run: |
-          cd .claude/skills/mdc-code-review
+          cd .claude/skills/meridian-code-review
           python -c "
           import json, sys
           from pathlib import Path
@@ -128,13 +128,13 @@ jobs:
                   print(f'ERROR: {e}')
               sys.exit(1)
           else:
-              print(f'mdc-code-review: structure valid ({len(eval_ids)} evals, {len(baseline_ids)} baselines)')
+              print(f'meridian-code-review: structure valid ({len(eval_ids)} evals, {len(baseline_ids)} baselines)')
           "
 
-      - name: Validate mdc-brainstorm structure
+      - name: Validate meridian-brainstorm structure
         if: needs.detect-changed-skills.outputs.mdc_brainstorm_changed == 'true'
         run: |
-          cd .claude/skills/mdc-brainstorm
+          cd .claude/skills/meridian-brainstorm
           python -c "
           from pathlib import Path
           import sys
@@ -151,7 +151,7 @@ jobs:
                   print(f'ERROR: {e}')
               sys.exit(1)
           else:
-              print('mdc-brainstorm: structure valid')
+              print('meridian-brainstorm: structure valid')
           "
 
       - name: Validate shared context exists
@@ -179,7 +179,7 @@ jobs:
       - name: Install eval dependencies
         run: pip install anthropic
 
-      - name: Run mdc-code-review evals
+      - name: Run meridian-code-review evals
         if: needs.detect-changed-skills.outputs.mdc_code_review_changed == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -193,16 +193,16 @@ jobs:
             EVAL_ARGS=""
           fi
 
-          python .claude/skills/mdc-code-review/scripts/run_eval.py \
-            --skill-path .claude/skills/mdc-code-review \
+          python .claude/skills/meridian-code-review/scripts/run_eval.py \
+            --skill-path .claude/skills/meridian-code-review \
             --workspace "$WORKSPACE" \
             $EVAL_ARGS
 
-          python .claude/skills/mdc-code-review/scripts/aggregate_benchmark.py \
+          python .claude/skills/meridian-code-review/scripts/aggregate_benchmark.py \
             "$WORKSPACE" \
-            --skill-name mdc-code-review \
-            --skill-path .claude/skills/mdc-code-review \
-            --baseline .claude/skills/mdc-code-review/evals/benchmark_baseline.json
+            --skill-name meridian-code-review \
+            --skill-path .claude/skills/meridian-code-review \
+            --baseline .claude/skills/meridian-code-review/evals/benchmark_baseline.json
 
       - name: Upload eval results
         if: always() && needs.detect-changed-skills.outputs.mdc_code_review_changed == 'true'

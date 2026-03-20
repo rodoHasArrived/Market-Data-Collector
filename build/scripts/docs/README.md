@@ -1,6 +1,6 @@
 # Documentation Automation Scripts
 
-This directory contains Python scripts for automating documentation tasks in the Market Data Collector project.
+This directory contains Python scripts for automating documentation tasks in the Meridian project.
 
 ## Table of Contents
 
@@ -372,4 +372,4 @@ If you encounter issues with these scripts:
 
 ---
 
-*This directory is part of the Market Data Collector documentation automation system.*
+*This directory is part of the Meridian documentation automation system.*

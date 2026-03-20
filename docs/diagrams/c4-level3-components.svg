@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 1641)">
 <title>C4_Components</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-1641 3677.5,-1641 3677.5,36 -36,36"/>
-<text text-anchor="middle" x="1820.75" y="-1592.2" font-family="Helvetica,sans-Serif" font-size="11.00">Market Data Collector &#45; Component Diagram (C4 Level 3)</text>
+<text text-anchor="middle" x="1820.75" y="-1592.2" font-family="Helvetica,sans-Serif" font-size="11.00">Meridian &#45; Component Diagram (C4 Level 3)</text>
 <text text-anchor="middle" x="1820.75" y="-1580.2" font-family="Helvetica,sans-Serif" font-size="11.00">Core Collector Internals | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_external</title>
@@ -19,7 +19,7 @@
 <g id="clust2" class="cluster">
 <title>cluster_core</title>
 <path fill="#f0f8ff" stroke="#438dd5" d="M20,-8C20,-8 3547,-8 3547,-8 3553,-8 3559,-14 3559,-20 3559,-20 3559,-1442 3559,-1442 3559,-1448 3553,-1454 3547,-1454 3547,-1454 20,-1454 20,-1454 14,-1454 8,-1448 8,-1442 8,-1442 8,-20 8,-20 8,-14 14,-8 20,-8"/>
-<text text-anchor="middle" x="1783.5" y="-1441.2" font-family="Helvetica,sans-Serif" font-size="11.00">Market Data Collector Core [.NET 9 Console App]</text>
+<text text-anchor="middle" x="1783.5" y="-1441.2" font-family="Helvetica,sans-Serif" font-size="11.00">Meridian Core [.NET 9 Console App]</text>
 </g>
 <g id="clust3" class="cluster">
 <title>cluster_infra</title>

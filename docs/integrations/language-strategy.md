@@ -1,4 +1,4 @@
-# Market Data Collector - Language Implementation Strategy
+# Meridian - Language Implementation Strategy
 
 **Document Version:** 1.6.1
 **Last Updated:** 2026-01-30

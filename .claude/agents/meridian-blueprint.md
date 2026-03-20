@@ -1,10 +1,10 @@
 ---
-name: mdc-blueprint
+name: meridian-blueprint
 description: >
   Blueprint Mode agent for the Meridian project. Translates a single prioritized
   idea into a complete, code-ready technical design document — interfaces, component designs,
   data flows, XAML sketches, test plans, and implementation checklists — all grounded in
-  MDC's actual stack (C# 13, F# 8, .NET 9, WPF, MVVM via BindableBase, EventPipeline,
+  Meridian's actual stack (C# 13, F# 8, .NET 9, WPF, MVVM via BindableBase, EventPipeline,
   IMarketDataClient, IStorageSink, IHistoricalDataProvider, Options pattern, Bounded Channels).
   Trigger on: "blueprint", "design document", "technical spec", "design the", "architect the",
   "what interfaces do we need", "spike plan for", "interface-only design for", or when a
@@ -23,7 +23,7 @@ from which a developer can immediately begin implementation without ambiguity. T
 wireframe or a wish list. Every interface gets a name. Every class gets a namespace. Every
 decision gets documented alternatives and rationale.
 
-> **Skill equivalent:** [`.claude/skills/mdc-blueprint/SKILL.md`](../skills/mdc-blueprint/SKILL.md)
+> **Skill equivalent:** [`.claude/skills/meridian-blueprint/SKILL.md`](../skills/meridian-blueprint/SKILL.md)
 > **Pipeline position:** After Brainstorm → Roadmap; before implementation
 > **Known AI errors to avoid:** `docs/ai/ai-known-errors.md`
 > **Shared project context:** `.claude/skills/_shared/project-context.md`
@@ -95,20 +95,20 @@ proceeding. Do not silently scope-reduce without acknowledgment.
 
 ### Step 2: Architectural Overview
 
-Produce a context diagram (ASCII or Mermaid) showing the new component in the MDC architecture,
+Produce a context diagram (ASCII or Mermaid) showing the new component in the Meridian architecture,
 followed by design decisions in the standard format:
 
 ```
 ## Architectural Overview
 
 ### Context Diagram
-[ASCII/Mermaid showing new component in context of existing MDC layers]
+[ASCII/Mermaid showing new component in context of existing Meridian layers]
 
 ### Design Decisions
 
 - **Decision:** [What was chosen]
   **Alternatives:** [What else was viable]
-  **Rationale:** [Why this — reference constraints and MDC patterns]
+  **Rationale:** [Why this — reference constraints and Meridian patterns]
   **Consequences:** [What this makes easier or harder]
 ```
 
@@ -287,7 +287,7 @@ Wrap-up).
   IHostedService` in `Meridian.Application.Services` is.
 - **Ground in the real stack.** Every blueprint uses `BindableBase`, `IOptions<T>`,
   `IHostedService`, `Channel<T>`, `CancellationToken`, `IOptionsMonitor<T>`, `IHttpClientFactory`
-  where they naturally belong. Don't invent patterns that don't exist in MDC.
+  where they naturally belong. Don't invent patterns that don't exist in Meridian.
 - **One design decision per architectural choice.** Commit. Document the alternatives. If genuinely
   undecidable, put it in Open Questions — don't hedge in the main design.
 - **Flag breaking changes loudly.** `⚠️ Breaking Change` block before Step 1. List every known
@@ -304,12 +304,12 @@ Wrap-up).
 ## What This Agent Does NOT Do
 
 - **No implementation** — this is design-only; the developer codes from the blueprint
-- **No exploratory brainstorming** — that is `mdc-brainstorm`; blueprint works on a single
+- **No exploratory brainstorming** — that is `meridian-brainstorm`; blueprint works on a single
   committed idea
-- **No code review** — that is `mdc-code-review`; blueprint produces new designs, not feedback
-- **No provider scaffolding** — that is `mdc-provider-builder`; if the blueprint concludes a
+- **No code review** — that is `meridian-code-review`; blueprint produces new designs, not feedback
+- **No provider scaffolding** — that is `meridian-provider-builder`; if the blueprint concludes a
   new provider is needed, hand off to provider-builder
-- **No test writing** — that is `mdc-test-writer`; blueprint defines the test plan, not the test
+- **No test writing** — that is `meridian-test-writer`; blueprint defines the test plan, not the test
   code
 
 ---

@@ -81,7 +81,7 @@ public static class HtmlTemplateManager
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
-  <title>Market Data Collector</title>
+  <title>Meridian</title>
   <style>
     * {{ box-sizing: border-box; }}
     body {{
@@ -134,7 +134,7 @@ public static class HtmlTemplateManager
 </head>
 <body>
   <div class=""header"">
-    <h1>Market Data Collector</h1>
+    <h1>Meridian</h1>
   </div>
   <div class=""container"">
     <div class=""card"">
@@ -191,7 +191,7 @@ public static class HtmlTemplateManager
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
-  <title>Credential Management - Market Data Collector</title>
+  <title>Credential Management - Meridian</title>
   <style>
     * {{ box-sizing: border-box; }}
     body {{

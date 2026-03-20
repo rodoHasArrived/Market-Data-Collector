@@ -181,7 +181,7 @@ public static class MessagingEndpoints
                 }, jsonOptions);
             }
 
-            var testMessage = req?.Message ?? "This is a test message from Market Data Collector.";
+            var testMessage = req?.Message ?? "This is a test message from Meridian.";
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
             try

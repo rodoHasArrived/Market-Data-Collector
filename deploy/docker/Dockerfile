@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Production Docker Image
+# Meridian - Production Docker Image
 # =============================================================================
 # Multi-stage build for optimized production deployment
 #

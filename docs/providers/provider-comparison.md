@@ -3,7 +3,7 @@
 **Last Updated:** 2026-01-30
 **Version:** 1.6.1
 
-This document provides a comprehensive comparison of all data providers supported by the Market Data Collector.
+This document provides a comprehensive comparison of all data providers supported by the Meridian.
 
 ---
 

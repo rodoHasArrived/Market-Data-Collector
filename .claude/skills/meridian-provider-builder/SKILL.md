@@ -1,5 +1,5 @@
 ---
-name: mdc-provider-builder
+name: meridian-provider-builder
 description: >
   Step-by-step guided skill for implementing new data provider adapters in Meridian.
   Use this skill whenever an agent needs to build or extend an IMarketDataClient (streaming),
@@ -23,13 +23,13 @@ metadata:
 # Meridian — Provider Builder Skill
 
 Build complete, architecturally compliant data provider adapters for Meridian.
-Every provider produced by this skill must be ready to pass the `mdc-code-review` skill's
+Every provider produced by this skill must be ready to pass the `meridian-code-review` skill's
 Lens 5 (Provider Implementation Compliance) and Lens 3 (Error Handling & Resilience)
 without warnings.
 
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md)
 > **Reference patterns:** [`references/provider-patterns.md`](references/provider-patterns.md)
-> **Code review skill:** [`../mdc-code-review/SKILL.md`](../mdc-code-review/SKILL.md)
+> **Code review skill:** [`../meridian-code-review/SKILL.md`](../meridian-code-review/SKILL.md)
 
 ---
 
@@ -55,13 +55,13 @@ Every provider build task follows this 4-step workflow:
 ### 4 — COMPLETE (MCP)
 - Commit the new provider files and test scaffold
 - Create a PR via GitHub summarizing the provider, its capabilities, and the compliance checklist status
-- Request review; the `mdc-code-review` skill's Lens 5 checklist is the acceptance gate
+- Request review; the `meridian-code-review` skill's Lens 5 checklist is the acceptance gate
 
 ---
 
 ## When to Use This Skill
 
-Use `mdc-provider-builder` when the task is one of:
+Use `meridian-provider-builder` when the task is one of:
 
 - Adding a brand-new streaming provider (implements `IMarketDataClient`)
 - Adding a brand-new historical data provider (implements `IHistoricalDataProvider`)
@@ -72,8 +72,8 @@ Use `mdc-provider-builder` when the task is one of:
 Do **not** use this skill for:
 
 - Configuration changes only (use standard editing)
-- UI work (use the WPF MVVM patterns from `mdc-code-review` Lens 1)
-- General refactoring (use `mdc-code-review`)
+- UI work (use the WPF MVVM patterns from `meridian-code-review` Lens 1)
+- General refactoring (use `meridian-code-review`)
 
 ---
 

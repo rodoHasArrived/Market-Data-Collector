@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers the three primary deployment methods for Market Data Collector: Docker, systemd, and standalone.
+This guide covers the three primary deployment methods for Meridian: Docker, systemd, and standalone.
 
 ---
 
@@ -87,7 +87,7 @@ docker compose -f deploy/docker/docker-compose.yml --profile monitoring up -d
 ```
 
 This starts:
-- **MDC** at `http://localhost:8080` (dashboard + API)
+- **MDC** at `http://localhost:8080` (Meridian dashboard + API)
 - **Prometheus** at `http://localhost:9090` (metrics)
 - **Grafana** at `http://localhost:3000` (dashboards, default: admin/admin)
 
@@ -140,7 +140,7 @@ sudo chown mdc:mdc /opt/marketdatacollector/.env
 #   ALPACA__SECRETKEY=your-secret-key
 
 # 5. Install service
-sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+sudo cp deploy/systemd/meridian.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable marketdatacollector
 

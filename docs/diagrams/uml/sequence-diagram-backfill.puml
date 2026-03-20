@@ -2,7 +2,7 @@
 !theme plain
 skinparam sequenceMessageAlign center
 
-title Market Data Collector - Historical Backfill Sequence
+title Meridian - Historical Backfill Sequence
 
 ' ==================== PARTICIPANTS ====================
 participant "User/CLI" as User

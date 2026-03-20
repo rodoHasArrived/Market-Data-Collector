@@ -25,13 +25,13 @@ public sealed class ApiDocumentationService
             OpenApi = "3.0.3",
             Info = new OpenApiInfo
             {
-                Title = "Market Data Collector API",
-                Description = "REST API for Market Data Collector - real-time and historical market data collection",
+                Title = "Meridian API",
+                Description = "REST API for Meridian - real-time and historical market data collection",
                 Version = "1.6.1",
                 Contact = new OpenApiContact
                 {
-                    Name = "Market Data Collector",
-                    Url = "https://github.com/rodoHasArrived/Market-Data-Collector"
+                    Name = "Meridian",
+                    Url = "https://github.com/rodoHasArrived/Meridian"
                 },
                 License = new OpenApiLicense
                 {
@@ -60,7 +60,7 @@ public sealed class ApiDocumentationService
 <html lang=""en"">
 <head>
     <meta charset=""UTF-8"">
-    <title>Market Data Collector - API Explorer</title>
+    <title>Meridian - API Explorer</title>
     <link rel=""stylesheet"" type=""text/css"" href=""https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css"" />
     <style>
         html {{ box-sizing: border-box; overflow-y: scroll; }}
@@ -80,7 +80,7 @@ public sealed class ApiDocumentationService
 </head>
 <body>
     <div class=""custom-header"">
-        <h1>Market Data Collector API</h1>
+        <h1>Meridian API</h1>
         <p>Interactive API Documentation</p>
     </div>
     <div id=""swagger-ui""></div>
@@ -121,7 +121,7 @@ public sealed class ApiDocumentationService
         var sb = new StringBuilder();
         var spec = GenerateOpenApiSpec();
 
-        sb.AppendLine("# Market Data Collector API Documentation");
+        sb.AppendLine("# Meridian API Documentation");
         sb.AppendLine();
         sb.AppendLine($"Version: {spec.Info?.Version}");
         sb.AppendLine();

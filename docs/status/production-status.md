@@ -1,15 +1,15 @@
-# Market Data Collector - Production Status
+# Meridian - Production Status
 
 **Version:** 1.7.0
 **Status:** Development / Pilot Ready (trading workstation migration planning active)
 
-This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
+This document consolidates the architecture assessment and production readiness information for the Meridian system.
 
 ---
 
 ## Executive Summary
 
-The Market Data Collector is a feature-rich system with working ingestion, backfill, storage, backtesting, and desktop tooling. The next major product effort is to unify those capabilities into a workflow-centric trading workstation with shared run, portfolio, and ledger surfaces. Some providers still require credentials or build-time flags, and certain integrations (notably Polygon streaming) remain partially implemented.
+The Meridian is a feature-rich system with working ingestion, backfill, storage, backtesting, and desktop tooling. The next major product effort is to unify those capabilities into a workflow-centric trading workstation with shared run, portfolio, and ledger surfaces. Some providers still require credentials or build-time flags, and certain integrations (notably Polygon streaming) remain partially implemented.
 
 ### Overall Assessment: **DEVELOPMENT / PILOT READY**
 

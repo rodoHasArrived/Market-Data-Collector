@@ -1,4 +1,4 @@
-# mdc-provider-builder — Provider Patterns Reference
+# meridian-provider-builder — Provider Patterns Reference
 
 This file contains complete, copy-ready implementation patterns for every major
 provider concern. All patterns are verified against the live codebase.

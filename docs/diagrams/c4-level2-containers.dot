@@ -1,5 +1,5 @@
 // C4 Level 2: Container Diagram
-// Market Data Collector v1.6.1
+// Meridian v1.6.1
 // Last Updated: 2026-02-21
 //
 // This diagram shows the major deployable units within the system.
@@ -16,7 +16,7 @@ digraph C4_Containers {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Container Diagram (C4 Level 2)\nv1.6.1";
+  label="Meridian - Container Diagram (C4 Level 2)\nv1.6.1";
 
   // External Actors
   Operator [shape=oval, style="filled", fillcolor="#08427b", fontcolor="white",
@@ -47,7 +47,7 @@ digraph C4_Containers {
 
   // System Boundary
   subgraph cluster_mdc {
-    label="Market Data Collector System Boundary";
+    label="Meridian System Boundary";
     color="#438dd5";
     style="rounded";
     bgcolor="#f0f8ff";
@@ -91,7 +91,7 @@ digraph C4_Containers {
 
     // Core Collector Service
     CORE [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white", width=3.5,
-          label="Market Data Collector Core\n[.NET 9 Console App | C# 13]\n\nEvent pipeline with 100K bounded channel\nCollectors: Trade, Quote, OrderBook\nStreaming + Historical data processing\nPrometheus metrics, health endpoints"];
+          label="Meridian Core\n[.NET 9 Console App | C# 13]\n\nEvent pipeline with 100K bounded channel\nCollectors: Trade, Quote, OrderBook\nStreaming + Historical data processing\nPrometheus metrics, health endpoints"];
 
     // F# Domain Library
     FSHARP [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",

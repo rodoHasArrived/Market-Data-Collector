@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive implementation guide for high-value improvements to the Market Data Collector desktop platform development experience. It documents the concrete implementation steps taken, code examples, and outcomes for each priority area.
+This document provides a comprehensive implementation guide for high-value improvements to the Meridian desktop platform development experience. It documents the concrete implementation steps taken, code examples, and outcomes for each priority area.
 
 ### Current State Assessment (February 2026)
 

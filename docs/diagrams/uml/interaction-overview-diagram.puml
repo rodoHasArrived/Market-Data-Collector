@@ -1,7 +1,7 @@
 @startuml Interaction Overview Diagram - System Workflow
 !theme plain
 
-title Market Data Collector - Interaction Overview Diagram
+title Meridian - Interaction Overview Diagram
 
 start
 

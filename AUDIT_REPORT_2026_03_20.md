@@ -180,7 +180,7 @@ public sealed class FooService
 - All Interactive Brokers provider adapters (no tests)
 - Historical data providers across multiple sources
 
-**Recommendation:** Use `/mdc-test-writer` skill to generate xUnit test stubs
+**Recommendation:** Use `/meridian-test-writer` skill to generate xUnit test stubs
 
 ---
 

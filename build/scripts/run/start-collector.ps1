@@ -1,7 +1,7 @@
 \
 <#
 START_COLLECTOR.ps1
-Market Data Collector – Canonical Startup (Windows PowerShell)
+Meridian – Canonical Startup (Windows PowerShell)
 
 Features:
   - Build (optional) with/without IBAPI

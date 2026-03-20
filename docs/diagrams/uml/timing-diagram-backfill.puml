@@ -2,7 +2,7 @@
 !theme plain
 skinparam backgroundColor white
 
-title Market Data Collector - Backfill Operation Timing Diagram
+title Meridian - Backfill Operation Timing Diagram
 
 ' ==================== PARTICIPANTS ====================
 clock "Wall Clock" as Clock

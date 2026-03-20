@@ -1,5 +1,5 @@
 ---
-name: mdc-brainstorm
+name: meridian-brainstorm
 description: >
   Brainstorming, ideation, and creative feature exploration skill for the Meridian project.
   Use this skill whenever the user wants to generate new ideas, features, or improvements for Meridian,
@@ -234,7 +234,7 @@ After the ideas, step back and write a synthesis that:
 
 ## Idea Continuity (Session History)
 
-To avoid repeating ideas across sessions, a lightweight ledger can be maintained at `.claude/skills/mdc-brainstorm/brainstorm-history.jsonl` (gitignored by default). Each line is a JSON object:
+To avoid repeating ideas across sessions, a lightweight ledger can be maintained at `.claude/skills/meridian-brainstorm/brainstorm-history.jsonl` (gitignored by default). Each line is a JSON object:
 
 ```json
 {"session_date": "2026-03-16", "mode": "Open Exploration", "themes": ["Python SDK", "data quality scorecard", "tiered storage"], "ideas_count": 10}

@@ -25,7 +25,7 @@ public sealed class SelectUseCaseStep : IWizardStep
         _output.WriteLine();
         _output.WriteLine("Step 3: Select Your Use Case");
         _output.WriteLine("----------------------------------------");
-        _output.WriteLine("\nHow will you use Market Data Collector?\n");
+        _output.WriteLine("\nHow will you use Meridian?\n");
         _output.WriteLine("  1. Development/Testing - Local development with sample data");
         _output.WriteLine("  2. Research - Historical data analysis and backtesting");
         _output.WriteLine("  3. Real-Time Trading - Live market data streaming");

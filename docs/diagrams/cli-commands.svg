@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 418)">
 <title>CLICommands</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-418 3352,-418 3352,36 -36,36"/>
-<text text-anchor="middle" x="1658" y="-368.4" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; CLI Commands Reference</text>
+<text text-anchor="middle" x="1658" y="-368.4" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; CLI Commands Reference</text>
 <text text-anchor="middle" x="1658" y="-355.4" font-family="Helvetica,sans-Serif" font-size="12.00">All Available Flags and Options | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_setup</title>
@@ -61,7 +61,7 @@
 <title>MDC</title>
 <path fill="#438dd5" stroke="black" d="M1638,-291C1638,-291 1446,-291 1446,-291 1440,-291 1434,-285 1434,-279 1434,-279 1434,-255 1434,-255 1434,-249 1440,-243 1446,-243 1446,-243 1638,-243 1638,-243 1644,-243 1650,-249 1650,-255 1650,-255 1650,-279 1650,-279 1650,-285 1644,-291 1638,-291"/>
 <text text-anchor="middle" x="1542" y="-279.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">dotnet run &#45;&#45;project src/Meridian</text>
-<text text-anchor="middle" x="1542" y="-259.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">Market Data Collector CLI</text>
+<text text-anchor="middle" x="1542" y="-259.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">Meridian CLI</text>
 <text text-anchor="middle" x="1542" y="-249.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="white">.NET 9.0 | Cross&#45;Platform</text>
 </g>
 <!-- WIZARD -->

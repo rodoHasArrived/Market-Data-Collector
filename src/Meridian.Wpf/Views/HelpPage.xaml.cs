@@ -30,37 +30,37 @@ public partial class HelpPage : Page
 
     private void OpenArchitectureDoc_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/architecture/overview.md");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/architecture/overview.md");
     }
 
     private void OpenConfigurationDoc_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/guides/configuration.md");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/guides/configuration.md");
     }
 
     private void OpenApiDoc_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/api/");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/api/");
     }
 
     private void OpenLeanIntegrationDoc_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/integrations/lean-integration.md");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/integrations/lean-integration.md");
     }
 
     private void OpenIBSetupDoc_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/providers/");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/providers/");
     }
 
     private void OpenOperatorRunbookDoc_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/blob/main/docs/guides/operator-runbook.md");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/blob/main/docs/guides/operator-runbook.md");
     }
 
     private void OpenGitHub_Click(object sender, RoutedEventArgs e)
     {
-        OpenUrl("https://github.com/example/market-data-collector/issues");
+        OpenUrl("https://github.com/rodoHasArrived/Meridian/issues");
     }
 
     private void OpenDiscord_Click(object sender, RoutedEventArgs e)

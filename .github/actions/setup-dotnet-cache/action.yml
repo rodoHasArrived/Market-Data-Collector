@@ -1,6 +1,6 @@
 name: 'Setup .NET with Cache'
 description: 'Sets up .NET SDK with NuGet package caching for consistent builds'
-author: 'Market Data Collector'
+author: 'Meridian'
 
 inputs:
   dotnet-version:

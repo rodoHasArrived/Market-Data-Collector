@@ -177,13 +177,13 @@ powershell -ExecutionPolicy Bypass -File .\STOP_COLLECTOR.ps1
 
 ### systemd (Linux service)
 Unit file included at:
-`deploy/systemd/marketdatacollector.service`
+`deploy/systemd/meridian.service`
 
 Typical install (example):
 ```bash
 sudo mkdir -p /opt/marketdatacollector
 sudo rsync -a ./ /opt/marketdatacollector/
-sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+sudo cp deploy/systemd/meridian.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now marketdatacollector
 sudo journalctl -u marketdatacollector -f

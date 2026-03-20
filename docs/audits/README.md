@@ -4,7 +4,7 @@
 **Scope:** Governance — Code Quality  
 **Review Cadence:** As hygiene audits are completed
 
-This directory contains comprehensive audits and assessments of the Market Data Collector codebase.
+This directory contains comprehensive audits and assessments of the Meridian codebase.
 
 > **Governance Zone:** Audits belong to the governance zone alongside `evaluations/`. The distinction:
 > - **`audits/`** — Targeted code-quality audits, cleanup analyses, and hygiene assessments

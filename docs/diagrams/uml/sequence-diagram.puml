@@ -3,7 +3,7 @@
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
-title Market Data Collector - Real-Time Data Collection Sequence
+title Meridian - Real-Time Data Collection Sequence
 
 ' ==================== PARTICIPANTS ====================
 participant "User/CLI" as User

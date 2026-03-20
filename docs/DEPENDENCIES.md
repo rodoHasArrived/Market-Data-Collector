@@ -1,6 +1,6 @@
 # Dependencies
 
-This document lists the primary dependencies used by the Market Data Collector solution.
+This document lists the primary dependencies used by the Meridian solution.
 
 **Source of truth:** package versions are centrally managed in `Directory.Packages.props` via Central Package Management (CPM). Individual project files reference packages without version numbers. See [Central Package Management Guide](development/central-package-management.md) for details.
 

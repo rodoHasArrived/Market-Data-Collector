@@ -152,7 +152,7 @@ public partial class WelcomePage : Page
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://github.com/example/market-data-collector",
+                FileName = "https://github.com/rodoHasArrived/Meridian",
                 UseShellExecute = true
             });
         }

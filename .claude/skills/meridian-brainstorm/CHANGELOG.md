@@ -1,4 +1,4 @@
-# mdc-brainstorm — Changelog
+# meridian-brainstorm — Changelog
 
 ## v1.3.0 (2026-03-19)
 
@@ -22,7 +22,7 @@
 - **Explicit mode detection** — Step 0 now requires a one-line mode declaration at the top of the response (`**Mode detected:** [Mode Name] — [reasoning]`); prevents silent mode mismatches; ambiguous requests state both modes
 - **Skill Improvement mode** — added as an explicit mode in the mode table; triggers when the user asks how the skills themselves can be improved; applies the brainstorm process reflexively
 - **Competitive signals in every synthesis** — synthesis section now always includes 2-3 sentences from `references/competitive-landscape.md` on how competitors handle the brainstorm space; was previously only active in Competitive mode
-- **Idea continuity / session ledger** — documented `brainstorm-history.jsonl` convention at `.claude/skills/mdc-brainstorm/brainstorm-history.jsonl` (gitignored); opens each session with "Previous sessions covered: X. Unexplored areas: Y."
+- **Idea continuity / session ledger** — documented `brainstorm-history.jsonl` convention at `.claude/skills/meridian-brainstorm/brainstorm-history.jsonl` (gitignored); opens each session with "Previous sessions covered: X. Unexplored areas: Y."
 - **Codebase anchor table** in `references/idea-dimensions.md` — 35-entry table mapping concept names to file paths and class names; makes ideas immediately navigable; covers all major interfaces, sinks, validators, providers, and WPF classes
 - **Shared project context** — SKILL.md now references `../_shared/project-context.md` for authoritative stats, ADR table, and file paths; updated project context section to match actual current state (779 files, 266 test files, 27 CI workflows, 5 streaming providers)
 

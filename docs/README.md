@@ -1,9 +1,9 @@
-# Market Data Collector Documentation
+# Meridian Documentation
 
 **Version:** 1.7.0  
 **Last Updated:** 2026-03-20
 
-Welcome to the Market Data Collector documentation. This guide will help you find the information you need, whether you're a developer, operator, or user.
+Welcome to the Meridian documentation. This guide will help you find the information you need, whether you're a developer, operator, or user.
 
 > Tip: Start with the audience section that matches your role, then use the reference and status sections for deeper details.
 

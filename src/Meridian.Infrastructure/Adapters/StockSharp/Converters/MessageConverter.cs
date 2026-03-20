@@ -10,7 +10,7 @@ namespace Meridian.Infrastructure.Adapters.StockSharp.Converters;
 
 /// <summary>
 /// Converts StockSharp messages to Meridian domain models.
-/// This converter bridges S# message types to MDC's immutable domain records.
+/// This converter bridges S# message types to Meridian's immutable domain records.
 /// </summary>
 public static class MessageConverter
 {

@@ -333,7 +333,7 @@
                                   RowBackground="Transparent"
                                   AlternatingRowBackground="Transparent">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="MDC Symbol" Binding="{Binding MdcSymbol}" Width="*" />
+                                <DataGridTextColumn Header="Meridian Symbol" Binding="{Binding MdcSymbol}" Width="*" />
                                 <DataGridTextColumn Header="Lean Ticker" Binding="{Binding LeanTicker}" Width="*" />
                                 <DataGridTextColumn Header="Type" Binding="{Binding SecurityType}" Width="80" />
                                 <DataGridTextColumn Header="Market" Binding="{Binding Market}" Width="80" />

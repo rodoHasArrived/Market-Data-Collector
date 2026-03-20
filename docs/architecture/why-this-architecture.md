@@ -1,7 +1,7 @@
 # Why This Architecture (Non-Engineer Explainer)
 
 ## What this program does
-Market Data Collector captures **live** and **historical** market microstructure data, validates it for quality, and stores it in audit-friendly formats so it can be replayed, analyzed, or fed into research tools.
+Meridian captures **live** and **historical** market microstructure data, validates it for quality, and stores it in audit-friendly formats so it can be replayed, analyzed, or fed into research tools.
 
 It collects:
 - **Trades:** tick-by-tick prints with sequence checks and quality validation

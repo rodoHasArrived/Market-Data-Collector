@@ -17,7 +17,7 @@
   "graphTooltip": 1,
   "id": null,
   "links": [
-    { "asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": ["market-data-collector"], "targetBlank": false, "title": "MDC Dashboards", "type": "dashboards" }
+    { "asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": ["meridian"], "targetBlank": false, "title": "Meridian Dashboards", "type": "dashboards" }
   ],
   "panels": [
     {
@@ -170,12 +170,12 @@
   ],
   "refresh": "10s",
   "schemaVersion": 39,
-  "tags": ["market-data-collector", "mdc", "trades"],
+  "tags": ["meridian", "meridian", "trades"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Market Data Collector - Trades & Quality",
-  "uid": "mdc-trades",
+  "title": "Meridian - Trades & Quality",
+  "uid": "meridian-trades",
   "version": 1
 }

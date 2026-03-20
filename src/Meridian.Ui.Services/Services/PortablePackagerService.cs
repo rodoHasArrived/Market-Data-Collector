@@ -628,7 +628,7 @@ def load_trades(filepath):
 ```
 
 ## License
-This data package was created by Market Data Collector.
+This data package was created by Meridian.
 Refer to your data provider's terms of service for data usage rights.
 ";
     }

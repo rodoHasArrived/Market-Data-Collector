@@ -2,7 +2,7 @@
 
 ## Overview
 
-Market Data Collector now uses a **dual UI surface**:
+Meridian now uses a **dual UI surface**:
 
 1. **WPF Desktop (`Meridian.Wpf`)** for rich Windows-first operator workflows.
 2. **Web Dashboard (`Meridian.Ui`)** for browser-based monitoring/configuration.

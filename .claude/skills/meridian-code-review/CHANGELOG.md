@@ -1,4 +1,4 @@
-# mdc-code-review — Changelog
+# meridian-code-review — Changelog
 
 ## v1.2.0 (2026-03-16)
 

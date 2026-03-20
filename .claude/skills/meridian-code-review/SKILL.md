@@ -1,5 +1,5 @@
 ---
-name: mdc-code-review
+name: meridian-code-review
 description: >
   Code review and architecture compliance skill for Meridian. Use when the user asks to review,
   audit, refactor, or improve Meridian C# or F# code, or when shared files mention MVVM,
@@ -53,7 +53,7 @@ Every code review task follows this 4-step workflow:
 ## Bundled Resources
 
 ```
-mdc-code-review/
+meridian-code-review/
 ├── SKILL.md                      ← you are here
 ├── agents/
 │   └── grader.md                 ← assertions grader for evals; read when grading test runs
@@ -338,21 +338,21 @@ Read `agents/grader.md` and evaluate the assertions from `evals/evals.json` agai
 ```bash
 python eval-viewer/generate_review.py \
   --workspace <path-to-workspace>/iteration-1 \
-  --skill-name mdc-code-review \
+  --skill-name meridian-code-review \
   --static /tmp/mdc_review.html
 ```
 Then open `/tmp/mdc_review.html` in a browser.
 
 **4. Aggregate benchmark**:
 ```bash
-python -m scripts.aggregate_benchmark <workspace>/iteration-1 --skill-name mdc-code-review
+python -m scripts.aggregate_benchmark <workspace>/iteration-1 --skill-name meridian-code-review
 ```
 
 The aggregator will compare results against `evals/benchmark_baseline.json` and warn if any eval drops more than 10 percentage points below its accepted baseline.
 
 **5. Package the skill** when done:
 ```bash
-python scripts/package_skill.py /tmp/mdc-code-review
+python scripts/package_skill.py /tmp/meridian-code-review
 ```
 
 See `references/schemas.md` for full JSON schemas.

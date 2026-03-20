@@ -6,7 +6,7 @@ public sealed class TemplateResources(RepoPathService repo)
     [McpServerResource(UriTemplate = "mdc://templates/{type}", Name = "provider_template",
         Title = "Provider Implementation Template",
         MimeType = "text/plain")]
-    [Description("Scaffold template for a new MDC provider. type: streaming | historical | symbol-search | factory | config | constants")]
+    [Description("Scaffold template for a new Meridian provider. type: streaming | historical | symbol-search | factory | config | constants")]
     public string GetTemplate(string type)
     {
         var fileMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

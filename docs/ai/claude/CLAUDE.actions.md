@@ -1,6 +1,6 @@
 # CLAUDE.actions.md - GitHub Actions & CI/CD Guide
 
-This guide covers the CI/CD pipeline for the Market Data Collector, including workflow structure, common tasks, and troubleshooting.
+This guide covers the CI/CD pipeline for the Meridian, including workflow structure, common tasks, and troubleshooting.
 
 ## Workflow Inventory
 

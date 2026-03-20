@@ -95,7 +95,7 @@ public sealed class MarketDataResources
         UriTemplate = "mdc://config/active",
         Name = "Active Configuration",
         MimeType = "application/json",
-        Title = "Current Market Data Collector configuration: active data source, " +
+        Title = "Current Meridian configuration: active data source, " +
                 "configured symbols, backfill defaults, and storage settings.")]
     public string GetActiveConfiguration()
     {

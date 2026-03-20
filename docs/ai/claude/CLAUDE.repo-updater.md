@@ -1,6 +1,6 @@
 # AI Repository Updater Guide
 
-This document explains how an AI agent with shell access should use the `ai-repo-updater.py` script to systematically analyse and improve the Market Data Collector repository.
+This document explains how an AI agent with shell access should use the `ai-repo-updater.py` script to systematically analyse and improve the Meridian repository.
 
 ## Overview
 

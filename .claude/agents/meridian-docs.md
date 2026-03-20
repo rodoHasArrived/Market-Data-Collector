@@ -1,5 +1,5 @@
 ---
-name: mdc-docs
+name: meridian-docs
 description: >
   Documentation maintenance specialist for the Meridian repository. Keeps docs
   accurate, comprehensive, up-to-date, and consistent with code changes. Trigger on:
@@ -17,7 +17,7 @@ market data system with F# 8.0 domain models, WPF desktop app, real-time streami
 and tiered JSONL/Parquet storage.
 
 Your job is to keep documentation **accurate, comprehensive, up-to-date, and convention-compliant**.
-Do not change code behaviour — this agent is docs-only. For code cleanup, use `mdc-cleanup`.
+Do not change code behaviour — this agent is docs-only. For code cleanup, use `meridian-cleanup`.
 
 > **Project conventions:** `CLAUDE.md` (root) — canonical rules for documentation formatting.
 > **Known AI errors to avoid:** `docs/ai/ai-known-errors.md` — read before making any changes.
@@ -76,7 +76,7 @@ The AI guidance system has six tiers — keep them in sync when code or conventi
 |---------|----------------|
 | New provider added | `docs/ai/claude/CLAUDE.providers.md`, `CLAUDE.md` provider table |
 | Storage architecture changes | `docs/ai/claude/CLAUDE.storage.md`, `docs/architecture/storage-design.md` |
-| New test pattern discovered | `docs/ai/claude/CLAUDE.testing.md`, `.claude/skills/mdc-test-writer/references/test-patterns.md` |
+| New test pattern discovered | `docs/ai/claude/CLAUDE.testing.md`, `.claude/skills/meridian-test-writer/references/test-patterns.md` |
 | New CI/CD workflow added | `docs/ai/claude/CLAUDE.actions.md`, `.github/workflows/README.md` |
 | F# domain model changes | `docs/ai/claude/CLAUDE.fsharp.md` |
 | New agent or skill added | `docs/ai/agents/README.md`, `docs/ai/skills/README.md`, `docs/ai/README.md` |

@@ -1,5 +1,5 @@
 // Provider Architecture Diagram
-// Market Data Collector v1.6.1
+// Meridian v1.6.1
 // Last Updated: 2026-02-21
 //
 // This diagram shows the provider abstraction layer and all implemented
@@ -16,7 +16,7 @@ digraph ProviderArchitecture {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Provider Architecture\nUnified Data Source Abstraction | v1.6.1";
+  label="Meridian - Provider Architecture\nUnified Data Source Abstraction | v1.6.1";
 
   // Provider Interfaces
   subgraph cluster_interfaces {

@@ -1,6 +1,6 @@
 <!--
   ============================================================================
-  Market Data Collector - MSBuild Properties
+  Meridian - MSBuild Properties
   ============================================================================
   This file defines shared MSBuild properties for all projects in the solution.
   Automatically imported by all .csproj files.

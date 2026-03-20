@@ -9,7 +9,7 @@
 
 This document translates the seven improvement candidates identified in the assembly-performance
 evaluation into a **viability-assessed, phase-ordered implementation roadmap**. Each candidate is
-scored against the MDC codebase's actual risk profile, and all code locations are pinned to the
+scored against the Meridian codebase's actual risk profile, and all code locations are pinned to the
 production files they touch.
 
 ---

@@ -1,6 +1,6 @@
 [Unit]
-Description=Market Data Collector (Microstructure Recorder)
-Documentation=https://github.com/rodoHasArrived/Market-Data-Collector
+Description=Meridian (Microstructure Recorder)
+Documentation=https://github.com/rodoHasArrived/Meridian
 After=network-online.target
 Wants=network-online.target
 

@@ -1,6 +1,6 @@
 # Getting Started
 
-Quick start guide for the Market Data Collector. For comprehensive documentation, see [HELP.md](../HELP.md).
+Quick start guide for the Meridian. For comprehensive documentation, see [HELP.md](../HELP.md).
 
 ## Prerequisites
 

@@ -15,7 +15,7 @@ public sealed class ProviderTools(RepoPathService repo)
     };
 
     [McpServerTool(Name = "get_provider_template")]
-    [Description("Get a scaffold template file for implementing a new MDC provider. Type: streaming | historical | symbol-search | factory | config | constants")]
+    [Description("Get a scaffold template file for implementing a new Meridian provider. Type: streaming | historical | symbol-search | factory | config | constants")]
     public string GetProviderTemplate(
         [Description("Provider type: streaming | historical | symbol-search | factory | config | constants")] string type)
     {
@@ -40,7 +40,7 @@ public sealed class ProviderTools(RepoPathService repo)
     }
 
     [McpServerTool(Name = "list_providers")]
-    [Description("List all registered data providers in the MDC codebase by scanning [DataSource] attributes. Returns provider name, type, class, and location.")]
+    [Description("List all registered data providers in the Meridian codebase by scanning [DataSource] attributes. Returns provider name, type, class, and location.")]
     public string ListProviders()
     {
         if (!Directory.Exists(repo.AdaptersPath))

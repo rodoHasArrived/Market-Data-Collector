@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Docs structure validator for Market Data Collector.
+Docs structure validator for Meridian.
 
 Checks:
   1. Every docs/ top-level subdirectory has a README.md

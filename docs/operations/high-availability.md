@@ -1,12 +1,12 @@
 # High Availability Guide
 
-This document describes strategies for running Market Data Collector in a resilient configuration that minimizes data loss and downtime.
+This document describes strategies for running Meridian in a resilient configuration that minimizes data loss and downtime.
 
 ---
 
 ## Architecture Overview
 
-Market Data Collector is a monolithic application by design (see [ADR-003](../adr/003-microservices-decomposition.md)). High availability is achieved through provider failover, WAL-based durability, and process-level redundancy rather than microservice decomposition.
+Meridian is a monolithic application by design (see [ADR-003](../adr/003-microservices-decomposition.md)). High availability is achieved through provider failover, WAL-based durability, and process-level redundancy rather than microservice decomposition.
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -121,7 +121,7 @@ Run two instances with the same configuration. Use health probes to detect the p
 
 #### systemd Configuration
 
-The provided systemd service file (`deploy/systemd/marketdatacollector.service`) includes:
+The provided systemd service file (`deploy/systemd/meridian.service`) includes:
 - `Restart=always` — Automatic restart on crash
 - `RestartSec=10` — 10-second delay before restart
 - `WatchdogSec=120` — systemd kills the process if it stops responding within 2 minutes

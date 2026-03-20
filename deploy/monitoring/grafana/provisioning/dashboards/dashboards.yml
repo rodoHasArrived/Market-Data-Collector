@@ -1,13 +1,13 @@
 # =============================================================================
-# Grafana Dashboard Provisioning for Market Data Collector
+# Grafana Dashboard Provisioning for Meridian
 # =============================================================================
 
 apiVersion: 1
 
 providers:
-  - name: 'Market Data Collector'
+  - name: 'Meridian'
     orgId: 1
-    folder: 'MDC'
+    folder: 'Meridian'
     type: file
     disableDeletion: false
     editable: true

@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 1359)">
 <title>StorageArchitecture</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-1359 2464,-1359 2464,36 -36,36"/>
-<text text-anchor="middle" x="1214" y="-1309.4" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Storage Architecture</text>
+<text text-anchor="middle" x="1214" y="-1309.4" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Storage Architecture</text>
 <text text-anchor="middle" x="1214" y="-1296.4" font-family="Helvetica,sans-Serif" font-size="12.00">Archival&#45;First Pipeline | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_input</title>

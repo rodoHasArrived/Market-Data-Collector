@@ -1,6 +1,6 @@
 # Service Level Objectives (SLOs)
 
-This document defines the Service Level Objectives for each subsystem of the Market Data Collector. SLOs provide measurable targets for reliability, performance, and data quality, enabling consistent alert calibration and incident severity mapping.
+This document defines the Service Level Objectives for each subsystem of the Meridian. SLOs provide measurable targets for reliability, performance, and data quality, enabling consistent alert calibration and incident severity mapping.
 
 ---
 

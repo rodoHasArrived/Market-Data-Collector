@@ -1,6 +1,6 @@
 # GitHub Workflows Documentation
 
-This directory contains automated workflows that help maintain code quality, security, and streamline the development process for the Market Data Collector project.
+This directory contains automated workflows that help maintain code quality, security, and streamline the development process for the Meridian project.
 
 ## Consolidation Summary
 
@@ -465,4 +465,4 @@ When using `peter-evans/create-pull-request` action with a fallback commit step:
 ---
 
 **Last Updated**: 2026-02-12
-**Maintained By**: Market Data Collector Team
+**Maintained By**: Meridian Team
