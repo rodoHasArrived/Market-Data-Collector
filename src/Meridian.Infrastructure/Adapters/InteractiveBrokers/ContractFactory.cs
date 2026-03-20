@@ -53,8 +53,14 @@ public static class ContractFactory
         return c;
     }
 #else
+    /// <summary>
+    /// Centralizes the non-IBAPI guard so every conditional-compilation stub throws the same guidance.
+    /// </summary>
+    private static Exception ThrowPlatformNotSupported() => new NotSupportedException(
+        "ContractFactory.Create requires IBApi. Reference IBApi and build with -p:DefineConstants=IBAPI.");
+
     public static object Create(SymbolConfig cfg)
-        => throw new NotSupportedException("ContractFactory.Create requires IBApi. Reference IBApi and build with -p:DefineConstants=IBAPI.");
+        => throw ThrowPlatformNotSupported();
 #endif
 
     private static (string ibSymbol, string? localSymbolFallback) InferPreferredLocalSymbol(string symbol)

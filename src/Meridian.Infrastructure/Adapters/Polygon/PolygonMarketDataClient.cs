@@ -4,7 +4,6 @@ using System.Threading;
 using Meridian.Application.Exceptions;
 using Meridian.Application.Logging;
 using Meridian.Application.Monitoring;
-using Meridian.Contracts.Domain.Models;
 using Meridian.Domain.Collectors;
 using Meridian.Domain.Events;
 using Meridian.Domain.Models;
@@ -49,16 +48,13 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     private readonly PolygonOptions _options;
     private long _messageSequence;
 
-    // Tracks connection for stub mode (no real WebSocket is opened in stub mode)
-    private volatile bool _isStubConnected;
-
     /// <summary>
     /// Creates a new Polygon market data client.
     /// </summary>
     /// <param name="publisher">Event publisher for heartbeats and status.</param>
     /// <param name="tradeCollector">Collector for trade data.</param>
     /// <param name="quoteCollector">Collector for quote data.</param>
-    /// <param name="options">Polygon configuration options. If null or missing ApiKey, runs in stub mode.</param>
+    /// <param name="options">Polygon configuration options. A valid API key is required to connect.</param>
     /// <param name="reconnectionMetrics">Unused; kept for backward-compatible constructor signature.</param>
     /// <exception cref="ArgumentNullException">If publisher, tradeCollector, or quoteCollector is null.</exception>
     public PolygonMarketDataClient(
@@ -84,8 +80,8 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         }
 
         Log.Information(
-            "Polygon client initialized (Mode: {Mode}, Feed: {Feed}, Trades: {Trades}, Quotes: {Quotes}, Aggregates: {Aggregates})",
-            IsStubMode ? "Stub" : "Live",
+            "Polygon client initialized (CredentialsConfigured: {CredentialsConfigured}, Feed: {Feed}, Trades: {Trades}, Quotes: {Quotes}, Aggregates: {Aggregates})",
+            HasValidCredentials,
             _options.Feed,
             _options.SubscribeTrades,
             _options.SubscribeQuotes,
@@ -104,18 +100,13 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     public bool HasValidCredentials =>
         !string.IsNullOrWhiteSpace(_options.ApiKey) && _options.ApiKey.Length >= MinApiKeyLength;
 
-    /// <summary>
-    /// Gets whether the client is operating in stub mode (no real connection).
-    /// </summary>
-    public bool IsStubMode => !HasValidCredentials;
-
     /// <inheritdoc/>
     public override bool IsEnabled => HasValidCredentials;
 
     /// <summary>
-    /// Gets the current connection state (true when connected or in stub mode).
+    /// Gets the current connection state.
     /// </summary>
-    public bool IsConnected => _isStubConnected || Connected;
+    public bool IsConnected => Connected;
 
     /// <summary>
     /// Gets the configured feed type (stocks, options, forex, crypto).
@@ -330,21 +321,12 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Overrides the base implementation to handle stub mode: when no valid API key is
-    /// configured the client emits a synthetic heartbeat and returns without opening
-    /// a real WebSocket connection.
+    /// Fails fast when Polygon credentials are missing so production code never falls back
+    /// to synthetic data generation. Test-only stub behavior lives in the test project.
     /// </remarks>
     public override async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (IsStubMode)
-        {
-            Log.Information(
-                "Polygon client connecting in STUB mode (no API key configured). " +
-                "Set Polygon:ApiKey in configuration or POLYGON__APIKEY environment variable for live data.");
-            _isStubConnected = true;
-            _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
-            return;
-        }
+        EnsureCredentialsConfigured();
 
         await base.ConnectAsync(ct).ConfigureAwait(false);
         _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "Polygon"));
@@ -373,10 +355,10 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         if (id == -1)
             return -1;
 
-        Log.Debug("Subscribed to Polygon quotes for {Symbol} (SubId: {SubId}, Mode: {Mode})",
-            symbol, id, IsStubMode ? "Stub" : "Live");
+        Log.Debug("Subscribed to Polygon quotes for {Symbol} (SubId: {SubId}, Connected: {Connected})",
+            symbol, id, Connected);
 
-        if (!IsStubMode && Connected && isNewSymbol)
+        if (Connected && isNewSymbol)
         {
             SendSubscribeAsync($"Q.{symbol}")
                 .ObserveException(Log, $"Polygon subscribe quotes for {symbol}");
@@ -395,7 +377,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         if (!Subscriptions.HasSubscription(subscription.Symbol, "quotes"))
         {
             Log.Debug("Unsubscribed from Polygon quotes for {Symbol}", subscription.Symbol);
-            if (!IsStubMode && Connected)
+            if (Connected)
             {
                 SendUnsubscribeAsync($"Q.{subscription.Symbol}")
                     .ObserveException(Log, $"Polygon unsubscribe quotes for {subscription.Symbol}");
@@ -421,22 +403,10 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         if (id == -1)
             return -1;
 
-        Log.Debug("Subscribed to Polygon trades for {Symbol} (SubId: {SubId}, Mode: {Mode})",
-            symbol, id, IsStubMode ? "Stub" : "Live");
+        Log.Debug("Subscribed to Polygon trades for {Symbol} (SubId: {SubId}, Connected: {Connected})",
+            symbol, id, Connected);
 
-        if (IsStubMode)
-        {
-            _tradeCollector.OnTrade(new MarketTradeUpdate(
-                Timestamp: DateTimeOffset.UtcNow,
-                Symbol: symbol,
-                Price: 100m,
-                Size: 1,
-                Aggressor: AggressorSide.Unknown,
-                SequenceNumber: 0,
-                StreamId: "POLYGON_STUB",
-                Venue: "POLYGON"));
-        }
-        else if (Connected && isNewSymbol)
+        if (Connected && isNewSymbol)
         {
             SendSubscribeAsync($"T.{symbol}")
                 .ObserveException(Log, $"Polygon subscribe trades for {symbol}");
@@ -455,7 +425,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         if (!Subscriptions.HasSubscription(subscription.Symbol, "trades"))
         {
             Log.Debug("Unsubscribed from Polygon trades for {Symbol}", subscription.Symbol);
-            if (!IsStubMode && Connected)
+            if (Connected)
             {
                 SendUnsubscribeAsync($"T.{subscription.Symbol}")
                     .ObserveException(Log, $"Polygon unsubscribe trades for {subscription.Symbol}");
@@ -485,10 +455,10 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         if (id == -1)
             return -1;
 
-        Log.Debug("Subscribed to Polygon aggregates for {Symbol} (SubId: {SubId}, Mode: {Mode})",
-            symbol, id, IsStubMode ? "Stub" : "Live");
+        Log.Debug("Subscribed to Polygon aggregates for {Symbol} (SubId: {SubId}, Connected: {Connected})",
+            symbol, id, Connected);
 
-        if (!IsStubMode && Connected && isNewSymbol)
+        if (Connected && isNewSymbol)
         {
             SendSubscribeAsync($"A.{symbol},AM.{symbol}")
                 .ObserveException(Log, $"Polygon subscribe aggregates for {symbol}");
@@ -509,7 +479,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         if (!Subscriptions.HasSubscription(subscription.Symbol, "aggregates"))
         {
             Log.Debug("Unsubscribed from Polygon aggregates for {Symbol}", subscription.Symbol);
-            if (!IsStubMode && Connected)
+            if (Connected)
             {
                 SendUnsubscribeAsync($"A.{subscription.Symbol},AM.{subscription.Symbol}")
                     .ObserveException(Log, $"Polygon unsubscribe aggregates for {subscription.Symbol}");
@@ -532,6 +502,29 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
     #endregion
 
     #region Credential validation
+
+    /// <summary>
+    /// Ensures a usable Polygon API key is configured before attempting a live connection.
+    /// </summary>
+    /// <exception cref="ConfigurationException">Thrown when the API key is missing or too short.</exception>
+    private void EnsureCredentialsConfigured()
+    {
+        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        {
+            throw new ConfigurationException(
+                "Polygon API key is required for live market data. Set Polygon:ApiKey or POLYGON__APIKEY before connecting.",
+                configPath: "Polygon:ApiKey",
+                fieldName: "ApiKey");
+        }
+
+        if (_options.ApiKey.Length < MinApiKeyLength)
+        {
+            throw new ConfigurationException(
+                $"Polygon API key must be at least {MinApiKeyLength} characters long.",
+                configPath: "Polygon:ApiKey",
+                fieldName: "ApiKey");
+        }
+    }
 
     /// <summary>
     /// Validates the API key format.

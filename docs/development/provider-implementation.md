@@ -750,6 +750,8 @@ export EXAMPLE__SECRETKEY=your-secret-key
 
 ## 9. Directory Structure
 
+Provider scaffolding templates now live outside the production assembly at `docs/examples/provider-template/`. Copy the files you need from there into `src/Meridian.Infrastructure/Adapters/{ProviderName}/` before customizing them.
+
 Place provider implementations in the appropriate subdirectory:
 
 ```

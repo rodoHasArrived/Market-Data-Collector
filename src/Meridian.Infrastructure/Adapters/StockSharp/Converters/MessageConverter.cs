@@ -194,40 +194,32 @@ public static class MessageConverter
     // These allow the code to compile without the StockSharp packages
 
     /// <summary>
+    /// Centralizes the conditional-compilation failure path for non-StockSharp builds.
+    /// </summary>
+    private static Exception ThrowPlatformNotSupported(string message) => new NotSupportedException(message);
+
+    /// <summary>
     /// Stub: StockSharp packages not installed.
     /// </summary>
     public static Trade ToTrade(object msg, string symbol)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Algo NuGet package. " +
-            "Install with: dotnet add package StockSharp.Algo");
-    }
+        => throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.Algo NuGet package. Install with: dotnet add package StockSharp.Algo");
 
     /// <summary>
     /// Stub: StockSharp packages not installed.
     /// </summary>
     public static LOBSnapshot ToLOBSnapshot(object msg, string symbol)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Messages NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.Messages NuGet package.");
 
     /// <summary>
     /// Stub: StockSharp packages not installed.
     /// </summary>
     public static BboQuotePayload ToBboQuote(object msg, string symbol)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Messages NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.Messages NuGet package.");
 
     /// <summary>
     /// Stub: StockSharp packages not installed.
     /// </summary>
     public static HistoricalBar ToHistoricalBar(object msg, string symbol)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Messages NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.Messages NuGet package.");
 #endif
 }

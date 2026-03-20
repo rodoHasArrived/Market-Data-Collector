@@ -29,23 +29,28 @@ public sealed partial class EnhancedIBConnectionManager
 
     public bool IsConnected => false;
 
-    public Task ConnectAsync() => throw new NotSupportedException(
+    /// <summary>
+    /// Centralizes the platform guard used by the non-IBAPI build so each stub entry point stays concise.
+    /// </summary>
+    private static Exception ThrowPlatformNotSupported() => new NotSupportedException(
         "Build with IBAPI defined and reference the official IBApi package/dll. " +
         "The IBAPI build includes exponential backoff retry, heartbeat monitoring, and automatic reconnection.");
 
+    public Task ConnectAsync() => Task.FromException(ThrowPlatformNotSupported());
+
     public Task DisconnectAsync() => Task.CompletedTask;
 
-    public int SubscribeMarketDepth(string symbol, int depthLevels = 10) => throw new NotSupportedException("Build with IBAPI defined.");
+    public int SubscribeMarketDepth(string symbol, int depthLevels = 10) => throw ThrowPlatformNotSupported();
 
     public int SubscribeMarketDepth(SymbolConfig cfg, bool smartDepth = true)
-        => throw new NotSupportedException("Build with IBAPI defined.");
+        => throw ThrowPlatformNotSupported();
 
     public int SubscribeTrades(SymbolConfig cfg)
-        => throw new NotSupportedException("Build with IBAPI defined.");
+        => throw ThrowPlatformNotSupported();
 
     public void UnsubscribeTrades(int tickerId)
-        => throw new NotSupportedException("Build with IBAPI defined.");
+        => throw ThrowPlatformNotSupported();
 
-    public void UnsubscribeMarketDepth(int tickerId) => throw new NotSupportedException("Build with IBAPI defined.");
+    public void UnsubscribeMarketDepth(int tickerId) => throw ThrowPlatformNotSupported();
 #endif
 }

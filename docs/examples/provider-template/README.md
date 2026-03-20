@@ -26,12 +26,12 @@ Implement only the file(s) relevant to your provider — not every provider need
 
 2. **Copy and rename the template files you need**
    ```
-   cp _Template/TemplateConstants.cs                 {YourProvider}/{YourProvider}Constants.cs
-   cp _Template/TemplateConfig.cs                    {YourProvider}/{YourProvider}Config.cs
-   cp _Template/TemplateMarketDataClient.cs          {YourProvider}/{YourProvider}MarketDataClient.cs
-   cp _Template/TemplateHistoricalDataProvider.cs    {YourProvider}/{YourProvider}HistoricalDataProvider.cs
-   cp _Template/TemplateSymbolSearchProvider.cs      {YourProvider}/{YourProvider}SymbolSearchProvider.cs
-   cp _Template/TemplateFactory.cs                   {YourProvider}/{YourProvider}Factory.cs
+   cp docs/examples/provider-template/TemplateConstants.cs              src/Meridian.Infrastructure/Adapters/{YourProvider}/{YourProvider}Constants.cs
+   cp docs/examples/provider-template/TemplateConfig.cs                 src/Meridian.Infrastructure/Adapters/{YourProvider}/{YourProvider}Config.cs
+   cp docs/examples/provider-template/TemplateMarketDataClient.cs       src/Meridian.Infrastructure/Adapters/{YourProvider}/{YourProvider}MarketDataClient.cs
+   cp docs/examples/provider-template/TemplateHistoricalDataProvider.cs src/Meridian.Infrastructure/Adapters/{YourProvider}/{YourProvider}HistoricalDataProvider.cs
+   cp docs/examples/provider-template/TemplateSymbolSearchProvider.cs   src/Meridian.Infrastructure/Adapters/{YourProvider}/{YourProvider}SymbolSearchProvider.cs
+   cp docs/examples/provider-template/TemplateFactory.cs                src/Meridian.Infrastructure/Adapters/{YourProvider}/{YourProvider}Factory.cs
    ```
 
 3. **Replace all `Template` placeholders** with your provider name (case-sensitive).

@@ -17,7 +17,7 @@ public sealed class RepoPathService
     public string InstructionsPath => Path.Combine(Root, ".github", "instructions");
     public string AgentsPath => Path.Combine(Root, ".github", "agents");
     public string AiClaudePath => Path.Combine(Root, "docs", "ai", "claude");
-    public string TemplatesPath => Path.Combine(Root, "src", "Meridian.Infrastructure", "Adapters", "_Template");
+    public string TemplatesPath => Path.Combine(Root, "docs", "examples", "provider-template");
     public string AdaptersPath => Path.Combine(Root, "src", "Meridian.Infrastructure", "Adapters");
     public string AuditScriptPath => Path.Combine(Root, "build", "scripts", "ai-repo-updater.py");
 

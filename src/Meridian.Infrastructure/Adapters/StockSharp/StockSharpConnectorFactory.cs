@@ -21,6 +21,11 @@ public static class StockSharpConnectorFactory
 {
     private static readonly ILogger Log = LoggingSetup.ForContext("StockSharpConnectorFactory");
 
+    /// <summary>
+    /// Centralizes platform/package guard messages used by conditional-compilation stubs.
+    /// </summary>
+    private static Exception ThrowPlatformNotSupported(string message) => new NotSupportedException(message);
+
 #if STOCKSHARP
     /// <summary>
     /// Create a connector instance based on the configured type.
@@ -99,9 +104,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("Rithmic adapter configured successfully");
 #else
-        throw new NotSupportedException(
-            "Rithmic support requires StockSharp.Rithmic NuGet package. " +
-            "Install with: dotnet add package StockSharp.Rithmic");
+        throw ThrowPlatformNotSupported("Rithmic support requires StockSharp.Rithmic NuGet package. Install with: dotnet add package StockSharp.Rithmic");
 #endif
     }
 
@@ -132,9 +135,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("IQFeed adapter configured successfully");
 #else
-        throw new NotSupportedException(
-            "IQFeed support requires StockSharp.IQFeed NuGet package. " +
-            "Install with: dotnet add package StockSharp.IQFeed");
+        throw ThrowPlatformNotSupported("IQFeed support requires StockSharp.IQFeed NuGet package. Install with: dotnet add package StockSharp.IQFeed");
 #endif
     }
 
@@ -158,9 +159,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("CQG adapter configured successfully");
 #else
-        throw new NotSupportedException(
-            "CQG support requires StockSharp.Cqg.Com NuGet package. " +
-            "Install with: dotnet add package StockSharp.Cqg.Com");
+        throw ThrowPlatformNotSupported("CQG support requires StockSharp.Cqg.Com NuGet package. Install with: dotnet add package StockSharp.Cqg.Com");
 #endif
     }
 
@@ -186,9 +185,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("Interactive Brokers adapter configured successfully");
 #else
-        throw new NotSupportedException(
-            "Interactive Brokers support requires StockSharp.InteractiveBrokers NuGet package. " +
-            "Install with: dotnet add package StockSharp.InteractiveBrokers");
+        throw ThrowPlatformNotSupported("Interactive Brokers support requires StockSharp.InteractiveBrokers NuGet package. Install with: dotnet add package StockSharp.InteractiveBrokers");
 #endif
     }
 
@@ -216,9 +213,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("Binance adapter configured successfully for {MarketType}", cfg?.MarketType ?? "Spot");
 #else
-        throw new NotSupportedException(
-            "Binance support requires StockSharp.Binance NuGet package and crowdfunding membership. " +
-            "See: https://stocksharp.com/store/ for more information.");
+        throw ThrowPlatformNotSupported("Binance support requires StockSharp.Binance NuGet package and crowdfunding membership. See: https://stocksharp.com/store/ for more information.");
 #endif
     }
 
@@ -242,9 +237,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("Coinbase adapter configured successfully");
 #else
-        throw new NotSupportedException(
-            "Coinbase support requires StockSharp.Coinbase NuGet package and crowdfunding membership. " +
-            "See: https://stocksharp.com/store/ for more information.");
+        throw ThrowPlatformNotSupported("Coinbase support requires StockSharp.Coinbase NuGet package and crowdfunding membership. See: https://stocksharp.com/store/ for more information.");
 #endif
     }
 
@@ -267,9 +260,7 @@ public static class StockSharpConnectorFactory
         connector.Adapter.InnerAdapters.Add(adapter);
         Log.Information("Kraken adapter configured successfully");
 #else
-        throw new NotSupportedException(
-            "Kraken support requires StockSharp.Kraken NuGet package and crowdfunding membership. " +
-            "See: https://stocksharp.com/store/ for more information.");
+        throw ThrowPlatformNotSupported("Kraken support requires StockSharp.Kraken NuGet package and crowdfunding membership. See: https://stocksharp.com/store/ for more information.");
 #endif
     }
 
@@ -402,9 +393,7 @@ public static class StockSharpConnectorFactory
     /// </summary>
     public static object Create(StockSharpConfig config)
     {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Algo NuGet package. " +
-            "Install with: dotnet add package StockSharp.Algo");
+        throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.Algo NuGet package. Install with: dotnet add package StockSharp.Algo");
     }
 #endif
 

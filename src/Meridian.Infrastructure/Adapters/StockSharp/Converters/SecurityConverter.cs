@@ -171,21 +171,20 @@ public static class SecurityConverter
     // Stub implementations when StockSharp is not available
 
     /// <summary>
+    /// Centralizes the conditional-compilation failure path for non-StockSharp builds.
+    /// </summary>
+    private static Exception ThrowPlatformNotSupported(string message) => new NotSupportedException(message);
+
+    /// <summary>
     /// Stub: StockSharp packages not installed.
     /// </summary>
     public static object ToSecurity(SymbolConfig cfg)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.BusinessEntities NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.BusinessEntities NuGet package.");
 
     /// <summary>
     /// Stub: StockSharp packages not installed.
     /// </summary>
     public static object ToSecurityId(SymbolConfig cfg)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Messages NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported("StockSharp integration requires StockSharp.Messages NuGet package.");
 #endif
 }
