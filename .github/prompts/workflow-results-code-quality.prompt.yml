@@ -1,8 +1,8 @@
 name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-19
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23311383605
+# Generated: 2026-03-20
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23323946263
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -18,7 +18,15 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      No specific patterns detected.
+      ### Code Quality
+      - `2 /home/runner/work/Meridian/Meridian/src/Meridian.Contracts/Domain/Events/MarketEventPayload.cs(8,22): warning CS1574: XML comment has cref attribute...`
+      - `2026-03-20T00:45:00.3221980Z - **Warning CS1574**: This warning indicates an unresolved XML comment reference for 'MarketEvent'. Resolve this by ensur...`
+      - `2026-03-20T00:45:00.4102096Z [36;1m- **Warning CS1574**: This warning indicates an unresolved XML comment reference for 'MarketEvent'. Resolve this b...`
+      - `2026-03-20T00:45:00.5875532Z Temporarily overriding HOME='/home/runner/work/_temp/db61db2a-fc57-43dd-9403-293aca62775a' before making global git confi...`
+
+
+      ## Error Codes
+      - `CS1574`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -31,7 +39,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23311383605
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23323946263
 
       Additional context:
       {{additional_context}}
