@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-03-20T08:36:27.578169+00:00
+> Last updated: 2026-03-20T09:26:03.563519+00:00
 
 ## Summary
 
@@ -22,8 +22,9 @@
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 39 |
+| `docs/` | 36 |
 | `tests/` | 9 |
+| `src/` | 3 |
 | `.github/` | 2 |
 
 ## Unassigned & Untracked
@@ -36,112 +37,112 @@ Consider assigning ownership or creating tracking issues for these items.
 
 ### TODO (36)
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateFactory.cs:157`
+- [ ] `docs/examples/provider-template/TemplateFactory.cs:157`
   > Register a named HttpClient for this provider: services.AddHttpClient(HttpClientNames.TemplateHistorical, client => { client.BaseAddress = new Uri(TemplateEndpoints.BaseUrl); client.DefaultRequestHeaders.Add("Accept", "application/json"); });
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateFactory.cs:164`
+- [ ] `docs/examples/provider-template/TemplateFactory.cs:164`
   > Bind streaming options from configuration: services.AddOptions<TemplateStreamingOptions>() .BindConfiguration("Template");
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateFactory.cs:168`
+- [ ] `docs/examples/provider-template/TemplateFactory.cs:168`
   > Register data sources in the DataSourceRegistry if needed. registry.Register(new DataSourceConfiguration("template", ...));
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:29`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:29`
   > Replace "template" with the provider ID, display name, type, and category.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:34`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:34`
   > Replace with the actual API key environment variable name.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:44`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:44`
   > Set to your provider's unique ID (lowercase, e.g., "tiingo").
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:48`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:48`
   > Set a human-readable display name.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:52`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:52`
   > Describe the provider's capabilities and data coverage.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:56`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:56`
   > Set the named HTTP client registered in the DI container. Add a constant to HttpClientNames and register the client in the composition root.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:65`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:65`
   > Set an appropriate priority (lower = tried first in failover chains).
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:69`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:69`
   > Set based on the provider's rate limit (e.g., 60 req/min → 1 s delay).
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:79`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:79`
   > Adjust to match what the provider actually supports.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:103`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:103`
   > Add required HTTP headers for this provider. Example: Http.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:126`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:126`
   > Build the request URL using TemplateEndpoints constants.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:127`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:127`
   > Apply rate limiting before each request: await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:129`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:129`
   > Call Http.GetAsync(url, ct) with the resilience pipeline.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:130`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:130`
   > Deserialize the response and map to List<HistoricalBar>.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:131`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:131`
   > Normalize symbol, convert timestamps to UTC.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs:132`
+- [ ] `docs/examples/provider-template/TemplateHistoricalDataProvider.cs:132`
   > Log success: Log.Debug("Fetched {Count} bars for {Symbol}", bars.Count, symbol);
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:29`
+- [ ] `docs/examples/provider-template/TemplateMarketDataClient.cs:29`
   > Replace "template" with the provider ID, display name, type, and category.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs:40`
+- [ ] `docs/examples/provider-template/TemplateMarketDataClient.cs:40`
   > Replace TemplateOptions with the provider's configuration type. private readonly TemplateOptions _options;
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:28`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:28`
   > Replace "template" with the provider ID, display name, type, and category.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:38`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:38`
   > Set to your provider's unique ID (lowercase, e.g., "finnhub").
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:42`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:42`
   > Set a human-readable display name.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:46`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:46`
   > Set the named HTTP client registered in the DI container.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:50`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:50`
   > Set the base URL for this provider's REST API.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:54`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:54`
   > Set the environment variable name used to load the API key.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:70`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:70`
   > If the provider supports asset-type filtering, override SupportedAssetTypes. public override IReadOnlyList<string> SupportedAssetTypes => ["stock", "etf", "crypto"];
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:73`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:73`
   > If the provider supports exchange filtering, override SupportedExchanges. public override IReadOnlyList<string> SupportedExchanges => ["NYSE", "NASDAQ"];
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:98`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:98`
   > Add provider-specific authentication headers. Example: if (!string.IsNullOrEmpty(ApiKey)) Http.DefaultRequestHeaders.Add("Authorization", $"Bearer {ApiKey}");
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:123`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:123`
   > Build the request URL from BaseUrl and query parameters.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:124`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:124`
   > Send the HTTP request and handle errors.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:125`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:125`
   > Deserialize the JSON response.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:126`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:126`
   > Map provider-specific DTOs to SymbolSearchResult.
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:127`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:127`
   > Return the mapped results (up to maxResults).
 
-- [ ] `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs:147`
+- [ ] `docs/examples/provider-template/TemplateSymbolSearchProvider.cs:147`
   > If the provider supports server-side filtering, implement it here. Otherwise, keep this call to the base class which filters client-side.
 
 ### NOTE (14)
