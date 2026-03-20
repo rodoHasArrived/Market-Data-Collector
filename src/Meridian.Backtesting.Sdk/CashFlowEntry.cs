@@ -59,7 +59,6 @@ public sealed record CashInterestCashFlow(
     decimal Amount,
     double AnnualRate,
     string? AccountId = null) : CashFlowEntry(Timestamp, Amount, AccountId);
-    decimal DividendPerShare) : CashFlowEntry(Timestamp, Amount);
 
 /// <summary>Generic cash-flow caused by a scheduled asset-level event.</summary>
 public sealed record AssetEventCashFlow(

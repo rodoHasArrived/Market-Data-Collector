@@ -160,6 +160,22 @@ public partial class DataQualityPage : Page
             XAxisLabels.Children.Clear();
             return;
         }
+        else
+        {
+            SymbolDrilldownPanel.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ShowSymbolDrilldown(SymbolQualityModel model)
+    {
+        SymbolDrilldownPanel.Visibility = Visibility.Visible;
+        DrilldownSymbolHeader.Text = $"{model.Symbol} — Quality Drilldown";
+        DrilldownScoreText.Text = model.ScoreFormatted;
+        DrilldownScoreText.Foreground = model.Score >= 90
+            ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
+            : model.Score >= 70
+                ? new SolidColorBrush(Color.FromRgb(227, 179, 65))
+                : new SolidColorBrush(Color.FromRgb(244, 67, 54));
 
         var width = TrendChart.ActualWidth;
         var height = TrendChart.ActualHeight;
@@ -202,7 +218,6 @@ public partial class DataQualityPage : Page
                 Margin = new Thickness(0, 0, 16, 0)
             });
         }
-    }
 
     private void ApplyDrilldownHeatmap()
     {
@@ -298,23 +313,16 @@ public partial class DataQualityPage : Page
 
         var cancelButton = new Button
         {
-            Content = "Cancel",
-            Width = 80,
-            Margin = new Thickness(0, 0, 8, 0),
-            Foreground = Brushes.White,
-            Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 6, 8, 6)
+            Content = "Cancel", Width = 80, Margin = new Thickness(0, 0, 8, 0),
+            Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
+            BorderThickness = new Thickness(0), Padding = new Thickness(8, 6, 8, 6)
         };
 
         var repairButton = new Button
         {
-            Content = "Start Repair",
-            Width = 100,
-            Foreground = Brushes.White,
-            Background = new SolidColorBrush(Color.FromRgb(56, 139, 253)),
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 6, 8, 6)
+            Content = "Start Repair", Width = 100,
+            Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(56, 139, 253)),
+            BorderThickness = new Thickness(0), Padding = new Thickness(8, 6, 8, 6)
         };
 
         buttonsPanel.Children.Add(cancelButton);
@@ -385,8 +393,7 @@ public partial class DataQualityPage : Page
             {
                 Text = gap.Description,
                 Foreground = new SolidColorBrush(Color.FromRgb(139, 148, 158)),
-                FontSize = 11,
-                TextTrimming = TextTrimming.CharacterEllipsis
+                FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis
             };
             Grid.SetColumn(descText, 1);
             rowGrid.Children.Add(descText);
@@ -395,8 +402,7 @@ public partial class DataQualityPage : Page
             {
                 Text = gap.Duration,
                 Foreground = new SolidColorBrush(Color.FromRgb(139, 148, 158)),
-                FontSize = 11,
-                HorizontalAlignment = HorizontalAlignment.Right
+                FontSize = 11, HorizontalAlignment = HorizontalAlignment.Right
             };
             Grid.SetColumn(durText, 2);
             rowGrid.Children.Add(durText);
@@ -421,23 +427,16 @@ public partial class DataQualityPage : Page
         var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var cancelButton = new Button
         {
-            Content = "Cancel",
-            Width = 80,
-            Margin = new Thickness(0, 0, 8, 0),
-            Foreground = Brushes.White,
-            Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 6, 8, 6)
+            Content = "Cancel", Width = 80, Margin = new Thickness(0, 0, 8, 0),
+            Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
+            BorderThickness = new Thickness(0), Padding = new Thickness(8, 6, 8, 6)
         };
 
         var repairButton = new Button
         {
-            Content = "Repair All",
-            Width = 100,
-            Foreground = Brushes.White,
-            Background = new SolidColorBrush(Color.FromRgb(56, 139, 253)),
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 6, 8, 6)
+            Content = "Repair All", Width = 100,
+            Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(56, 139, 253)),
+            BorderThickness = new Thickness(0), Padding = new Thickness(8, 6, 8, 6)
         };
 
         buttonsPanel.Children.Add(cancelButton);
@@ -491,14 +490,11 @@ public partial class DataQualityPage : Page
 
         var closeButton = new Button
         {
-            Content = "Close",
-            Width = 80,
+            Content = "Close", Width = 80,
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new Thickness(0, 16, 0, 0),
-            Foreground = Brushes.White,
-            Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(8, 6, 8, 6)
+            Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
+            BorderThickness = new Thickness(0), Padding = new Thickness(8, 6, 8, 6)
         };
         closeButton.Click += (_, _) => window.Close();
         stack.Children.Add(closeButton);
@@ -506,6 +502,8 @@ public partial class DataQualityPage : Page
         window.Content = stack;
         window.ShowDialog();
     }
+
+    // ── Dialog helpers ─────────────────────────────────────────────────────
 
     private static Border BuildComparisonRow(string col1, string col2, string col3, string col4, string col5, bool isHeader)
     {
@@ -538,11 +536,8 @@ public partial class DataQualityPage : Page
         {
             var tb = new TextBlock
             {
-                Text = text,
-                Foreground = foreground,
-                FontWeight = weight,
-                FontSize = 12,
-                VerticalAlignment = VerticalAlignment.Center
+                Text = text, Foreground = foreground, FontWeight = weight,
+                FontSize = 12, VerticalAlignment = VerticalAlignment.Center
             };
             Grid.SetColumn(tb, col);
             grid.Children.Add(tb);
@@ -563,19 +558,13 @@ public partial class DataQualityPage : Page
         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
         row.Children.Add(new TextBlock
         {
-            Text = $"{label}: ",
-            FontWeight = FontWeights.SemiBold,
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(139, 148, 158)),
-            Width = 80
+            Text = $"{label}: ", FontWeight = FontWeights.SemiBold, FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(139, 148, 158)), Width = 80
         });
         row.Children.Add(new TextBlock
         {
-            Text = value,
-            FontSize = 12,
-            Foreground = Brushes.White,
-            TextWrapping = TextWrapping.Wrap,
-            MaxWidth = 320
+            Text = value, FontSize = 12, Foreground = Brushes.White,
+            TextWrapping = TextWrapping.Wrap, MaxWidth = 320
         });
         panel.Children.Add(row);
     }
