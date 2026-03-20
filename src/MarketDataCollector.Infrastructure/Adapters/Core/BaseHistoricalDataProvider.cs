@@ -275,13 +275,19 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
     /// <param name="symbol">Symbol for logging context.</param>
     /// <param name="dataType">Data type for logging context (e.g., "bars", "quotes").</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="displayUrl">Optional redacted URL to use for logging instead of the actual request URL.</param>
     /// <returns>The HTTP response message.</returns>
-    protected async Task<HttpResponseMessage> ExecuteGetAsync(string url, string symbol, string dataType, CancellationToken ct)
+    protected async Task<HttpResponseMessage> ExecuteGetAsync(
+        string url,
+        string symbol,
+        string dataType,
+        CancellationToken ct,
+        string? displayUrl = null)
     {
         ThrowIfDisposed();
         await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-        Log.Debug("Requesting {Provider} {DataType} for {Symbol}: {Url}", Name, dataType, symbol, url);
+        Log.Debug("Requesting {Provider} {DataType} for {Symbol}: {Url}", Name, dataType, symbol, displayUrl ?? url);
 
         // Execute with resilience pipeline (retry, circuit breaker)
         var response = await ResiliencePipeline.ExecuteAsync(
@@ -299,11 +305,17 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
     /// <param name="symbol">Symbol for logging context.</param>
     /// <param name="dataType">Data type for logging context (e.g., "bars", "quotes").</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="displayUrl">Optional redacted URL to use for logging instead of the actual request URL.</param>
     /// <returns>The response content as string, or null if not found.</returns>
     /// <exception cref="InvalidOperationException">Thrown for auth failures or server errors.</exception>
-    protected async Task<string?> ExecuteGetAndReadAsync(string url, string symbol, string dataType, CancellationToken ct)
+    protected async Task<string?> ExecuteGetAndReadAsync(
+        string url,
+        string symbol,
+        string dataType,
+        CancellationToken ct,
+        string? displayUrl = null)
     {
-        using var response = await ExecuteGetAsync(url, symbol, dataType, ct).ConfigureAwait(false);
+        using var response = await ExecuteGetAsync(url, symbol, dataType, ct, displayUrl).ConfigureAwait(false);
         var result = await HandleHttpResponseAsync(response, symbol, dataType, ct).ConfigureAwait(false);
 
         if (result.IsNotFound)

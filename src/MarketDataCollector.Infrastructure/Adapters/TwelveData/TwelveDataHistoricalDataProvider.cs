@@ -85,13 +85,12 @@ public sealed class TwelveDataHistoricalDataProvider : BaseHistoricalDataProvide
         var startDate = from?.ToString("yyyy-MM-dd") ?? "2000-01-01";
         var endDate = to?.ToString("yyyy-MM-dd") ?? DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
 
-        var url = $"{BaseUrl}?symbol={Uri.EscapeDataString(symbol)}&interval=1day" +
-                  $"&start_date={startDate}&end_date={endDate}" +
-                  $"&outputsize=5000&format=JSON&apikey={_apiKey}";
+        var url = BuildTimeSeriesUrl(symbol, startDate, endDate, _apiKey);
+        var redactedUrl = BuildTimeSeriesUrl(symbol, startDate, endDate, "REDACTED");
 
         Log.Information("Requesting Twelve Data history for {Symbol} ({StartDate} to {EndDate})", symbol, startDate, endDate);
 
-        var json = await ExecuteGetAndReadAsync(url, symbol, "daily bars", ct).ConfigureAwait(false);
+        var json = await ExecuteGetAndReadAsync(url, symbol, "daily bars", ct, redactedUrl).ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(json))
         {
@@ -103,6 +102,13 @@ public sealed class TwelveDataHistoricalDataProvider : BaseHistoricalDataProvide
 
         Log.Information("Fetched {Count} bars for {Symbol} from Twelve Data", bars.Count, symbol);
         return bars.OrderBy(b => b.SessionDate).ToArray();
+    }
+
+    private static string BuildTimeSeriesUrl(string symbol, string startDate, string endDate, string apiKey)
+    {
+        return $"{BaseUrl}?symbol={Uri.EscapeDataString(symbol)}&interval=1day" +
+               $"&start_date={startDate}&end_date={endDate}" +
+               $"&outputsize=5000&format=JSON&apikey={Uri.EscapeDataString(apiKey)}";
     }
 
     private List<HistoricalBar> ParseJsonResponse(string json, string symbol, DateOnly? from, DateOnly? to)
