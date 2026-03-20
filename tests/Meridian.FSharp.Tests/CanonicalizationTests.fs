@@ -8,18 +8,18 @@ open Meridian.Contracts.Domain.Enums
 open Meridian.FSharp.Canonicalization
 
 let createConditionMappings () =
-    dict [
-        ValueTuple("ALPACA", "@"), CanonicalTradeCondition.Regular
-        ValueTuple("ALPACA", "T"), CanonicalTradeCondition.FormT_ExtendedHours
-        ValueTuple("POLYGON", "29"), CanonicalTradeCondition.SellerInitiated
-    ] :> IReadOnlyDictionary<ValueTuple<string, string>, CanonicalTradeCondition>
+    readOnlyDict [
+        struct ("ALPACA", "@"), CanonicalTradeCondition.Regular
+        struct ("ALPACA", "T"), CanonicalTradeCondition.FormT_ExtendedHours
+        struct ("POLYGON", "29"), CanonicalTradeCondition.SellerInitiated
+    ]
 
 let createVenueMappings () =
-    dict [
-        ValueTuple("IB", "ISLAND"), "XNAS"
-        ValueTuple("IB", "SMART"), null
-        ValueTuple("ALPACA", "V"), "XNAS"
-    ] :> IReadOnlyDictionary<ValueTuple<string, string>, string>
+    readOnlyDict [
+        struct ("IB", "ISLAND"), "XNAS"
+        struct ("IB", "SMART"), null
+        struct ("ALPACA", "V"), "XNAS"
+    ]
 
 [<Fact>]
 let ``NormalizeProvider uppercases provider names`` () =
@@ -54,8 +54,8 @@ let ``MapConditions returns unknown for unmapped codes`` () =
 
 [<Fact>]
 let ``ContainsHaltCondition detects halt-like conditions`` () =
-    ConditionCodeRules.ContainsHaltCondition([ CanonicalTradeCondition.Regular; CanonicalTradeCondition.LuldPause ]) |> should equal true
-    ConditionCodeRules.ContainsHaltCondition([ CanonicalTradeCondition.Regular; CanonicalTradeCondition.OddLot ]) |> should equal false
+    ConditionCodeRules.ContainsHaltCondition([| CanonicalTradeCondition.Regular; CanonicalTradeCondition.LuldPause |]) |> should equal true
+    ConditionCodeRules.ContainsHaltCondition([| CanonicalTradeCondition.Regular; CanonicalTradeCondition.OddLot |]) |> should equal false
 
 [<Fact>]
 let ``IsResumedCondition only matches resumed state`` () =

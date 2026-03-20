@@ -87,6 +87,10 @@ public sealed class VenueMicMapper
     /// <returns>The ISO MIC code, or null if the venue is unmappable or unknown.</returns>
     public string? TryMapVenue(string? rawVenue, string provider)
     {
+        if (rawVenue is null)
+        {
+            return null;
+        }
         return VenueMappingRules.TryMapVenue(_map, rawVenue, provider);
     }
 
