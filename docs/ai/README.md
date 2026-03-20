@@ -20,29 +20,10 @@ This document is the **master index** for AI assistant guidance in the Meridian 
 
 ## Directory Structure
 
-```text
-docs/ai/
-├── README.md                    # Master AI resource index
-├── ai-known-errors.md           # Recurring AI mistake registry
-├── agents/                      # Index for GitHub agent definitions
-│   └── README.md
-├── skills/                      # Index for portable Agent Skills packages
-│   └── README.md
-├── instructions/                # Index for Copilot path-specific instructions
-│   └── README.md
-├── prompts/                     # Index for reusable prompt templates
-│   └── README.md
-├── copilot/                     # Extended Copilot guidance
-│   ├── instructions.md
-│   └── ai-sync-workflow.md
-└── claude/                      # Claude-focused reference guides
-    ├── CLAUDE.actions.md
-    ├── CLAUDE.fsharp.md
-    ├── CLAUDE.providers.md
-    ├── CLAUDE.repo-updater.md
-    ├── CLAUDE.storage.md
-    └── CLAUDE.testing.md
-```
+The repository tree below is maintained automatically by the README Tree Sync workflow so the AI index stays aligned with the live repo layout.
+
+<!-- readme-tree start -->
+<!-- readme-tree end -->
 
 **Tool-owned locations** that are part of the AI guidance surface:
 

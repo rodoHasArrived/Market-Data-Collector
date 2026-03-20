@@ -568,45 +568,15 @@ docker run -d -p 8080:8080 \
 
 **704 source files** | **692 C#** | **12 F#** | **273 test files** | **~4,100 test methods** | **214 documentation files**
 
-```
-Meridian/
-├── .github/              # 33 workflow files, AI prompts, Dependabot
-├── docs/                 # 214 documentation files, ADRs, status tracking, guides
-├── build/                # Python scripts, Node generators, build automation
-├── deploy/               # Docker, Kubernetes, systemd, monitoring configs
-├── config/               # Configuration files (appsettings.json, schemas)
-├── src/                  # 21 projects, 704 source files
-│   ├── Meridian/                    # CLI entry point, integrations, HTTP server
-│   ├── Meridian.Application/        # Startup, services, pipeline, monitoring
-│   ├── Meridian.Backtesting/        # Backtest engine, fill models, metrics
-│   ├── Meridian.Backtesting.Sdk/    # Strategy SDK interfaces
-│   ├── Meridian.Core/               # Shared config, exceptions, logging, serialization
-│   ├── Meridian.Contracts/          # Shared DTOs and API contracts
-│   ├── Meridian.Domain/             # Business logic, collectors, event models
-│   ├── Meridian.Execution/          # Order management, paper trading gateway
-│   ├── Meridian.Execution.Sdk/      # Execution context and interfaces
-│   ├── Meridian.Infrastructure/     # Provider implementations, HTTP clients, resilience
-│   ├── Meridian.ProviderSdk/        # Provider interface contracts and attributes
-│   ├── Meridian.Storage/            # Storage sinks, WAL, export, packaging, archival
-│   ├── Meridian.Strategies/         # Strategy lifecycle, portfolio tracking, promotion
-│   ├── Meridian.FSharp/             # F# domain types, validators, calculations
-│   ├── Meridian.Ui/                 # Web dashboard and SSE endpoints
-│   ├── Meridian.Ui.Services/        # Desktop UI service abstractions
-│   ├── Meridian.Ui.Shared/          # Shared endpoint handlers
-│   ├── Meridian.Wpf/                # WPF desktop app (Windows)
-│   ├── Meridian.Risk/               # Risk management and portfolio analytics
-│   ├── Meridian.McpServer/          # MCP server tools integration
-│   └── Meridian.Mcp/                # MCP protocol support
-├── tests/                # Test projects and shared test infrastructure
-│   ├── Meridian.Tests/              # Cross-platform startup, composition, contracts, API, and core/backend tests
-│   ├── Meridian.FSharp.Tests/       # F# domain tests (~99 methods)
-│   ├── Meridian.Wpf.Tests/          # WPF-only binding/navigation/host-wiring tests
-│   └── Meridian.Ui.Tests/           # Shared desktop UI service tests
-├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
-├── Meridian.sln         # Main solution file
-├── Makefile             # 91+ build targets for development and operations
-└── CLAUDE.md            # AI assistant development guide
-```
+This section is auto-updated by the `readme-tree.yml` workflow on pushes to `main`.
+
+<details>
+<summary>Show live repository tree</summary>
+
+<!-- readme-tree start -->
+<!-- readme-tree end -->
+
+</details>
 
 ## License
 

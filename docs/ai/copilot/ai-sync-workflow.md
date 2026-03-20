@@ -130,10 +130,27 @@ Manual runs can be triggered at any time via `workflow_dispatch` with custom opt
 | File | Purpose |
 |------|---------|
 | `.github/workflows/documentation.yml` | Workflow definition (AI Instructions Sync job) |
+| `.github/workflows/readme-tree.yml` | Keeps README/AI markdown tree markers synchronized with the live repository layout |
 | `docs/ai/README.md` | Master AI resource index |
 | `CLAUDE.md` | Root AI context document |
 | `docs/ai/copilot/instructions.md` | Extended Copilot guidance |
 
+## README Tree Marker Sync
+
+Repository tree snapshots embedded in markdown are now maintained by a separate workflow:
+
+- **Workflow:** `readme-tree.yml`
+- **Trigger:** Every push to `main` and manual dispatch
+- **Action:** `RavelloH/readme-tree`
+- **Managed files:** `README.md`, `docs/ai/README.md`, `docs/ai/claude/CLAUDE.structure.md`
+
+To opt a markdown document into automatic tree updates, add:
+
+```md
+<!-- readme-tree start -->
+<!-- readme-tree end -->
+```
+
 ---
 
-*Last Updated: 2026-03-16*
+*Last Updated: 2026-03-20*

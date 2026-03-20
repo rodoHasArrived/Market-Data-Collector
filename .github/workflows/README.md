@@ -149,7 +149,16 @@ Workflows have been consolidated from 37 to 33 files, reducing duplication and a
   - Optional GitHub issue creation for untracked TODOs
   - **AI**: Documentation quality review, TODO triage recommendations
 
-#### 12. **Update Diagram Artifacts** (`update-diagrams.yml`) *(consolidated)*
+#### 12. **README Tree Sync** (`readme-tree.yml`)
+- **Trigger**: Push to `main`, manual workflow dispatch
+- **Purpose**: Refreshes markdown repository tree sections managed by `RavelloH/readme-tree`
+- **Features**:
+  - Updates `README.md`, `docs/ai/README.md`, and `docs/ai/claude/CLAUDE.structure.md`
+  - Uses `<!-- readme-tree start -->` / `<!-- readme-tree end -->` markers
+  - Commits only when the generated tree output changes
+  - Skips bot-authored pushes to avoid workflow loops
+
+#### 13. **Update Diagram Artifacts** (`update-diagrams.yml`) *(consolidated)*
 - **Trigger**: Push to `main` touching `docs/diagrams/*.dot`, `docs/diagrams/uml/*.puml`, or WPF source files; manual dispatch
 - **Absorbed**: `update-uml-diagrams.yml`
 - **Purpose**: Automatically regenerates SVG and PNG diagram artifacts from DOT and PlantUML sources
@@ -161,7 +170,7 @@ Workflows have been consolidated from 37 to 33 files, reducing duplication and a
 
 ### Automation and Maintenance Workflows
 
-#### 13. **Auto Label PRs** (`labeling.yml`)
+#### 14. **Auto Label PRs** (`labeling.yml`)
 - **Trigger**: PR opened, edited, synchronized, reopened
 - **Purpose**: Automatically categorizes pull requests
 - **Features**:
@@ -170,7 +179,7 @@ Workflows have been consolidated from 37 to 33 files, reducing duplication and a
   - Warns about large PRs
   - Uses `.github/labeler.yml` configuration
 
-#### 14. **Manage Stale Issues and PRs** (`stale.yml`)
+#### 15. **Manage Stale Issues and PRs** (`stale.yml`)
 - **Trigger**: Daily at midnight UTC, Manual dispatch
 - **Purpose**: Keeps issue tracker clean
 - **Features**:
@@ -180,7 +189,7 @@ Workflows have been consolidated from 37 to 33 files, reducing duplication and a
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
-#### 15. **Scheduled Maintenance** (`scheduled-maintenance.yml`) *(consolidated)*
+#### 16. **Scheduled Maintenance** (`scheduled-maintenance.yml`) *(consolidated)*
 - **Trigger**: Weekly schedule, Manual dispatch
 - **Purpose**: Runs periodic tests, dependency health checks, and cache management
 - **Absorbed**: `cache-management.yml`
@@ -191,7 +200,7 @@ Workflows have been consolidated from 37 to 33 files, reducing duplication and a
   - Manual cache management options (list/clean-old/clean-all)
   - **AI**: Dependency upgrade recommendations with risk assessment
 
-#### 16. **Build Observability** (`build-observability.yml`)
+#### 17. **Build Observability** (`build-observability.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Generates build diagnostics and observability bundles
 - **Features**:

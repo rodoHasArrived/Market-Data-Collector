@@ -12,6 +12,7 @@ The documentation automation system keeps project documentation accurate and up-
 | --------- | ------------- |
 | **UI Diagram Refresh** | Regenerates WPF UI implementation diagrams from live source files before rendering committed SVG artifacts |
 | **Structure Generation** | Auto-generates repository structure docs from the file tree |
+| **README Tree Sync** | Updates markdown tree markers in README and AI-facing docs on every push to `main` |
 | **Provider Registry** | Extracts provider metadata from `[DataSource]` attributes |
 | **ADR Indexing** | Builds an index of Architecture Decision Records |
 | **AI Instruction Sync** | Keeps CLAUDE.md, Copilot instructions, and agent files in sync |
@@ -53,6 +54,29 @@ The workflow runs automatically on:
 - **Weekly schedule** (Monday 3 AM UTC) for full regeneration
 - **Manual dispatch** via GitHub Actions UI with configurable options
 - **Issue events** for AI Known Error intake
+
+The repository also has a dedicated `readme-tree.yml` workflow that runs on every push to `main` and refreshes markdown files containing `<!-- readme-tree start -->` / `<!-- readme-tree end -->` markers.
+
+## README Tree Sync
+
+The repository uses the GitHub Marketplace action [`RavelloH/readme-tree`](https://github.com/RavelloH/readme-tree) to keep embedded repository trees current in contributor-facing and AI-facing markdown files.
+
+### Managed Markdown Files
+
+- `README.md`
+- `docs/ai/README.md`
+- `docs/ai/claude/CLAUDE.structure.md`
+
+### Marker Format
+
+Add the following markers anywhere a generated tree should appear:
+
+```md
+<!-- readme-tree start -->
+<!-- readme-tree end -->
+```
+
+On each push to `main`, `.github/workflows/readme-tree.yml` refreshes the content between those markers and commits the updated markdown back to the branch.
 
 ## Manual Dispatch Options
 
