@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 03:26:29 UTC
+> Auto-generated on 2026-03-20 03:30:09 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1232,6 +1232,8 @@ Meridian/
 │   │   │   ├── IWatchlistService.cs
 │   │   │   └── NavigationTypes.cs
 │   │   ├── Services/
+│   │   │   ├── DataQuality/
+│   │   │   │   ...
 │   │   │   ├── ActivityFeedService.cs
 │   │   │   ├── AdminMaintenanceModels.cs
 │   │   │   ├── AdminMaintenanceServiceBase.cs
