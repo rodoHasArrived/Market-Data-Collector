@@ -35,16 +35,16 @@ using Serilog;
 namespace Meridian.Application.Composition;
 
 /// <summary>
-/// Centralizes all service registration for the application.
-/// This is the single composition root that builds the service graph once,
-/// with host-specific adapters (console, web, desktop) opting into endpoints.
+/// Centralizes all shared service registration for the application.
+/// This composition root is consumed by <see cref="HostStartup"/>, <see cref="HostBuilder"/>,
+/// and the extracted startup orchestration layer so every host mode builds from the same graph.
 /// </summary>
 /// <remarks>
 /// <para><b>Design Philosophy:</b></para>
 /// <list type="bullet">
 /// <item><description>Single source of truth for service registration</description></item>
-/// <item><description>Host-agnostic core services</description></item>
-/// <item><description>Feature flags for optional capabilities (HTTP server, backfill, etc.)</description></item>
+/// <item><description>Host-agnostic core services shared across console, web, desktop, and MCP hosts</description></item>
+/// <item><description>Canonical <see cref="CompositionOptions"/> presets select optional capabilities</description></item>
 /// <item><description>Lazy initialization for expensive services</description></item>
 /// </list>
 /// </remarks>

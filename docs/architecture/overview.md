@@ -166,7 +166,7 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 * **C# Interop** – Wrapper classes with nullable-friendly APIs
 
 ### Application
-* `Program.cs` – composition root and startup
+* `Program.cs` – thin console bootstrapper that delegates into the shared composition startup layer
 * `ConfigWatcher` – hot reload of `appsettings.json`
 * `ConfigurationService` – unified wizard, auto-config, validation, and hot reload
 * `StatusWriter` – periodic health snapshot to `data/_status/status.json`
@@ -174,9 +174,10 @@ See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI c
 * `EventSchemaValidator` – validates event schema integrity
 * `Metrics` – counters for published, dropped, and integrity events
 * **Composition sub-module** (`Application/Composition/`):
-  - `ServiceCompositionRoot` – DI service registration for all application layers
-  - `HostStartup` – unified startup entry point shared across all host types (console, web, desktop)
+  - `ServiceCompositionRoot` – shared DI registration layer used by console, web, desktop, and MCP hosts
+  - `HostStartup` – single host graph construction surface used by the shared startup orchestrators
   - `HostAdapters` – host-specific adapter wiring
+  - `Composition/Startup/*` – shared startup helpers/orchestrators for config resolution, mode selection, validation, and command dispatch
   - `CircuitBreakerCallbackRouter` – routes circuit-breaker state-change events to monitoring
 * **Event Pipeline** (`Application/Pipeline/`):
   - `EventPipeline` – bounded `Channel<MarketEvent>` with configurable capacity and drop policy

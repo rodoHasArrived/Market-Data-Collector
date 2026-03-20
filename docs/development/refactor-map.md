@@ -66,9 +66,11 @@
 - **Status:** Complete.
 - **What was done:**
   - `HostStartup.CreateStreamingClient()` delegates to `ProviderRegistry.CreateStreamingClient()`.
-  - `ServiceCompositionRoot` is the single source of truth for DI registration.
-  - `Program.cs` resolves providers through DI/registry, not `new` statements.
+  - `ServiceCompositionRoot` remains the single source of truth for DI registration.
+  - The shared startup/orchestration layer under `Application/Composition/Startup/` now owns config-path resolution, deployment selection, validation, and command dispatch planning.
+  - `Program.cs` is now a thin bootstrapper; host execution still resolves providers through `HostStartup` + DI/registry rather than `new` statements.
 - **Key files:**
+  - `src/Meridian.Application/Composition/Startup/SharedStartupBootstrapper.cs`
   - `src/Meridian.Application/Composition/HostStartup.cs`
   - `src/Meridian.Application/Composition/ServiceCompositionRoot.cs`
 
