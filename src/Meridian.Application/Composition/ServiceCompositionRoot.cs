@@ -1,36 +1,8 @@
-using Meridian.Application.Backfill;
-using Meridian.Application.Canonicalization;
-using Meridian.Application.Config;
-using Meridian.Application.Config.Credentials;
-using Meridian.Application.Logging;
+using Meridian.Application.Composition.Features;
 using Meridian.Application.Monitoring;
-using Meridian.Application.Monitoring.DataQuality;
 using Meridian.Application.Pipeline;
-using Meridian.Application.Scheduling;
-using Meridian.Application.Services;
-using Meridian.Application.Subscriptions.Models;
-using Meridian.Application.Subscriptions.Services;
-using Meridian.Application.UI;
-using Meridian.Contracts.Store;
-using Meridian.Domain.Collectors;
 using Meridian.Domain.Events;
-using Meridian.Infrastructure;
-using Meridian.Infrastructure.Adapters.Core;
-using Meridian.Infrastructure.Adapters.OpenFigi;
-using Meridian.Infrastructure.Contracts;
-using Meridian.Infrastructure.DataSources;
-using Meridian.Infrastructure.Http;
-using Meridian.Storage;
-using Meridian.Storage.Export;
-using Meridian.Storage.Interfaces;
-using Meridian.Storage.Maintenance;
-using Meridian.Storage.Policies;
-using Meridian.Storage.Services;
-using Meridian.Storage.Sinks;
-using Meridian.Storage.Store;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace Meridian.Application.Composition;
 
@@ -45,12 +17,30 @@ namespace Meridian.Application.Composition;
 /// <item><description>Single source of truth for service registration</description></item>
 /// <item><description>Host-agnostic core services shared across console, web, desktop, and MCP hosts</description></item>
 /// <item><description>Canonical <see cref="CompositionOptions"/> presets select optional capabilities</description></item>
-/// <item><description>Lazy initialization for expensive services</description></item>
+/// <item><description>Feature registration delegated to <see cref="IServiceFeatureRegistration"/> modules</description></item>
 /// </list>
 /// </remarks>
 [ImplementsAdr("ADR-001", "Centralized composition root for service configuration")]
 public static class ServiceCompositionRoot
 {
+    // Feature registration modules — instantiated once and reused across calls.
+    // Registration order matters: later modules may depend on services registered by earlier ones.
+    private static readonly IServiceFeatureRegistration[] FeatureModules =
+    [
+        new ConfigurationFeatureRegistration(),
+        new StorageFeatureRegistration(),
+        new CredentialFeatureRegistration(),
+        new ProviderFeatureRegistration(),
+        new SymbolManagementFeatureRegistration(),
+        new BackfillFeatureRegistration(),
+        new MaintenanceFeatureRegistration(),
+        new DiagnosticsFeatureRegistration(),
+        new PipelineFeatureRegistration(),
+        new CollectorFeatureRegistration(),
+        new CanonicalizationFeatureRegistration(),
+        new HttpClientFeatureRegistration(),
+    ];
+
     /// <summary>
     /// Registers all core services required by any host type.
     /// This is the minimum set of services needed for the application to function.
@@ -76,68 +66,45 @@ public static class ServiceCompositionRoot
     {
         options ??= CompositionOptions.Default;
 
-        // Core configuration services - always required
-        services.AddCoreConfigurationServices(options);
+        // Core configuration and storage — always required
+        services.RegisterFeature<ConfigurationFeatureRegistration>(options);
+        services.RegisterFeature<StorageFeatureRegistration>(options);
 
-        // Storage services - always required for data persistence
-        services.AddStorageServices(options);
-
-        // Credential services - must come before provider services for credential resolution
+        // Credential services — must come before provider services
         if (options.EnableCredentialServices)
-        {
-            services.AddCredentialServices(options);
-        }
+            services.RegisterFeature<CredentialFeatureRegistration>(options);
 
-        // Provider services (ProviderRegistry, ProviderFactory) - must come before
-        // dependent services (SymbolManagement, Backfill) to ensure providers are available
+        // Provider services — must come before dependent services (Symbol, Backfill)
         if (options.EnableProviderServices)
-        {
-            services.AddProviderServices(options);
-        }
+            services.RegisterFeature<ProviderFeatureRegistration>(options);
 
-        // Symbol management - depends on ProviderFactory/ProviderRegistry
+        // Symbol management — depends on ProviderFactory/ProviderRegistry
         if (options.EnableSymbolManagement)
-        {
-            services.AddSymbolManagementServices();
-        }
+            services.RegisterFeature<SymbolManagementFeatureRegistration>(options);
 
-        // Backfill services - depends on ProviderRegistry/ProviderFactory
+        // Backfill services — depends on ProviderRegistry/ProviderFactory
         if (options.EnableBackfillServices)
-        {
-            services.AddBackfillServices(options);
-        }
+            services.RegisterFeature<BackfillFeatureRegistration>(options);
 
         // Remaining optional services
         if (options.EnableMaintenanceServices)
-        {
-            services.AddMaintenanceServices(options);
-        }
+            services.RegisterFeature<MaintenanceFeatureRegistration>(options);
 
         if (options.EnableDiagnosticServices)
-        {
-            services.AddDiagnosticServices(options);
-        }
+            services.RegisterFeature<DiagnosticsFeatureRegistration>(options);
 
         if (options.EnablePipelineServices)
-        {
-            services.AddPipelineServices(options);
-        }
+            services.RegisterFeature<PipelineFeatureRegistration>(options);
 
         if (options.EnableCollectorServices)
-        {
-            services.AddCollectorServices(options);
-        }
+            services.RegisterFeature<CollectorFeatureRegistration>(options);
 
-        // Canonicalization services - must come after pipeline (decorates IMarketEventPublisher)
+        // Canonicalization — must come after pipeline (decorates IMarketEventPublisher)
         if (options.EnableCanonicalizationServices)
-        {
-            services.AddCanonicalizationServices(options);
-        }
+            services.RegisterFeature<CanonicalizationFeatureRegistration>(options);
 
         if (options.EnableHttpClientFactory)
-        {
-            services.AddHttpClientFactoryServices();
-        }
+            services.RegisterFeature<HttpClientFeatureRegistration>(options);
 
         return services;
     }
@@ -155,1046 +122,23 @@ public static class ServiceCompositionRoot
             CircuitBreakerCallbackRouter.Initialize(cbService);
     }
 
-    #region Core Configuration Services
-
     /// <summary>
-    /// Registers core configuration services that all hosts need.
+    /// Locates the singleton feature module instance of type <typeparamref name="T"/>
+    /// from the static module array and invokes its registration.
     /// </summary>
-    private static IServiceCollection AddCoreConfigurationServices(
+    private static IServiceCollection RegisterFeature<T>(
         this IServiceCollection services,
-        CompositionOptions options)
+        CompositionOptions options) where T : IServiceFeatureRegistration
     {
-        // ConfigStore - unified configuration access
-        if (!string.IsNullOrEmpty(options.ConfigPath))
+        foreach (var module in FeatureModules)
         {
-            services.AddSingleton(new ConfigStore(options.ConfigPath));
-        }
-        else
-        {
-            services.AddSingleton<ConfigStore>();
+            if (module is T feature)
+                return feature.Register(services, options);
         }
 
-        // ConfigurationService - consolidated configuration operations
-        services.AddSingleton<ConfigurationService>();
-
-        // Configuration utilities
-        services.AddSingleton<ConfigTemplateGenerator>();
-        services.AddSingleton<ConfigEnvironmentOverride>();
-        services.AddSingleton<DryRunService>();
-
-        return services;
+        // Fallback: create a new instance (should not happen with the static array)
+        return Activator.CreateInstance<T>().Register(services, options);
     }
-
-    #endregion
-
-    #region Storage Services
-
-    /// <summary>
-    /// Registers storage and data persistence services.
-    /// </summary>
-    private static IServiceCollection AddStorageServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // StorageOptions - configured from AppConfig or defaults
-        services.AddSingleton<StorageOptions>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var compressionEnabled = config.Compress ?? false;
-
-            return config.Storage?.ToStorageOptions(config.DataRoot, compressionEnabled)
-                ?? StorageProfilePresets.CreateFromProfile(null, config.DataRoot, compressionEnabled);
-        });
-
-        // Source registry for data source tracking
-        services.AddSingleton<ISourceRegistry>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new SourceRegistry(config.Sources?.PersistencePath);
-        });
-
-        // Core storage services
-        services.AddSingleton<IFileMaintenanceService, FileMaintenanceService>();
-        services.AddSingleton<IDataQualityService, DataQualityService>();
-        services.AddSingleton<IStorageSearchService, StorageSearchService>();
-        services.AddSingleton<ITierMigrationService, TierMigrationService>();
-
-        // Analysis export service for data export operations
-        services.AddSingleton<AnalysisExportService>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            return new AnalysisExportService(storageOptions.RootPath);
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region Symbol Management Services
-
-    /// <summary>
-    /// Registers symbol management and search services.
-    /// </summary>
-    /// <remarks>
-    /// Symbol search providers are resolved from <see cref="ProviderRegistry"/> which is populated
-    /// by <see cref="RegisterSymbolSearchProviders"/> during startup.
-    /// All symbol search operations go through <see cref="SymbolSearchService"/>.
-    /// </remarks>
-    private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
-    {
-        // Canonical symbol registry - identity resolution for canonicalization
-        services.AddSingleton<CanonicalSymbolRegistry>();
-        services.AddSingleton<Contracts.Catalog.ICanonicalSymbolRegistry>(sp =>
-            sp.GetRequiredService<CanonicalSymbolRegistry>());
-
-        // Symbol import/export
-        services.AddSingleton<SymbolImportExportService>();
-        services.AddSingleton<TemplateService>();
-        services.AddSingleton<MetadataEnrichmentService>();
-        services.AddSingleton<IndexSubscriptionService>();
-        services.AddSingleton<WatchlistService>();
-        services.AddSingleton<BatchOperationsService>();
-        services.AddSingleton<PortfolioImportService>();
-
-        // Symbol search providers - consolidated through SymbolSearchService
-        services.AddSingleton<OpenFigiClient>();
-        services.AddSingleton<SymbolSearchService>(sp =>
-        {
-            var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
-            var figiClient = sp.GetRequiredService<OpenFigiClient>();
-            var log = LoggingSetup.ForContext<SymbolSearchService>();
-
-            // Priority-based provider discovery
-            var providers = GetSymbolSearchProviders(sp, log);
-
-            return new SymbolSearchService(providers, figiClient, metadataService);
-        });
-
-        return services;
-    }
-
-    /// <summary>
-    /// Gets symbol search providers from the unified ProviderRegistry.
-    /// Providers are populated by <see cref="RegisterSymbolSearchProviders"/> during startup.
-    /// </summary>
-    private static IEnumerable<ISymbolSearchProvider> GetSymbolSearchProviders(
-        IServiceProvider sp,
-        Serilog.ILogger log)
-    {
-        var registry = sp.GetService<ProviderRegistry>();
-        if (registry != null)
-        {
-            var providers = registry.GetSymbolSearchProviders();
-            if (providers.Count > 0)
-            {
-                log.Information("Using {Count} symbol search providers from ProviderRegistry", providers.Count);
-                return providers;
-            }
-        }
-
-        log.Warning("No symbol search providers available from ProviderRegistry");
-        return Array.Empty<ISymbolSearchProvider>();
-    }
-
-    #endregion
-
-    #region Backfill Services
-
-    /// <summary>
-    /// Registers backfill and scheduling services.
-    /// Uses <see cref="ProviderRegistry"/> for unified provider discovery.
-    /// </summary>
-    /// <remarks>
-    /// <para>Requires <see cref="AddProviderServices"/> to be called first to ensure
-    /// <see cref="ProviderRegistry"/> and <see cref="ProviderFactory"/> are available.</para>
-    /// </remarks>
-    private static IServiceCollection AddBackfillServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // BackfillCoordinator - uses ProviderRegistry for unified provider discovery
-        services.AddSingleton<BackfillCoordinator>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var registry = sp.GetService<ProviderRegistry>();
-            var factory = sp.GetService<ProviderFactory>();
-            return new BackfillCoordinator(configStore, registry, factory);
-        });
-
-        // SchedulingService - symbol subscription scheduling
-        services.AddSingleton<SchedulingService>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            return new SchedulingService(configStore);
-        });
-
-        // Backfill execution history and schedule manager
-        services.AddSingleton<BackfillExecutionHistory>();
-        services.AddSingleton<BackfillScheduleManager>(sp =>
-        {
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger<BackfillScheduleManager>();
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var history = sp.GetRequiredService<BackfillExecutionHistory>();
-            return new BackfillScheduleManager(logger, config.DataRoot, history);
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region Maintenance Services
-
-    /// <summary>
-    /// Registers archive maintenance and cleanup services.
-    /// </summary>
-    private static IServiceCollection AddMaintenanceServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // Maintenance history and schedule manager
-        services.AddSingleton<MaintenanceExecutionHistory>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new MaintenanceExecutionHistory(config.DataRoot);
-        });
-
-        services.AddSingleton<ArchiveMaintenanceScheduleManager>(sp =>
-        {
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger<ArchiveMaintenanceScheduleManager>();
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var history = sp.GetRequiredService<MaintenanceExecutionHistory>();
-            return new ArchiveMaintenanceScheduleManager(logger, config.DataRoot, history);
-        });
-
-        services.AddSingleton<ScheduledArchiveMaintenanceService>(sp =>
-        {
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger<ScheduledArchiveMaintenanceService>();
-            var schedManager = sp.GetRequiredService<ArchiveMaintenanceScheduleManager>();
-            var fileMaint = sp.GetRequiredService<IFileMaintenanceService>();
-            var tierMigration = sp.GetRequiredService<ITierMigrationService>();
-            var storageOpts = sp.GetRequiredService<StorageOptions>();
-            return new ScheduledArchiveMaintenanceService(logger, schedManager, fileMaint, tierMigration, storageOpts);
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region Diagnostic Services
-
-    /// <summary>
-    /// Registers diagnostic and error tracking services.
-    /// </summary>
-    private static IServiceCollection AddDiagnosticServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // Historical data query
-        services.AddSingleton<HistoricalDataQueryService>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new HistoricalDataQueryService(config.DataRoot);
-        });
-
-        // Unified market data read abstraction (IMarketDataStore)
-        // Backed by JSONL storage; extend by replacing with CompositeMarketDataStore
-        // when additional tiers (Parquet, object store) are available.
-        services.AddSingleton<IMarketDataStore>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new JsonlMarketDataStore(config.DataRoot);
-        });
-
-        // Diagnostic bundle generator
-        services.AddSingleton<DiagnosticBundleService>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new DiagnosticBundleService(config.DataRoot, null, () => configStore.Load());
-        });
-
-        // Sample data generator
-        services.AddSingleton<SampleDataGenerator>();
-
-        // Error tracker
-        services.AddSingleton<ErrorTracker>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new ErrorTracker(config.DataRoot);
-        });
-
-        // API documentation service
-        services.AddSingleton<ApiDocumentationService>();
-
-        // Circuit breaker status service - tracks Polly circuit breaker state transitions
-        // and exposes them via the /api/resilience/circuit-breakers endpoint.
-        services.AddSingleton<CircuitBreakerStatusService>();
-
-        return services;
-    }
-
-    #endregion
-
-    #region Credential Services
-
-    /// <summary>
-    /// Registers credential management services.
-    /// </summary>
-    private static IServiceCollection AddCredentialServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        services.AddSingleton<CredentialTestingService>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new CredentialTestingService(config.DataRoot);
-        });
-
-        services.AddSingleton<OAuthTokenRefreshService>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            return new OAuthTokenRefreshService(config.DataRoot);
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region Provider Services
-
-    /// <summary>
-    /// Registers the unified <see cref="ProviderRegistry"/> and populates it with
-    /// streaming factory functions (keyed by <see cref="DataSourceKind"/>), backfill providers,
-    /// and symbol search providers. All providers are resolved through DI.
-    /// </summary>
-    /// <remarks>
-    /// Streaming factories are registered as <c>Dictionary&lt;DataSourceKind, Func&lt;IMarketDataClient&gt;&gt;</c>
-    /// entries inside <see cref="ProviderRegistry.RegisterStreamingFactory"/>. The old
-    /// <c>MarketDataClientFactory</c> switch statement and <c>ProviderFactory</c> streaming
-    /// creation are replaced by this dictionary-based approach.
-    /// </remarks>
-    private static IServiceCollection AddProviderServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // DataSourceRegistry - discovers providers decorated with [DataSource] (ADR-005).
-        // This allows new providers to be registered by adding the attribute and implementing
-        // the interface, without modifying factory methods or switch statements.
-        services.AddSingleton<DataSourceRegistry>(sp =>
-        {
-            var registry = new DataSourceRegistry();
-            registry.DiscoverFromAssemblies(typeof(Meridian.Infrastructure.NoOpMarketDataClient).Assembly);
-            return registry;
-        });
-
-        // Register credential resolver - wraps ConfigurationService for provider credential resolution
-        services.AddSingleton<ICredentialResolver>(sp =>
-        {
-            var configService = sp.GetRequiredService<ConfigurationService>();
-            return new ConfigurationServiceCredentialAdapter(configService);
-        });
-
-        // Register the unified ProviderRegistry as singleton - this is the single source of truth
-        // for all provider types (streaming, backfill, symbol search).
-        services.AddSingleton<ProviderRegistry>(sp =>
-        {
-            var registry = new ProviderRegistry(alertDispatcher: null, LoggingSetup.ForContext<ProviderRegistry>());
-
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var credentialResolver = sp.GetRequiredService<ICredentialResolver>();
-            var log = LoggingSetup.ForContext("ProviderRegistration");
-
-            // --- Streaming factories ---
-            // Phase 1.2: When UseAttributeDiscovery is enabled, [DataSource]-decorated types
-            // are auto-registered as streaming factories via DataSourceRegistry, replacing
-            // manual lambda registration. Default: manual registration (false).
-            var useAttributeDiscovery = config.ProviderRegistry?.UseAttributeDiscovery ?? false;
-            if (useAttributeDiscovery)
-            {
-                var dsRegistry = sp.GetRequiredService<DataSourceRegistry>();
-                RegisterStreamingFactoriesFromAttributes(registry, dsRegistry, sp, log);
-            }
-            else
-            {
-                RegisterStreamingFactories(registry, config, credentialResolver, sp, log);
-            }
-
-            // --- Backfill providers ---
-            RegisterBackfillProviders(registry, config, credentialResolver, log);
-
-            // --- Symbol search providers ---
-            RegisterSymbolSearchProviders(registry, config, credentialResolver, log);
-
-            return registry;
-        });
-
-        // Keep ProviderFactory registered for backward compatibility with consumers
-        // that still depend on it (BackfillCoordinators, HostStartup).
-        services.AddSingleton<ProviderFactory>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var credentialResolver = sp.GetRequiredService<ICredentialResolver>();
-            var logger = LoggingSetup.ForContext<ProviderFactory>();
-            return new ProviderFactory(config, credentialResolver, logger);
-        });
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers streaming client factory functions with the provider registry.
-    /// Each <see cref="DataSourceKind"/> maps to a factory that creates the appropriate
-    /// <see cref="IMarketDataClient"/> implementation, replacing the old switch-based approach.
-    /// </summary>
-    private static void RegisterStreamingFactories(
-        ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        IServiceProvider sp,
-        Serilog.ILogger log)
-    {
-        // IB (default)
-        registry.RegisterStreamingFactory(DataSourceKind.IB, () =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
-            var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            return new Infrastructure.Adapters.InteractiveBrokers.IBMarketDataClient(
-                publisher, tradeCollector, depthCollector);
-        });
-
-        // Alpaca
-        registry.RegisterStreamingFactory(DataSourceKind.Alpaca, () =>
-        {
-            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
-            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            var (keyId, secretKey) = credentialResolver.ResolveAlpacaCredentials(
-                config.Alpaca?.KeyId, config.Alpaca?.SecretKey);
-            return new Infrastructure.Adapters.Alpaca.AlpacaMarketDataClient(
-                tradeCollector, quoteCollector,
-                config.Alpaca! with { KeyId = keyId ?? "", SecretKey = secretKey ?? "" });
-        });
-
-        // Polygon
-        registry.RegisterStreamingFactory(DataSourceKind.Polygon, () =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
-            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            var reconnMetrics = sp.GetRequiredService<IReconnectionMetrics>();
-            return new Infrastructure.Adapters.Polygon.PolygonMarketDataClient(
-                publisher, tradeCollector, quoteCollector,
-                reconnectionMetrics: reconnMetrics);
-        });
-
-        // StockSharp
-        registry.RegisterStreamingFactory(DataSourceKind.StockSharp, () =>
-        {
-            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
-            var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            return new Infrastructure.Adapters.StockSharp.StockSharpMarketDataClient(
-                tradeCollector, depthCollector, quoteCollector,
-                config.StockSharp ?? new StockSharpConfig());
-        });
-
-        // NYSE (uses IB as underlying implementation per existing behavior)
-        registry.RegisterStreamingFactory(DataSourceKind.NYSE, () =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
-            var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
-            return new Infrastructure.Adapters.InteractiveBrokers.IBMarketDataClient(
-                publisher, tradeCollector, depthCollector);
-        });
-
-        // Synthetic offline data provider
-        registry.RegisterStreamingFactory(DataSourceKind.Synthetic, () =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            return new SyntheticMarketDataClient(publisher, config.Synthetic);
-        });
-
-        log.Information("Registered streaming factories for {Count} data sources",
-            registry.SupportedStreamingSources.Count);
-    }
-
-    /// <summary>
-    /// Registers streaming factories by discovering [DataSource]-decorated types from the
-    /// DataSourceRegistry and mapping them to DataSourceKind factory functions automatically.
-    /// This replaces manual lambda registration when ProviderRegistry:UseAttributeDiscovery is true.
-    /// </summary>
-    private static void RegisterStreamingFactoriesFromAttributes(
-        ProviderRegistry registry,
-        DataSourceRegistry dsRegistry,
-        IServiceProvider sp,
-        Serilog.ILogger log)
-    {
-        foreach (var source in dsRegistry.Sources)
-        {
-            // Only register types that implement IMarketDataClient (streaming providers)
-            if (!typeof(IMarketDataClient).IsAssignableFrom(source.ImplementationType))
-                continue;
-
-            // Map the DataSource attribute ID to a DataSourceKind enum value
-            if (!TryMapToDataSourceKind(source.Id, out var kind))
-            {
-                log.Debug("Skipping attribute-discovered provider {Id}: no matching DataSourceKind", source.Id);
-                continue;
-            }
-
-            var implType = source.ImplementationType;
-            registry.RegisterStreamingFactory(kind, () =>
-            {
-                // Resolve from DI if registered, otherwise create via Activator
-                var instance = sp.GetService(implType) as IMarketDataClient;
-                if (instance != null)
-                    return instance;
-
-                return (IMarketDataClient)ActivatorUtilities.CreateInstance(sp, implType);
-            });
-
-            log.Information("Auto-registered streaming factory for {Kind} from [DataSource(\"{Id}\")] on {Type}",
-                kind, source.Id, implType.Name);
-        }
-
-        log.Information("Attribute-based discovery registered {Count} streaming factories",
-            registry.SupportedStreamingSources.Count);
-    }
-
-    /// <summary>
-    /// Maps a DataSource attribute ID string to the corresponding DataSourceKind enum.
-    /// </summary>
-    private static bool TryMapToDataSourceKind(string id, out DataSourceKind kind)
-    {
-        kind = id.ToLowerInvariant() switch
-        {
-            "ib" or "interactivebrokers" => DataSourceKind.IB,
-            "alpaca" => DataSourceKind.Alpaca,
-            "polygon" => DataSourceKind.Polygon,
-            "stocksharp" => DataSourceKind.StockSharp,
-            "nyse" => DataSourceKind.NYSE,
-            "synthetic" => DataSourceKind.Synthetic,
-            _ => default
-        };
-
-        return id.ToLowerInvariant() is "ib" or "interactivebrokers" or "alpaca" or "polygon" or "stocksharp" or "nyse" or "synthetic";
-    }
-
-    /// <summary>
-    /// Resolves each sink ID from the <paramref name="activeIds"/> list using the
-    /// <paramref name="registry"/> and the DI service provider.
-    /// </summary>
-    /// <remarks>
-    /// For each configured ID:
-    /// <list type="number">
-    ///   <item>Looks up the implementation type from the <see cref="StorageSinkRegistry"/>.</item>
-    ///   <item>Resolves an existing DI registration for that type (preferred, so that
-    ///         factory-configured singletons like <see cref="JsonlStorageSink"/> are reused).</item>
-    ///   <item>Falls back to <see cref="ActivatorUtilities.CreateInstance"/> for plugin sinks
-    ///         not explicitly registered in the container.</item>
-    /// </list>
-    /// Unknown IDs produce a warning and are skipped.
-    /// </remarks>
-    private static IReadOnlyList<IStorageSink> BuildSinksFromRegistry(
-        IReadOnlyList<string> activeIds,
-        StorageSinkRegistry registry,
-        IServiceProvider sp)
-    {
-        var sinks = new List<IStorageSink>(activeIds.Count);
-        foreach (var id in activeIds)
-        {
-            if (!registry.TryGetSink(id, out var metadata) || metadata is null)
-            {
-                Serilog.Log.Warning(
-                    "StorageSink plugin '{SinkId}' is listed in Storage.Sinks but was not found " +
-                    "in the StorageSinkRegistry — ensure the assembly containing the " +
-                    "[StorageSink(\"{SinkId}\")] class is scanned at startup. Skipping.",
-                    id, id);
-                continue;
-            }
-
-            // Prefer DI resolution so that factory-registered singletons are reused;
-            // fall back to ActivatorUtilities for plugin sinks whose assembly is loaded
-            // but not explicitly registered in the container.
-            var instance = sp.GetService(metadata.ImplementationType) as IStorageSink
-                ?? (IStorageSink)ActivatorUtilities.CreateInstance(sp, metadata.ImplementationType);
-
-            sinks.Add(instance);
-        }
-
-        return sinks;
-    }
-
-    /// <summary>
-    /// Creates and registers backfill providers with the registry using credential resolution.
-    /// </summary>
-    private static void RegisterBackfillProviders(
-        ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        Serilog.ILogger log)
-    {
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var providers = factory.CreateBackfillProviders();
-        foreach (var provider in providers)
-        {
-            registry.Register(provider);
-        }
-    }
-
-    /// <summary>
-    /// Creates and registers symbol search providers with the registry using credential resolution.
-    /// </summary>
-    private static void RegisterSymbolSearchProviders(
-        ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        Serilog.ILogger log)
-    {
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var providers = factory.CreateSymbolSearchProviders();
-        foreach (var provider in providers)
-        {
-            registry.Register(provider);
-        }
-    }
-
-    #endregion
-
-    #region Pipeline Services
-
-    /// <summary>
-    /// Registers event pipeline and storage sink services.
-    /// </summary>
-    private static IServiceCollection AddPipelineServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // IEventMetrics - injectable metrics for pipeline and publisher.
-        // When OpenTelemetry tracing is enabled, wraps DefaultEventMetrics with
-        // TracedEventMetrics to export pipeline counters via System.Diagnostics.Metrics.
-        if (options.EnableOpenTelemetry)
-        {
-            services.AddSingleton<IEventMetrics>(sp =>
-                new Tracing.TracedEventMetrics(new DefaultEventMetrics()));
-        }
-        else
-        {
-            services.AddSingleton<IEventMetrics, DefaultEventMetrics>();
-        }
-
-        // IReconnectionMetrics - injectable metrics for WebSocket reconnection tracking.
-        services.AddSingleton<IReconnectionMetrics, PrometheusReconnectionMetrics>();
-
-        // DataQualityMonitoringService - orchestrates all quality monitoring components
-        services.AddSingleton<DataQualityMonitoringService>(sp =>
-        {
-            var eventMetrics = sp.GetRequiredService<IEventMetrics>();
-            return new DataQualityMonitoringService(eventMetrics: eventMetrics);
-        });
-
-        // DataFreshnessSlaMonitor - monitors data freshness SLA compliance
-        services.AddSingleton<DataFreshnessSlaMonitor>();
-
-        // JsonlStoragePolicy - controls file path generation
-        services.AddSingleton<JsonlStoragePolicy>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            return new JsonlStoragePolicy(storageOptions);
-        });
-
-        // JsonlStorageSink - writes events to JSONL files (always registered)
-        services.AddSingleton<JsonlStorageSink>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            var policy = sp.GetRequiredService<JsonlStoragePolicy>();
-            return new JsonlStorageSink(storageOptions, policy);
-        });
-
-        // ParquetStorageSink - writes events to Parquet files (optional)
-        services.AddSingleton<ParquetStorageSink>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            return new ParquetStorageSink(storageOptions);
-        });
-
-        // StorageSinkRegistry - discovers storage sink plugins decorated with [StorageSink]
-        // from the Storage assembly, enabling configuration-driven dynamic composition.
-        services.AddSingleton<StorageSinkRegistry>(sp =>
-        {
-            var registry = new StorageSinkRegistry();
-            registry.DiscoverFromAssemblies(typeof(JsonlStorageSink).Assembly);
-            return registry;
-        });
-
-        // IStorageSink - dynamically composed from the configured ActiveSinks list when set;
-        // falls back to the legacy EnableParquetSink flag for backward compatibility.
-        services.AddSingleton<IStorageSink>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CompositeSink>>();
-
-            // New plugin-based path: build composite from the configured sink list.
-            if (storageOptions.ActiveSinks is { Count: > 0 })
-            {
-                var registry = sp.GetRequiredService<StorageSinkRegistry>();
-                var sinks = BuildSinksFromRegistry(storageOptions.ActiveSinks, registry, sp);
-                return sinks.Count == 1 ? sinks[0] : new CompositeSink(sinks, logger);
-            }
-
-            // Legacy path: EnableParquetSink flag (retained for backward compatibility).
-            var jsonlSink = sp.GetRequiredService<JsonlStorageSink>();
-            if (storageOptions.EnableParquetSink)
-            {
-                var parquetSink = sp.GetRequiredService<ParquetStorageSink>();
-                return new CompositeSink(new IStorageSink[] { jsonlSink, parquetSink }, logger);
-            }
-
-            return jsonlSink;
-        });
-
-        // WriteAheadLog - crash-safe durability for the event pipeline
-        services.AddSingleton<Storage.Archival.WriteAheadLog>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            var walDir = Path.Combine(storageOptions.RootPath, "_wal");
-            return new Storage.Archival.WriteAheadLog(walDir, new Storage.Archival.WalOptions
-            {
-                SyncMode = Storage.Archival.WalSyncMode.BatchedSync,
-                SyncBatchSize = 1000,
-                MaxFlushDelay = TimeSpan.FromSeconds(1)
-            });
-        });
-
-        // DroppedEventAuditTrail - records events dropped due to backpressure
-        services.AddSingleton<Pipeline.DroppedEventAuditTrail>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.DroppedEventAuditTrail>>();
-            return new Pipeline.DroppedEventAuditTrail(storageOptions.RootPath, logger);
-        });
-
-        // DeadLetterSink - persists validation-rejected events to a separate JSONL file
-        services.AddSingleton<Pipeline.DeadLetterSink>(sp =>
-        {
-            var storageOptions = sp.GetRequiredService<StorageOptions>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.DeadLetterSink>>();
-            return new Pipeline.DeadLetterSink(storageOptions.RootPath, logger);
-        });
-
-        // FSharpEventValidator - optional F# validation stage (enabled via Validation.Enabled in config)
-        services.AddSingleton<Pipeline.FSharpEventValidator>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var validationConfig = config.Validation;
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.FSharpEventValidator>>();
-            return new Pipeline.FSharpEventValidator(
-                symbolConfigs: config.Symbols,
-                useRealTimeMode: validationConfig?.UseRealTimeMode ?? false,
-                logger: logger);
-        });
-
-        // EventPipeline - bounded channel event routing with WAL for durability.
-        // When Validation.Enabled is true in config, the F# validation gate and dead-letter sink
-        // are wired in so invalid events are rejected before reaching primary storage.
-        services.AddSingleton<EventPipeline>(sp =>
-        {
-            var sink = sp.GetRequiredService<IStorageSink>();
-            var metrics = sp.GetRequiredService<IEventMetrics>();
-            var wal = sp.GetService<Storage.Archival.WriteAheadLog>();
-            var auditTrail = sp.GetService<Pipeline.DroppedEventAuditTrail>();
-
-            // Resolve validation components only when the feature is enabled.
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            Pipeline.IEventValidator? validator = null;
-            Pipeline.DeadLetterSink? deadLetterSink = null;
-
-            if (config.Validation is { Enabled: true })
-            {
-                validator = sp.GetRequiredService<Pipeline.FSharpEventValidator>();
-                deadLetterSink = sp.GetRequiredService<Pipeline.DeadLetterSink>();
-
-                Log.ForContext<EventPipeline>().Information(
-                    "F# validation pipeline enabled (realTimeMode={RealTimeMode})",
-                    config.Validation.UseRealTimeMode);
-            }
-
-            return new EventPipeline(
-                sink,
-                EventPipelinePolicy.HighThroughput,
-                metrics: metrics,
-                wal: wal,
-                auditTrail: auditTrail,
-                validator: validator,
-                deadLetterSink: deadLetterSink,
-                consumerCount: wal is null && validator is null && Environment.ProcessorCount > 2 ? 2 : 1);
-        });
-
-        // IMarketEventPublisher - facade for publishing events.
-        // When canonicalization is enabled, returns CanonicalizingPublisher (which
-        // wraps its own PipelinePublisher internally). Otherwise creates PipelinePublisher directly.
-        services.AddSingleton<IMarketEventPublisher>(sp =>
-        {
-            // Check if canonicalization should wrap the publisher
-            var canonPublisher = sp.GetService<CanonicalizingPublisher>();
-            if (canonPublisher is not null)
-            {
-                var configStore = sp.GetRequiredService<ConfigStore>();
-                var config = configStore.Load();
-                if (config.Canonicalization is { Enabled: true })
-                    return canonPublisher;
-            }
-
-            var pipeline = sp.GetRequiredService<EventPipeline>();
-            var metrics = sp.GetRequiredService<IEventMetrics>();
-            IMarketEventPublisher publisher = new PipelinePublisher(pipeline, metrics);
-
-            var pipelineConfigStore = sp.GetRequiredService<ConfigStore>();
-            var pipelineConfig = pipelineConfigStore.Load();
-
-            if (pipelineConfig.Canonicalization is { Enabled: true })
-            {
-                var canonConfig = pipelineConfig.Canonicalization;
-                var symbolRegistry = sp.GetService<Contracts.Catalog.ICanonicalSymbolRegistry>();
-                if (symbolRegistry is null)
-                {
-                    Log.ForContext<EventPipeline>().Warning(
-                        "Canonicalization enabled but ICanonicalSymbolRegistry not registered; skipping");
-                    return publisher;
-                }
-                var conditionsPath = canonConfig.ConditionCodesPath
-                    ?? Path.Combine(AppContext.BaseDirectory, "config", "condition-codes.json");
-                var conditions = ConditionCodeMapper.LoadFromFile(conditionsPath);
-                var venuesPath = canonConfig.VenueMappingPath
-                    ?? Path.Combine(AppContext.BaseDirectory, "config", "venue-mapping.json");
-                var venues = VenueMicMapper.LoadFromFile(venuesPath);
-                var canonicalizer = new EventCanonicalizer(
-                    symbolRegistry, conditions, venues, (byte)canonConfig.Version);
-
-                CanonicalizationMetrics.SetActiveVersion(canonConfig.Version);
-
-                publisher = new CanonicalizingPublisher(
-                    publisher, canonicalizer, canonConfig.PilotSymbols, canonConfig.EnableDualWrite);
-
-                Log.ForContext<EventPipeline>().Information(
-                    "Canonicalization enabled (version={Version}, pilotSymbols={PilotCount}, dualWrite={DualWrite})",
-                    canonConfig.Version,
-                    canonConfig.PilotSymbols?.Length ?? 0,
-                    canonConfig.EnableDualWrite);
-            }
-
-            return publisher;
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region Collector Services
-
-    /// <summary>
-    /// Registers market data collector services.
-    /// </summary>
-    private static IServiceCollection AddCollectorServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // QuoteCollector - BBO state tracking
-        services.AddSingleton<QuoteCollector>(sp =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            return new QuoteCollector(publisher);
-        });
-
-        // TradeDataCollector - tick-by-tick trade processing
-        services.AddSingleton<TradeDataCollector>(sp =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            return new TradeDataCollector(publisher, quoteCollector);
-        });
-
-        // MarketDepthCollector - L2 order book maintenance
-        services.AddSingleton<MarketDepthCollector>(sp =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            return new MarketDepthCollector(publisher, requireExplicitSubscription: true);
-        });
-
-        // OptionDataCollector - option quotes, trades, greeks, chains
-        services.AddSingleton<OptionDataCollector>(sp =>
-        {
-            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            return new OptionDataCollector(publisher);
-        });
-
-        // OptionsChainService - orchestrates option chain discovery and filtering
-        services.AddSingleton<OptionsChainService>(sp =>
-        {
-            var collector = sp.GetRequiredService<OptionDataCollector>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OptionsChainService>>();
-            var provider = sp.GetService<Infrastructure.Adapters.Core.IOptionsChainProvider>();
-            return new OptionsChainService(collector, logger, provider);
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region Canonicalization Services
-
-    /// <summary>
-    /// Registers canonicalization services: mapping tables, the canonicalizer,
-    /// and the <see cref="CanonicalizingPublisher"/> decorator that wraps
-    /// <see cref="IMarketEventPublisher"/>.
-    /// </summary>
-    /// <remarks>
-    /// Must be called <b>after</b> <see cref="AddPipelineServices"/> because
-    /// the canonicalizing publisher decorates the existing IMarketEventPublisher
-    /// registration (PipelinePublisher).
-    /// </remarks>
-    private static IServiceCollection AddCanonicalizationServices(
-        this IServiceCollection services,
-        CompositionOptions options)
-    {
-        // [6.1] Register ICanonicalizationMetrics as a DI singleton so it can be injected,
-        // mocked in tests, and replaced without modifying global static state.
-        // The static CanonicalizationMetrics façade is also updated to delegate to this instance.
-        services.AddSingleton<ICanonicalizationMetrics>(sp =>
-        {
-            var instance = new DefaultCanonicalizationMetrics();
-            // Keep the static façade in sync so legacy call sites continue to work.
-            CanonicalizationMetrics.Current = instance;
-            return instance;
-        });
-
-        // Mapping tables (loaded once at startup, frozen for hot-path reads)
-        services.AddSingleton<ConditionCodeMapper>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var path = config.Canonicalization?.ConditionCodesPath ?? "config/condition-codes.json";
-            return ConditionCodeMapper.LoadFromFile(path);
-        });
-
-        services.AddSingleton<VenueMicMapper>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var path = config.Canonicalization?.VenueMappingPath ?? "config/venue-mapping.json";
-            return VenueMicMapper.LoadFromFile(path);
-        });
-
-        // EventCanonicalizer - the core canonicalization logic
-        services.AddSingleton<IEventCanonicalizer>(sp =>
-        {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var symbols = sp.GetRequiredService<Contracts.Catalog.ICanonicalSymbolRegistry>();
-            var conditions = sp.GetRequiredService<ConditionCodeMapper>();
-            var venues = sp.GetRequiredService<VenueMicMapper>();
-            var version = (byte)(config.Canonicalization?.Version ?? 1);
-            return new EventCanonicalizer(symbols, conditions, venues, version);
-        });
-
-        // CanonicalizingPublisher - wraps the inner IMarketEventPublisher (PipelinePublisher).
-        // Registered as a named singleton so the decorator can be manually composed below.
-        services.AddSingleton<CanonicalizingPublisher>(sp =>
-        {
-            var pipeline = sp.GetRequiredService<EventPipeline>();
-            var metrics = sp.GetRequiredService<IEventMetrics>();
-            var innerPublisher = new PipelinePublisher(pipeline, metrics);
-
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            var config = configStore.Load();
-            var canonConfig = config.Canonicalization;
-            var canonicalizer = sp.GetRequiredService<IEventCanonicalizer>();
-
-            // Optional quarantine sink: when canonicalization is enabled, unresolved-symbol
-            // events are written to <dataRoot>/_quarantine/ so they are never silently lost.
-            Pipeline.DeadLetterSink? quarantine = null;
-            if (canonConfig?.Enabled == true)
-            {
-                var storageOptions = sp.GetRequiredService<StorageOptions>();
-                var qLogger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.DeadLetterSink>>();
-                quarantine = new Pipeline.DeadLetterSink(
-                    Path.Combine(storageOptions.RootPath, "_quarantine"), qLogger);
-            }
-
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CanonicalizingPublisher>>();
-
-            return new CanonicalizingPublisher(
-                innerPublisher,
-                canonicalizer,
-                canonConfig?.PilotSymbols,
-                canonConfig?.EnableDualWrite ?? true,
-                quarantine,
-                logger);
-        });
-
-        return services;
-    }
-
-    #endregion
-
-    #region HttpClient Factory Services
-
-    /// <summary>
-    /// Registers HttpClientFactory for proper HTTP client lifecycle management.
-    /// Implements ADR-010: HttpClient Factory pattern.
-    /// </summary>
-    private static IServiceCollection AddHttpClientFactoryServices(this IServiceCollection services)
-    {
-        // Register all named HttpClient configurations with Polly policies.
-        // Uses the tracked variant so every circuit breaker state transition is reported
-        // to CircuitBreakerStatusService and surfaced via /api/resilience/circuit-breakers.
-        services.AddMarketDataHttpClientsTracked((name, state, error) =>
-        {
-            // Callback invoked by Polly on every circuit breaker transition.
-            // We use a lazy service resolution pattern here because the service provider
-            // is not yet available during service registration — the lambda captures the
-            // IServiceCollection and resolves the service on first use.
-            var circuitBreakerState = state switch
-            {
-                "Open" => CircuitBreakerState.Open,
-                "HalfOpen" => CircuitBreakerState.HalfOpen,
-                _ => CircuitBreakerState.Closed
-            };
-
-            // The callback is invoked at runtime when an HTTP request triggers a state
-            // transition. At that point the DI container is fully built, so we resolve
-            // CircuitBreakerStatusService from the root provider via a static accessor.
-            CircuitBreakerCallbackRouter.Notify(name, circuitBreakerState, error);
-        });
-
-        return services;
-    }
-
-    #endregion
 }
 
 /// <summary>
@@ -1217,7 +161,6 @@ public sealed class PipelinePublisher : IMarketEventPublisher
         var ok = _pipeline.TryPublish(evt);
 
         // Integrity tracking lives here because EventPipeline is type-agnostic.
-        // Published/Dropped are tracked inside EventPipeline.TryPublish() already.
         if (evt.Type == MarketEventType.Integrity)
             _metrics.IncIntegrity();
         return ok;
@@ -1340,65 +283,19 @@ public sealed record CompositionOptions
     /// </summary>
     public string? DataRoot { get; init; }
 
-    /// <summary>
-    /// Whether to enable symbol management services (import/export, search, watchlists).
-    /// </summary>
     public bool EnableSymbolManagement { get; init; }
-
-    /// <summary>
-    /// Whether to enable backfill scheduling and coordination services.
-    /// </summary>
     public bool EnableBackfillServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable archive maintenance and cleanup services.
-    /// </summary>
     public bool EnableMaintenanceServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable diagnostic and error tracking services.
-    /// </summary>
     public bool EnableDiagnosticServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable credential testing and OAuth services.
-    /// </summary>
     public bool EnableCredentialServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable provider factory and registry services.
-    /// </summary>
     public bool EnableProviderServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable event pipeline and storage sink services.
-    /// </summary>
     public bool EnablePipelineServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable market data collector services (Trade, Quote, Depth).
-    /// </summary>
     public bool EnableCollectorServices { get; init; }
-
-    /// <summary>
-    /// Whether to enable HttpClientFactory for HTTP client lifecycle management.
-    /// </summary>
     public bool EnableHttpClientFactory { get; init; }
-
-    /// <summary>
-    /// Whether to enable canonicalization services (symbol resolution, condition
-    /// code mapping, venue normalization). When enabled, a <see cref="CanonicalizingPublisher"/>
-    /// decorator wraps <see cref="IMarketEventPublisher"/> to enrich events before
-    /// they reach the pipeline. The actual canonicalization behavior is further gated
-    /// by <see cref="CanonicalizationConfig.Enabled"/> in <c>appsettings.json</c>.
-    /// </summary>
     public bool EnableCanonicalizationServices { get; init; }
 
     /// <summary>
     /// Whether to enable OpenTelemetry tracing and metrics instrumentation.
-    /// When enabled, wraps IEventMetrics with TracedEventMetrics for OTLP-compatible
-    /// pipeline counter export. Controlled via MDC_OTEL_ENABLED environment variable
-    /// or explicit configuration.
     /// </summary>
     public bool EnableOpenTelemetry { get; init; }
 }

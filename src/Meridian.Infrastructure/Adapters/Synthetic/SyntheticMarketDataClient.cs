@@ -11,7 +11,7 @@ using Meridian.Infrastructure.DataSources;
 
 namespace Meridian.Infrastructure.Adapters.Synthetic;
 
-[DataSource("synthetic", "Synthetic Market Data", DataSourceType.Hybrid, DataSourceCategory.Free, Description = "Deterministic synthetic real-time and historical market data for offline development.")]
+[DataSource("synthetic", "Synthetic Market Data", DataSources.DataSourceType.Hybrid, DataSourceCategory.Free, Description = "Deterministic synthetic real-time and historical market data for offline development.")]
 public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearchProvider
 {
     private readonly SyntheticMarketDataConfig _config;
