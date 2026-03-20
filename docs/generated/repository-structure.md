@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 00:09:08 UTC
+> Auto-generated on 2026-03-20 00:15:39 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1696,7 +1696,9 @@ Meridian/
 ├── .markdownlint.json
 ├── audit-architecture-results.txt
 ├── audit-code-results.json
+├── audit-results-full.json
 ├── AUDIT_REPORT.md
+├── AUDIT_REPORT_2026_03_20.md
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props

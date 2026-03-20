@@ -1,7 +1,7 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-20T00:09:12.173994+00:00
+> Last updated: 2026-03-20T00:15:43.122054+00:00
 
 ## Overall Health Score
 
@@ -14,10 +14,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 225 |
-| Total lines | 87,904 |
-| Average file size (lines) | 390.7 |
-| Orphaned files | 40 |
+| Total documentation files | 226 |
+| Total lines | 88,195 |
+| Average file size (lines) | 390.2 |
+| Orphaned files | 41 |
 | Files without headings | 2 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 180 |
@@ -55,6 +55,7 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/pull_request_template_desktop.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
 - `AUDIT_REPORT.md`
+- `AUDIT_REPORT_2026_03_20.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
 - `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
@@ -65,8 +66,7 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/CS0101_FIX_SUMMARY.md`
 - `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
 - `docs/archived/IMPROVEMENTS_2026-02.md`
-- `docs/archived/QUICKSTART_2026-01-08.md`
-- ... and 20 more
+- ... and 21 more
 
 ## Trend
 
@@ -74,7 +74,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-20 | 91 | 225 | 40 | 0 |
+| 2026-03-20 | 91 | 226 | 41 | 0 |
 
 ---
 
