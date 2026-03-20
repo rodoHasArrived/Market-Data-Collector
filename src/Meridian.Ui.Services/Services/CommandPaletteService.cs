@@ -114,7 +114,7 @@ public sealed class CommandPaletteService
         }
 
         // Fill with popular/default commands
-        var defaultIds = new[] { "nav-dashboard", "nav-backfill", "nav-symbols", "nav-data-quality", "nav-settings" };
+        var defaultIds = new[] { "nav-dashboard", "nav-backtest", "nav-lean", "nav-portfolio-import", "nav-backfill", "nav-symbols", "nav-data-quality", "nav-settings" };
         foreach (var id in defaultIds)
         {
             if (result.All(c => c.Id != id))
@@ -213,15 +213,16 @@ public sealed class CommandPaletteService
         RegisterNavigationCommand("nav-event-replay", "Navigate to Event Replay", "EventReplay", "event replay playback simulate", "\uE768", "");
         RegisterNavigationCommand("nav-package-manager", "Navigate to Package Manager", "PackageManager", "package zip import share", "\uE7B8", "");
         RegisterNavigationCommand("nav-schedules", "Navigate to Schedule Manager", "Schedules", "schedule cron job timer", "\uE823", "");
-        RegisterNavigationCommand("nav-lean", "Navigate to Lean Integration", "LeanIntegration", "lean quantconnect backtest", "\uE943", "");
+        RegisterNavigationCommand("nav-backtest", "Navigate to Backtest", "Backtest", "backtest strategy simulation run test historical replay", "\uE9D9", "Ctrl+Shift+B");
+        RegisterNavigationCommand("nav-lean", "Navigate to Lean Integration", "LeanIntegration", "lean quantconnect backtest engine algorithm", "\uE943", "");
         RegisterNavigationCommand("nav-admin-maintenance", "Navigate to Admin Maintenance", "AdminMaintenance", "admin maintenance cleanup", "\uE90F", "");
         RegisterNavigationCommand("nav-storage-optimization", "Navigate to Storage Optimization", "StorageOptimization", "storage optimize compress tier", "\uEDA2", "");
         RegisterNavigationCommand("nav-keyboard-shortcuts", "Navigate to Keyboard Shortcuts", "KeyboardShortcuts", "keyboard shortcut hotkey bind", "\uE765", "");
         RegisterNavigationCommand("nav-setup-wizard", "Navigate to Setup Wizard", "SetupWizard", "setup wizard configure first run", "\uE74C", "");
         RegisterNavigationCommand("nav-activity-log", "Navigate to Activity Log", "ActivityLog", "activity log events history", "\uE81C", "");
         RegisterNavigationCommand("nav-symbol-mapping", "Navigate to Symbol Mapping", "SymbolMapping", "symbol mapping alias convert", "\uE8AB", "");
-        RegisterNavigationCommand("nav-portfolio-import", "Navigate to Portfolio Import", "PortfolioImport", "portfolio import csv bulk", "\uE8B5", "");
-        RegisterNavigationCommand("nav-trading-hours", "Navigate to Trading Hours", "TradingHours", "trading hours market calendar", "\uE823", "");
+        RegisterNavigationCommand("nav-portfolio-import", "Navigate to Portfolio Import", "PortfolioImport", "portfolio import csv bulk ledger positions trades", "\uE8B5", "");
+        RegisterNavigationCommand("nav-trading-hours", "Navigate to Trading Hours", "TradingHours", "trading hours market calendar sessions open close backtest", "\uE823", "");
         RegisterNavigationCommand("nav-workspaces", "Navigate to Workspaces", "Workspaces", "workspace layout save restore", "\uE737", "");
         RegisterNavigationCommand("nav-advanced-analytics", "Navigate to Advanced Analytics", "AdvancedAnalytics", "analytics advanced statistics", "\uE9D9", "");
         RegisterNavigationCommand("nav-retention", "Navigate to Retention Assurance", "RetentionAssurance", "retention policy assurance audit", "\uE74C", "");

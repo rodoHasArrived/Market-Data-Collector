@@ -79,6 +79,10 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
         RegisterPage("Options", typeof(OptionsPage));
         RegisterPage("Schedules", typeof(ScheduleManagerPage));
 
+        // Trading & Backtesting (4 pages)
+        RegisterPage("Backtest", typeof(BacktestPage));
+        RegisterPage("TradingHours", typeof(TradingHoursPage));
+
         // Monitoring (6 pages)
         RegisterPage("DataQuality", typeof(DataQualityPage));
         RegisterPage("CollectionSessions", typeof(CollectionSessionPage));
@@ -87,7 +91,7 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
         RegisterPage("SystemHealth", typeof(SystemHealthPage));
         RegisterPage("Diagnostics", typeof(DiagnosticsPage));
 
-        // Tools (10 pages)
+        // Tools (8 pages)
         RegisterPage("DataExport", typeof(DataExportPage));
         RegisterPage("DataSampling", typeof(DataSamplingPage));
         RegisterPage("TimeSeriesAlignment", typeof(TimeSeriesAlignmentPage));
@@ -96,7 +100,6 @@ public sealed class NavigationService : NavigationServiceBase, INavigationServic
         RegisterPage("AnalysisExportWizard", typeof(AnalysisExportWizardPage));
         RegisterPage("EventReplay", typeof(EventReplayPage));
         RegisterPage("PackageManager", typeof(PackageManagerPage));
-        RegisterPage("TradingHours", typeof(TradingHoursPage));
 
         // Analytics & Visualization (4 pages)
         RegisterPage("AdvancedAnalytics", typeof(AdvancedAnalyticsPage));

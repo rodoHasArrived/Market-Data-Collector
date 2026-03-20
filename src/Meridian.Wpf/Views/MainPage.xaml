@@ -202,14 +202,14 @@
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="0,4,0,4">
 
-                            <!-- ═══ MONITOR Workspace ═══ -->
-                            <TextBlock Text="MONITOR" Style="{StaticResource SectionHeaderStyle}" />
+                            <!-- ═══ RESEARCH Section ═══ -->
+                            <TextBlock Text="RESEARCH" Style="{StaticResource SectionHeaderStyle}" />
 
-                            <ListBox x:Name="MonitorNavList"
+                            <ListBox x:Name="ResearchNavList"
                                      Background="Transparent"
                                      BorderThickness="0"
                                      ItemContainerStyle="{StaticResource NavItemStyle}"
-                                     SelectionChanged="OnMonitorNavSelectionChanged">
+                                     SelectionChanged="OnResearchNavSelectionChanged">
                                 <ListBoxItem Tag="Dashboard">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconDashboard}" Style="{StaticResource NavIconStyle}" />
@@ -228,9 +228,15 @@
                                         <TextBlock Text="Charts" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
+                                <ListBoxItem Tag="OrderBook">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconTable}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Order Book" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
                                 <ListBoxItem Tag="Watchlist">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource IconList}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="{StaticResource IconFavorite}" Style="{StaticResource NavIconStyle}" />
                                         <TextBlock Text="Watchlist" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
@@ -238,14 +244,50 @@
 
                             <Rectangle Style="{StaticResource HorizontalDividerStyle}" Margin="20,6" />
 
-                            <!-- ═══ COLLECT Workspace ═══ -->
-                            <TextBlock Text="COLLECT" Style="{StaticResource SectionHeaderStyle}" />
+                            <!-- ═══ TRADING Section ═══ -->
+                            <TextBlock Text="TRADING" Style="{StaticResource SectionHeaderStyle}" />
 
-                            <ListBox x:Name="CollectNavList"
+                            <ListBox x:Name="TradingNavList"
                                      Background="Transparent"
                                      BorderThickness="0"
                                      ItemContainerStyle="{StaticResource NavItemStyle}"
-                                     SelectionChanged="OnCollectNavSelectionChanged">
+                                     SelectionChanged="OnTradingNavSelectionChanged">
+                                <ListBoxItem Tag="Backtest">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconPlay}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Backtest" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
+                                <ListBoxItem Tag="LeanIntegration">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconCode}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Lean Engine" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
+                                <ListBoxItem Tag="PortfolioImport">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconImport}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Portfolio Import" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
+                                <ListBoxItem Tag="TradingHours">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconClock}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="Trading Hours" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
+                            </ListBox>
+
+                            <Rectangle Style="{StaticResource HorizontalDividerStyle}" Margin="20,6" />
+
+                            <!-- ═══ DATA OPS Section ═══ -->
+                            <TextBlock Text="DATA OPS" Style="{StaticResource SectionHeaderStyle}" />
+
+                            <ListBox x:Name="DataOpsNavList"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ItemContainerStyle="{StaticResource NavItemStyle}"
+                                     SelectionChanged="OnDataOpsNavSelectionChanged">
                                 <ListBoxItem Tag="Provider">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconNetwork}" Style="{StaticResource NavIconStyle}" />
@@ -264,24 +306,6 @@
                                         <TextBlock Text="Backfill" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
-                                <ListBoxItem Tag="Options">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource IconTrending}" Style="{StaticResource NavIconStyle}" />
-                                        <TextBlock Text="Options" Style="{StaticResource NavLabelStyle}" />
-                                    </StackPanel>
-                                </ListBoxItem>
-                            </ListBox>
-
-                            <Rectangle Style="{StaticResource HorizontalDividerStyle}" Margin="20,6" />
-
-                            <!-- ═══ STORAGE Workspace ═══ -->
-                            <TextBlock Text="STORAGE" Style="{StaticResource SectionHeaderStyle}" />
-
-                            <ListBox x:Name="StorageNavList"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ItemContainerStyle="{StaticResource NavItemStyle}"
-                                     SelectionChanged="OnStorageNavSelectionChanged">
                                 <ListBoxItem Tag="Storage">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconDatabase}" Style="{StaticResource NavIconStyle}" />
@@ -296,7 +320,7 @@
                                 </ListBoxItem>
                                 <ListBoxItem Tag="PackageManager">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource IconExport}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="{StaticResource IconFolder}" Style="{StaticResource NavIconStyle}" />
                                         <TextBlock Text="Packages" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
@@ -304,14 +328,14 @@
 
                             <Rectangle Style="{StaticResource HorizontalDividerStyle}" Margin="20,6" />
 
-                            <!-- ═══ QUALITY Workspace ═══ -->
-                            <TextBlock Text="QUALITY" Style="{StaticResource SectionHeaderStyle}" />
+                            <!-- ═══ GOVERNANCE Section ═══ -->
+                            <TextBlock Text="GOVERNANCE" Style="{StaticResource SectionHeaderStyle}" />
 
-                            <ListBox x:Name="QualityNavList"
+                            <ListBox x:Name="GovernanceNavList"
                                      Background="Transparent"
                                      BorderThickness="0"
                                      ItemContainerStyle="{StaticResource NavItemStyle}"
-                                     SelectionChanged="OnQualityNavSelectionChanged">
+                                     SelectionChanged="OnGovernanceNavSelectionChanged">
                                 <ListBoxItem Tag="DataQuality">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconCheckmark}" Style="{StaticResource NavIconStyle}" />
@@ -324,39 +348,27 @@
                                         <TextBlock Text="Provider Health" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
+                                <ListBoxItem Tag="SystemHealth">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{StaticResource IconConnected}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="System Health" Style="{StaticResource NavLabelStyle}" />
+                                    </StackPanel>
+                                </ListBoxItem>
                                 <ListBoxItem Tag="Diagnostics">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource IconSettings}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="{StaticResource IconTerminal}" Style="{StaticResource NavIconStyle}" />
                                         <TextBlock Text="Diagnostics" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
-                            </ListBox>
-
-                            <Rectangle Style="{StaticResource HorizontalDividerStyle}" Margin="20,6" />
-
-                            <!-- ═══ SETTINGS Workspace ═══ -->
-                            <TextBlock Text="SETTINGS" Style="{StaticResource SectionHeaderStyle}" />
-
-                            <ListBox x:Name="SettingsNavList"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ItemContainerStyle="{StaticResource NavItemStyle}"
-                                     SelectionChanged="OnSettingsNavSelectionChanged">
                                 <ListBoxItem Tag="Settings">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{StaticResource IconSettings}" Style="{StaticResource NavIconStyle}" />
                                         <TextBlock Text="Settings" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>
-                                <ListBoxItem Tag="AddProviderWizard">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource IconPlugin}" Style="{StaticResource NavIconStyle}" />
-                                        <TextBlock Text="Add Provider" Style="{StaticResource NavLabelStyle}" />
-                                    </StackPanel>
-                                </ListBoxItem>
                                 <ListBoxItem Tag="AdminMaintenance">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{StaticResource IconSettings}" Style="{StaticResource NavIconStyle}" />
+                                        <TextBlock Text="{StaticResource IconLock}" Style="{StaticResource NavIconStyle}" />
                                         <TextBlock Text="Admin" Style="{StaticResource NavLabelStyle}" />
                                     </StackPanel>
                                 </ListBoxItem>

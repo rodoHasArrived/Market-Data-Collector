@@ -28,11 +28,11 @@ public partial class MainPage : Page
     private bool _commandPaletteOpen;
 
     /// <summary>
-    /// All navigation ListBoxes, used to clear selection across workspaces.
+    /// All navigation ListBoxes, used to clear selection across sections.
     /// </summary>
     private ListBox[] AllNavLists => new[]
     {
-        MonitorNavList, CollectNavList, StorageNavList, QualityNavList, SettingsNavList
+        ResearchNavList, TradingNavList, DataOpsNavList, GovernanceNavList
     };
 
     public MainPage(
@@ -71,7 +71,7 @@ public partial class MainPage : Page
         else
         {
             // Set selected index first (before navigation to avoid triggering SelectionChanged)
-            MonitorNavList.SelectedIndex = 0;
+            ResearchNavList.SelectedIndex = 0;
             // Default to Dashboard
             _navigationService.NavigateTo("Dashboard");
         }
@@ -86,49 +86,40 @@ public partial class MainPage : Page
         InitializeFixtureModeBanner();
     }
 
-    #region Workspace Navigation Handlers
+    #region Section Navigation Handlers
 
-    private void OnMonitorNavSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnResearchNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (MonitorNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
+        if (ResearchNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
         {
-            ClearOtherSelections(MonitorNavList);
+            ClearOtherSelections(ResearchNavList);
             NavigateToPage(pageTag);
         }
     }
 
-    private void OnCollectNavSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnTradingNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (CollectNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
+        if (TradingNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
         {
-            ClearOtherSelections(CollectNavList);
+            ClearOtherSelections(TradingNavList);
             NavigateToPage(pageTag);
         }
     }
 
-    private void OnStorageNavSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnDataOpsNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (StorageNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
+        if (DataOpsNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
         {
-            ClearOtherSelections(StorageNavList);
+            ClearOtherSelections(DataOpsNavList);
             NavigateToPage(pageTag);
         }
     }
 
-    private void OnQualityNavSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnGovernanceNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (QualityNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
+        if (GovernanceNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
         {
-            ClearOtherSelections(QualityNavList);
-            NavigateToPage(pageTag);
-        }
-    }
-
-    private void OnSettingsNavSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (SettingsNavList.SelectedItem is ListBoxItem item && item.Tag is string pageTag)
-        {
-            ClearOtherSelections(SettingsNavList);
+            ClearOtherSelections(GovernanceNavList);
             NavigateToPage(pageTag);
         }
     }
@@ -303,47 +294,48 @@ public partial class MainPage : Page
     {
         return new List<CommandPaletteItem>
         {
-            // Monitor workspace
-            new("Dashboard", "Monitor", "page:Dashboard", new[] { "home", "overview", "status" }),
-            new("Live Data", "Monitor", "page:LiveData", new[] { "realtime", "streaming", "trades" }),
-            new("Charts", "Monitor", "page:Charts", new[] { "candlestick", "technical", "indicators" }),
-            new("Order Book", "Monitor", "page:OrderBook", new[] { "depth", "l2", "heatmap" }),
-            new("Watchlist", "Monitor", "page:Watchlist", new[] { "favorites", "tracked" }),
-            new("Notifications", "Monitor", "page:NotificationCenter", new[] { "alerts", "incidents" }),
+            // Research section
+            new("Dashboard", "Research", "page:Dashboard", new[] { "home", "overview", "status" }),
+            new("Live Data", "Research", "page:LiveData", new[] { "realtime", "streaming", "trades" }),
+            new("Charts", "Research", "page:Charts", new[] { "candlestick", "technical", "indicators" }),
+            new("Order Book", "Research", "page:OrderBook", new[] { "depth", "l2", "heatmap" }),
+            new("Watchlist", "Research", "page:Watchlist", new[] { "favorites", "tracked" }),
+            new("Notifications", "Research", "page:NotificationCenter", new[] { "alerts", "incidents" }),
 
-            // Collect workspace
-            new("Provider", "Collect", "page:Provider", new[] { "source", "api", "connection" }),
-            new("Multi-Source", "Collect", "page:DataSources", new[] { "failover", "multiple" }),
-            new("Symbols", "Collect", "page:Symbols", new[] { "stocks", "tickers" }),
-            new("Backfill", "Collect", "page:Backfill", new[] { "historical", "download" }),
-            new("Options", "Collect", "page:Options", new[] { "derivatives", "chain", "greeks", "strikes", "expiration", "calls", "puts" }),
-            new("Schedules", "Collect", "page:Schedules", new[] { "schedule", "cron", "timer" }),
-            new("Sessions", "Collect", "page:CollectionSessions", new[] { "history", "runs" }),
+            // Trading section
+            new("Backtest", "Trading", "page:Backtest", new[] { "backtest", "strategy", "simulation", "run", "test", "historical", "lean" }),
+            new("Lean Engine", "Trading", "page:LeanIntegration", new[] { "quantconnect", "lean", "backtest", "algorithm", "strategy" }),
+            new("Portfolio Import", "Trading", "page:PortfolioImport", new[] { "portfolio", "import", "csv", "bulk", "ledger", "positions" }),
+            new("Trading Hours", "Trading", "page:TradingHours", new[] { "trading", "hours", "market", "calendar", "session", "backtest" }),
 
-            // Storage workspace
-            new("Data Browser", "Storage", "page:DataBrowser", new[] { "browse", "files" }),
-            new("Storage", "Storage", "page:Storage", new[] { "disk", "usage", "tiers" }),
-            new("Export", "Storage", "page:DataExport", new[] { "csv", "parquet", "json" }),
-            new("Package Manager", "Storage", "page:PackageManager", new[] { "package", "portable" }),
-            new("Data Calendar", "Storage", "page:DataCalendar", new[] { "coverage", "gaps", "heatmap" }),
-            new("Event Replay", "Storage", "page:EventReplay", new[] { "replay", "playback" }),
+            // Data Ops section
+            new("Provider", "Data Ops", "page:Provider", new[] { "source", "api", "connection" }),
+            new("Multi-Source", "Data Ops", "page:DataSources", new[] { "failover", "multiple" }),
+            new("Symbols", "Data Ops", "page:Symbols", new[] { "stocks", "tickers" }),
+            new("Backfill", "Data Ops", "page:Backfill", new[] { "historical", "download" }),
+            new("Options", "Data Ops", "page:Options", new[] { "derivatives", "chain", "greeks", "strikes", "expiration", "calls", "puts" }),
+            new("Schedules", "Data Ops", "page:Schedules", new[] { "schedule", "cron", "timer" }),
+            new("Sessions", "Data Ops", "page:CollectionSessions", new[] { "history", "runs" }),
+            new("Data Browser", "Data Ops", "page:DataBrowser", new[] { "browse", "files" }),
+            new("Storage", "Data Ops", "page:Storage", new[] { "disk", "usage", "tiers" }),
+            new("Export", "Data Ops", "page:DataExport", new[] { "csv", "parquet", "json" }),
+            new("Package Manager", "Data Ops", "page:PackageManager", new[] { "package", "portable" }),
+            new("Data Calendar", "Data Ops", "page:DataCalendar", new[] { "coverage", "gaps", "heatmap" }),
+            new("Event Replay", "Data Ops", "page:EventReplay", new[] { "replay", "playback" }),
 
-            // Quality workspace
-            new("Data Quality", "Quality", "page:DataQuality", new[] { "quality", "scores", "alerts" }),
-            new("Analytics", "Quality", "page:AdvancedAnalytics", new[] { "gap", "analysis", "comparison" }),
-            new("Archive Health", "Quality", "page:ArchiveHealth", new[] { "integrity", "verify" }),
-            new("Provider Health", "Quality", "page:ProviderHealth", new[] { "latency", "uptime" }),
-            new("System Health", "Quality", "page:SystemHealth", new[] { "connection", "diagnostics" }),
-            new("Diagnostics", "Quality", "page:Diagnostics", new[] { "preflight", "dryrun" }),
-
-            // Settings workspace
-            new("Settings", "Settings", "page:Settings", new[] { "preferences", "config", "options" }),
-            new("Admin", "Settings", "page:AdminMaintenance", new[] { "maintenance", "retention" }),
-            new("Retention", "Settings", "page:RetentionAssurance", new[] { "guardrails", "holds" }),
-            new("Optimization", "Settings", "page:StorageOptimization", new[] { "duplicates", "compression" }),
-            new("Integrations", "Settings", "page:LeanIntegration", new[] { "quantconnect", "lean", "backtest" }),
-            new("Setup Wizard", "Settings", "page:SetupWizard", new[] { "setup", "guided", "wizard" }),
-            new("Help", "Settings", "page:Help", new[] { "docs", "faq", "documentation" }),
+            // Governance section
+            new("Data Quality", "Governance", "page:DataQuality", new[] { "quality", "scores", "alerts" }),
+            new("Analytics", "Governance", "page:AdvancedAnalytics", new[] { "gap", "analysis", "comparison" }),
+            new("Archive Health", "Governance", "page:ArchiveHealth", new[] { "integrity", "verify" }),
+            new("Provider Health", "Governance", "page:ProviderHealth", new[] { "latency", "uptime" }),
+            new("System Health", "Governance", "page:SystemHealth", new[] { "connection", "diagnostics" }),
+            new("Diagnostics", "Governance", "page:Diagnostics", new[] { "preflight", "dryrun" }),
+            new("Settings", "Governance", "page:Settings", new[] { "preferences", "config", "options" }),
+            new("Admin", "Governance", "page:AdminMaintenance", new[] { "maintenance", "retention" }),
+            new("Retention", "Governance", "page:RetentionAssurance", new[] { "guardrails", "holds" }),
+            new("Optimization", "Governance", "page:StorageOptimization", new[] { "duplicates", "compression" }),
+            new("Setup Wizard", "Governance", "page:SetupWizard", new[] { "setup", "guided", "wizard" }),
+            new("Help", "Governance", "page:Help", new[] { "docs", "faq", "documentation" }),
 
             // Quick actions
             new("Start Collector", "Action", "action:start", new[] { "begin", "run" }),
@@ -386,6 +378,10 @@ public partial class MainPage : Page
             "OrderBook" => "Order Book",
             "Watchlist" => "Watchlist",
             "NotificationCenter" => "Notifications",
+            "Backtest" => "Strategy Backtest",
+            "LeanIntegration" => "Lean Engine Integration",
+            "PortfolioImport" => "Portfolio Import",
+            "TradingHours" => "Trading Hours",
             "Provider" => "Data Provider",
             "DataSources" => "Multi-Source Config",
             "Symbols" => "Symbols",
@@ -563,19 +559,31 @@ public partial class MainPage : Page
                 break;
 
             case "NavigateDashboard":
-                MonitorNavList.SelectedIndex = 0;
+                ResearchNavList.SelectedIndex = 0;
+                break;
+
+            case "NavigateBacktest":
+                TradingNavList.SelectedIndex = 0;
+                break;
+
+            case "NavigateLean":
+                TradingNavList.SelectedIndex = 1;
+                break;
+
+            case "NavigatePortfolioImport":
+                TradingNavList.SelectedIndex = 2;
                 break;
 
             case "NavigateSymbols":
-                CollectNavList.SelectedIndex = 1;
+                DataOpsNavList.SelectedIndex = 2;
                 break;
 
             case "NavigateBackfill":
-                CollectNavList.SelectedIndex = 2;
+                DataOpsNavList.SelectedIndex = 3;
                 break;
 
             case "NavigateSettings":
-                SettingsNavList.SelectedIndex = 0;
+                GovernanceNavList.SelectedIndex = 4;
                 break;
         }
     }
