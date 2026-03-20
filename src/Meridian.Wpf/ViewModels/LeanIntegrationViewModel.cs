@@ -345,7 +345,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Initialization ────────────────────────────────────────────────────────────
 
-    private async Task InitializeAsync()
+    private async Task InitializeAsync(CancellationToken ct = default)
     {
         await Task.WhenAll(
             LoadStatusAsync(),
@@ -355,7 +355,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
             LoadAutoExportStatusAsync());
     }
 
-    private async Task LoadStatusAsync()
+    private async Task LoadStatusAsync(CancellationToken ct = default)
     {
         try
         {
@@ -376,7 +376,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task LoadConfigurationAsync()
+    private async Task LoadConfigurationAsync(CancellationToken ct = default)
     {
         try
         {
@@ -389,7 +389,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
         catch { /* Use defaults */ }
     }
 
-    private async Task LoadAlgorithmsAsync()
+    private async Task LoadAlgorithmsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -405,7 +405,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
         catch { /* Algorithms not available */ }
     }
 
-    private async Task LoadBacktestHistoryAsync()
+    private async Task LoadBacktestHistoryAsync(CancellationToken ct = default)
     {
         try
         {
@@ -430,7 +430,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
         catch { IsNoBacktestsVisible = true; }
     }
 
-    private async Task LoadAutoExportStatusAsync()
+    private async Task LoadAutoExportStatusAsync(CancellationToken ct = default)
     {
         try
         {
@@ -448,7 +448,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Verify Installation ───────────────────────────────────────────────────────
 
-    private async Task VerifyInstallationAsync()
+    private async Task VerifyInstallationAsync(CancellationToken ct = default)
     {
         try
         {
@@ -468,7 +468,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Save Configuration ────────────────────────────────────────────────────────
 
-    private async Task SaveConfigurationAsync()
+    private async Task SaveConfigurationAsync(CancellationToken ct = default)
     {
         try
         {
@@ -490,7 +490,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Data Sync ─────────────────────────────────────────────────────────────────
 
-    private async Task SyncDataAsync()
+    private async Task SyncDataAsync(CancellationToken ct = default)
     {
         IsSyncEnabled = false;
         SyncStatusText = "Syncing...";
@@ -528,7 +528,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Backtest ──────────────────────────────────────────────────────────────────
 
-    private async Task RunBacktestAsync()
+    private async Task RunBacktestAsync(CancellationToken ct = default)
     {
         if (SelectedAlgorithm == null)
         {
@@ -585,7 +585,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
         ResetBacktestState();
     }
 
-    private async Task PollBacktestStatusAsync()
+    private async Task PollBacktestStatusAsync(CancellationToken ct = default)
     {
         if (_currentBacktestId == null) return;
         try
@@ -612,7 +612,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
         catch { /* Ignore transient poll errors */ }
     }
 
-    private async Task ShowBacktestResultsAsync(string backtestId)
+    private async Task ShowBacktestResultsAsync(string backtestId, CancellationToken ct = default)
     {
         try
         {
@@ -642,7 +642,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Auto-Export ───────────────────────────────────────────────────────────────
 
-    private async Task ConfigureAutoExportAsync()
+    private async Task ConfigureAutoExportAsync(CancellationToken ct = default)
     {
         _isAutoExportBusy = true;
         AutoExportStatusText = "Saving...";
@@ -672,7 +672,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Symbol Mapping ────────────────────────────────────────────────────────────
 
-    private async Task ResolveSymbolMappingAsync()
+    private async Task ResolveSymbolMappingAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(MappingSymbols))
         {
@@ -709,7 +709,7 @@ public sealed class LeanIntegrationViewModel : BindableBase, IDisposable
 
     // ── Results Ingestion ─────────────────────────────────────────────────────────
 
-    private async Task IngestResultsAsync()
+    private async Task IngestResultsAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(IngestFilePath))
         {

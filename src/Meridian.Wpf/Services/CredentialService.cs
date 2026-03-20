@@ -175,7 +175,7 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Initializes the credential service by loading metadata.
     /// </summary>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken ct = default)
     {
         if (_metadataLoaded) return;
         await LoadMetadataAsync();
@@ -435,7 +435,7 @@ public sealed class CredentialService : IDisposable
 
     #region Metadata Management
 
-    private async Task LoadMetadataAsync()
+    private async Task LoadMetadataAsync(CancellationToken ct = default)
     {
         try
         {
@@ -462,7 +462,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    private async Task SaveMetadataAsync()
+    private async Task SaveMetadataAsync(CancellationToken ct = default)
     {
         try
         {
@@ -490,7 +490,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    public async Task UpdateMetadataAsync(string resource, Action<CredentialMetadata> update)
+    public async Task UpdateMetadataAsync(string resource, Action<CredentialMetadata> update, CancellationToken ct = default)
     {
         ThrowIfDisposed();
 
@@ -518,7 +518,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    public async Task RecordAuthenticationAsync(string resource)
+    public async Task RecordAuthenticationAsync(string resource, CancellationToken ct = default)
     {
         await UpdateMetadataAsync(resource, m =>
         {
@@ -604,7 +604,7 @@ public sealed class CredentialService : IDisposable
 
     #region Credential Testing
 
-    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(bool useSandbox = false)
+    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(bool useSandbox = false, CancellationToken ct = default)
     {
         var credentials = GetAlpacaCredentials();
         if (credentials == null)
@@ -613,7 +613,7 @@ public sealed class CredentialService : IDisposable
         return await TestAlpacaCredentialsAsync(credentials.Value.KeyId, credentials.Value.SecretKey, useSandbox);
     }
 
-    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(string keyId, string secretKey, bool useSandbox = false)
+    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(string keyId, string secretKey, bool useSandbox = false, CancellationToken ct = default)
     {
         var sw = Stopwatch.StartNew();
         try
@@ -679,7 +679,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    public async Task<CredentialTestResult> TestNasdaqApiKeyAsync()
+    public async Task<CredentialTestResult> TestNasdaqApiKeyAsync(CancellationToken ct = default)
     {
         var apiKey = GetNasdaqApiKey();
         if (string.IsNullOrEmpty(apiKey))
@@ -734,7 +734,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    public async Task<CredentialTestResult> TestOpenFigiApiKeyAsync()
+    public async Task<CredentialTestResult> TestOpenFigiApiKeyAsync(CancellationToken ct = default)
     {
         var apiKey = GetOpenFigiApiKey();
         if (string.IsNullOrEmpty(apiKey))
@@ -787,7 +787,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    public async Task<CredentialTestResult> TestCredentialAsync(string resource)
+    public async Task<CredentialTestResult> TestCredentialAsync(string resource, CancellationToken ct = default)
     {
         return resource switch
         {
@@ -798,7 +798,7 @@ public sealed class CredentialService : IDisposable
         };
     }
 
-    public async Task<Dictionary<string, CredentialTestResult>> TestAllCredentialsAsync()
+    public async Task<Dictionary<string, CredentialTestResult>> TestAllCredentialsAsync(CancellationToken ct = default)
     {
         var results = new Dictionary<string, CredentialTestResult>();
         var resources = GetAllStoredResources();
@@ -821,7 +821,7 @@ public sealed class CredentialService : IDisposable
         string? refreshToken,
         DateTime expiresAt,
         string? tokenEndpoint = null,
-        string? clientId = null)
+        string? clientId = null, CancellationToken ct = default)
     {
         var resource = $"{OAuthTokenResource}.{providerId}";
         SaveCredential(resource, "oauth", accessToken);
@@ -844,7 +844,7 @@ public sealed class CredentialService : IDisposable
         return GetCredential(resource)?.Password;
     }
 
-    public async Task<bool> RefreshOAuthTokenAsync(string providerId)
+    public async Task<bool> RefreshOAuthTokenAsync(string providerId, CancellationToken ct = default)
     {
         var resource = $"{OAuthTokenResource}.{providerId}";
         var metadata = GetMetadata(resource);
@@ -904,7 +904,7 @@ public sealed class CredentialService : IDisposable
         }
     }
 
-    public async Task<bool> EnsureTokenValidAsync(string providerId, int refreshThresholdMinutes = 5)
+    public async Task<bool> EnsureTokenValidAsync(string providerId, int refreshThresholdMinutes = 5, CancellationToken ct = default)
     {
         var resource = $"{OAuthTokenResource}.{providerId}";
         var metadata = GetMetadata(resource);

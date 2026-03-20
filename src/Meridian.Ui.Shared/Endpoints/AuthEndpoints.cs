@@ -48,6 +48,23 @@ public static class AuthEndpoints
                 returnUrl = form["returnUrl"].ToString();
             }
 
+            if (!sessionService.IsConfigured && !sessionService.AllowAnonymousWhenUnconfigured)
+            {
+                if (context.Request.HasJsonContentType())
+                {
+                    return Results.Json(
+                        new
+                        {
+                            error = "Authentication is required but not configured. Set MDC_USERNAME and MDC_PASSWORD or configure MDC_AUTH_MODE=optional for local development."
+                        },
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+
+                return Results.Text(
+                    "Authentication is required but not configured. Set MDC_USERNAME and MDC_PASSWORD or configure MDC_AUTH_MODE=optional for local development.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
                 if (context.Request.HasJsonContentType())

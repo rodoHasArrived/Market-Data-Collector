@@ -130,7 +130,7 @@ public sealed class BacktestViewModel : BindableBase, IDisposable
 
     // ── Command implementations ───────────────────────────────────────────────
 
-    private async Task RunBacktestAsync()
+    private async Task RunBacktestAsync(CancellationToken ct = default)
     {
         EquityCurvePoints.Clear();
         Fills.Clear();

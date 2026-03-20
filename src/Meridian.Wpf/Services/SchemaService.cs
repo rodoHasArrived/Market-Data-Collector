@@ -25,20 +25,20 @@ public sealed class SchemaService : Meridian.Ui.Services.SchemaServiceBase
 
     public event EventHandler<Meridian.Ui.Services.DataDictionaryEventArgs>? DictionaryGenerated;
 
-    public async Task<DataDictionary> GetDataDictionaryAsync()
+    public async Task<DataDictionary> GetDataDictionaryAsync(CancellationToken ct = default)
     {
         if (_dataDictionary != null) return _dataDictionary;
         _dataDictionary = await LoadOrCreateDataDictionaryAsync();
         return _dataDictionary;
     }
 
-    public async Task<EventSchema?> GetSchemaAsync(string eventType)
+    public async Task<EventSchema?> GetSchemaAsync(string eventType, CancellationToken ct = default)
     {
         var dictionary = await GetDataDictionaryAsync();
         return dictionary.Schemas.TryGetValue(eventType, out var schema) ? schema : null;
     }
 
-    public async Task<DataDictionary> GenerateDataDictionaryAsync()
+    public async Task<DataDictionary> GenerateDataDictionaryAsync(CancellationToken ct = default)
     {
         var dictionary = CreateDataDictionary();
         _dataDictionary = dictionary;
@@ -47,7 +47,7 @@ public sealed class SchemaService : Meridian.Ui.Services.SchemaServiceBase
         return dictionary;
     }
 
-    public async Task<string> ExportDataDictionaryAsync(string format, string? outputPath = null)
+    public async Task<string> ExportDataDictionaryAsync(string format, string? outputPath = null, CancellationToken ct = default)
     {
         var dictionary = await GetDataDictionaryAsync();
         var output = format.ToLower() switch
@@ -66,13 +66,13 @@ public sealed class SchemaService : Meridian.Ui.Services.SchemaServiceBase
         return output;
     }
 
-    public async Task<string> GenerateMarkdownDocumentationAsync()
+    public async Task<string> GenerateMarkdownDocumentationAsync(CancellationToken ct = default)
     {
         var dictionary = await GetDataDictionaryAsync();
         return ExportAsMarkdown(dictionary);
     }
 
-    private async Task<DataDictionary> LoadOrCreateDataDictionaryAsync()
+    private async Task<DataDictionary> LoadOrCreateDataDictionaryAsync(CancellationToken ct = default)
     {
         EnsureSchemasPathExists();
         var dictionaryPath = Path.Combine(_schemasPath, "data_dictionary.json");
@@ -97,7 +97,7 @@ public sealed class SchemaService : Meridian.Ui.Services.SchemaServiceBase
         return await GenerateDataDictionaryAsync();
     }
 
-    private async Task SaveDataDictionaryAsync(DataDictionary dictionary)
+    private async Task SaveDataDictionaryAsync(DataDictionary dictionary, CancellationToken ct = default)
     {
         EnsureSchemasPathExists();
         var dictionaryPath = Path.Combine(_schemasPath, "data_dictionary.json");

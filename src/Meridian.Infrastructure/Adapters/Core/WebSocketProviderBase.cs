@@ -206,7 +206,7 @@ public abstract class WebSocketProviderBase : IMarketDataClient
 
     #region Reconnection
 
-    private async Task OnConnectionLostAsync()
+    private async Task OnConnectionLostAsync(CancellationToken ct = default)
     {
         if (_wsUri == null)
             return;

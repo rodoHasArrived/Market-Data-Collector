@@ -1,7 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json;
 using Meridian.Application.Logging;
-using Meridian.Storage.Interfaces;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
@@ -20,27 +19,7 @@ public sealed class ParquetConversionService
     private readonly StorageOptions _options;
     private readonly string _parquetOutputDir;
 
-    // Trade event schema for Parquet output
-    private static readonly ParquetSchema TradeSchema = new(
-        new DataField<DateTimeOffset>("Timestamp"),
-        new DataField<string>("Symbol"),
-        new DataField<decimal>("Price"),
-        new DataField<long>("Size"),
-        new DataField<string>("AggressorSide"),
-        new DataField<string>("Exchange"),
-        new DataField<string>("Source")
-    );
-
-    // Quote event schema for Parquet output
-    private static readonly ParquetSchema QuoteSchema = new(
-        new DataField<DateTimeOffset>("Timestamp"),
-        new DataField<string>("Symbol"),
-        new DataField<decimal>("BidPrice"),
-        new DataField<long>("BidSize"),
-        new DataField<decimal>("AskPrice"),
-        new DataField<long>("AskSize"),
-        new DataField<string>("Exchange")
-    );
+    private const int DefaultRowGroupSize = 10_000;
 
     public ParquetConversionService(StorageOptions options)
     {
@@ -92,23 +71,19 @@ public sealed class ParquetConversionService
                     continue;
                 }
 
-                // Read and convert
-                var records = await ReadJsonlFileAsync(jsonlPath, ct);
-                if (records.Count == 0)
+                var convertedRecords = await ConvertJsonlFileToParquetAsync(jsonlPath, parquetPath, ct);
+                if (convertedRecords == 0)
                 {
                     summary.SkippedEmpty++;
                     continue;
                 }
 
-                Directory.CreateDirectory(Path.GetDirectoryName(parquetPath)!);
-                await WriteParquetAsync(parquetPath, records, ct);
-
                 summary.FilesConverted++;
-                summary.RecordsConverted += records.Count;
+                summary.RecordsConverted += convertedRecords;
                 summary.BytesSaved += new FileInfo(jsonlPath).Length - new FileInfo(parquetPath).Length;
 
                 _log.Information("Converted {Source} to Parquet ({RecordCount} records)",
-                    Path.GetFileName(jsonlPath), records.Count);
+                    Path.GetFileName(jsonlPath), convertedRecords);
             }
             catch (Exception ex)
             {
@@ -170,115 +145,211 @@ public sealed class ParquetConversionService
         return Path.Combine(_parquetOutputDir, baseName);
     }
 
-    private static async Task<List<Dictionary<string, JsonElement>>> ReadJsonlFileAsync(
-        string path, CancellationToken ct)
+    private async Task<long> ConvertJsonlFileToParquetAsync(
+        string jsonlPath,
+        string parquetPath,
+        CancellationToken ct)
     {
-        var records = new List<Dictionary<string, JsonElement>>();
+        Directory.CreateDirectory(Path.GetDirectoryName(parquetPath)!);
+
+        var schema = await DiscoverSchemaAsync(jsonlPath, ct).ConfigureAwait(false);
+        if (schema.Length == 0)
+            return 0;
+
+        await using var fileStream = File.Create(parquetPath);
+        using var writer = await ParquetWriter.CreateAsync(new ParquetSchema(schema), fileStream, cancellationToken: ct).ConfigureAwait(false);
+
+        long convertedRecords = 0;
+        var batch = new List<Dictionary<string, JsonElement>>(DefaultRowGroupSize);
+
+        using var reader = await OpenJsonlReaderAsync(jsonlPath, ct).ConfigureAwait(false);
+        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            if (!TryParseRecord(line, out var record))
+                continue;
+
+            batch.Add(record);
+            if (batch.Count >= DefaultRowGroupSize)
+            {
+                await WriteRowGroupAsync(writer, schema, batch, ct).ConfigureAwait(false);
+                convertedRecords += batch.Count;
+                batch.Clear();
+            }
+        }
+
+        if (batch.Count > 0)
+        {
+            await WriteRowGroupAsync(writer, schema, batch, ct).ConfigureAwait(false);
+            convertedRecords += batch.Count;
+        }
+
+        return convertedRecords;
+    }
+
+    private static async Task<DataField[]> DiscoverSchemaAsync(string path, CancellationToken ct)
+    {
+        var fieldTypes = new Dictionary<string, Type>(StringComparer.Ordinal);
+
+        using var reader = await OpenJsonlReaderAsync(path, ct).ConfigureAwait(false);
+        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(line) || !TryParseRecord(line, out var record))
+                continue;
+
+            foreach (var (name, value) in record)
+            {
+                var inferredType = InferClrType(value);
+                if (fieldTypes.TryGetValue(name, out var existingType))
+                {
+                    fieldTypes[name] = MergeClrTypes(existingType, inferredType);
+                }
+                else
+                {
+                    fieldTypes[name] = inferredType;
+                }
+            }
+        }
+
+        return fieldTypes
+            .OrderBy(kvp => kvp.Key, StringComparer.Ordinal)
+            .Select(kvp => CreateDataField(kvp.Key, kvp.Value))
+            .ToArray();
+    }
+
+    private static Task<StreamReader> OpenJsonlReaderAsync(string path, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
 
         Stream stream = File.OpenRead(path);
         if (path.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
             stream = new GZipStream(stream, CompressionMode.Decompress);
 
-        await using (stream)
-        using (var reader = new StreamReader(stream))
-        {
-            while (!reader.EndOfStream && !ct.IsCancellationRequested)
-            {
-                var line = await reader.ReadLineAsync(ct);
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                try
-                {
-                    var doc = JsonDocument.Parse(line);
-                    var dict = new Dictionary<string, JsonElement>();
-                    foreach (var prop in doc.RootElement.EnumerateObject())
-                    {
-                        dict[prop.Name] = prop.Value.Clone();
-                    }
-                    records.Add(dict);
-                }
-                catch
-                {
-                    // Skip malformed lines
-                }
-            }
-        }
-
-        return records;
+        return Task.FromResult(new StreamReader(stream));
     }
 
-    private static async Task WriteParquetAsync(
-        string path,
-        List<Dictionary<string, JsonElement>> records,
+    private static bool TryParseRecord(string line, out Dictionary<string, JsonElement> record)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(line);
+            record = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                record[prop.Name] = prop.Value.Clone();
+            }
+
+            return true;
+        }
+        catch
+        {
+            record = null!;
+            return false;
+        }
+    }
+
+    private static async Task WriteRowGroupAsync(
+        ParquetWriter writer,
+        IReadOnlyList<DataField> schema,
+        IReadOnlyList<Dictionary<string, JsonElement>> records,
         CancellationToken ct)
     {
-        // Detect schema from first record
-        if (records.Count == 0)
+        if (schema.Count == 0 || records.Count == 0)
             return;
 
-        var fields = records[0].Keys.Select(key =>
-        {
-            // Infer type from first non-null value
-            foreach (var record in records)
-            {
-                if (record.TryGetValue(key, out var val))
-                {
-                    return val.ValueKind switch
-                    {
-                        JsonValueKind.Number when val.TryGetInt64(out _) => (DataField)new DataField<long>(key),
-                        JsonValueKind.Number => new DataField<double>(key),
-                        JsonValueKind.True or JsonValueKind.False => new DataField<bool>(key),
-                        _ => new DataField<string>(key)
-                    };
-                }
-            }
-            return (DataField)new DataField<string>(key);
-        }).ToArray();
-
-        var schema = new ParquetSchema(fields);
-
-        // Build column arrays
-        var columns = new List<DataColumn>();
-        foreach (var field in fields)
-        {
-            if (field.ClrType == typeof(long))
-            {
-                var data = records.Select(r =>
-                    r.TryGetValue(field.Name, out var v) && v.ValueKind == JsonValueKind.Number
-                        ? v.GetInt64() : 0L).ToArray();
-                columns.Add(new DataColumn(field, data));
-            }
-            else if (field.ClrType == typeof(double))
-            {
-                var data = records.Select(r =>
-                    r.TryGetValue(field.Name, out var v) && v.ValueKind == JsonValueKind.Number
-                        ? v.GetDouble() : 0.0).ToArray();
-                columns.Add(new DataColumn(field, data));
-            }
-            else if (field.ClrType == typeof(bool))
-            {
-                var data = records.Select(r =>
-                    r.TryGetValue(field.Name, out var v) &&
-                    (v.ValueKind == JsonValueKind.True || v.ValueKind == JsonValueKind.False)
-                        ? v.GetBoolean() : false).ToArray();
-                columns.Add(new DataColumn(field, data));
-            }
-            else
-            {
-                var data = records.Select(r =>
-                    r.TryGetValue(field.Name, out var v) ? v.ToString() : "").ToArray();
-                columns.Add(new DataColumn(field, data));
-            }
-        }
-
-        await using var fileStream = File.Create(path);
-        using var writer = await ParquetWriter.CreateAsync(schema, fileStream, cancellationToken: ct);
         using var groupWriter = writer.CreateRowGroup();
-        foreach (var column in columns)
+        foreach (var field in schema)
         {
-            await groupWriter.WriteColumnAsync(column, ct);
+            await groupWriter.WriteColumnAsync(BuildColumn(field, records), ct).ConfigureAwait(false);
         }
+    }
+
+    private static DataColumn BuildColumn(DataField field, IReadOnlyList<Dictionary<string, JsonElement>> records)
+    {
+        if (field.ClrType == typeof(long))
+        {
+            var data = records.Select(r =>
+                r.TryGetValue(field.Name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var value)
+                    ? value
+                    : 0L).ToArray();
+            return new DataColumn(field, data);
+        }
+
+        if (field.ClrType == typeof(double))
+        {
+            var data = records.Select(r =>
+                r.TryGetValue(field.Name, out var v) && v.ValueKind == JsonValueKind.Number
+                    ? v.GetDouble()
+                    : 0.0).ToArray();
+            return new DataColumn(field, data);
+        }
+
+        if (field.ClrType == typeof(bool))
+        {
+            var data = records.Select(r =>
+                r.TryGetValue(field.Name, out var v) &&
+                (v.ValueKind == JsonValueKind.True || v.ValueKind == JsonValueKind.False)
+                    ? v.GetBoolean()
+                    : false).ToArray();
+            return new DataColumn(field, data);
+        }
+
+        var strings = records.Select(r =>
+            r.TryGetValue(field.Name, out var v) ? JsonElementToString(v) : string.Empty).ToArray();
+        return new DataColumn(field, strings);
+    }
+
+    private static Type InferClrType(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt64(out _) => typeof(long),
+            JsonValueKind.Number => typeof(double),
+            JsonValueKind.True or JsonValueKind.False => typeof(bool),
+            _ => typeof(string)
+        };
+    }
+
+    private static Type MergeClrTypes(Type existing, Type incoming)
+    {
+        if (existing == incoming)
+            return existing;
+
+        if ((existing == typeof(long) && incoming == typeof(double)) ||
+            (existing == typeof(double) && incoming == typeof(long)))
+        {
+            return typeof(double);
+        }
+
+        return typeof(string);
+    }
+
+    private static DataField CreateDataField(string name, Type clrType)
+    {
+        if (clrType == typeof(long))
+            return new DataField<long>(name);
+
+        if (clrType == typeof(double))
+            return new DataField<double>(name);
+
+        if (clrType == typeof(bool))
+            return new DataField<bool>(name);
+
+        return new DataField<string>(name);
+    }
+
+    private static string JsonElementToString(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.Null => string.Empty,
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            _ => value.ToString()
+        };
     }
 }
 

@@ -103,7 +103,7 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
     /// <summary>
     /// Initiates graceful shutdown with the specified reason.
     /// </summary>
-    public async Task<ShutdownResult> InitiateShutdownAsync(ShutdownReason reason, string? message = null)
+    public async Task<ShutdownResult> InitiateShutdownAsync(ShutdownReason reason, string? message = null, CancellationToken ct = default)
     {
         if (_isShuttingDown)
         {

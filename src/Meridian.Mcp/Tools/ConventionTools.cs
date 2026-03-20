@@ -28,9 +28,9 @@ public sealed class ConventionTools(RepoPathService repo)
         sb.AppendLine("## Anti-Patterns (Never Do These)\n");
         sb.AppendLine("| Anti-Pattern | Why |");
         sb.AppendLine("|--------------|-----|");
-        sb.AppendLine("| `.Result` or `.Wait()` on Tasks | Deadlocks in async contexts |");
+        sb.AppendLine("| Blocking task completion APIs | Deadlocks in async contexts |");
         sb.AppendLine("| `Task.Run` for I/O-bound work | Wastes thread pool threads |");
-        sb.AppendLine("| `new HttpClient()` directly | Socket exhaustion, DNS caching issues |");
+        sb.AppendLine("| Direct `HttpClient` construction | Socket exhaustion, DNS caching issues |");
         sb.AppendLine("| String interpolation in logger | Loses structured log benefits |");
         sb.AppendLine("| Swallowing exceptions silently | Hides bugs, undebuggable |");
         sb.AppendLine("| Hardcoding credentials | Security risk |");
@@ -64,8 +64,8 @@ public sealed class ConventionTools(RepoPathService repo)
             ("Swallowing exceptions silently", "Hides bugs, makes debugging impossible", "Log the exception with context and rethrow or handle explicitly"),
             ("Hardcoding credentials", "Security risk, inflexible deployment", "Use environment variables; never put keys in source or config files"),
             ("`Task.Run` for I/O-bound work", "Wastes thread pool threads, adds unnecessary overhead", "Use async/await with native async I/O APIs"),
-            ("Blocking async with `.Result`/`.Wait()`", "Causes deadlocks in synchronization-context environments", "Use `await` all the way up the call stack"),
-            ("`new HttpClient()` instances", "Socket exhaustion, DNS staleness, connection pool thrash", "Inject `IHttpClientFactory` and use named/typed clients"),
+            ("Blocking task completion APIs", "Causes deadlocks in synchronization-context environments", "Use `await` all the way up the call stack"),
+            ("Direct `HttpClient` instances", "Socket exhaustion, DNS staleness, connection pool thrash", "Inject `IHttpClientFactory` and use named/typed clients"),
             ("String interpolation in logger calls", "Loses structured log parameter names, prevents log filtering", "Use semantic parameters: `_logger.LogInfo(\"{Symbol} bars: {Count}\", sym, n)`"),
             ("Missing `CancellationToken`", "Prevents graceful shutdown, can hang on I/O indefinitely", "Add `CancellationToken ct = default` to every async method signature"),
             ("Missing `[ImplementsAdr]` attribute", "Loses traceability from code to ADR contracts", "Add `[ImplementsAdr(\"ADR-XXX\", \"reason\")]` on all provider/sink classes"),

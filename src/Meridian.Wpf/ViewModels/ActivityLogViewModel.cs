@@ -80,7 +80,7 @@ public sealed class ActivityLogViewModel : BindableBase, IDisposable
     }
 
     /// <summary>Starts the background refresh timer and subscribes to log events.</summary>
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         _loggingService.LogWritten += OnLogEntryAdded;
 
@@ -199,7 +199,7 @@ public sealed class ActivityLogViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task LoadLogsAsync()
+    private async Task LoadLogsAsync(CancellationToken ct = default)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();

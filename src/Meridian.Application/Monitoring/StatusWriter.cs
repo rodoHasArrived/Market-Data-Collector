@@ -31,7 +31,7 @@ public sealed class StatusWriter : IAsyncDisposable
         _loop = WriteLoopAsync(interval);
     }
 
-    private async Task WriteLoopAsync(TimeSpan interval)
+    private async Task WriteLoopAsync(TimeSpan interval, CancellationToken ct = default)
     {
         while (!_cts.IsCancellationRequested)
         {

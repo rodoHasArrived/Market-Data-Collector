@@ -8,7 +8,7 @@ public sealed class AuditTools(RepoPathService repo, ILogger<AuditTools> logger)
     private const int TimeoutMs = 60_000;
 
     [McpServerTool(Name = "run_code_audit")]
-    [Description("Run the MDC code convention auditor. Detects missing CancellationToken, string interpolation in loggers, direct new HttpClient(), blocking async, and more. Returns findings as Markdown.")]
+    [Description("Run the MDC code convention auditor. Detects missing CancellationToken, string interpolation in loggers, direct HttpClient construction, blocking async, and more. Returns findings as Markdown.")]
     public async Task<string> RunCodeAuditAsync(
         [Description("Optional file glob to scope the audit, e.g. 'src/Meridian.Infrastructure/**'")] string? pathFilter = null,
         CancellationToken ct = default)

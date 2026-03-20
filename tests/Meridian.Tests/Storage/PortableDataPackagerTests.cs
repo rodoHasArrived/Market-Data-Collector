@@ -287,6 +287,40 @@ public class PortableDataPackagerTests : IDisposable
     }
 
     [Fact]
+    public async Task ImportPackageAsync_WithPathTraversalEntry_ShouldRejectPackage()
+    {
+        var packagePath = Path.Combine(_testOutputDir, "path-traversal.zip");
+        var extractDir = Path.Combine(_testOutputDir, "extract-safe");
+        var outsidePath = Path.Combine(_testOutputDir, "escaped.txt");
+
+        Directory.CreateDirectory(extractDir);
+        await CreateTraversalPackageAsync(packagePath);
+
+        var result = await _packager.ImportPackageAsync(packagePath, extractDir, validateChecksums: true);
+
+        result.Success.Should().BeFalse();
+        result.Error.Should().Contain("outside the destination directory");
+        File.Exists(outsidePath).Should().BeFalse();
+        Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ImportPackageAsync_WithChecksumMismatch_ShouldNotWriteFileToDestination()
+    {
+        var packagePath = Path.Combine(_testOutputDir, "checksum-mismatch.zip");
+        var extractDir = Path.Combine(_testOutputDir, "extract-mismatch");
+
+        Directory.CreateDirectory(extractDir);
+        await CreateChecksumMismatchPackageAsync(packagePath);
+
+        var result = await _packager.ImportPackageAsync(packagePath, extractDir, validateChecksums: true);
+
+        result.Success.Should().BeFalse();
+        result.ValidationFailures.Should().Be(1);
+        File.Exists(Path.Combine(extractDir, "AAPL/Trade/2026-01-03.jsonl")).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ImportPackageAsync_WithNonExistentFile_ShouldReturnFailure()
     {
         // Arrange
@@ -578,6 +612,80 @@ public class PortableDataPackagerTests : IDisposable
         }
 
         await File.WriteAllTextAsync(fullPath, sb.ToString());
+    }
+
+    private static async Task CreateTraversalPackageAsync(string packagePath)
+    {
+        var manifest = new PackageManifest
+        {
+            PackageId = "test-package",
+            Name = "path-traversal-test",
+            Files = Array.Empty<PackageFileEntry>(),
+            SupplementaryFiles = new[]
+            {
+                new SupplementaryFileInfo
+                {
+                    Path = "../escaped.txt",
+                    Type = "readme",
+                    Description = "malicious"
+                }
+            },
+            TotalFiles = 0
+        };
+
+        using var archive = ZipFile.Open(packagePath, ZipArchiveMode.Create);
+        var manifestEntry = archive.CreateEntry("manifest.json");
+        await using (var manifestStream = manifestEntry.Open())
+        await using (var writer = new StreamWriter(manifestStream, Encoding.UTF8, 1024, leaveOpen: false))
+        {
+            await writer.WriteAsync(JsonSerializer.Serialize(manifest));
+        }
+
+        var maliciousEntry = archive.CreateEntry("../escaped.txt");
+        await using (var maliciousStream = maliciousEntry.Open())
+        await using (var writer = new StreamWriter(maliciousStream, Encoding.UTF8, 1024, leaveOpen: false))
+        {
+            await writer.WriteAsync("owned");
+        }
+    }
+
+    private static async Task CreateChecksumMismatchPackageAsync(string packagePath)
+    {
+        const string filePath = "AAPL/Trade/2026-01-03.jsonl";
+        const string payload = "{\"symbol\":\"AAPL\",\"price\":185.50}\n";
+
+        var manifest = new PackageManifest
+        {
+            PackageId = "checksum-package",
+            Name = "checksum-mismatch-test",
+            Files = new[]
+            {
+                new PackageFileEntry
+                {
+                    Path = filePath,
+                    Symbol = "AAPL",
+                    EventType = "Trade",
+                    ChecksumSha256 = new string('0', 64),
+                    SizeBytes = Encoding.UTF8.GetByteCount(payload)
+                }
+            },
+            TotalFiles = 1
+        };
+
+        using var archive = ZipFile.Open(packagePath, ZipArchiveMode.Create);
+        var manifestEntry = archive.CreateEntry("manifest.json");
+        await using (var manifestStream = manifestEntry.Open())
+        await using (var writer = new StreamWriter(manifestStream, Encoding.UTF8, 1024, leaveOpen: false))
+        {
+            await writer.WriteAsync(JsonSerializer.Serialize(manifest));
+        }
+
+        var dataEntry = archive.CreateEntry(filePath);
+        await using (var dataStream = dataEntry.Open())
+        await using (var writer = new StreamWriter(dataStream, Encoding.UTF8, 1024, leaveOpen: false))
+        {
+            await writer.WriteAsync(payload);
+        }
     }
 }
 

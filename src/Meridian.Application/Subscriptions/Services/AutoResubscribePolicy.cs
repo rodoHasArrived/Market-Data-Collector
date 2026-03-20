@@ -319,7 +319,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
         ResubscriptionMetrics.SetSymbolsCircuitOpen(SymbolsWithOpenCircuit);
     }
 
-    private async Task CleanupLoopAsync()
+    private async Task CleanupLoopAsync(CancellationToken ct = default)
     {
         try
         {

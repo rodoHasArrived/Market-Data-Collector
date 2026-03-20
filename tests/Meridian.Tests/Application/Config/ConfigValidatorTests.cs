@@ -232,9 +232,24 @@ public class ConfigValidatorTests
 
     [Theory]
     [InlineData("STK")]
+    [InlineData("ETF")]
     [InlineData("OPT")]
+    [InlineData("IND_OPT")]
+    [InlineData("FOP")]
     [InlineData("FUT")]
+    [InlineData("SSF")]
     [InlineData("CASH")]
+    [InlineData("FOREX")]
+    [InlineData("FX")]
+    [InlineData("IND")]
+    [InlineData("CMDTY")]
+    [InlineData("CRYPTO")]
+    [InlineData("CFD")]
+    [InlineData("BOND")]
+    [InlineData("FUND")]
+    [InlineData("WAR")]
+    [InlineData("BAG")]
+    [InlineData("MARGIN")]
     public void Validate_ValidSecurityTypes_AreValid(string securityType)
     {
         // Arrange

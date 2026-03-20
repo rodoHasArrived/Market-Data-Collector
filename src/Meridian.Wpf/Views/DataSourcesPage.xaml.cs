@@ -31,7 +31,7 @@ public partial class DataSourcesPage : Page
         await LoadDataSourcesAsync();
     }
 
-    private async Task LoadDataSourcesAsync()
+    private async Task LoadDataSourcesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -320,7 +320,7 @@ public partial class DataSourcesPage : Page
         await UpdateFailoverSettingsAsync();
     }
 
-    private async Task UpdateFailoverSettingsAsync()
+    private async Task UpdateFailoverSettingsAsync(CancellationToken ct = default)
     {
         if (!TryParseTimeout(out var timeoutSeconds))
         {

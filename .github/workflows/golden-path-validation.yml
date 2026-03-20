@@ -5,7 +5,7 @@ on:
     branches: ["main", "develop"]
     paths:
       - "README.md"
-      - "docs/HELP.md"
+      - "docs/**/*.md"
       - "Makefile"
       - "build/scripts/install/**"
       - "build/scripts/docs/validate-golden-path.sh"
@@ -14,7 +14,7 @@ on:
     branches: ["main"]
     paths:
       - "README.md"
-      - "docs/HELP.md"
+      - "docs/**/*.md"
       - "Makefile"
       - "build/scripts/install/**"
       - "build/scripts/docs/validate-golden-path.sh"

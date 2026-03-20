@@ -7,7 +7,7 @@ namespace Meridian.Ledger;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Every economic event (fill, commission, margin interest, etc.) is recorded as
+/// Every economic event (fill, commission, margin interest, transfers, etc.) is recorded as
 /// a balanced journal entry: the sum of debits always equals the sum of credits.
 /// </para>
 /// <para>
@@ -131,19 +131,53 @@ public sealed class Ledger : IReadOnlyLedger
         DateTimeOffset? to = null,
         string? descriptionContains = null)
     {
-        EnsureValidRange(from, to);
+        return GetJournalEntries(new LedgerQuery(from, to, descriptionContains));
+    }
 
-        IEnumerable<JournalEntry> query = _journal;
+    /// <summary>
+    /// Returns journal entries matching the supplied structured query.
+    /// </summary>
+    public IReadOnlyList<JournalEntry> GetJournalEntries(LedgerQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        EnsureValidRange(query.From, query.To);
 
-        if (from is not null || to is not null)
-            query = query.Where(entry => IsWithinRange(entry.Timestamp, from, to));
+        IEnumerable<JournalEntry> filtered = _journal;
 
-        if (!string.IsNullOrWhiteSpace(descriptionContains))
+        if (query.From is not null || query.To is not null)
+            filtered = filtered.Where(entry => IsWithinRange(entry.Timestamp, query.From, query.To));
+
+        if (!string.IsNullOrWhiteSpace(query.DescriptionContains))
+            filtered = filtered.Where(entry => entry.Description.Contains(query.DescriptionContains, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.ActivityType))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.ActivityType, query.ActivityType, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.Symbol))
         {
-            query = query.Where(entry => entry.Description.Contains(descriptionContains, StringComparison.OrdinalIgnoreCase));
+            var normalizedSymbol = query.Symbol.Trim().ToUpperInvariant();
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.Symbol, normalizedSymbol, StringComparison.OrdinalIgnoreCase));
         }
 
-        return query.ToList();
+        if (query.OrderId is not null)
+            filtered = filtered.Where(entry => entry.Metadata.OrderId == query.OrderId);
+
+        if (query.FillId is not null)
+            filtered = filtered.Where(entry => entry.Metadata.FillId == query.FillId);
+
+        if (!string.IsNullOrWhiteSpace(query.StrategyId))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.StrategyId, query.StrategyId, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.FinancialAccountId))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.FinancialAccountId, query.FinancialAccountId, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.CounterpartyAccountId))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.CounterpartyAccountId, query.CounterpartyAccountId, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.Institution))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.Institution, query.Institution, StringComparison.OrdinalIgnoreCase));
+
+        return filtered.ToList();
     }
 
     /// <summary>
@@ -177,12 +211,13 @@ public sealed class Ledger : IReadOnlyLedger
     }
 
     /// <summary>
-    /// Returns account summaries for every posted account, optionally filtered by account type.
+    /// Returns account summaries for every posted account, optionally filtered by account type and account scope.
     /// </summary>
-    public IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null)
+    public IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null, string? financialAccountId = null)
     {
         return _accountTotals
             .Where(pair => accountType is null || pair.Key.AccountType == accountType)
+            .Where(pair => MatchesFinancialAccount(pair.Key, financialAccountId))
             .Select(pair => new LedgerAccountSummary(
                 pair.Key,
                 CalculateNetBalance(pair.Key, pair.Value.Debits, pair.Value.Credits),
@@ -194,6 +229,7 @@ public sealed class Ledger : IReadOnlyLedger
             .OrderBy(summary => summary.Account.AccountType)
             .ThenBy(summary => summary.Account.Name, StringComparer.Ordinal)
             .ThenBy(summary => summary.Account.Symbol, StringComparer.Ordinal)
+            .ThenBy(summary => summary.Account.FinancialAccountId, StringComparer.Ordinal)
             .ToList();
     }
 
@@ -202,11 +238,14 @@ public sealed class Ledger : IReadOnlyLedger
     /// If accounting is correct the sum of asset and expense balances equals the sum of liability,
     /// equity, and revenue balances (the accounting equation holds).
     /// </summary>
-    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance()
+    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance(string? financialAccountId = null)
     {
         var result = new Dictionary<LedgerAccount, decimal>(_accountTotals.Count);
         foreach (var (account, totals) in _accountTotals)
         {
+            if (!MatchesFinancialAccount(account, financialAccountId))
+                continue;
+
             result[account] = CalculateNetBalance(account, totals.Debits, totals.Credits);
         }
 
@@ -216,7 +255,7 @@ public sealed class Ledger : IReadOnlyLedger
     /// <summary>
     /// Returns a trial balance as of the supplied timestamp.
     /// </summary>
-    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp)
+    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp, string? financialAccountId = null)
     {
         var result = new Dictionary<LedgerAccount, decimal>();
 
@@ -227,6 +266,9 @@ public sealed class Ledger : IReadOnlyLedger
 
             foreach (var line in journalEntry.Lines)
             {
+                if (!MatchesFinancialAccount(line.Account, financialAccountId))
+                    continue;
+
                 result.TryGetValue(line.Account, out var currentBalance);
                 var delta = line.Account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
                     ? line.Debit - line.Credit
@@ -236,6 +278,78 @@ public sealed class Ledger : IReadOnlyLedger
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Returns running-balance checkpoints for an account in chronological order.
+    /// </summary>
+    public IReadOnlyList<LedgerBalancePoint> GetRunningBalance(LedgerAccount account, DateTimeOffset? from = null, DateTimeOffset? to = null)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        EnsureValidRange(from, to);
+
+        var points = new List<LedgerBalancePoint>();
+        var runningBalance = from.HasValue
+            ? GetBalanceAsOf(account, from.Value.AddTicks(-1))
+            : 0m;
+
+        foreach (var journalEntry in _journal)
+        {
+            if (!IsWithinRange(journalEntry.Timestamp, from, to))
+                continue;
+
+            var debit = 0m;
+            var credit = 0m;
+
+            foreach (var line in journalEntry.Lines)
+            {
+                if (line.Account != account)
+                    continue;
+
+                debit += line.Debit;
+                credit += line.Credit;
+            }
+
+            if (debit == 0m && credit == 0m)
+                continue;
+
+            runningBalance += CalculateNetBalance(account, debit, credit);
+            points.Add(new LedgerBalancePoint(
+                journalEntry.Timestamp,
+                journalEntry.JournalEntryId,
+                journalEntry.Description,
+                debit,
+                credit,
+                runningBalance,
+                journalEntry.Metadata));
+        }
+
+        return points;
+    }
+
+    /// <summary>
+    /// Returns point-in-time balances and posting counts.
+    /// </summary>
+    public LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp, string? financialAccountId = null)
+    {
+        var balances = TrialBalanceAsOf(timestamp, financialAccountId);
+        var journalCount = 0;
+        var ledgerEntryCount = 0;
+
+        foreach (var journalEntry in _journal)
+        {
+            if (journalEntry.Timestamp > timestamp)
+                continue;
+
+            var scopedLines = journalEntry.Lines.Where(line => MatchesFinancialAccount(line.Account, financialAccountId)).ToList();
+            if (scopedLines.Count == 0)
+                continue;
+
+            journalCount++;
+            ledgerEntryCount += scopedLines.Count;
+        }
+
+        return new LedgerSnapshot(timestamp, balances, journalCount, ledgerEntryCount);
     }
 
     /// <summary>
@@ -250,6 +364,16 @@ public sealed class Ledger : IReadOnlyLedger
         DateTimeOffset timestamp,
         string description,
         IReadOnlyList<(LedgerAccount account, decimal debit, decimal credit)> lines)
+        => PostLines(timestamp, description, lines, metadata: null);
+
+    /// <summary>
+    /// Creates and posts a balanced journal entry with optional audit metadata.
+    /// </summary>
+    public void PostLines(
+        DateTimeOffset timestamp,
+        string description,
+        IReadOnlyList<(LedgerAccount account, decimal debit, decimal credit)> lines,
+        JournalEntryMetadata? metadata)
     {
         ArgumentNullException.ThrowIfNull(lines);
         if (string.IsNullOrWhiteSpace(description))
@@ -262,7 +386,7 @@ public sealed class Ledger : IReadOnlyLedger
             .Select(l => new LedgerEntry(Guid.NewGuid(), journalId, timestamp, l.account, l.debit, l.credit, description))
             .ToList();
 
-        Post(new JournalEntry(journalId, timestamp, description, entries));
+        Post(new JournalEntry(journalId, timestamp, description, entries, metadata));
     }
 
     private void ValidateJournalEntry(JournalEntry entry)
@@ -309,6 +433,10 @@ public sealed class Ledger : IReadOnlyLedger
                 throw new LedgerValidationException($"Ledger entry '{line.EntryId}' has already been posted.");
         }
     }
+
+    private static bool MatchesFinancialAccount(LedgerAccount account, string? financialAccountId)
+        => string.IsNullOrWhiteSpace(financialAccountId)
+            || string.Equals(account.FinancialAccountId, financialAccountId.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static decimal CalculateNetBalance(LedgerAccount account, decimal debits, decimal credits)
         => account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense

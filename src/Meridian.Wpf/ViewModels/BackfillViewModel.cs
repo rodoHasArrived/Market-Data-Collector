@@ -182,7 +182,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     }
 
     // ── Lifecycle ───────────────────────────────────────────────────────────
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         _backfillService.ProgressUpdated += OnBackfillProgressUpdated;
         _backfillService.BackfillCompleted += OnBackfillCompleted;
@@ -201,7 +201,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     }
 
     // ── Data loading ────────────────────────────────────────────────────────
-    public async Task LoadScheduledJobsAsync()
+    public async Task LoadScheduledJobsAsync(CancellationToken ct = default)
     {
         ScheduledJobs.Clear();
         try
@@ -224,7 +224,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
         HasNoScheduledJobs = ScheduledJobs.Count == 0;
     }
 
-    public async Task LoadResumableJobsAsync()
+    public async Task LoadResumableJobsAsync(CancellationToken ct = default)
     {
         ResumableJobs.Clear();
         try
@@ -254,7 +254,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
         HasNoResumableJobs = ResumableJobs.Count == 0;
     }
 
-    public async Task RefreshStatusFromApiAsync()
+    public async Task RefreshStatusFromApiAsync(CancellationToken ct = default)
     {
         try
         {
@@ -288,7 +288,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
         string provider,
         DateTime fromDate,
         DateTime toDate,
-        string granularity)
+        string granularity, CancellationToken ct = default)
     {
         SymbolProgress.Clear();
         foreach (var symbol in symbols)
@@ -375,7 +375,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
         _notificationService.ShowNotification("Backfill Cancelled", "The backfill operation was cancelled.", NotificationType.Warning);
     }
 
-    public async Task ResumeJobAsync(ResumableJobInfo job)
+    public async Task ResumeJobAsync(ResumableJobInfo job, CancellationToken ct = default)
     {
         if (_backfillService.IsRunning)
         {
@@ -508,7 +508,7 @@ public sealed class BackfillViewModel : BindableBase, IDisposable
     }
 
     // ── Gap scanning ────────────────────────────────────────────────────────
-    public async Task ScanGapsAsync(string[] symbols, DateTime fromDate, DateTime toDate)
+    public async Task ScanGapsAsync(string[] symbols, DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
         if (symbols.Length == 0)
         {

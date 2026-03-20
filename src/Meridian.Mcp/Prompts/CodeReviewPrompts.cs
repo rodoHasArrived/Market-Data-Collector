@@ -30,9 +30,9 @@ public sealed class CodeReviewPrompts(RepoPathService repo)
         if (focus == "all" || focus == "performance")
         {
             sb.AppendLine("## Lens 2: Performance & Async Safety");
-            sb.AppendLine("- No `.Result` or `.Wait()` — use `await` throughout");
+            sb.AppendLine("- No blocking task completion APIs — use `await` throughout");
             sb.AppendLine("- No `Task.Run` wrapping I/O — use native async APIs");
-            sb.AppendLine("- No `new HttpClient()` — use `IHttpClientFactory`");
+            sb.AppendLine("- No direct `HttpClient` construction — use `IHttpClientFactory`");
             sb.AppendLine("- Every `async` method has `CancellationToken ct = default`");
             sb.AppendLine("- No allocations in hot paths — check for unnecessary LINQ, boxing, or string concat");
             sb.AppendLine();
@@ -78,7 +78,7 @@ public sealed class CodeReviewPrompts(RepoPathService repo)
             sb.AppendLine("- Tests named: `MethodName_StateUnderTest_ExpectedBehavior`");
             sb.AppendLine("- No shared mutable state between tests");
             sb.AppendLine("- External dependencies (HTTP, file system, time) are mocked");
-            sb.AppendLine("- Async tests use `await` — no `.Result` in test code");
+            sb.AppendLine("- Async tests use `await` — no blocking task completion in test code");
             sb.AppendLine();
         }
 

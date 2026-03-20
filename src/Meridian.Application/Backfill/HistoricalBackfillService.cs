@@ -76,7 +76,7 @@ public sealed class HistoricalBackfillService
         int currentConcurrency = maxConcurrent;
         var semaphore = new SemaphoreSlim(maxConcurrent, maxConcurrent);
 
-        async Task ProcessSymbolAsync(string symbol)
+        async Task ProcessSymbolAsync(string symbol, CancellationToken ct = default)
         {
             await semaphore.WaitAsync(ct).ConfigureAwait(false);
             try

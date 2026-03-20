@@ -79,7 +79,7 @@ public partial class SymbolsPage : Page
         if (SecurityTypeCombo?.SelectedItem is ComboBoxItem item)
         {
             var tag = item.Tag?.ToString() ?? "STK";
-            var isOption = tag == "OPT" || tag == "IND_OPT";
+            var isOption = tag is "OPT" or "IND_OPT" or "FOP";
             if (OptionsExpander != null)
                 OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
             if (isOption && tag == "IND_OPT" && OptionStyleCombo != null)
@@ -159,7 +159,7 @@ public partial class SymbolsPage : Page
             LocalSymbolBox.Text = symbol.LocalSymbol ?? string.Empty;
 
             SelectComboItemByTag(SecurityTypeCombo, symbol.SecurityType ?? "STK");
-            var isOption = symbol.SecurityType == "OPT" || symbol.SecurityType == "IND_OPT";
+            var isOption = symbol.SecurityType is "OPT" or "IND_OPT" or "FOP";
             OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
 
             if (isOption)
@@ -184,7 +184,7 @@ public partial class SymbolsPage : Page
         if (string.IsNullOrEmpty(symbolName)) return;
 
         var securityType = GetComboSelectedTag(SecurityTypeCombo) ?? "STK";
-        var isOption = securityType == "OPT" || securityType == "IND_OPT";
+        var isOption = securityType is "OPT" or "IND_OPT" or "FOP";
 
         decimal? strike = null;
         string? right = null;
@@ -295,7 +295,7 @@ public partial class SymbolsPage : Page
     }
 
     private async Task SyncAddSymbolToBackendAsync(
-        string symbol, bool subscribeTrades, bool subscribeDepth, int depthLevels, string exchange)
+        string symbol, bool subscribeTrades, bool subscribeDepth, int depthLevels, string exchange, CancellationToken ct = default)
     {
         try
         {

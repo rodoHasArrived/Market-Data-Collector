@@ -172,7 +172,7 @@ public sealed class PendingOperationsQueueService
     /// Operations with no registered handler are silently discarded.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
-    public async Task ProcessAllAsync()
+    public async Task ProcessAllAsync(CancellationToken ct = default)
     {
         var count = _queue.Count;
         for (var i = 0; i < count; i++)

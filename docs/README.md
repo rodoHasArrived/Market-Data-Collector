@@ -13,6 +13,7 @@ Welcome to the Market Data Collector documentation. This guide will help you fin
 
 - **New Users** → [Getting Started Guide](getting-started/README.md)
 - **Developers** → [Repository Organization Guide](development/repository-organization-guide.md)
+- **Trading workstation migration** → [Migration Blueprint](plans/trading-workstation-migration-blueprint.md)
 - **Operators** → [Operator Runbook](operations/operator-runbook.md)
 - **Contributors** → See [Contributing](#contributing) section below or [Where should this doc go?](development/documentation-contribution-guide.md#where-should-this-doc-go)
 
@@ -88,6 +89,7 @@ Deploying, monitoring, and maintaining the system.
 Understanding system design.
 
 - [Architecture Overview](architecture/overview.md) — High-level system architecture
+- [Trading Workstation Migration Blueprint](plans/trading-workstation-migration-blueprint.md) — Target product, workspace, and run-model migration
 - [Layer Boundaries](architecture/layer-boundaries.md) — Project dependency rules
 - [Storage Design](architecture/storage-design.md) — Storage architecture
 - [Deterministic Canonicalization](architecture/deterministic-canonicalization.md) — Data normalization
@@ -100,6 +102,7 @@ Understanding system design.
 ## Project Status & Planning
 
 - [**Project Roadmap**](status/ROADMAP.md) — **Primary planning document**
+- [Trading Workstation Migration Blueprint](plans/trading-workstation-migration-blueprint.md) — Workflow-centric product migration plan
 - [**Feature Inventory**](status/FEATURE_INVENTORY.md) — Per-feature implementation status
 - [**Improvements Tracker**](status/IMPROVEMENTS.md) — Consolidated improvement tracking
 - [TODO Tracking](status/TODO.md) — Auto-scanned TODO comments

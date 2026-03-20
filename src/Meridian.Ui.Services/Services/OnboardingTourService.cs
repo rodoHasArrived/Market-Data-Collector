@@ -210,7 +210,7 @@ public sealed class OnboardingTourService
         _ = SaveProgressAsync();
     }
 
-    private async Task LoadProgressAsync()
+    private async Task LoadProgressAsync(CancellationToken ct = default)
     {
         try
         {
@@ -236,7 +236,7 @@ public sealed class OnboardingTourService
         }
     }
 
-    private async Task SaveProgressAsync()
+    private async Task SaveProgressAsync(CancellationToken ct = default)
     {
         try
         {

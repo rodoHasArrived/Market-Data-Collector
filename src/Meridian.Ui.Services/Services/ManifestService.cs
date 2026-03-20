@@ -29,7 +29,7 @@ public sealed class ManifestService
     /// <summary>
     /// Generates a manifest for a collection session.
     /// </summary>
-    public async Task<(DataManifest, string)> GenerateManifestForSessionAsync(CollectionSession session)
+    public async Task<(DataManifest, string)> GenerateManifestForSessionAsync(CollectionSession session, CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync();
         var dataRoot = config?.DataRoot ?? "data";
@@ -103,7 +103,7 @@ public sealed class ManifestService
     /// <summary>
     /// Generates a manifest for a date range.
     /// </summary>
-    public async Task<(DataManifest, string)> GenerateManifestForDateRangeAsync(DateTime startDate, DateTime endDate, string[]? symbols = null)
+    public async Task<(DataManifest, string)> GenerateManifestForDateRangeAsync(DateTime startDate, DateTime endDate, string[]? symbols = null, CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync();
         var dataRoot = config?.DataRoot ?? "data";
@@ -180,7 +180,7 @@ public sealed class ManifestService
     /// <summary>
     /// Loads an existing manifest from file.
     /// </summary>
-    public async Task<DataManifest?> LoadManifestAsync(string path)
+    public async Task<DataManifest?> LoadManifestAsync(string path, CancellationToken ct = default)
     {
         try
         {
@@ -205,7 +205,7 @@ public sealed class ManifestService
     /// <summary>
     /// Verifies a manifest against actual files.
     /// </summary>
-    public async Task<ManifestVerificationResult> VerifyManifestAsync(DataManifest manifest, IProgress<double>? progress = null)
+    public async Task<ManifestVerificationResult> VerifyManifestAsync(DataManifest manifest, IProgress<double>? progress = null, CancellationToken ct = default)
     {
         var result = new ManifestVerificationResult
         {
@@ -278,7 +278,7 @@ public sealed class ManifestService
     /// <summary>
     /// Gets all manifests in the catalog.
     /// </summary>
-    public async Task<DataManifest[]> GetAllManifestsAsync()
+    public async Task<DataManifest[]> GetAllManifestsAsync(CancellationToken ct = default)
     {
         var manifests = new List<DataManifest>();
 
@@ -424,7 +424,7 @@ public sealed class ManifestService
         return Convert.ToHexString(hash).ToLower();
     }
 
-    private static async Task<string> ComputeFileChecksumAsync(string filePath)
+    private static async Task<string> ComputeFileChecksumAsync(string filePath, CancellationToken ct = default)
     {
         using var sha256 = SHA256.Create();
         await using var stream = File.OpenRead(filePath);
@@ -496,7 +496,7 @@ public sealed class ManifestService
         }
     }
 
-    private async Task<string> SaveManifestAsync(DataManifest manifest, string name)
+    private async Task<string> SaveManifestAsync(DataManifest manifest, string name, CancellationToken ct = default)
     {
         EnsureCatalogExists();
 

@@ -15,6 +15,9 @@
 
 set -e
 
+DOTNET_CHANNEL="${DOTNET_CHANNEL:-9.0}"
+DOTNET_INSTALL_DIR="${DOTNET_INSTALL_DIR:-$HOME/.dotnet}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -144,11 +147,11 @@ suggest_prerequisites() {
         echo "  # For .NET SDK:"
         echo "  wget https://dot.net/v1/dotnet-install.sh"
         echo "  chmod +x dotnet-install.sh"
-        echo "  ./dotnet-install.sh --channel 8.0"
+        echo "  ./dotnet-install.sh --channel ${DOTNET_CHANNEL}"
         echo ""
         echo "Fedora/RHEL:"
         echo "  sudo dnf install -y docker docker-compose curl git"
-        echo "  sudo dnf install -y dotnet-sdk-8.0"
+        echo "  sudo dnf install -y dotnet-sdk-9.0"
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         echo "macOS (using Homebrew):"
         echo "  brew install --cask docker"
@@ -156,6 +159,41 @@ suggest_prerequisites() {
         echo "  brew install --cask dotnet-sdk"
     fi
     echo ""
+}
+
+ensure_dotnet_sdk() {
+    if command_exists dotnet; then
+        local dotnet_version
+        dotnet_version="$(dotnet --version)"
+        print_success ".NET SDK already available: $dotnet_version"
+        return 0
+    fi
+
+    if ! command_exists curl; then
+        print_error "curl is required to install the .NET SDK automatically"
+        return 1
+    fi
+
+    print_info ".NET SDK not found; installing channel ${DOTNET_CHANNEL} into ${DOTNET_INSTALL_DIR}"
+    mkdir -p "$DOTNET_INSTALL_DIR"
+
+    local installer
+    installer="$(mktemp)"
+    curl -fsSL https://dot.net/v1/dotnet-install.sh -o "$installer"
+    bash "$installer" --channel "$DOTNET_CHANNEL" --install-dir "$DOTNET_INSTALL_DIR"
+    rm -f "$installer"
+
+    export PATH="$DOTNET_INSTALL_DIR:$PATH"
+    export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+
+    if command_exists dotnet; then
+        print_success "Installed .NET SDK: $(dotnet --version)"
+        print_info "Add this to your shell profile if needed: export PATH=\"$DOTNET_INSTALL_DIR:\$PATH\""
+        return 0
+    fi
+
+    print_error "Automatic .NET SDK installation did not succeed"
+    return 1
 }
 
 # Setup configuration
@@ -231,8 +269,7 @@ install_docker() {
 install_native() {
     print_info "Installing with native .NET..."
 
-    # Check .NET SDK
-    if ! command_exists dotnet; then
+    if ! ensure_dotnet_sdk; then
         print_error ".NET SDK is required for native installation"
         suggest_prerequisites
         return 1

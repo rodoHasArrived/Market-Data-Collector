@@ -8,4 +8,5 @@ public sealed record FillEvent(
     long FilledQuantity,    // positive = bought; negative = sold/shorted
     decimal FillPrice,
     decimal Commission,
-    DateTimeOffset FilledAt);
+    DateTimeOffset FilledAt,
+    string? AccountId = null);

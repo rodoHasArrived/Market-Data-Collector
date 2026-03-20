@@ -11,4 +11,5 @@ public sealed record PortfolioSnapshot(
     decimal TotalEquity,            // Cash + LongMarketValue + ShortMarketValue
     decimal DailyReturn,            // (TotalEquity - PrevEquity) / PrevEquity
     IReadOnlyDictionary<string, Position> Positions,
+    IReadOnlyDictionary<string, FinancialAccountSnapshot> Accounts,
     IReadOnlyList<CashFlowEntry> DayCashFlows);

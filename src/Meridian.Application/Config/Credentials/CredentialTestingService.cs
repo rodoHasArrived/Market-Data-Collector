@@ -485,7 +485,7 @@ public sealed class CredentialTestingService : IAsyncDisposable
         }
     }
 
-    private async Task PersistStatusAsync()
+    private async Task PersistStatusAsync(CancellationToken ct = default)
     {
         try
         {

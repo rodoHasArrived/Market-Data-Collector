@@ -23,7 +23,7 @@ public sealed class ProviderPrompts(RepoPathService repo)
         sb.AppendLine("- **ADR-001** — Implement the correct interface (`IMarketDataClient`, `IHistoricalDataProvider`, or `ISymbolSearchProvider`)");
         sb.AppendLine("- **ADR-004** — Every `async` method must accept `CancellationToken ct = default`");
         sb.AppendLine("- **ADR-005** — Decorate the class with `[DataSource(\"id\", \"Display Name\", ...)]` for auto-discovery");
-        sb.AppendLine("- **ADR-010** — Never use `new HttpClient()` — inject `IHttpClientFactory`");
+        sb.AppendLine("- **ADR-010** — Never construct `HttpClient` directly — inject `IHttpClientFactory`");
         sb.AppendLine("- **ADR-011** — Read credentials from environment variables only; never hardcode");
         sb.AppendLine();
 
@@ -71,7 +71,7 @@ public sealed class ProviderPrompts(RepoPathService repo)
         sb.AppendLine("- [ ] `[ImplementsAdr(\"ADR-001\")]`, `[ImplementsAdr(\"ADR-004\")]`, `[ImplementsAdr(\"ADR-005\")]`");
         sb.AppendLine("- [ ] Every async method has `CancellationToken ct = default`");
         sb.AppendLine("- [ ] Credentials read from environment variables via `ISecretProvider`");
-        sb.AppendLine("- [ ] HTTP via `IHttpClientFactory` — no `new HttpClient()`");
+        sb.AppendLine("- [ ] HTTP via `IHttpClientFactory` — no direct `HttpClient` construction");
         sb.AppendLine("- [ ] Structured logging: `_logger.LogInformation(\"{Symbol}: {Count} bars\", symbol, count)`");
         sb.AppendLine("- [ ] Rate limiting via `WaitForRateLimitSlotAsync(ct)` (historical providers)");
         sb.AppendLine("- [ ] Test file created in `tests/Meridian.Tests/Infrastructure/Providers/`");

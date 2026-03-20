@@ -338,9 +338,22 @@
                                           Style="{StaticResource FormComboBoxStyle}"
                                           SelectionChanged="SecurityType_Changed">
                                     <ComboBoxItem Content="Stock (STK)" Tag="STK" IsSelected="True" />
+                                    <ComboBoxItem Content="ETF (ETF)" Tag="ETF" />
                                     <ComboBoxItem Content="Equity Option (OPT)" Tag="OPT" />
-                                    <ComboBoxItem Content="Index Option" Tag="IND_OPT" />
+                                    <ComboBoxItem Content="Index Option (IND_OPT)" Tag="IND_OPT" />
+                                    <ComboBoxItem Content="Futures Option (FOP)" Tag="FOP" />
                                     <ComboBoxItem Content="Future (FUT)" Tag="FUT" />
+                                    <ComboBoxItem Content="Single Stock Future (SSF)" Tag="SSF" />
+                                    <ComboBoxItem Content="Index (IND)" Tag="IND" />
+                                    <ComboBoxItem Content="Forex / Cash (CASH)" Tag="CASH" />
+                                    <ComboBoxItem Content="Commodity (CMDTY)" Tag="CMDTY" />
+                                    <ComboBoxItem Content="Crypto (CRYPTO)" Tag="CRYPTO" />
+                                    <ComboBoxItem Content="CFD (CFD)" Tag="CFD" />
+                                    <ComboBoxItem Content="Bond (BOND)" Tag="BOND" />
+                                    <ComboBoxItem Content="Fund (FUND)" Tag="FUND" />
+                                    <ComboBoxItem Content="Warrant (WAR)" Tag="WAR" />
+                                    <ComboBoxItem Content="Combination / Spread (BAG)" Tag="BAG" />
+                                    <ComboBoxItem Content="Margin Product (MARGIN)" Tag="MARGIN" />
                                 </ComboBox>
                             </StackPanel>
 

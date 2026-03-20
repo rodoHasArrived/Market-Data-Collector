@@ -1,7 +1,7 @@
 # Market Data Collector - Production Status
 
-**Version:** 1.6.2
-**Status:** Development / Pilot Ready
+**Version:** 1.7.0
+**Status:** Development / Pilot Ready (trading workstation migration planning active)
 
 This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
 
@@ -9,7 +9,7 @@ This document consolidates the architecture assessment and production readiness 
 
 ## Executive Summary
 
-The Market Data Collector is a feature-rich system with a working CLI, backfill pipeline, storage, and UI tooling. Some providers require credentials or build-time flags, and certain integrations (notably Polygon streaming) remain partially implemented.
+The Market Data Collector is a feature-rich system with working ingestion, backfill, storage, backtesting, and desktop tooling. The next major product effort is to unify those capabilities into a workflow-centric trading workstation with shared run, portfolio, and ledger surfaces. Some providers still require credentials or build-time flags, and certain integrations (notably Polygon streaming) remain partially implemented.
 
 ### Overall Assessment: **DEVELOPMENT / PILOT READY**
 
@@ -25,7 +25,7 @@ The Market Data Collector is a feature-rich system with a working CLI, backfill 
 | StockSharp Provider | ⚠️ Integration scaffold | Requires StockSharp setup |
 | Monitoring | ✅ Implemented | HTTP server + Prometheus metrics + OpenTelemetry |
 | Data Quality | ✅ Implemented | Completeness, gap analysis, anomaly detection, SLA monitoring |
-| WPF Desktop App | ⚠️ Partial UX parity | Windows desktop UI (sole desktop client); ~42 of 49 pages wired to live services; ~6 pages show static placeholder data (StoragePage, WelcomePage, TradingHoursPage). See [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) §10. |
+| WPF Desktop App | 🔄 Workflow migration active | Windows desktop UI (sole desktop client) with broad page coverage; current delivery focus is consolidating the app into Research, Trading, Data Operations, and Governance workspaces backed by shared run / portfolio / ledger models. See [FEATURE_INVENTORY.md](FEATURE_INVENTORY.md) §10 and the migration blueprint. |
 | QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
 | Symbol Search Providers | ✅ Implemented | 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp) |
 | API Surface | ✅ Implemented | 283 route constants, typed OpenAPI annotations across all endpoint families |
@@ -105,19 +105,24 @@ Multiple storage strategies:
 
 ## Known Issues
 
-### WPF UX Parity
+### Trading Workstation Migration
 
-**Status:** ⚠️ Partial implementation  
-The WPF shell and navigation model are in place, and approximately 42 of 49 pages are wired to live backend services. The remaining pages (`StoragePage`, `WelcomePage`, `TradingHoursPage`, and a few others) currently display static placeholder values. Phase 11 of the roadmap addresses this. See [`FEATURE_INVENTORY.md`](FEATURE_INVENTORY.md) §10 for the full page-by-page breakdown.
+**Status:** 🔄 Planned / documentation-aligned
+Meridian already has the major underlying capabilities for research, backtesting, paper-trading infrastructure, and auditability, but the operator experience is still fragmented across many pages. Phases 11–13 of the roadmap now focus on converging those capabilities into a unified trading workstation with shared run, portfolio, and ledger concepts.
+
+### Paper-Trading Operator UX
+
+**Status:** ⚠️ Infrastructure ahead of product UX
+Execution primitives, OMS coordination, and a paper gateway exist, but the user-facing trading cockpit, positions / blotter views, and realistic execution workflow are not yet the primary product surface.
 
 ### Polygon Streaming
 
-**Status:** ⚠️ Partial implementation  
+**Status:** ⚠️ Partial implementation
 The Polygon streaming client operates in stub mode when no API key is provided. The WebSocket parsing path is still being completed.
 
 ### Interactive Brokers Build Flag
 
-**Status:** ⚠️ Build-time requirement  
+**Status:** ⚠️ Build-time requirement
 Interactive Brokers connectivity requires the IBAPI compile flag and a referenced IBApi package/dll.
 
 ---
@@ -139,7 +144,7 @@ dotnet build -p:DefineConstants=IBAPI
 
 ### 2. Polygon Provider
 
-**Status:** Partial implementation  
+**Status:** Partial implementation
 The Polygon provider runs in stub mode without credentials and requires full WebSocket message parsing for complete streaming support.
 
 ---

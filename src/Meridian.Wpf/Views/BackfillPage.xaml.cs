@@ -108,17 +108,17 @@ public partial class BackfillPage : Page
 
     // ── Data loading helpers ─────────────────────────────────────────────────
 
-    private async Task LoadScheduledJobsAsync()
+    private async Task LoadScheduledJobsAsync(CancellationToken ct = default)
     {
         await _viewModel.LoadScheduledJobsAsync();
     }
 
-    private async Task LoadResumableJobsAsync()
+    private async Task LoadResumableJobsAsync(CancellationToken ct = default)
     {
         await _viewModel.LoadResumableJobsAsync();
     }
 
-    private async Task RefreshStatusFromApiAsync()
+    private async Task RefreshStatusFromApiAsync(CancellationToken ct = default)
     {
         await _viewModel.RefreshStatusFromApiAsync();
         SyncStatusDisplay();

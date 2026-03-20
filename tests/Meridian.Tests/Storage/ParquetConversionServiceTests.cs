@@ -106,6 +106,51 @@ public class ParquetConversionServiceTests : IDisposable
         result.SkippedAlreadyConverted.Should().Be(1);
     }
 
+    [Fact]
+    public async Task ConvertCompletedDaysAsync_WithLargeArchive_ConvertsInRowGroups()
+    {
+        var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+        var fileName = $"QQQ.Trade.{yesterday:yyyy-MM-dd}.jsonl";
+
+        var records = Enumerable.Range(0, 25_000)
+            .Select(i => new
+            {
+                Timestamp = DateTime.UtcNow.AddDays(-1).AddMilliseconds(i).ToString("o"),
+                Symbol = "QQQ",
+                Price = 500.0 + (i * 0.01),
+                Size = 100 + i,
+                Venue = i % 2 == 0 ? "XNAS" : "ARCX"
+            })
+            .ToArray();
+
+        await CreateTestJsonlFileAsync(fileName, records);
+
+        var result = await _service.ConvertCompletedDaysAsync();
+
+        result.FilesConverted.Should().Be(1);
+        result.RecordsConverted.Should().Be(25_000);
+        result.Errors.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ConvertCompletedDaysAsync_WithMalformedLines_SkipsBadRowsAndConvertsValidRows()
+    {
+        var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+        var filePath = Path.Combine(_testDataRoot, $"MSFT.Trade.{yesterday:yyyy-MM-dd}.jsonl");
+        var content = """
+{"Timestamp":"2026-03-19T12:00:00Z","Symbol":"MSFT","Price":380.25,"Size":100}
+{ not valid json
+{"Timestamp":"2026-03-19T12:00:01Z","Symbol":"MSFT","Price":380.30,"Size":200}
+""";
+        await File.WriteAllTextAsync(filePath, content);
+
+        var result = await _service.ConvertCompletedDaysAsync();
+
+        result.FilesConverted.Should().Be(1);
+        result.RecordsConverted.Should().Be(2);
+        result.Errors.Should().Be(0);
+    }
+
     private async Task CreateTestJsonlFileAsync<T>(string fileName, T[] records)
     {
         var filePath = Path.Combine(_testDataRoot, fileName);

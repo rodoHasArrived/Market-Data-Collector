@@ -10,7 +10,7 @@ internal interface IFillModel
 {
     /// <summary>
     /// Attempt to fill <paramref name="order"/> against <paramref name="evt"/>.
-    /// Returns zero or more fill events (multiple = partial fills across LOB levels).
+    /// Returns the updated order state together with zero or more fill events.
     /// </summary>
-    IReadOnlyList<FillEvent> TryFill(Order order, MarketEvent evt);
+    OrderFillResult TryFill(Order order, MarketEvent evt);
 }

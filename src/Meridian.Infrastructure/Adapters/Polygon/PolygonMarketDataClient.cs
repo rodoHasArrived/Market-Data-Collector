@@ -555,7 +555,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
 
     #region WebSocket helpers
 
-    private async Task SendSubscribeAsync(string channel)
+    private async Task SendSubscribeAsync(string channel, CancellationToken ct = default)
     {
         try
         {
@@ -570,7 +570,7 @@ public sealed class PolygonMarketDataClient : WebSocketProviderBase
         }
     }
 
-    private async Task SendUnsubscribeAsync(string channel)
+    private async Task SendUnsubscribeAsync(string channel, CancellationToken ct = default)
     {
         try
         {

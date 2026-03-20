@@ -940,7 +940,8 @@ public static class ServiceCompositionRoot
                 wal: wal,
                 auditTrail: auditTrail,
                 validator: validator,
-                deadLetterSink: deadLetterSink);
+                deadLetterSink: deadLetterSink,
+                consumerCount: wal is null && validator is null && Environment.ProcessorCount > 2 ? 2 : 1);
         });
 
         // IMarketEventPublisher - facade for publishing events.

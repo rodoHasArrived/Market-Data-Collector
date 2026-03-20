@@ -29,7 +29,7 @@ public sealed class AdrResources(RepoPathService repo)
             ["007"] = "`AtomicFileWriter` for all sink writes; WAL before queue",
             ["008"] = "`CompositeSink` for JSONL + Parquet simultaneous writes",
             ["009"] = "F# discriminated unions; handle all DU cases in C#",
-            ["010"] = "`IHttpClientFactory` — never `new HttpClient()`",
+            ["010"] = "`IHttpClientFactory` — never construct `HttpClient` directly",
             ["011"] = "Env vars for credentials; no hardcoding",
             ["012"] = "Unified health checks + Prometheus metrics pipeline",
             ["013"] = "`EventPipelinePolicy.*.CreateChannel<T>()` — no raw channel creation",

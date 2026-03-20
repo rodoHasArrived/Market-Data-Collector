@@ -281,7 +281,7 @@ public sealed class JsonlStorageSink : IStorageSink
         }
     }
 
-    private async Task FlushAllBuffersSafelyAsync()
+    private async Task FlushAllBuffersSafelyAsync(CancellationToken ct = default)
     {
         try
         {

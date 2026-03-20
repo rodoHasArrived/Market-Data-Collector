@@ -342,7 +342,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
     // Consumer loops
     // -------------------------------------------------------------------------
 
-    private async Task ConsumeTradesAsync()
+    private async Task ConsumeTradesAsync(CancellationToken ct = default)
     {
         ThreadingUtilities.SetAboveNormalPriority();
 
@@ -382,7 +382,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
         }
     }
 
-    private async Task ConsumeQuotesAsync()
+    private async Task ConsumeQuotesAsync(CancellationToken ct = default)
     {
         ThreadingUtilities.SetAboveNormalPriority();
 
@@ -402,9 +402,9 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
                 {
                     ref readonly var raw = ref _quoteBatch[i];
                     var evt = ReconstituteQuote(in raw);
-                    _slowPath.TryPublish(in evt);
-                }
 
+                    await _slowPath.PublishAsync(evt).ConfigureAwait(false);
+                }
                 Interlocked.Add(ref _hotQuoteConsumed, drained);
             }
         }
@@ -456,7 +456,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
 
     // Drains remaining items from the trade ring buffer into the slow path
     // during disposal (after consumers have stopped).
-    private async Task DrainRemainingTradesAsync()
+    private async Task DrainRemainingTradesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -473,7 +473,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
         }
     }
 
-    private async Task DrainRemainingQuotesAsync()
+    private async Task DrainRemainingQuotesAsync(CancellationToken ct = default)
     {
         try
         {

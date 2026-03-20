@@ -1,16 +1,18 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
+using Meridian.Ui.Shared.Endpoints;
+using Microsoft.Extensions.Hosting;
 
 namespace Meridian.Ui.Shared;
 
 /// <summary>
 /// In-memory session store for username/password authentication.
 /// Credentials are read from the MDC_USERNAME and MDC_PASSWORD environment variables.
-/// When neither variable is set the service reports as not configured and all requests
-/// pass through without authentication (backward-compatible).
+/// Authentication defaults to optional in Development/Test and required elsewhere.
+/// Use MDC_AUTH_MODE=optional|required|auto to override the default environment-based mode.
 /// </summary>
-public sealed class LoginSessionService
+public sealed class LoginSessionService(IHostEnvironment environment)
 {
     private const string UsernameEnvVar = "MDC_USERNAME";
     private const string PasswordEnvVar = "MDC_PASSWORD";
@@ -26,6 +28,10 @@ public sealed class LoginSessionService
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(UsernameEnvVar)) &&
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(PasswordEnvVar));
+
+    internal AuthenticationMode Mode => AuthenticationModeResolver.Resolve(environment);
+
+    internal bool AllowAnonymousWhenUnconfigured => Mode == AuthenticationMode.Optional;
 
     /// <summary>
     /// Validates the supplied credentials and creates a new session token on success.

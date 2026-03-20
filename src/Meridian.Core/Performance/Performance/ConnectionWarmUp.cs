@@ -312,7 +312,7 @@ public sealed class HeartbeatMonitor : IDisposable
         _monitorTask = MonitorLoopAsync(_cts.Token);
     }
 
-    public async Task StopAsync()
+    public async Task StopAsync(CancellationToken ct = default)
     {
         if (_cts is null || _monitorTask is null)
             return;
