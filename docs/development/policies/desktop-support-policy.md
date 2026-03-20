@@ -4,8 +4,8 @@
 
 This policy defines contribution and validation expectations for desktop surfaces:
 
-- `src/MarketDataCollector.Wpf` (**primary desktop surface**)
-- `src/MarketDataCollector.Ui.Services` (shared services used by the desktop client)
+- `src/Meridian.Wpf` (**primary desktop surface**)
+- `src/Meridian.Ui.Services` (shared services used by the desktop client)
 
 ## Support Level
 

@@ -439,7 +439,7 @@ Enable detailed logging:
   "Serilog": {
     "MinimumLevel": {
       "Override": {
-        "MarketDataCollector.Infrastructure.Providers.Backfill": "Debug"
+        "Meridian.Infrastructure.Providers.Backfill": "Debug"
       }
     }
   }

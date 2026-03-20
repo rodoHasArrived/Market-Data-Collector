@@ -1,12 +1,12 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-03-18T07:57:44.682525+00:00
+> Last updated: 2026-03-20T00:15:43.122054+00:00
 
 ## Overall Health Score
 
 ```
-  [############################--] 92/100
+  [###########################---] 91/100
   Rating: Excellent
 ```
 
@@ -14,14 +14,14 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 215 |
-| Total lines | 84,633 |
-| Average file size (lines) | 393.6 |
-| Orphaned files | 37 |
-| Files without headings | 1 |
+| Total documentation files | 226 |
+| Total lines | 88,195 |
+| Average file size (lines) | 390.2 |
+| Orphaned files | 41 |
+| Files without headings | 2 |
 | Stale files (>90 days) | 0 |
-| TODO/FIXME markers | 178 |
-| **Health score** | **92/100** |
+| TODO/FIXME markers | 180 |
+| **Health score** | **91/100** |
 
 ### Score Breakdown
 
@@ -40,6 +40,7 @@
 These files lack a Markdown heading, making them harder to navigate:
 
 - `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/agents/cleanup-specialist.agent.md`
 
 ### Orphaned Documentation
 
@@ -50,8 +51,11 @@ These files are not linked from any other Markdown file in the repository:
 - `.claude/skills/mdc-code-review/agents/grader.md`
 - `.claude/skills/mdc-code-review/references/schemas.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/agents/cleanup-specialist.agent.md`
 - `.github/pull_request_template_desktop.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
+- `AUDIT_REPORT.md`
+- `AUDIT_REPORT_2026_03_20.md`
 - `benchmarks/BOTTLENECK_REPORT.md`
 - `docs/archived/2026-02_PR_SUMMARY.md`
 - `docs/archived/2026-02_UI_IMPROVEMENTS_SUMMARY.md`
@@ -62,10 +66,7 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/CS0101_FIX_SUMMARY.md`
 - `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
 - `docs/archived/IMPROVEMENTS_2026-02.md`
-- `docs/archived/QUICKSTART_2026-01-08.md`
-- `docs/archived/REDESIGN_IMPROVEMENTS.md`
-- `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
-- ... and 17 more
+- ... and 21 more
 
 ## Trend
 
@@ -73,7 +74,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-03-18 | 92 | 215 | 37 | 0 |
+| 2026-03-20 | 91 | 226 | 41 | 0 |
 
 ---
 

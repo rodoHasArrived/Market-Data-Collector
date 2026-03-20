@@ -4,10 +4,10 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'src/MarketDataCollector.Application/Pipeline/**'
-      - 'src/MarketDataCollector.Storage/**'
-      - 'src/MarketDataCollector.Domain/Collectors/**'
-      - 'src/MarketDataCollector.Core/Serialization/**'
+      - 'src/Meridian.Application/Pipeline/**'
+      - 'src/Meridian.Storage/**'
+      - 'src/Meridian.Domain/Collectors/**'
+      - 'src/Meridian.Core/Serialization/**'
       - 'benchmarks/**'
   workflow_dispatch:
     inputs:
@@ -47,16 +47,16 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
+        run: dotnet restore benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj /p:EnableWindowsTargeting=true
 
       - name: Build benchmarks
         run: |
-          dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-restore /p:EnableWindowsTargeting=true
+          dotnet build benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj -c Release --no-restore /p:EnableWindowsTargeting=true
 
       - name: Run benchmarks
         run: |
           filter="${{ github.event.inputs.filter || '*' }}"
-          dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+          dotnet run --project benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj \
             -c Release \
             --no-build \
             -- \
@@ -74,8 +74,8 @@ jobs:
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -f "./BenchmarkDotNet.Artifacts/results/MarketDataCollector.Benchmarks-report-github.md" ]; then
-            cat "./BenchmarkDotNet.Artifacts/results/MarketDataCollector.Benchmarks-report-github.md" >> $GITHUB_STEP_SUMMARY
+          if [ -f "./BenchmarkDotNet.Artifacts/results/Meridian.Benchmarks-report-github.md" ]; then
+            cat "./BenchmarkDotNet.Artifacts/results/Meridian.Benchmarks-report-github.md" >> $GITHUB_STEP_SUMMARY
           else
             REPORT=$(find ./BenchmarkDotNet.Artifacts -name "*.md" -type f | head -1)
             if [ -n "$REPORT" ]; then

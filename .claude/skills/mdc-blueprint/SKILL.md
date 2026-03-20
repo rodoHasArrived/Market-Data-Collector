@@ -1,7 +1,7 @@
 ---
 name: mdc-blueprint
 description: >
-  Blueprint Mode skill for the MarketDataCollector project. Translates a single prioritized
+  Blueprint Mode skill for the Meridian project. Translates a single prioritized
   idea into a complete, code-ready technical design document — interfaces, component designs,
   data flows, XAML sketches, test plans, and implementation checklists — grounded in MDC's
   actual stack: C# 13, F# 8, .NET 9, WPF, MVVM via BindableBase, EventPipeline,
@@ -13,10 +13,10 @@ description: >
   or Idea Evaluator pipeline stage.
 ---
 
-# MarketDataCollector — Blueprint Mode Skill
+# Meridian — Blueprint Mode Skill
 
 Translate a single prioritized idea into a complete, code-ready technical design document for
-MarketDataCollector.
+Meridian.
 
 > **Shared project context:** [`../_shared/project-context.md`](../_shared/project-context.md) —
 > authoritative stats, file paths, provider list, ADR table. Read before naming interfaces or
@@ -169,7 +169,7 @@ public interface IXxxService
 
 ### F# Domain Types (if applicable)
 
-// F# 8 syntax. Match naming conventions in MarketDataCollector.Domain.
+// F# 8 syntax. Match naming conventions in Meridian.Domain.
 type XxxEntry =
     { Symbol: string
       Status: XxxStatus }
@@ -215,7 +215,7 @@ For each significant new or modified component, provide a detailed design:
 
 ### [ComponentName]
 
-**Namespace:** MarketDataCollector.[Layer].[Area]
+**Namespace:** Meridian.[Layer].[Area]
 **Type:** `sealed class ComponentName : IComponentInterface, IHostedService`
 **Lifetime:** Singleton | Scoped | Transient
 **Implements:** [Interfaces, base classes]
@@ -427,7 +427,7 @@ If `--json` is requested, also produce a `blueprint.json` summary:
   "new_interfaces": [
     {
       "name": "IXxxService",
-      "namespace": "MarketDataCollector.Application.Services",
+      "namespace": "Meridian.Application.Services",
       "methods": ["DoSomethingAsync", "GetItems"],
       "events": ["ItemChanged"]
     }

@@ -4,7 +4,7 @@
 **Version:** 1.6.1
 **Last Updated:** 2026-01-30
 
-This guide provides comprehensive instructions for integrating MarketDataCollector with QuantConnect's Lean algorithmic trading engine.
+This guide provides comprehensive instructions for integrating Meridian with QuantConnect's Lean algorithmic trading engine.
 
 ## Table of Contents
 
@@ -23,14 +23,14 @@ This guide provides comprehensive instructions for integrating MarketDataCollect
 
 The Lean Engine integration enables you to:
 
-- **Backtest algorithms** using MarketDataCollector's high-fidelity tick data
+- **Backtest algorithms** using Meridian's high-fidelity tick data
 - **Access microstructure data** including order flow, aggressor side, and exchange routing
 - **Leverage Lean's ecosystem** of 200+ technical indicators and risk management tools
 - **Build production strategies** on institutional-grade market data
 
 ### Why This Integration?
 
-Traditional market data feeds provide only basic OHLCV bars or quotes. MarketDataCollector captures:
+Traditional market data feeds provide only basic OHLCV bars or quotes. Meridian captures:
 - Every tick-by-tick trade with sequence numbers and conditions
 - Best bid/offer updates with exchange routing information
 - Order book snapshots and depth updates
@@ -43,17 +43,17 @@ This granular data enables sophisticated strategies that exploit market microstr
 ### Integration Components
 
 ```
-MarketDataCollector
+Meridian
 ├── Data Collection (IB, Alpaca, Polygon)
 │   └── JSONL Storage (./data/)
 │
 └── Lean Integration
     ├── Custom BaseData Types
-    │   ├── MarketDataCollectorTradeData
-    │   └── MarketDataCollectorQuoteData
+    │   ├── MeridianTradeData
+    │   └── MeridianQuoteData
     │
     ├── Data Provider
-    │   └── MarketDataCollectorDataProvider (IDataProvider)
+    │   └── MeridianDataProvider (IDataProvider)
     │
     └── Sample Algorithms
         ├── SampleLeanAlgorithm
@@ -65,12 +65,12 @@ Lean Engine
 ├── Backtesting Engine
 ├── Indicators Library
 └── Data Feed System
-    └── Consumes MarketDataCollector data via custom types
+    └── Consumes Meridian data via custom types
 ```
 
 ### Data Flow
 
-1. **Collection**: MarketDataCollector captures market data from providers
+1. **Collection**: Meridian captures market data from providers
 2. **Storage**: Events stored as JSONL files in `./data/`
 3. **Lean Reads**: Custom BaseData types read JSONL files via `GetSource()` and `Reader()`
 4. **Algorithm Consumes**: Lean algorithms receive data via `OnData(Slice)`
@@ -80,12 +80,12 @@ Lean Engine
 ### Prerequisites
 
 - .NET 8.0 SDK or later
-- MarketDataCollector (this project)
+- Meridian (this project)
 - QuantConnect Lean (optional for standalone testing)
 
 ### Step 1: Add NuGet Packages
 
-The required packages are already included in `MarketDataCollector.csproj`:
+The required packages are already included in `Meridian.csproj`:
 
 ```xml
 <PackageReference Include="QuantConnect.Lean" Version="2.5.17315" />
@@ -97,7 +97,7 @@ The required packages are already included in `MarketDataCollector.csproj`:
 ### Step 2: Restore Packages
 
 ```bash
-cd MarketDataCollector
+cd Meridian
 dotnet restore
 ```
 
@@ -111,10 +111,10 @@ dotnet build
 
 ### 1. Collect Market Data
 
-Run MarketDataCollector to gather data:
+Run Meridian to gather data:
 
 ```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 ```
 
 Data will be stored in `./data/` as:
@@ -137,7 +137,7 @@ Create `MyFirstAlgorithm.cs`:
 using QuantConnect;
 using QuantConnect.Algorithm;
 using QuantConnect.Data;
-using MarketDataCollector.Integrations.Lean;
+using Meridian.Integrations.Lean;
 
 namespace MyAlgorithms
 {
@@ -149,15 +149,15 @@ namespace MyAlgorithms
             SetEndDate(2024, 1, 5);
             SetCash(100000);
 
-            // Subscribe to MarketDataCollector data
-            AddData<MarketDataCollectorTradeData>("SPY", Resolution.Tick);
+            // Subscribe to Meridian data
+            AddData<MeridianTradeData>("SPY", Resolution.Tick);
 
-            Log("Algorithm initialized with MarketDataCollector data");
+            Log("Algorithm initialized with Meridian data");
         }
 
         public override void OnData(Slice data)
         {
-            if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+            if (data.ContainsKey("SPY") && data["SPY"] is MeridianTradeData trade)
             {
                 Log($"Trade: {trade.TradePrice:F2} x {trade.TradeSize} - {trade.AggressorSide}");
             }
@@ -173,22 +173,22 @@ The custom data types automatically look for data in Lean's data folder. You can
 **Option A: Use custom data provider**
 
 ```csharp
-var dataProvider = new MarketDataCollectorDataProvider("./data");
+var dataProvider = new MeridianDataProvider("./data");
 ```
 
 **Option B: Symlink data directory**
 
 ```bash
 # Linux/Mac
-ln -s /path/to/MarketDataCollector/data /path/to/Lean/Data/marketdatacollector
+ln -s /path/to/Meridian/data /path/to/Lean/Data/marketdatacollector
 
 # Windows (as Administrator)
-mklink /D C:\Lean\Data\marketdatacollector C:\MarketDataCollector\data
+mklink /D C:\Lean\Data\marketdatacollector C:\Meridian\data
 ```
 
 ## Custom Data Types
 
-### MarketDataCollectorTradeData
+### MeridianTradeData
 
 Represents individual trade executions with full microstructure detail.
 
@@ -211,7 +211,7 @@ Represents individual trade executions with full microstructure detail.
 ```csharp
 public override void OnData(Slice data)
 {
-    if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+    if (data.ContainsKey("SPY") && data["SPY"] is MeridianTradeData trade)
     {
         // Filter out odd lot trades
         if (trade.Conditions.Contains("ODD_LOT"))
@@ -227,7 +227,7 @@ public override void OnData(Slice data)
 }
 ```
 
-### MarketDataCollectorQuoteData
+### MeridianQuoteData
 
 Represents best bid/offer updates with spread and imbalance metrics.
 
@@ -253,7 +253,7 @@ Represents best bid/offer updates with spread and imbalance metrics.
 ```csharp
 public override void OnData(Slice data)
 {
-    if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorQuoteData quote)
+    if (data.ContainsKey("SPY") && data["SPY"] is MeridianQuoteData quote)
     {
         // Calculate spread in basis points
         var spreadBps = (quote.Spread / quote.MidPrice) * 10000;
@@ -277,19 +277,19 @@ public override void OnData(Slice data)
 
 ## Data Provider
 
-The `MarketDataCollectorDataProvider` implements Lean's `IDataProvider` interface to read JSONL files.
+The `MeridianDataProvider` implements Lean's `IDataProvider` interface to read JSONL files.
 
 ### Features
 
 - Automatic `.jsonl.gz` decompression
-- Path mapping from Lean's data folder to MarketDataCollector's data directory
+- Path mapping from Lean's data folder to Meridian's data directory
 - Efficient stream-based file reading
 
 ### Usage
 
 ```csharp
 // In Lean configuration or algorithm
-var dataProvider = new MarketDataCollectorDataProvider("./data");
+var dataProvider = new MeridianDataProvider("./data");
 
 // The data provider automatically handles:
 // - Path construction: data/SPY/trade/2024-01-01.jsonl
@@ -299,7 +299,7 @@ var dataProvider = new MarketDataCollectorDataProvider("./data");
 
 ## Algorithm Examples
 
-See the `src/MarketDataCollector/Integrations/Lean/` directory for complete examples:
+See the `src/Meridian/Integrations/Lean/` directory for complete examples:
 
 - **SampleLeanAlgorithm**: Basic usage of trade and quote data
 - **SpreadArbitrageAlgorithm**: Mean reversion on spread widening
@@ -309,18 +309,18 @@ See the `src/MarketDataCollector/Integrations/Lean/` directory for complete exam
 
 ### Lean Configuration File
 
-Add MarketDataCollector data types to your Lean `config.json`:
+Add Meridian data types to your Lean `config.json`:
 
 ```json
 {
   "data-folder": "./data",
-  "data-provider": "MarketDataCollector.Integrations.Lean.MarketDataCollectorDataProvider"
+  "data-provider": "Meridian.Integrations.Lean.MeridianDataProvider"
 }
 ```
 
 ### Data File Organization
 
-Ensure MarketDataCollector uses a consistent file organization:
+Ensure Meridian uses a consistent file organization:
 
 ```json
 {
@@ -362,7 +362,7 @@ Compression provides 5-10x size reduction with minimal read overhead.
 public override void Initialize()
 {
     // Only subscribe to data you need
-    AddData<MarketDataCollectorTradeData>("SPY", Resolution.Tick);
+    AddData<MeridianTradeData>("SPY", Resolution.Tick);
     // Don't subscribe to quotes if not needed
 }
 ```
@@ -371,7 +371,7 @@ public override void Initialize()
 
 ```csharp
 // Use minute bars instead of ticks for slower strategies
-AddData<MarketDataCollectorTradeData>("SPY", Resolution.Minute);
+AddData<MeridianTradeData>("SPY", Resolution.Minute);
 ```
 
 #### 4. Implement Data Filtering
@@ -379,7 +379,7 @@ AddData<MarketDataCollectorTradeData>("SPY", Resolution.Minute);
 ```csharp
 public override void OnData(Slice data)
 {
-    if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+    if (data.ContainsKey("SPY") && data["SPY"] is MeridianTradeData trade)
     {
         // Skip small trades
         if (trade.TradeSize < 100)
@@ -431,7 +431,7 @@ public override void OnData(Slice data)
 private List<Trade> _allTrades = new();
 
 // Good: Bounded rolling window
-private RollingWindow<MarketDataCollectorTradeData> _trades = new(1000);
+private RollingWindow<MeridianTradeData> _trades = new(1000);
 ```
 
 ## Performance Characteristics
@@ -472,7 +472,7 @@ On typical hardware:
 - Bounded memory usage with RollingWindow examples
 
 ✅ **Compatibility**
-- Works with existing MarketDataCollector file organization
+- Works with existing Meridian file organization
 - Compatible with Lean Engine 2.5.x
 - Supports .NET 8.0
 - Apache 2.0 license compatible
@@ -484,10 +484,10 @@ On typical hardware:
 ### Integration Files
 
 ```
-src/MarketDataCollector/Integrations/Lean/
-├── MarketDataCollectorTradeData.cs       (Custom BaseData for trades)
-├── MarketDataCollectorQuoteData.cs       (Custom BaseData for quotes)
-├── MarketDataCollectorDataProvider.cs    (IDataProvider implementation)
+src/Meridian/Integrations/Lean/
+├── MeridianTradeData.cs       (Custom BaseData for trades)
+├── MeridianQuoteData.cs       (Custom BaseData for quotes)
+├── MeridianDataProvider.cs    (IDataProvider implementation)
 ├── SampleLeanAlgorithm.cs                (Working example algorithm)
 └── README.md                             (Quick reference)
 ```
@@ -496,11 +496,11 @@ src/MarketDataCollector/Integrations/Lean/
 
 ## Next Steps
 
-- Review the sample algorithms in `src/MarketDataCollector/Integrations/Lean/`
+- Review the sample algorithms in `src/Meridian/Integrations/Lean/`
 - Explore Lean's documentation: https://www.quantconnect.com/docs/
 - Join the QuantConnect community forum
 - Contribute improvements to the integration
 
 ---
 
-**See Also:** [Architecture](../architecture/overview.md) | [Configuration](../HELP.md#configuration) | [Lean Integration README](../../src/MarketDataCollector/Integrations/Lean/README.md)
+**See Also:** [Architecture](../architecture/overview.md) | [Configuration](../HELP.md#configuration) | [Lean Integration README](../../src/Meridian/Integrations/Lean/README.md)

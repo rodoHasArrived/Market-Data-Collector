@@ -41,12 +41,12 @@ MarketDataClient → EventPipeline → WAL (fsync) → StorageSink → Commit
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| WAL Implementation | `src/MarketDataCollector.Storage/Archival/WriteAheadLog.cs:17` | Core WAL class |
-| WAL Options | `src/MarketDataCollector.Storage/Archival/WalOptions.cs` | Configuration |
-| Pipeline Integration | `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs:20-28` | WAL in event pipeline |
-| Atomic File Writer | `src/MarketDataCollector.Storage/Archival/AtomicFileWriter.cs` | Crash-safe file writes |
-| Recovery Tests | `tests/MarketDataCollector.Tests/Storage/WriteAheadLogTests.cs` | Verification |
-| Flush on Shutdown | `src/MarketDataCollector.Application/Services/GracefulShutdownService.cs` | Coordinated shutdown |
+| WAL Implementation | `src/Meridian.Storage/Archival/WriteAheadLog.cs:17` | Core WAL class |
+| WAL Options | `src/Meridian.Storage/Archival/WalOptions.cs` | Configuration |
+| Pipeline Integration | `src/Meridian.Application/Pipeline/EventPipeline.cs:20-28` | WAL in event pipeline |
+| Atomic File Writer | `src/Meridian.Storage/Archival/AtomicFileWriter.cs` | Crash-safe file writes |
+| Recovery Tests | `tests/Meridian.Tests/Storage/WriteAheadLogTests.cs` | Verification |
+| Flush on Shutdown | `src/Meridian.Application/Services/GracefulShutdownService.cs` | Coordinated shutdown |
 
 ## Rationale
 

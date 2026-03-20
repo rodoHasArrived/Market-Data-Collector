@@ -4,19 +4,19 @@ This file contains complete, copy-ready implementation patterns for every major
 provider concern. All patterns are verified against the live codebase.
 
 > **Authoritative interfaces:** [`../../_shared/project-context.md`](../../_shared/project-context.md)
-> **Rate limiter source:** `src/MarketDataCollector.Infrastructure/Adapters/Core/RateLimiting/RateLimiter.cs`
-> **Resilience source:** `src/MarketDataCollector.Infrastructure/Resilience/`
+> **Rate limiter source:** `src/Meridian.Infrastructure/Adapters/Core/RateLimiting/RateLimiter.cs`
+> **Resilience source:** `src/Meridian.Infrastructure/Resilience/`
 
 ---
 
 ## Pattern 1: Historical Provider Full Skeleton
 
 ```csharp
-using MarketDataCollector.Contracts.Domain;
-using MarketDataCollector.Core.Exceptions;
-using MarketDataCollector.Core.Serialization;
-using MarketDataCollector.Infrastructure.Adapters.Core;
-using MarketDataCollector.ProviderSdk;
+using Meridian.Contracts.Domain;
+using Meridian.Core.Exceptions;
+using Meridian.Core.Serialization;
+using Meridian.Infrastructure.Adapters.Core;
+using Meridian.ProviderSdk;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
@@ -127,11 +127,11 @@ public sealed class MyProviderHistoricalDataProvider : BaseHistoricalDataProvide
 ## Pattern 2: Streaming Provider Full Skeleton
 
 ```csharp
-using MarketDataCollector.Core.Exceptions;
-using MarketDataCollector.Core.Serialization;
-using MarketDataCollector.Infrastructure.Resilience;
-using MarketDataCollector.Infrastructure.Shared;
-using MarketDataCollector.ProviderSdk;
+using Meridian.Core.Exceptions;
+using Meridian.Core.Serialization;
+using Meridian.Infrastructure.Resilience;
+using Meridian.Infrastructure.Shared;
+using Meridian.ProviderSdk;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -315,7 +315,7 @@ public sealed class MyProviderModule : IProviderModule
 
 ## Pattern 5: JsonSerializerContext Registration
 
-Add to `src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs`:
+Add to `src/Meridian.Core/Serialization/MarketDataJsonContext.cs`:
 
 ```csharp
 [JsonSerializable(typeof(MyProviderResponse))]
@@ -330,7 +330,7 @@ public partial class MarketDataJsonContext : JsonSerializerContext { }
 ## Pattern 6: Historical Provider Test Scaffold
 
 ```csharp
-// File: tests/MarketDataCollector.Tests/Infrastructure/Providers/
+// File: tests/Meridian.Tests/Infrastructure/Providers/
 //       MyProviderHistoricalDataProviderTests.cs
 
 public sealed class MyProviderHistoricalDataProviderTests
@@ -502,7 +502,7 @@ public sealed class MyStreamingProviderClientTests
 | `WaitForSlotAsync(ct)` | `RateLimiter` | Direct use in non-base-class scenarios |
 | ~~`WaitAsync(ct)`~~ | ~~`RateLimiter`~~ | **Does not exist** — common AI error |
 
-File: `src/MarketDataCollector.Infrastructure/Adapters/Core/RateLimiting/RateLimiter.cs`
+File: `src/Meridian.Infrastructure/Adapters/Core/RateLimiting/RateLimiter.cs`
 
 ---
 

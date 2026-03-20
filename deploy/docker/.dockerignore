@@ -62,8 +62,8 @@ secrets.json
 !publish.sh
 
 # Desktop projects (Windows only, not for containers)
-src/MarketDataCollector.Wpf/
-tests/MarketDataCollector.Wpf.Tests/
+src/Meridian.Wpf/
+tests/Meridian.Wpf.Tests/
 
 # Benchmarks (not needed in production)
 benchmarks/

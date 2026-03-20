@@ -1,8 +1,8 @@
 name: Fix Test Failures Identified By Ci
 description: Fix test failures identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23234439005
+# Generated: 2026-03-19
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23317515114
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -13,46 +13,32 @@ messages:
       - xUnit for test framework
       - FluentAssertions for assertions
       - Moq / NSubstitute for mocking
-      - Tests in tests/MarketDataCollector.Tests/ and tests/MarketDataCollector.FSharp.Tests/
+      - Tests in tests/Meridian.Tests/ and tests/Meridian.FSharp.Tests/
 
       ## Test Patterns
       - Arrange-Act-Assert structure
       - Mock external dependencies (providers, storage)
       - Test edge cases: null inputs, empty collections, boundary values
-      - Run tests: `dotnet test tests/MarketDataCollector.Tests`
+      - Run tests: `dotnet test tests/Meridian.Tests`
 
       ## Error Codes Found
       - `CS0118`
       - `CS0219`
       - `CS0234`
       - `CS0246`
-      - `CS0433`
-      - `CS0534`
       - `CS0535`
+      - `CS1061`
 
       ## Failure Patterns
-      - `2026-03-18T07:51:02.8469865Z Failed!  - Failed:     5, Passed:  2841, Skipped:     0, Total:  2846, Duration: 12 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-18T07:50:40.4772560Z Failed!  - Failed:     4, Passed:  2842, Skipped:     0, Total:  2846, Duration: 21 s - MarketDataCollector.Tests.dll (net9.0)`
-      - `2026-03-18T07:50:49.1861437Z [xUnit.net 00:00:03.30]     MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [FAIL]`
-      - `2026-03-18T07:50:52.8685785Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
-      - `2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:52.8767803Z [xUnit.net 00:00:06.99]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
-      - `2026-03-18T07:50:52.8867031Z [xUnit.net 00:00:07.00]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords [FAIL]`
-      - `2026-03-18T07:50:26.0226770Z [xUnit.net 00:00:07.55]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [FAIL]`
-      - `2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:26.0593780Z [xUnit.net 00:00:07.59]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
+      - `2026-03-19T21:23:52.2397870Z Failed!  - Failed:     1, Passed:  2845, Skipped:     0, Total:  2846, Duration: 17 s - Meridian.Tests.dll (net9.0)`
+      - `2026-03-19T21:24:29.3496476Z Failed!  - Failed:     1, Passed:  2845, Skipped:     0, Total:  2846, Duration: 14 s - Meridian.Tests.dll (net9.0)`
+      - `2026-03-19T21:23:38.1105740Z [xUnit.net 00:00:03.75]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
+      - `2026-03-19T21:24:18.2257053Z [xUnit.net 00:00:06.73]     Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [FAIL]`
 
       ## Failed Tests
-      - `2026-03-18T07:50:49.3521134Z   Failed MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [1 s]`
-      - `2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:52.8809429Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [10 ms]`
-      - `2026-03-18T07:50:52.8869656Z    at MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RotateWalAsync() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/WriteAheadLogFuzzTests.cs:line 319`
-      - `2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]`
-      - `2026-03-18T07:50:26.0829760Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [17 ms]`
-      - `2026-03-18T07:50:26.0932990Z   Error Message:`
-      - `MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords`
-      - `MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed`
+      - `2026-03-19T21:23:38.1192990Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [22 ms]`
+      - `2026-03-19T21:24:18.2302621Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [25 ms]`
+      - `Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

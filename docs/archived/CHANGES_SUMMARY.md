@@ -153,7 +153,7 @@ This major update introduces a comprehensive F# domain library providing type-sa
 ### Project Structure
 
 ```
-src/MarketDataCollector.FSharp/
+src/Meridian.FSharp/
 ├── Domain/
 │   ├── Sides.fs          # Side and AggressorSide types
 │   ├── Integrity.fs      # Integrity event types
@@ -258,7 +258,7 @@ This update adds a native Windows desktop application using UWP/XAML with WinUI 
 
 #### 1. UWP/XAML Desktop Application
 Created a full-featured native Windows application:
-- **Location**: `src/MarketDataCollector.Uwp/`
+- **Location**: `src/Meridian.Uwp/`
 - Modern WinUI 3 styling with responsive layout
 - Tabbed navigation interface
 
@@ -299,10 +299,10 @@ Implemented Windows CredentialPicker for API credentials:
 
 ### Files Added
 ```
-MarketDataCollector/src/MarketDataCollector.Uwp/
+Meridian/src/Meridian.Uwp/
 ├── App.xaml / App.xaml.cs
 ├── MainWindow.xaml / MainWindow.xaml.cs
-├── MarketDataCollector.Uwp.csproj
+├── Meridian.Uwp.csproj
 ├── app.manifest
 ├── Converters/
 │   └── BoolConverters.cs
@@ -371,14 +371,14 @@ Created comprehensive `.gitignore` for .NET projects:
 ### Files Changed
 ```
 .gitignore (new)
-MarketDataCollector/src/MarketDataCollector/Domain/Collectors/SymbolSubscriptionTracker.cs (new)
-MarketDataCollector/src/MarketDataCollector/Domain/Collectors/MarketDepthCollector.cs
-MarketDataCollector/src/MarketDataCollector/Domain/Collectors/HighPerformanceMarketDepthCollector.cs
-MarketDataCollector/src/MarketDataCollector/Messaging/Consumers/*.cs (4 files)
-MarketDataCollector/src/MarketDataCollector/Messaging/Publishers/*.cs (2 files)
-MarketDataCollector/src/MarketDataCollector/Application/Subscriptions/*.cs (4 files)
-MarketDataCollector/src/MarketDataCollector/Infrastructure/Resilience/WebSocketResiliencePolicy.cs
-MarketDataCollector/src/MarketDataCollector/Application/Config/Credentials/CredentialResolver.cs
+Meridian/src/Meridian/Domain/Collectors/SymbolSubscriptionTracker.cs (new)
+Meridian/src/Meridian/Domain/Collectors/MarketDepthCollector.cs
+Meridian/src/Meridian/Domain/Collectors/HighPerformanceMarketDepthCollector.cs
+Meridian/src/Meridian/Messaging/Consumers/*.cs (4 files)
+Meridian/src/Meridian/Messaging/Publishers/*.cs (2 files)
+Meridian/src/Meridian/Application/Subscriptions/*.cs (4 files)
+Meridian/src/Meridian/Infrastructure/Resilience/WebSocketResiliencePolicy.cs
+Meridian/src/Meridian/Application/Config/Credentials/CredentialResolver.cs
 ```
 
 ---
@@ -393,7 +393,7 @@ This update adds essential NuGet dependencies to the Market Data Collector proje
 
 ### 1. Updated Project Files
 
-#### MarketDataCollector.csproj
+#### Meridian.csproj
 Added 26 NuGet packages across 7 categories:
 
 - **Configuration Management** (5 packages)
@@ -420,7 +420,7 @@ Added 26 NuGet packages across 7 categories:
 - **Additional** (3 packages)
   - Compression, HTTP client, WebSocket support
 
-#### MarketDataCollector.Ui.csproj
+#### Meridian.Ui.csproj
 Added 3 packages for the web dashboard:
 - ASP.NET Core OpenAPI support
 - Serilog integration
@@ -597,10 +597,10 @@ dotnet build
 dotnet build -p:DefineConstants="IBAPI"
 
 # Run smoke test
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 
 # Run self-tests
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
+dotnet run --project src/Meridian/Meridian.csproj -- --selftest
 ```
 
 ## Next Steps
@@ -623,11 +623,11 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --sel
 ## Files Changed
 
 ```
-MarketDataCollector/src/MarketDataCollector/MarketDataCollector.csproj (modified)
-MarketDataCollector/src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj (modified)
-MarketDataCollector/docs/open-source-references.md (new)
-MarketDataCollector/docs/interactive-brokers-setup.md (new)
-MarketDataCollector/DEPENDENCIES.md (new)
+Meridian/src/Meridian/Meridian.csproj (modified)
+Meridian/src/Meridian.Ui/Meridian.Ui.csproj (modified)
+Meridian/docs/open-source-references.md (new)
+Meridian/docs/interactive-brokers-setup.md (new)
+Meridian/DEPENDENCIES.md (new)
 CHANGES_SUMMARY.md (new)
 ```
 

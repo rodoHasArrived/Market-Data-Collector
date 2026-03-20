@@ -7,28 +7,28 @@
 
 ## Problem
 
-The WPF desktop build was failing with 17 CS0101 compilation errors due to duplicate type definitions in the `MarketDataCollector.Ui.Services` namespace.
+The WPF desktop build was failing with 17 CS0101 compilation errors due to duplicate type definitions in the `Meridian.Ui.Services` namespace.
 
 ### Error Details
 
 ```
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'RetentionPolicy'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'SelfTestOptions'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'SelfTestResult'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'SelfTestResponse'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'SelfTestItem'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ErrorCodesResult'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ErrorCodesResponse'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ErrorCodeInfo'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ShowConfigResult'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ShowConfigResponse'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ConfigSection'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ConfigItem'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'QuickCheckResult'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'QuickCheckResponse'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'QuickCheckItem'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'ProviderComparison'
-error CS0101: The namespace 'MarketDataCollector.Ui.Services' already contains a definition for 'SymbolCompleteness'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'RetentionPolicy'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'SelfTestOptions'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'SelfTestResult'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'SelfTestResponse'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'SelfTestItem'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ErrorCodesResult'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ErrorCodesResponse'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ErrorCodeInfo'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ShowConfigResult'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ShowConfigResponse'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ConfigSection'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ConfigItem'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'QuickCheckResult'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'QuickCheckResponse'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'QuickCheckItem'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'ProviderComparison'
+error CS0101: The namespace 'Meridian.Ui.Services' already contains a definition for 'SymbolCompleteness'
 ```
 
 ## Root Cause
@@ -46,9 +46,9 @@ A model consolidation effort created dedicated model files (`AdminMaintenanceMod
 **Resolution:** Renamed the type in `AdminMaintenanceModels.cs` to `StorageRetentionPolicy` to disambiguate
 
 **Files Changed:**
-- `src/MarketDataCollector.Ui.Services/Services/AdminMaintenanceModels.cs` - Renamed class
-- `src/MarketDataCollector.Ui.Services/Contracts/IAdminMaintenanceService.cs` - Updated signature
-- `src/MarketDataCollector.Ui.Services/Services/AdminMaintenanceServiceBase.cs` - Updated usages
+- `src/Meridian.Ui.Services/Services/AdminMaintenanceModels.cs` - Renamed class
+- `src/Meridian.Ui.Services/Contracts/IAdminMaintenanceService.cs` - Updated signature
+- `src/Meridian.Ui.Services/Services/AdminMaintenanceServiceBase.cs` - Updated usages
 
 ### 2. Diagnostics Types (True Duplicates)
 
@@ -92,7 +92,7 @@ A model consolidation effort created dedicated model files (`AdminMaintenanceMod
 ## Verification
 
 ### Build Status
-✅ `MarketDataCollector.Ui.Services.csproj` builds cleanly with 0 errors and 0 warnings
+✅ `Meridian.Ui.Services.csproj` builds cleanly with 0 errors and 0 warnings
 
 ### Type Definition Count
 All 17 previously duplicated types now have exactly 1 definition:
@@ -134,7 +134,7 @@ All 17 previously duplicated types now have exactly 1 definition:
 - [ ] Desktop service tests should pass
 
 ### Manual Verification
-- [x] `MarketDataCollector.Ui.Services` builds cleanly
+- [x] `Meridian.Ui.Services` builds cleanly
 - [x] All 17 duplicate types resolved to single definitions
 - [x] Type usage patterns verified (no breaking changes to consumer code)
 

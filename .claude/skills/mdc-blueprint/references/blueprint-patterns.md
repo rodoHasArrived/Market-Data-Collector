@@ -3,7 +3,7 @@
 > **Authoritative stats and file paths:** [`../_shared/project-context.md`](../../_shared/project-context.md)
 
 This file provides ready-to-use patterns, naming conventions, and ADR contract reference for
-Blueprint Mode. Every pattern here is grounded in the actual MarketDataCollector codebase.
+Blueprint Mode. Every pattern here is grounded in the actual Meridian codebase.
 
 ---
 
@@ -13,13 +13,13 @@ Blueprint Mode. Every pattern here is grounded in the actual MarketDataCollector
 
 | Layer | Namespace Pattern | Example |
 |-------|-------------------|---------|
-| Domain | `MarketDataCollector.Domain.[Area]` | `MarketDataCollector.Domain.Collectors` |
-| Application | `MarketDataCollector.Application.[Area]` | `MarketDataCollector.Application.Services` |
-| Infrastructure | `MarketDataCollector.Infrastructure.Adapters.[Provider]` | `MarketDataCollector.Infrastructure.Adapters.Alpaca` |
-| Storage | `MarketDataCollector.Storage.[Area]` | `MarketDataCollector.Storage.Sinks` |
-| Contracts | `MarketDataCollector.Contracts.[Area]` | `MarketDataCollector.Contracts.Domain.Events` |
-| WPF | `MarketDataCollector.Wpf.[Layer]` | `MarketDataCollector.Wpf.ViewModels` |
-| ProviderSdk | `MarketDataCollector.ProviderSdk` | (flat) |
+| Domain | `Meridian.Domain.[Area]` | `Meridian.Domain.Collectors` |
+| Application | `Meridian.Application.[Area]` | `Meridian.Application.Services` |
+| Infrastructure | `Meridian.Infrastructure.Adapters.[Provider]` | `Meridian.Infrastructure.Adapters.Alpaca` |
+| Storage | `Meridian.Storage.[Area]` | `Meridian.Storage.Sinks` |
+| Contracts | `Meridian.Contracts.[Area]` | `Meridian.Contracts.Domain.Events` |
+| WPF | `Meridian.Wpf.[Layer]` | `Meridian.Wpf.ViewModels` |
+| ProviderSdk | `Meridian.ProviderSdk` | (flat) |
 
 ### Interface Names
 
@@ -235,8 +235,8 @@ module SymbolEntryOps =
         | _ -> false
 ```
 
-C# interop is generated into `src/MarketDataCollector.FSharp/Generated/MarketDataCollector.FSharp.Interop.g.cs`.
-New F# types that need C# consumers must be added to `src/MarketDataCollector.FSharp/Interop.fs`
+C# interop is generated into `src/Meridian.FSharp/Generated/Meridian.FSharp.Interop.g.cs`.
+New F# types that need C# consumers must be added to `src/Meridian.FSharp/Interop.fs`
 and the generator re-run.
 
 ---

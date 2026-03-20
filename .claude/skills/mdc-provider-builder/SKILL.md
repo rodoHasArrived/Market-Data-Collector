@@ -1,7 +1,7 @@
 ---
 name: mdc-provider-builder
 description: >
-  Step-by-step guided skill for implementing new data provider adapters in MarketDataCollector.
+  Step-by-step guided skill for implementing new data provider adapters in Meridian.
   Use this skill whenever an agent needs to build or extend an IMarketDataClient (streaming),
   IHistoricalDataProvider (backfill), or ISymbolSearchProvider (symbol search) implementation.
   Triggers on: "add a new provider", "implement a data source", "add support for X exchange",
@@ -13,9 +13,9 @@ description: >
   patterns and ADR contracts.
 ---
 
-# MarketDataCollector — Provider Builder Skill
+# Meridian — Provider Builder Skill
 
-Build complete, architecturally compliant data provider adapters for MarketDataCollector.
+Build complete, architecturally compliant data provider adapters for Meridian.
 Every provider produced by this skill must be ready to pass the `mdc-code-review` skill's
 Lens 5 (Provider Implementation Compliance) and Lens 3 (Error Handling & Resilience)
 without warnings.
@@ -78,18 +78,18 @@ Before writing any code, identify the correct provider type:
 What does this provider supply?
 ├── Real-time streaming ticks / quotes / L2 order book
 │   └── Implement IMarketDataClient
-│       File: src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs
-│       Template: src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs
+│       File: src/Meridian.ProviderSdk/IMarketDataClient.cs
+│       Template: src/Meridian.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs
 │
 ├── Historical OHLCV / tick data (backfill use case)
 │   └── Implement IHistoricalDataProvider
-│       File: src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs
-│       Template: src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs
+│       File: src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs
+│       Template: src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs
 │       Base: BaseHistoricalDataProvider (handles rate limiting + retry automatically)
 │
 └── Symbol search / lookup (resolving tickers)
     └── Implement ISymbolSearchProvider
-        Template: src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs
+        Template: src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs
         Base: BaseSymbolSearchProvider
 ```
 
@@ -101,9 +101,9 @@ What does this provider supply?
 
 **Always** start from the template scaffolding, not from a blank file or from copying another provider.
 
-- Streaming: `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs`
-- Historical: `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs`
-- Symbol search: `src/MarketDataCollector.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs`
+- Streaming: `src/Meridian.Infrastructure/Adapters/_Template/TemplateMarketDataClient.cs`
+- Historical: `src/Meridian.Infrastructure/Adapters/_Template/TemplateHistoricalDataProvider.cs`
+- Symbol search: `src/Meridian.Infrastructure/Adapters/_Template/TemplateSymbolSearchProvider.cs`
 
 Read the full template before writing any code. The templates contain inline comments explaining
 every required section.
@@ -111,7 +111,7 @@ every required section.
 ### Step 2 — Create the Provider Directory
 
 ```
-src/MarketDataCollector.Infrastructure/Adapters/{ProviderName}/
+src/Meridian.Infrastructure/Adapters/{ProviderName}/
 ├── {ProviderName}MarketDataClient.cs      (streaming) OR
 │   {ProviderName}HistoricalDataProvider.cs (historical)
 ├── {ProviderName}Options.cs               (config)
@@ -163,7 +163,7 @@ await _rateLimiter.WaitAsync(ct);
 var response = await _http.GetAsync(url, ct);
 ```
 
-See `src/MarketDataCollector.Infrastructure/Adapters/Core/RateLimiting/RateLimiter.cs` for the
+See `src/Meridian.Infrastructure/Adapters/Core/RateLimiting/RateLimiter.cs` for the
 implementation. The correct public method is `WaitForSlotAsync(CancellationToken ct)`.
 
 ### Step 6 — WebSocket Reconnection (Streaming Providers Only)
@@ -175,7 +175,7 @@ Do **not** implement reconnection from scratch. Use the existing infrastructure:
 private readonly WebSocketConnectionManager _wsManager;
 
 // Use WebSocketResiliencePolicy for retry/backoff
-// File: src/MarketDataCollector.Infrastructure/Resilience/WebSocketResiliencePolicy.cs
+// File: src/Meridian.Infrastructure/Resilience/WebSocketResiliencePolicy.cs
 
 // Reconnection must be triggered on ANY disconnect:
 private async Task OnDisconnectedAsync(CancellationToken ct)
@@ -203,7 +203,7 @@ var result = JsonSerializer.Deserialize<MyProviderResponse>(json);
 ```
 
 Register new response DTOs in `MarketDataJsonContext` at
-`src/MarketDataCollector.Core/Serialization/MarketDataJsonContext.cs`:
+`src/Meridian.Core/Serialization/MarketDataJsonContext.cs`:
 
 ```csharp
 [JsonSerializable(typeof(MyProviderResponse))]

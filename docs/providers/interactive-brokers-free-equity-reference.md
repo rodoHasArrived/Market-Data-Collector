@@ -291,7 +291,7 @@ At this time Historical Data Limitations for barSize = "1 mins" and greater have
 
 ---
 
-## Implementation Constants for MarketDataCollector
+## Implementation Constants for Meridian
 
 ```csharp
 public static class IBApiLimits

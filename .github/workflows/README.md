@@ -350,7 +350,7 @@ graph TD
 1. **Before Opening a PR**:
    ```bash
    # Format code locally
-   dotnet format MarketDataCollector.sln
+   dotnet format Meridian.sln
 
    # Run tests
    dotnet test

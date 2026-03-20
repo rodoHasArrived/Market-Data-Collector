@@ -32,7 +32,7 @@ messages:
 
       ## Lens 3: Error Handling & Resilience
 
-      - All domain exceptions must derive from `MarketDataCollectorException` (see `src/MarketDataCollector.Core/Exceptions/`); never throw bare `Exception` or `ApplicationException`.
+      - All domain exceptions must derive from `MeridianException` (see `src/Meridian.Core/Exceptions/`); never throw bare `Exception` or `ApplicationException`.
       - Provider implementations must reconnect with exponential backoff + jitter; never catch `OperationCanceledException` as a provider failure.
       - Every `IAsyncDisposable` must flush buffers before disposing; pipeline shutdown must drain with a timeout.
       - Rate limit handling: catch `RateLimitException` and respect `RetryAfter`; no `Task.Delay()` self-throttling.

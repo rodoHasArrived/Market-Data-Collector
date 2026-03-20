@@ -11,7 +11,7 @@ The UI Fixture Mode enables desktop developers to work on the WPF application wi
 
 ## Architecture
 
-The fixture mode is built around the `FixtureDataService` singleton that provides mock data matching the actual API contracts defined in `MarketDataCollector.Contracts.Api`.
+The fixture mode is built around the `FixtureDataService` singleton that provides mock data matching the actual API contracts defined in `Meridian.Contracts.Api`.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -37,19 +37,19 @@ Set the `MDC_FIXTURE_MODE` environment variable before starting the application:
 **Windows (PowerShell):**
 ```powershell
 $env:MDC_FIXTURE_MODE = "1"
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 ```
 
 **Windows (Command Prompt):**
 ```cmd
 set MDC_FIXTURE_MODE=1
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 ```
 
 **Linux/macOS:**
 ```bash
 export MDC_FIXTURE_MODE=1
-dotnet run --project src/MarketDataCollector.Wpf
+dotnet run --project src/Meridian.Wpf
 ```
 
 ### Command-Line Argument
@@ -57,7 +57,7 @@ dotnet run --project src/MarketDataCollector.Wpf
 Pass `--fixture` flag when starting the application:
 
 ```bash
-dotnet run --project src/MarketDataCollector.Wpf -- --fixture
+dotnet run --project src/Meridian.Wpf -- --fixture
 ```
 
 ### Programmatic (For Testing)
@@ -389,9 +389,9 @@ Ensure:
 
 ## Related Files
 
-- **Service**: `src/MarketDataCollector.Ui.Services/Services/FixtureDataService.cs`
-- **Tests**: `tests/MarketDataCollector.Ui.Tests/Services/FixtureDataServiceTests.cs`
-- **Contracts**: `src/MarketDataCollector.Contracts/Api/`
+- **Service**: `src/Meridian.Ui.Services/Services/FixtureDataService.cs`
+- **Tests**: `tests/Meridian.Ui.Tests/Services/FixtureDataServiceTests.cs`
+- **Contracts**: `src/Meridian.Contracts/Api/`
 - **Implementation Guide**: `docs/evaluations/desktop-platform-improvements-implementation-guide.md`
 
 ## Next Steps
@@ -418,7 +418,7 @@ After implementing basic fixture mode:
   - [Desktop Platform Improvements](../evaluations/desktop-platform-improvements-implementation-guide.md) - Improvement roadmap
 
 - **Testing and Quality:**
-  - [Test Project README](../../tests/MarketDataCollector.Ui.Tests/README.md) - Test coverage details
+  - [Test Project README](../../tests/Meridian.Ui.Tests/README.md) - Test coverage details
   - [Desktop Support Policy](./policies/desktop-support-policy.md) - Required validation checks
 
 - **Architecture:**

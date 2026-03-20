@@ -26,7 +26,7 @@ However, the application host and infrastructure are C# (80% of codebase). A hyb
 Implement **F# domain modules with C# interop bridge**:
 
 ```fsharp
-// F# domain (MarketDataCollector.FSharp)
+// F# domain (Meridian.FSharp)
 module MarketEvents =
     type TradeEvent = { Symbol: string; Price: decimal; ... }
     type QuoteEvent = { Symbol: string; BidPrice: decimal; ... }
@@ -53,7 +53,7 @@ type TradeValidator private () =
 
 ### Project Structure
 
-- **MarketDataCollector.FSharp** - Pure F# domain logic (12 files)
+- **Meridian.FSharp** - Pure F# domain logic (12 files)
   - `Domain/MarketEvents.fs` - Event types
   - `Domain/Sides.fs` - Buy/sell discriminated union
   - `Domain/Integrity.fs` - Sequence validation
@@ -69,14 +69,14 @@ type TradeValidator private () =
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| F# Project | `src/MarketDataCollector.FSharp/MarketDataCollector.FSharp.fsproj` | F# domain library |
-| Domain Events | `src/MarketDataCollector.FSharp/Domain/MarketEvents.fs` | Trade/quote types |
-| Validation Pipeline | `src/MarketDataCollector.FSharp/Validation/ValidationPipeline.fs` | Validation composition |
-| Calculations | `src/MarketDataCollector.FSharp/Calculations/` | Pure math functions |
-| Interop Bridge | `src/MarketDataCollector.FSharp/Interop.fs:3` | C# wrappers |
-| Generated Interop | `src/MarketDataCollector.FSharp/Generated/MarketDataCollector.FSharp.Interop.g.cs` | Auto-generated C# |
-| C# Integration | `src/MarketDataCollector.Application/Monitoring/DataQuality/` | Consumer code |
-| F# Tests | `tests/MarketDataCollector.FSharp.Tests/` | F# unit tests |
+| F# Project | `src/Meridian.FSharp/Meridian.FSharp.fsproj` | F# domain library |
+| Domain Events | `src/Meridian.FSharp/Domain/MarketEvents.fs` | Trade/quote types |
+| Validation Pipeline | `src/Meridian.FSharp/Validation/ValidationPipeline.fs` | Validation composition |
+| Calculations | `src/Meridian.FSharp/Calculations/` | Pure math functions |
+| Interop Bridge | `src/Meridian.FSharp/Interop.fs:3` | C# wrappers |
+| Generated Interop | `src/Meridian.FSharp/Generated/Meridian.FSharp.Interop.g.cs` | Auto-generated C# |
+| C# Integration | `src/Meridian.Application/Monitoring/DataQuality/` | Consumer code |
+| F# Tests | `tests/Meridian.FSharp.Tests/` | F# unit tests |
 
 ## Rationale
 

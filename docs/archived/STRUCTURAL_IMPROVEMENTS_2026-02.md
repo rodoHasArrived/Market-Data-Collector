@@ -147,7 +147,7 @@ These are used inconsistently: providers throw exceptions, some services return 
 - Assert status codes, content types, and response schema shapes
 - Include negative cases (invalid input, missing config, auth failures)
 
-**Files:** New `tests/MarketDataCollector.Tests/Integration/EndpointTests/`, existing `EndpointStubDetectionTests.cs`
+**Files:** New `tests/Meridian.Tests/Integration/EndpointTests/`, existing `EndpointStubDetectionTests.cs`
 
 **Benefit:** Prevents regressions in the growing API surface. Validates endpoint-to-service wiring.
 
@@ -164,7 +164,7 @@ These are used inconsistently: providers throw exceptions, some services return 
 - Test error handling paths (connection failure, malformed message, rate limit)
 - Use recorded WebSocket message fixtures to avoid live API dependencies
 
-**Files:** New tests in `tests/MarketDataCollector.Tests/Infrastructure/Providers/`
+**Files:** New tests in `tests/Meridian.Tests/Infrastructure/Providers/`
 
 **Benefit:** Catches parsing regressions when provider APIs change. Enables safe refactoring of provider internals.
 
@@ -189,11 +189,11 @@ These are used inconsistently: providers throw exceptions, some services return 
 
 ### C1. Eliminate WPF/UWP Service Duplication
 
-**Problem:** 25-30 services are nearly identical between `MarketDataCollector.Wpf/Services/` (43 files, 12,338 lines) and `MarketDataCollector.Uwp/Services/` (29 files, 16,553 lines). Examples: `ThemeService`, `ConfigService`, `NotificationService`, `NavigationService`, `ConnectionService`. The only differences are singleton patterns (WPF uses `Lazy<T>`, UWP uses `lock`-based) and minor platform API calls.
+**Problem:** 25-30 services are nearly identical between `Meridian.Wpf/Services/` (43 files, 12,338 lines) and `Meridian.Uwp/Services/` (29 files, 16,553 lines). Examples: `ThemeService`, `ConfigService`, `NotificationService`, `NavigationService`, `ConnectionService`. The only differences are singleton patterns (WPF uses `Lazy<T>`, UWP uses `lock`-based) and minor platform API calls.
 
 **Remedy:**
-- Move shared service interfaces (`IThemeService`, `IConfigService`, `INotificationService`, etc.) to `MarketDataCollector.Ui.Services`
-- Move shared implementations to `MarketDataCollector.Ui.Services` with constructor-injected platform abstractions
+- Move shared service interfaces (`IThemeService`, `IConfigService`, `INotificationService`, etc.) to `Meridian.Ui.Services`
+- Move shared implementations to `Meridian.Ui.Services` with constructor-injected platform abstractions
 - Keep only platform-specific adapters in WPF/UWP projects
 - WPF already has 15 interface definitions; promote them to the shared project
 

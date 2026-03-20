@@ -43,7 +43,7 @@ A researcher wants to understand how a passive AAPL limit-order strategy would h
 **Steps:**
 1. Calibrate the queue model for AAPL using the prior month's data:
    ```bash
-   dotnet run --project src/MarketDataCollector -- \
+   dotnet run --project src/Meridian -- \
      --calibrate-queue-model \
      --symbols AAPL \
      --calibrate-from 2025-12-01 \
@@ -51,7 +51,7 @@ A researcher wants to understand how a passive AAPL limit-order strategy would h
    ```
 2. Run the execution simulation for January 2026:
    ```bash
-   dotnet run --project src/MarketDataCollector -- \
+   dotnet run --project src/Meridian -- \
      --simulate-execution \
      --symbols AAPL \
      --sim-from 2026-01-01 \
@@ -70,7 +70,7 @@ A researcher wants to understand how a passive AAPL limit-order strategy would h
 A quant developer runs a batch simulation across a portfolio of symbols to feed a QuantConnect strategy.
 
 ```bash
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution \
   --symbols SPY,QQQ,IWM,AAPL,MSFT \
   --sim-from 2026-01-01 \
@@ -90,14 +90,14 @@ Run two simulations with different order intent files and compare summary statis
 
 ```bash
 # Passive strategy
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --symbols AAPL \
   --sim-from 2026-01-02 --sim-to 2026-01-31 \
   --sim-orders ./passive-orders.jsonl \
   --sim-output ./results/passive
 
 # Aggressive strategy
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --symbols AAPL \
   --sim-from 2026-01-02 --sim-to 2026-01-31 \
   --sim-orders ./aggressive-orders.jsonl \
@@ -109,7 +109,7 @@ dotnet run --project src/MarketDataCollector -- \
 Before running a simulation, check whether your stored data has sufficient quality for reliable inference:
 
 ```bash
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --dry-run \
   --symbols AAPL \
   --sim-from 2026-01-01 \
@@ -123,7 +123,7 @@ The dry-run reports per-day data coverage, sequence gap rates, and an estimated 
 A quant developer wants to find the optimal limit price aggression level for AAPL passive orders without manually creating multiple order-intent files. The `--sim-grid-search` mode parameterises a template order over a configurable grid and runs all variants in a single reconstruction pass.
 
 ```bash
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution \
   --symbols AAPL \
   --sim-from 2026-01-01 \
@@ -194,11 +194,11 @@ The inference engine evaluates data quality before processing. Simulations cover
 
 ```bash
 # Check what L2 + trade data you have stored for AAPL
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --symbol-status AAPL
 
 # Run dry-run to see quality assessment without computing fills
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --dry-run \
   --symbols AAPL \
   --sim-from 2026-01-01 \
@@ -291,7 +291,7 @@ Add a new bounded context under `Application` + `Storage/Replay` integration:
 
 ## 7) Data Model Additions
 
-Create new contracts under `src/MarketDataCollector.Contracts/...`:
+Create new contracts under `src/Meridian.Contracts/...`:
 
 1. `InferredQueueState`
    - `Timestamp`, `Symbol`, `Side`, `Price`, `DisplayedSize`
@@ -460,7 +460,7 @@ For aggressive orders:
 All simulation commands follow the same pattern as existing commands (`--backfill`, `--package`). They are invoked via:
 
 ```bash
-dotnet run --project src/MarketDataCollector -- <flags>
+dotnet run --project src/Meridian -- <flags>
 ```
 
 ### Simulation command (`--simulate-execution`)
@@ -513,25 +513,25 @@ The `--sim-orders` input is a JSONL file where each line is one order intent:
 
 ```bash
 # Step 1 — Ensure you have L2 + trade data collected (e.g. via Polygon or IB)
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --symbol-status AAPL
 
 # Step 2 — Validate data quality for the simulation period
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --dry-run \
   --symbols AAPL \
   --sim-from 2026-01-01 \
   --sim-to 2026-01-31
 
 # Step 3 — Calibrate the model using the prior month
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --calibrate-queue-model \
   --symbols AAPL \
   --calibrate-from 2025-12-01 \
   --calibrate-to 2025-12-31
 
 # Step 4 — Run the simulation
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution \
   --symbols AAPL \
   --sim-from 2026-01-01 \
@@ -715,7 +715,7 @@ Request body for `POST /api/sim/execution/run`:
 ## 11.6 UI Integration — WPF Simulation Explorer
 
 A dedicated `SimulationPage.xaml` / `SimulationViewModel.cs` (extending `BindableBase` at
-`src/MarketDataCollector.Wpf/ViewModels/BindableBase.cs`) is added to the WPF desktop app. The page
+`src/Meridian.Wpf/ViewModels/BindableBase.cs`) is added to the WPF desktop app. The page
 has three panels arranged in a horizontal split layout:
 
 ### Left panel — Configuration wizard
@@ -761,7 +761,7 @@ Displayed after a completed run:
 - All long-running operations use `async`/`await` with `CancellationToken`; progress is reported
   via `IProgress<SimulationProgressEvent>` bound to the center panel.
 - The page is registered in `Pages.cs` and added to the navigation menu after the Backfill page.
-- Tests live in `tests/MarketDataCollector.Wpf.Tests/Services/` following the existing pattern for
+- Tests live in `tests/Meridian.Wpf.Tests/Services/` following the existing pattern for
   WPF service tests.
 
 ---
@@ -782,13 +782,13 @@ Displayed after a completed run:
 - Fill quantity never exceeds available/inferred executable quantity
 
 **F# type-encoded invariants:** The core queue decomposition is expressed as an F# discriminated
-union in `src/MarketDataCollector.FSharp/` following the pattern established by `QuoteValidator.fs`
+union in `src/Meridian.FSharp/` following the pattern established by `QuoteValidator.fs`
 and `TradeValidator.fs`. Using a `NonNegativeQty` single-case DU, the type
 `QueueDecomposition = { TradeConsumed: NonNegativeQty; CancelVolume: NonNegativeQty; RefillVolume: NonNegativeQty }`
 makes negative queue sizes unrepresentable at compile time. The conservation identity
 `netChange = refill − cancel − trade` is enforced by the smart constructor rather than a runtime
 assertion. C# consumers access the validated values through the existing
-`MarketDataCollector.FSharp.Interop.g.cs` generated surface.
+`Meridian.FSharp.Interop.g.cs` generated surface.
 
 ## 12.3 Scenario/Golden Tests
 
@@ -938,19 +938,19 @@ market impact model (§18.4) is available.
 Promote Workflow C from manual JSON comparison to a first-class CLI mode:
 
 ```bash
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --compare-simulations \
   --sim-results ./results/passive,./results/aggressive
 ```
 
 Outputs `comparison.json` with per-order matched slippage deltas, bootstrap confidence
 intervals (1 000 resamples), a Mann-Whitney U test p-value, and a plain-English verdict.
-Implementation lives in `src/MarketDataCollector.Backtesting/Metrics/` alongside
+Implementation lives in `src/Meridian.Backtesting/Metrics/` alongside
 `BacktestMetricsEngine.cs`.
 
 ### 18.3 Regime-Aware Auto-Calibration Scheduling (Phase 2 — effort M)
 
-Extend `OperationalScheduler` (`src/MarketDataCollector.Application/Scheduling/`) with a
+Extend `OperationalScheduler` (`src/Meridian.Application/Scheduling/`) with a
 `CalibrationSchedule` block that triggers weekly rolling re-calibration. Pair with a drift
 detector: when any key parameter shifts more than a configurable threshold between runs, a
 `DataQualityMonitoringService` alert fires — "Queue model parameters for AAPL shifted
@@ -981,7 +981,7 @@ side-by-side view.
 ### 18.7 Live Queue Position Monitor (Phase 4 — effort XL)
 
 Apply the calibrated inference model to the **real-time** event pipeline
-(`EventPipeline` at `src/MarketDataCollector.Application/Pipeline/EventPipeline.cs`)
+(`EventPipeline` at `src/Meridian.Application/Pipeline/EventPipeline.cs`)
 to estimate current queue position for live limit orders. Exposed via
 `/api/queue/{symbol}` and a WPF dashboard widget. Requires the F# type-safe queue state
 (§12.2) to operate safely on the hot path at sub-millisecond per book-update latency.
@@ -995,20 +995,20 @@ an algorithm template:
 
 ```bash
 # VWAP: slice 10,000 shares proportional to historical intraday volume profile
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --symbols AAPL \
   --sim-from 2026-01-02 --sim-to 2026-01-31 \
   --sim-algo vwap --sim-algo-qty 10000 --sim-algo-side Buy \
   --sim-output ./results/aapl-vwap
 
 # TWAP: 10,000 shares evenly sliced in 5-minute intervals
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --symbols AAPL \
   --sim-algo twap --sim-algo-qty 10000 --sim-algo-interval-minutes 5 \
   --sim-output ./results/aapl-twap
 
 # POV: participate at 10% of observed market volume
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --simulate-execution --symbols AAPL \
   --sim-algo pov --sim-algo-pov-rate 0.10 \
   --sim-output ./results/aapl-pov
@@ -1027,7 +1027,7 @@ profile pass) → POV (stateful, requires trade-count injection per simulation s
 Add a `sim-manifest.json` output alongside every simulation run, recording the exact MDC
 version, Git hash, calibration parameter hash, model config hash, and SHA-256 of the input
 data (via the existing `StorageChecksumService` at
-`src/MarketDataCollector.Storage/Services/StorageChecksumService.cs`):
+`src/Meridian.Storage/Services/StorageChecksumService.cs`):
 
 ```jsonc
 {
@@ -1052,9 +1052,9 @@ per-day hashes in the storage catalog to avoid full recomputation on subsequent 
 
 ### 18.10 Backtesting.Sdk Fill Tape Bridge (Phase 2 — effort S)
 
-A `SimulationFillTapeBridge` adapter in `src/MarketDataCollector.Backtesting/` converts a
+A `SimulationFillTapeBridge` adapter in `src/Meridian.Backtesting/` converts a
 `fill-tape.jsonl` from §11.2 into a sequence of `FillEvent` objects that the existing
-`SimulatedPortfolio` (`src/MarketDataCollector.Backtesting/Portfolio/SimulatedPortfolio.cs`)
+`SimulatedPortfolio` (`src/Meridian.Backtesting/Portfolio/SimulatedPortfolio.cs`)
 can process. This enables a two-phase workflow:
 
 1. L3 simulation → determines *when* and *at what price* fills occur (realistic execution layer)
@@ -1073,7 +1073,7 @@ the same period. This is the calibration feedback loop that institutional execut
 daily: simulate → trade → reconcile → recalibrate → simulate more accurately.
 
 ```bash
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --reconcile-fills \
   --live-fills ./broker-fill-report.csv \
   --symbols AAPL \

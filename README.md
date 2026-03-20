@@ -1,6 +1,6 @@
-# Market Data Collector
+# Meridian
 
-A high-performance, cross-platform market data collection system for real-time and historical market microstructure data.
+A high-performance, self-hosted algorithmic trading platform — **collect**, **backtest**, and **execute** strategies over real-time and historical market data.
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-13-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
@@ -20,7 +20,16 @@ A high-performance, cross-platform market data collection system for real-time a
 
 ## What This Project Does
 
-Market Data Collector is a complete solution for **building your own market data archive**. It connects to financial data providers, captures market data in real-time, and stores everything locally so you have full ownership and offline access to your data.
+Meridian is a self-hosted, multi-pillar algorithmic trading platform. It provides everything needed to collect market data at scale, develop and validate trading strategies through backtesting, execute strategies with zero financial risk using paper trading, and manage the complete strategy lifecycle from research to production deployment. All pillars—data collection, backtesting, execution, and strategy management—are built on a unified, event-driven architecture and fully integrated.
+
+### Platform Pillars
+
+| Pillar | Projects | Status |
+|--------|----------|--------|
+| **📡 Data Collection** | `Meridian.*` core projects | ✅ Production-ready — 90+ streaming and 10+ backfill providers |
+| **🔬 Backtesting** | `Meridian.Backtesting`, `.Backtesting.Sdk` | ✅ Production-ready — tick-level engine with fill models and metrics |
+| **⚡ Execution** | `Meridian.Execution`, `.Execution.Sdk` | ✅ Paper trading gateway active — ready for live integration |
+| **🗂️ Strategies** | `Meridian.Strategies` | ✅ Lifecycle management — register, backtest, paper-trade, promote to live |
 
 ### Core Capabilities
 
@@ -28,28 +37,32 @@ Market Data Collector is a complete solution for **building your own market data
 |------------|---------------------|
 | **📡 Real-Time Streaming** | Capture live trades, quotes, and order book depth as they happen from Interactive Brokers, Alpaca, NYSE, Polygon, or StockSharp |
 | **📥 Historical Backfill** | Download years of historical price data from 10+ providers (Yahoo Finance, Tiingo, Polygon, Alpaca, and more) with automatic failover |
-| **💾 Local Data Storage** | Own your data—everything is stored in structured JSONL or Parquet files on your machine, not locked in a vendor's cloud |
+| **💾 Local Data Storage** | Own your data — everything is stored in structured JSONL or Parquet files on your machine, not locked in a vendor's cloud |
 | **🔍 Data Quality Monitoring** | Automatic validation catches missing data, sequence gaps, and anomalies before they corrupt your analysis |
 | **📦 Data Packaging** | Export and package your data for sharing, backup, or use in other tools |
 | **📊 Live Dashboards** | Monitor collection status, throughput, and data quality through a web dashboard or Windows desktop app |
-| **🔬 Backtesting Integration** | Feed your collected data directly into QuantConnect Lean for algorithmic strategy development |
+| **🔬 Backtesting Engine** | Replay tick-level historical data through strategy plugins; compute Sharpe, drawdown, XIRR, and full fill tape |
+| **⚡ Paper Trading** | Run strategies against a live feed with zero financial risk using `PaperTradingGateway` (ADR-015) |
+| **🗂️ Strategy Lifecycle** | Register, start, pause, stop, and archive strategy runs with full audit trail and promotion workflow |
 
 ### Who Is This For?
 
 - **Quantitative researchers** who need tick-level market microstructure data for analysis
-- **Algorithmic traders** building strategies that require historical and real-time market data
+- **Algorithmic traders** building and validating strategies before committing real capital
 - **Data engineers** who want to build a reliable market data pipeline
-- **Hobbyist traders** who want to collect and own their own market data archive
+- **Hobbyist traders** who want to collect, backtest, and paper-trade their own strategies
 - **Students and academics** studying market microstructure, price formation, or trading systems
 
 ### The Problem It Solves
 
-Commercial market data is expensive, vendor APIs change without notice, and cloud-only solutions mean you never truly own your data. Market Data Collector gives you:
+Commercial market data is expensive, vendor APIs change without notice, and cloud-only
+solutions mean you never truly own your data or your strategy infrastructure. Meridian gives you:
 
 1. **Data independence** — Switch providers without losing your archive or rewriting code
 2. **Cost control** — Use free-tier APIs strategically, pay only for premium data you actually need
 3. **Reliability** — Automatic reconnection, failover between providers, and data integrity checks
 4. **Flexibility** — Collect exactly the symbols and data types you need, store them how you want
+5. **Paper-first safety** — Validate every strategy in simulation before any real capital is committed
 
 ---
 
@@ -109,15 +122,15 @@ make test-desktop-services   # Run desktop-focused tests (includes WPF service t
 - Works on Windows 7+
 - Simple .exe deployment
 - Direct assembly references (no WinRT limitations)
-- See [WPF README](src/MarketDataCollector.Wpf/README.md) for details
+- See [WPF README](src/Meridian.Wpf/README.md) for details
 
 **Installation:**
 ```bash
 # Build from source
-dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release
+dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release
 
 # Run
-dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+dotnet run --project src/Meridian.Wpf/Meridian.Wpf.csproj
 ```
 
 ---
@@ -158,12 +171,12 @@ make test-desktop-services
 ```
 
 **Test Projects:**
-- `tests/MarketDataCollector.Wpf.Tests` - 58 tests for WPF singleton services
+- `tests/Meridian.Wpf.Tests` - 58 tests for WPF singleton services
   - NavigationServiceTests (14 tests)
   - ConfigServiceTests (13 tests)
   - StatusServiceTests (13 tests)
   - ConnectionServiceTests (18 tests)
-- `tests/MarketDataCollector.Ui.Tests` - 71 tests for desktop UI services
+- `tests/Meridian.Ui.Tests` - 71 tests for desktop UI services
   - ApiClientServiceTests, BackfillServiceTests, FixtureDataServiceTests
   - FormValidationServiceTests, SystemHealthServiceTests, WatchlistServiceTests
   - BoundedObservableCollectionTests, CircularBufferTests
@@ -185,16 +198,62 @@ make build-wpf
 
 ## Technical Overview
 
-Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 source files** (692 C# + 12 F# in `src/`). It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+Meridian is built on **.NET 9.0** using **C# 13** and **F# 8.0** across **704 source files** (692 C# + 12 F# in `src/`), with **273 test files** (~4,100 test methods). It uses a modular, event-driven architecture with bounded channels (System.Threading.Channels) for high-throughput data processing. The unified architecture spans all four pillars: data collection, backtesting, execution, and strategy management. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
 
 ### Implementation Status Snapshot
 
-- ✅ Core event pipeline, storage, backfill, and HTTP monitoring endpoints are implemented.
-- ✅ WPF desktop app is actively developed and available for Windows users.
-- ⚠️ Some providers and integrations require credentials and/or build-time flags (for example, Interactive Brokers).
-- ⚠️ A subset of provider paths (notably Polygon streaming and portions of StockSharp integration) remain partial and continue to evolve.
+**Version:** 1.7.x | **Status:** Development / Pilot Ready (Phase 9: Final Production Release in progress)
 
-For detailed, continuously maintained status tracking, see [docs/status/production-status.md](docs/status/production-status.md), [docs/status/FEATURE_INVENTORY.md](docs/status/FEATURE_INVENTORY.md), and [docs/status/ROADMAP.md](docs/status/ROADMAP.md).
+- ✅ **Core event pipeline** — bounded channels, backpressure, 100K capacity, nanosecond timing
+- ✅ **Multi-provider ingest** — 90+ streaming sources (Alpaca, Interactive Brokers, Polygon, NYSE, StockSharp, etc.)
+- ✅ **Historical backfill** — 10+ providers with automatic failover and rate limiting
+- ✅ **Storage layer** — JSONL/Parquet with tiered retention, packaging, and export
+- ✅ **Backtesting engine** — Tick-by-tick replay with multiple fill models and performance metrics (Sharpe, drawdown, XIRR)
+- ✅ **Paper trading gateway** — Risk-free strategy validation against live feeds
+- ✅ **Strategy lifecycle** — Register, backtest, paper-trade, promote workflows with full audit trail
+- ✅ **WPF desktop app** — Windows-native client with 42+ pages wired to live services
+- ✅ **Web dashboard** — Real-time monitoring, backfill controls, HTML + Prometheus + JSON status
+- ✅ **Data quality monitoring** — Completeness, gap analysis, anomaly detection, SLA enforcement
+- ⚠️ Some providers require credentials or build flags (Interactive Brokers needs `IBAPI` constant; NYSE/Polygon need API keys)
+- 📝 End-to-end OpenTelemetry trace propagation and multi-instance coordination (planned for Phase 13–15)
+
+**For detailed status:** See [docs/status/production-status.md](docs/status/production-status.md), [docs/status/FEATURE_INVENTORY.md](docs/status/FEATURE_INVENTORY.md), and [docs/status/ROADMAP.md](docs/status/ROADMAP.md).
+
+## Pillar Details
+
+### 📡 Data Collection (Production-Ready)
+Meridian's data collection foundation is mature and production-ready:
+- **Real-time streaming** from 90+ sources with automatic failover and health monitoring
+- **Historical backfill** from 10+ providers with composite fallback chains and rate limiting
+- **Symbol search** across 5 global providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp)
+- **Multi-format storage** (JSONL + Parquet) with tiered retention and portable packaging
+- **Data quality monitoring** with SLA enforcement and anomaly detection
+
+### 🔬 Backtesting (Production-Ready)
+Full backtesting capabilities for strategy research and validation:
+- **Tick-by-tick replay engine** — Process historical data at nanosecond precision
+- **Multiple fill models** — Bar midpoint, order book depth, and custom implementations
+- **Performance metrics** — Sharpe ratio, max drawdown, XIRR, cumulative returns, win rate, profit factor
+- **Strategy SDK** — Plug-and-play interface for implementing custom backtesting logic
+- **Integration with data collection** — Backtest against collected real-world data or imported datasets
+
+### ⚡ Execution (Paper Trading Active)
+Strategy execution framework with paper trading ready for live integration:
+- **Paper trading gateway** — Risk-free validation of strategies against live market feeds
+- **Order management system** — Limit/market orders, position tracking, cash management
+- **Portfolio state tracking** — Real-time position and performance metrics
+- **Fill simulation** — Realistic order fills based on collected market data
+- **Integration pathway** — Designed for live broker adapter implementation (e.g., Interactive Brokers, Alpaca)
+
+### 🗂️ Strategy Lifecycle (Fully Implemented)
+End-to-end strategy management from development to production:
+- **Registration & versioning** — Store and version control strategies
+- **Backtest → Paper-Trade → Live promotion workflow** — Formalized promotion path with audit trail
+- **Multi-run comparison** — Compare performance across multiple backtest and paper-trading runs
+- **Performance analytics** — Aggregate metrics and performance tracking across strategy versions
+- **Audit trail** — Complete history of strategy changes, runs, and promotions
+
+---
 
 ## Key Features
 
@@ -239,11 +298,11 @@ For first-time users, the interactive wizard guides you through setup:
 
 ```bash
 # Clone the repository
-git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
-cd Market-Data-Collector
+git clone https://github.com/rodoHasArrived/Meridian.git
+cd Meridian
 
 # Run the interactive configuration wizard (recommended for new users)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+dotnet run --project src/Meridian/Meridian.csproj -- --wizard
 ```
 
 The wizard will:
@@ -258,36 +317,36 @@ If you have environment variables set, use quick auto-configuration:
 
 ```bash
 # Auto-detect providers from environment variables
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+dotnet run --project src/Meridian/Meridian.csproj -- --auto-config
 
 # Check what providers are available
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --detect-providers
+dotnet run --project src/Meridian/Meridian.csproj -- --detect-providers
 
 # Validate your API credentials
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --validate-credentials
+dotnet run --project src/Meridian/Meridian.csproj -- --validate-credentials
 ```
 
 ### Manual Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
-cd Market-Data-Collector
+git clone https://github.com/rodoHasArrived/Meridian.git
+cd Meridian
 
 # Copy the sample settings and edit as needed
 cp config/appsettings.sample.json config/appsettings.json
 
 # Option 1: Launch the web dashboard (serves HTML + Prometheus + JSON status)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --ui --watch-config --http-port 8080
 
 # Run smoke test (no provider connectivity required)
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+dotnet run --project src/Meridian/Meridian.csproj
 
 # Run self-tests
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
+dotnet run --project src/Meridian/Meridian.csproj -- --selftest
 
 # Historical backfill with overrides
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
+dotnet run --project src/Meridian/Meridian.csproj -- \
   --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL \
   --backfill-from 2024-01-01 --backfill-to 2024-01-05
 ```
@@ -348,14 +407,14 @@ Configure fallback chains in `appsettings.json` under `Backfill.ProviderPriority
 
 ## Lean Engine Integration
 
-Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabling sophisticated algorithmic trading strategies:
+Meridian now integrates with **QuantConnect's Lean Engine**, enabling sophisticated algorithmic trading strategies:
 
 - **Custom Data Types**: Trade and quote data exposed as Lean `BaseData` types
 - **Backtesting Support**: Use collected tick data for algorithm backtesting
 - **Data Provider**: Custom `IDataProvider` implementation for JSONL files
 - **Sample Algorithms**: Ready-to-use examples for microstructure-aware trading
 
-See [`src/MarketDataCollector/Integrations/Lean/README.md`](src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
+See [`src/Meridian/Integrations/Lean/README.md`](src/Meridian/Integrations/Lean/README.md) for integration details and examples.
 
 ## Output Data
 
@@ -405,11 +464,11 @@ The application supports Kubernetes-style health probes:
 
 ```bash
 # Copy service file
-sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+sudo cp deploy/systemd/meridian.service /etc/systemd/system/
 
 # Enable and start
-sudo systemctl enable marketdatacollector
-sudo systemctl start marketdatacollector
+sudo systemctl enable meridian
+sudo systemctl start meridian
 ```
 
 ### Environment Variables
@@ -492,49 +551,57 @@ Pre-built Docker images are available from GitHub Container Registry:
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/rodohasarrived/market-data-collector:latest
+docker pull ghcr.io/rodohasarrived/meridian:latest
 
 # Run the container
 docker run -d -p 8080:8080 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/appsettings.json:/app/appsettings.json:ro \
-  ghcr.io/rodohasarrived/market-data-collector:latest
+  ghcr.io/rodohasarrived/meridian:latest
 ```
 
 ## Repository Structure
 
-**704 source files** | **692 C#** | **12 F#** | **243 test files** | **214 documentation files**
+**704 source files** | **692 C#** | **12 F#** | **273 test files** | **~4,100 test methods** | **214 documentation files**
 
 ```
-Market-Data-Collector/
-├── .github/              # CI/CD workflows (25), AI prompts, Dependabot
-├── docs/                 # Documentation (214 files), ADRs, AI assistant guides
-├── build/                # Build tooling (Python, Node.js, .NET generators, scripts)
-├── deploy/               # Docker, systemd, and monitoring configs
-├── config/               # Configuration files (appsettings.json)
-├── src/
-│   ├── MarketDataCollector/             # Entry point, integrations, web UI server
-│   ├── MarketDataCollector.Application/ # Startup, config, services, pipeline, monitoring
-│   ├── MarketDataCollector.Core/        # Shared config models, exceptions, logging, serialization
-│   ├── MarketDataCollector.Domain/      # Business logic, collectors, events, models
-│   ├── MarketDataCollector.Infrastructure/ # Provider implementations, resilience, HTTP
-│   ├── MarketDataCollector.Storage/     # Data persistence, archival, export, packaging
-│   ├── MarketDataCollector.Contracts/   # Shared DTOs and API contracts
-│   ├── MarketDataCollector.ProviderSdk/ # Provider SDK interfaces and attributes
-│   ├── MarketDataCollector.FSharp/      # F# domain models and validation (12 files)
-│   ├── MarketDataCollector.Ui/          # Web dashboard
-│   ├── MarketDataCollector.Ui.Shared/   # Shared UI endpoint handlers
-│   ├── MarketDataCollector.Ui.Services/ # Shared UI service abstractions
-│   └── MarketDataCollector.Wpf/         # WPF desktop app (Windows)
-├── tests/                # C# and F# test projects (243 files)
-│   ├── MarketDataCollector.Tests/       # Core unit and integration tests
-│   ├── MarketDataCollector.FSharp.Tests/ # F# domain tests
-│   ├── MarketDataCollector.Wpf.Tests/   # WPF service tests (Windows)
-│   └── MarketDataCollector.Ui.Tests/    # Desktop UI service tests
+Meridian/
+├── .github/              # 25 CI/CD workflows, AI prompts, Dependabot
+├── docs/                 # 214 documentation files, ADRs, status tracking, guides
+├── build/                # Python scripts, Node generators, build automation
+├── deploy/               # Docker, Kubernetes, systemd, monitoring configs
+├── config/               # Configuration files (appsettings.json, schemas)
+├── src/                  # 21 projects, 704 source files
+│   ├── Meridian/                    # CLI entry point, integrations, HTTP server
+│   ├── Meridian.Application/        # Startup, services, pipeline, monitoring
+│   ├── Meridian.Backtesting/        # Backtest engine, fill models, metrics
+│   ├── Meridian.Backtesting.Sdk/    # Strategy SDK interfaces
+│   ├── Meridian.Core/               # Shared config, exceptions, logging, serialization
+│   ├── Meridian.Contracts/          # Shared DTOs and API contracts
+│   ├── Meridian.Domain/             # Business logic, collectors, event models
+│   ├── Meridian.Execution/          # Order management, paper trading gateway
+│   ├── Meridian.Execution.Sdk/      # Execution context and interfaces
+│   ├── Meridian.Infrastructure/     # Provider implementations, HTTP clients, resilience
+│   ├── Meridian.ProviderSdk/        # Provider interface contracts and attributes
+│   ├── Meridian.Storage/            # Storage sinks, WAL, export, packaging, archival
+│   ├── Meridian.Strategies/         # Strategy lifecycle, portfolio tracking, promotion
+│   ├── Meridian.FSharp/             # F# domain types, validators, calculations
+│   ├── Meridian.Ui/                 # Web dashboard and SSE endpoints
+│   ├── Meridian.Ui.Services/        # Desktop UI service abstractions
+│   ├── Meridian.Ui.Shared/          # Shared endpoint handlers
+│   ├── Meridian.Wpf/                # WPF desktop app (Windows)
+│   ├── Meridian.Risk/               # Risk management and portfolio analytics
+│   ├── Meridian.McpServer/          # MCP server tools integration
+│   └── Meridian.Mcp/                # MCP protocol support
+├── tests/                # 4 test projects, 273 files, ~4,100 test methods
+│   ├── Meridian.Tests/              # Core tests (~2,663 methods): backfill, storage, pipeline, providers, API
+│   ├── Meridian.FSharp.Tests/       # F# domain tests (~99 methods)
+│   ├── Meridian.Wpf.Tests/          # WPF service tests (~324 methods)
+│   └── Meridian.Ui.Tests/           # Desktop UI service tests (~1,007 methods)
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
-├── MarketDataCollector.sln
-├── Makefile              # Build automation (91 targets)
-└── CLAUDE.md             # AI assistant guide
+├── Meridian.sln         # Main solution file
+├── Makefile             # 91+ build targets for development and operations
+└── CLAUDE.md            # AI assistant development guide
 ```
 
 ## License

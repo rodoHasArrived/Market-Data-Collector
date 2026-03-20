@@ -481,7 +481,7 @@ def audit_config(root: Path, report: AuditReport) -> None:
 
 def audit_providers(root: Path, report: AuditReport) -> None:
     """Check provider implementations for completeness."""
-    providers_dir = root / "src" / "MarketDataCollector.Infrastructure" / "Providers"
+    providers_dir = root / "src" / "Meridian.Infrastructure" / "Providers"
     if not providers_dir.exists():
         return
 
@@ -584,7 +584,7 @@ def run_verify(root: Path) -> dict[str, Any]:
     results: dict[str, Any] = {"timestamp": datetime.now(timezone.utc).isoformat()}
     steps = [
         ("build", ["dotnet", "build", "-c", "Release", "--nologo", "-v", "quiet"]),
-        ("test", ["dotnet", "test", "tests/MarketDataCollector.Tests", "-c", "Release",
+        ("test", ["dotnet", "test", "tests/Meridian.Tests", "-c", "Release",
                    "--nologo", "-v", "quiet", "--no-build"]),
         ("lint", ["dotnet", "format", "--verify-no-changes", "--no-restore"]),
     ]

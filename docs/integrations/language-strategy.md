@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document outlines the recommended language strategy for MarketDataCollector, proposing a polyglot architecture that leverages the strengths of C#, C++, and F# for different components of the system. The goal is to maximize performance in latency-critical paths while maintaining developer productivity and type safety where it matters most.
+This document outlines the recommended language strategy for Meridian, proposing a polyglot architecture that leverages the strengths of C#, C++, and F# for different components of the system. The goal is to maximize performance in latency-critical paths while maintaining developer productivity and type safety where it matters most.
 
 ### Strategy Overview
 
@@ -28,12 +28,12 @@ C# remains the primary language for the system's orchestration and integration c
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| **Application Layer** | `src/MarketDataCollector/Application/` | Program.cs, ConfigWatcher, StatusWriter, metrics |
-| **Infrastructure** | `src/MarketDataCollector/Infrastructure/` | Provider clients (IB, Alpaca), subscription management |
-| **Storage Policy** | `src/MarketDataCollector/Storage/` | JSONL sinks, retention, tier migration orchestration |
-| **Web UI** | `src/MarketDataCollector/Application/StatusHttpServer.cs` | ASP.NET dashboard, REST API, Prometheus metrics |
-| **Provider Integration** | `src/MarketDataCollector/Infrastructure/Adapters/` | Official SDK wrappers (IB API, Alpaca SDK) |
-| **WPF Desktop App** | `src/MarketDataCollector.Wpf/` | WPF desktop application (Windows) |
+| **Application Layer** | `src/Meridian/Application/` | Program.cs, ConfigWatcher, StatusWriter, metrics |
+| **Infrastructure** | `src/Meridian/Infrastructure/` | Provider clients (IB, Alpaca), subscription management |
+| **Storage Policy** | `src/Meridian/Storage/` | JSONL sinks, retention, tier migration orchestration |
+| **Web UI** | `src/Meridian/Application/StatusHttpServer.cs` | ASP.NET dashboard, REST API, Prometheus metrics |
+| **Provider Integration** | `src/Meridian/Infrastructure/Adapters/` | Official SDK wrappers (IB API, Alpaca SDK) |
+| **WPF Desktop App** | `src/Meridian.Wpf/` | WPF desktop application (Windows) |
 
 ### Rationale for C#
 
@@ -150,17 +150,17 @@ extern "C" {
 // Safe managed wrapper around native order book
 public sealed class NativeOrderBook : IDisposable
 {
-    [DllImport("MarketDataCollector.Native", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("Meridian.Native", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr orderbook_create();
 
-    [DllImport("MarketDataCollector.Native", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("Meridian.Native", CallingConvention = CallingConvention.Cdecl)]
     private static extern void orderbook_update(IntPtr ob, double price, long qty, int side);
 
-    [DllImport("MarketDataCollector.Native", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("Meridian.Native", CallingConvention = CallingConvention.Cdecl)]
     private static extern void orderbook_snapshot(IntPtr ob,
         [Out] Level[] bids, [Out] Level[] asks, nuint maxLevels);
 
-    [DllImport("MarketDataCollector.Native", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("Meridian.Native", CallingConvention = CallingConvention.Cdecl)]
     private static extern void orderbook_destroy(IntPtr ob);
 
     private IntPtr _handle;
@@ -191,12 +191,12 @@ F# excels at domain modeling with algebraic data types and compiler-enforced typ
 
 | Component | Location | Benefit |
 |-----------|----------|---------|
-| **Domain Models/Events** | `src/MarketDataCollector.FSharp/Domain/` | Discriminated unions with exhaustive pattern matching |
-| **Order Book Calculations** | `src/MarketDataCollector.FSharp/Calculations/` | Pure functional transformations (mid-price, spread, imbalance) |
-| **Validation Logic** | `src/MarketDataCollector.FSharp/Validation/` | Railway-Oriented Programming with Result types |
-| **Event Pipeline Transforms** | `src/MarketDataCollector.FSharp/Pipeline/` | AsyncSeq for declarative stream processing |
-| **Aggressor Inference** | `src/MarketDataCollector.FSharp/Domain/` | Pattern matching on optional BBO state |
-| **Integrity Events** | `src/MarketDataCollector.FSharp/Domain/` | Smart constructors for well-formed events |
+| **Domain Models/Events** | `src/Meridian.FSharp/Domain/` | Discriminated unions with exhaustive pattern matching |
+| **Order Book Calculations** | `src/Meridian.FSharp/Calculations/` | Pure functional transformations (mid-price, spread, imbalance) |
+| **Validation Logic** | `src/Meridian.FSharp/Validation/` | Railway-Oriented Programming with Result types |
+| **Event Pipeline Transforms** | `src/Meridian.FSharp/Pipeline/` | AsyncSeq for declarative stream processing |
+| **Aggressor Inference** | `src/Meridian.FSharp/Domain/` | Pattern matching on optional BBO state |
+| **Integrity Events** | `src/Meridian.FSharp/Domain/` | Smart constructors for well-formed events |
 
 ### Rationale for F#
 
@@ -224,7 +224,7 @@ F# excels at domain modeling with algebraic data types and compiler-enforced typ
 
 ```fsharp
 // Domain types with discriminated unions
-module MarketDataCollector.FSharp.Domain
+module Meridian.FSharp.Domain
 
 open System
 
@@ -286,9 +286,9 @@ and DepthEvent = {
 ### F# Validation with Railway-Oriented Programming
 
 ```fsharp
-module MarketDataCollector.FSharp.Validation
+module Meridian.FSharp.Validation
 
-open MarketDataCollector.FSharp.Domain
+open Meridian.FSharp.Domain
 
 /// Validation error types
 type ValidationError =
@@ -344,9 +344,9 @@ let validateTrade (trade: TradeEvent) : ValidationResult<TradeEvent> =
 ### F# Order Book Calculations
 
 ```fsharp
-module MarketDataCollector.FSharp.Calculations
+module Meridian.FSharp.Calculations
 
-open MarketDataCollector.FSharp.Domain
+open Meridian.FSharp.Domain
 
 /// Order book level
 type BookLevel = {
@@ -431,7 +431,7 @@ The following table outlines the recommended migration order based on effort vs.
 **Status:** Implemented 2026-01-03
 
 **Scope:**
-- Create `MarketDataCollector.FSharp` project
+- Create `Meridian.FSharp` project
 - Define discriminated unions for market events
 - Implement smart constructors for type safety
 - C# interop through `[<CompiledName>]` attributes
@@ -469,7 +469,7 @@ The following table outlines the recommended migration order based on effort vs.
 
 **Deliverables:**
 - `native/json_parser.cpp` - simdjson integration
-- `MarketDataCollector.Native.dll` - Native library
+- `Meridian.Native.dll` - Native library
 - C# wrapper class
 
 ### Phase 4: C++ Lock-Free Ring Buffer (Weeks 7-8)
@@ -533,15 +533,15 @@ The following table outlines the recommended migration order based on effort vs.
 ## Project Structure
 
 ```
-MarketDataCollector/
+Meridian/
 ├── src/
-│   ├── MarketDataCollector/              # C# main project (existing)
+│   ├── Meridian/              # C# main project (existing)
 │   │   ├── Application/
 │   │   ├── Domain/                       # Keep C# domain for compatibility
 │   │   ├── Infrastructure/
 │   │   └── Storage/
 │   │
-│   ├── MarketDataCollector.FSharp/       # NEW: F# domain library
+│   ├── Meridian.FSharp/       # NEW: F# domain library
 │   │   ├── Domain/
 │   │   │   ├── MarketEvents.fs
 │   │   │   ├── Integrity.fs
@@ -557,7 +557,7 @@ MarketDataCollector/
 │   │   └── Pipeline/
 │   │       └── Transforms.fs
 │   │
-│   ├── MarketDataCollector.Native/       # NEW: C++ performance library
+│   ├── Meridian.Native/       # NEW: C++ performance library
 │   │   ├── include/
 │   │   │   ├── orderbook.hpp
 │   │   │   ├── ring_buffer.hpp
@@ -570,12 +570,12 @@ MarketDataCollector/
 │   │   ├── CMakeLists.txt
 │   │   └── vcpkg.json
 │   │
-│   ├── MarketDataCollector.Native.Interop/  # NEW: C# P/Invoke wrappers
+│   ├── Meridian.Native.Interop/  # NEW: C# P/Invoke wrappers
 │   │   ├── NativeOrderBook.cs
 │   │   ├── NativeRingBuffer.cs
 │   │   └── NativeJsonParser.cs
 │   │
-│   └── MarketDataCollector.Wpf/          # C# WPF desktop app (existing)
+│   └── Meridian.Wpf/          # C# WPF desktop app (existing)
 │
 ├── native/                               # Native build artifacts
 │   ├── win-x64/
@@ -584,9 +584,9 @@ MarketDataCollector/
 │   └── osx-arm64/
 │
 └── tests/
-    ├── MarketDataCollector.Tests/        # C# tests (existing)
-    ├── MarketDataCollector.FSharp.Tests/ # F# tests
-    └── MarketDataCollector.Native.Tests/ # Native benchmarks
+    ├── Meridian.Tests/        # C# tests (existing)
+    ├── Meridian.FSharp.Tests/ # F# tests
+    └── Meridian.Native.Tests/ # Native benchmarks
 ```
 
 ---

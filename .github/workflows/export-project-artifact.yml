@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           short_sha="${GITHUB_SHA::7}"
-          base_name="market-data-collector-${short_sha}"
+          base_name="meridian-${short_sha}"
           echo "base_name=${base_name}" >> "$GITHUB_OUTPUT"
 
       - name: Create tar.gz archive

@@ -1,22 +1,21 @@
 {
-  "generated_at": "2026-03-18T07:52:42.925161+00:00",
+  "generated_at": "2026-03-19T23:53:29.931560+00:00",
   "workflow": "test-matrix.yml",
-  "run_id": 23234439005,
-  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23234439005",
+  "run_id": 23322476846,
+  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23322476846",
   "run_conclusion": "unknown",
-  "repository": "rodoHasArrived/Market-Data-Collector",
+  "repository": "rodoHasArrived/Meridian",
   "failed_jobs": [
-    "Test (Linux)",
+    "Test (Windows)",
     "Test (macOS)",
-    "Test (Windows)"
+    "Test (Linux)"
   ],
   "findings_by_category": {
     "build": 10,
-    "test": 10,
-    "code-quality": 2
+    "code-quality": 8
   },
-  "total_error_codes": 7,
-  "total_failed_tests": 12,
+  "total_error_codes": 10,
+  "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
     {
@@ -25,50 +24,24 @@
       "action": "update",
       "findings_count": 10,
       "error_codes": [
+        "CS0103",
+        "CS0104",
         "CS0118",
         "CS0219",
         "CS0234",
         "CS0246",
-        "CS0433",
-        "CS0534",
-        "CS0535"
+        "CS0535",
+        "CS1061",
+        "CS1574",
+        "CS8300"
       ],
       "failed_tests": []
-    },
-    {
-      "file": "fix-test-failures.prompt.yml",
-      "category": "test",
-      "action": "update",
-      "findings_count": 10,
-      "error_codes": [
-        "CS0118",
-        "CS0219",
-        "CS0234",
-        "CS0246",
-        "CS0433",
-        "CS0534",
-        "CS0535"
-      ],
-      "failed_tests": [
-        "2026-03-18T07:50:49.3521134Z   Failed MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [1 s]",
-        "2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]",
-        "2026-03-18T07:50:52.8809429Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [10 ms]",
-        "2026-03-18T07:50:52.8869656Z    at MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RotateWalAsync() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/WriteAheadLogFuzzTests.cs:line 319",
-        "2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]",
-        "2026-03-18T07:50:26.0829760Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [17 ms]",
-        "2026-03-18T07:50:26.0932990Z   Error Message:",
-        "MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords"
-      ]
     },
     {
       "file": "fix-code-quality.prompt.yml",
       "category": "code-quality",
       "action": "update",
-      "findings_count": 2,
+      "findings_count": 8,
       "error_codes": [],
       "failed_tests": []
     },
@@ -76,31 +49,21 @@
       "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 22,
+      "findings_count": 18,
       "error_codes": [
+        "CS0103",
+        "CS0104",
         "CS0118",
         "CS0219",
         "CS0234",
         "CS0246",
-        "CS0433",
-        "CS0534",
-        "CS0535"
+        "CS0535",
+        "CS1061",
+        "CS1574",
+        "CS8300"
       ],
-      "failed_tests": [
-        "2026-03-18T07:50:49.3521134Z   Failed MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout [1 s]",
-        "2026-03-18T07:50:52.8708847Z [xUnit.net 00:00:06.98]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]",
-        "2026-03-18T07:50:52.8809429Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [10 ms]",
-        "2026-03-18T07:50:52.8869656Z    at MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RotateWalAsync() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/WriteAheadLogFuzzTests.cs:line 319",
-        "2026-03-18T07:50:26.0322920Z [xUnit.net 00:00:07.57]     MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed [FAIL]",
-        "2026-03-18T07:50:26.0829760Z   Failed MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords [17 ms]",
-        "2026-03-18T07:50:26.0932990Z   Error Message:",
-        "MarketDataCollector.Tests.GracefulShutdownTests.StopAsync_HandlesFlushablesThatTimeout",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_SubsequentAppendsSucceed",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords",
-        "MarketDataCollector.Tests.Storage.WriteAheadLogFuzzTests.Recovery_TruncatedLastRecord_RecoversAllPrecedingValidRecords"
-      ]
+      "failed_tests": []
     }
   ],
-  "total_generated": 4
+  "total_generated": 3
 }

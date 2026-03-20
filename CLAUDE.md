@@ -1,8 +1,14 @@
-# CLAUDE.md - AI Assistant Guide for Market Data Collector
+# CLAUDE.md - AI Assistant Guide for Meridian
 
-Market Data Collector is a high-performance .NET 9.0 / C# 13 / F# 8.0 market data collection system. It captures real-time and historical market microstructure data from multiple providers and persists it for research, backtesting, and algorithmic trading.
+**Meridian** is a high-performance .NET 9.0 / C# 13 / F# 8.0 integrated trading platform. It collects real-time and historical market microstructure data from multiple providers, executes trading strategies in real-time, backtests strategies on historical data, and tracks portfolio performance across all runs.
 
-**Version:** 1.6.2 | **Status:** Development / Pilot Ready | **Files:** 773 source files | **Tests:** ~4,135
+**Version:** 1.7.x | **Status:** Development / Pilot Ready | **Files:** 704 source files | **Tests:** ~4,135
+
+### Platform Pillars
+- **📡 Data Collection** - Real-time streaming (90+ sources) + historical backfill (10+ providers) with data quality monitoring
+- **🔬 Backtesting** - Tick-level strategy replay with fill models, portfolio metrics (Sharpe, drawdown, XIRR), and full audit trail
+- **⚡ Real-Time Execution** - Paper trading gateway for zero-risk strategy validation; designed for live order execution integration
+- **🗂️ Portfolio Tracking** - Performance metrics, strategy lifecycle management, and multi-run comparison
 
 ### Key Capabilities
 - Real-time streaming: Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ sources)
@@ -10,6 +16,9 @@ Market Data Collector is a high-performance .NET 9.0 / C# 13 / F# 8.0 market dat
 - Symbol search: 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp)
 - Data quality monitoring with SLA enforcement
 - WAL + tiered JSONL/Parquet storage
+- Backtesting engine with tick-by-tick replay and fill models
+- Paper trading and strategy execution framework
+- Portfolio performance tracking and multi-run analysis
 - Web dashboard and WPF desktop app (Windows)
 - QuantConnect Lean Engine integration
 
@@ -20,13 +29,13 @@ Market Data Collector is a high-performance .NET 9.0 / C# 13 / F# 8.0 market dat
 ```bash
 # Build & Test
 dotnet build -c Release
-dotnet test tests/MarketDataCollector.Tests
-dotnet test tests/MarketDataCollector.FSharp.Tests
+dotnet test tests/Meridian.Tests
+dotnet test tests/Meridian.FSharp.Tests
 make test                    # All tests via Makefile
 make build                   # Build via Makefile
 
 # Run
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
+dotnet run --project src/Meridian/Meridian.csproj -- --ui --http-port 8080
 make run-ui
 
 # AI Audit Tools (run before/after changes)
@@ -43,7 +52,7 @@ make diagnose
 dotnet restore /p:EnableWindowsTargeting=true -v diag   # Build issue diagnosis
 
 # Backfill
-dotnet run --project src/MarketDataCollector -- \
+dotnet run --project src/Meridian -- \
   --backfill --backfill-provider stooq \
   --backfill-symbols SPY,AAPL \
   --backfill-from 2024-01-01 --backfill-to 2024-01-05
@@ -68,35 +77,38 @@ make test-desktop-services
 ## Repository Layout
 
 ```
-Market-Data-Collector/
-├── src/                     # Source code (13 projects)
-│   ├── MarketDataCollector/             # Entry point, CLI, web server
-│   ├── MarketDataCollector.Application/ # Commands, pipeline, monitoring, services
-│   ├── MarketDataCollector.Domain/      # Collectors, event publishers
-│   ├── MarketDataCollector.Core/        # Config, exceptions, logging
-│   ├── MarketDataCollector.Contracts/   # API models, domain types, interfaces
-│   ├── MarketDataCollector.Infrastructure/ # Provider adapters (Alpaca, IB, Polygon…)
-│   ├── MarketDataCollector.Storage/     # WAL, sinks, archival, packaging
-│   ├── MarketDataCollector.ProviderSdk/ # IMarketDataClient, IHistoricalDataProvider
-│   ├── MarketDataCollector.FSharp/      # F# domain: validation, calculations
-│   ├── MarketDataCollector.Backtesting/ # Backtest engine, fill models, portfolio
-│   ├── MarketDataCollector.Backtesting.Sdk/ # Backtest strategy SDK
-│   ├── MarketDataCollector.Wpf/         # WPF desktop app (Windows)
-│   ├── MarketDataCollector.Ui.Services/ # Shared desktop UI services
-│   ├── MarketDataCollector.Ui.Shared/   # Shared endpoints, HTML templates
-│   ├── MarketDataCollector.Ui/          # Web UI entry point
-│   └── MarketDataCollector.McpServer/   # MCP server tools
+Meridian/
+├── src/                     # Source code (15 projects)
+│   ├── Meridian/             # Entry point, CLI, web server
+│   ├── Meridian.Application/ # Commands, pipeline, monitoring, services
+│   ├── Meridian.Domain/      # Collectors, event publishers, domain logic
+│   ├── Meridian.Core/        # Config, exceptions, logging
+│   ├── Meridian.Contracts/   # API models, domain types, interfaces
+│   ├── Meridian.Infrastructure/ # Provider adapters (Alpaca, IB, Polygon…)
+│   ├── Meridian.Storage/     # WAL, sinks, archival, packaging
+│   ├── Meridian.ProviderSdk/ # IMarketDataClient, IHistoricalDataProvider
+│   ├── Meridian.FSharp/      # F# domain: validation, calculations
+│   ├── Meridian.Backtesting/ # Backtest engine, fill models, performance metrics
+│   ├── Meridian.Backtesting.Sdk/ # Backtest strategy SDK and strategy interfaces
+│   ├── Meridian.Execution/   # Order execution, paper trading gateway
+│   ├── Meridian.Strategies/  # Strategy lifecycle, portfolio tracking
+│   ├── Meridian.Wpf/         # WPF desktop app (Windows)
+│   ├── Meridian.Ui.Services/ # Shared desktop UI services
+│   ├── Meridian.Ui.Shared/   # Shared endpoints, HTML templates
+│   ├── Meridian.Ui/          # Web UI entry point
+│   └── Meridian.McpServer/   # MCP server tools
 ├── tests/                   # 4 test projects, ~4,135 tests
 ├── benchmarks/              # BenchmarkDotNet performance benchmarks
-├── docs/                    # 163 documentation files
-│   ├── adr/                 # Architecture Decision Records (ADR-001…ADR-014)
+├── docs/                    # 214 documentation files
+│   ├── adr/                 # Architecture Decision Records (ADR-001…ADR-015)
 │   ├── ai/claude/           # AI sub-documents (see table below)
 │   ├── architecture/        # System design docs
+│   ├── status/              # Production status and roadmap
 │   └── providers/           # Provider setup guides
 ├── config/                  # appsettings.json, appsettings.sample.json
 ├── build/                   # Build tooling (Python, Node, scripts)
 ├── deploy/                  # Docker, k8s, systemd configs
-└── .github/workflows/       # 28 CI/CD workflows
+└── .github/workflows/       # 25+ CI/CD workflows
 ```
 
 Full annotated file tree: [`docs/ai/claude/CLAUDE.structure.md`](docs/ai/claude/CLAUDE.structure.md)
@@ -135,7 +147,7 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 - Log all errors with context (symbol, provider, timestamp)
 - Use exponential backoff for retries
 - Throw `ArgumentException` for bad inputs, `InvalidOperationException` for state errors
-- Custom exceptions in `src/MarketDataCollector.Core/Exceptions/`: `ConfigurationException`, `ConnectionException`, `DataProviderException`, `RateLimitException`, `SequenceValidationException`, `StorageException`, `ValidationException`, `OperationTimeoutException`
+- Custom exceptions in `src/Meridian.Core/Exceptions/`: `ConfigurationException`, `ConnectionException`, `DataProviderException`, `RateLimitException`, `SequenceValidationException`, `StorageException`, `ValidationException`, `OperationTimeoutException`
 
 ### Naming
 - Async methods: suffix `Async`
@@ -223,18 +235,25 @@ Located in `docs/adr/`. Use `[ImplementsAdr("ADR-XXX", "reason")]` on implementi
 | ADR-009 | F# type-safe domain with C# interop |
 | ADR-013 | Bounded channel pipeline policy — consistent backpressure |
 | ADR-014 | JSON source generators — no-reflection serialization |
+| ADR-015 | Paper trading gateway — risk-free strategy validation for live + backtest parity |
 
 ---
 
 ## Domain Models
 
-### Core Event Types
+### Core Event Types (Data Collection)
 - `Trade` — Tick-by-tick trade prints with sequence validation
 - `LOBSnapshot` — Full L2 order book state
 - `BboQuote` — Best bid/offer with spread and mid-price
 - `OrderFlowStatistics` — Rolling VWAP, imbalance, volume splits
 - `IntegrityEvent` — Sequence anomalies (gaps, out-of-order)
 - `HistoricalBar` — OHLCV bars from backfill providers
+
+### Execution & Strategy Types
+- `Order` — Limit/market orders with timestamp and fill tracking
+- `Fill` — Executed trade with price, quantity, and commission
+- `StrategyState` — Active/paused/stopped strategy with metadata
+- `PortfolioSnapshot` — Position, cash, and performance metrics at point-in-time
 
 ### Key Classes
 | Class | Location | Purpose |
@@ -246,8 +265,11 @@ Located in `docs/adr/`. Use `[ImplementsAdr("ADR-XXX", "reason")]` on implementi
 | `ParquetStorageSink` | `Storage/Sinks/` | Parquet file persistence |
 | `WriteAheadLog` | `Storage/Archival/` | WAL for data durability |
 | `CompositeHistoricalDataProvider` | `Infrastructure/Adapters/Core/` | Multi-provider backfill with fallback |
+| `BacktestEngine` | `Backtesting/` | Tick-by-tick strategy replay with fill models |
+| `PaperTradingGateway` | `Execution/` | Paper trading for real-time strategy testing |
+| `PortfolioTracker` | `Strategies/` | Multi-run performance metrics and lifecycle |
 
-*All locations relative to `src/MarketDataCollector/`*
+*All locations relative to `src/Meridian/`*
 
 ---
 
@@ -285,13 +307,13 @@ Load these on-demand when working in the relevant area — do not read all of th
 
 | Sub-Document | When to Load |
 |--------------|-------------|
-| [`docs/ai/claude/CLAUDE.providers.md`](docs/ai/claude/CLAUDE.providers.md) | Adding/modifying providers, `IMarketDataClient`, `IHistoricalDataProvider`, symbol search |
+| [`docs/ai/claude/CLAUDE.providers.md`](docs/ai/claude/CLAUDE.providers.md) | Adding/modifying data providers, `IMarketDataClient`, `IHistoricalDataProvider`, symbol search |
 | [`docs/ai/claude/CLAUDE.storage.md`](docs/ai/claude/CLAUDE.storage.md) | Storage sinks, WAL, archival, packaging, tiered storage |
 | [`docs/ai/claude/CLAUDE.testing.md`](docs/ai/claude/CLAUDE.testing.md) | Writing or reviewing tests, test patterns, coverage |
 | [`docs/ai/claude/CLAUDE.fsharp.md`](docs/ai/claude/CLAUDE.fsharp.md) | F# domain library, validation pipeline, C# interop |
-| [`docs/ai/claude/CLAUDE.api.md`](docs/ai/claude/CLAUDE.api.md) | REST API endpoints, data quality services, CI/CD pipelines |
+| [`docs/ai/claude/CLAUDE.api.md`](docs/ai/claude/CLAUDE.api.md) | REST API endpoints, backtesting, strategy management, portfolio tracking, CI/CD pipelines |
 | [`docs/ai/claude/CLAUDE.repo-updater.md`](docs/ai/claude/CLAUDE.repo-updater.md) | Running `ai-repo-updater.py` audit/verify/report commands |
-| [`docs/ai/claude/CLAUDE.structure.md`](docs/ai/claude/CLAUDE.structure.md) | Full annotated file tree (load only when navigating unfamiliar areas) |
+| [`docs/ai/claude/CLAUDE.structure.md`](docs/ai/claude/CLAUDE.structure.md) | Full annotated file tree with backtesting, execution, and strategy projects |
 | [`docs/ai/claude/CLAUDE.actions.md`](docs/ai/claude/CLAUDE.actions.md) | GitHub Actions workflows |
 | [`docs/ai/ai-known-errors.md`](docs/ai/ai-known-errors.md) | Known AI agent mistakes — check before starting any task |
 
@@ -299,11 +321,16 @@ Load these on-demand when working in the relevant area — do not read all of th
 | Doc | Purpose |
 |-----|---------|
 | `docs/adr/` | Architecture Decision Records |
-| `docs/development/provider-implementation.md` | Step-by-step provider guide |
-| `docs/operations/portable-data-packager.md` | Data packaging |
+| `docs/development/provider-implementation.md` | Step-by-step data provider guide |
+| `docs/development/strategy-implementation.md` | Step-by-step strategy development guide |
+| `docs/operations/portable-data-packager.md` | Data packaging and export |
+| `docs/operations/strategy-lifecycle.md` | Strategy registration, deployment, and monitoring |
+| `docs/architecture/backtesting-design.md` | Backtest engine architecture and fill models |
 | `docs/HELP.md` | Complete user guide with FAQ |
 | `docs/development/central-package-management.md` | CPM details |
+| `docs/status/production-status.md` | Feature implementation status |
+| `docs/status/ROADMAP.md` | Project roadmap and future work |
 
 ---
 
-*Last Updated: 2026-03-18*
+*Last Updated: 2026-03-19*

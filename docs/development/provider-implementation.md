@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers patterns for implementing market data providers in MarketDataCollector. The system has three provider categories, each with its own interface hierarchy:
+This guide covers patterns for implementing market data providers in Meridian. The system has three provider categories, each with its own interface hierarchy:
 
 | Category | Primary Interface | Base Class | Purpose |
 |----------|-------------------|------------|---------|
@@ -16,7 +16,7 @@ There is also a parallel **DataSource** hierarchy (`IDataSource` → `IRealtimeD
 
 ---
 
-## Provider SDK (`MarketDataCollector.ProviderSdk`)
+## Provider SDK (`Meridian.ProviderSdk`)
 
 The ProviderSdk project defines the core contracts that all providers share:
 
@@ -59,7 +59,7 @@ Mark your implementations with `[ImplementsAdr("ADR-XXX", "reason")]`.
 
 ### Interface
 
-Location: `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs`
+Location: `src/Meridian.ProviderSdk/IMarketDataClient.cs`
 
 ```csharp
 [ImplementsAdr("ADR-001", "Core streaming data provider contract")]
@@ -240,7 +240,7 @@ public async Task ConnectWithRetryAsync(CancellationToken ct)
 
 ### Interface
 
-Location: `src/MarketDataCollector.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs`
+Location: `src/Meridian.Infrastructure/Adapters/Core/IHistoricalDataProvider.cs`
 
 ```csharp
 [ImplementsAdr("ADR-001", "Core historical data provider contract")]
@@ -278,7 +278,7 @@ public interface IHistoricalDataProvider : IProviderMetadata, IDisposable
 
 ### Base Class: `BaseHistoricalDataProvider`
 
-Location: `src/MarketDataCollector.Infrastructure/Adapters/Core/BaseHistoricalDataProvider.cs`
+Location: `src/Meridian.Infrastructure/Adapters/Core/BaseHistoricalDataProvider.cs`
 
 All historical providers should extend this base class. It provides:
 
@@ -423,7 +423,7 @@ Register your provider in the DI container and the composite provider picks it u
 
 ### Interface
 
-Location: `src/MarketDataCollector.Infrastructure/Adapters/Core/ISymbolSearchProvider.cs`
+Location: `src/Meridian.Infrastructure/Adapters/Core/ISymbolSearchProvider.cs`
 
 ```csharp
 public interface ISymbolSearchProvider : IProviderMetadata
@@ -471,7 +471,7 @@ IDataSource (base)
 
 ### `IDataSource`
 
-Location: `src/MarketDataCollector.ProviderSdk/IDataSource.cs`
+Location: `src/Meridian.ProviderSdk/IDataSource.cs`
 
 Provides identity, classification, capabilities, health/status, rate limit state, and lifecycle management (`InitializeAsync`, `ValidateCredentialsAsync`, `TestConnectivityAsync`).
 
@@ -484,7 +484,7 @@ Key types:
 
 ### `DataSourceBase`
 
-Location: `src/MarketDataCollector.Infrastructure/DataSources/DataSourceBase.cs`
+Location: `src/Meridian.Infrastructure/DataSources/DataSourceBase.cs`
 
 Abstract base class providing:
 - **Health tracking** — automatic health score calculation, consecutive failure tracking, health change notifications via `IObservable<DataSourceHealthChanged>`
@@ -495,7 +495,7 @@ Abstract base class providing:
 
 ### `[DataSource]` Attribute (ADR-005)
 
-Location: `src/MarketDataCollector.ProviderSdk/DataSourceAttribute.cs`
+Location: `src/Meridian.ProviderSdk/DataSourceAttribute.cs`
 
 ```csharp
 [DataSource("example", "Example Markets", DataSourceType.Hybrid, DataSourceCategory.Broker, Priority = 10)]
@@ -517,7 +517,7 @@ Parameters:
 
 ### `DataSourceRegistry`
 
-Location: `src/MarketDataCollector.ProviderSdk/DataSourceRegistry.cs`
+Location: `src/Meridian.ProviderSdk/DataSourceRegistry.cs`
 
 Scans assemblies for types decorated with `[DataSource]` and registers them in DI:
 
@@ -530,7 +530,7 @@ registry.RegisterModules(services, typeof(AlpacaProviderModule).Assembly);
 
 ### `IProviderModule`
 
-Location: `src/MarketDataCollector.ProviderSdk/IProviderModule.cs`
+Location: `src/Meridian.ProviderSdk/IProviderModule.cs`
 
 For providers requiring custom DI registration:
 
@@ -550,7 +550,7 @@ public sealed class ExampleProviderModule : IProviderModule
 
 ## 5. `IProviderMetadata` — Unified Provider Discovery
 
-Location: `src/MarketDataCollector.ProviderSdk/IProviderMetadata.cs`
+Location: `src/Meridian.ProviderSdk/IProviderMetadata.cs`
 
 All three provider interfaces (`IMarketDataClient`, `IHistoricalDataProvider`, `ISymbolSearchProvider`) extend `IProviderMetadata`, enabling:
 
@@ -625,7 +625,7 @@ new ProviderCredentialField(
 
 ### `CredentialValidator`
 
-Location: `src/MarketDataCollector.ProviderSdk/CredentialValidator.cs`
+Location: `src/Meridian.ProviderSdk/CredentialValidator.cs`
 
 Centralized utilities to eliminate duplicate validation:
 
@@ -659,7 +659,7 @@ The `CredentialConfig` class supports multiple credential sources with the follo
 
 ## 7. Channel Buffering (`EventPipelinePolicy`)
 
-Location: `src/MarketDataCollector.Core/Pipeline/EventPipelinePolicy.cs`
+Location: `src/Meridian.Core/Pipeline/EventPipelinePolicy.cs`
 
 All providers must use `EventPipelinePolicy` presets for bounded channels (ADR-013):
 
@@ -753,7 +753,7 @@ export EXAMPLE__SECRETKEY=your-secret-key
 Place provider implementations in the appropriate subdirectory:
 
 ```
-src/MarketDataCollector.Infrastructure/Adapters/
+src/Meridian.Infrastructure/Adapters/
 ├── Backfill/                          # Historical provider base + interface
 │   ├── IHistoricalDataProvider.cs     # Interface
 │   ├── BaseHistoricalDataProvider.cs  # Base class
@@ -889,18 +889,18 @@ public sealed class MockExampleClient : IMarketDataClient
 
 ### Streaming Provider
 
-1. Create `src/MarketDataCollector.Infrastructure/Adapters/Streaming/{Provider}/{Provider}MarketDataClient.cs`
+1. Create `src/Meridian.Infrastructure/Adapters/Streaming/{Provider}/{Provider}MarketDataClient.cs`
 2. Implement `IMarketDataClient`
 3. Add `[ImplementsAdr("ADR-001", "...")]` and `[ImplementsAdr("ADR-004", "...")]`
 4. Create `{Provider}Options` configuration model
 5. Register in DI (`ServiceCompositionRoot.cs` or via `IProviderModule`)
 6. Add config section in `config/appsettings.sample.json`
-7. Add tests in `tests/MarketDataCollector.Tests/Infrastructure/Adapters/`
+7. Add tests in `tests/Meridian.Tests/Infrastructure/Adapters/`
 8. Document in `docs/providers/`
 
 ### Historical Provider
 
-1. Create `src/MarketDataCollector.Infrastructure/Adapters/{Provider}/{Provider}HistoricalDataProvider.cs`
+1. Create `src/Meridian.Infrastructure/Adapters/{Provider}/{Provider}HistoricalDataProvider.cs`
 2. Extend `BaseHistoricalDataProvider`
 3. Add `[ImplementsAdr]` attributes
 4. Override `Name`, `DisplayName`, `Description`, `HttpClientName`, `Capabilities`
@@ -910,7 +910,7 @@ public sealed class MockExampleClient : IMarketDataClient
 
 ### Symbol Search Provider
 
-1. Create `src/MarketDataCollector.Infrastructure/Adapters/Core/{Provider}SymbolSearchProvider.cs`
+1. Create `src/Meridian.Infrastructure/Adapters/Core/{Provider}SymbolSearchProvider.cs`
 2. Implement `ISymbolSearchProvider` (or `IFilterableSymbolSearchProvider`)
 3. Override `IProviderMetadata` defaults
 4. Register in DI

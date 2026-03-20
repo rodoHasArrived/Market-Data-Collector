@@ -38,29 +38,29 @@ This guide establishes conventions for organizing code, documentation, and asset
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Presentation Layer (UI Projects)                   │
-│  - MarketDataCollector.Wpf (Desktop)                │
-│  - MarketDataCollector.Ui (Web UI)                  │
+│  - Meridian.Wpf (Desktop)                │
+│  - Meridian.Ui (Web UI)                  │
 ├─────────────────────────────────────────────────────┤
 │  UI Services Layer                                  │
-│  - MarketDataCollector.Ui.Services (shared)         │
-│  - MarketDataCollector.Ui.Shared (web components)   │
+│  - Meridian.Ui.Services (shared)         │
+│  - Meridian.Ui.Shared (web components)   │
 ├─────────────────────────────────────────────────────┤
 │  Application Layer                                  │
-│  - MarketDataCollector.Application                  │
-│  - MarketDataCollector (entry point)                │
+│  - Meridian.Application                  │
+│  - Meridian (entry point)                │
 ├─────────────────────────────────────────────────────┤
 │  Domain & Infrastructure Layer                      │
-│  - MarketDataCollector.Domain (business logic)      │
-│  - MarketDataCollector.Infrastructure (providers)   │
-│  - MarketDataCollector.Storage (persistence)        │
-│  - MarketDataCollector.FSharp (functional domain)   │
+│  - Meridian.Domain (business logic)      │
+│  - Meridian.Infrastructure (providers)   │
+│  - Meridian.Storage (persistence)        │
+│  - Meridian.FSharp (functional domain)   │
 ├─────────────────────────────────────────────────────┤
 │  Core Layer                                         │
-│  - MarketDataCollector.Core (shared utilities)      │
-│  - MarketDataCollector.ProviderSdk (provider API)   │
+│  - Meridian.Core (shared utilities)      │
+│  - Meridian.ProviderSdk (provider API)   │
 ├─────────────────────────────────────────────────────┤
 │  Contracts Layer (bottom)                           │
-│  - MarketDataCollector.Contracts (DTOs, interfaces) │
+│  - Meridian.Contracts (DTOs, interfaces) │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -96,19 +96,19 @@ Market-Data-Collector/
 
 ```
 src/
-├── MarketDataCollector/                    # Main entry point (Program.cs)
-├── MarketDataCollector.Application/        # Application services, commands, pipeline
-├── MarketDataCollector.Contracts/          # Shared DTOs, interfaces, domain models
-├── MarketDataCollector.Core/               # Core utilities, configuration, exceptions
-├── MarketDataCollector.Domain/             # Domain logic, collectors, events
-├── MarketDataCollector.FSharp/             # F# domain logic and validation
-├── MarketDataCollector.Infrastructure/     # Provider implementations
-├── MarketDataCollector.ProviderSdk/        # Provider abstraction layer
-├── MarketDataCollector.Storage/            # Storage, archival, export
-├── MarketDataCollector.Ui/                 # Web UI entry point
-├── MarketDataCollector.Ui.Services/        # Shared UI services (desktop + web)
-├── MarketDataCollector.Ui.Shared/          # Web-specific UI components
-└── MarketDataCollector.Wpf/                # WPF desktop application
+├── Meridian/                    # Main entry point (Program.cs)
+├── Meridian.Application/        # Application services, commands, pipeline
+├── Meridian.Contracts/          # Shared DTOs, interfaces, domain models
+├── Meridian.Core/               # Core utilities, configuration, exceptions
+├── Meridian.Domain/             # Domain logic, collectors, events
+├── Meridian.FSharp/             # F# domain logic and validation
+├── Meridian.Infrastructure/     # Provider implementations
+├── Meridian.ProviderSdk/        # Provider abstraction layer
+├── Meridian.Storage/            # Storage, archival, export
+├── Meridian.Ui/                 # Web UI entry point
+├── Meridian.Ui.Services/        # Shared UI services (desktop + web)
+├── Meridian.Ui.Shared/          # Web-specific UI components
+└── Meridian.Wpf/                # WPF desktop application
 ```
 
 ### Standard Project Internal Structure
@@ -173,7 +173,7 @@ Each project can reference projects below it in the layer hierarchy:
 
 | Project | Can Reference |
 |---------|---------------|
-| **MarketDataCollector** | Application, Domain, Infrastructure, Storage, Core, Contracts, FSharp, ProviderSdk, Ui.Shared |
+| **Meridian** | Application, Domain, Infrastructure, Storage, Core, Contracts, FSharp, ProviderSdk, Ui.Shared |
 | **Application** | Domain, Infrastructure, Storage, Core, Contracts, FSharp, ProviderSdk |
 | **Ui.Services** | Contracts, Core |
 | **Ui.Shared** | Application, Ui.Services, Contracts, Core |
@@ -396,7 +396,7 @@ Test projects mirror source project structure:
 
 ```
 tests/
-├── MarketDataCollector.Tests/              # Tests for Application layer
+├── Meridian.Tests/              # Tests for Application layer
 │   ├── Application/
 │   │   ├── Commands/
 │   │   ├── Config/
@@ -404,9 +404,9 @@ tests/
 │   ├── Domain/
 │   ├── Infrastructure/
 │   └── Storage/
-├── MarketDataCollector.FSharp.Tests/       # F# tests
-├── MarketDataCollector.Ui.Tests/           # UI Services tests
-├── MarketDataCollector.Wpf.Tests/          # WPF tests (Windows-only)
+├── Meridian.FSharp.Tests/       # F# tests
+├── Meridian.Ui.Tests/           # UI Services tests
+├── Meridian.Wpf.Tests/          # WPF tests (Windows-only)
 └── coverlet.runsettings
 ```
 
@@ -473,7 +473,7 @@ src/ProjectName/
 ### Desktop Assets
 
 ```
-src/MarketDataCollector.Wpf/
+src/Meridian.Wpf/
 ├── Assets/
 │   ├── Icons/                  # Icon files
 │   ├── Images/                 # Image resources
@@ -532,7 +532,7 @@ Ui.Shared.Services.ConfigStore            → UiConfigStore
 ❌ **Problem:** Core references Application (circular dependency)
 ```csharp
 // In Core/Utilities/Helper.cs
-using MarketDataCollector.Application.Services; // ❌ Forbidden!
+using Meridian.Application.Services; // ❌ Forbidden!
 ```
 
 ✅ **Solution:** Move shared types to Contracts
@@ -566,13 +566,13 @@ Auth/ApiKeyMiddleware.cs     → Authentication
 ❌ **Problem:** Tests not organized to mirror source
 ```
 Source: src/Application/Services/ConfigService.cs
-Test:   tests/MarketDataCollector.Tests/ConfigTests.cs  ❌
+Test:   tests/Meridian.Tests/ConfigTests.cs  ❌
 ```
 
 ✅ **Solution:** Mirror source structure exactly
 ```
 Source: src/Application/Services/ConfigService.cs
-Test:   tests/MarketDataCollector.Tests/Application/Services/ConfigServiceTests.cs  ✓
+Test:   tests/Meridian.Tests/Application/Services/ConfigServiceTests.cs  ✓
 ```
 
 ---
@@ -597,17 +597,17 @@ When adding new code, ask these questions:
 
 | Code Type | Location | Project |
 |-----------|----------|---------|
-| Shared DTO | `Contracts/` | `MarketDataCollector.Contracts` |
-| Domain model | `Contracts/Domain/Models/` | `MarketDataCollector.Contracts` |
-| Business logic | `Domain/` | `MarketDataCollector.Domain` |
-| Provider implementation | `Infrastructure/Adapters/` | `MarketDataCollector.Infrastructure` |
-| HTTP API endpoint | `Application/Http/Endpoints/` | `MarketDataCollector.Application` |
-| UI service (desktop+web) | `Ui.Services/Services/` | `MarketDataCollector.Ui.Services` |
-| Platform-specific UI logic | `Wpf/` | `MarketDataCollector.Wpf` |
-| Configuration model | `Core/Config/` | `MarketDataCollector.Core` |
-| Shared utility | `Core/Utilities/` | `MarketDataCollector.Core` |
-| Custom exception | `Core/Exceptions/` | `MarketDataCollector.Core` |
-| Provider abstraction | `ProviderSdk/` | `MarketDataCollector.ProviderSdk` |
+| Shared DTO | `Contracts/` | `Meridian.Contracts` |
+| Domain model | `Contracts/Domain/Models/` | `Meridian.Contracts` |
+| Business logic | `Domain/` | `Meridian.Domain` |
+| Provider implementation | `Infrastructure/Adapters/` | `Meridian.Infrastructure` |
+| HTTP API endpoint | `Application/Http/Endpoints/` | `Meridian.Application` |
+| UI service (desktop+web) | `Ui.Services/Services/` | `Meridian.Ui.Services` |
+| Platform-specific UI logic | `Wpf/` | `Meridian.Wpf` |
+| Configuration model | `Core/Config/` | `Meridian.Core` |
+| Shared utility | `Core/Utilities/` | `Meridian.Core` |
+| Custom exception | `Core/Exceptions/` | `Meridian.Core` |
+| Provider abstraction | `ProviderSdk/` | `Meridian.ProviderSdk` |
 
 ### Adding a New Provider
 
@@ -636,7 +636,7 @@ Follow this structure:
 
 5. **Add tests:**
    ```
-   tests/MarketDataCollector.Tests/Infrastructure/Adapters/{Provider}Tests.cs
+   tests/Meridian.Tests/Infrastructure/Adapters/{Provider}Tests.cs
    ```
 
 6. **Document setup:**

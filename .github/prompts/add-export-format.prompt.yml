@@ -31,8 +31,8 @@ messages:
       ```
 
       ## Directory Structure
-      - `src/MarketDataCollector/Storage/Export/` - Export implementations
-      - `src/MarketDataCollector/Storage/Sinks/` - Storage sink implementations
+      - `src/Meridian/Storage/Export/` - Export implementations
+      - `src/Meridian/Storage/Sinks/` - Storage sink implementations
 
       ## Data Types
       - Trade events with timestamp, price, size, side

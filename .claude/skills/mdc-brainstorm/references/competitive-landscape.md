@@ -54,19 +54,24 @@ Understanding the market helps identify where MDC can differentiate vs. where it
 | Capability          | Bloomberg | Databento | Polygon | MDC now | MDC potential |
 |---------------------|-----------|-----------|---------|---------|---------------|
 | Self-hosted         | No        | No        | No      | Yes     | Yes           |
-| Multi-provider      | Yes       | No        | No      | Yes (2) | Yes (90+)     |
+| Multi-provider      | Yes       | No        | No      | Yes (5) | Yes (90+)     |
 | Free tier           | No        | No        | Yes     | Yes     | Yes           |
 | Sub-ms latency      | Yes       | Yes       | No      | Yes     | Yes           |
 | Python SDK          | Yes       | Yes       | Yes     | No      | Planned       |
 | L2 order book       | Yes       | Yes       | Yes     | Yes(IB) | Yes           |
 | Data provenance     | Yes       | Partial   | No      | No      | Opportunity   |
-| Backtesting bridge  | No        | No        | No      | No      | Opportunity   |
+| Backtesting engine  | No        | No        | No      | Yes     | Yes (full)    |
+| Paper trading       | No        | No        | No      | Yes     | Yes           |
+| Strategy execution  | No        | No        | No      | Yes     | Yes (live)    |
+| Pre-trade risk      | Yes       | No        | No      | Yes     | Yes           |
 | Community sharing   | No        | No        | No      | No      | Opportunity   |
 | Academic citation   | No        | No        | No      | No      | Opportunity   |
+| MCP / AI tooling    | No        | No        | No      | Yes     | Yes           |
 
 MDC defensible moats:
 
 1. Self-hosted, no per-query cloud fees
 2. Multi-provider failover and reconciliation (no competitor does this affordably)
-3. Hackable open architecture — plugins, custom sinks, C# + F# + C++ extensibility
-4. Community-first approach (shared datasets, plugin marketplace)
+3. Full platform: data collection → backtesting → execution → strategy lifecycle in one codebase
+4. Hackable open architecture — plugins, custom sinks, C# + F# extensibility
+5. MCP server layer — AI-native tooling surface (unique in this space)

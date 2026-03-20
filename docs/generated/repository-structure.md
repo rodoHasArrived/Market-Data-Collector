@@ -4,14 +4,14 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-18 07:57:40 UTC
+> Auto-generated on 2026-03-20 00:15:39 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
 ## Directory Layout
 
 ```
-Market-Data-Collector/
+Meridian/
 ├── .claude/
 │   ├── agents/
 │   │   ├── mdc-blueprint.md
@@ -64,10 +64,14 @@ Market-Data-Collector/
 │   │       └── action.yml
 │   ├── agents/
 │   │   ├── adr-generator.agent.md
+│   │   ├── cleanup-specialist.agent.md
 │   │   ├── code-review-agent.md
 │   │   ├── documentation-agent.md
 │   │   ├── mdc-blueprint-agent.md
 │   │   ├── mdc-brainstorm-agent.md
+│   │   ├── mdc-bug-fix-agent.md
+│   │   ├── mdc-cleanup-agent.md
+│   │   ├── mdc-performance-agent.md
 │   │   ├── mdc-provider-builder-agent.md
 │   │   └── mdc-test-writer-agent.md
 │   ├── instructions/
@@ -108,15 +112,18 @@ Market-Data-Collector/
 │   │   ├── copilot-setup-steps.yml
 │   │   ├── copilot-swe-agent-copilot.yml
 │   │   ├── desktop-builds.yml
+│   │   ├── docker-image.yml
 │   │   ├── docker.yml
 │   │   ├── docs-check.yml
 │   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── export-project-artifact.yml
 │   │   ├── labeling.yml
+│   │   ├── makefile.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
 │   │   ├── prompt-generation.yml
+│   │   ├── python-package-conda.yml
 │   │   ├── README.md
 │   │   ├── release.yml
 │   │   ├── reusable-dotnet-build.yml
@@ -125,6 +132,7 @@ Market-Data-Collector/
 │   │   ├── skill-evals.yml
 │   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
+│   │   ├── static.yml
 │   │   ├── test-matrix.yml
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
@@ -139,13 +147,13 @@ Market-Data-Collector/
 │   ├── pull_request_template_desktop.md
 │   └── spellcheck-config.yml
 ├── benchmarks/  # Performance benchmarks
-│   ├── MarketDataCollector.Benchmarks/
+│   ├── Meridian.Benchmarks/
 │   │   ├── CollectorBenchmarks.cs
 │   │   ├── EndToEndPipelineBenchmarks.cs
 │   │   ├── EventPipelineBenchmarks.cs
 │   │   ├── IndicatorBenchmarks.cs
 │   │   ├── JsonSerializationBenchmarks.cs
-│   │   ├── MarketDataCollector.Benchmarks.csproj
+│   │   ├── Meridian.Benchmarks.csproj
 │   │   ├── Program.cs
 │   │   ├── StorageSinkBenchmarks.cs
 │   │   └── WalChecksumBenchmarks.cs
@@ -275,7 +283,10 @@ Market-Data-Collector/
 │   │   ├── 012-monitoring-and-alerting-pipeline.md
 │   │   ├── 013-bounded-channel-policy.md
 │   │   ├── 014-json-source-generators.md
+│   │   ├── 015-strategy-execution-contract.md
+│   │   ├── 016-platform-architecture-migration.md
 │   │   ├── _template.md
+│   │   ├── ADR-015-platform-restructuring.md
 │   │   └── README.md
 │   ├── ai/
 │   │   ├── agents/
@@ -313,6 +324,9 @@ Market-Data-Collector/
 │   │   ├── storage-design.md
 │   │   ├── ui-redesign.md
 │   │   └── why-this-architecture.md
+│   ├── archive/
+│   │   ├── desktop-end-user-improvements.md
+│   │   └── README.md
 │   ├── archived/
 │   │   ├── 2026-02_PR_SUMMARY.md
 │   │   ├── 2026-02_UI_IMPROVEMENTS_SUMMARY.md
@@ -442,7 +456,6 @@ Market-Data-Collector/
 │   │   ├── 2026-03-brainstorm-next-frontier.md
 │   │   ├── assembly-performance-opportunities.md
 │   │   ├── data-quality-monitoring-evaluation.md
-│   │   ├── desktop-end-user-improvements.md
 │   │   ├── desktop-improvements-executive-summary.md
 │   │   ├── desktop-platform-improvements-implementation-guide.md
 │   │   ├── high-impact-improvement-brainstorm-2026-03.md
@@ -484,6 +497,7 @@ Market-Data-Collector/
 │   │   └── service-level-objectives.md
 │   ├── plans/
 │   │   ├── assembly-performance-roadmap.md
+│   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
 │   │   └── quant-script-environment-blueprint.md
 │   ├── providers/
@@ -524,7 +538,7 @@ Market-Data-Collector/
 │       ├── desktop-dev.ps1
 │       └── diagnose-uwp-xaml.ps1
 ├── src/  # Source code
-│   ├── MarketDataCollector/
+│   ├── Meridian/
 │   │   ├── Integrations/
 │   │   │   └── Lean/
 │   │   │       ...
@@ -535,11 +549,11 @@ Market-Data-Collector/
 │   │   │       ...
 │   │   ├── app.manifest
 │   │   ├── GlobalUsings.cs
-│   │   ├── MarketDataCollector.csproj
+│   │   ├── Meridian.csproj
 │   │   ├── Program.cs
 │   │   ├── runtimeconfig.template.json
 │   │   └── UiServer.cs
-│   ├── MarketDataCollector.Application/
+│   ├── Meridian.Application/
 │   │   ├── Backfill/
 │   │   │   ├── BackfillCostEstimator.cs
 │   │   │   ├── BackfillRequest.cs
@@ -691,8 +705,8 @@ Market-Data-Collector/
 │   │   │   ├── OpenTelemetrySetup.cs
 │   │   │   └── TracedEventMetrics.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Application.csproj
-│   ├── MarketDataCollector.Backtesting/
+│   │   └── Meridian.Application.csproj
+│   ├── Meridian.Backtesting/
 │   │   ├── Engine/
 │   │   │   ├── BacktestContext.cs
 │   │   │   ├── BacktestEngine.cs
@@ -711,8 +725,15 @@ Market-Data-Collector/
 │   │   │   ├── ICommissionModel.cs
 │   │   │   └── SimulatedPortfolio.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Backtesting.csproj
-│   ├── MarketDataCollector.Backtesting.Sdk/
+│   │   └── Meridian.Backtesting.csproj
+│   ├── Meridian.Backtesting.Sdk/
+│   │   ├── Ledger/
+│   │   │   ├── BacktestLedger.cs
+│   │   │   ├── JournalEntry.cs
+│   │   │   ├── LedgerAccount.cs
+│   │   │   ├── LedgerAccounts.cs
+│   │   │   ├── LedgerAccountType.cs
+│   │   │   └── LedgerEntry.cs
 │   │   ├── BacktestProgressEvent.cs
 │   │   ├── BacktestRequest.cs
 │   │   ├── BacktestResult.cs
@@ -721,12 +742,12 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   ├── IBacktestContext.cs
 │   │   ├── IBacktestStrategy.cs
-│   │   ├── MarketDataCollector.Backtesting.Sdk.csproj
+│   │   ├── Meridian.Backtesting.Sdk.csproj
 │   │   ├── Order.cs
 │   │   ├── PortfolioSnapshot.cs
 │   │   ├── Position.cs
 │   │   └── StrategyParameterAttribute.cs
-│   ├── MarketDataCollector.Contracts/
+│   ├── Meridian.Contracts/
 │   │   ├── Api/
 │   │   │   ├── BackfillApiModels.cs
 │   │   │   ├── ClientModels.cs
@@ -785,8 +806,8 @@ Market-Data-Collector/
 │   │   │   └── CollectionSession.cs
 │   │   ├── Store/
 │   │   │   └── MarketDataQuery.cs
-│   │   └── MarketDataCollector.Contracts.csproj
-│   ├── MarketDataCollector.Core/
+│   │   └── Meridian.Contracts.csproj
+│   ├── Meridian.Core/
 │   │   ├── Config/
 │   │   │   ├── AlpacaOptions.cs
 │   │   │   ├── AppConfig.cs
@@ -803,7 +824,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigurationException.cs
 │   │   │   ├── ConnectionException.cs
 │   │   │   ├── DataProviderException.cs
-│   │   │   ├── MarketDataCollectorException.cs
+│   │   │   ├── MeridianException.cs
 │   │   │   ├── OperationTimeoutException.cs
 │   │   │   ├── RateLimitException.cs
 │   │   │   ├── SequenceValidationException.cs
@@ -833,8 +854,8 @@ Market-Data-Collector/
 │   │   │   └── Models/
 │   │   │       ...
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Core.csproj
-│   ├── MarketDataCollector.Domain/
+│   │   └── Meridian.Core.csproj
+│   ├── Meridian.Domain/
 │   │   ├── Collectors/
 │   │   │   ├── IQuoteStateStore.cs
 │   │   │   ├── L3OrderBookCollector.cs
@@ -857,8 +878,36 @@ Market-Data-Collector/
 │   │   │   └── MarketTradeUpdate.cs
 │   │   ├── BannedReferences.txt
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Domain.csproj
-│   ├── MarketDataCollector.FSharp/
+│   │   └── Meridian.Domain.csproj
+│   ├── Meridian.Execution/
+│   │   ├── Adapters/
+│   │   │   └── PaperTradingGateway.cs
+│   │   ├── Interfaces/
+│   │   │   ├── IExecutionContext.cs
+│   │   │   ├── ILiveFeedAdapter.cs
+│   │   │   └── IOrderGateway.cs
+│   │   ├── Models/
+│   │   │   ├── ExecutionMode.cs
+│   │   │   ├── ExecutionPosition.cs
+│   │   │   ├── IPortfolioState.cs
+│   │   │   ├── OrderAcknowledgement.cs
+│   │   │   ├── OrderStatus.cs
+│   │   │   ├── OrderStatusUpdate.cs
+│   │   │   └── OrderType.cs
+│   │   ├── Services/
+│   │   │   └── OrderLifecycleManager.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── IRiskValidator.cs
+│   │   ├── Meridian.Execution.csproj
+│   │   ├── OrderManagementSystem.cs
+│   │   └── PaperTradingGateway.cs
+│   ├── Meridian.Execution.Sdk/
+│   │   ├── IExecutionGateway.cs
+│   │   ├── IOrderManager.cs
+│   │   ├── IPositionTracker.cs
+│   │   ├── Meridian.Execution.Sdk.csproj
+│   │   └── Models.cs
+│   ├── Meridian.FSharp/
 │   │   ├── Calculations/
 │   │   │   ├── Aggregations.fs
 │   │   │   ├── Imbalance.fs
@@ -868,7 +917,7 @@ Market-Data-Collector/
 │   │   │   ├── MarketEvents.fs
 │   │   │   └── Sides.fs
 │   │   ├── Generated/
-│   │   │   └── MarketDataCollector.FSharp.Interop.g.cs
+│   │   │   └── Meridian.FSharp.Interop.g.cs
 │   │   ├── Pipeline/
 │   │   │   └── Transforms.fs
 │   │   ├── Validation/
@@ -877,8 +926,8 @@ Market-Data-Collector/
 │   │   │   ├── ValidationPipeline.fs
 │   │   │   └── ValidationTypes.fs
 │   │   ├── Interop.fs
-│   │   └── MarketDataCollector.FSharp.fsproj
-│   ├── MarketDataCollector.Infrastructure/
+│   │   └── Meridian.FSharp.fsproj
+│   ├── Meridian.Infrastructure/
 │   │   ├── Adapters/
 │   │   │   ├── _Template/
 │   │   │   │   ...
@@ -936,9 +985,20 @@ Market-Data-Collector/
 │   │   │   ├── JsonElementExtensions.cs
 │   │   │   └── SymbolNormalization.cs
 │   │   ├── GlobalUsings.cs
-│   │   ├── MarketDataCollector.Infrastructure.csproj
+│   │   ├── Meridian.Infrastructure.csproj
 │   │   └── NoOpMarketDataClient.cs
-│   ├── MarketDataCollector.Mcp/
+│   ├── Meridian.Ledger/
+│   │   ├── GlobalUsings.cs
+│   │   ├── IReadOnlyLedger.cs
+│   │   ├── JournalEntry.cs
+│   │   ├── Ledger.cs
+│   │   ├── LedgerAccount.cs
+│   │   ├── LedgerAccounts.cs
+│   │   ├── LedgerAccountType.cs
+│   │   ├── LedgerEntry.cs
+│   │   ├── LedgerValidationException.cs
+│   │   └── Meridian.Ledger.csproj
+│   ├── Meridian.Mcp/
 │   │   ├── Prompts/
 │   │   │   ├── CodeReviewPrompts.cs
 │   │   │   ├── ProviderPrompts.cs
@@ -956,9 +1016,9 @@ Market-Data-Collector/
 │   │   │   ├── KnownErrorTools.cs
 │   │   │   └── ProviderTools.cs
 │   │   ├── GlobalUsings.cs
-│   │   ├── MarketDataCollector.Mcp.csproj
+│   │   ├── Meridian.Mcp.csproj
 │   │   └── Program.cs
-│   ├── MarketDataCollector.McpServer/
+│   ├── Meridian.McpServer/
 │   │   ├── Prompts/
 │   │   │   └── MarketDataPrompts.cs
 │   │   ├── Resources/
@@ -969,9 +1029,9 @@ Market-Data-Collector/
 │   │   │   ├── StorageTools.cs
 │   │   │   └── SymbolTools.cs
 │   │   ├── GlobalUsings.cs
-│   │   ├── MarketDataCollector.McpServer.csproj
+│   │   ├── Meridian.McpServer.csproj
 │   │   └── Program.cs
-│   ├── MarketDataCollector.ProviderSdk/
+│   ├── Meridian.ProviderSdk/
 │   │   ├── CredentialValidator.cs
 │   │   ├── DataSourceAttribute.cs
 │   │   ├── DataSourceRegistry.cs
@@ -985,9 +1045,17 @@ Market-Data-Collector/
 │   │   ├── IProviderMetadata.cs
 │   │   ├── IProviderModule.cs
 │   │   ├── IRealtimeDataSource.cs
-│   │   ├── MarketDataCollector.ProviderSdk.csproj
+│   │   ├── Meridian.ProviderSdk.csproj
 │   │   └── ProviderHttpUtilities.cs
-│   ├── MarketDataCollector.Storage/
+│   ├── Meridian.Risk/
+│   │   ├── Rules/
+│   │   │   ├── DrawdownCircuitBreaker.cs
+│   │   │   ├── OrderRateThrottle.cs
+│   │   │   └── PositionLimitRule.cs
+│   │   ├── CompositeRiskValidator.cs
+│   │   ├── IRiskRule.cs
+│   │   └── Meridian.Risk.csproj
+│   ├── Meridian.Storage/
 │   │   ├── Archival/
 │   │   │   ├── ArchivalStorageService.cs
 │   │   │   ├── AtomicFileWriter.cs
@@ -1065,19 +1133,36 @@ Market-Data-Collector/
 │   │   │   ├── CompositeMarketDataStore.cs
 │   │   │   └── JsonlMarketDataStore.cs
 │   │   ├── GlobalUsings.cs
-│   │   ├── MarketDataCollector.Storage.csproj
+│   │   ├── Meridian.Storage.csproj
 │   │   ├── StorageOptions.cs
 │   │   ├── StorageProfiles.cs
 │   │   ├── StorageSinkAttribute.cs
 │   │   └── StorageSinkRegistry.cs
-│   ├── MarketDataCollector.Ui/
+│   ├── Meridian.Strategies/
+│   │   ├── Interfaces/
+│   │   │   ├── ILiveStrategy.cs
+│   │   │   ├── IStrategyLifecycle.cs
+│   │   │   └── IStrategyRepository.cs
+│   │   ├── Models/
+│   │   │   ├── RunType.cs
+│   │   │   ├── StrategyRunEntry.cs
+│   │   │   └── StrategyStatus.cs
+│   │   ├── Promotions/
+│   │   │   └── BacktestToLivePromoter.cs
+│   │   ├── Services/
+│   │   │   └── StrategyLifecycleManager.cs
+│   │   ├── Storage/
+│   │   │   └── StrategyRunStore.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── Meridian.Strategies.csproj
+│   ├── Meridian.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/
 │   │   │       ...
 │   │   ├── app.manifest
-│   │   ├── MarketDataCollector.Ui.csproj
+│   │   ├── Meridian.Ui.csproj
 │   │   └── Program.cs
-│   ├── MarketDataCollector.Ui.Services/
+│   ├── Meridian.Ui.Services/
 │   │   ├── Collections/
 │   │   │   ├── BoundedObservableCollection.cs
 │   │   │   └── CircularBuffer.cs
@@ -1181,8 +1266,8 @@ Market-Data-Collector/
 │   │   │   ├── WatchlistService.cs
 │   │   │   └── WorkspaceModels.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Ui.Services.csproj
-│   ├── MarketDataCollector.Ui.Shared/
+│   │   └── Meridian.Ui.Services.csproj
+│   ├── Meridian.Ui.Shared/
 │   │   ├── Endpoints/
 │   │   │   ├── AdminEndpoints.cs
 │   │   │   ├── AnalyticsEndpoints.cs
@@ -1234,8 +1319,8 @@ Market-Data-Collector/
 │   │   ├── LeanAutoExportService.cs
 │   │   ├── LeanSymbolMapper.cs
 │   │   ├── LoginSessionService.cs
-│   │   └── MarketDataCollector.Ui.Shared.csproj
-│   └── MarketDataCollector.Wpf/
+│   │   └── Meridian.Ui.Shared.csproj
+│   └── Meridian.Wpf/
 │       ├── Contracts/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
@@ -1415,28 +1500,28 @@ Market-Data-Collector/
 │       ├── GlobalUsings.cs
 │       ├── MainWindow.xaml
 │       ├── MainWindow.xaml.cs
-│       ├── MarketDataCollector.Wpf.csproj
+│       ├── Meridian.Wpf.csproj
 │       └── README.md
 ├── tests/  # Test projects
-│   ├── MarketDataCollector.Backtesting.Tests/
+│   ├── Meridian.Backtesting.Tests/
 │   │   ├── FillModelTests.cs
 │   │   ├── GlobalUsings.cs
-│   │   ├── MarketDataCollector.Backtesting.Tests.csproj
+│   │   ├── Meridian.Backtesting.Tests.csproj
 │   │   ├── SimulatedPortfolioTests.cs
 │   │   └── XirrCalculatorTests.cs
-│   ├── MarketDataCollector.FSharp.Tests/
+│   ├── Meridian.FSharp.Tests/
 │   │   ├── CalculationTests.fs
 │   │   ├── DomainTests.fs
-│   │   ├── MarketDataCollector.FSharp.Tests.fsproj
+│   │   ├── Meridian.FSharp.Tests.fsproj
 │   │   ├── PipelineTests.fs
 │   │   └── ValidationTests.fs
-│   ├── MarketDataCollector.McpServer.Tests/
+│   ├── Meridian.McpServer.Tests/
 │   │   ├── Tools/
 │   │   │   ├── BackfillToolsTests.cs
 │   │   │   └── StorageToolsTests.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.McpServer.Tests.csproj
-│   ├── MarketDataCollector.Tests/
+│   │   └── Meridian.McpServer.Tests.csproj
+│   ├── Meridian.Tests/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
 │   │   │   │   ...
@@ -1521,8 +1606,8 @@ Market-Data-Collector/
 │   │   ├── TestHelpers/
 │   │   │   └── TestMarketEventPublisher.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Tests.csproj
-│   ├── MarketDataCollector.Ui.Tests/
+│   │   └── Meridian.Tests.csproj
+│   ├── Meridian.Ui.Tests/
 │   │   ├── Collections/
 │   │   │   ├── BoundedObservableCollectionTests.cs
 │   │   │   └── CircularBufferTests.cs
@@ -1577,9 +1662,9 @@ Market-Data-Collector/
 │   │   │   ├── SystemHealthServiceTests.cs
 │   │   │   ├── TimeSeriesAlignmentServiceTests.cs
 │   │   │   └── WatchlistServiceTests.cs
-│   │   ├── MarketDataCollector.Ui.Tests.csproj
+│   │   ├── Meridian.Ui.Tests.csproj
 │   │   └── README.md
-│   ├── MarketDataCollector.Wpf.Tests/
+│   ├── Meridian.Wpf.Tests/
 │   │   ├── Services/
 │   │   │   ├── AdminMaintenanceServiceTests.cs
 │   │   │   ├── BackgroundTaskSchedulerServiceTests.cs
@@ -1601,7 +1686,7 @@ Market-Data-Collector/
 │   │   │   ├── WatchlistServiceTests.cs
 │   │   │   └── WorkspaceServiceTests.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Wpf.Tests.csproj
+│   │   └── Meridian.Wpf.Tests.csproj
 │   ├── coverlet.runsettings
 │   ├── Directory.Build.props
 │   └── xunit.runner.json
@@ -1609,13 +1694,19 @@ Market-Data-Collector/
 ├── .gitignore
 ├── .globalconfig
 ├── .markdownlint.json
+├── audit-architecture-results.txt
+├── audit-code-results.json
+├── audit-results-full.json
+├── AUDIT_REPORT.md
+├── AUDIT_REPORT_2026_03_20.md
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
+├── environment.yml
 ├── global.json
 ├── LICENSE
 ├── Makefile
-├── MarketDataCollector.sln
+├── Meridian.sln
 ├── package-lock.json
 ├── package.json
 ├── prompt-generation-results.json
@@ -1639,7 +1730,7 @@ Market-Data-Collector/
 
 ## Source Code Organization
 
-### Core Application (`src/MarketDataCollector/`)
+### Core Application (`src/Meridian/`)
 
 | Directory | Purpose |
 |-----------|---------|

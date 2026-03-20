@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Initial skill release** — Blueprint Mode for MarketDataCollector
+- **Initial skill release** — Blueprint Mode for Meridian
 - **9-section blueprint format** — Scope, Architectural Overview, Interface & API Contracts,
   Component Design, Data Flow, XAML & UI Design, Test Plan, Implementation Checklist, Open
   Questions & Risks

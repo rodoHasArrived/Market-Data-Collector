@@ -1,8 +1,8 @@
 name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
-# Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23234439005
+# Generated: 2026-03-19
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23322476846
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -23,25 +23,28 @@ messages:
       - CS8600-CS8604: Nullable reference type warnings treated as errors
 
       ## Error Codes Found
+      - `CS0103`
+      - `CS0104`
       - `CS0118`
       - `CS0219`
       - `CS0234`
       - `CS0246`
-      - `CS0433`
-      - `CS0534`
       - `CS0535`
+      - `CS1061`
+      - `CS1574`
+      - `CS8300`
 
       ## Failure Patterns
-      - `2026-03-18T07:52:08.8789886Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(93,17): error CS0433: The type 'DataSourcesConfigDto' exist...`
-      - `2026-03-18T07:52:08.8820777Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(99,17): error CS0433: The type 'SymbolConfigDto' exists in ...`
-      - `2026-03-18T07:52:08.8845235Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(105,44): error CS0433: The type 'DataSourcesConfigDto' exis...`
-      - `2026-03-18T07:52:08.8872981Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(138,9): error CS0433: The type 'BackfillProviderOptionsDto'...`
-      - `2026-03-18T07:52:08.8890600Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(186,74): error CS0433: The type 'BackfillProviderOptionsDto...`
-      - `2026-03-18T07:52:08.8927139Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(220,35): error CS0433: The type 'AppConfigDto' exists in bo...`
-      - `2026-03-18T07:52:08.8970518Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(244,55): error CS0433: The type 'AppConfigDto' exists in bo...`
-      - `2026-03-18T07:52:08.8980753Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(270,19): error CS0433: The type 'AppConfigDto' exists in bo...`
-      - `2026-03-18T07:52:08.9023436Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Services\ConfigService.cs(48,21): error CS0534: 'ConfigService' does not implement in...`
-      - `2026-03-18T07:52:08.9048521Z ##[error]D:\a\Market-Data-Collector\Market-Data-Collector\src\MarketDataCollector.Wpf\Views\BackfillPage.xaml.cs(303,79): error CS0433: The type 'BackfillProgress' exists ...`
+      - `2026-03-19T23:52:31.5167673Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Collections\BoundedObservableCollectionTests.cs(166,35): error CS1061: 'NumericAssertions<int>' does not contain a ...`
+      - `2026-03-19T23:52:31.5195453Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(173,28): error CS1061: 'GenericCollectionAssertions<AlignmentInterval>'...`
+      - `2026-03-19T23:52:31.5247401Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(190,26): error CS1061: 'GenericCollectionAssertions<AggregationMethod>'...`
+      - `2026-03-19T23:52:31.5260507Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(206,29): error CS1061: 'GenericCollectionAssertions<GapHandlingStrategy...`
+      - `2026-03-19T23:52:31.5427539Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\TimeSeriesAlignmentServiceTests.cs(223,26): error CS1061: 'GenericCollectionAssertions<AlignmentPreset>' d...`
+      - `2026-03-19T23:52:31.5454782Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ActivityFeedServiceTests.cs(349,49): error CS1061: 'GenericCollectionAssertions<ActivityType>' does not co...`
+      - `2026-03-19T23:52:31.5469198Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\AlertServiceTests.cs(251,48): error CS1061: 'NumericAssertions<int>' does not contain a definition for 'Be...`
+      - `2026-03-19T23:52:31.5492433Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\BackfillProviderConfigServiceTests.cs(55,40): error CS1061: 'NumericAssertions<int>' does not contain a de...`
+      - `2026-03-19T23:52:31.5500842Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\BackfillProviderConfigServiceTests.cs(230,26): error CS1061: 'GenericCollectionAssertions<ProviderConfigAu...`
+      - `2026-03-19T23:52:31.5509855Z ##[error]D:\a\Meridian\Meridian\tests\Meridian.Ui.Tests\Services\ChartingServiceTests.cs(227,29): error CS1061: 'GenericCollectionAssertions<TechnicalIndicatorInfo>' does ...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully

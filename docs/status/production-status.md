@@ -259,10 +259,10 @@ The project has 219 test files (215 C#, 4 F#) across 4 test projects with ~3,444
 
 | Test Project | Focus | Test Methods |
 |--------------|-------|-------|
-| `MarketDataCollector.Tests` | Core unit/integration tests (backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain) | ~444 |
-| `MarketDataCollector.FSharp.Tests` | F# domain validation, calculations, pipeline transforms | ~99 |
-| `MarketDataCollector.Wpf.Tests` | WPF desktop service tests (navigation, config, status, connection) | ~324 |
-| `MarketDataCollector.Ui.Tests` | Desktop UI service tests (API client, backfill, fixtures, forms, health, watchlist, collections) | ~927 |
+| `Meridian.Tests` | Core unit/integration tests (backfill, storage, pipeline, monitoring, providers, credentials, serialization, domain) | ~444 |
+| `Meridian.FSharp.Tests` | F# domain validation, calculations, pipeline transforms | ~99 |
+| `Meridian.Wpf.Tests` | WPF desktop service tests (navigation, config, status, connection) | ~324 |
+| `Meridian.Ui.Tests` | Desktop UI service tests (API client, backfill, fixtures, forms, health, watchlist, collections) | ~927 |
 
 Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
 

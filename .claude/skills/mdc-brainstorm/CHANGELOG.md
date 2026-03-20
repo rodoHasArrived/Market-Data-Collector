@@ -1,5 +1,20 @@
 # mdc-brainstorm — Changelog
 
+## v1.3.0 (2026-03-19)
+
+### Changed
+- **Project statistics updated** — 868 source files (856 C# + 12 F#), 261 test files, 22 main projects, 33 CI/CD workflows; previous v1.2.0 stats were 779 source files, 15 projects, 27 workflows
+- **Solution layout updated** — added 7 new projects: `Meridian.Backtesting`, `Meridian.Backtesting.Sdk`, `Meridian.Execution`, `Meridian.Execution.Sdk`, `Meridian.Ledger`, `Meridian.Mcp`, `Meridian.McpServer`, `Meridian.Risk`, `Meridian.Strategies`; removed stale `MarketDataCollector.Execution` / `MarketDataCollector.Strategies` references (all projects now use `Meridian.*` namespace)
+- **Dependency graph updated** — added allowed deps for `Backtesting`, `Backtesting.Sdk`, `Execution.Sdk`, `Ledger`, `Risk`, `Mcp/McpServer`; added forbidden rule: `Ledger → any other Meridian project` (zero-dependency leaf)
+- **Provider inventory updated** — added `TwelveData` as 11th historical provider; updated streaming count from "2" to "5" in competitive landscape matrix
+- **ADR table expanded** — added ADR-015 (Strategy Execution Contract: `IOrderGateway` + `IExecutionContext`) and ADR-016 (Four-Pillar Architecture)
+- **Competitive landscape updated** — differentiation matrix now reflects backtesting engine (live), paper trading (live), strategy execution (live), and MCP/AI tooling (unique to MDC)
+- **New key abstractions documented** — `IOrderGateway`, `IExecutionGateway`, `IExecutionContext`, `IRiskValidator`, `IRiskRule`, `IStrategyLifecycle`, `Ledger`/`IReadOnlyLedger`, `IBacktestStrategy`, `IBacktestContext`
+- **Idea anchor table expanded** — 15 new entries covering execution, risk, strategies, backtesting SDK, and ledger abstractions
+- **Project description updated** — from "market data collection tool" to "four-pillar algorithmic trading platform" per ADR-016
+
+---
+
 ## v1.2.0 (2026-03-16)
 
 ### Added

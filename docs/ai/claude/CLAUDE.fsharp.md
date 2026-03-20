@@ -6,14 +6,14 @@ This document provides guidance for AI assistants working with the F# domain lib
 
 ## Overview
 
-The `MarketDataCollector.FSharp` library provides type-safe domain models, validation logic, and pure functional calculations. It leverages F#'s discriminated unions, pattern matching, and Railway-Oriented Programming to eliminate entire categories of bugs while maintaining seamless C# interoperability.
+The `Meridian.FSharp` library provides type-safe domain models, validation logic, and pure functional calculations. It leverages F#'s discriminated unions, pattern matching, and Railway-Oriented Programming to eliminate entire categories of bugs while maintaining seamless C# interoperability.
 
 ---
 
 ## Project Structure
 
 ```
-src/MarketDataCollector.FSharp/
+src/Meridian.FSharp/
 ├── Domain/
 │   ├── Sides.fs           # Side and AggressorSide types
 │   ├── Integrity.fs       # Integrity event types
@@ -41,7 +41,7 @@ src/MarketDataCollector.FSharp/
 ### Sides.fs - Trade Sides
 
 ```fsharp
-module MarketDataCollector.FSharp.Domain.Sides
+module Meridian.FSharp.Domain.Sides
 
 /// Order book side
 type Side = Buy | Sell
@@ -72,7 +72,7 @@ let aggressorFromInt = function
 ### MarketEvents.fs - Event Types
 
 ```fsharp
-module MarketDataCollector.FSharp.Domain.MarketEvents
+module Meridian.FSharp.Domain.MarketEvents
 
 type TradeEvent = {
     Timestamp: DateTimeOffset
@@ -152,7 +152,7 @@ module MarketEvent =
 ### Integrity.fs - Integrity Events
 
 ```fsharp
-module MarketDataCollector.FSharp.Domain.Integrity
+module Meridian.FSharp.Domain.Integrity
 
 type IntegrityEventType =
     | SequenceGap of expected: int64 * received: int64
@@ -213,7 +213,7 @@ module IntegrityEvent =
 The validation system uses `Result<'T, 'TError list>` to accumulate errors instead of throwing exceptions:
 
 ```fsharp
-module MarketDataCollector.FSharp.Validation.ValidationTypes
+module Meridian.FSharp.Validation.ValidationTypes
 
 /// Validation error with context
 type ValidationError =
@@ -247,9 +247,9 @@ let (<*>) fRes xRes =
 ### TradeValidator.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Validation.TradeValidator
+module Meridian.FSharp.Validation.TradeValidator
 
-open MarketDataCollector.FSharp.Validation.ValidationTypes
+open Meridian.FSharp.Validation.ValidationTypes
 
 type TradeValidationConfig = {
     MaxPrice: decimal
@@ -315,7 +315,7 @@ let validateTradeDefault = validateTrade defaultConfig
 ### QuoteValidator.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Validation.QuoteValidator
+module Meridian.FSharp.Validation.QuoteValidator
 
 let validateQuote config (quote: QuoteEvent) =
     let validateSpread () =
@@ -344,7 +344,7 @@ let validateQuote config (quote: QuoteEvent) =
 ### Spread.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Calculations.Spread
+module Meridian.FSharp.Calculations.Spread
 
 /// Calculate absolute spread
 let calculate bidPrice askPrice =
@@ -385,7 +385,7 @@ let spreadPercent bidPrice askPrice =
 ### Imbalance.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Calculations.Imbalance
+module Meridian.FSharp.Calculations.Imbalance
 
 /// Calculate order book imbalance (-1 to +1)
 /// Positive = buying pressure, Negative = selling pressure
@@ -426,7 +426,7 @@ let fromQuote (quote: QuoteEvent) =
 ### Aggregations.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Calculations.Aggregations
+module Meridian.FSharp.Calculations.Aggregations
 
 /// Volume-Weighted Average Price
 let vwap (trades: TradeEvent seq) =
@@ -485,11 +485,11 @@ let orderFlowImbalance (trades: TradeEvent seq) =
 ### Transforms.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Pipeline.Transforms
+module Meridian.FSharp.Pipeline.Transforms
 
 // Module aliases to avoid naming conflicts with record fields
-module SpreadCalc = MarketDataCollector.FSharp.Calculations.Spread
-module ImbalanceCalc = MarketDataCollector.FSharp.Calculations.Imbalance
+module SpreadCalc = Meridian.FSharp.Calculations.Spread
+module ImbalanceCalc = Meridian.FSharp.Calculations.Imbalance
 
 /// Filter by symbol
 let filterBySymbol symbol events =
@@ -596,7 +596,7 @@ let partitionByType events =
 ### Interop.fs
 
 ```fsharp
-module MarketDataCollector.FSharp.Interop
+module Meridian.FSharp.Interop
 
 open System
 open System.Runtime.CompilerServices
@@ -688,8 +688,8 @@ type AggregationFunctions private () =
 ### Creating Events
 
 ```csharp
-using MarketDataCollector.FSharp.Domain.MarketEvents;
-using MarketDataCollector.FSharp.Domain.Sides;
+using Meridian.FSharp.Domain.MarketEvents;
+using Meridian.FSharp.Domain.Sides;
 
 // Using smart constructor
 var trade = MarketEventModule.createTrade(
@@ -709,7 +709,7 @@ var quote = new QuoteEvent(
 ### Validation
 
 ```csharp
-using MarketDataCollector.FSharp.Interop;
+using Meridian.FSharp.Interop;
 
 var result = TradeValidator.Validate(trade);
 
@@ -735,7 +735,7 @@ if (TradeValidator.IsValid(trade))
 ### Calculations
 
 ```csharp
-using MarketDataCollector.FSharp.Interop;
+using Meridian.FSharp.Interop;
 
 // Spread calculations
 decimal? spread = SpreadCalculator.Calculate(149.50m, 150.50m);
@@ -765,7 +765,7 @@ The F# test project contains 4 test files:
 
 ```bash
 # Run all F# tests
-dotnet test tests/MarketDataCollector.FSharp.Tests
+dotnet test tests/Meridian.FSharp.Tests
 
 # Run specific test category
 dotnet test --filter "FullyQualifiedName~ValidationTests"

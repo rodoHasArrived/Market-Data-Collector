@@ -77,14 +77,14 @@ AggregatedHealthReport
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Health contract | `src/MarketDataCollector.Core/Monitoring/Core/IHealthCheckProvider.cs` | Health severity, provider API, and result types |
-| Health aggregation | `src/MarketDataCollector.Application/Monitoring/Core/HealthCheckAggregator.cs` | Parallel health evaluation with 5s timeout |
-| Alert contract | `src/MarketDataCollector.Core/Monitoring/Core/IAlertDispatcher.cs` | Alert modeling, severity, categories, filters |
-| Alert dispatcher | `src/MarketDataCollector.Application/Monitoring/Core/AlertDispatcher.cs` | Centralized alert publishing and subscription |
-| Connection monitor | `src/MarketDataCollector.Application/Monitoring/ConnectionHealthMonitor.cs` | Provider connection health tracking |
-| Data quality monitor | `src/MarketDataCollector.Application/Monitoring/DataQuality/DataQualityMonitoringService.cs` | Data quality health checks |
-| Health endpoint | `src/MarketDataCollector.Ui.Shared/Endpoints/HealthEndpoints.cs` | `/healthz`, `/readyz`, `/livez` probes |
-| Prometheus metrics | `src/MarketDataCollector.Application/Monitoring/PrometheusMetrics.cs` | Metrics export |
+| Health contract | `src/Meridian.Core/Monitoring/Core/IHealthCheckProvider.cs` | Health severity, provider API, and result types |
+| Health aggregation | `src/Meridian.Application/Monitoring/Core/HealthCheckAggregator.cs` | Parallel health evaluation with 5s timeout |
+| Alert contract | `src/Meridian.Core/Monitoring/Core/IAlertDispatcher.cs` | Alert modeling, severity, categories, filters |
+| Alert dispatcher | `src/Meridian.Application/Monitoring/Core/AlertDispatcher.cs` | Centralized alert publishing and subscription |
+| Connection monitor | `src/Meridian.Application/Monitoring/ConnectionHealthMonitor.cs` | Provider connection health tracking |
+| Data quality monitor | `src/Meridian.Application/Monitoring/DataQuality/DataQualityMonitoringService.cs` | Data quality health checks |
+| Health endpoint | `src/Meridian.Ui.Shared/Endpoints/HealthEndpoints.cs` | `/healthz`, `/readyz`, `/livez` probes |
+| Prometheus metrics | `src/Meridian.Application/Monitoring/PrometheusMetrics.cs` | Metrics export |
 
 ## Rationale
 

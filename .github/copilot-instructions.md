@@ -59,15 +59,15 @@ Always do the following before opening a PR:
 Use the fastest command set that validates your change. For non-test-only edits, run restore + build first:
 
 ```bash
-dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+dotnet restore Meridian.sln /p:EnableWindowsTargeting=true
+dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 ```
 
 Common targeted test commands:
 
 ```bash
-dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release /p:EnableWindowsTargeting=true
-dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.Tests/Meridian.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+dotnet test tests/Meridian.FSharp.Tests/Meridian.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
 ```
 
 If only one area is affected, run the nearest test project first and expand scope only if needed.

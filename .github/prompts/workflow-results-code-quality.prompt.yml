@@ -1,8 +1,8 @@
 name: Workflow Results - code-quality
 description: Address issues found in the code-quality workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-18
-# Source: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23227231362
+# Generated: 2026-03-19
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23311383605
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -14,7 +14,7 @@ messages:
       ## Project Context
       Market Data Collector is a .NET 9.0 C#/F# market data collection system.
       - Build: `dotnet build -c Release`
-      - Test: `dotnet test tests/MarketDataCollector.Tests`
+      - Test: `dotnet test tests/Meridian.Tests`
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
@@ -31,7 +31,7 @@ messages:
     content: |
       The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23227231362
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23311383605
 
       Additional context:
       {{additional_context}}

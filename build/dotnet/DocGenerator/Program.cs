@@ -66,7 +66,7 @@ public static partial class Program
         Console.WriteLine($"Generating project context from {src.FullName}");
 
         var sb = new StringBuilder();
-        sb.AppendLine("# MarketDataCollector Project Context");
+        sb.AppendLine("# Meridian Project Context");
         sb.AppendLine();
         sb.AppendLine($"**Generated:** {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine("**Source:** Auto-generated from code annotations");

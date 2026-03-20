@@ -1,21 +1,21 @@
 ---
 name: mdc-code-review
 description: >
-  Code review and architecture compliance skill for the MarketDataCollector project — a .NET 9 / C# 13
+  Code review and architecture compliance skill for the Meridian project — a .NET 9 / C# 13
   market data system with WPF desktop app, F# 8.0 domain models, real-time streaming pipelines, and
   tiered JSONL/Parquet storage. Use this skill whenever the user asks to review, audit, refactor, or
-  improve C# or F# code from MarketDataCollector, or when they share .cs/.fs files and want feedback.
+  improve C# or F# code from Meridian, or when they share .cs/.fs files and want feedback.
   Also trigger on: MVVM compliance, ViewModel extraction, code-behind cleanup, real-time performance,
   hot-path optimization, pipeline throughput, provider implementation review, backfill logic, data
   integrity validation, error handling patterns, test code quality, unit test review, ProviderSdk
   compliance, dependency violations, JSON source generator usage, hot config reload, WPF architecture,
   storage sink compliance, WAL correctness, AtomicFileWriter usage, or IStorageSink implementation
-  — even without naming the project. If code references MarketDataCollector namespaces, BindableBase,
+  — even without naming the project. If code references Meridian namespaces, BindableBase,
   EventPipeline, IMarketDataClient, IStorageSink, WriteAheadLog, AtomicFileWriter, or ProviderSdk
   types, use this skill.
 ---
 
-# MarketDataCollector Code Review
+# Meridian Code Review
 
 > **GitHub Copilot / Actions equivalent:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md) — same lens framework as a GitHub agent definition.
 > **Navigation index:** [`docs/ai/skills/README.md`](../../../docs/ai/skills/README.md)
@@ -78,18 +78,18 @@ mdc-code-review/
 
 ---
 
-A unified code review skill that catches architecture violations, performance anti-patterns, error handling gaps, test quality issues, provider compliance problems, and storage/pipeline integrity issues in the MarketDataCollector codebase.
+A unified code review skill that catches architecture violations, performance anti-patterns, error handling gaps, test quality issues, provider compliance problems, and storage/pipeline integrity issues in the Meridian codebase.
 
 ## Context: What This Project Is
 
-MarketDataCollector is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. Historical backfill from 10+ providers with automatic failover. WPF desktop app (recommended) and web dashboard share services through a layered architecture.
+Meridian is a high-throughput .NET 9 / C# 13 system (with F# 8.0 domain models) that captures real-time market microstructure data (trades, quotes, L2 order books) from multiple providers (Alpaca, Polygon, Interactive Brokers, StockSharp, NYSE) and persists it via a backpressured pipeline to JSONL/Parquet storage with WAL durability. Historical backfill from 10+ providers with automatic failover. WPF desktop app (recommended) and web dashboard share services through a layered architecture.
 
 **Key facts for reviewers (authoritative counts in `../_shared/project-context.md`):**
 - **779 source files**: 769 C#, 14 F#, 266 test files, ~4,135 test methods across 4 test projects
-- **WPF is the primary desktop target.** UWP was fully removed — flag ANY `using Windows.*` or `using MarketDataCollector.Uwp.*` as CRITICAL.
+- **WPF is the primary desktop target.** UWP was fully removed — flag ANY `using Windows.*` or `using Meridian.Uwp.*` as CRITICAL.
 - The project has strong backend patterns — bounded channels, Write-Ahead Logging, batched flushing, backpressure signals. Primary improvement area: WPF desktop layer where business logic accumulates in XAML code-behind.
-- `MarketDataCollector.ProviderSdk` defines clean interfaces for provider implementations.
-- F# domain models in `MarketDataCollector.FSharp` require care at C#/F# interop boundaries.
+- `Meridian.ProviderSdk` defines clean interfaces for provider implementations.
+- F# domain models in `Meridian.FSharp` require care at C#/F# interop boundaries.
 - Storage writes MUST go through `AtomicFileWriter` — never direct `FileStream`/`File.WriteAllText`.
 
 ---
@@ -256,7 +256,7 @@ Apply relevant lenses based on what the code does. Not every lens applies to eve
 // new property names (see binding migration notes below).
 // =============================================================================
 
-namespace MarketDataCollector.Wpf.ViewModels;
+namespace Meridian.Wpf.ViewModels;
 
 public sealed class DashboardViewModel : BindableBase  // [M1] extracted from code-behind
 {

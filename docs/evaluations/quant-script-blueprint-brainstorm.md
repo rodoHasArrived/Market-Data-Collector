@@ -182,7 +182,7 @@ Log($"Sharpe: {result.Metrics.SharpeRatio:F2}");
 
 Ten lines. Zero boilerplate. The user focuses entirely on their idea.
 
-**The implementation shape.** Add a `BacktestBuilder` class to `MarketDataCollector.QuantScript`:
+**The implementation shape.** Add a `BacktestBuilder` class to `Meridian.QuantScript`:
 
 ```csharp
 public sealed class BacktestBuilder

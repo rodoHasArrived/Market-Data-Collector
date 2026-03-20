@@ -207,11 +207,11 @@ The service will fail to start if IB Gateway is not reachable on any of the stan
 dotnet build -c Release
 
 # Run with web dashboard
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
+dotnet run --project src/Meridian/Meridian.csproj -- \
   --ui --http-port 8080 --watch-config
 
 # Run headless
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
+dotnet run --project src/Meridian/Meridian.csproj -- \
   --mode headless --watch-config
 ```
 
@@ -219,13 +219,13 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
 
 ```bash
 # Interactive wizard
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+dotnet run --project src/Meridian/Meridian.csproj -- --wizard
 
 # Auto-configure from environment variables
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+dotnet run --project src/Meridian/Meridian.csproj -- --auto-config
 
 # Validate configuration
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --dry-run
+dotnet run --project src/Meridian/Meridian.csproj -- --dry-run
 ```
 
 ---

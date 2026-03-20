@@ -6,8 +6,8 @@ This guide documents the UI/API consolidation, provider templating, storage prof
 
 ## Unified UI API Layer
 
-* **Shared contracts** live in `MarketDataCollector.Contracts.Api` (UI request/response DTOs, routes, client).  
-* **Web dashboard** (`MarketDataCollector.Ui`) and **UWP** now consume the same DTOs and routes, with a shared `UiApiClient` for status/health checks.
+* **Shared contracts** live in `Meridian.Contracts.Api` (UI request/response DTOs, routes, client).  
+* **Web dashboard** (`Meridian.Ui`) and **UWP** now consume the same DTOs and routes, with a shared `UiApiClient` for status/health checks.
 * UI endpoints continue to use the existing status/config endpoints but now share the contracts for compatibility.
 
 ## Provider Templates
@@ -58,13 +58,13 @@ Existing commands continue to work and now route through the service.
 
 ## F# Interop Generation
 
-* Build-time generation produces C# DTO wrappers in `MarketDataCollector.FSharp/Generated`.
+* Build-time generation produces C# DTO wrappers in `Meridian.FSharp/Generated`.
 * Output is packaged as content for downstream consumers while keeping the existing public API unchanged.
 
 ## Staged Migration Plan
 
 1. **Stage 1: UI contracts & client**
-   * Adopt `MarketDataCollector.Contracts.Api` DTOs and routes in web/UWP.
+   * Adopt `Meridian.Contracts.Api` DTOs and routes in web/UWP.
    * Verify status/config endpoints continue to return the same JSON.
 2. **Stage 2: Configuration & pipeline policy**
    * Migrate hot reload and wizard flows to `ConfigurationService`.
