@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 01:28:53 UTC
+> Auto-generated on 2026-03-20 01:34:25 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1274,6 +1274,7 @@ Meridian/
 │   │   │   ├── AnalyticsEndpoints.cs
 │   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── AuthEndpoints.cs
+│   │   │   ├── AuthenticationMode.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── BackfillScheduleEndpoints.cs
 │   │   │   ├── CalendarEndpoints.cs
