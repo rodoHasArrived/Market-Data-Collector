@@ -13,11 +13,13 @@ namespace Meridian.Application.Config;
 /// - <see cref="DataSourceKind.Alpaca"/> uses Alpaca market data via WebSocket (trades; quotes optional in future).
 /// - <see cref="DataSourceKind.StockSharp"/> uses StockSharp connectors (Rithmic, IQFeed, CQG, IB, etc.).
 /// - <see cref="DataSourceKind.NYSE"/> uses the NYSE market data feed.
+/// - <see cref="DataSourceKind.Synthetic"/> uses the built-in synthetic historical/reference dataset for offline development.
 /// </param>
 /// <param name="Alpaca">Alpaca provider options (required if DataSource == DataSourceKind.Alpaca).</param>
 /// <param name="IB">Interactive Brokers provider options (required if DataSource == DataSourceKind.IB).</param>
 /// <param name="Polygon">Polygon provider options (required if DataSource == DataSourceKind.Polygon).</param>
 /// <param name="StockSharp">StockSharp connector configuration (required if DataSource == DataSourceKind.StockSharp).</param>
+/// <param name="Synthetic">Synthetic market-data provider configuration for offline/backtest development.</param>
 /// <param name="Storage">Storage configuration options (naming convention, partitioning, etc.).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>
 /// <param name="Backfill">Optional historical backfill defaults.</param>
@@ -35,6 +37,7 @@ public sealed record AppConfig(
     IBOptions? IB = null,
     PolygonOptions? Polygon = null,
     StockSharpConfig? StockSharp = null,
+    SyntheticMarketDataConfig? Synthetic = null,
     StorageConfig? Storage = null,
     SymbolConfig[]? Symbols = null,
     BackfillConfig? Backfill = null,

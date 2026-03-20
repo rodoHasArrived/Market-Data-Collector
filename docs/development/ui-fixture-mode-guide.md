@@ -28,6 +28,22 @@ The fixture mode is built around the `FixtureDataService` singleton that provide
          └──────────────┘  └─────────────────┘
 ```
 
+## Synthetic Provider vs. UI Fixture Mode
+
+The desktop fixture mode is still useful when only the UI needs canned responses. For end-to-end offline development, the repository now also supports a **synthetic provider mode** that runs the actual ingestion/backfill pipeline against deterministic historical/reference data.
+
+Use the synthetic provider when you want:
+
+- realistic historical bars with split and dividend adjustments;
+- historical trades, quotes, and auction prints for provider/backtest testing;
+- real-time synthetic trade, BBO, and level-2 order book events without live credentials;
+- symbol/reference metadata for offline development flows.
+
+Enable it by either:
+
+- setting `"DataSource": "Synthetic"` plus `"Synthetic": { "Enabled": true }` in `appsettings.json`; or
+- setting `MDC_SYNTHETIC_MODE=1` to force the synthetic provider on in development environments.
+
 ## Using Fixture Mode
 
 ### Environment Variable (Recommended)
