@@ -14,11 +14,12 @@ public sealed class FillModelTests
         MarketEvent.HistoricalBar(DateTimeOffset.UtcNow, symbol, new HistoricalBar(
             symbol, DateOnly.FromDateTime(DateTime.Today), open, high, low, close, 100_000L, "test"));
 
-    private static MarketEvent MakeLobEvent(string symbol, decimal askPrice, long askQty) =>
+    private static MarketEvent MakeLobEvent(string symbol, decimal askPrice, long askQty, decimal? bidPrice = null, long bidQty = 1_000L) =>
         MarketEvent.L2Snapshot(DateTimeOffset.UtcNow, symbol, new LOBSnapshot(
-            DateTimeOffset.UtcNow, symbol,
-            Bids: [new OrderBookLevel(OrderBookSide.Bid, 0, askPrice - 0.01m, 1000m)],
-            Asks: [new OrderBookLevel(OrderBookSide.Ask, 0, askPrice, (decimal)askQty)]));
+            DateTimeOffset.UtcNow,
+            symbol,
+            Bids: [new OrderBookLevel(OrderBookSide.Bid, 0, bidPrice ?? askPrice - 0.01m, bidQty)],
+            Asks: [new OrderBookLevel(OrderBookSide.Ask, 0, askPrice, askQty)]));
 
     [Fact]
     public void BarMidpointFillModel_FillsMarketOrder_AtMidpoint()
@@ -27,11 +28,13 @@ public sealed class FillModelTests
         var order = new Order(Guid.NewGuid(), "SPY", OrderType.Market, 10L, null, null, DateTimeOffset.UtcNow);
         var evt = MakeBarEvent("SPY", 400m, 410m, 395m, 405m);
 
-        var fills = model.TryFill(order, evt);
+        var result = model.TryFill(order, evt);
 
-        fills.Should().HaveCount(1);
-        fills[0].FillPrice.Should().Be(402.5m);  // (400+405)/2
-        fills[0].FilledQuantity.Should().Be(10L);
+        result.Fills.Should().HaveCount(1);
+        result.Fills[0].FillPrice.Should().Be(402.5m);
+        result.Fills[0].FilledQuantity.Should().Be(10L);
+        result.RemoveOrder.Should().BeTrue();
+        result.UpdatedOrder.Status.Should().Be(OrderStatus.Filled);
     }
 
     [Fact]
@@ -39,12 +42,33 @@ public sealed class FillModelTests
     {
         var model = new BarMidpointFillModel(new FixedCommissionModel(0m));
         var order = new Order(Guid.NewGuid(), "SPY", OrderType.Limit, 10L, 397m, null, DateTimeOffset.UtcNow);
-        var evt = MakeBarEvent("SPY", 400m, 410m, 395m, 405m);  // low=395 touches limit 397
+        var evt = MakeBarEvent("SPY", 400m, 410m, 395m, 405m);
 
-        var fills = model.TryFill(order, evt);
+        var result = model.TryFill(order, evt);
 
-        fills.Should().HaveCount(1);
-        fills[0].FillPrice.Should().Be(397m);
+        result.Fills.Should().HaveCount(1);
+        result.Fills[0].FillPrice.Should().Be(397m);
+    }
+
+    [Fact]
+    public void BarMidpointFillModel_StopLimit_Buy_TriggersAndFillsAtLimit()
+    {
+        var model = new BarMidpointFillModel(new FixedCommissionModel(0m));
+        var order = new Order(
+            Guid.NewGuid(),
+            "SPY",
+            OrderType.StopLimit,
+            10L,
+            LimitPrice: 404m,
+            StopPrice: 403m,
+            SubmittedAt: DateTimeOffset.UtcNow);
+        var evt = MakeBarEvent("SPY", 400m, 405m, 399m, 404m);
+
+        var result = model.TryFill(order, evt);
+
+        result.WasTriggered.Should().BeTrue();
+        result.Fills.Should().HaveCount(1);
+        result.Fills[0].FillPrice.Should().Be(404m);
     }
 
     [Fact]
@@ -52,11 +76,12 @@ public sealed class FillModelTests
     {
         var model = new BarMidpointFillModel(new FixedCommissionModel(0m));
         var order = new Order(Guid.NewGuid(), "SPY", OrderType.Limit, 10L, 390m, null, DateTimeOffset.UtcNow);
-        var evt = MakeBarEvent("SPY", 400m, 410m, 395m, 405m);  // low=395 does NOT reach 390
+        var evt = MakeBarEvent("SPY", 400m, 410m, 395m, 405m);
 
-        var fills = model.TryFill(order, evt);
+        var result = model.TryFill(order, evt);
 
-        fills.Should().BeEmpty();
+        result.Fills.Should().BeEmpty();
+        result.RemoveOrder.Should().BeFalse();
     }
 
     [Fact]
@@ -66,11 +91,72 @@ public sealed class FillModelTests
         var order = new Order(Guid.NewGuid(), "SPY", OrderType.Market, 100L, null, null, DateTimeOffset.UtcNow);
         var evt = MakeLobEvent("SPY", 410m, 200L);
 
-        var fills = model.TryFill(order, evt);
+        var result = model.TryFill(order, evt);
 
-        fills.Should().HaveCount(1);
-        fills[0].FillPrice.Should().Be(410m);
-        fills[0].FilledQuantity.Should().Be(100L);
+        result.Fills.Should().HaveCount(1);
+        result.Fills[0].FillPrice.Should().Be(410m);
+        result.Fills[0].FilledQuantity.Should().Be(100L);
+        result.RemoveOrder.Should().BeTrue();
+    }
+
+    [Fact]
+    public void OrderBookFillModel_PartialFill_KeepsWorkingOrder()
+    {
+        var model = new OrderBookFillModel(new FixedCommissionModel(0m));
+        var order = new Order(Guid.NewGuid(), "SPY", OrderType.Market, 100L, null, null, DateTimeOffset.UtcNow);
+        var evt = MakeLobEvent("SPY", 410m, 40L);
+
+        var result = model.TryFill(order, evt);
+
+        result.Fills.Should().HaveCount(1);
+        result.Fills[0].FilledQuantity.Should().Be(40L);
+        result.RemoveOrder.Should().BeFalse();
+        result.UpdatedOrder.Status.Should().Be(OrderStatus.PartiallyFilled);
+        result.UpdatedOrder.RemainingQuantity.Should().Be(60L);
+    }
+
+    [Fact]
+    public void OrderBookFillModel_FillOrKill_CancelsWhenLiquidityInsufficient()
+    {
+        var model = new OrderBookFillModel(new FixedCommissionModel(0m));
+        var order = new Order(
+            Guid.NewGuid(),
+            "SPY",
+            OrderType.Market,
+            100L,
+            null,
+            null,
+            DateTimeOffset.UtcNow,
+            TimeInForce.FillOrKill);
+        var evt = MakeLobEvent("SPY", 410m, 50L);
+
+        var result = model.TryFill(order, evt);
+
+        result.Fills.Should().BeEmpty();
+        result.RemoveOrder.Should().BeTrue();
+        result.UpdatedOrder.Status.Should().Be(OrderStatus.Cancelled);
+    }
+
+    [Fact]
+    public void OrderBookFillModel_StopMarketSell_TriggersFromBid()
+    {
+        var model = new OrderBookFillModel(new FixedCommissionModel(0m));
+        var order = new Order(
+            Guid.NewGuid(),
+            "SPY",
+            OrderType.StopMarket,
+            -25L,
+            null,
+            StopPrice: 399m,
+            SubmittedAt: DateTimeOffset.UtcNow);
+        var evt = MakeLobEvent("SPY", 401m, 100L, bidPrice: 398.5m, bidQty: 100L);
+
+        var result = model.TryFill(order, evt);
+
+        result.WasTriggered.Should().BeTrue();
+        result.Fills.Should().HaveCount(1);
+        result.Fills[0].FilledQuantity.Should().Be(-25L);
+        result.Fills[0].FillPrice.Should().Be(398.5m);
     }
 
     [Fact]
@@ -80,8 +166,8 @@ public sealed class FillModelTests
         var order = new Order(Guid.NewGuid(), "AAPL", OrderType.Market, 10L, null, null, DateTimeOffset.UtcNow);
         var evt = MakeBarEvent("SPY", 400m, 410m, 395m, 405m);
 
-        var fills = model.TryFill(order, evt);
+        var result = model.TryFill(order, evt);
 
-        fills.Should().BeEmpty();
+        result.Fills.Should().BeEmpty();
     }
 }

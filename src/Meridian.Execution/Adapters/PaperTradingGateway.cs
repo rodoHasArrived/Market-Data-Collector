@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Meridian.Execution.Exceptions;
 using Meridian.Execution.Models;
 using Meridian.Execution.Sdk;
 using GatewayExecutionMode = Meridian.Execution.Models.ExecutionMode;
@@ -31,6 +32,35 @@ public sealed class PaperTradingGateway : IOrderGateway
     /// <inheritdoc/>
     public GatewayExecutionMode Mode => GatewayExecutionMode.Paper;
 
+    /// <inheritdoc/>
+    public OrderGatewayCapabilities Capabilities { get; } = new(
+        SupportedOrderTypes: new HashSet<OrderType>
+        {
+            OrderType.Market,
+            OrderType.Limit,
+            OrderType.StopMarket,
+            OrderType.StopLimit
+        },
+        SupportedTimeInForce: new HashSet<TimeInForce>
+        {
+            TimeInForce.Day,
+            TimeInForce.GoodTilCancelled,
+            TimeInForce.ImmediateOrCancel,
+            TimeInForce.FillOrKill
+        },
+        SupportedExecutionModes: new HashSet<GatewayExecutionMode>
+        {
+            GatewayExecutionMode.Paper,
+            GatewayExecutionMode.Simulation
+        },
+        SupportsOrderModification: false,
+        SupportsPartialFills: false,
+        ProviderExtensions: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["priceSource"] = "scaffold",
+            ["supportsNativeTrailingStops"] = "false"
+        });
+
     /// <summary>
     /// Creates a new paper trading gateway.
     /// </summary>
@@ -44,10 +74,16 @@ public sealed class PaperTradingGateway : IOrderGateway
     }
 
     /// <inheritdoc/>
-    public Task<OrderAcknowledgement> SubmitAsync(OrderRequest request, CancellationToken ct = default)
+    public async Task<OrderAcknowledgement> SubmitAsync(OrderRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         ObjectDisposedException.ThrowIf(_disposed, this);
+        var validation = await ValidateOrderAsync(request, ct).ConfigureAwait(false);
+        if (!validation.IsValid)
+        {
+            throw new UnsupportedOrderRequestException(validation.Reason ?? "Order request is not supported by the paper gateway.");
+        }
+
         var orderId = request.ClientOrderId ?? $"paper-{Guid.NewGuid():N}";
 
         lock (_lock)
@@ -70,7 +106,40 @@ public sealed class PaperTradingGateway : IOrderGateway
         // and emits a terminal update, even if the caller cancels after receiving the ack.
         _ = SimulateFillAsync(request with { ClientOrderId = orderId }, CancellationToken.None);
 
-        return Task.FromResult(ack);
+        return ack;
+    }
+
+    /// <inheritdoc/>
+    public Task<OrderValidationResult> ValidateOrderAsync(OrderRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!Capabilities.SupportedOrderTypes.Contains(request.Type))
+        {
+            return Task.FromResult(new OrderValidationResult(false, $"Order type '{request.Type}' is not supported by the paper gateway."));
+        }
+
+        if (!Capabilities.SupportedTimeInForce.Contains(request.TimeInForce))
+        {
+            return Task.FromResult(new OrderValidationResult(false, $"Time in force '{request.TimeInForce}' is not supported by the paper gateway."));
+        }
+
+        if (request.Quantity == 0)
+        {
+            return Task.FromResult(new OrderValidationResult(false, "Order quantity cannot be zero."));
+        }
+
+        if ((request.Type is OrderType.Limit or OrderType.StopLimit) && (!request.LimitPrice.HasValue || request.LimitPrice <= 0))
+        {
+            return Task.FromResult(new OrderValidationResult(false, "Limit and stop-limit orders require a positive limit price."));
+        }
+
+        if ((request.Type is OrderType.StopMarket or OrderType.StopLimit) && (!request.StopPrice.HasValue || request.StopPrice <= 0))
+        {
+            return Task.FromResult(new OrderValidationResult(false, "Stop and stop-limit orders require a positive stop price."));
+        }
+
+        return Task.FromResult(new OrderValidationResult(true));
     }
 
     /// <inheritdoc/>
@@ -129,7 +198,12 @@ public sealed class PaperTradingGateway : IOrderGateway
 
         // For limit orders use the limit price; for market orders use the scaffold notional price.
         // A real implementation would source the fill price from the live feed via ILiveFeedAdapter.
-        var fillPrice = request.LimitPrice ?? ScaffoldMarketFillPrice;
+        var fillPrice = request.Type switch
+        {
+            OrderType.Limit or OrderType.StopLimit => request.LimitPrice ?? ScaffoldMarketFillPrice,
+            OrderType.StopMarket => request.StopPrice ?? ScaffoldMarketFillPrice,
+            _ => ScaffoldMarketFillPrice
+        };
 
         var fill = new OrderStatusUpdate(
             OrderId: orderId,

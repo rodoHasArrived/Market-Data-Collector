@@ -35,6 +35,18 @@ The previous UWP implementation had several challenges:
 
 WPF solves these issues while providing a more straightforward development and deployment experience.
 
+
+## Migration Direction
+
+The WPF application remains Meridian's primary desktop surface, but it is now the host for the **Trading Workstation Migration**. The current codebase already contains broad feature coverage; the next implementation phase reorganizes that breadth into workflow-centric workspaces:
+
+- **Research** — backtesting, experiment comparison, charts, replay
+- **Trading** — live monitoring, orders, positions, paper/live strategy operation
+- **Data Operations** — providers, symbols, backfill, storage, export
+- **Governance** — portfolio, ledger, diagnostics, audit, settings
+
+See [`docs/plans/trading-workstation-migration-blueprint.md`](../../docs/plans/trading-workstation-migration-blueprint.md) for the active migration blueprint and [`docs/architecture/ui-redesign.md`](../../docs/architecture/ui-redesign.md) for the target information architecture.
+
 ## Architecture
 
 ### Technology Stack

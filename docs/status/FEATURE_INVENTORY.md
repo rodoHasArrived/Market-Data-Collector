@@ -1,7 +1,7 @@
 # Market Data Collector — Feature Inventory
 
-**Version:** 1.6.2
-**Date:** 2026-03-17
+**Version:** 1.7.0
+**Date:** 2026-03-20
 **Purpose:** Comprehensive inventory of every functional area, its current implementation status, and the remaining work required to reach full implementation.
 
 Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`IMPROVEMENTS.md`](IMPROVEMENTS.md) (per-item tracking).
@@ -285,15 +285,21 @@ Use this document alongside [`ROADMAP.md`](ROADMAP.md) (sprint schedule) and [`I
 | TimeSeriesAlignmentPage | TimeSeriesAlignmentService | Multi-symbol time alignment |
 | WorkspacePage | WorkspaceService | Workspace management |
 
-### Pages requiring live-data wiring (⚠️ Static placeholder data)
+### Trading workstation migration target (🔄 Planned / active in documentation)
 
-| Page | Issue | Remaining Work |
-|------|-------|----------------|
-| — | All known placeholder pages have been wired to live services (see completed list above) | — |
+The current WPF app exposes broad capability coverage, but the next implementation wave reorganizes those capabilities into four workflow workspaces:
+
+- **Research** — backtests, Lean engine flows, charts, replay, experiment comparison
+- **Trading** — live monitoring, orders, fills, positions, strategy operation
+- **Data Operations** — providers, symbols, backfills, schedules, storage, exports
+- **Governance** — portfolio, ledger, diagnostics, notifications, settings
+
+This migration is tracked in [`../plans/trading-workstation-migration-blueprint.md`](../plans/trading-workstation-migration-blueprint.md) and [`ROADMAP.md`](ROADMAP.md) Phases 11–13.
 
 ### Known WPF limitations
 
 - `DiagnosticsPage` reads from local process/environment; not connected to remote backend API.
+- Current functionality is still more **page-centric** than **workflow-centric**; backtesting, paper-trading, portfolio, and ledger concepts are not yet unified into a single operator-facing run model.
 
 ### WPF MVVM progress
 

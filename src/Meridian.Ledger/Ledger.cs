@@ -131,19 +131,44 @@ public sealed class Ledger : IReadOnlyLedger
         DateTimeOffset? to = null,
         string? descriptionContains = null)
     {
-        EnsureValidRange(from, to);
+        return GetJournalEntries(new LedgerQuery(from, to, descriptionContains));
+    }
 
-        IEnumerable<JournalEntry> query = _journal;
+    /// <summary>
+    /// Returns journal entries matching the supplied structured query.
+    /// </summary>
+    public IReadOnlyList<JournalEntry> GetJournalEntries(LedgerQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        EnsureValidRange(query.From, query.To);
 
-        if (from is not null || to is not null)
-            query = query.Where(entry => IsWithinRange(entry.Timestamp, from, to));
+        IEnumerable<JournalEntry> filtered = _journal;
 
-        if (!string.IsNullOrWhiteSpace(descriptionContains))
+        if (query.From is not null || query.To is not null)
+            filtered = filtered.Where(entry => IsWithinRange(entry.Timestamp, query.From, query.To));
+
+        if (!string.IsNullOrWhiteSpace(query.DescriptionContains))
+            filtered = filtered.Where(entry => entry.Description.Contains(query.DescriptionContains, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.ActivityType))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.ActivityType, query.ActivityType, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(query.Symbol))
         {
-            query = query.Where(entry => entry.Description.Contains(descriptionContains, StringComparison.OrdinalIgnoreCase));
+            var normalizedSymbol = query.Symbol.Trim().ToUpperInvariant();
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.Symbol, normalizedSymbol, StringComparison.OrdinalIgnoreCase));
         }
 
-        return query.ToList();
+        if (query.OrderId is not null)
+            filtered = filtered.Where(entry => entry.Metadata.OrderId == query.OrderId);
+
+        if (query.FillId is not null)
+            filtered = filtered.Where(entry => entry.Metadata.FillId == query.FillId);
+
+        if (!string.IsNullOrWhiteSpace(query.StrategyId))
+            filtered = filtered.Where(entry => string.Equals(entry.Metadata.StrategyId, query.StrategyId, StringComparison.OrdinalIgnoreCase));
+
+        return filtered.ToList();
     }
 
     /// <summary>
@@ -239,6 +264,74 @@ public sealed class Ledger : IReadOnlyLedger
     }
 
     /// <summary>
+    /// Returns running-balance checkpoints for an account in chronological order.
+    /// </summary>
+    public IReadOnlyList<LedgerBalancePoint> GetRunningBalance(LedgerAccount account, DateTimeOffset? from = null, DateTimeOffset? to = null)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        EnsureValidRange(from, to);
+
+        var points = new List<LedgerBalancePoint>();
+        var runningBalance = from.HasValue
+            ? GetBalanceAsOf(account, from.Value.AddTicks(-1))
+            : 0m;
+
+        foreach (var journalEntry in _journal)
+        {
+            if (!IsWithinRange(journalEntry.Timestamp, from, to))
+                continue;
+
+            var debit = 0m;
+            var credit = 0m;
+
+            foreach (var line in journalEntry.Lines)
+            {
+                if (line.Account != account)
+                    continue;
+
+                debit += line.Debit;
+                credit += line.Credit;
+            }
+
+            if (debit == 0m && credit == 0m)
+                continue;
+
+            runningBalance += CalculateNetBalance(account, debit, credit);
+            points.Add(new LedgerBalancePoint(
+                journalEntry.Timestamp,
+                journalEntry.JournalEntryId,
+                journalEntry.Description,
+                debit,
+                credit,
+                runningBalance,
+                journalEntry.Metadata));
+        }
+
+        return points;
+    }
+
+    /// <summary>
+    /// Returns point-in-time balances and posting counts.
+    /// </summary>
+    public LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp)
+    {
+        var balances = TrialBalanceAsOf(timestamp);
+        var journalCount = 0;
+        var ledgerEntryCount = 0;
+
+        foreach (var journalEntry in _journal)
+        {
+            if (journalEntry.Timestamp > timestamp)
+                continue;
+
+            journalCount++;
+            ledgerEntryCount += journalEntry.Lines.Count;
+        }
+
+        return new LedgerSnapshot(timestamp, balances, journalCount, ledgerEntryCount);
+    }
+
+    /// <summary>
     /// Creates a balanced <see cref="JournalEntry"/> from a list of (account, debit, credit) tuples
     /// and immediately posts it. All lines share the same journal entry ID and timestamp.
     /// </summary>
@@ -250,6 +343,16 @@ public sealed class Ledger : IReadOnlyLedger
         DateTimeOffset timestamp,
         string description,
         IReadOnlyList<(LedgerAccount account, decimal debit, decimal credit)> lines)
+        => PostLines(timestamp, description, lines, metadata: null);
+
+    /// <summary>
+    /// Creates and posts a balanced journal entry with optional audit metadata.
+    /// </summary>
+    public void PostLines(
+        DateTimeOffset timestamp,
+        string description,
+        IReadOnlyList<(LedgerAccount account, decimal debit, decimal credit)> lines,
+        JournalEntryMetadata? metadata)
     {
         ArgumentNullException.ThrowIfNull(lines);
         if (string.IsNullOrWhiteSpace(description))
@@ -262,7 +365,7 @@ public sealed class Ledger : IReadOnlyLedger
             .Select(l => new LedgerEntry(Guid.NewGuid(), journalId, timestamp, l.account, l.debit, l.credit, description))
             .ToList();
 
-        Post(new JournalEntry(journalId, timestamp, description, entries));
+        Post(new JournalEntry(journalId, timestamp, description, entries, metadata));
     }
 
     private void ValidateJournalEntry(JournalEntry entry)

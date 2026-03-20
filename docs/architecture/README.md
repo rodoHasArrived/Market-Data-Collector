@@ -45,6 +45,7 @@ This directory contains documentation about the system's design, architectural d
 | [C4 Diagrams Reference](c4-diagrams.md) | Reference guide for C4 diagrams |
 | [Crystallized Storage Format](crystallized-storage-format.md) | Storage format specification |
 | [UI Redesign Notes](ui-redesign.md) | Desktop UI architectural direction |
+| [Trading Workstation Migration Blueprint](../plans/trading-workstation-migration-blueprint.md) | Target run model, workspace IA, and migration phases |
 | [MCP Server](layer-boundaries.md#dependency-graph) | MCP tool server — dependency position and boundary rules |
 
 ---
