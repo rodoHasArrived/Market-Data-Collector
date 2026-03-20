@@ -68,9 +68,5 @@
     <ProjectReference Include="..\Meridian.ProviderSdk\Meridian.ProviderSdk.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Provider implementation templates – reference files only, not compiled into the assembly.
-         Copy a file from Adapters/_Template/ to your new provider directory and rename it. -->
-    <Compile Remove="Adapters/_Template/**/*.cs" />
-  </ItemGroup>
+  <!-- Provider implementation templates live under docs/examples/provider-template/ and are no longer part of this project. -->
 </Project>

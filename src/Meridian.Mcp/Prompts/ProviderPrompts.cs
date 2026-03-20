@@ -46,7 +46,7 @@ public sealed class ProviderPrompts(RepoPathService repo)
         {
             sb.AppendLine($"## Template: `{templateFile}`");
             sb.AppendLine();
-            sb.AppendLine($"Copy this from `src/Meridian.Infrastructure/Adapters/_Template/{templateFile}`");
+            sb.AppendLine($"Copy this from `docs/examples/provider-template/{templateFile}`");
             sb.AppendLine("and replace all `Template` references with your provider name.");
             sb.AppendLine();
             sb.AppendLine("```csharp");

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Meridian.Application.Config;
+using Meridian.Application.Exceptions;
 using Meridian.Contracts.Domain.Enums;
 using Meridian.Domain.Collectors;
 using Meridian.Domain.Events;
@@ -19,6 +20,7 @@ public class PolygonMarketDataClientTests : IDisposable
     private readonly TestMarketEventPublisher _publisher;
     private readonly TradeDataCollector _tradeCollector;
     private readonly QuoteCollector _quoteCollector;
+    private readonly PolygonStubClient _stubClient;
     private IReadOnlyList<MarketEvent> _publishedEvents => _publisher.PublishedEvents;
 
     // Store original environment variable values for cleanup
@@ -32,6 +34,7 @@ public class PolygonMarketDataClientTests : IDisposable
         // Create real collectors with publisher for testing
         _tradeCollector = new TradeDataCollector(_publisher, null);
         _quoteCollector = new QuoteCollector(_publisher);
+        _stubClient = new PolygonStubClient(_publisher, _tradeCollector);
 
         // Store and clear environment variables for predictable testing
         _originalPolygonApiKey = Environment.GetEnvironmentVariable("POLYGON_API_KEY");
@@ -204,38 +207,28 @@ public class PolygonMarketDataClientTests : IDisposable
     #region Connection Tests
 
     [Fact]
-    public async Task ConnectAsync_PublishesHeartbeatEvent()
+    public async Task StubClient_ConnectAsync_PublishesHeartbeatEvent()
     {
-        // Arrange
-        var client = new PolygonMarketDataClient(
-            _publisher,
-            _tradeCollector,
-            _quoteCollector);
+        await _stubClient.ConnectAsync();
 
-        // Act
-        await client.ConnectAsync();
-
-        // Assert
         _publishedEvents.Should().HaveCount(1);
         _publishedEvents[0].Type.Should().Be(MarketEventType.Heartbeat);
         _publishedEvents[0].Source.Should().Be("PolygonStub");
     }
 
     [Fact]
-    public async Task ConnectAsync_WithCancellationToken_RespectsToken()
+    public async Task ConnectAsync_WithMissingApiKey_ThrowsConfigurationException()
     {
-        // Arrange
         var client = new PolygonMarketDataClient(
             _publisher,
             _tradeCollector,
             _quoteCollector);
         using var cts = new CancellationTokenSource();
 
-        // Act - should complete without throwing for stub implementation
-        await client.ConnectAsync(cts.Token);
+        var act = () => client.ConnectAsync(cts.Token);
 
-        // Assert
-        _publishedEvents.Should().HaveCount(1);
+        await act.Should().ThrowAsync<ConfigurationException>()
+            .WithMessage("*POLYGON__APIKEY*");
     }
 
     [Fact]
@@ -259,14 +252,10 @@ public class PolygonMarketDataClientTests : IDisposable
     public void SubscribeMarketDepth_ReturnsNegativeOne()
     {
         // Arrange
-        var client = new PolygonMarketDataClient(
-            _publisher,
-            _tradeCollector,
-            _quoteCollector);
         var config = new SymbolConfig("SPY");
 
         // Act
-        var subscriptionId = client.SubscribeMarketDepth(config);
+        var subscriptionId = _stubClient.SubscribeMarketDepth(config);
 
         // Assert - depth not supported in stub
         subscriptionId.Should().Be(-1);
@@ -276,13 +265,8 @@ public class PolygonMarketDataClientTests : IDisposable
     public void UnsubscribeMarketDepth_DoesNotThrow()
     {
         // Arrange
-        var client = new PolygonMarketDataClient(
-            _publisher,
-            _tradeCollector,
-            _quoteCollector);
-
         // Act & Assert - should not throw
-        var act = () => client.UnsubscribeMarketDepth(1);
+        var act = () => _stubClient.UnsubscribeMarketDepth(1);
         act.Should().NotThrow();
     }
 
@@ -290,47 +274,35 @@ public class PolygonMarketDataClientTests : IDisposable
     public void SubscribeTrades_ReturnsPositiveSubscriptionId()
     {
         // Arrange
-        var client = new PolygonMarketDataClient(
-            _publisher,
-            _tradeCollector,
-            _quoteCollector);
         var config = new SymbolConfig("AAPL");
 
         // Act
-        var subscriptionId = client.SubscribeTrades(config);
+        var subscriptionId = _stubClient.SubscribeTrades(config);
 
         // Assert - stub mode still returns valid subscription ID (for tracking purposes)
         subscriptionId.Should().BeGreaterThan(0);
     }
 
     [Fact]
-    public void SubscribeTrades_EmitsSyntheticTrade()
+    public void ProductionClient_SubscribeTrades_DoesNotEmitSyntheticTrade()
     {
-        // Arrange
         var client = new PolygonMarketDataClient(
             _publisher,
             _tradeCollector,
             _quoteCollector);
         var config = new SymbolConfig("AAPL");
 
-        // Act
         client.SubscribeTrades(config);
 
-        // Assert - should have published a trade event via the collector
-        _publishedEvents.Should().Contain(e => e.Type == MarketEventType.Trade);
+        _publishedEvents.Should().NotContain(e => e.Type == MarketEventType.Trade);
     }
 
     [Fact]
     public void UnsubscribeTrades_DoesNotThrow()
     {
         // Arrange
-        var client = new PolygonMarketDataClient(
-            _publisher,
-            _tradeCollector,
-            _quoteCollector);
-
         // Act & Assert - should not throw
-        var act = () => client.UnsubscribeTrades(1);
+        var act = () => _stubClient.UnsubscribeTrades(1);
         act.Should().NotThrow();
     }
 

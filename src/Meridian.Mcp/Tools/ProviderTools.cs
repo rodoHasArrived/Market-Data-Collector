@@ -31,7 +31,7 @@ public sealed class ProviderTools(RepoPathService repo)
 
         var sb = new StringBuilder();
         sb.AppendLine($"## Template: {fileName}\n");
-        sb.AppendLine($"**Path in repo:** `src/Meridian.Infrastructure/Adapters/_Template/{fileName}`\n");
+        sb.AppendLine($"**Path in repo:** `docs/examples/provider-template/{fileName}`\n");
         sb.AppendLine("Copy this file to `src/Meridian.Infrastructure/Adapters/{YourProvider}/` and replace all `Template` references with your provider name.\n");
         sb.AppendLine("```csharp");
         sb.AppendLine(File.ReadAllText(path));

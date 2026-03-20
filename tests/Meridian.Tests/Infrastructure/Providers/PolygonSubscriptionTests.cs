@@ -48,12 +48,14 @@ public sealed class PolygonSubscriptionTests : IDisposable
             _publisher, _tradeCollector, _quoteCollector, options);
     }
 
+    private PolygonStubClient CreateStubClient() => new(_publisher, _tradeCollector);
+
     #region Multi-Symbol Subscription Tests
 
     [Fact]
     public void SubscribeTrades_MultipleSymbols_ReturnsUniqueIds()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
         var symbols = new[] { "AAPL", "MSFT", "GOOGL" };
         var ids = new List<int>();
 
@@ -70,7 +72,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public void SubscribeTrades_MultipleSymbols_EmitsTradeForEach()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
         var symbols = new[] { "AAPL", "MSFT", "GOOGL" };
 
         foreach (var symbol in symbols)
@@ -85,7 +87,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public void UnsubscribeTrades_AfterMultipleSubscriptions_DoesNotThrow()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
         var id1 = client.SubscribeTrades(new SymbolConfig("AAPL"));
         var id2 = client.SubscribeTrades(new SymbolConfig("MSFT"));
 
@@ -99,7 +101,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public void UnsubscribeTrades_NonExistentId_DoesNotThrow()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
 
         var act = () => client.UnsubscribeTrades(99999);
         act.Should().NotThrow();
@@ -159,7 +161,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public async Task ConnectAsync_ThenDisconnect_CompletesCleanly()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
 
         await client.ConnectAsync();
         await client.DisconnectAsync();
@@ -171,7 +173,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public async Task ConnectAsync_MultipleConnections_DoesNotThrow()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
 
         await client.ConnectAsync();
         await client.ConnectAsync();
@@ -183,7 +185,7 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public async Task DisconnectAsync_WithoutConnect_DoesNotThrow()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
 
         // Should complete without throwing even if not connected
         await client.DisconnectAsync();
@@ -196,12 +198,11 @@ public sealed class PolygonSubscriptionTests : IDisposable
     [Fact]
     public void ProviderMetadata_HasExpectedDefaults()
     {
-        var client = CreateClient();
+        var client = CreateStubClient();
 
-        // IMarketDataClient / IProviderMetadata defaults
         var metadata = client as Meridian.Infrastructure.IMarketDataClient;
         metadata.Should().NotBeNull();
-        client.IsEnabled.Should().BeFalse("no API key configured");
+        client.IsEnabled.Should().BeFalse("stub clients are test-only and not live-enabled");
     }
 
     [Fact]

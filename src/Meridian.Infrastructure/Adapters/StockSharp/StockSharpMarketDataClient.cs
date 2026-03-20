@@ -1245,14 +1245,17 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     // Stub implementations when StockSharp packages are not installed
 
     /// <summary>
+    /// Centralizes the non-StockSharp guard so each #else stub can share one documented failure path.
+    /// </summary>
+    private static Exception ThrowPlatformNotSupported() => new NotSupportedException(
+        "StockSharp integration requires StockSharp.Algo NuGet package. " +
+        "Install with: dotnet add package StockSharp.Algo");
+
+    /// <summary>
     /// Stub: Connect not available without StockSharp packages.
     /// </summary>
     public Task ConnectAsync(CancellationToken ct = default)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Algo NuGet package. " +
-            "Install with: dotnet add package StockSharp.Algo");
-    }
+        => Task.FromException(ThrowPlatformNotSupported());
 
     /// <summary>
     /// Stub: Disconnect not available without StockSharp packages.
@@ -1266,10 +1269,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// Stub: SubscribeMarketDepth not available without StockSharp packages.
     /// </summary>
     public int SubscribeMarketDepth(SymbolConfig cfg)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Algo NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported();
 
     /// <summary>
     /// Stub: UnsubscribeMarketDepth not available without StockSharp packages.
@@ -1282,10 +1282,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// Stub: SubscribeTrades not available without StockSharp packages.
     /// </summary>
     public int SubscribeTrades(SymbolConfig cfg)
-    {
-        throw new NotSupportedException(
-            "StockSharp integration requires StockSharp.Algo NuGet package.");
-    }
+        => throw ThrowPlatformNotSupported();
 
     /// <summary>
     /// Stub: UnsubscribeTrades not available without StockSharp packages.
