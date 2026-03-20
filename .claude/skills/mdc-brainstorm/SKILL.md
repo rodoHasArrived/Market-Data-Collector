@@ -11,8 +11,15 @@ description: >
   Trigger even if the user just says "brainstorm" or "give me ideas" in the context of this project. This skill
   produces detailed idea writeups with implementation sketches, audience fit analysis, effort ratings, and concrete
   next steps.
+license: See repository LICENSE
+compatibility: >
+  Portable Agent Skill package for Agent Skills-compatible hosts. Reads markdown references on demand
+  and may append to a local brainstorming history ledger when the host permits filesystem writes.
+metadata:
+  owner: meridian-ai
+  version: "1.1"
+  spec: open-agent-skills-v1
 ---
-
 # Meridian — Brainstorming & Ideation Skill
 
 Generate high-value, implementable ideas for the Meridian platform. Every idea should feel like a natural extension of the program — something that makes the existing experience richer, clearer, and more capable, not a bolt-on afterthought.
@@ -49,11 +56,11 @@ Every brainstorming task follows this 4-step workflow:
 
 ## Core Philosophy: Complementary Extension
 
-The best ideas for MDC aren't isolated features. They're extensions that **amplify what already exists**. Before generating any idea, ask:
+The best ideas for Meridian aren't isolated features. They're extensions that **amplify what already exists**. Before generating any idea, ask:
 
-1. **What does MDC already do well nearby?** Find the existing capability this idea extends, deepens, or connects to. An idea with no anchor to current functionality is probably the wrong idea.
+1. **What does Meridian already do well nearby?** Find the existing capability this idea extends, deepens, or connects to. An idea with no anchor to current functionality is probably the wrong idea.
 2. **What would a user actually see and feel?** Every idea must have a concrete UI or interaction moment. If you can't describe what the user clicks, reads, or watches — the idea isn't finished yet.
-3. **Does this make the whole program more coherent?** The best features make users think "of course this is here." They reduce the number of tools a user needs open, surfacing the right information at the right time within MDC itself.
+3. **Does this make the whole program more coherent?** The best features make users think "of course this is here." They reduce the number of tools a user needs open, surfacing the right information at the right time within Meridian itself.
 4. **Is the information presented clearly?** Data-dense applications live or die on information hierarchy. Every idea that touches the UI should consider: what's the most important thing on screen? What's secondary? What can be progressive-disclosed or hidden until needed?
 
 ---
@@ -111,12 +118,12 @@ Prop trading firm, hedge fund ops, or quant analyst at an asset manager. Pain po
 
 ## The User Experience Lens
 
-**Apply this lens to every idea.** MDC is a desktop application people monitor for hours. The quality of the experience — how information is organized, how status is communicated, how configuration feels, how errors surface — determines whether someone keeps using it or switches to a script.
+**Apply this lens to every idea.** Meridian is a desktop application people monitor for hours. The quality of the experience — how information is organized, how status is communicated, how configuration feels, how errors surface — determines whether someone keeps using it or switches to a script.
 
 **Principles for UI-touching ideas:**
 
 - **Information hierarchy matters.** A streaming data app can easily become a wall of numbers. Every screen should have a clear primary focus, secondary details accessible on hover or drill-down, and a calm default state that doesn't demand attention when things are healthy.
-- **Status at a glance.** The user should be able to look at MDC for 2 seconds and know: is everything OK? Is anything degraded? Is a backfill running? Use color, density, and spatial position to communicate state — not just text.
+- **Status at a glance.** The user should be able to look at Meridian for 2 seconds and know: is everything OK? Is anything degraded? Is a backfill running? Use color, density, and spatial position to communicate state — not just text.
 - **Progressive disclosure.** Show the essential view first. Let users expand into detail when they want it. A symbol's health score is the top layer; the per-provider tick rate breakdown is the drill-down.
 - **Contextual actions.** When showing data, show what the user can _do_ with it right there. Viewing a gap in historical data? Offer a one-click backfill. Seeing an anomalous tick? Offer to flag or exclude it.
 - **Consistency across views.** Symbols, providers, time ranges, and status indicators should look and behave the same way everywhere in the app. Build a shared visual vocabulary.
@@ -140,7 +147,7 @@ Use the table below to identify the mode. If the request is ambiguous between tw
 | **Problem-Focused** | "How do we solve X?" / "What's the best way to fix Y?" | 3-5 deep ideas targeting the specific pain. Show how each integrates with existing features. |
 | **Persona-Focused** | "What do hobbyist quants want?" / "Ideas for academics" / "Institutional use cases" | 5-8 ideas optimized for that audience. Describe the user journey, not just the feature. |
 | **Domain-Focused** | "Ideas for latency / storage / UX / data quality" | Technical depth in that domain. Every idea still needs a UI or interaction touchpoint. |
-| **Competitive** | "What are others doing?" / "How do we compare to Databento?" | Scan `references/competitive-landscape.md`. Identify gaps; only propose ideas that fit MDC's architecture naturally. |
+| **Competitive** | "What are others doing?" / "How do we compare to Databento?" | Scan `references/competitive-landscape.md`. Identify gaps; only propose ideas that fit Meridian's architecture naturally. |
 | **Quick Wins** | "What's easy to ship?" / "Low-hanging fruit?" | Effort ≤ Medium, impact ≥ High. Emphasize ideas that improve the existing experience, not new surface area. |
 | **Architecture / Refactoring** | "How should we restructure X?" / "Refactoring ideas" / "What should we improve architecturally?" | Code structure, MVVM compliance, separation of concerns, testability. Anchor to real patterns (`BindableBase`, `EventPipeline`, `IStorageSink`). Include before/after and migration risk. |
 | **User Growth / Adoption** | "How do we get more users?" / "Growth ideas" / "Onboarding friction" | Onboarding, evangelism, community. Map to personas. Span awareness → activation → retention. |
@@ -169,7 +176,7 @@ Write each idea as a **natural narrative**, not a form to fill out. The reader s
 
 **What every idea must include** (woven into prose, not as labeled fields):
 
-- **The anchor:** What existing MDC capability does this extend or complement? Reference real file paths from `../_shared/project-context.md` where helpful (e.g., "extends `IStorageSink` at `src/Meridian.Storage/Interfaces/IStorageSink.cs`").
+- **The anchor:** What existing Meridian capability does this extend or complement? Reference real file paths from `../_shared/project-context.md` where helpful (e.g., "extends `IStorageSink` at `src/Meridian.Storage/Interfaces/IStorageSink.cs`").
 - **The user moment:** What does the user see, click, or experience? Be specific — describe a screen, a notification, an interaction, not just a backend change.
 - **The implementation shape:** Key technical approach — interfaces, patterns, data flow. Enough that a developer could start scoping.
 - **The tradeoffs:** What's hard? What could go wrong? What does this cost in complexity?
@@ -201,7 +208,7 @@ After the ideas, step back and write a synthesis that:
 - Calls out "platform bets" — ideas that unlock multiple others
 - Flags cross-cutting themes (e.g., "three of these ideas all need a shared symbol health model")
 - Suggests sequencing: what to build first, what it enables next
-- **Competitive signals (always include):** 2-3 sentences from `references/competitive-landscape.md` on how competitors handle this space and which pattern is most adaptable to MDC's architecture
+- **Competitive signals (always include):** 2-3 sentences from `references/competitive-landscape.md` on how competitors handle this space and which pattern is most adaptable to Meridian's architecture
 - For Architecture mode: migration ordering and risk dependencies
 - For Growth mode: which funnel stage to invest in first
 - For Tech Debt mode: quick wins first, then structural changes

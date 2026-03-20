@@ -8,10 +8,17 @@ description: >
   missing for", or when reviewing code that lacks corresponding test coverage. Also triggers
   when a code review (mdc-code-review) has identified test gaps. This skill produces
   idiomatic xUnit + FluentAssertions tests with correct async patterns, isolation, naming
-  conventions, and mock setup for all major MDC component types: providers, storage sinks,
+  conventions, and mock setup for all major Meridian component types: providers, storage sinks,
   pipeline components, WPF services, and F# interop boundaries.
+license: See repository LICENSE
+compatibility: >
+  Portable Agent Skill package for Agent Skills-compatible hosts. Reads repository files plus
+  the bundled test pattern reference; no special runtime beyond standard markdown/resource loading.
+metadata:
+  owner: meridian-ai
+  version: "1.1"
+  spec: open-agent-skills-v1
 ---
-
 # Meridian — Test Writer Skill
 
 Generate high-quality, idiomatic xUnit tests for any Meridian component. Every test

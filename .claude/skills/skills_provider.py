@@ -1,6 +1,6 @@
-"""Code-defined skills provider for Meridian.
+"""Code-defined Agent Skills provider for Meridian.
 
-Creates a :class:`SkillsProvider` that exposes three skills:
+Creates a :class:`SkillsProvider` that exposes portable, progressive-disclosure skill packages and code-defined companions:
 
 1. ``mdc-code-review`` — Code review and architecture compliance, available
    both as a file-based skill (discovered from the ``mdc-code-review/``
@@ -695,7 +695,7 @@ mdc_blueprint_skill = Skill(
         "Blueprint Mode skill for the Meridian project. "
         "Translates a single prioritized idea into a complete, code-ready technical "
         "design document — interfaces, component designs, data flows, XAML sketches, "
-        "test plans, and implementation checklists — grounded in MDC's actual stack: "
+        "test plans, and implementation checklists — grounded in Meridian's actual stack: "
         "C# 13, F# 8, .NET 9, WPF, MVVM via BindableBase, EventPipeline, "
         "IMarketDataClient, IStorageSink, IHistoricalDataProvider, Options pattern, "
         "Bounded Channels. "
@@ -713,7 +713,7 @@ mdc_blueprint_skill = Skill(
         SkillResource(
             name="blueprint-patterns",
             description=(
-                "MDC interface patterns, naming conventions, ADR contract reference, "
+                "Meridian interface patterns, naming conventions, ADR contract reference, "
                 "DI registration patterns, Options pattern, Channel/pipeline pattern, "
                 "WPF/MVVM patterns, F# domain type patterns, error handling and "
                 "structured logging patterns, storage sink pattern, historical provider "

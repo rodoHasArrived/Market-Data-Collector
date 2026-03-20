@@ -1,20 +1,23 @@
 ---
 name: mdc-code-review
 description: >
-  Code review and architecture compliance skill for the Meridian project — a .NET 9 / C# 13
-  market data system with WPF desktop app, F# 8.0 domain models, real-time streaming pipelines, and
-  tiered JSONL/Parquet storage. Use this skill whenever the user asks to review, audit, refactor, or
-  improve C# or F# code from Meridian, or when they share .cs/.fs files and want feedback.
-  Also trigger on: MVVM compliance, ViewModel extraction, code-behind cleanup, real-time performance,
-  hot-path optimization, pipeline throughput, provider implementation review, backfill logic, data
-  integrity validation, error handling patterns, test code quality, unit test review, ProviderSdk
-  compliance, dependency violations, JSON source generator usage, hot config reload, WPF architecture,
-  storage sink compliance, WAL correctness, AtomicFileWriter usage, or IStorageSink implementation
-  — even without naming the project. If code references Meridian namespaces, BindableBase,
-  EventPipeline, IMarketDataClient, IStorageSink, WriteAheadLog, AtomicFileWriter, or ProviderSdk
-  types, use this skill.
+  Code review and architecture compliance skill for Meridian. Use when the user asks to review,
+  audit, refactor, or improve Meridian C# or F# code, or when shared files mention MVVM,
+  ViewModels, code-behind cleanup, performance, pipeline throughput, provider implementations,
+  backfill logic, data integrity, error handling, test quality, ProviderSdk compliance, dependency
+  violations, JSON source generators, hot config reload, WPF architecture, storage sinks, WAL
+  correctness, or AtomicFileWriter usage. Trigger even without naming the project if code references
+  Meridian namespaces, BindableBase, EventPipeline, IMarketDataClient, IStorageSink,
+  WriteAheadLog, AtomicFileWriter, or ProviderSdk types.
+license: See repository LICENSE
+compatibility: >
+  Portable Agent Skill package for Agent Skills-compatible hosts. Reads repository files, optional
+  reference bundles, and Python helper scripts for evals, packaging, and deterministic validation.
+metadata:
+  owner: meridian-ai
+  version: "1.1"
+  spec: open-agent-skills-v1
 ---
-
 # Meridian Code Review
 
 > **GitHub Copilot / Actions equivalent:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md) — same lens framework as a GitHub agent definition.

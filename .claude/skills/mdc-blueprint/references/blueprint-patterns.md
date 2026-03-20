@@ -1,4 +1,4 @@
-# MDC Blueprint Patterns Reference
+# Meridian Blueprint Patterns Reference
 
 > **Authoritative stats and file paths:** [`../_shared/project-context.md`](../../_shared/project-context.md)
 

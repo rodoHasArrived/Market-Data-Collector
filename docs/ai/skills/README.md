@@ -1,267 +1,179 @@
-# Claude Code Skills
+# Agent Skills
 
-This directory is the navigation index for **Claude Code skill definitions** used in the Meridian
-project. Skills live in `.claude/skills/` so that Claude Code can discover and load them
-automatically.
+This directory is the navigation index for **Meridian's portable Agent Skills packages**. Each
+skill is a self-contained package of instructions, optional scripts, and optional reference
+resources rooted under `.claude/skills/`, with a required `SKILL.md` entry point that follows the
+open Agent Skills-style frontmatter + markdown pattern.
 
----
-
-## Available Skills
-
-### Blueprint Skill
-
-**Location:** `.claude/skills/`
-**Entry point:** the Blueprint skill in `.claude/skills/`
-**Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
-**Copilot equivalent:** [`.github/agents/blueprint-agent.md`](../../../.github/agents/blueprint-agent.md)
-**Claude agent:** the Blueprint agent in `.claude/agents/`
-
-Blueprint Mode skill for the Meridian project. Translates a single prioritised idea
-into a complete, code-ready technical design document — interfaces, component designs, data flows,
-XAML sketches, test plans, and implementation checklists — grounded in Meridian's actual stack
-(C# 13, F# 8, .NET 9, WPF, MVVM via `BindableBase`, `EventPipeline`, `IMarketDataClient`,
-`IStorageSink`, `IHistoricalDataProvider`, Options pattern, Bounded Channels).
-
-**Trigger conditions** (from system prompt):
-
-- User says "blueprint", "design document", "technical spec", "design the", "architect the"
-- User asks "what interfaces do we need for" or "spike plan for"
-- A Roadmap/Brainstorm output needs to be turned into something a developer can implement
-- User says "blueprint mode" or provides an idea card from the Brainstorm pipeline stage
-
-**Depth modes:**
-
-| Mode | When to use | Sections produced |
-|------|-------------|-------------------|
-| `full` | Default — complete feature blueprint | Steps 1–9 |
-| `spike` | Riskiest unknowns first; internal design deferred | Steps 1–3 + spike plan |
-| `interface-only` | Contracts need alignment before internals | Steps 1–3 only |
-
-**Bundled resources:**
-
-| Resource | Purpose |
-| ---------- | ------- |
-| `references/blueprint-patterns.md` | Copy-ready section templates for all 9 blueprint steps |
-| `references/pipeline-position.md` | Diagrams showing blueprint's position in the Brainstorm → Code Review pipeline |
+Meridian keeps the packages portable on purpose: the same skill directory can be discovered by
+Claude-oriented tooling today and reused by other Agent Skills-compatible hosts that support the
+same progressive disclosure workflow.
 
 ---
 
-### Code Review Skill
+## Portable Package Contract
 
-**Location:** `.claude/skills/`
-**Entry point:** the Code Review skill in `.claude/skills/`
-**Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
-**Copilot equivalent:** [`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md)
+Every Meridian skill package is expected to follow this structure:
 
-Code review and architecture compliance skill for the Meridian codebase. Applies the
-canonical 7-lens framework defined in
-[`.github/agents/code-review-agent.md`](../../../.github/agents/code-review-agent.md).
+```text
+<skill-name>/
+├── SKILL.md              # Required: YAML frontmatter + concise workflow instructions
+├── scripts/              # Optional: deterministic helpers agents can execute
+├── references/           # Optional: docs/resources loaded only when needed
+├── assets/               # Optional: static templates or output resources
+└── ...                   # Optional: evals, graders, host-specific metadata, etc.
+```
 
-**Trigger conditions** (from system prompt):
+### SKILL.md Frontmatter
 
-- User asks to review, audit, refactor, or improve C#/F# code
-- Code references `Meridian` namespaces, `BindableBase`, `EventPipeline`,
-  `IMarketDataClient`, `IStorageSink`, or `ProviderSdk` types
-- Tasks involving MVVM compliance, hot-path optimization, provider implementation, or WPF architecture
+Meridian skill packages now use portable metadata fields that map cleanly onto the open skill
+specification:
 
-**Bundled resources:**
-
-| Resource | Purpose |
-| ---------- | ------- |
-| `references/architecture.md` | Deep solution layout, dependency graph, F# interop rules |
-| `references/schemas.md` | JSON schemas for eval artifacts |
-| `agents/grader.md` | Assertions grader for skill evaluation |
-| `evals/evals.json` | 8 test cases with assertions |
-| `eval-viewer/viewer.html` + `generate_review.py` | Interactive eval results viewer |
-| `scripts/run_eval.py` | Run the skill evaluation suite |
-| `scripts/aggregate_benchmark.py` | Aggregate grading results |
-| `scripts/package_skill.py` | Package skill into `.skill` file |
-
-**Dynamic resources** (refreshed on every read):
-
-- `project-stats` — Live source/test file counts from the filesystem
-- `git-context` — Current branch, last relevant commit, changed files
+| Field | Purpose |
+| ----- | ------- |
+| `name` | Stable package name; must match the skill directory |
+| `description` | Trigger guidance for hosts that advertise skills up front |
+| `license` | Repository license reference for downstream packaging |
+| `compatibility` | Host/runtime expectations |
+| `metadata` | Package owner, version, and spec tagging |
 
 ---
 
-### Brainstorm Skill
+## Progressive Disclosure Model
 
-**Location:** `.claude/skills/`
-**Entry point:** the Brainstorm skill in `.claude/skills/`
-**Copilot equivalent:** [`.github/agents/brainstorm-agent.md`](../../../.github/agents/brainstorm-agent.md)
+Meridian skills are authored to support the standard three-stage loading pattern:
 
-Brainstorming, ideation, and creative feature exploration skill for the Meridian project.
+1. **Advertise** — The host injects each skill's `name` and `description` so agents know the
+   package exists.
+2. **Load** — When the task matches, the host loads the full `SKILL.md` instructions.
+3. **Read resources / run scripts as needed** — The host reads `references/` files or executes
+   `scripts/` only when the task actually needs that deeper context or determinism.
 
-**Trigger conditions** (from system prompt):
+This keeps the default context lean while preserving access to Meridian-specific architecture,
+provider patterns, grading assets, and helper automation.
 
-- User wants to generate new ideas, features, or improvements for Meridian
-- User asks "what could we add", "how could we improve", "what features should we build"
-- Tasks involving architecture brainstorms, user growth strategy, or technical debt ideation
-- User describes a pain point or domain problem and wants ideas for solving it
+### Host Tools Meridian Skills Expect
 
-**Bundled resources:**
+Meridian's skill packages are written to work best in hosts that expose the following primitives:
 
-| Resource | Purpose |
-| ---------- | ------- |
-| `references/idea-dimensions.md` | Idea evaluation dimensions and scoring framework |
-| `references/competitive-landscape.md` | Competitive analysis and differentiation context |
+- `load_skill` — load the full `SKILL.md`
+- `read_skill_resource` — fetch a referenced file only when needed
+- `run_skill_script` — execute deterministic helpers when the package bundles scripts
 
----
-
-### Provider Builder Skill
-
-**Location:** `.claude/skills/`
-**Entry point:** the Provider Builder skill in `.claude/skills/`
-**Copilot equivalent:** [`.github/agents/provider-builder-agent.md`](../../../.github/agents/provider-builder-agent.md)
-
-Step-by-step guided skill for building new data provider adapters for Meridian.
-Covers all three provider types (`IMarketDataClient`, `IHistoricalDataProvider`,
-`ISymbolSearchProvider`) with a 12-step build process, compliance checklist, and known AI
-error table.
-
-**Trigger conditions:**
-
-- User asks to add a new data provider, exchange, or data source
-- Tasks involving `IMarketDataClient`, `IHistoricalDataProvider`, `DataSourceAttribute`, or `ProviderSdk`
-- Implementing rate limiting, WebSocket reconnection, or DI registration for a provider
-- Code review identifies missing `[ImplementsAdr]` attribute or `WaitAsync()` error
-
-**Bundled resources:**
-
-| Resource | Purpose |
-| ---------- | ------- |
-| `references/provider-patterns.md` | 7 copy-ready patterns: historical skeleton, streaming skeleton, options, DI module, JsonContext diff, test scaffolds, appsettings template |
+The repository's code-defined provider at
+[`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py) implements this
+model for local use and keeps dynamic resources such as git context or project stats separate from
+static package content.
 
 ---
 
-### Test Writer Skill
+## Available Skill Packages
 
-**Location:** `.claude/skills/`
-**Entry point:** the Test Writer skill in `.claude/skills/`
-**Copilot equivalent:** [`.github/agents/test-writer-agent.md`](../../../.github/agents/test-writer-agent.md)
+### `mdc-blueprint`
 
-Test generation skill for any Meridian component. Produces idiomatic xUnit +
-FluentAssertions tests with correct async patterns, isolation, naming conventions, and mock
-setup for all major component types.
+**Location:** [`.claude/skills/mdc-blueprint/`](../../../.claude/skills/mdc-blueprint/)
+**Purpose:** Turn one prioritized idea into a code-ready technical blueprint for Meridian.
+**When it triggers:** design-doc requests, architecture spikes, interface planning, or roadmap-to-implementation handoffs.
+**On-demand resources:**
 
-**Trigger conditions:**
+- `references/blueprint-patterns.md` — reusable section patterns and implementation shapes
+- `references/pipeline-position.md` — pipeline-stage and handoff guidance
+- `../_shared/project-context.md` — canonical project statistics, paths, and ADR anchors
 
-- User asks to write, add, or expand tests for any Meridian component
-- Code review (Lens 4) identified test quality issues or gaps
-- New provider, service, or storage component needs a test scaffold
-- Tasks involving `async void`, missing `CancellationToken`, or `Task.Delay` in tests
+### `mdc-code-review`
 
-**Bundled resources:**
+**Location:** [`.claude/skills/mdc-code-review/`](../../../.claude/skills/mdc-code-review/)
+**Purpose:** Apply Meridian's 7-lens architecture and code quality review framework.
+**When it triggers:** code review, refactoring, architecture audit, MVVM cleanup, provider compliance, or performance review tasks.
+**On-demand resources and scripts:**
 
-| Resource | Purpose |
-| ---------- | ------- |
-| `references/test-patterns.md` | 8 named patterns (A–H) with full compilable scaffolding for providers, sinks, pipelines, WPF services, F# interop, and endpoint integration tests |
+- `references/architecture.md` — deep architecture context
+- `references/schemas.md` — eval/grading schemas
+- `agents/grader.md` — grading instructions for eval runs
+- `scripts/run_eval.py`, `scripts/aggregate_benchmark.py`, `scripts/package_skill.py` — deterministic review helpers
+- Dynamic resources via the provider: `project-stats`, `git-context`
 
----
+### `mdc-brainstorm`
 
-### ai-docs-maintain
+**Location:** [`.claude/skills/mdc-brainstorm/`](../../../.claude/skills/mdc-brainstorm/)
+**Purpose:** Generate high-value, implementable ideas that extend Meridian coherently.
+**When it triggers:** feature ideation, user-pain brainstorming, architecture brainstorms, or technical-debt ideation.
+**On-demand resources:**
+
+- `references/idea-dimensions.md` — evaluation rubric
+- `references/competitive-landscape.md` — external framing and differentiation context
+- `brainstorm-history.jsonl` — optional local continuity ledger when the host permits writes
+
+### `mdc-provider-builder`
+
+**Location:** [`.claude/skills/mdc-provider-builder/`](../../../.claude/skills/mdc-provider-builder/)
+**Purpose:** Scaffold Meridian data providers with the right ADR, DI, and resilience patterns.
+**When it triggers:** new exchange/provider work, historical providers, streaming adapters, or symbol search implementations.
+**On-demand resources:**
+
+- `references/provider-patterns.md` — provider skeletons, options, DI wiring, and test scaffolds
+- Companion skills referenced as needed: `mdc-code-review`, `mdc-test-writer`
+
+### `mdc-test-writer`
+
+**Location:** [`.claude/skills/mdc-test-writer/`](../../../.claude/skills/mdc-test-writer/)
+**Purpose:** Produce idiomatic Meridian xUnit tests with the right async, mocking, and cleanup patterns.
+**When it triggers:** new tests, test-gap remediation, or code-review follow-up for missing coverage.
+**On-demand resources:**
+
+- `references/test-patterns.md` — component-specific test scaffolds and decision trees
+- Companion skill referenced as needed: `mdc-code-review`
+
+### `ai-docs-maintain` (code-defined)
 
 **Registered in:** [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py)
-_(code-defined only — no separate directory)_
 
-AI documentation maintenance skill. Delegates to `build/scripts/docs/ai-docs-maintenance.py`.
+`ai-docs-maintain` is intentionally code-defined rather than file-backed. It still behaves like a
+skill package from the host's perspective, but its resources and scripts are surfaced directly from
+Python so documentation freshness and drift checks can stay live.
 
-**Trigger conditions:**
-
-- User asks to check AI doc freshness, detect drift, archive stale docs, or validate cross-references
-- Tasks involving "update AI docs", "check doc staleness", or "sync AI instructions"
-
-**Available scripts:**
+Available scripts:
 
 | Script | Purpose |
-| -------- | ------- |
-| `run-freshness` | Check staleness of all AI docs (60-day warning, 120-day critical) |
+| ------ | ------- |
+| `run-freshness` | Check AI doc staleness |
 | `run-drift` | Detect divergence between docs and code reality |
-| `run-full` | Run all checks (freshness + drift + refs + archive) |
-| `run-archive` | Preview (or execute) stale doc archiving |
+| `run-full` | Run freshness, drift, reference, and archive checks |
+| `run-archive` | Preview or execute stale-doc archiving |
 
-**Available resource:**
+Available resource:
 
-- `doc-health-summary` — Live health summary (stale count, drift items, broken refs)
-
----
-
-## Skills Provider
-
-The skills provider [`skills_provider.py`](../../../.claude/skills/skills_provider.py) handles:
-
-- File-based skill discovery from `.claude/skills/`
-- Code-defined skill registration (`ai-docs-maintain` and review helpers)
-- Dynamic resource evaluation (live project stats, git context)
-- In-process script execution (validate-skill, run-eval, aggregate-benchmark)
-- File-based script subprocess execution
+- `doc-health-summary` — live doc-health snapshot
 
 ---
 
-## Architecture Guard Tool
+## Validation
 
-The `architecture-guard` tool is a standalone Python compliance checker at
-[`build/scripts/ai-architecture-check.py`](../../../build/scripts/ai-architecture-check.py).
-It is not a skill invoked via the Claude skill system — it is a command-line tool that AI agents
-run before submitting a PR to catch architecture violations.
-
-**What it checks:**
-
-| Check ID | Rule |
-| -------- | ---- |
-| `CPM-001` | No `Version=` on `<PackageReference>` items (NU1008 guard) |
-| `DEP-001` – `DEP-006` | Forbidden dependency directions (Ui.Services→Wpf, ProviderSdk→Infrastructure, UWP refs, FSharp→non-Contracts) |
-| `ADR-001` / `ADR-005` | Missing `[ImplementsAdr]` and `[DataSource]` on provider classes |
-| `CHAN-001` | Raw `Channel.CreateBounded/CreateUnbounded` calls (must use `EventPipelinePolicy`) |
-| `SINK-001` | Direct `FileStream` / `File.Write*` in storage sinks (must use `AtomicFileWriter`) |
-| `JSON-001` | Reflection-based `JsonSerializer` calls without source-gen context |
-| `LOG-001` | String interpolation (`$"..."`) in structured log calls |
-
-**Usage:**
+Use the repository validator to confirm each file-backed skill still looks like a portable package:
 
 ```bash
-# Full check (human-readable)
-make ai-arch-check
-
-# One-line summary (useful in pre-PR scripts)
-make ai-arch-check-summary
-
-# JSON output (for CI or tooling)
-make ai-arch-check-json
-
-# Targeted checks
-python3 build/scripts/ai-architecture-check.py --src src/ check-cpm
-python3 build/scripts/ai-architecture-check.py --src src/ check-adrs
-python3 build/scripts/ai-architecture-check.py --src src/ check-channels
+python3 build/scripts/docs/validate-skill-packages.py
 ```
 
----
+The validator checks for:
 
-## Running Skill Evaluations
-
-```bash
-# Validate skill definition
-python3 .claude/skills/<review-skill>/scripts/quick_validate.py
-
-# Run eval set (8 test cases)
-python3 .claude/skills/<review-skill>/scripts/run_eval.py \
-  --eval-set .claude/skills/<review-skill>/evals/evals.json \
-  --skill-path .claude/skills/<review-skill>
-
-# Launch interactive eval viewer
-python3 .claude/skills/<review-skill>/eval-viewer/generate_review.py
-```
+- required `SKILL.md` frontmatter fences
+- `name`/directory alignment and portable naming rules
+- required `description`, `license`, `compatibility`, and `metadata` fields
+- `SKILL.md` body line-count guardrail (500 lines)
+- progressive-disclosure references when `references/`, `scripts/`, or `assets/` directories exist
 
 ---
 
 ## Related Resources
 
 | Resource | Purpose |
-| ---------- | ------- |
-| [`docs/ai/agents/README.md`](../agents/README.md) | GitHub agent equivalents (Copilot) |
+| -------- | ------- |
 | [`docs/ai/README.md`](../README.md) | Master AI resource index |
-| [`CLAUDE.md`](../../../CLAUDE.md) | Root project context |
+| [`docs/ai/agents/README.md`](../agents/README.md) | GitHub/Copilot agent equivalents |
+| [`CLAUDE.md`](../../../CLAUDE.md) | Root project context and repo conventions |
+| [`.claude/skills/skills_provider.py`](../../../.claude/skills/skills_provider.py) | Local skills provider implementation |
 
 ---
 
-_Last Updated: 2026-03-17_
+_Last Updated: 2026-03-20_

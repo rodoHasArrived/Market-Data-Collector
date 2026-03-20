@@ -1,6 +1,6 @@
 # Blueprint Mode — Pipeline Position
 
-This document describes where Blueprint Mode fits in the MDC ideation-to-implementation pipeline,
+This document describes where Blueprint Mode fits in the Meridian ideation-to-implementation pipeline,
 the inputs and outputs of each stage, and the handoff contracts between stages.
 
 ---
@@ -9,7 +9,7 @@ the inputs and outputs of each stage, and the handoff contracts between stages.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    MDC Ideation-to-Implementation Pipeline               │
+│                    Meridian Ideation-to-Implementation Pipeline               │
 └─────────────────────────────────────────────────────────────────────────┘
 
 Stage 1: Brainstorm (mdc-brainstorm)

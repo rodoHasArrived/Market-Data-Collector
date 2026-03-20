@@ -1,6 +1,6 @@
-# Idea Dimensions — MDC Brainstorm Reference
+# Idea Dimensions — Meridian Brainstorm Reference
 
-Seeded concept bank organized by category. Use these as inspiration prompts, not final ideas — the goal is to develop them into full Idea Cards grounded in the MDC codebase.
+Seeded concept bank organized by category. Use these as inspiration prompts, not final ideas — the goal is to develop them into full Idea Cards grounded in the Meridian codebase.
 
 > **See also:** [`../../_shared/project-context.md`](../../_shared/project-context.md) for authoritative project stats, ADR table, and key abstraction file paths.
 
@@ -68,17 +68,17 @@ Use these when referencing specific abstractions in ideas. File paths are relati
 
 ## 🔌 Data Access & APIs
 
-- **Python SDK** — async iterator over live feed, pandas DataFrame output, `snap()` for last N ticks, `history()` for bulk pull. Wraps the WebSocket/REST HTTP layer already exposed by MDC.
-- **gRPC streaming endpoint** — low-latency alternative to WebSocket for intra-datacenter consumers (e.g., C++ strategy engine consuming from MDC)
+- **Python SDK** — async iterator over live feed, pandas DataFrame output, `snap()` for last N ticks, `history()` for bulk pull. Wraps the WebSocket/REST HTTP layer already exposed by Meridian.
+- **gRPC streaming endpoint** — low-latency alternative to WebSocket for intra-datacenter consumers (e.g., C++ strategy engine consuming from Meridian)
 - **Arrow Flight endpoint** — columnar bulk data transfer without REST overhead; natural fit for academic batch pulls
 - **GraphQL query API** — flexible ad-hoc querying over stored JSONL data; explorers can filter/aggregate without file access
 - **Tick replay API** — serve historical ticks at configurable speed multiplier (1x, 10x, 100x market time); valuable for backtesting engines that need realistic feed simulation
 - **Snapshot API** — point-in-time orderbook snapshot endpoint; `GET /api/snapshot/{symbol}?at=2024-01-15T14:30:00Z`
 - **WebSocket multiplex protocol** — single connection, multiple symbol subscriptions, backpressure signaling; reduces connection overhead for subscribers with large universes
 - **R language bindings** — `reticulate`-free native R package via `.NET Interop` or a thin REST wrapper; academic quant finance community is heavily R-based
-- **DuckDB virtual table** — register MDC's JSONL/Parquet store as a DuckDB external table; enables SQL queries without data movement
+- **DuckDB virtual table** — register Meridian's JSONL/Parquet store as a DuckDB external table; enables SQL queries without data movement
 - **Event-driven webhooks** — push notifications on configurable triggers (new gap detected, anomaly flagged, backfill complete); enables serverless downstream workflows
-- **OpenAPI spec auto-generation** — auto-generate OpenAPI 3.1 spec from MDC's REST controllers; enables code-gen for any language client
+- **OpenAPI spec auto-generation** — auto-generate OpenAPI 3.1 spec from Meridian's REST controllers; enables code-gen for any language client
 
 ---
 
@@ -130,18 +130,18 @@ Use these when referencing specific abstractions in ideas. File paths are relati
 
 ## 🔗 Integrations & Ecosystem
 
-- **Jupyter kernel extension** — `%marketdata` magic command that connects to a running MDC instance and streams ticks into a DataFrame in real time
-- **pandas accessor** — `df.marketdata.resample_ohlcv('1min')` style API built on top of MDC's historical export format
-- **QuantConnect LEAN bridge** — MDC as a custom data source for LEAN backtesting engine; map `IMarketDataClient` to LEAN's `IDataQueueHandler` interface
-- **Backtrader data feed** — Python class wrapping MDC's REST/WebSocket endpoint as a `bt.DataBase` subclass
-- **Zipline ingestion bundle** — export MDC data as a Zipline ingest bundle for Zipline-Reloaded backtesting
-- **dbt integration** — MDC as a dbt source, enabling SQL-based data transformations and quality tests on stored market data
-- **Grafana data source plugin** — native Grafana plugin (Go) that queries MDC's `/api` endpoints; enables blending market data with infrastructure metrics on one board
+- **Jupyter kernel extension** — `%marketdata` magic command that connects to a running Meridian instance and streams ticks into a DataFrame in real time
+- **pandas accessor** — `df.marketdata.resample_ohlcv('1min')` style API built on top of Meridian's historical export format
+- **QuantConnect LEAN bridge** — Meridian as a custom data source for LEAN backtesting engine; map `IMarketDataClient` to LEAN's `IDataQueueHandler` interface
+- **Backtrader data feed** — Python class wrapping Meridian's REST/WebSocket endpoint as a `bt.DataBase` subclass
+- **Zipline ingestion bundle** — export Meridian data as a Zipline ingest bundle for Zipline-Reloaded backtesting
+- **dbt integration** — Meridian as a dbt source, enabling SQL-based data transformations and quality tests on stored market data
+- **Grafana data source plugin** — native Grafana plugin (Go) that queries Meridian's `/api` endpoints; enables blending market data with infrastructure metrics on one board
 - **TradingView webhook receiver** — ingest TradingView alerts as structured events alongside market data; correlate signal firing with tick data
 - **Slack/Discord bot** — alert bot that posts to a channel when: data gap detected, provider disconnected, anomalous tick received, backfill completed
-- **OpenBB integration** — serve as a data backend for OpenBB Terminal; MDC provides the persistent collection layer that OpenBB lacks
-- **NinjaTrader / MetaTrader bridge** — expose MDC data via the NinjaTrader Connection Adapter or MetaTrader EA interface; captures the retail algo trading audience
-- **Dagster / Airflow operator** — custom operator for orchestrating MDC backfill jobs, Parquet compaction, and data quality checks inside existing data pipelines
+- **OpenBB integration** — serve as a data backend for OpenBB Terminal; Meridian provides the persistent collection layer that OpenBB lacks
+- **NinjaTrader / MetaTrader bridge** — expose Meridian data via the NinjaTrader Connection Adapter or MetaTrader EA interface; captures the retail algo trading audience
+- **Dagster / Airflow operator** — custom operator for orchestrating Meridian backfill jobs, Parquet compaction, and data quality checks inside existing data pipelines
 
 ---
 
@@ -149,7 +149,7 @@ Use these when referencing specific abstractions in ideas. File paths are relati
 
 - **Public data snapshots** — opt-in feature to publish anonymized daily OHLCV snapshots to a shared S3 bucket; community-maintained free data layer
 - **Provider plugin SDK** — documented interface + CLI scaffolding tool for third parties to build new `IMarketDataClient` implementations; npm-style plugin registry
-- **Strategy template library** — curated set of Jupyter notebooks demonstrating: loading MDC data → feature engineering → backtest → performance report
+- **Strategy template library** — curated set of Jupyter notebooks demonstrating: loading Meridian data → feature engineering → backtest → performance report
 - **Discord/forum integration** — built-in "share session" feature that posts a summary of today's collection run (symbols, tick count, anomalies) to a community feed
 - **Contribution leaderboard** — gamified: users who contribute provider plugins or data quality validators earn recognition on a public leaderboard
 - **Data marketplace** — users who collect rare data (options chains, crypto perps, international equities) can make it discoverable to others with access controls
@@ -210,12 +210,12 @@ Use these when referencing specific abstractions in ideas. File paths are relati
 
 ## 📈 User Growth & Adoption
 
-- **"Zero to first tick" quickstart** — a single `docker compose up` command that starts MDC with Alpaca's free tier, subscribes to SPY, and shows live ticks in the web dashboard within 60 seconds; optimize ruthlessly for time-to-value
-- **YouTube / blog content series** — "Building a Quant Data Pipeline" tutorial series showing MDC as the backbone; each episode adds a capability (backfill, Jupyter, backtest); drives organic search traffic
-- **GitHub README overhaul** — hero GIF showing live ticks flowing, architecture diagram, one-click deploy badges, and "Why MDC?" comparison table vs. alternatives; first 30 seconds of the README determine star/bounce
+- **"Zero to first tick" quickstart** — a single `docker compose up` command that starts Meridian with Alpaca's free tier, subscribes to SPY, and shows live ticks in the web dashboard within 60 seconds; optimize ruthlessly for time-to-value
+- **YouTube / blog content series** — "Building a Quant Data Pipeline" tutorial series showing Meridian as the backbone; each episode adds a capability (backfill, Jupyter, backtest); drives organic search traffic
+- **GitHub README overhaul** — hero GIF showing live ticks flowing, architecture diagram, one-click deploy badges, and "Why Meridian?" comparison table vs. alternatives; first 30 seconds of the README determine star/bounce
 - **Integration showcase gallery** — web page with working code snippets for each integration (Jupyter, LEAN, pandas, Grafana); copy-paste ready; each snippet links to a deeper tutorial
-- **Conference talk / meetup circuit** — target QuantConnect community meetups, .NET Conf, and local quant finance groups; live demo of MDC collecting options data in real-time
-- **Freemium cloud-hosted tier** — a managed MDC instance with limited symbol count (5 symbols, delayed data); removes all setup friction; converts to self-hosted when users hit limits
+- **Conference talk / meetup circuit** — target QuantConnect community meetups, .NET Conf, and local quant finance groups; live demo of Meridian collecting options data in real-time
+- **Freemium cloud-hosted tier** — a managed Meridian instance with limited symbol count (5 symbols, delayed data); removes all setup friction; converts to self-hosted when users hit limits
 - **First-run analytics** — anonymous telemetry (opt-in) tracking: setup completion rate, first successful tick received, first query executed; identify and fix the biggest drop-off points
 - **Contributor onboarding guide** — a `CONTRIBUTING.md` with architecture walkthrough, "good first issue" labels, and a mentorship channel; converts users into contributors
 

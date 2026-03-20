@@ -11,7 +11,7 @@ This document is the **master index** for AI assistant guidance in the Meridian 
 | Any task | [`CLAUDE.md`](../../CLAUDE.md) | This file for the full resource map |
 | Before any change | [`ai-known-errors.md`](ai-known-errors.md) | Prevention checklists |
 | GitHub agent work | [`agents/README.md`](agents/README.md) | [`.github/agents/`](../../.github/agents/) |
-| Claude Code skill work | [`skills/README.md`](skills/README.md) | [`.claude/skills/`](../../.claude/skills/) |
+| Agent Skills work | [`skills/README.md`](skills/README.md) | [`.claude/skills/`](../../.claude/skills/) |
 | Copilot setup | [`copilot/instructions.md`](copilot/instructions.md) | [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md) |
 | Prompt-driven work | [`prompts/README.md`](prompts/README.md) | [`.github/prompts/`](../../.github/prompts/) |
 | Documentation edits | [`instructions/README.md`](instructions/README.md) | [`agents/README.md`](agents/README.md) |
@@ -26,7 +26,7 @@ docs/ai/
 ├── ai-known-errors.md           # Recurring AI mistake registry
 ├── agents/                      # Index for GitHub agent definitions
 │   └── README.md
-├── skills/                      # Index for Claude Code skills
+├── skills/                      # Index for portable Agent Skills packages
 │   └── README.md
 ├── instructions/                # Index for Copilot path-specific instructions
 │   └── README.md
@@ -55,7 +55,7 @@ docs/ai/
 
 .claude/
 ├── agents/                      # Claude Code agent definitions
-└── skills/                      # Claude Code skills, references, evals, and scripts
+└── skills/                      # Portable Agent Skills packages, references, evals, and scripts
 ```
 
 ---
@@ -87,10 +87,10 @@ Located in `docs/ai/claude/`.
 | Resource | Purpose |
 |----------|---------|
 | [`agents/README.md`](agents/README.md) | GitHub and Claude agent overview |
-| [`skills/README.md`](skills/README.md) | Claude Code skill overview |
+| [`skills/README.md`](skills/README.md) | Portable Agent Skills overview |
 | [`prompts/README.md`](prompts/README.md) | Prompt catalog and usage guide |
 | [`.github/agents/`](../../.github/agents/) | GitHub Copilot agent definition files |
-| [`.claude/skills/`](../../.claude/skills/) | Claude Code skills, references, evals, and scripts |
+| [`.claude/skills/`](../../.claude/skills/) | Portable Agent Skills packages, references, evals, and scripts |
 
 ### Tier 4: Auto-Applied Instructions
 
