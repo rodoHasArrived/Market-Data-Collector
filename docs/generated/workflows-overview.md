@@ -4,7 +4,7 @@
 
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-20 07:13:54 UTC
+> Auto-generated on 2026-03-20 08:16:55 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -16,6 +16,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Bottleneck Detection | `bottleneck-detection.yml` | PR, manual |
 | Build Observability | `build-observability.yml` | push, PR, manual |
 | Close Duplicate and Stale Auto-Generated Issues | `close-duplicate-issues.yml` | manual, scheduled |
+| Code Quality | `code-quality.yml` | push, PR, manual |
 | Copilot Pull Request Reviewer | `copilot-pull-request-reviewer.yml` | PR, manual |
 | Copilot SWE Agent / Copilot | `copilot-swe-agent-copilot.yml` | manual |
 | Copilot Setup Steps | `copilot-setup-steps.yml` | push, manual |
@@ -66,7 +67,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 34
+- **Total workflows:** 33
 
 ---
 
