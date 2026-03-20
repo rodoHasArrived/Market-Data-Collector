@@ -11,6 +11,7 @@
     <Compile Include="DomainTests.fs" />
     <Compile Include="ValidationTests.fs" />
     <Compile Include="CalculationTests.fs" />
+    <Compile Include="CanonicalizationTests.fs" />
     <Compile Include="PipelineTests.fs" />
   </ItemGroup>
 

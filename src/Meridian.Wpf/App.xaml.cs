@@ -9,6 +9,7 @@ using Meridian.Wpf.Contracts;
 using WpfServices = Meridian.Wpf.Services;
 using Meridian.Wpf.Views;
 using Meridian.Ui.Services;
+using Meridian.Ui.Services.DataQuality;
 
 namespace Meridian.Wpf;
 
@@ -128,8 +129,11 @@ public partial class App : Application
     /// </summary>
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Register HttpClient factory
-        services.AddHttpClient();
+        // Register shared desktop HttpClient configurations
+        services.AddDesktopHttpClients();
+
+        // Shared API infrastructure
+        services.AddSingleton(_ => ApiClientService.Instance);
 
         // ── Fixture mode service (offline mock data) ────────────────────────
         services.AddSingleton(_ => Meridian.Ui.Services.Services.FixtureDataService.Instance);
@@ -165,6 +169,11 @@ public partial class App : Application
         services.AddSingleton<AdminMaintenanceServiceBase>(_ => AdminMaintenanceServiceBase.Instance);
         services.AddSingleton<AdvancedAnalyticsServiceBase>(_ => new AdvancedAnalyticsServiceBase());
         services.AddSingleton(_ => SearchService.Instance);
+
+        // ── Data quality shared services ─────────────────────────────────────
+        services.AddSingleton<IDataQualityApiClient, DataQualityApiClient>();
+        services.AddSingleton<IDataQualityPresentationService, DataQualityPresentationService>();
+        services.AddTransient<IDataQualityRefreshService, DataQualityRefreshService>();
 
         // ── Background / infrastructure services ────────────────────────────
         services.AddSingleton(_ => WpfServices.BackgroundTaskSchedulerService.Instance);
@@ -235,6 +244,7 @@ public partial class App : Application
 
         // ── ViewModels (transient — new instance per page navigation) ────────
         services.AddTransient<Meridian.Wpf.ViewModels.BackfillViewModel>();
+        services.AddTransient<Meridian.Wpf.ViewModels.DataQualityViewModel>();
     }
 
     /// <summary>

@@ -1,213 +1,59 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Meridian.Wpf.Models;
 using Meridian.Wpf.ViewModels;
-using WpfServices = Meridian.Wpf.Services;
 
-using Meridian.Wpf.Services;
 namespace Meridian.Wpf.Views;
 
 /// <summary>
 /// Data quality monitoring page showing completeness, gaps, and anomalies.
-/// Delegates all data loading, filtering, and state management to <see cref="DataQualityViewModel"/>.
-/// Code-behind retains only lifecycle wiring, chart/canvas rendering, dialog creation, and drilldown visuals.
+/// The page is responsible only for DI-backed viewmodel binding, lifecycle hooks, chart rendering, and dialogs.
 /// </summary>
 public partial class DataQualityPage : Page
 {
-    private readonly DataQualityViewModel _vm;
-    private readonly WpfServices.NotificationService _notificationService;
+    private readonly DataQualityViewModel _viewModel;
 
-    public DataQualityPage(
-        StatusService statusService,
-        WpfServices.LoggingService loggingService,
-        WpfServices.NotificationService notificationService)
+    public DataQualityPage(DataQualityViewModel viewModel)
     {
         InitializeComponent();
+        _viewModel = viewModel;
+        DataContext = _viewModel;
 
-        _notificationService = notificationService;
-        _vm = new DataQualityViewModel(statusService, loggingService, notificationService);
-
-        // Bind collections from the ViewModel to the UI controls
-        SymbolQualityList.ItemsSource = _vm.FilteredSymbols;
-        GapsControl.ItemsSource = _vm.Gaps;
-        AlertsList.ItemsSource = _vm.Alerts;
-        AnomaliesList.ItemsSource = _vm.Anomalies;
-
-        // Wire up ViewModel events for visual updates that require code-behind
-        _vm.ScoreUpdated += OnScoreUpdated;
-        _vm.PropertyChanged += OnViewModelPropertyChanged;
-
+        Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+        SizeChanged += (_, _) => RenderTrendChart(_viewModel.TrendPoints);
+        _viewModel.TrendChartChanged += (_, _) => RenderTrendChart(_viewModel.TrendPoints);
+        _viewModel.DrilldownChanged += (_, _) => ApplyDrilldownHeatmap();
     }
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        await _vm.StartAsync();
-        SyncVisibility();
-        UpdateTrendDisplay();
+        await _viewModel.StartAsync();
+        RenderTrendChart(_viewModel.TrendPoints);
+        ApplyDrilldownHeatmap();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        _vm.ScoreUpdated -= OnScoreUpdated;
-        _vm.PropertyChanged -= OnViewModelPropertyChanged;
-        _vm.Stop();
+        _viewModel.Stop();
     }
-
-    // ── ViewModel event handlers ───────────────────────────────────────────
-
-    private void OnScoreUpdated(object? sender, ScoreUpdatedEventArgs e)
-    {
-        OverallScoreText.Text = e.Score > 0 ? $"{e.Score:F1}" : "--";
-        OverallGradeText.Text = e.Label;
-        StatusText.Text = DataQualityViewModel.GetStatus(e.Score);
-
-        var statusBrush = e.Score switch
-        {
-            >= 90 => (Brush)Resources["SuccessColorBrush"],
-            >= 75 => (Brush)Resources["InfoColorBrush"],
-            >= 50 => (Brush)Resources["WarningColorBrush"],
-            _ => (Brush)Resources["ErrorColorBrush"]
-        };
-
-        StatusBadge.Background = statusBrush;
-        OverallScoreText.Foreground = statusBrush;
-        ScoreRing.Stroke = statusBrush;
-        ScoreRing.StrokeDashArray = new DoubleCollection(e.StrokeSegments);
-
-        UpdateTrendDisplay();
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        switch (e.PropertyName)
-        {
-            case nameof(DataQualityViewModel.LastUpdateText):
-                LastUpdateText.Text = _vm.LastUpdateText;
-                break;
-            case nameof(DataQualityViewModel.LatencyText):
-                LatencyText.Text = _vm.LatencyText;
-                break;
-            case nameof(DataQualityViewModel.CompletenessText):
-                CompletenessText.Text = _vm.CompletenessText;
-                break;
-            case nameof(DataQualityViewModel.HealthyFilesText):
-                HealthyFilesText.Text = _vm.HealthyFilesText;
-                break;
-            case nameof(DataQualityViewModel.WarningFilesText):
-                WarningFilesText.Text = _vm.WarningFilesText;
-                break;
-            case nameof(DataQualityViewModel.CriticalFilesText):
-                CriticalFilesText.Text = _vm.CriticalFilesText;
-                break;
-            case nameof(DataQualityViewModel.GapsCountText):
-                GapsCountText.Text = _vm.GapsCountText;
-                GapsCountText.Foreground = new SolidColorBrush(_vm.GapsCountColor);
-                break;
-            case nameof(DataQualityViewModel.ErrorsCountText):
-                ErrorsCountText.Text = _vm.ErrorsCountText;
-                ErrorsCountText.Foreground = new SolidColorBrush(_vm.ErrorsCountColor);
-                break;
-            case nameof(DataQualityViewModel.UnacknowledgedText):
-                UnacknowledgedText.Text = _vm.UnacknowledgedText;
-                break;
-            case nameof(DataQualityViewModel.TotalActiveAlertsText):
-                TotalActiveAlertsText.Text = _vm.TotalActiveAlertsText;
-                break;
-            case nameof(DataQualityViewModel.IsAlertCountBadgeVisible):
-                AlertCountBadge.Visibility = _vm.IsAlertCountBadgeVisible ? Visibility.Visible : Visibility.Collapsed;
-                AlertCountText.Text = _vm.AlertCountBadgeText;
-                break;
-            case nameof(DataQualityViewModel.CrossedMarketCount):
-                CrossedMarketCount.Text = _vm.CrossedMarketCount;
-                break;
-            case nameof(DataQualityViewModel.StaleDataCount):
-                StaleDataCount.Text = _vm.StaleDataCount;
-                break;
-            case nameof(DataQualityViewModel.InvalidPriceCount):
-                InvalidPriceCount.Text = _vm.InvalidPriceCount;
-                break;
-            case nameof(DataQualityViewModel.InvalidVolumeCount):
-                InvalidVolumeCount.Text = _vm.InvalidVolumeCount;
-                break;
-            case nameof(DataQualityViewModel.MissingDataCount):
-                MissingDataCount.Text = _vm.MissingDataCount;
-                break;
-            case nameof(DataQualityViewModel.LastCheckTimeText):
-                LastCheckTimeText.Text = _vm.LastCheckTimeText;
-                break;
-            case nameof(DataQualityViewModel.NextCheckText):
-                NextCheckText.Text = _vm.NextCheckText;
-                break;
-            case nameof(DataQualityViewModel.CheckProgressValue):
-                CheckProgress.Value = _vm.CheckProgressValue;
-                break;
-            case nameof(DataQualityViewModel.P50Text):
-                P50Text.Text = _vm.P50Text;
-                break;
-            case nameof(DataQualityViewModel.P75Text):
-                P75Text.Text = _vm.P75Text;
-                break;
-            case nameof(DataQualityViewModel.P90Text):
-                P90Text.Text = _vm.P90Text;
-                break;
-            case nameof(DataQualityViewModel.P95Text):
-                P95Text.Text = _vm.P95Text;
-                break;
-            case nameof(DataQualityViewModel.P99Text):
-                P99Text.Text = _vm.P99Text;
-                break;
-            case nameof(DataQualityViewModel.HasNoGaps):
-                NoGapsText.Visibility = _vm.HasNoGaps ? Visibility.Visible : Visibility.Collapsed;
-                break;
-            case nameof(DataQualityViewModel.HasNoAlerts):
-                NoAlertsText.Visibility = _vm.HasNoAlerts ? Visibility.Visible : Visibility.Collapsed;
-                break;
-            case nameof(DataQualityViewModel.HasNoAnomalies):
-                NoAnomaliesText.Visibility = _vm.HasNoAnomalies ? Visibility.Visible : Visibility.Collapsed;
-                break;
-            case nameof(DataQualityViewModel.HasNoSymbols):
-                NoSymbolsText.Visibility = _vm.HasNoSymbols ? Visibility.Visible : Visibility.Collapsed;
-                break;
-            case nameof(DataQualityViewModel.IsAnomalyCountBadgeVisible):
-                AnomalyCountBadge.Visibility = _vm.IsAnomalyCountBadgeVisible ? Visibility.Visible : Visibility.Collapsed;
-                AnomalyCountText.Text = _vm.AnomalyCountText;
-                break;
-        }
-    }
-
-    /// <summary>Synchronizes all visibility states from the ViewModel after initial load.</summary>
-    private void SyncVisibility()
-    {
-        NoGapsText.Visibility = _vm.HasNoGaps ? Visibility.Visible : Visibility.Collapsed;
-        NoAlertsText.Visibility = _vm.HasNoAlerts ? Visibility.Visible : Visibility.Collapsed;
-        NoAnomaliesText.Visibility = _vm.HasNoAnomalies ? Visibility.Visible : Visibility.Collapsed;
-        NoSymbolsText.Visibility = _vm.HasNoSymbols ? Visibility.Visible : Visibility.Collapsed;
-        AlertCountBadge.Visibility = _vm.IsAlertCountBadgeVisible ? Visibility.Visible : Visibility.Collapsed;
-        AnomalyCountBadge.Visibility = _vm.IsAnomalyCountBadgeVisible ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    // ── UI event handlers (delegate to ViewModel) ──────────────────────────
 
     private void TimeWindow_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (TimeWindowCombo.SelectedItem is ComboBoxItem item && item.Tag is string window)
         {
-            _vm.SetTimeRange(window);
-            UpdateTrendDisplay();
+            _viewModel.SetTimeRange(window);
         }
     }
 
-    private void Refresh_Click(object sender, RoutedEventArgs e)
+    private async void Refresh_Click(object sender, RoutedEventArgs e)
     {
-        _ = _vm.RefreshAsync();
+        await _viewModel.RefreshAsync();
     }
 
     private async void RunQualityCheck_Click(object sender, RoutedEventArgs e)
@@ -215,82 +61,104 @@ public partial class DataQualityPage : Page
         var path = PromptForQualityCheckPath();
         if (!string.IsNullOrWhiteSpace(path))
         {
-            await _vm.RunQualityCheckAsync(path);
+            await _viewModel.RunQualityCheckAsync(path);
         }
     }
 
     private async void RepairGap_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not string gapId) return;
-
-        var gap = _vm.Gaps.FirstOrDefault(g => g.GapId == gapId);
-        if (gap == null) return;
-
-        if (!ShowRepairPreviewDialog(gap))
+        if (sender is not Button btn || btn.Tag is not string gapId)
+        {
             return;
+        }
 
-        await _vm.RepairGapAsync(gapId);
+        var gap = _viewModel.Gaps.FirstOrDefault(g => g.GapId == gapId);
+        if (gap != null && ShowRepairPreviewDialog(gap))
+        {
+            await _viewModel.RepairGapAsync(gapId);
+        }
     }
 
     private async void RepairAllGaps_Click(object sender, RoutedEventArgs e)
     {
-        if (_vm.Gaps.Count == 0)
+        if (_viewModel.Gaps.Count == 0)
         {
-            _notificationService.ShowNotification("No Gaps", "There are no gaps to repair.", NotificationType.Info);
             return;
         }
 
-        if (!ShowRepairAllPreviewDialog(_vm.Gaps.ToList()))
-            return;
-
-        await _vm.RepairAllGapsAsync();
+        if (ShowRepairAllPreviewDialog(_viewModel.Gaps.ToList()))
+        {
+            await _viewModel.RepairAllGapsAsync();
+        }
     }
 
     private async void CompareProviders_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not string symbol) return;
+        if (sender is not Button btn || btn.Tag is not string symbol)
+        {
+            return;
+        }
 
-        var data = await _vm.GetProviderComparisonAsync(symbol);
-        ShowProviderComparisonDialog(symbol, data);
+        var comparison = await _viewModel.GetProviderComparisonAsync(symbol);
+        ShowProviderComparisonDialog(comparison.Symbol, comparison.Providers);
     }
 
     private void SymbolFilter_TextChanged(object sender, TextChangedEventArgs e)
     {
-        _vm.ApplySymbolFilter(SymbolFilterBox.Text?.Trim().ToUpperInvariant() ?? string.Empty);
+        _viewModel.ApplySymbolFilter(SymbolFilterBox.Text?.Trim() ?? string.Empty);
+    }
+
+    private void SymbolQuality_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SymbolQualityList.SelectedItem is SymbolQualityModel selected)
+        {
+            _viewModel.ShowSymbolDrilldown(selected);
+        }
+        else
+        {
+            _viewModel.HideSymbolDrilldown();
+        }
+    }
+
+    private void CloseDrilldown_Click(object sender, RoutedEventArgs e)
+    {
+        SymbolQualityList.SelectedItem = null;
+        _viewModel.HideSymbolDrilldown();
     }
 
     private void SeverityFilter_Changed(object sender, SelectionChangedEventArgs e)
     {
         var severity = (SeverityFilterCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "All";
-        _vm.ApplyAlertFilter(severity);
-    }
-
-    private void AnomalyType_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        var type = (AnomalyTypeCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "All";
-        _vm.ApplyAnomalyFilter(type);
+        _viewModel.ApplyAlertFilter(severity);
     }
 
     private async void AcknowledgeAlert_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.Tag is string alertId)
         {
-            await _vm.AcknowledgeAlertAsync(alertId);
+            await _viewModel.AcknowledgeAlertAsync(alertId);
         }
     }
 
     private async void AcknowledgeAll_Click(object sender, RoutedEventArgs e)
     {
-        await _vm.AcknowledgeAllAlertsAsync();
+        await _viewModel.AcknowledgeAllAlertsAsync();
     }
 
-    // ── Symbol drilldown (UI-only) ─────────────────────────────────────────
-
-    private void SymbolQuality_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void AnomalyType_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (SymbolQualityList.SelectedItem is SymbolQualityModel selected)
+        var type = (AnomalyTypeCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "All";
+        _viewModel.ApplyAnomalyFilter(type);
+    }
+
+    private void RenderTrendChart(IReadOnlyList<TrendPoint> points)
+    {
+        if (points.Count == 0)
         {
-            ShowSymbolDrilldown(selected);
+            TrendChartLine.Points = new PointCollection();
+            TrendChartFill.Points = new PointCollection();
+            XAxisLabels.Children.Clear();
+            return;
         }
         else
         {
@@ -308,98 +176,6 @@ public partial class DataQualityPage : Page
             : model.Score >= 70
                 ? new SolidColorBrush(Color.FromRgb(227, 179, 65))
                 : new SolidColorBrush(Color.FromRgb(244, 67, 54));
-
-        var random = new Random(model.Symbol.GetHashCode());
-        DrilldownCompletenessText.Text = $"{random.Next(85, 100)}%";
-        DrilldownGapsText.Text = random.Next(0, 5).ToString();
-        DrilldownErrorsText.Text = random.Next(0, 3).ToString();
-        DrilldownLatencyText.Text = $"{random.Next(5, 120)}ms";
-
-        var heatmapCells = new[] { HeatmapCell0, HeatmapCell1, HeatmapCell2, HeatmapCell3, HeatmapCell4, HeatmapCell5, HeatmapCell6 };
-        var dayLabels = new[] { HeatmapDay0Label, HeatmapDay1Label, HeatmapDay2Label, HeatmapDay3Label, HeatmapDay4Label, HeatmapDay5Label, HeatmapDay6Label };
-
-        for (var i = 0; i < 7; i++)
-        {
-            var day = DateTime.Today.AddDays(-6 + i);
-            dayLabels[i].Text = day.ToString("ddd");
-
-            var dayScore = random.Next(60, 100);
-            heatmapCells[i].Background = dayScore >= 95
-                ? new SolidColorBrush(Color.FromArgb(200, 63, 185, 80))
-                : dayScore >= 85
-                    ? new SolidColorBrush(Color.FromArgb(200, 78, 201, 176))
-                    : dayScore >= 70
-                        ? new SolidColorBrush(Color.FromArgb(200, 227, 179, 65))
-                        : new SolidColorBrush(Color.FromArgb(200, 244, 67, 54));
-
-            heatmapCells[i].ToolTip = $"{day:MMM dd}: Score {dayScore}%";
-        }
-
-        var issues = new ObservableCollection<DrilldownIssue>();
-        var issueTypes = new[] { "Sequence gap detected", "Stale data (>5s delay)", "Price spike anomaly", "Missing quotes window", "Volume irregularity" };
-        var issueCount = random.Next(0, 4);
-        for (var i = 0; i < issueCount; i++)
-        {
-            var severity = random.Next(0, 3);
-            issues.Add(new DrilldownIssue
-            {
-                Description = issueTypes[random.Next(issueTypes.Length)],
-                Timestamp = DateTime.Now.AddMinutes(-random.Next(10, 2880)).ToString("MMM dd HH:mm"),
-                SeverityBrush = severity == 0
-                    ? new SolidColorBrush(Color.FromRgb(244, 67, 54))
-                    : severity == 1
-                        ? new SolidColorBrush(Color.FromRgb(227, 179, 65))
-                        : new SolidColorBrush(Color.FromRgb(33, 150, 243))
-            });
-        }
-
-        DrilldownIssuesList.ItemsSource = issues;
-        NoDrilldownIssuesText.Visibility = issues.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        DrilldownIssuesList.Visibility = issues.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void CloseDrilldown_Click(object sender, RoutedEventArgs e)
-    {
-        SymbolDrilldownPanel.Visibility = Visibility.Collapsed;
-        SymbolQualityList.SelectedItem = null;
-    }
-
-    // ── Trend chart rendering (UI-only) ────────────────────────────────────
-
-    private void UpdateTrendDisplay()
-    {
-        var stats = _vm.ComputeTrendStatistics();
-        AvgScoreText.Text = stats.AvgText;
-        MinScoreText.Text = stats.MinText;
-        MaxScoreText.Text = stats.MaxText;
-        StdDevText.Text = stats.StdDevText;
-
-        if (stats.HasData)
-        {
-            TrendIcon.Text = stats.IsTrendPositive ? "\uE70E" : "\uE70D";
-            TrendText.Text = stats.TrendText;
-
-            var trendBrush = stats.ScoreChange > 0.5
-                ? (Brush)Resources["SuccessColorBrush"]
-                : stats.ScoreChange < -0.5
-                    ? (Brush)Resources["ErrorColorBrush"]
-                    : (Brush)Resources["WarningColorBrush"];
-
-            TrendIcon.Foreground = trendBrush;
-            TrendText.Foreground = trendBrush;
-        }
-
-        RenderTrendChart(_vm.GetTrendPoints());
-    }
-
-    private void RenderTrendChart(IReadOnlyList<TrendPoint> points)
-    {
-        if (points.Count == 0)
-        {
-            TrendChartLine.Points = new PointCollection();
-            TrendChartFill.Points = new PointCollection();
-            return;
-        }
 
         var width = TrendChart.ActualWidth;
         var height = TrendChart.ActualHeight;
@@ -420,7 +196,7 @@ public partial class DataQualityPage : Page
         {
             var x = i * (width / Math.Max(1, points.Count - 1));
             var normalized = (points[i].Score - minScore) / Math.Max(1, maxScore - minScore);
-            var y = height - (normalized * height);
+            var y = height - normalized * height;
 
             pointsCollection.Add(new Point(x, y));
             fillCollection.Add(new Point(x, y));
@@ -442,9 +218,34 @@ public partial class DataQualityPage : Page
                 Margin = new Thickness(0, 0, 16, 0)
             });
         }
-    }
 
-    // ── Dialogs (UI-only) ──────────────────────────────────────────────────
+    private void ApplyDrilldownHeatmap()
+    {
+        var heatmapCells = new[] { HeatmapCell0, HeatmapCell1, HeatmapCell2, HeatmapCell3, HeatmapCell4, HeatmapCell5, HeatmapCell6 };
+        var dayLabels = new[] { HeatmapDay0Label, HeatmapDay1Label, HeatmapDay2Label, HeatmapDay3Label, HeatmapDay4Label, HeatmapDay5Label, HeatmapDay6Label };
+
+        for (var i = 0; i < heatmapCells.Length; i++)
+        {
+            if (i >= _viewModel.DrilldownHeatmapCells.Count)
+            {
+                heatmapCells[i].Background = Brushes.Transparent;
+                heatmapCells[i].ToolTip = null;
+                dayLabels[i].Text = string.Empty;
+                continue;
+            }
+
+            var cell = _viewModel.DrilldownHeatmapCells[i];
+            dayLabels[i].Text = cell.Label;
+            heatmapCells[i].Background = cell.Tone switch
+            {
+                Meridian.Ui.Services.DataQuality.DataQualityVisualTones.Success => new SolidColorBrush(Color.FromArgb(200, 63, 185, 80)),
+                Meridian.Ui.Services.DataQuality.DataQualityVisualTones.Info => new SolidColorBrush(Color.FromArgb(200, 78, 201, 176)),
+                Meridian.Ui.Services.DataQuality.DataQualityVisualTones.Warning => new SolidColorBrush(Color.FromArgb(200, 227, 179, 65)),
+                _ => new SolidColorBrush(Color.FromArgb(200, 244, 67, 54))
+            };
+            heatmapCells[i].ToolTip = cell.Tooltip;
+        }
+    }
 
     private static bool ShowRepairPreviewDialog(GapModel gap)
     {
@@ -552,7 +353,6 @@ public partial class DataQualityPage : Page
         };
 
         var stack = new StackPanel { Margin = new Thickness(20) };
-
         stack.Children.Add(new TextBlock
         {
             Text = $"Repair {gaps.Count} Gap(s)",
@@ -570,7 +370,6 @@ public partial class DataQualityPage : Page
         };
 
         var listPanel = new StackPanel();
-
         foreach (var gap in gaps)
         {
             var row = new Border
@@ -586,11 +385,7 @@ public partial class DataQualityPage : Page
             rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
 
-            var symbolText = new TextBlock
-            {
-                Text = gap.Symbol, FontWeight = FontWeights.SemiBold,
-                Foreground = Brushes.White, FontSize = 12
-            };
+            var symbolText = new TextBlock { Text = gap.Symbol, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White, FontSize = 12 };
             Grid.SetColumn(symbolText, 0);
             rowGrid.Children.Add(symbolText);
 
@@ -629,12 +424,7 @@ public partial class DataQualityPage : Page
             Margin = new Thickness(0, 0, 0, 16)
         });
 
-        var buttonsPanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right
-        };
-
+        var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var cancelButton = new Button
         {
             Content = "Cancel", Width = 80, Margin = new Thickness(0, 0, 8, 0),
@@ -663,7 +453,7 @@ public partial class DataQualityPage : Page
         return confirmed;
     }
 
-    private static void ShowProviderComparisonDialog(string symbol, System.Text.Json.JsonElement data)
+    private static void ShowProviderComparisonDialog(string symbol, IReadOnlyList<Meridian.Ui.Services.DataQuality.DataQualityProviderComparisonItem> providers)
     {
         var window = new Window
         {
@@ -677,7 +467,6 @@ public partial class DataQualityPage : Page
         };
 
         var stack = new StackPanel { Margin = new Thickness(20) };
-
         stack.Children.Add(new TextBlock
         {
             Text = $"Data Quality Comparison: {symbol}",
@@ -687,36 +476,16 @@ public partial class DataQualityPage : Page
             Margin = new Thickness(0, 0, 0, 16)
         });
 
-        var providers = new List<(string Name, double Completeness, string Latency, string Freshness, string Status)>();
-
-        if (data.ValueKind == System.Text.Json.JsonValueKind.Object
-            && data.TryGetProperty("providers", out var provArray)
-            && provArray.ValueKind == System.Text.Json.JsonValueKind.Array)
-        {
-            foreach (var prov in provArray.EnumerateArray())
-            {
-                var name = prov.TryGetProperty("provider", out var n) ? n.GetString() ?? "" : "";
-                var comp = prov.TryGetProperty("completeness", out var c) ? c.GetDouble() * 100 : 0;
-                var lat = prov.TryGetProperty("averageLatencyMs", out var l) ? $"{l.GetDouble():F0}ms" : "--";
-                var fresh = prov.TryGetProperty("lastDataAge", out var f) ? f.GetString() ?? "--" : "--";
-                var status = comp >= 95 ? "Good" : comp >= 80 ? "Fair" : "Poor";
-                providers.Add((name, comp, lat, fresh, status));
-            }
-        }
-
-        if (providers.Count == 0)
-        {
-            providers.Add(("Alpaca", 99.2, "8ms", "2s ago", "Good"));
-            providers.Add(("Polygon", 97.8, "12ms", "5s ago", "Good"));
-            providers.Add(("Tiingo", 94.5, "45ms", "1m ago", "Fair"));
-            providers.Add(("Yahoo Finance", 88.2, "120ms", "15m ago", "Fair"));
-        }
-
         stack.Children.Add(BuildComparisonRow("Provider", "Completeness", "Latency", "Freshness", "Status", true));
-
-        foreach (var (name, completeness, latency, freshness, status) in providers)
+        foreach (var provider in providers)
         {
-            stack.Children.Add(BuildComparisonRow(name, $"{completeness:F1}%", latency, freshness, status, false));
+            stack.Children.Add(BuildComparisonRow(
+                provider.Name,
+                provider.CompletenessText,
+                provider.LatencyText,
+                provider.FreshnessText,
+                provider.Status,
+                false));
         }
 
         var closeButton = new Button
@@ -740,9 +509,7 @@ public partial class DataQualityPage : Page
     {
         var border = new Border
         {
-            Background = isHeader
-                ? new SolidColorBrush(Color.FromRgb(50, 50, 50))
-                : new SolidColorBrush(Color.FromRgb(40, 40, 40)),
+            Background = isHeader ? new SolidColorBrush(Color.FromRgb(50, 50, 50)) : new SolidColorBrush(Color.FromRgb(40, 40, 40)),
             Padding = new Thickness(12, 8, 12, 8),
             Margin = new Thickness(0, 0, 0, 2),
             CornerRadius = isHeader ? new CornerRadius(4, 4, 0, 0) : new CornerRadius(0)
@@ -756,9 +523,7 @@ public partial class DataQualityPage : Page
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         var weight = isHeader ? FontWeights.SemiBold : FontWeights.Normal;
-        var fg = isHeader
-            ? new SolidColorBrush(Color.FromRgb(200, 200, 200))
-            : Brushes.White;
+        var fg = isHeader ? new SolidColorBrush(Color.FromRgb(200, 200, 200)) : Brushes.White;
         var statusFg = col5 switch
         {
             "Good" => new SolidColorBrush(Color.FromRgb(63, 185, 80)),
@@ -817,15 +582,10 @@ public partial class DataQualityPage : Page
         };
 
         var textBox = new TextBox { Margin = new Thickness(0, 12, 0, 12), MinWidth = 320 };
-
         var okButton = new Button { Content = "Run", Width = 80, Margin = new Thickness(0, 0, 8, 0) };
         var cancelButton = new Button { Content = "Cancel", Width = 80 };
 
-        var buttonsPanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right
-        };
+        var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         buttonsPanel.Children.Add(okButton);
         buttonsPanel.Children.Add(cancelButton);
 

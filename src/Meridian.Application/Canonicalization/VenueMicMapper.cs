@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using System.Text.Json;
 using Meridian.Application.Logging;
+using Meridian.FSharp.Canonicalization;
 using Serilog;
 
 namespace Meridian.Application.Canonicalization;
@@ -63,7 +64,7 @@ public sealed class VenueMicMapper
         {
             foreach (var providerProp in mappings.EnumerateObject())
             {
-                var provider = providerProp.Name.ToUpperInvariant();
+                var provider = VenueMappingRules.NormalizeProvider(providerProp.Name);
                 foreach (var venueProp in providerProp.Value.EnumerateObject())
                 {
                     var rawVenue = venueProp.Name;
@@ -86,20 +87,11 @@ public sealed class VenueMicMapper
     /// <returns>The ISO MIC code, or null if the venue is unmappable or unknown.</returns>
     public string? TryMapVenue(string? rawVenue, string provider)
     {
-        if (string.IsNullOrEmpty(rawVenue))
+        if (rawVenue is null)
+        {
             return null;
-
-        var upperProvider = provider.ToUpperInvariant();
-
-        if (_map.TryGetValue((upperProvider, rawVenue), out var mic))
-            return mic;
-
-        // Try case-insensitive venue match by uppercasing the raw venue
-        var upperVenue = rawVenue.ToUpperInvariant();
-        if (upperVenue != rawVenue && _map.TryGetValue((upperProvider, upperVenue), out mic))
-            return mic;
-
-        return null;
+        }
+        return VenueMappingRules.TryMapVenue(_map, rawVenue, provider);
     }
 
     /// <summary>

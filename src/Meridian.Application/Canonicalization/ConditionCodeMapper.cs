@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Text.Json;
 using Meridian.Application.Logging;
 using Meridian.Contracts.Domain.Enums;
+using Meridian.FSharp.Canonicalization;
 using Serilog;
 
 namespace Meridian.Application.Canonicalization;
@@ -65,13 +66,13 @@ public sealed class ConditionCodeMapper
         {
             foreach (var providerProp in mappings.EnumerateObject())
             {
-                var provider = providerProp.Name.ToUpperInvariant();
+                var provider = ConditionCodeRules.NormalizeProvider(providerProp.Name);
                 foreach (var codeProp in providerProp.Value.EnumerateObject())
                 {
                     var rawCode = codeProp.Name;
                     var canonicalName = codeProp.Value.GetString();
                     if (canonicalName is not null &&
-                        Enum.TryParse<CanonicalTradeCondition>(canonicalName, ignoreCase: true, out var canonical))
+                        ConditionCodeRules.TryParseCanonicalCondition(canonicalName, out var canonical))
                     {
                         dict[(provider, rawCode)] = canonical;
                     }
@@ -95,16 +96,7 @@ public sealed class ConditionCodeMapper
         if (rawConditions is null or { Length: 0 })
             return ([], []);
 
-        var upperProvider = provider.ToUpperInvariant();
-        var canonical = new CanonicalTradeCondition[rawConditions.Length];
-
-        for (var i = 0; i < rawConditions.Length; i++)
-        {
-            canonical[i] = _map.TryGetValue((upperProvider, rawConditions[i]), out var mapped)
-                ? mapped
-                : CanonicalTradeCondition.Unknown;
-        }
-
+        var canonical = ConditionCodeRules.MapConditions(_map, provider, rawConditions);
         return (canonical, rawConditions);
     }
 
@@ -113,9 +105,7 @@ public sealed class ConditionCodeMapper
     /// </summary>
     public CanonicalTradeCondition MapSingle(string provider, string rawCode)
     {
-        return _map.TryGetValue((provider.ToUpperInvariant(), rawCode), out var mapped)
-            ? mapped
-            : CanonicalTradeCondition.Unknown;
+        return ConditionCodeRules.MapSingle(_map, provider, rawCode);
     }
 
     /// <summary>
@@ -131,12 +121,7 @@ public sealed class ConditionCodeMapper
     /// <returns>True if any condition represents a halt state.</returns>
     public static bool ContainsHaltCondition(CanonicalTradeCondition[] conditions)
     {
-        for (var i = 0; i < conditions.Length; i++)
-        {
-            if (IsHaltCondition(conditions[i]))
-                return true;
-        }
-        return false;
+        return ConditionCodeRules.ContainsHaltCondition(conditions);
     }
 
     /// <summary>
@@ -144,13 +129,7 @@ public sealed class ConditionCodeMapper
     /// </summary>
     public static bool IsHaltCondition(CanonicalTradeCondition condition)
     {
-        return condition is CanonicalTradeCondition.Halted
-            or CanonicalTradeCondition.CircuitBreakerLevel1
-            or CanonicalTradeCondition.CircuitBreakerLevel2
-            or CanonicalTradeCondition.CircuitBreakerLevel3
-            or CanonicalTradeCondition.LuldPause
-            or CanonicalTradeCondition.RegulatoryHalt
-            or CanonicalTradeCondition.IpoHalt;
+        return ConditionCodeRules.IsHaltCondition(condition);
     }
 
     /// <summary>
@@ -158,6 +137,6 @@ public sealed class ConditionCodeMapper
     /// </summary>
     public static bool IsResumedCondition(CanonicalTradeCondition condition)
     {
-        return condition == CanonicalTradeCondition.TradingResumed;
+        return ConditionCodeRules.IsResumedCondition(condition);
     }
 }

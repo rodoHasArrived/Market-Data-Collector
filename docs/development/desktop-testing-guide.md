@@ -50,14 +50,35 @@ make test-desktop-services
 
 # Or run specific test projects:
 dotnet test tests/Meridian.Wpf.Tests  # Windows only
-dotnet test tests/Meridian.Tests --filter "FullyQualifiedName~ConfigurationUnificationTests"
+dotnet test tests/Meridian.Ui.Tests   # Shared UI services (Windows target; intentionally limited scope)
+dotnet test tests/Meridian.Tests      # Cross-platform startup, composition, contracts, and endpoint-shape coverage
 ```
 
 ## Test Projects
 
-### Meridian.Ui.Tests (71 tests, Windows only)
+### Meridian.Tests (cross-platform backend + host topology)
 
-Tests for shared UI services used by the WPF desktop application.
+`tests/Meridian.Tests/` is the default home for repository-wide tests that must stay runnable without Windows desktop support.
+
+**Keep these suites here:**
+
+- startup and host wiring checks
+- DI composition / composition-root tests
+- provider and endpoint contract tests
+- endpoint response-shape and schema snapshot tests
+- cross-platform application, domain, infrastructure, and storage logic
+
+**Examples already in this project:**
+
+- `Integration/EndpointTests/*`
+- `Application/Composition/*`
+- `Infrastructure/Providers/*ContractTests.cs`
+- `Integration/EndpointTests/ResponseSchema*Tests.cs`
+
+### Meridian.Ui.Tests (shared desktop service logic under the existing Windows target)
+
+Tests for shared desktop-facing services in `src/Meridian.Ui.Services/`.
+Although the project keeps its existing Windows-aware target behavior, its scope should stay focused on platform-compatible shared service logic rather than backend host topology.
 
 **Test Suites:**
 
@@ -82,9 +103,16 @@ dotnet test tests/Meridian.Ui.Tests/Meridian.Ui.Tests.csproj
 
 These tests validate shared services used by the WPF desktop application.
 
-### Meridian.Wpf.Tests (58 tests, Windows only)
+**Keep these suites here:**
 
-Tests for WPF singleton services. These tests require Windows as they depend on WPF types (`System.Windows.Controls.Frame`, etc.).
+- shared service abstractions and base classes
+- collection helpers and model-shaping helpers
+- shared refresh/polling coordinators whose scheduling is abstracted behind an interface
+- service logic that is independent of WPF page navigation, binding, or desktop host wiring
+
+### Meridian.Wpf.Tests (Windows only)
+
+Tests for WPF-specific behavior that genuinely depends on WPF types (`System.Windows.Controls.Frame`, bindings, navigation wiring, resource dictionaries, and desktop DI registration).
 
 **Test Suites:**
 
@@ -128,13 +156,22 @@ dotnet test tests/Meridian.Wpf.Tests/Meridian.Wpf.Tests.csproj
 
 On non-Windows platforms, these tests will be skipped automatically by the Makefile target.
 
+**Keep these suites here:**
+
+- binding-specific behavior
+- navigation/page registration behavior
+- WPF host wiring and desktop-only service registration
+
+Do **not** move mapping, filtering, or refresh-state logic into this project unless the logic truly requires WPF types. Prefer shared services or plain viewmodel logic with an injected scheduler abstraction.
+
 ### Combined Test Coverage Summary
 
 | Project | Tests | Platform | Coverage Areas |
 |---------|-------|----------|----------------|
-| **Meridian.Ui.Tests** | 71 | Windows | Shared UI services, collections, form validation |
-| **Meridian.Wpf.Tests** | 58 | Windows | WPF singleton services, navigation, configuration |
-| **Total Desktop Tests** | **129** | Windows | Comprehensive desktop service validation |
+| **Meridian.Tests** | Cross-platform | Any OS with .NET 9 | Startup, composition, contracts, endpoint shape, and core/backend logic |
+| **Meridian.Ui.Tests** | Varies by slice | Windows target | Shared UI services, collections, form validation, scheduler-backed shared refresh logic |
+| **Meridian.Wpf.Tests** | Varies by slice | Windows | WPF-specific binding, navigation, and host wiring |
+| **Desktop-specific test projects** | Varies by slice | Windows | Shared desktop services plus WPF-only integration points |
 
 **Coverage breakdown:**
 - Navigation: 14 tests (page routing, history, breadcrumbs)
@@ -255,6 +292,10 @@ When adding new desktop tests:
 4. **Test error paths**: Verify exception handling, cancellation support
 5. **Keep tests fast**: Avoid actual network calls, use mocked endpoints
 6. **Document test purpose**: Clear test names and XML comments
+7. **Choose the project by topology**:
+   - `Meridian.Tests` for startup/composition/contracts/endpoint shape and any logic that must run cross-platform
+   - `Meridian.Ui.Tests` for shared UI-service logic with platform-neutral cores
+   - `Meridian.Wpf.Tests` only for WPF-specific binding, navigation, and host wiring
 
 Example test structure:
 
