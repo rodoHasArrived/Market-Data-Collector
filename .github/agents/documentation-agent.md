@@ -1618,6 +1618,8 @@ Meridian/
 │   │   │   │   ...
 │   │   │   ├── Commands/
 │   │   │   │   ...
+│   │   │   ├── Composition/
+│   │   │   │   ...
 │   │   │   ├── Config/
 │   │   │   │   ...
 │   │   │   ├── Credentials/
@@ -1700,7 +1702,8 @@ Meridian/
 │   │   ├── TestHelpers/
 │   │   │   └── TestMarketEventPublisher.cs
 │   │   ├── GlobalUsings.cs
-│   │   └── Meridian.Tests.csproj
+│   │   ├── Meridian.Tests.csproj
+│   │   └── TestCollections.cs
 │   ├── Meridian.Ui.Tests/
 │   │   ├── Collections/
 │   │   │   ├── BoundedObservableCollectionTests.cs
