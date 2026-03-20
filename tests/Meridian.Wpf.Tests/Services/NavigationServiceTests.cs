@@ -137,8 +137,79 @@ public sealed class NavigationServiceTests
         isRegistered.Should().BeTrue($"page '{firstPage}' should be registered");
     }
 
-    [Fact]
-    public void IsPageRegistered_WithUnknownPage_ShouldReturnFalse()
+    [Theory]
+    [InlineData("Backtest")]
+    [InlineData("LeanIntegration")]
+    [InlineData("PortfolioImport")]
+    [InlineData("TradingHours")]
+    public void IsPageRegistered_TradingWorkflowPages_ShouldReturnTrue(string pageTag)
+    {
+        // Arrange
+        var service = NavigationService.Instance;
+
+        // Act
+        var isRegistered = service.IsPageRegistered(pageTag);
+
+        // Assert
+        isRegistered.Should().BeTrue($"trading workflow page '{pageTag}' must be registered so it is reachable from primary navigation");
+    }
+
+    [Theory]
+    [InlineData("Dashboard")]
+    [InlineData("LiveData")]
+    [InlineData("Charts")]
+    [InlineData("OrderBook")]
+    [InlineData("Watchlist")]
+    public void IsPageRegistered_ResearchSectionPages_ShouldReturnTrue(string pageTag)
+    {
+        // Arrange
+        var service = NavigationService.Instance;
+
+        // Act
+        var isRegistered = service.IsPageRegistered(pageTag);
+
+        // Assert
+        isRegistered.Should().BeTrue($"research section page '{pageTag}' must be registered and reachable");
+    }
+
+    [Theory]
+    [InlineData("Provider")]
+    [InlineData("Symbols")]
+    [InlineData("Backfill")]
+    [InlineData("Storage")]
+    [InlineData("DataExport")]
+    [InlineData("PackageManager")]
+    public void IsPageRegistered_DataOpsSectionPages_ShouldReturnTrue(string pageTag)
+    {
+        // Arrange
+        var service = NavigationService.Instance;
+
+        // Act
+        var isRegistered = service.IsPageRegistered(pageTag);
+
+        // Assert
+        isRegistered.Should().BeTrue($"data ops section page '{pageTag}' must be registered and reachable");
+    }
+
+    [Theory]
+    [InlineData("DataQuality")]
+    [InlineData("ProviderHealth")]
+    [InlineData("SystemHealth")]
+    [InlineData("Diagnostics")]
+    [InlineData("Settings")]
+    [InlineData("AdminMaintenance")]
+    public void IsPageRegistered_GovernanceSectionPages_ShouldReturnTrue(string pageTag)
+    {
+        // Arrange
+        var service = NavigationService.Instance;
+
+        // Act
+        var isRegistered = service.IsPageRegistered(pageTag);
+
+        // Assert
+        isRegistered.Should().BeTrue($"governance section page '{pageTag}' must be registered and reachable");
+    }
+
     {
         // Arrange
         var service = NavigationService.Instance;
