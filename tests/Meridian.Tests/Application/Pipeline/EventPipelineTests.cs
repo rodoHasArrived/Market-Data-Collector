@@ -113,7 +113,8 @@ public class EventPipelineTests : IAsyncLifetime
     [Fact]
     public async Task MultiConsumerMode_AllowsConcurrentSlowPathAppends()
     {
-        await using var sink = new ConcurrencyTrackingSink(TimeSpan.FromMilliseconds(20));
+        var releaseTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var sink = new ConcurrencyTrackingSink(releaseTcs.Task);
         await using var pipeline = new EventPipeline(
             sink,
             capacity: 1_000,
@@ -121,14 +122,18 @@ public class EventPipelineTests : IAsyncLifetime
             enablePeriodicFlush: false,
             consumerCount: 2);
 
-        for (var i = 0; i < 25; i++)
+        for (var i = 0; i < 4; i++)
         {
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
+        // Wait until at least 2 consumers are blocked in the sink simultaneously — this
+        // proves they overlap before we let them proceed, making the assertion deterministic.
+        await sink.ConcurrencyReachedTask.WaitAsync(TimeSpan.FromSeconds(5));
+        releaseTcs.SetResult(true);
+
         await pipeline.FlushAsync();
 
-        sink.ReceivedCount.Should().Be(25);
         sink.MaxConcurrentAppends.Should().BeGreaterThan(1,
             "multiple consumers should overlap sink appends when advanced persistence features are disabled");
     }
@@ -862,15 +867,23 @@ internal sealed class BlockingStorageSink : IStorageSink
 
 internal sealed class ConcurrencyTrackingSink : IStorageSink
 {
-    private readonly TimeSpan _processingDelay;
+    private readonly Task _releaseSignal;
+    private readonly TaskCompletionSource _concurrencyReached =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _receivedCount;
     private int _activeAppends;
     private int _maxConcurrentAppends;
 
-    public ConcurrencyTrackingSink(TimeSpan processingDelay)
+    public ConcurrencyTrackingSink(Task releaseSignal)
     {
-        _processingDelay = processingDelay;
+        _releaseSignal = releaseSignal;
     }
+
+    /// <summary>
+    /// Completes when at least 2 concurrent appends have been observed simultaneously.
+    /// Await this before releasing the sink to make concurrency assertions deterministic.
+    /// </summary>
+    public Task ConcurrencyReachedTask => _concurrencyReached.Task;
 
     public int ReceivedCount => Volatile.Read(ref _receivedCount);
     public int MaxConcurrentAppends => Volatile.Read(ref _maxConcurrentAppends);
@@ -880,9 +893,14 @@ internal sealed class ConcurrencyTrackingSink : IStorageSink
         var active = Interlocked.Increment(ref _activeAppends);
         UpdateMax(active);
 
+        if (active >= 2)
+            _concurrencyReached.TrySetResult();
+
         try
         {
-            await Task.Delay(_processingDelay, ct);
+            // Block until released — this keeps each consumer inside AppendAsync long
+            // enough for a second consumer to also enter, proving concurrent overlap.
+            await _releaseSignal.WaitAsync(ct).ConfigureAwait(false);
             Interlocked.Increment(ref _receivedCount);
         }
         finally

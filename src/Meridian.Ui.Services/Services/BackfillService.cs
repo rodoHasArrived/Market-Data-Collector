@@ -108,7 +108,7 @@ public sealed class BackfillService
         DateTime fromDate,
         DateTime toDate,
         string granularity = "Daily",
-        Action<BackfillProgress>? progressCallback = null)
+        Action<BackfillProgress>? progressCallback = null, CancellationToken ct = default)
     {
         if (IsRunning)
         {
@@ -293,7 +293,7 @@ public sealed class BackfillService
     public async Task StartGapFillAsync(
         string[] symbols,
         int lookbackDays = 30,
-        Action<BackfillProgress>? progressCallback = null)
+        Action<BackfillProgress>? progressCallback = null, CancellationToken ct = default)
     {
         if (IsRunning)
         {
@@ -721,7 +721,7 @@ public sealed class BackfillService
     /// </summary>
     public async Task ResumeBackfillAsync(
         string checkpointJobId,
-        Action<BackfillProgress>? progressCallback = null)
+        Action<BackfillProgress>? progressCallback = null, CancellationToken ct = default)
     {
         var checkpoint = await _checkpointService.LoadCheckpointAsync(checkpointJobId);
         if (checkpoint == null)

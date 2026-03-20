@@ -346,7 +346,7 @@ public sealed class DiagnosticBundleService
         key.Equals("PATH", StringComparison.OrdinalIgnoreCase) ? "[PATH variable - omitted for brevity]" :
         value;
 
-    private static async Task ListDirectoryAsync(string path, StringBuilder sb, string indent, int maxDepth)
+    private static async Task ListDirectoryAsync(string path, StringBuilder sb, string indent, int maxDepth, CancellationToken ct = default)
     {
         if (maxDepth <= 0)
             return;

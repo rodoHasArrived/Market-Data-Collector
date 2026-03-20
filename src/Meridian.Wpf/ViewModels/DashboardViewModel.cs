@@ -482,7 +482,7 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
 
     // ── Business logic ────────────────────────────────────────────────────────────
 
-    private async Task RefreshStatusAsync()
+    private async Task RefreshStatusAsync(CancellationToken ct = default)
     {
         try
         {
@@ -686,7 +686,7 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
 
     // ── Command implementations ───────────────────────────────────────────────────
 
-    private async Task StartCollectorAsync()
+    private async Task StartCollectorAsync(CancellationToken ct = default)
     {
         try
         {
@@ -711,7 +711,7 @@ public sealed class DashboardViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task StopCollectorAsync()
+    private async Task StopCollectorAsync(CancellationToken ct = default)
     {
         try
         {

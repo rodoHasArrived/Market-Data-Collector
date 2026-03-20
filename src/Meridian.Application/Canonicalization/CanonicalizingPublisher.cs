@@ -139,7 +139,7 @@ public sealed class CanonicalizingPublisher : IMarketEventPublisher
         return _inner.TryPublish(in canonical);
     }
 
-    private async Task RecordQuarantineAsync(MarketEvent evt)
+    private async Task RecordQuarantineAsync(MarketEvent evt, CancellationToken ct = default)
     {
         try
         {

@@ -86,53 +86,93 @@ public sealed partial class PortableDataPackager
     {
         var result = new ExtractionResult();
         var validationErrors = new List<ValidationError>();
+        var extractionRoot = Path.GetFullPath(destinationDirectory);
+        var stagingRoot = Path.Combine(extractionRoot, $".mdc-import-{Guid.NewGuid():N}");
 
         if (format == PackageFormat.Zip)
         {
             using var stream = File.OpenRead(packagePath);
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+            var allowedEntries = BuildAllowedEntryPaths(manifest);
 
-            foreach (var entry in archive.Entries)
+            Directory.CreateDirectory(stagingRoot);
+
+            try
             {
-                ct.ThrowIfCancellationRequested();
-
-                if (string.IsNullOrEmpty(entry.Name))
-                    continue; // Skip directories
-
-                var destinationPath = Path.Combine(destinationDirectory, entry.FullName);
-                var destinationDir = Path.GetDirectoryName(destinationPath);
-                if (!string.IsNullOrEmpty(destinationDir))
+                foreach (var entry in archive.Entries)
                 {
-                    Directory.CreateDirectory(destinationDir);
-                }
+                    ct.ThrowIfCancellationRequested();
 
-                entry.ExtractToFile(destinationPath, overwrite: true);
-                result.FilesExtracted++;
-                result.BytesExtracted += entry.Length;
+                    if (string.IsNullOrEmpty(entry.Name))
+                        continue; // Skip directories
 
-                // Validate checksum if requested and file is in manifest
-                if (validateChecksums)
-                {
-                    var manifestEntry = manifest.Files.FirstOrDefault(f => f.Path == entry.FullName);
-                    if (manifestEntry != null && !string.IsNullOrEmpty(manifestEntry.ChecksumSha256))
+                    if (!allowedEntries.Contains(entry.FullName) && !IsRecognizedSupplementaryPath(entry.FullName))
                     {
-                        var actualChecksum = await ComputeFileChecksumAsync(destinationPath, ct);
-                        if (actualChecksum == manifestEntry.ChecksumSha256)
+                        throw new InvalidDataException(
+                            $"Package contains unexpected entry '{entry.FullName}' that is not declared in the manifest.");
+                    }
+
+                    var stagedPath = ResolveSafeExtractionPath(stagingRoot, entry.FullName);
+                    var stagedDir = Path.GetDirectoryName(stagedPath);
+                    if (!string.IsNullOrEmpty(stagedDir))
+                    {
+                        Directory.CreateDirectory(stagedDir);
+                    }
+
+                    entry.ExtractToFile(stagedPath, overwrite: true);
+
+                    // Validate checksum while still in quarantine
+                    if (validateChecksums)
+                    {
+                        var manifestEntry = manifest.Files.FirstOrDefault(f => f.Path == entry.FullName);
+                        if (manifestEntry != null && !string.IsNullOrEmpty(manifestEntry.ChecksumSha256))
                         {
-                            result.FilesValidated++;
-                        }
-                        else
-                        {
-                            result.ValidationFailures++;
-                            validationErrors.Add(new ValidationError
+                            var actualChecksum = await ComputeFileChecksumAsync(stagedPath, ct);
+                            if (actualChecksum == manifestEntry.ChecksumSha256)
                             {
-                                FilePath = entry.FullName,
-                                ErrorType = "ChecksumMismatch",
-                                ExpectedValue = manifestEntry.ChecksumSha256,
-                                ActualValue = actualChecksum,
-                                Message = "File checksum does not match manifest"
-                            });
+                                result.FilesValidated++;
+                            }
+                            else
+                            {
+                                result.ValidationFailures++;
+                                validationErrors.Add(new ValidationError
+                                {
+                                    FilePath = entry.FullName,
+                                    ErrorType = "ChecksumMismatch",
+                                    ExpectedValue = manifestEntry.ChecksumSha256,
+                                    ActualValue = actualChecksum,
+                                    Message = "File checksum does not match manifest"
+                                });
+
+                                File.Delete(stagedPath);
+                                continue;
+                            }
                         }
+                    }
+
+                    var destinationPath = ResolveSafeExtractionPath(extractionRoot, entry.FullName);
+                    var destinationDir = Path.GetDirectoryName(destinationPath);
+                    if (!string.IsNullOrEmpty(destinationDir))
+                    {
+                        Directory.CreateDirectory(destinationDir);
+                    }
+
+                    File.Move(stagedPath, destinationPath, overwrite: true);
+                    result.FilesExtracted++;
+                    result.BytesExtracted += entry.Length;
+                }
+            }
+            finally
+            {
+                if (Directory.Exists(stagingRoot))
+                {
+                    try
+                    {
+                        Directory.Delete(stagingRoot, recursive: true);
+                    }
+                    catch (IOException)
+                    {
+                        // Best effort cleanup for temporary quarantine directory.
                     }
                 }
             }
@@ -140,6 +180,59 @@ public sealed partial class PortableDataPackager
 
         result.ValidationErrors = validationErrors;
         return result;
+    }
+
+    private static HashSet<string> BuildAllowedEntryPaths(PackageManifest manifest)
+    {
+        var allowedEntries = new HashSet<string>(StringComparer.Ordinal);
+        allowedEntries.Add(ManifestFileName);
+
+        foreach (var file in manifest.Files)
+        {
+            if (!string.IsNullOrWhiteSpace(file.Path))
+                allowedEntries.Add(file.Path);
+        }
+
+        if (manifest.SupplementaryFiles != null)
+        {
+            foreach (var file in manifest.SupplementaryFiles)
+            {
+                if (!string.IsNullOrWhiteSpace(file.Path))
+                    allowedEntries.Add(file.Path);
+            }
+        }
+
+        return allowedEntries;
+    }
+
+    private static bool IsRecognizedSupplementaryPath(string packageRelativePath)
+    {
+        return packageRelativePath.Equals(ReadmeFileName, StringComparison.Ordinal) ||
+               packageRelativePath.StartsWith($"{MetadataDirectory}/", StringComparison.Ordinal) ||
+               packageRelativePath.StartsWith($"{ScriptsDirectory}/", StringComparison.Ordinal);
+    }
+
+    private static string ResolveSafeExtractionPath(string rootDirectory, string packageRelativePath)
+    {
+        if (Path.IsPathRooted(packageRelativePath))
+            throw new InvalidDataException($"Package entry '{packageRelativePath}' uses an absolute path.");
+
+        var normalizedRoot = Path.GetFullPath(rootDirectory);
+        var candidatePath = Path.GetFullPath(Path.Combine(normalizedRoot, packageRelativePath));
+        var rootWithSeparator = normalizedRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? normalizedRoot
+            : normalizedRoot + Path.DirectorySeparatorChar;
+        var comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        if (!candidatePath.StartsWith(rootWithSeparator, comparison))
+        {
+            throw new InvalidDataException(
+                $"Package entry '{packageRelativePath}' would extract outside the destination directory.");
+        }
+
+        return candidatePath;
     }
 
     private PackageFormat DetectPackageFormat(string path)

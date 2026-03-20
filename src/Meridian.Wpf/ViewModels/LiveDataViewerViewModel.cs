@@ -135,7 +135,7 @@ public sealed class LiveDataViewerViewModel : BindableBase, IDisposable
         _statsTimer.Tick += (_, _) => UpdateStats();
     }
 
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         _connectionService.StateChanged += OnConnectionStateChanged;
         UpdateConnectionStatus();
@@ -212,7 +212,7 @@ public sealed class LiveDataViewerViewModel : BindableBase, IDisposable
         IsPauseResumeEnabled = state == ConnectionState.Connected;
     }
 
-    private async Task LoadSymbolsAsync()
+    private async Task LoadSymbolsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -240,7 +240,7 @@ public sealed class LiveDataViewerViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task RefreshLiveDataAsync()
+    private async Task RefreshLiveDataAsync(CancellationToken ct = default)
     {
         if (_isPaused || string.IsNullOrEmpty(_selectedSymbol))
             return;
@@ -305,7 +305,7 @@ public sealed class LiveDataViewerViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task RefreshQuoteAsync()
+    private async Task RefreshQuoteAsync(CancellationToken ct = default)
     {
         try
         {

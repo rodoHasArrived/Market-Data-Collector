@@ -89,19 +89,19 @@ If this is your first run, use the installer orchestrator first so dependencies 
 
 ```bash
 # Interactive installer (Docker or Native)
-./scripts/install/install.sh
+./build/scripts/install/install.sh
 
 # Or choose a mode explicitly
-./scripts/install/install.sh --docker
-./scripts/install/install.sh --native
+./build/scripts/install/install.sh --docker
+./build/scripts/install/install.sh --native
 ```
 
 On Windows, use the equivalent PowerShell installer:
 
 ```powershell
-.\scripts\install\install.ps1
-.\scripts\install\install.ps1 -Mode Docker
-.\scripts\install\install.ps1 -Mode Native
+.\build\scripts\install\install.ps1
+.\build\scripts\install\install.ps1 -Mode Docker
+.\build\scripts\install\install.ps1 -Mode Native
 ```
 
 **Option A: Web Dashboard (Cross-platform)**
@@ -262,11 +262,11 @@ Use the installation orchestrator script for all setups. It keeps Docker and nat
 
 ```bash
 # Interactive installer (Docker or Native)
-./scripts/install/install.sh
+./build/scripts/install/install.sh
 
 # Or choose a mode explicitly
-./scripts/install/install.sh --docker
-./scripts/install/install.sh --native
+./build/scripts/install/install.sh --docker
+./build/scripts/install/install.sh --native
 ```
 
 Access the dashboard at `http://localhost:8080`.
@@ -277,11 +277,11 @@ The PowerShell installer mirrors the same workflow on Windows.
 
 ```powershell
 # Interactive installation
-.\scripts\install\install.ps1
+.\build\scripts\install\install.ps1
 
 # Or specify mode directly
-.\scripts\install\install.ps1 -Mode Docker
-.\scripts\install\install.ps1 -Mode Native
+.\build\scripts\install\install.ps1 -Mode Docker
+.\build\scripts\install\install.ps1 -Mode Native
 ```
 
 ### Optional Make Wrappers
@@ -1013,7 +1013,7 @@ See [docs/architecture/storage-design.md](architecture/storage-design.md) for de
 | `SubscribeTrades` | boolean | Collect trade/tick data |
 | `SubscribeDepth` | boolean | Collect Level 2 order book (IB only) |
 | `DepthLevels` | integer | Number of price levels to track (5-20 typical) |
-| `SecurityType` | string | "STK", "OPT", "FUT", etc. |
+| `SecurityType` | string | "STK", "OPT", "IND_OPT", "FOP", "FUT", "SSF", "CASH", "CMDTY", "CRYPTO", "CFD", "BOND", "FUND", "WAR", "BAG", "MARGIN", etc. |
 | `Exchange` | string | Exchange routing (IB: "SMART" recommended) |
 | `Currency` | string | "USD", "EUR", etc. |
 | `LocalSymbol` | string | IB local symbol for specific securities |
@@ -2040,10 +2040,22 @@ grep ERROR data/_logs/*.log | cut -d: -f4 | sort | uniq -c
 
 **A:** Yes! Set the `SecurityType` in symbol configuration:
 - `STK`: Stocks
-- `OPT`: Options
+- `ETF`: Exchange-traded funds
+- `OPT`: Equity options
+- `IND_OPT`: Index options
+- `FOP`: Futures options
 - `FUT`: Futures
-- `CASH`: Forex
+- `SSF`: Single-stock futures
+- `CASH`: Forex / spot FX
 - `IND`: Indices
+- `CMDTY`: Commodities
+- `CRYPTO`: Crypto assets
+- `CFD`: Contracts for difference
+- `BOND`: Bonds
+- `FUND`: Funds
+- `WAR`: Warrants
+- `BAG`: Combination / spread instruments
+- `MARGIN`: Margin products
 
 **Example:**
 ```json

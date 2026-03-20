@@ -456,7 +456,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
 
     // Drains remaining items from the trade ring buffer into the slow path
     // during disposal (after consumers have stopped).
-    private async Task DrainRemainingTradesAsync()
+    private async Task DrainRemainingTradesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -473,7 +473,7 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
         }
     }
 
-    private async Task DrainRemainingQuotesAsync()
+    private async Task DrainRemainingQuotesAsync(CancellationToken ct = default)
     {
         try
         {

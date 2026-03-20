@@ -230,7 +230,7 @@ public abstract class ConnectionServiceBase : IDisposable
     /// <summary>
     /// Called by derived classes when the monitoring timer fires.
     /// </summary>
-    protected async Task OnMonitoringTimerFired()
+    protected async Task OnMonitoringTimerFired(CancellationToken ct = default)
     {
         await PerformHealthCheckAsync();
     }
@@ -238,7 +238,7 @@ public abstract class ConnectionServiceBase : IDisposable
     /// <summary>
     /// Called by derived classes when the reconnect timer fires.
     /// </summary>
-    protected async Task OnReconnectTimerFired()
+    protected async Task OnReconnectTimerFired(CancellationToken ct = default)
     {
         StopAutoReconnect();
 
@@ -282,7 +282,7 @@ public abstract class ConnectionServiceBase : IDisposable
         }
     }
 
-    private async Task PerformHealthCheckAsync()
+    private async Task PerformHealthCheckAsync(CancellationToken ct = default)
     {
         if (!_isMonitoring)
             return;

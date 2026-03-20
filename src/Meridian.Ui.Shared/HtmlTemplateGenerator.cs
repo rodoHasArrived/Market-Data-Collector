@@ -602,9 +602,22 @@ public static partial class HtmlTemplateGenerator
           <label>Security Type</label>
           <select id=""secType"" onchange=""toggleOptionsFields()"">
             <option value=""STK"" selected>Stock (STK)</option>
+            <option value=""ETF"">ETF (ETF)</option>
             <option value=""OPT"">Equity Option (OPT)</option>
-            <option value=""IND_OPT"">Index Option</option>
+            <option value=""IND_OPT"">Index Option (IND_OPT)</option>
+            <option value=""FOP"">Futures Option (FOP)</option>
             <option value=""FUT"">Future (FUT)</option>
+            <option value=""SSF"">Single Stock Future (SSF)</option>
+            <option value=""IND"">Index (IND)</option>
+            <option value=""CASH"">Forex / Cash (CASH)</option>
+            <option value=""CMDTY"">Commodity (CMDTY)</option>
+            <option value=""CRYPTO"">Crypto (CRYPTO)</option>
+            <option value=""CFD"">CFD (CFD)</option>
+            <option value=""BOND"">Bond (BOND)</option>
+            <option value=""FUND"">Fund (FUND)</option>
+            <option value=""WAR"">Warrant (WAR)</option>
+            <option value=""BAG"">Combination / Spread (BAG)</option>
+            <option value=""MARGIN"">Margin Product (MARGIN)</option>
           </select>
         </div>
         <div class=""form-group"">

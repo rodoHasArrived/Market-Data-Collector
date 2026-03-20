@@ -110,7 +110,14 @@ public class DualPathEventPipelineTests : IAsyncLifetime
         pipeline.TryPublish(CreateQuoteEvent("AAPL", seq: 2));
         pipeline.TryPublish(CreateQuoteEvent("AAPL", seq: 3));
 
-        await blockingSink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(5));
+        var firstBlockSw = System.Diagnostics.Stopwatch.StartNew();
+        while (blockingSink.ReceivedCount < 1 && firstBlockSw.Elapsed < TimeSpan.FromSeconds(5))
+        {
+            await Task.Delay(10);
+        }
+
+        blockingSink.ReceivedCount.Should().BeGreaterThanOrEqualTo(1,
+            "the slow path should have received at least one event before releasing backpressure in this test");
         release.SetResult(true);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();

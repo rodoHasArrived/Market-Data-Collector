@@ -106,7 +106,7 @@ public sealed class GapBackfillService
         _ = EnqueueGapBackfillAsync(evt, symbols);
     }
 
-    private async Task EnqueueGapBackfillAsync(ReconnectionEvent evt, string[] symbols)
+    private async Task EnqueueGapBackfillAsync(ReconnectionEvent evt, string[] symbols, CancellationToken ct = default)
     {
         try
         {

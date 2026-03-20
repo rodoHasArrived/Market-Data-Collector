@@ -4,14 +4,13 @@ using Microsoft.AspNetCore.Http;
 namespace Meridian.Ui.Shared.Endpoints;
 
 /// <summary>
-/// Middleware that enforces session-based authentication when MDC_USERNAME and
-/// MDC_PASSWORD environment variables are both configured.
+/// Middleware that enforces session-based authentication.
 /// <list type="bullet">
 ///   <item>Health probes (/healthz, /readyz, /livez) are always exempt.</item>
-///   <item>The login page (/login) and auth API endpoints (/api/auth/*) are always exempt.</item>
+///   <item>The login page (/login) and auth API endpoints (/api/auth/*) are exempt when authentication is configured.</item>
 ///   <item>Unauthenticated API requests receive a 401 JSON response.</item>
 ///   <item>Unauthenticated browser (non-/api) requests are redirected to /login.</item>
-///   <item>When no credentials are configured all requests pass through (backward-compatible).</item>
+///   <item>Authentication is optional in Development/Test and required elsewhere by default.</item>
 /// </list>
 /// </summary>
 public sealed class LoginSessionMiddleware
@@ -32,13 +31,6 @@ public sealed class LoginSessionMiddleware
 
     public async Task InvokeAsync(HttpContext context, LoginSessionService sessionService)
     {
-        // If no credentials are configured, allow all requests (backward-compatible)
-        if (!sessionService.IsConfigured)
-        {
-            await _next(context);
-            return;
-        }
-
         var path = context.Request.Path.Value ?? "";
         var trimmedPath = path.TrimEnd('/');
 
@@ -46,6 +38,19 @@ public sealed class LoginSessionMiddleware
         if (ExemptPaths.Contains(trimmedPath))
         {
             await _next(context);
+            return;
+        }
+
+        // Fail closed outside optional mode when authentication credentials are missing
+        if (!sessionService.IsConfigured)
+        {
+            if (sessionService.AllowAnonymousWhenUnconfigured)
+            {
+                await _next(context);
+                return;
+            }
+
+            await WriteAuthenticationConfigurationErrorAsync(context, path);
             return;
         }
 
@@ -80,6 +85,23 @@ public sealed class LoginSessionMiddleware
                 $"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
     }
+
+    private static async Task WriteAuthenticationConfigurationErrorAsync(HttpContext context, string path)
+    {
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+
+        if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(
+                """{"error":"Authentication is required but not configured. Set MDC_USERNAME and MDC_PASSWORD or configure MDC_AUTH_MODE=optional for local development."}""");
+            return;
+        }
+
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        await context.Response.WriteAsync(
+            "Authentication is required but not configured. Set MDC_USERNAME and MDC_PASSWORD or configure MDC_AUTH_MODE=optional for local development.");
+    }
 }
 
 /// <summary>
@@ -89,7 +111,7 @@ public static class LoginSessionMiddlewareExtensions
 {
     /// <summary>
     /// Adds session-based authentication middleware.
-    /// Authentication is only enforced when MDC_USERNAME and MDC_PASSWORD are configured.
+    /// Authentication is optional in Development/Test and required elsewhere by default.
     /// </summary>
     public static IApplicationBuilder UseLoginSessionAuthentication(this IApplicationBuilder app)
         => app.UseMiddleware<LoginSessionMiddleware>();

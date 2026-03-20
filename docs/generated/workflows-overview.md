@@ -4,7 +4,7 @@
 
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-20 01:12:15 UTC
+> Auto-generated on 2026-03-20 02:02:28 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -28,7 +28,10 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Documentation Automation | `documentation.yml` | push, PR, manual, scheduled |
 | Documentation Checks | `docs-check.yml` | push, PR, manual |
 | Export Project Artifact | `export-project-artifact.yml` | manual |
+| Golden Path Validation | `golden-path-validation.yml` | push, PR, manual |
 | Labeling | `labeling.yml` | PR, manual |
+| Maintenance Checks | `maintenance.yml` | push, PR, manual, scheduled |
+| Maintenance Self-Test | `maintenance-self-test.yml` | PR, manual |
 | Makefile CI | `makefile.yml` | push, PR |
 | Mark Stale Issues and PRs | `stale.yml` | manual, scheduled |
 | Nightly Testing | `nightly.yml` | manual, scheduled |
@@ -36,6 +39,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Pull Request Checks | `pr-checks.yml` | PR, manual |
 | Python Package using Conda | `python-package-conda.yml` | unknown |
 | Release Management | `release.yml` | manual |
+| Repo Health | `repo-health.yml` | manual, scheduled |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | unknown |
 | Scheduled Maintenance | `scheduled-maintenance.yml` | manual, scheduled |
 | Security | `security.yml` | PR, manual, scheduled |
@@ -67,7 +71,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 33
+- **Total workflows:** 37
 
 ---
 

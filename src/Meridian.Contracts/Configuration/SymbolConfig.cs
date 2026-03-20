@@ -23,7 +23,7 @@ public sealed record SymbolConfig(
     int DepthLevels = 10,
 
     // Contract fields (IB)
-    string SecurityType = "STK",        // STK, OPT, FUT, CASH, etc.
+    string SecurityType = "STK",        // STK, OPT, IND_OPT, FUT, FOP, SSF, CASH, CMDTY, CRYPTO, MARGIN, etc.
     string Exchange = "SMART",          // SMART is usually best; set direct venue if needed
     string Currency = "USD",
     string? PrimaryExchange = null,     // e.g. NYSE, NASDAQ

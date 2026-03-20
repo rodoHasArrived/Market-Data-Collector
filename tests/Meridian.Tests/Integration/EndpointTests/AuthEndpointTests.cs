@@ -11,10 +11,9 @@ namespace Meridian.Tests.Integration.EndpointTests;
 /// Integration tests for the authentication endpoints:
 /// GET /login, POST /api/auth/login, POST /api/auth/logout.
 ///
-/// The test fixture does not set MDC_USERNAME / MDC_PASSWORD environment variables,
-/// so LoginSessionService.IsConfigured returns false and the middleware passes all
-/// requests through. This lets us verify endpoint reachability and input validation
-/// without needing real credentials in the test environment.
+/// The test fixture runs under the Test environment, where authentication defaults
+/// to optional unless MDC_AUTH_MODE overrides it. This lets us verify endpoint
+/// reachability and input validation without requiring real credentials.
 /// </summary>
 [Trait("Category", "Integration")]
 [Collection("Endpoint")]
@@ -206,7 +205,6 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
     [Fact]
     public async Task ProtectedEndpoint_WhenNoCredentialsConfigured_PassesThrough()
     {
-        // MDC_USERNAME / MDC_PASSWORD not set → middleware IsConfigured=false → passthrough
         var response = await GetAsync("/api/status");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -216,5 +214,81 @@ public sealed class AuthEndpointTests : EndpointIntegrationTestBase
     {
         var response = await GetAsync("/");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ProtectedEndpoint_WhenAuthModeRequiredAndCredentialsMissing_ReturnsServiceUnavailable()
+    {
+        Environment.SetEnvironmentVariable("MDC_AUTH_MODE", "required");
+        try
+        {
+            var response = await GetAsync("/api/status");
+
+            response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+            var body = await response.Content.ReadAsStringAsync();
+            body.Should().Contain("Authentication is required but not configured");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("MDC_AUTH_MODE", null);
+        }
+    }
+
+    [Fact]
+    public async Task LoginJson_WhenAuthModeRequiredAndCredentialsMissing_ReturnsServiceUnavailable()
+    {
+        Environment.SetEnvironmentVariable("MDC_AUTH_MODE", "required");
+        try
+        {
+            var payload = new { Username = "admin", Password = "secret" };
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await Client.PostAsync("/api/auth/login", content);
+
+            response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+            var body = await response.Content.ReadAsStringAsync();
+            body.Should().Contain("Authentication is required but not configured");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("MDC_AUTH_MODE", null);
+        }
+    }
+
+    [Fact]
+    public async Task ApiKeyMiddleware_DoesNotAcceptQueryStringApiKey()
+    {
+        Environment.SetEnvironmentVariable("MDC_API_KEY", "integration-test-key");
+        try
+        {
+            var response = await GetAsync("/api/status?api_key=integration-test-key");
+
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            var body = await response.Content.ReadAsStringAsync();
+            body.Should().Contain("X-Api-Key");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("MDC_API_KEY", null);
+        }
+    }
+
+    [Fact]
+    public async Task ApiKeyMiddleware_AcceptsHeaderApiKey()
+    {
+        Environment.SetEnvironmentVariable("MDC_API_KEY", "integration-test-key");
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/status");
+            request.Headers.Add("X-Api-Key", "integration-test-key");
+
+            var response = await Client.SendAsync(request);
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("MDC_API_KEY", null);
+        }
     }
 }

@@ -136,7 +136,7 @@ public sealed class UiServer : IAsyncDisposable
         // Wire Polly circuit breaker callbacks to CircuitBreakerStatusService
         ServiceCompositionRoot.InitializeCircuitBreakerCallbackRouter(_app.Services);
 
-        // Enable session-based authentication middleware (enforced only when MDC_USERNAME/MDC_PASSWORD are set)
+        // Enable session-based authentication middleware (optional in Development/Test, required elsewhere by default)
         _app.UseLoginSessionAuthentication();
 
         // Enable Swagger middleware

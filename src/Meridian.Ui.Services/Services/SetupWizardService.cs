@@ -681,7 +681,7 @@ public sealed class SetupWizardService
     /// <summary>
     /// Saves provider credentials securely.
     /// </summary>
-    public async Task SaveCredentialsAsync(string provider, Dictionary<string, string> credentials)
+    public async Task SaveCredentialsAsync(string provider, Dictionary<string, string> credentials, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(provider) || credentials.Count == 0)
         {

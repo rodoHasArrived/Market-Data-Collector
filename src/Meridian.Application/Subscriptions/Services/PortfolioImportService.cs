@@ -428,11 +428,22 @@ public sealed class PortfolioImportService
         return assetClass.ToLowerInvariant() switch
         {
             "us_equity" or "stock" or "stocks" => "STK",
-            "etf" or "etfs" => "STK",
-            "option" or "options" => "OPT",
+            "etf" or "etfs" => "ETF",
+            "option" or "options" or "equity_option" or "equity_options" => "OPT",
+            "index_option" or "index_options" => "IND_OPT",
             "future" or "futures" => "FUT",
+            "future_option" or "future_options" or "futures_option" or "futures_options" => "FOP",
+            "single_stock_future" or "single_stock_futures" => "SSF",
             "forex" or "fx" => "CASH",
             "crypto" or "cryptocurrency" => "CRYPTO",
+            "commodity" or "commodities" => "CMDTY",
+            "bond" or "bonds" or "fixed_income" => "BOND",
+            "cfd" => "CFD",
+            "fund" or "funds" or "mutual_fund" or "mutual_funds" => "FUND",
+            "warrant" or "warrants" => "WAR",
+            "spread" or "bag" => "BAG",
+            "margin" => "MARGIN",
+            "index" or "indices" => "IND",
             _ => "STK"
         };
     }

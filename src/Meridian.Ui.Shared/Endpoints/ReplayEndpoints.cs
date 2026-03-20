@@ -370,7 +370,7 @@ public static class ReplayEndpoints
             _ = CountEventsAsync();
         }
 
-        private async Task CountEventsAsync()
+        private async Task CountEventsAsync(CancellationToken ct = default)
         {
             try
             {

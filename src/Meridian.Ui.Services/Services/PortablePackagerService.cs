@@ -52,7 +52,7 @@ public sealed class PortablePackagerService
     /// <summary>
     /// Creates a package with the specified options.
     /// </summary>
-    public async Task<PackageCreationResult> CreatePackageAsync(PackageCreationOptions options)
+    public async Task<PackageCreationResult> CreatePackageAsync(PackageCreationOptions options, CancellationToken ct = default)
     {
         var request = new PackageRequest
         {
@@ -98,7 +98,7 @@ public sealed class PortablePackagerService
     /// <summary>
     /// Imports a package from the specified path.
     /// </summary>
-    public async Task<PackageImportResult> ImportPackageAsync(PackageImportOptions options)
+    public async Task<PackageImportResult> ImportPackageAsync(PackageImportOptions options, CancellationToken ct = default)
     {
         if (options.ValidateFirst)
         {
@@ -137,7 +137,7 @@ public sealed class PortablePackagerService
     /// <summary>
     /// Validates a package and returns detailed validation results.
     /// </summary>
-    public async Task<PackageValidationResult> ValidatePackageAsync(string packagePath)
+    public async Task<PackageValidationResult> ValidatePackageAsync(string packagePath, CancellationToken ct = default)
     {
         var result = await VerifyPackageAsync(packagePath, null, default);
 
@@ -163,7 +163,7 @@ public sealed class PortablePackagerService
     /// <summary>
     /// Gets information about a package without extracting it.
     /// </summary>
-    public async Task<PackageInfo?> GetPackageInfoAsync(string packagePath)
+    public async Task<PackageInfo?> GetPackageInfoAsync(string packagePath, CancellationToken ct = default)
     {
         if (!File.Exists(packagePath)) return null;
 

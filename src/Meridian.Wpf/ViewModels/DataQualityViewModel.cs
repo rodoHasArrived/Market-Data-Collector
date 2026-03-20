@@ -281,7 +281,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     }
 
     // ── Lifecycle ───────────────────────────────────────────────────────────
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         await RefreshDataAsync();
 
@@ -299,7 +299,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     }
 
     // ── Refresh ─────────────────────────────────────────────────────────────
-    public async Task RefreshAsync()
+    public async Task RefreshAsync(CancellationToken ct = default)
     {
         await RefreshDataAsync();
         _notificationService.ShowNotification(
@@ -308,7 +308,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
             NotificationType.Info);
     }
 
-    private async Task RefreshDataAsync()
+    private async Task RefreshDataAsync(CancellationToken ct = default)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();
@@ -772,7 +772,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
         BuildTrendPoints(_lastOverallScore, _timeRange);
 
     // ── Alert / gap management ──────────────────────────────────────────────
-    public async Task AcknowledgeAlertAsync(string alertId)
+    public async Task AcknowledgeAlertAsync(string alertId, CancellationToken ct = default)
     {
         try
         {
@@ -797,7 +797,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
         }
     }
 
-    public async Task AcknowledgeAllAlertsAsync()
+    public async Task AcknowledgeAllAlertsAsync(CancellationToken ct = default)
     {
         foreach (var alert in _allAlerts.ToList())
         {
@@ -820,7 +820,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     }
 
     /// <returns>True if the repair was initiated successfully.</returns>
-    public async Task<bool> RepairGapAsync(string gapId)
+    public async Task<bool> RepairGapAsync(string gapId, CancellationToken ct = default)
     {
         try
         {
@@ -853,7 +853,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     }
 
     /// <returns>True if all repairs were initiated successfully.</returns>
-    public async Task<bool> RepairAllGapsAsync()
+    public async Task<bool> RepairAllGapsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -880,7 +880,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
         }
     }
 
-    public async Task RunQualityCheckAsync(string path)
+    public async Task RunQualityCheckAsync(string path, CancellationToken ct = default)
     {
         try
         {
@@ -905,7 +905,7 @@ public sealed class DataQualityViewModel : BindableBase, IDisposable
     }
 
     /// <summary>Fetches provider comparison data for a symbol. Returns default JsonElement on failure.</summary>
-    public async Task<JsonElement> GetProviderComparisonAsync(string symbol)
+    public async Task<JsonElement> GetProviderComparisonAsync(string symbol, CancellationToken ct = default)
     {
         try
         {

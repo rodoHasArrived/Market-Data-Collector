@@ -10,13 +10,12 @@ namespace Meridian.Ui.Shared.Endpoints;
 /// Middleware that enforces API key authentication on /api/* endpoints.
 /// The API key is read from the MDC_API_KEY environment variable and supports
 /// key rotation (re-reads the variable on each request).
-/// When no key is configured, all requests are allowed (backward-compatible).
+/// When no key is configured, requests pass through so other auth layers can decide access.
 /// Health check endpoints (/healthz, /readyz, /livez) are always exempt.
 /// </summary>
 public sealed class ApiKeyMiddleware
 {
     private const string ApiKeyHeaderName = "X-Api-Key";
-    private const string ApiKeyQueryParam = "api_key";
     private const string ApiKeyEnvVar = "MDC_API_KEY";
 
     private static readonly HashSet<string> ExemptPaths = new(StringComparer.OrdinalIgnoreCase)
@@ -38,7 +37,7 @@ public sealed class ApiKeyMiddleware
         // Re-read on each request to support key rotation without restart
         var expectedApiKey = Environment.GetEnvironmentVariable(ApiKeyEnvVar);
 
-        // If no API key is configured, allow all requests (backward-compatible)
+        // If no API key is configured, defer to other authentication layers.
         if (string.IsNullOrWhiteSpace(expectedApiKey))
         {
             await _next(context);
@@ -61,9 +60,8 @@ public sealed class ApiKeyMiddleware
             return;
         }
 
-        // Check for API key in header or query string
-        var providedKey = context.Request.Headers[ApiKeyHeaderName].FirstOrDefault()
-            ?? context.Request.Query[ApiKeyQueryParam].FirstOrDefault();
+        // Check for API key in the header only to avoid leakage via URLs, logs, and browser history.
+        var providedKey = context.Request.Headers[ApiKeyHeaderName].FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(providedKey) ||
             !CryptographicEquals(providedKey, expectedApiKey))
@@ -71,7 +69,7 @@ public sealed class ApiKeyMiddleware
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(
-                """{"error":"Unauthorized. Provide a valid API key via X-Api-Key header or api_key query parameter."}""");
+                """{"error":"Unauthorized. Provide a valid API key via the X-Api-Key header."}""");
             return;
         }
 
@@ -217,7 +215,7 @@ public static class ApiKeyMiddlewareExtensions
     /// <summary>
     /// Adds API key authentication middleware for /api/* endpoints.
     /// The key is read from the MDC_API_KEY environment variable.
-    /// When no key is set, all requests pass through (backward-compatible).
+    /// When no key is set, requests pass through so other authentication layers can decide access.
     /// Health check endpoints (/healthz, /readyz, /livez) are always exempt.
     /// </summary>
     public static IApplicationBuilder UseApiKeyAuthentication(this IApplicationBuilder app)

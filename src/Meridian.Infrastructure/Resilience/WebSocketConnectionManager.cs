@@ -530,7 +530,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         }
     }
 
-    private async Task CleanupConnectionAsync()
+    private async Task CleanupConnectionAsync(CancellationToken ct = default)
     {
         // Record when the disconnect happened for gap tracking
         _lastDisconnectTime = DateTimeOffset.UtcNow;

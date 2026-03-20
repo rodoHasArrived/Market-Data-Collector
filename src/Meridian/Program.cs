@@ -82,7 +82,7 @@ public partial class Program
         }
     }
 
-    private static async Task<int> RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
+    private static async Task<int> RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment, CancellationToken ct = default)
     {
 
         // Build all CLI command handlers and dispatch through a single dispatcher.

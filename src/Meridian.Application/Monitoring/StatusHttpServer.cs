@@ -98,7 +98,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
         _log.Debug("Extended providers registered for StatusHttpServer");
     }
 
-    private async Task HandleAsync()
+    private async Task HandleAsync(CancellationToken ct = default)
     {
         while (!_cts.IsCancellationRequested)
         {
@@ -121,7 +121,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
         }
     }
 
-    private async Task ProcessRequestAsync(HttpListenerContext ctx)
+    private async Task ProcessRequestAsync(HttpListenerContext ctx, CancellationToken ct = default)
     {
         try
         {
@@ -138,7 +138,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
         }
     }
 
-    private async Task HandleRequestAsync(HttpListenerContext ctx)
+    private async Task HandleRequestAsync(HttpListenerContext ctx, CancellationToken ct = default)
     {
         try
         {
@@ -374,7 +374,7 @@ setInterval(refresh,2000);refresh();
     /// Detailed health check endpoint using shared handlers.
     /// Returns comprehensive health information including dependencies.
     /// </summary>
-    private async Task WriteDetailedHealthAsync(HttpListenerResponse resp)
+    private async Task WriteDetailedHealthAsync(HttpListenerResponse resp, CancellationToken ct = default)
     {
         var (report, error) = await _handlers.GetDetailedHealthAsync();
 

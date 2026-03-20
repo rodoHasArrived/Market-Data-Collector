@@ -91,7 +91,7 @@ All AI features use `actions/ai-inference@v1` with `continue-on-error: true` (ne
 
 | File | Purpose |
 |------|---------|
-| `.github/dependabot.yml` | Weekly dependency updates (NuGet, Actions, Docker) |
+| `.github/dependabot.yml` | Weekly dependency updates (npm, NuGet, Actions, Docker) |
 | `.github/labeler.yml` | Auto-label path patterns |
 | `.github/labels.yml` | Label definitions |
 | `.github/markdown-link-check-config.json` | Link checker settings |

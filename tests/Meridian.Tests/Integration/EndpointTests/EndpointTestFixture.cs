@@ -47,6 +47,7 @@ public sealed class EndpointTestFixture : IAsyncLifetime
 
         var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
+        builder.Environment.EnvironmentName = "Test";
 
         // Register the Ui.Shared ConfigStore wrapper (endpoints resolve this type).
         // The core ConfigStore (Application.UI.ConfigStore) is registered separately by AddMarketDataServices.

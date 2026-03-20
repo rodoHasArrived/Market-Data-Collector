@@ -827,7 +827,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         return _batchSize;
     }
 
-    private async Task PeriodicFlushAsync()
+    private async Task PeriodicFlushAsync(CancellationToken ct = default)
     {
         try
         {
@@ -889,11 +889,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         // timeout fallback to prevent indefinite hang.
         try
         {
+            var allConsumers = Task.WhenAll(_consumers);
             var completed = await Task.WhenAny(
-                Task.WhenAll(_consumers),
+                allConsumers,
                 Task.Delay(_disposeTaskTimeout)).ConfigureAwait(false);
 
-            var allConsumers = Task.WhenAll(_consumers);
             if (completed != allConsumers)
             {
                 _logger.LogWarning(

@@ -74,7 +74,7 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         _staleCheckTimer.Tick += (_, _) => UpdateStaleIndicator();
     }
 
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         _connectionService.StateChanged += OnConnectionStateChanged;
         _connectionService.ConnectionHealthUpdated += OnConnectionHealthUpdated;
@@ -95,7 +95,7 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         _cts?.Dispose();
     }
 
-    public async Task RefreshAsync()
+    public async Task RefreshAsync(CancellationToken ct = default)
     {
         await RefreshDataAsync();
         _notificationService.ShowNotification(
@@ -104,7 +104,7 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
             NotificationType.Info);
     }
 
-    public async Task ToggleProviderConnectionAsync(string providerId)
+    public async Task ToggleProviderConnectionAsync(string providerId, CancellationToken ct = default)
     {
         var provider = StreamingProviders.FirstOrDefault(p => p.ProviderId == providerId);
         if (provider == null) return;
@@ -181,7 +181,7 @@ public sealed class ProviderHealthViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task RefreshDataAsync()
+    private async Task RefreshDataAsync(CancellationToken ct = default)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();

@@ -4,7 +4,7 @@
 
 # Repository Structure
 
-> Auto-generated on 2026-03-20 01:12:15 UTC
+> Auto-generated on 2026-03-20 02:02:28 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -118,7 +118,10 @@ Meridian/
 │   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── export-project-artifact.yml
+│   │   ├── golden-path-validation.yml
 │   │   ├── labeling.yml
+│   │   ├── maintenance-self-test.yml
+│   │   ├── maintenance.yml
 │   │   ├── makefile.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
@@ -126,6 +129,7 @@ Meridian/
 │   │   ├── python-package-conda.yml
 │   │   ├── README.md
 │   │   ├── release.yml
+│   │   ├── repo-health.yml
 │   │   ├── reusable-dotnet-build.yml
 │   │   ├── scheduled-maintenance.yml
 │   │   ├── security.yml
@@ -222,7 +226,8 @@ Meridian/
 │       │   ├── update-claude-md.py
 │       │   ├── validate-api-docs.py
 │       │   ├── validate-docs-structure.py
-│       │   └── validate-examples.py
+│       │   ├── validate-examples.py
+│       │   └── validate-golden-path.sh
 │       ├── hooks/
 │       │   ├── commit-msg
 │       │   ├── install-hooks.sh
@@ -532,6 +537,13 @@ Meridian/
 │   ├── README.md
 │   └── toc.yml
 ├── scripts/  # Automation scripts
+│   ├── ai/
+│   │   ├── common.sh
+│   │   ├── maintenance-full.sh
+│   │   ├── maintenance-light.sh
+│   │   ├── maintenance.sh
+│   │   ├── route-maintenance.sh
+│   │   └── setup-ai-agent.sh
 │   └── dev/
 │       ├── desktop-dev.ps1
 │       └── diagnose-uwp-xaml.ps1
@@ -1272,6 +1284,7 @@ Meridian/
 │   │   │   ├── AnalyticsEndpoints.cs
 │   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── AuthEndpoints.cs
+│   │   │   ├── AuthenticationMode.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── BackfillScheduleEndpoints.cs
 │   │   │   ├── CalendarEndpoints.cs

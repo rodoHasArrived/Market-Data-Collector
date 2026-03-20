@@ -258,7 +258,7 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
         _heartbeatTask = HeartbeatLoopAsync();
     }
 
-    private async Task HeartbeatLoopAsync()
+    private async Task HeartbeatLoopAsync(CancellationToken ct = default)
     {
         _log.Debug("WebSocket heartbeat started (ping every {PingInterval}s, pong timeout: {PongTimeout}s)",
             _pingInterval.TotalSeconds, _pongTimeout.TotalSeconds);
@@ -336,7 +336,7 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
     /// verify the event subscription and handler behaviour without depending on real
     /// WebSocket communication.
     /// </summary>
-    internal async Task RaiseConnectionLostAsync()
+    internal async Task RaiseConnectionLostAsync(CancellationToken ct = default)
     {
         await (ConnectionLost?.Invoke() ?? Task.CompletedTask);
     }

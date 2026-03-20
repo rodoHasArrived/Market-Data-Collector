@@ -38,7 +38,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Loads symbol groups configuration.
     /// </summary>
-    public async Task<SymbolGroupsConfig> LoadGroupsAsync()
+    public async Task<SymbolGroupsConfig> LoadGroupsAsync(CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync();
         _groupsConfig = config?.SymbolGroups ?? new SymbolGroupsConfig();
@@ -54,7 +54,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Gets all symbol groups.
     /// </summary>
-    public async Task<SymbolGroup[]> GetGroupsAsync()
+    public async Task<SymbolGroup[]> GetGroupsAsync(CancellationToken ct = default)
     {
         if (_groupsConfig == null)
         {
@@ -66,7 +66,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Gets a symbol group by ID.
     /// </summary>
-    public async Task<SymbolGroup?> GetGroupByIdAsync(string id)
+    public async Task<SymbolGroup?> GetGroupByIdAsync(string id, CancellationToken ct = default)
     {
         var groups = await GetGroupsAsync();
         return groups.FirstOrDefault(g => g.Id == id);
@@ -80,7 +80,7 @@ public sealed class SymbolGroupService
         string? description = null,
         string? color = null,
         string? icon = null,
-        string[]? symbols = null)
+        string[]? symbols = null, CancellationToken ct = default)
     {
         var groups = (await GetGroupsAsync()).ToList();
 
@@ -108,7 +108,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Creates a group from a predefined template.
     /// </summary>
-    public async Task<SymbolGroup?> CreateGroupFromTemplateAsync(string templateId)
+    public async Task<SymbolGroup?> CreateGroupFromTemplateAsync(string templateId, CancellationToken ct = default)
     {
         if (!Templates.TryGetValue(templateId, out var template))
         {
@@ -126,7 +126,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Updates an existing symbol group.
     /// </summary>
-    public async Task<bool> UpdateGroupAsync(SymbolGroup group)
+    public async Task<bool> UpdateGroupAsync(SymbolGroup group, CancellationToken ct = default)
     {
         var groups = (await GetGroupsAsync()).ToList();
         var index = groups.FindIndex(g => g.Id == group.Id);
@@ -146,7 +146,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Deletes a symbol group.
     /// </summary>
-    public async Task<bool> DeleteGroupAsync(string id)
+    public async Task<bool> DeleteGroupAsync(string id, CancellationToken ct = default)
     {
         var groups = (await GetGroupsAsync()).ToList();
         var group = groups.FirstOrDefault(g => g.Id == id);
@@ -164,7 +164,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Adds a symbol to a group.
     /// </summary>
-    public async Task<bool> AddSymbolToGroupAsync(string groupId, string symbol)
+    public async Task<bool> AddSymbolToGroupAsync(string groupId, string symbol, CancellationToken ct = default)
     {
         var group = await GetGroupByIdAsync(groupId);
         if (group == null) return false;
@@ -182,7 +182,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Removes a symbol from a group.
     /// </summary>
-    public async Task<bool> RemoveSymbolFromGroupAsync(string groupId, string symbol)
+    public async Task<bool> RemoveSymbolFromGroupAsync(string groupId, string symbol, CancellationToken ct = default)
     {
         var group = await GetGroupByIdAsync(groupId);
         if (group == null) return false;
@@ -197,7 +197,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Moves a symbol between groups.
     /// </summary>
-    public async Task<bool> MoveSymbolAsync(string symbol, string? fromGroupId, string toGroupId)
+    public async Task<bool> MoveSymbolAsync(string symbol, string? fromGroupId, string toGroupId, CancellationToken ct = default)
     {
         if (!string.IsNullOrEmpty(fromGroupId))
         {
@@ -210,7 +210,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Gets all groups that contain a symbol.
     /// </summary>
-    public async Task<SymbolGroup[]> GetGroupsForSymbolAsync(string symbol)
+    public async Task<SymbolGroup[]> GetGroupsForSymbolAsync(string symbol, CancellationToken ct = default)
     {
         var groups = await GetGroupsAsync();
         return groups.Where(g =>
@@ -221,7 +221,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Gets symbols that are not in any group.
     /// </summary>
-    public async Task<string[]> GetUngroupedSymbolsAsync()
+    public async Task<string[]> GetUngroupedSymbolsAsync(CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync();
         var allSymbols = config?.Symbols?.Select(s => s.Symbol?.ToUpper())
@@ -241,7 +241,7 @@ public sealed class SymbolGroupService
     /// <summary>
     /// Reorders groups.
     /// </summary>
-    public async Task ReorderGroupsAsync(int oldIndex, int newIndex)
+    public async Task ReorderGroupsAsync(int oldIndex, int newIndex, CancellationToken ct = default)
     {
         var groups = (await GetGroupsAsync()).ToList();
 
@@ -272,7 +272,7 @@ public sealed class SymbolGroupService
         return Templates.Select(kvp => (kvp.Key, kvp.Value.Name, kvp.Value.Symbols, kvp.Value.Color));
     }
 
-    private async Task SaveGroupsAsync(SymbolGroup[] groups)
+    private async Task SaveGroupsAsync(SymbolGroup[] groups, CancellationToken ct = default)
     {
         var config = await _configService.LoadConfigAsync() ?? new AppConfig();
 

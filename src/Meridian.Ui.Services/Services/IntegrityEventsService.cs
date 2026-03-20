@@ -78,7 +78,7 @@ public sealed class IntegrityEventsService
     /// Records a new integrity event.
     /// Uses efficient Prepend operation - O(1) with automatic capacity management.
     /// </summary>
-    public async Task RecordEventAsync(IntegrityEvent integrityEvent)
+    public async Task RecordEventAsync(IntegrityEvent integrityEvent, CancellationToken ct = default)
     {
         // Prepend to collection - automatically handles capacity limit
         _events.Prepend(integrityEvent);
@@ -104,7 +104,7 @@ public sealed class IntegrityEventsService
     /// <summary>
     /// Records a sequence gap event.
     /// </summary>
-    public async Task RecordSequenceGapAsync(string symbol, long expectedSeq, long actualSeq, DateTime timestamp)
+    public async Task RecordSequenceGapAsync(string symbol, long expectedSeq, long actualSeq, DateTime timestamp, CancellationToken ct = default)
     {
         var gapSize = actualSeq - expectedSeq;
         var severity = gapSize > 100 ? IntegritySeverity.Critical :
@@ -128,7 +128,7 @@ public sealed class IntegrityEventsService
     /// <summary>
     /// Records an out-of-order event.
     /// </summary>
-    public async Task RecordOutOfOrderAsync(string symbol, long expectedSeq, long actualSeq, DateTime timestamp)
+    public async Task RecordOutOfOrderAsync(string symbol, long expectedSeq, long actualSeq, DateTime timestamp, CancellationToken ct = default)
     {
         await RecordEventAsync(new IntegrityEvent
         {
@@ -146,7 +146,7 @@ public sealed class IntegrityEventsService
     /// <summary>
     /// Records a stale data event.
     /// </summary>
-    public async Task RecordStaleDataAsync(string symbol, TimeSpan staleDuration, DateTime lastEventTime)
+    public async Task RecordStaleDataAsync(string symbol, TimeSpan staleDuration, DateTime lastEventTime, CancellationToken ct = default)
     {
         var severity = staleDuration.TotalMinutes > 5 ? IntegritySeverity.Critical :
                       staleDuration.TotalMinutes > 1 ? IntegritySeverity.Warning :
@@ -168,7 +168,7 @@ public sealed class IntegrityEventsService
     /// <summary>
     /// Records a data validation failure.
     /// </summary>
-    public async Task RecordValidationFailureAsync(string symbol, string field, string reason, DateTime timestamp)
+    public async Task RecordValidationFailureAsync(string symbol, string field, string reason, DateTime timestamp, CancellationToken ct = default)
     {
         await RecordEventAsync(new IntegrityEvent
         {
@@ -186,7 +186,7 @@ public sealed class IntegrityEventsService
     /// <summary>
     /// Records a duplicate event detection.
     /// </summary>
-    public async Task RecordDuplicateAsync(string symbol, long sequence, DateTime timestamp)
+    public async Task RecordDuplicateAsync(string symbol, long sequence, DateTime timestamp, CancellationToken ct = default)
     {
         await RecordEventAsync(new IntegrityEvent
         {
@@ -203,7 +203,7 @@ public sealed class IntegrityEventsService
     /// <summary>
     /// Records a provider switchover event.
     /// </summary>
-    public async Task RecordProviderSwitchAsync(string symbol, string fromProvider, string toProvider, string reason)
+    public async Task RecordProviderSwitchAsync(string symbol, string fromProvider, string toProvider, string reason, CancellationToken ct = default)
     {
         await RecordEventAsync(new IntegrityEvent
         {

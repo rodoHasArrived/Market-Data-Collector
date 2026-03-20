@@ -31,7 +31,7 @@ public partial class TradingHoursPage : Page
         await LoadHolidaysAsync();
     }
 
-    private async Task LoadMarketStatusAsync()
+    private async Task LoadMarketStatusAsync(CancellationToken ct = default)
     {
         try
         {
@@ -140,7 +140,7 @@ public partial class TradingHoursPage : Page
         NasdaqRegularStatusText.Foreground = isRegularOpen ? openText : closedText;
     }
 
-    private async Task LoadHolidaysAsync()
+    private async Task LoadHolidaysAsync(CancellationToken ct = default)
     {
         var year = DateTime.UtcNow.Year;
         HolidaysHeaderText.Text = $"US Market Holidays ({year})";

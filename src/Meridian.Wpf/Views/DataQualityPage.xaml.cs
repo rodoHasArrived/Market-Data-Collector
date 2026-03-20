@@ -76,7 +76,7 @@ public partial class DataQualityPage : Page
         _refreshTimer.Start();
     }
 
-    private async Task RefreshDataAsync()
+    private async Task RefreshDataAsync(CancellationToken ct = default)
     {
         _cts?.Cancel();
         _cts = new CancellationTokenSource();

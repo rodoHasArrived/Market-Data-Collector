@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Meridian.Ledger;
 
 namespace Meridian.Backtesting.Tests;
@@ -7,7 +8,7 @@ public sealed class LedgerQueryTests
     [Fact]
     public void Accounts_AndSummaries_AreTrackedAcrossPosts()
     {
-        var ledger = new Ledger();
+        var ledger = new BacktestLedger();
         var t1 = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
         var t2 = t1.AddMinutes(5);
 
@@ -49,7 +50,7 @@ public sealed class LedgerQueryTests
     [Fact]
     public void GetBalanceAsOf_And_TrialBalanceAsOf_RespectTimestampBoundaries()
     {
-        var ledger = new Ledger();
+        var ledger = new BacktestLedger();
         var t1 = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
         var t2 = t1.AddMinutes(5);
         var t3 = t2.AddMinutes(5);
@@ -93,7 +94,7 @@ public sealed class LedgerQueryTests
     [Fact]
     public void GetJournalEntries_And_GetEntries_CanFilterByDateAndDescription()
     {
-        var ledger = new Ledger();
+        var ledger = new BacktestLedger();
         var t1 = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
         var t2 = t1.AddMinutes(5);
         var t3 = t2.AddMinutes(5);
@@ -137,7 +138,7 @@ public sealed class LedgerQueryTests
     [Fact]
     public void Post_RejectsDuplicateJournalAndLineIdentifiers()
     {
-        var ledger = new Ledger();
+        var ledger = new BacktestLedger();
         var timestamp = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
         var journalId = Guid.NewGuid();
         var debitEntryId = Guid.NewGuid();

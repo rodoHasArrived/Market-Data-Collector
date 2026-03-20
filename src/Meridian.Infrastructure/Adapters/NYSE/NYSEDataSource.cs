@@ -877,7 +877,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         _depthUpdates.OnNext(update);
     }
 
-    private async Task SendSubscriptionMessageAsync(string symbol, string channel, string action)
+    private async Task SendSubscriptionMessageAsync(string symbol, string channel, string action, CancellationToken ct = default)
     {
         try
         {
@@ -902,7 +902,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         }
     }
 
-    private async Task SendUnsubscribeAllMessageAsync()
+    private async Task SendUnsubscribeAllMessageAsync(CancellationToken ct = default)
     {
         try
         {

@@ -76,7 +76,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
     }
 
     // ── Lifecycle ───────────────────────────────────────────────────────────
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         _watchlistService.WatchlistsChanged += OnWatchlistsChanged;
         await LoadSymbolsFromConfigAsync();
@@ -96,7 +96,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
     }
 
     // ── Data loading ────────────────────────────────────────────────────────
-    public async Task LoadSymbolsFromConfigAsync()
+    public async Task LoadSymbolsFromConfigAsync(CancellationToken ct = default)
     {
         Symbols.Clear();
         try
@@ -129,7 +129,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
         SymbolCountText = $"{Symbols.Count} symbols";
     }
 
-    public async Task LoadWatchlistsAsync()
+    public async Task LoadWatchlistsAsync(CancellationToken ct = default)
     {
         _loadCts?.Cancel();
         _loadCts = new CancellationTokenSource();
@@ -207,7 +207,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
             NotificationType.Success);
     }
 
-    public async Task BulkDeleteSymbolsAsync(IEnumerable<SymbolViewModel> selectedSymbols)
+    public async Task BulkDeleteSymbolsAsync(IEnumerable<SymbolViewModel> selectedSymbols, CancellationToken ct = default)
     {
         var toDelete = selectedSymbols.ToList();
         var symbolNames = toDelete.Select(s => s.Symbol).ToList();
@@ -255,7 +255,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
 
     // ── Watchlist operations ────────────────────────────────────────────────
     /// <summary>Loads symbols from a watchlist. Returns false if not found.</summary>
-    public async Task<bool> LoadWatchlistSymbolsAsync(string? watchlistId)
+    public async Task<bool> LoadWatchlistSymbolsAsync(string? watchlistId, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(watchlistId))
         {
@@ -314,7 +314,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
         }
     }
 
-    public async Task SaveWatchlistAsync(string name, bool saveAsNew, string? existingWatchlistId)
+    public async Task SaveWatchlistAsync(string name, bool saveAsNew, string? existingWatchlistId, CancellationToken ct = default)
     {
         try
         {
@@ -370,7 +370,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
         string? lastTradeDateOrContractMonth,
         string? optionStyle,
         int? multiplier,
-        SymbolViewModel? editTarget)
+        SymbolViewModel? editTarget, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(symbolName))
             return "Symbol is required.";
@@ -433,7 +433,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
         return null;
     }
 
-    public async Task DeleteSymbolAsync(SymbolViewModel symbol)
+    public async Task DeleteSymbolAsync(SymbolViewModel symbol, CancellationToken ct = default)
     {
         var symbolToDelete = symbol.Symbol;
         Symbols.Remove(symbol);
@@ -449,7 +449,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
     }
 
     // ── Persistence & backend sync ──────────────────────────────────────────
-    public async Task PersistSymbolsToConfigAsync()
+    public async Task PersistSymbolsToConfigAsync(CancellationToken ct = default)
     {
         try
         {
@@ -479,7 +479,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
     }
 
     private async Task SyncAddSymbolToBackendAsync(
-        string symbol, bool subscribeTrades, bool subscribeDepth, int depthLevels, string exchange)
+        string symbol, bool subscribeTrades, bool subscribeDepth, int depthLevels, string exchange, CancellationToken ct = default)
     {
         try
         {
@@ -492,7 +492,7 @@ public sealed class SymbolsPageViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task SyncRemoveSymbolFromBackendAsync(string symbol)
+    private async Task SyncRemoveSymbolFromBackendAsync(string symbol, CancellationToken ct = default)
     {
         try
         {

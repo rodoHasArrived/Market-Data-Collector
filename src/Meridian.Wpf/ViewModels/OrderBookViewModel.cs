@@ -118,7 +118,7 @@ public sealed class OrderBookViewModel : BindableBase, IDisposable
     }
 
     /// <summary>Subscribes to events, loads symbols, and starts the refresh timer.</summary>
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
         _connectionService.StateChanged += OnConnectionStateChanged;
         UpdateConnectionStatus();
@@ -173,7 +173,7 @@ public sealed class OrderBookViewModel : BindableBase, IDisposable
         });
     }
 
-    private async Task LoadSymbolsAsync()
+    private async Task LoadSymbolsAsync(CancellationToken ct = default)
     {
         try
         {
@@ -198,7 +198,7 @@ public sealed class OrderBookViewModel : BindableBase, IDisposable
         }
     }
 
-    private async Task RefreshOrderBookAsync()
+    private async Task RefreshOrderBookAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_selectedSymbol))
             return;
@@ -426,7 +426,7 @@ public sealed class OrderBookViewModel : BindableBase, IDisposable
         AskBarWidth = new GridLength(1 - bidRatio, GridUnitType.Star);
     }
 
-    private async Task RefreshRecentTradesAsync()
+    private async Task RefreshRecentTradesAsync(CancellationToken ct = default)
     {
         try
         {

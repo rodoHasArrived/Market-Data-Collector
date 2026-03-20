@@ -337,7 +337,7 @@ public sealed class DetailedHealthCheck : IDisposable
         _ = CheckDependenciesInternalAsync();
     }
 
-    private async Task CheckDependenciesInternalAsync()
+    private async Task CheckDependenciesInternalAsync(CancellationToken ct = default)
     {
         try
         {

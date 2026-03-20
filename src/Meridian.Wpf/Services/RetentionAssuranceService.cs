@@ -60,7 +60,7 @@ public sealed class RetentionAssuranceService
     /// <summary>
     /// Loads configuration from storage.
     /// </summary>
-    public async Task LoadConfigurationAsync()
+    public async Task LoadConfigurationAsync(CancellationToken ct = default)
     {
         try
         {
@@ -100,7 +100,7 @@ public sealed class RetentionAssuranceService
     /// <summary>
     /// Saves configuration to storage.
     /// </summary>
-    public async Task SaveConfigurationAsync()
+    public async Task SaveConfigurationAsync(CancellationToken ct = default)
     {
         try
         {
@@ -614,7 +614,7 @@ public sealed class RetentionAssuranceService
         string name,
         string reason,
         IEnumerable<string> symbols,
-        DateTime? expiresAt = null)
+        DateTime? expiresAt = null, CancellationToken ct = default)
     {
         var hold = new LegalHold
         {
@@ -636,7 +636,7 @@ public sealed class RetentionAssuranceService
     /// <summary>
     /// Releases a legal hold.
     /// </summary>
-    public async Task ReleaseLegalHoldAsync(string holdId)
+    public async Task ReleaseLegalHoldAsync(string holdId, CancellationToken ct = default)
     {
         var hold = _legalHolds.FirstOrDefault(h => h.Id == holdId);
         if (hold != null)
@@ -681,7 +681,7 @@ public sealed class RetentionAssuranceService
         return Task.FromResult(json);
     }
 
-    private async Task SaveAuditReportAsync(RetentionAuditReport report)
+    private async Task SaveAuditReportAsync(RetentionAuditReport report, CancellationToken ct = default)
     {
         try
         {

@@ -18,8 +18,11 @@ on:
       - 'tests/**'
       - '**/*.csproj'
       - '**/*.fsproj'
+      - 'package.json'
+      - 'package-lock.json'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
+      - 'docs/security/**'
   schedule:
     # Run full security scans weekly on Monday at 5:00 UTC
     - cron: '0 5 * * 1'
@@ -107,6 +110,58 @@ jobs:
               echo "  - Status: No fix available (deprecated library, upstream dependency)" >> $GITHUB_STEP_SUMMARY
             fi
           fi
+
+  npm-vulnerability-scan:
+    name: npm Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Scan npm dependencies
+        run: |
+          echo "## npm Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          npm audit --audit-level=high --json > npm-audit.json || AUDIT_EXIT=$?
+          AUDIT_EXIT=${AUDIT_EXIT:-0}
+
+          node <<'EOF'
+          const fs = require('fs');
+          const audit = JSON.parse(fs.readFileSync('npm-audit.json', 'utf8'));
+          const metadata = audit.metadata?.vulnerabilities ?? {};
+          const total = Object.values(metadata).reduce((sum, count) => sum + (Number(count) || 0), 0);
+          const lines = [
+            `- Total vulnerabilities: ${total}`,
+            `- Critical: ${metadata.critical ?? 0}`,
+            `- High: ${metadata.high ?? 0}`,
+            `- Moderate: ${metadata.moderate ?? 0}`,
+            `- Low: ${metadata.low ?? 0}`,
+            `- Info: ${metadata.info ?? 0}`
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### npm audit summary\n${lines.join('\n')}\n`);
+          EOF
+
+          if [ "$AUDIT_EXIT" -ne 0 ]; then
+            echo "::error::High/Critical npm vulnerabilities detected!"
+            exit "$AUDIT_EXIT"
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ No High/Critical npm vulnerabilities" >> $GITHUB_STEP_SUMMARY
 
   # ─── Dependency Review (absorbed from dependency-review.yml) ───────────
 
@@ -317,7 +372,7 @@ jobs:
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [dependency-vulnerability-scan, dependency-review, secret-detection, sast-scanning, codeql-analysis, ai-security-analysis]
+    needs: [dependency-vulnerability-scan, npm-vulnerability-scan, dependency-review, secret-detection, sast-scanning, codeql-analysis, ai-security-analysis]
     if: always()
     timeout-minutes: 5
 
@@ -334,6 +389,7 @@ jobs:
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Dependency Vulnerability Scan | ${{ needs.dependency-vulnerability-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| npm Vulnerability Scan | ${{ needs.npm-vulnerability-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Dependency Review (License) | ${{ needs.dependency-review.result == 'success' && '✅ Passed' || (needs.dependency-review.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Secret Detection | ${{ needs.secret-detection.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -348,6 +404,7 @@ jobs:
 
           # Fail if critical checks failed
           if [[ "${{ needs.dependency-vulnerability-scan.result }}" == "failure" ]] || \
+             [[ "${{ needs.npm-vulnerability-scan.result }}" == "failure" ]] || \
              [[ "${{ needs.secret-detection.result }}" == "failure" ]]; then
             echo "### ❌ Critical security checks failed!" >> $GITHUB_STEP_SUMMARY
             exit 1
