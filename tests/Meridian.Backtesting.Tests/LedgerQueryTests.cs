@@ -192,4 +192,89 @@ public sealed class LedgerQueryTests
         duplicateLinePost.Should().Throw<LedgerValidationException>()
             .WithMessage("*already been posted*");
     }
+
+    [Fact]
+    public void GetJournalEntries_CanFilterByStructuredAuditMetadata()
+    {
+        var ledger = new Ledger();
+        var orderId = Guid.NewGuid();
+        var fillId = Guid.NewGuid();
+        var t1 = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
+        var t2 = t1.AddMinutes(1);
+
+        ledger.PostLines(
+            t1,
+            "Buy SPY",
+            [
+                (LedgerAccounts.Securities("SPY"), 4_000m, 0m),
+                (LedgerAccounts.Cash, 0m, 4_000m)
+            ],
+            new JournalEntryMetadata(ActivityType: "buy", Symbol: "spy", OrderId: orderId, FillId: fillId));
+
+        ledger.PostLines(
+            t2,
+            "Commission – SPY",
+            [
+                (LedgerAccounts.CommissionExpense, 1m, 0m),
+                (LedgerAccounts.Cash, 0m, 1m)
+            ],
+            new JournalEntryMetadata(ActivityType: "commission", Symbol: "SPY", OrderId: orderId, FillId: fillId));
+
+        ledger.GetJournalEntries(new LedgerQuery(Symbol: "SPY", OrderId: orderId))
+            .Select(entry => entry.Description)
+            .Should()
+            .Equal("Buy SPY", "Commission – SPY");
+
+        ledger.GetJournalEntries(new LedgerQuery(ActivityType: "commission", FillId: fillId))
+            .Should()
+            .ContainSingle()
+            .Which.Metadata.Symbol.Should().Be("SPY");
+    }
+
+    [Fact]
+    public void GetRunningBalance_And_SnapshotAsOf_ReconstructHistoricalState()
+    {
+        var ledger = new Ledger();
+        var t1 = new DateTimeOffset(2024, 1, 2, 14, 30, 0, TimeSpan.Zero);
+        var t2 = t1.AddMinutes(5);
+        var t3 = t2.AddMinutes(5);
+
+        ledger.PostLines(
+            t1,
+            "Initial capital",
+            [
+                (LedgerAccounts.Cash, 10_000m, 0m),
+                (LedgerAccounts.CapitalAccount, 0m, 10_000m)
+            ],
+            new JournalEntryMetadata(ActivityType: "capital"));
+
+        ledger.PostLines(
+            t2,
+            "Buy SPY",
+            [
+                (LedgerAccounts.Securities("SPY"), 4_000m, 0m),
+                (LedgerAccounts.Cash, 0m, 4_000m)
+            ],
+            new JournalEntryMetadata(ActivityType: "buy", Symbol: "SPY"));
+
+        ledger.PostLines(
+            t3,
+            "Commission",
+            [
+                (LedgerAccounts.CommissionExpense, 5m, 0m),
+                (LedgerAccounts.Cash, 0m, 5m)
+            ],
+            new JournalEntryMetadata(ActivityType: "commission", Symbol: "SPY"));
+
+        var runningCash = ledger.GetRunningBalance(LedgerAccounts.Cash);
+        runningCash.Select(point => point.Balance).Should().Equal(10_000m, 6_000m, 5_995m);
+        runningCash[1].Metadata.ActivityType.Should().Be("buy");
+
+        var snapshot = ledger.SnapshotAsOf(t2);
+        snapshot.JournalEntryCount.Should().Be(2);
+        snapshot.LedgerEntryCount.Should().Be(4);
+        snapshot.Balances[LedgerAccounts.Cash].Should().Be(6_000m);
+        snapshot.Balances[LedgerAccounts.Securities("SPY")].Should().Be(4_000m);
+        snapshot.Balances.Should().NotContainKey(LedgerAccounts.CommissionExpense);
+    }
 }

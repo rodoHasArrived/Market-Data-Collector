@@ -20,6 +20,11 @@ public sealed record JournalEntry
     public IReadOnlyList<LedgerEntry> Lines { get; private init; }
 
     /// <summary>
+    /// Optional audit metadata that links the journal entry back to trading-domain events.
+    /// </summary>
+    public JournalEntryMetadata Metadata { get; private init; }
+
+    /// <summary>
     /// Initializes a new <see cref="JournalEntry"/> with validation.
     /// </summary>
     /// <exception cref="LedgerValidationException">
@@ -31,7 +36,8 @@ public sealed record JournalEntry
         Guid journalEntryId,
         DateTimeOffset timestamp,
         string description,
-        IReadOnlyList<LedgerEntry> lines)
+        IReadOnlyList<LedgerEntry> lines,
+        JournalEntryMetadata? metadata = null)
     {
         if (string.IsNullOrWhiteSpace(description))
             throw new LedgerValidationException("Journal entry description must not be null or whitespace.");
@@ -72,6 +78,7 @@ public sealed record JournalEntry
         Timestamp = timestamp;
         Description = description;
         Lines = lines;
+        Metadata = metadata?.Normalize() ?? new JournalEntryMetadata();
     }
 
     /// <summary>

@@ -50,7 +50,8 @@ internal sealed class SimulatedPortfolio
                 [
                     (LedgerAccounts.Cash, initialCash, 0m),
                     (LedgerAccounts.CapitalAccount, 0m, initialCash),
-                ]);
+                ],
+                new JournalEntryMetadata(ActivityType: "capital"));
         }
     }
 
@@ -167,7 +168,8 @@ internal sealed class SimulatedPortfolio
                 [
                     (LedgerAccounts.MarginInterestExpense, charge, 0m),
                     (LedgerAccounts.Cash, 0m, charge),
-                ]);
+                ],
+                new JournalEntryMetadata(ActivityType: "margin_interest"));
         }
 
         // Short rebate (we receive; positive cash flow)
@@ -190,7 +192,8 @@ internal sealed class SimulatedPortfolio
                 [
                     (LedgerAccounts.Cash, rebate, 0m),
                     (LedgerAccounts.ShortRebateIncome, 0m, rebate),
-                ]);
+                ],
+                new JournalEntryMetadata(ActivityType: "short_rebate", Symbol: symbol));
         }
     }
 
@@ -241,6 +244,11 @@ internal sealed class SimulatedPortfolio
         var symbol = fill.Symbol;
         var securitiesAccount = LedgerAccounts.Securities(symbol);
         var shortPayableAccount = LedgerAccounts.ShortSecuritiesPayable(symbol);
+        var fillMetadata = new JournalEntryMetadata(
+            ActivityType: "fill",
+            Symbol: symbol,
+            OrderId: fill.OrderId,
+            FillId: fill.FillId);
 
         // Compute long buy quantity: all of qty when adding to a long; only the excess after
         // covering a short when transitioning from short to long in a single fill.
@@ -258,7 +266,8 @@ internal sealed class SimulatedPortfolio
                 [
                     (securitiesAccount, cost, 0m),
                     (LedgerAccounts.Cash, 0m, cost),
-                ]);
+                ],
+                fillMetadata with { ActivityType = "buy" });
         }
         else if (qty < 0 && existingQty > 0 && realised.HasValue)
         {
@@ -302,7 +311,7 @@ internal sealed class SimulatedPortfolio
                 ];
             }
 
-            _ledger.PostLines(ts, $"Sell {closeQty} {symbol} @ {price:F4}", lines);
+            _ledger.PostLines(ts, $"Sell {closeQty} {symbol} @ {price:F4}", lines, fillMetadata with { ActivityType = "sell" });
         }
 
         // Short sell: DR Cash / CR Short Securities Payable
@@ -315,7 +324,8 @@ internal sealed class SimulatedPortfolio
                 [
                     (LedgerAccounts.Cash, shortProceeds, 0m),
                     (shortPayableAccount, 0m, shortProceeds),
-                ]);
+                ],
+                fillMetadata with { ActivityType = "short_sell" });
         }
 
         // Cover short: DR Short Securities Payable / CR Cash ± Realized Gain/Loss
@@ -360,7 +370,7 @@ internal sealed class SimulatedPortfolio
                 ];
             }
 
-            _ledger.PostLines(ts, $"Cover short {coverQty} {symbol} @ {price:F4}", lines);
+            _ledger.PostLines(ts, $"Cover short {coverQty} {symbol} @ {price:F4}", lines, fillMetadata with { ActivityType = "cover_short" });
         }
 
         // Commission: DR Commission Expense / CR Cash
@@ -372,7 +382,8 @@ internal sealed class SimulatedPortfolio
                 [
                     (LedgerAccounts.CommissionExpense, commission, 0m),
                     (LedgerAccounts.Cash, 0m, commission),
-                ]);
+                ],
+                fillMetadata with { ActivityType = "commission" });
         }
     }
 

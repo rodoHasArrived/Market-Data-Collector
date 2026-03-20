@@ -36,6 +36,9 @@ public interface IReadOnlyLedger
     /// <summary>Returns journal entries matching the supplied range and optional description filter.</summary>
     IReadOnlyList<JournalEntry> GetJournalEntries(DateTimeOffset? from = null, DateTimeOffset? to = null, string? descriptionContains = null);
 
+    /// <summary>Returns journal entries matching the supplied structured query.</summary>
+    IReadOnlyList<JournalEntry> GetJournalEntries(LedgerQuery query);
+
     /// <summary>Returns a summary for a single account.</summary>
     LedgerAccountSummary GetAccountSummary(LedgerAccount account);
 
@@ -49,4 +52,10 @@ public interface IReadOnlyLedger
 
     /// <summary>Returns the trial balance as of <paramref name="timestamp"/>.</summary>
     IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp);
+
+    /// <summary>Returns running-balance checkpoints for an account across the selected range.</summary>
+    IReadOnlyList<LedgerBalancePoint> GetRunningBalance(LedgerAccount account, DateTimeOffset? from = null, DateTimeOffset? to = null);
+
+    /// <summary>Returns a point-in-time ledger snapshot as of <paramref name="timestamp"/>.</summary>
+    LedgerSnapshot SnapshotAsOf(DateTimeOffset timestamp);
 }

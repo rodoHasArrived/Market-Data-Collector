@@ -174,6 +174,26 @@ public sealed class SimulatedPortfolioTests
     }
 
     [Fact]
+    public void Ledger_FillEntries_IncludeBacktestAuditMetadata()
+    {
+        var ledger = NewLedger();
+        var startTs = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(5m), 0.05, 0.02, ledger, startTs);
+        var fill = new FillEvent(Guid.NewGuid(), Guid.NewGuid(), "aapl", 5L, 200m, 5m, startTs.AddMinutes(1));
+
+        portfolio.ProcessFill(fill);
+
+        ledger.GetJournalEntries(new LedgerQuery(OrderId: fill.OrderId))
+            .Select(entry => entry.Metadata.ActivityType)
+            .Should()
+            .BeEquivalentTo(["buy", "commission"]);
+
+        ledger.GetJournalEntries(new LedgerQuery(FillId: fill.FillId))
+            .Should()
+            .OnlyContain(entry => entry.Metadata.Symbol == "AAPL");
+    }
+
+    [Fact]
     public void Ledger_SymbolNormalization_SameAccountForDifferentCase()
     {
         var lower = LedgerAccounts.Securities("spy");
