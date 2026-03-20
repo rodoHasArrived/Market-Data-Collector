@@ -30,11 +30,23 @@ public interface IBacktestContext
     /// <summary>Returns the last known price for <paramref name="symbol"/>, or <c>null</c> if unseen.</summary>
     decimal? GetLastPrice(string symbol);
 
+    /// <summary>
+    /// Submit an order using the provider-independent order request surface.
+    /// Provider-specific extensions can be attached via <see cref="OrderRequest.ProviderParameters"/>.
+    /// </summary>
+    Guid PlaceOrder(OrderRequest request);
+
     /// <summary>Submit a market order. Returns the assigned order ID.</summary>
     Guid PlaceMarketOrder(string symbol, long quantity);
 
     /// <summary>Submit a limit order. Returns the assigned order ID.</summary>
     Guid PlaceLimitOrder(string symbol, long quantity, decimal limitPrice);
+
+    /// <summary>Submit a stop-market order. Returns the assigned order ID.</summary>
+    Guid PlaceStopMarketOrder(string symbol, long quantity, decimal stopPrice);
+
+    /// <summary>Submit a stop-limit order. Returns the assigned order ID.</summary>
+    Guid PlaceStopLimitOrder(string symbol, long quantity, decimal stopPrice, decimal limitPrice);
 
     /// <summary>Cancel a pending order.</summary>
     void CancelOrder(Guid orderId);

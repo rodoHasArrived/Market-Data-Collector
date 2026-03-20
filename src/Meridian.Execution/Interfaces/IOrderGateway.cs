@@ -18,6 +18,18 @@ public interface IOrderGateway : IAsyncDisposable
     GatewayExecutionMode Mode { get; }
 
     /// <summary>
+    /// Provider-independent capability matrix for this gateway. Provider-specific
+    /// nuances can be exposed via metadata without leaking provider types.
+    /// </summary>
+    OrderGatewayCapabilities Capabilities { get; }
+
+    /// <summary>
+    /// Validates a request against provider-independent constraints and any provider-specific
+    /// implementation rules published through <see cref="OrderGatewayCapabilities"/>.
+    /// </summary>
+    Task<OrderValidationResult> ValidateOrderAsync(OrderRequest request, CancellationToken ct = default);
+
+    /// <summary>
     /// Submits an order to the gateway. Returns an acknowledgement immediately; fills
     /// arrive asynchronously via <see cref="StreamOrderUpdatesAsync"/>.
     /// </summary>
