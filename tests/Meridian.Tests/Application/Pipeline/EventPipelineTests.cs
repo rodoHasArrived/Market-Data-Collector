@@ -110,6 +110,29 @@ public class EventPipelineTests : IAsyncLifetime
         _mockSink.ReceivedEvents.Should().Contain(e => e.Type == MarketEventType.BboQuote);
     }
 
+    [Fact]
+    public async Task MultiConsumerMode_AllowsConcurrentSlowPathAppends()
+    {
+        await using var sink = new ConcurrencyTrackingSink(TimeSpan.FromMilliseconds(20));
+        await using var pipeline = new EventPipeline(
+            sink,
+            capacity: 1_000,
+            batchSize: 1,
+            enablePeriodicFlush: false,
+            consumerCount: 2);
+
+        for (var i = 0; i < 25; i++)
+        {
+            pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
+        }
+
+        await pipeline.FlushAsync();
+
+        sink.ReceivedCount.Should().Be(25);
+        sink.MaxConcurrentAppends.Should().BeGreaterThan(1,
+            "multiple consumers should overlap sink appends when advanced persistence features are disabled");
+    }
+
     #endregion
 
     #region Statistics Tests
@@ -805,6 +828,7 @@ internal sealed class BlockingStorageSink : IStorageSink
     private readonly Task _releaseSignal;
     private readonly TaskCompletionSource<bool> _firstBlockReached =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private int _receivedCount;
 
     public BlockingStorageSink(Task releaseSignal)
     {
@@ -819,10 +843,13 @@ internal sealed class BlockingStorageSink : IStorageSink
         return Task.WhenAny(_firstBlockReached.Task, Task.Delay(timeout));
     }
 
+    public int ReceivedCount => Volatile.Read(ref _receivedCount);
+
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
         // Signal that the consumer has arrived
         _firstBlockReached.TrySetResult(true);
+        Interlocked.Increment(ref _receivedCount);
 
         // Block until released or cancelled
         await _releaseSignal.WaitAsync(ct).ConfigureAwait(false);
@@ -831,4 +858,53 @@ internal sealed class BlockingStorageSink : IStorageSink
     public Task FlushAsync(CancellationToken ct = default) => Task.CompletedTask;
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+internal sealed class ConcurrencyTrackingSink : IStorageSink
+{
+    private readonly TimeSpan _processingDelay;
+    private int _receivedCount;
+    private int _activeAppends;
+    private int _maxConcurrentAppends;
+
+    public ConcurrencyTrackingSink(TimeSpan processingDelay)
+    {
+        _processingDelay = processingDelay;
+    }
+
+    public int ReceivedCount => Volatile.Read(ref _receivedCount);
+    public int MaxConcurrentAppends => Volatile.Read(ref _maxConcurrentAppends);
+
+    public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
+    {
+        var active = Interlocked.Increment(ref _activeAppends);
+        UpdateMax(active);
+
+        try
+        {
+            await Task.Delay(_processingDelay, ct);
+            Interlocked.Increment(ref _receivedCount);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _activeAppends);
+        }
+    }
+
+    public Task FlushAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private void UpdateMax(int candidate)
+    {
+        while (true)
+        {
+            var current = Volatile.Read(ref _maxConcurrentAppends);
+            if (candidate <= current)
+                return;
+
+            if (Interlocked.CompareExchange(ref _maxConcurrentAppends, candidate, current) == current)
+                return;
+        }
+    }
 }

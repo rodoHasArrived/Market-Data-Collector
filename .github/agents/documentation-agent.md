@@ -775,6 +775,7 @@ Meridian/
 │   │   │   ├── LedgerAccounts.cs
 │   │   │   ├── LedgerAccountType.cs
 │   │   │   └── LedgerEntry.cs
+│   │   ├── AssetEvent.cs
 │   │   ├── BacktestProgressEvent.cs
 │   │   ├── BacktestRequest.cs
 │   │   ├── BacktestResult.cs

@@ -176,7 +176,47 @@ internal sealed class SimulatedPortfolio
         if (commission > 0)
             _cashFlows.Add(new CommissionCashFlow(fill.FilledAt, -commission, symbol, fill.OrderId, accountId));
 
-        PostFillLedgerEntries(account, fill with { AccountId = accountId }, qty, price, commission, existingQty, realised, costBasisRemoved, shortOpenQty, shortRealised, shortOriginalProceeds);
+        // Post double-entry journal entries to ledger
+        PostFillLedgerEntries(fill, qty, price, commission, existingQty, realised, costBasisRemoved, shortOpenQty, shortRealised, shortOriginalProceeds);
+        CleanupSymbolIfFlat(symbol);
+    }
+
+    public void ApplyAssetEvent(AssetEvent assetEvent)
+    {
+        ArgumentNullException.ThrowIfNull(assetEvent);
+
+        var symbol = assetEvent.Symbol;
+        var targetSymbol = assetEvent.DestinationSymbol;
+        var existingQty = _positions.GetValueOrDefault(symbol);
+        var impactedUnits = existingQty;
+        decimal totalCashImpact = 0m;
+
+        if (assetEvent.CashPerShare != 0m && existingQty != 0)
+        {
+            totalCashImpact += ApplyPerShareCashAdjustment(assetEvent, existingQty);
+        }
+
+        if (assetEvent.HasPositionTransformation && existingQty != 0)
+        {
+            totalCashImpact += ApplyPositionTransformation(assetEvent, existingQty, targetSymbol);
+        }
+
+        if (totalCashImpact == 0m && existingQty == 0)
+            return;
+
+        if (Cash < 0)
+            MarginBalance = Math.Min(MarginBalance, Cash);
+
+        _cashFlows.Add(new AssetEventCashFlow(
+            assetEvent.EffectiveAt,
+            totalCashImpact,
+            symbol,
+            assetEvent.EventType,
+            impactedUnits,
+            assetEvent.CashPerShare,
+            assetEvent.TargetSymbol,
+            assetEvent.PositionFactor,
+            assetEvent.Description));
     }
 
     // ── Day-end accruals ─────────────────────────────────────────────────────
@@ -271,6 +311,186 @@ internal sealed class SimulatedPortfolio
     public IReadOnlyDictionary<string, FinancialAccountSnapshot> GetAccountSnapshots() => BuildAccountSnapshots();
 
     // ── Private helpers ──────────────────────────────────────────────────────
+
+    private decimal ApplyPerShareCashAdjustment(AssetEvent assetEvent, long quantity)
+    {
+        var amount = quantity * assetEvent.CashPerShare;
+        Cash += amount;
+        PostAssetCashLedgerEntry(assetEvent, amount, quantity, assetEvent.Symbol, assetEvent.TargetSymbol);
+        return amount;
+    }
+
+    private decimal ApplyPositionTransformation(AssetEvent assetEvent, long existingQty, string targetSymbol)
+    {
+        var factor = assetEvent.PositionFactor;
+        if (factor == 0m)
+            throw new InvalidOperationException($"Asset event factor cannot be zero for {assetEvent.Symbol}.");
+
+        var transformedQtyDecimal = existingQty * factor;
+        var transformedQty = ConvertToWholeUnits(transformedQtyDecimal);
+        var fractionalUnits = transformedQtyDecimal - transformedQty;
+        var referencePrice = ResolveReferencePrice(assetEvent, existingQty, factor);
+        var cashInLieu = fractionalUnits * referencePrice;
+
+        var transformedLongLots = TransformLots(_lots.GetValueOrDefault(assetEvent.Symbol), factor);
+        var transformedShortLots = TransformLots(_shortLots.GetValueOrDefault(assetEvent.Symbol), factor);
+        var transformedRealized = _realizedPnl.GetValueOrDefault(assetEvent.Symbol);
+        var existingTargetRealized = _realizedPnl.GetValueOrDefault(targetSymbol);
+        var transformedPrice = referencePrice > 0m ? referencePrice : _lastPrices.GetValueOrDefault(assetEvent.Symbol, 0m);
+
+        RemoveSymbolState(assetEvent.Symbol);
+
+        if (transformedQty != 0)
+        {
+            _positions[targetSymbol] = _positions.GetValueOrDefault(targetSymbol) + transformedQty;
+            MergeLots(_lots, targetSymbol, transformedLongLots);
+            MergeLots(_shortLots, targetSymbol, transformedShortLots);
+            _avgCost[targetSymbol] = ComputeAvgCost(targetSymbol);
+            _realizedPnl[targetSymbol] = existingTargetRealized + transformedRealized;
+            if (transformedPrice > 0m)
+                _lastPrices[targetSymbol] = transformedPrice;
+        }
+
+        if (cashInLieu != 0m)
+        {
+            Cash += cashInLieu;
+            PostAssetCashLedgerEntry(assetEvent, cashInLieu, existingQty, assetEvent.Symbol, targetSymbol, suffix: "cash in lieu");
+        }
+
+        return cashInLieu;
+    }
+
+    private decimal ResolveReferencePrice(AssetEvent assetEvent, long existingQty, decimal factor)
+    {
+        if (assetEvent.ReferencePrice is { } explicitReference && explicitReference > 0m)
+            return explicitReference;
+
+        if (_lastPrices.TryGetValue(assetEvent.DestinationSymbol, out var destinationPrice) && destinationPrice > 0m)
+            return destinationPrice;
+
+        if (_lastPrices.TryGetValue(assetEvent.Symbol, out var sourcePrice) && sourcePrice > 0m)
+            return factor == 0m ? sourcePrice : sourcePrice / Math.Abs(factor);
+
+        var avgCost = _avgCost.GetValueOrDefault(assetEvent.Symbol, 0m);
+        if (avgCost > 0m)
+            return factor == 0m ? avgCost : avgCost / Math.Abs(factor);
+
+        return existingQty == 0 ? 0m : 1m;
+    }
+
+    private void PostAssetCashLedgerEntry(
+        AssetEvent assetEvent,
+        decimal amount,
+        long quantity,
+        string symbol,
+        string? relatedSymbol,
+        string? suffix = null)
+    {
+        if (_ledger is null || amount == 0m)
+            return;
+
+        var counterpartyAccount = SelectAssetEventAccount(assetEvent.EventType, amount);
+        var description = string.IsNullOrWhiteSpace(assetEvent.Description)
+            ? $"{assetEvent.EventType} – {symbol}" + (string.IsNullOrWhiteSpace(relatedSymbol) || relatedSymbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)
+                ? string.Empty
+                : $" -> {relatedSymbol}") + (string.IsNullOrWhiteSpace(suffix) ? string.Empty : $" ({suffix})")
+            : assetEvent.Description + (string.IsNullOrWhiteSpace(suffix) ? string.Empty : $" ({suffix})");
+
+        if (amount > 0)
+        {
+            _ledger.PostLines(
+                assetEvent.EffectiveAt,
+                description,
+                [
+                    (LedgerAccounts.Cash, amount, 0m),
+                    (counterpartyAccount, 0m, amount),
+                ]);
+        }
+        else
+        {
+            var outflow = Math.Abs(amount);
+            _ledger.PostLines(
+                assetEvent.EffectiveAt,
+                description,
+                [
+                    (counterpartyAccount, outflow, 0m),
+                    (LedgerAccounts.Cash, 0m, outflow),
+                ]);
+        }
+    }
+
+    private static LedgerAccount SelectAssetEventAccount(AssetEventType eventType, decimal amount) => eventType switch
+    {
+        AssetEventType.Dividend => amount >= 0m ? LedgerAccounts.DividendIncome : LedgerAccounts.DividendExpense,
+        AssetEventType.Coupon => amount >= 0m ? LedgerAccounts.CouponIncome : LedgerAccounts.CouponExpense,
+        AssetEventType.Fee => LedgerAccounts.CorporateActionExpense,
+        _ => amount >= 0m ? LedgerAccounts.CorporateActionIncome : LedgerAccounts.CorporateActionExpense,
+    };
+
+    private static long ConvertToWholeUnits(decimal quantity) => quantity >= 0m
+        ? (long)Math.Floor(quantity)
+        : (long)Math.Ceiling(quantity);
+
+    private static Queue<(long qty, decimal price)> TransformLots(Queue<(long qty, decimal price)>? source, decimal factor)
+    {
+        var result = new Queue<(long qty, decimal price)>();
+        if (source is null || source.Count == 0)
+            return result;
+
+        foreach (var (qty, price) in source)
+        {
+            var transformedQty = ConvertToWholeUnits(qty * factor);
+            if (transformedQty == 0)
+                continue;
+
+            var transformedPrice = factor == 0m ? price : price / Math.Abs(factor);
+            result.Enqueue((Math.Abs(transformedQty), transformedPrice));
+        }
+
+        return result;
+    }
+
+    private static void MergeLots(
+        Dictionary<string, Queue<(long qty, decimal price)>> store,
+        string symbol,
+        Queue<(long qty, decimal price)> lots)
+    {
+        if (lots.Count == 0)
+            return;
+
+        if (!store.TryGetValue(symbol, out var existing))
+        {
+            store[symbol] = new Queue<(long qty, decimal price)>(lots);
+            return;
+        }
+
+        foreach (var lot in lots)
+            existing.Enqueue(lot);
+    }
+
+    private void RemoveSymbolState(string symbol)
+    {
+        _positions.Remove(symbol);
+        _avgCost.Remove(symbol);
+        _lots.Remove(symbol);
+        _shortLots.Remove(symbol);
+        _lastPrices.Remove(symbol);
+        _realizedPnl.Remove(symbol);
+    }
+
+    private void CleanupSymbolIfFlat(string symbol)
+    {
+        if (_positions.GetValueOrDefault(symbol) != 0)
+            return;
+
+        _positions.Remove(symbol);
+        _avgCost.Remove(symbol);
+
+        if (_lots.TryGetValue(symbol, out var lots) && lots.Count == 0)
+            _lots.Remove(symbol);
+        if (_shortLots.TryGetValue(symbol, out var shortLots) && shortLots.Count == 0)
+            _shortLots.Remove(symbol);
+    }
 
     private void PostFillLedgerEntries(
         AccountState account,

@@ -402,9 +402,9 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
                 {
                     ref readonly var raw = ref _quoteBatch[i];
                     var evt = ReconstituteQuote(in raw);
-                    _slowPath.TryPublish(in evt);
-                }
 
+                    await _slowPath.PublishAsync(evt).ConfigureAwait(false);
+                }
                 Interlocked.Add(ref _hotQuoteConsumed, drained);
             }
         }

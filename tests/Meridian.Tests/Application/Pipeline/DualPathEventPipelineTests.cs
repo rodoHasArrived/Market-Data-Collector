@@ -90,6 +90,40 @@ public class DualPathEventPipelineTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task QuoteHotPath_WhenSlowPathBackpressures_RetriesUntilPersisted()
+    {
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var blockingSink = new BlockingStorageSink(release.Task);
+        await using var constrainedSlowPath = new EventPipeline(
+            blockingSink,
+            capacity: 1,
+            fullMode: System.Threading.Channels.BoundedChannelFullMode.Wait,
+            batchSize: 1,
+            enablePeriodicFlush: false);
+        await using var pipeline = new DualPathEventPipeline(
+            constrainedSlowPath,
+            new SymbolTable(),
+            ringBufferCapacity: 32,
+            batchDrainSize: 4);
+
+        pipeline.TryPublish(CreateQuoteEvent("AAPL", seq: 1));
+        pipeline.TryPublish(CreateQuoteEvent("AAPL", seq: 2));
+        pipeline.TryPublish(CreateQuoteEvent("AAPL", seq: 3));
+
+        await blockingSink.WaitForFirstBlockAsync(TimeSpan.FromSeconds(5));
+        release.SetResult(true);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (blockingSink.ReceivedCount < 3 && sw.Elapsed < TimeSpan.FromSeconds(5))
+        {
+            await Task.Delay(10);
+        }
+
+        blockingSink.ReceivedCount.Should().Be(3,
+            "quote hot-path fallback should retry instead of silently dropping when the slow path is full");
+    }
+
+    [Fact]
     public async Task TryPublish_IntegrityEvent_GoesToSlowPath_NotHotPath()
     {
         var evt = MarketEvent.Integrity(

@@ -317,6 +317,80 @@ public sealed class SimulatedPortfolioTests
 
         ledger.TrialBalance("broker-1").Keys.Should().OnlyContain(account => account.FinancialAccountId == "broker-1");
         ledger.TrialBalance("broker-2").Keys.Should().OnlyContain(account => account.FinancialAccountId == "broker-2");
+    [Fact]
+    public void ApplyAssetEvent_Dividend_CreditsCash_AndRecordsLedgerIncome()
+    {
+        var ledger = NewLedger();
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(0m), 0.05, 0.02, ledger);
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), Guid.NewGuid(), "SPY", 10L, 400m, 0m, DateTimeOffset.UtcNow));
+
+        var exDate = new DateTimeOffset(2024, 2, 1, 0, 0, 0, TimeSpan.Zero);
+        portfolio.ApplyAssetEvent(new AssetEvent(exDate, "SPY", AssetEventType.Dividend, CashPerShare: 1.25m, Description: "Quarterly dividend"));
+
+        portfolio.Cash.Should().Be(6_012.5m);
+        var snapshot = portfolio.TakeSnapshot(exDate, DateOnly.FromDateTime(exDate.Date));
+        snapshot.DayCashFlows.OfType<AssetEventCashFlow>().Should().ContainSingle(flow => flow.Amount == 12.5m && flow.EventType == AssetEventType.Dividend);
+        ledger.GetBalance(LedgerAccounts.DividendIncome).Should().Be(12.5m);
+    }
+
+    [Fact]
+    public void ApplyAssetEvent_Coupon_OnShortPosition_RecordsExpense()
+    {
+        var ledger = NewLedger();
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(0m), 0.05, 0.02, ledger);
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), Guid.NewGuid(), "TLT", -5L, 100m, 0m, DateTimeOffset.UtcNow));
+
+        var paymentDate = new DateTimeOffset(2024, 2, 15, 0, 0, 0, TimeSpan.Zero);
+        portfolio.ApplyAssetEvent(new AssetEvent(paymentDate, "TLT", AssetEventType.Coupon, CashPerShare: 2m));
+
+        portfolio.Cash.Should().Be(10_490m);
+        ledger.GetBalance(LedgerAccounts.CouponExpense).Should().Be(10m);
+        var snapshot = portfolio.TakeSnapshot(paymentDate, DateOnly.FromDateTime(paymentDate.Date));
+        snapshot.DayCashFlows.OfType<AssetEventCashFlow>().Should().ContainSingle(flow => flow.Amount == -10m && flow.EventType == AssetEventType.Coupon);
+    }
+
+    [Fact]
+    public void ApplyAssetEvent_Split_AdjustsShareCount_AndAverageCost()
+    {
+        var portfolio = CreatePortfolio(10_000m);
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), Guid.NewGuid(), "AAPL", 3L, 100m, 0m, DateTimeOffset.UtcNow));
+        portfolio.UpdateLastPrice("AAPL", 120m);
+
+        portfolio.ApplyAssetEvent(new AssetEvent(
+            new DateTimeOffset(2024, 3, 1, 0, 0, 0, TimeSpan.Zero),
+            "AAPL",
+            AssetEventType.Split,
+            PositionFactor: 2m));
+
+        var position = portfolio.GetCurrentPositions()["AAPL"];
+        position.Quantity.Should().Be(6);
+        position.AverageCostBasis.Should().Be(50m);
+    }
+
+    [Fact]
+    public void ApplyAssetEvent_Acquisition_TransfersPosition_AndBooksCashInLieu()
+    {
+        var ledger = NewLedger();
+        var portfolio = new SimulatedPortfolio(10_000m, new FixedCommissionModel(0m), 0.05, 0.02, ledger);
+        portfolio.ProcessFill(new FillEvent(Guid.NewGuid(), Guid.NewGuid(), "ATVI", 3L, 90m, 0m, DateTimeOffset.UtcNow));
+        portfolio.UpdateLastPrice("ATVI", 95m);
+
+        portfolio.ApplyAssetEvent(new AssetEvent(
+            new DateTimeOffset(2024, 4, 1, 0, 0, 0, TimeSpan.Zero),
+            "ATVI",
+            AssetEventType.Acquisition,
+            CashPerShare: 5m,
+            PositionFactor: 0.5m,
+            TargetSymbol: "MSFT",
+            ReferencePrice: 400m,
+            Description: "ATVI acquired by MSFT"));
+
+        portfolio.GetCurrentPositions().Should().NotContainKey("ATVI");
+        var newPosition = portfolio.GetCurrentPositions()["MSFT"];
+        newPosition.Quantity.Should().Be(1);
+        newPosition.AverageCostBasis.Should().Be(180m);
+        portfolio.Cash.Should().Be(9_945m);
+        ledger.GetBalance(LedgerAccounts.CorporateActionIncome).Should().Be(215m);
     }
 
 }
