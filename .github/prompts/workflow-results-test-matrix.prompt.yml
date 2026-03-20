@@ -2,7 +2,7 @@ name: Workflow Results - test-matrix
 description: Address issues found in the test-matrix workflow run
 # Auto-generated prompt from workflow run analysis
 # Generated: 2026-03-20
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23328781150
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23330268335
 # Run conclusion: unknown
 # Model-agnostic prompt - works with any capable LLM
 messages:
@@ -19,22 +19,19 @@ messages:
 
       ## Findings from Workflow Run
       ### Build
-      - `2026-03-20T04:17:38.4845170Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Ui.Services\Services\DataQuality\IDataQualityApiClient.cs(22,10): error CS02...`
-      - `2026-03-20T04:17:38.5000289Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Ui.Services\Services\DataQuality\DataQualityApiClient.cs(13,68): error CS073...`
-      - `2026-03-20T04:17:58.6365812Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Portfolio\SimulatedPortfolio.cs(180,9): error CS7036: There is n...`
-      - `2026-03-20T04:17:58.6702502Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Portfolio\SimulatedPortfolio.cs(190,27): error CS0103: The name ...`
-      - `2026-03-20T04:17:58.6850068Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Portfolio\SimulatedPortfolio.cs(208,13): error CS0200: Property ...`
+      - `2026-03-20T05:24:02.6200658Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(200,26): error CS0118: ...`
+      - `2026-03-20T05:24:02.6216653Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(238,26): error CS0118: ...`
+      - `2026-03-20T05:24:02.6221506Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(286,26): error CS0118: ...`
+      - `2026-03-20T05:24:11.8347246Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Integration/EndpointTests/EndpointTestFixture.cs(50,47)...`
+      - `2026-03-20T05:24:11.8355298Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTes...`
 
 
       ## Error Codes
       - `CS0103`
-      - `CS0104`
-      - `CS0200`
+      - `CS0118`
       - `CS0246`
       - `CS0738`
       - `CS1061`
-      - `CS1503`
-      - `CS7036`
 
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
@@ -47,7 +44,7 @@ messages:
     content: |
       The `test-matrix` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23328781150
+      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23330268335
 
       Additional context:
       {{additional_context}}

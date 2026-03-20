@@ -2,7 +2,7 @@ name: Fix Build Errors Identified By Ci
 description: Fix build errors identified by CI
 # Auto-generated prompt from workflow results - test-matrix
 # Generated: 2026-03-20
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23328781150
+# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23330268335
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
@@ -24,25 +24,22 @@ messages:
 
       ## Error Codes Found
       - `CS0103`
-      - `CS0104`
-      - `CS0200`
+      - `CS0118`
       - `CS0246`
       - `CS0738`
       - `CS1061`
-      - `CS1503`
-      - `CS7036`
 
       ## Failure Patterns
-      - `2026-03-20T04:17:38.4845170Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Ui.Services\Services\DataQuality\IDataQualityApiClient.cs(22,10): error CS0246: The type or namespace name 'QualityCheckResult...`
-      - `2026-03-20T04:17:38.5000289Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Ui.Services\Services\DataQuality\DataQualityApiClient.cs(13,68): error CS0738: 'DataQualityApiClient' does not implement inter...`
-      - `2026-03-20T04:17:58.6365812Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Portfolio\SimulatedPortfolio.cs(180,9): error CS7036: There is no argument given that corresponds to the required ...`
-      - `2026-03-20T04:17:58.6702502Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Portfolio\SimulatedPortfolio.cs(190,27): error CS0103: The name '_positions' does not exist in the current context...`
-      - `2026-03-20T04:17:58.6850068Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Portfolio\SimulatedPortfolio.cs(208,13): error CS0200: Property or indexer 'SimulatedPortfolio.MarginBalance' cann...`
-      - `2026-03-20T04:17:58.7027641Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Engine\BacktestEngine.cs(43,44): error CS1061: 'BacktestRequest' does not contain a definition for 'AssetEvents' a...`
-      - `2026-03-20T04:17:58.7383007Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Engine\BacktestEngine.cs(66,62): error CS1061: 'BacktestRequest' does not contain a definition for 'AssetEvents' a...`
-      - `2026-03-20T04:17:58.7665305Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Engine\BacktestEngine.cs(114,57): error CS1503: Argument 3: cannot convert from 'Meridian.Backtesting.Engine.Backt...`
-      - `2026-03-20T04:17:58.8050445Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Engine\BacktestEngine.cs(114,62): error CS1503: Argument 4: cannot convert from 'Meridian.Backtesting.Sdk.IBacktes...`
-      - `2026-03-20T04:17:58.8082708Z ##[error]D:\a\Meridian\Meridian\src\Meridian.Backtesting\Engine\BacktestEngine.cs(114,72): error CS1503: Argument 5: cannot convert from 'System.Collections.Generic.List<M...`
+      - `2026-03-20T05:24:02.6200658Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(200,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
+      - `2026-03-20T05:24:02.6216653Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(238,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
+      - `2026-03-20T05:24:02.6221506Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(286,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
+      - `2026-03-20T05:24:11.8347246Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Integration/EndpointTests/EndpointTestFixture.cs(50,47): error CS0103: The name 'Environments' does not e...`
+      - `2026-03-20T05:24:11.8355298Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTests.cs(65,50): error CS1061: 'MarketEvent' does not...`
+      - `2026-03-20T05:24:11.8363574Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTests.cs(66,50): error CS1061: 'MarketEvent' does not...`
+      - `2026-03-20T05:24:11.8373329Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Tests/Infrastructure/Providers/SyntheticMarketDataProviderTests.cs(67,50): error CS1061: 'MarketEvent' does not...`
+      - `2026-03-20T05:24:12.0250942Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(200,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
+      - `2026-03-20T05:24:12.0256363Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(238,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
+      - `2026-03-20T05:24:12.0261224Z ##[error]/home/runner/work/Meridian/Meridian/tests/Meridian.Backtesting.Tests/LedgerQueryTests.cs(286,26): error CS0118: 'Ledger' is a namespace but is used like a type [/...`
 
       ## Resolution Approach
       1. Read the error messages and stack traces carefully
