@@ -149,7 +149,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     /// Handles automatic reconnection when connection is lost.
     /// Delegates to WebSocketConnectionManager for gated reconnection.
     /// </summary>
-    private async Task OnConnectionLostAsync(CancellationToken ct = default)
+    private async Task OnConnectionLostAsync()
     {
         if (_wsUri == null)
             return;

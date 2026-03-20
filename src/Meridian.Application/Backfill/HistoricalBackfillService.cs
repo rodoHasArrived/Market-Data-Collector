@@ -122,7 +122,7 @@ public sealed class HistoricalBackfillService
             }
         }
 
-        var tasks = sortedSymbols.Select(ProcessSymbolAsync).ToArray();
+        var tasks = sortedSymbols.Select(s => ProcessSymbolAsync(s)).ToArray();
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
         try

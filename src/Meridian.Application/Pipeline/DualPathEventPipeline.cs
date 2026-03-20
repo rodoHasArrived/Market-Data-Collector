@@ -129,13 +129,13 @@ public sealed class DualPathEventPipeline : IMarketEventPublisher, IBackpressure
         {
             // Start one long-running consumer per ring buffer.
             _tradeConsumer = Task.Factory.StartNew(
-                ConsumeTradesAsync,
+                () => ConsumeTradesAsync(),
                 _cts.Token,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap();
 
             _quoteConsumer = Task.Factory.StartNew(
-                ConsumeQuotesAsync,
+                () => ConsumeQuotesAsync(),
                 _cts.Token,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap();

@@ -721,7 +721,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     #region WebSocket Message Handling
 
-    private async Task OnWsConnectionLostAsync(CancellationToken ct = default)
+    private async Task OnWsConnectionLostAsync()
     {
         Status = DataSourceStatus.Disconnected;
 
@@ -729,11 +729,11 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         // during the loop do not cancel the token the loop itself is watching.
         _reconnectCts.Dispose();
         _reconnectCts = new CancellationTokenSource();
-        var ct = _reconnectCts.Token;
+        var reconnectCt = _reconnectCts.Token;
 
         for (int attempt = 1; attempt <= _options.MaxReconnectAttempts; attempt++)
         {
-            if (ct.IsCancellationRequested)
+            if (reconnectCt.IsCancellationRequested)
             {
                 Log.Debug("NYSE reconnection loop cancelled by shutdown signal");
                 return;
@@ -747,7 +747,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             var delaySecs = Math.Min(_options.ReconnectDelaySeconds * Math.Pow(2, attempt - 1) * jitter, 60.0);
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(delaySecs), ct).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(delaySecs), reconnectCt).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -757,7 +757,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
             // Check cancellation immediately before attempting the connect so that a
             // shutdown signal received during the backoff delay is still honoured.
-            if (ct.IsCancellationRequested)
+            if (reconnectCt.IsCancellationRequested)
             {
                 Log.Debug("NYSE reconnection loop cancelled by shutdown signal");
                 return;
@@ -765,10 +765,10 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
             try
             {
-                // Pass ct so that a shutdown signal also cancels the connect operation itself,
-                // not just the backoff delay.  ConnectAsync no longer resets _reconnectCts so
-                // ct remains valid for the duration of the connect call.
-                await ConnectAsync(ct).ConfigureAwait(false);
+                // Pass reconnectCt so that a shutdown signal also cancels the connect operation
+                // itself, not just the backoff delay.  ConnectAsync no longer resets _reconnectCts
+                // so reconnectCt remains valid for the duration of the connect call.
+                await ConnectAsync(reconnectCt).ConfigureAwait(false);
                 MigrationDiagnostics.IncReconnectSuccess("nyse");
                 return;
             }

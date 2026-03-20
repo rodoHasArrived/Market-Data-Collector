@@ -1,9 +1,13 @@
 using Meridian.Application.Config;
 using Meridian.Application.Logging;
+using Meridian.Application.Monitoring;
+using Meridian.Application.Services;
+using Meridian.Application.UI;
 using Meridian.Domain.Collectors;
 using Meridian.Domain.Events;
 using Meridian.Infrastructure;
 using Meridian.Infrastructure.Adapters.Core;
+using Meridian.Infrastructure.Adapters.Synthetic;
 using Meridian.Infrastructure.Contracts;
 using Meridian.Infrastructure.DataSources;
 using Microsoft.Extensions.DependencyInjection;

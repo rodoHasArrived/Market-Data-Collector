@@ -6,6 +6,7 @@ using Meridian.Storage.Interfaces;
 using Meridian.Storage.Maintenance;
 using Meridian.Storage.Policies;
 using Meridian.Storage.Services;
+using Meridian.Application.UI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Meridian.Application.Composition.Features;

@@ -2,6 +2,7 @@ using Meridian.Application.Composition.Features;
 using Meridian.Application.Monitoring;
 using Meridian.Application.Pipeline;
 using Meridian.Domain.Events;
+using Meridian.Infrastructure.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Meridian.Application.Composition;

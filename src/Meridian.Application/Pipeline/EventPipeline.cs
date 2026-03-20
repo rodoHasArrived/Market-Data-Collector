@@ -220,7 +220,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         // persistence remains single-threaded by default.
         _consumers = Enumerable.Range(0, _consumerCount)
             .Select(_ => Task.Factory.StartNew(
-                ConsumeAsync,
+                () => ConsumeAsync(),
                 _cts.Token,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap())

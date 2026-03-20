@@ -1,6 +1,8 @@
 using Meridian.Application.Backfill;
 using Meridian.Application.Config;
 using Meridian.Application.Scheduling;
+using Meridian.Application.Subscriptions.Services;
+using Meridian.Application.UI;
 using Meridian.Infrastructure.Adapters.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

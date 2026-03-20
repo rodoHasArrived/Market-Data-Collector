@@ -2,6 +2,7 @@ using Meridian.Application.Config;
 using Meridian.Application.Monitoring;
 using Meridian.Application.Services;
 using Meridian.Application.UI;
+using Meridian.Storage.Interfaces;
 using Meridian.Storage.Store;
 using Microsoft.Extensions.DependencyInjection;
 
