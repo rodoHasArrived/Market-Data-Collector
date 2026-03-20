@@ -270,7 +270,8 @@ Meridian/
 │       │   ├── stop-collector.ps1
 │       │   └── stop-collector.sh
 │       ├── ai-architecture-check.py
-│       └── ai-repo-updater.py
+│       ├── ai-repo-updater.py
+│       └── validate-tooling-metadata.py
 ├── config/  # Configuration files
 │   ├── appsettings.json
 │   ├── appsettings.sample.json
@@ -412,6 +413,7 @@ Meridian/
 │   │   ├── README.md
 │   │   ├── refactor-map.md
 │   │   ├── repository-organization-guide.md
+│   │   ├── tooling-workflow-backlog.md
 │   │   ├── ui-fixture-mode-guide.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/

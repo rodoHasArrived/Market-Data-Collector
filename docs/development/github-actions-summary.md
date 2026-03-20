@@ -2,13 +2,13 @@
 
 This document provides a quick reference for all GitHub Actions workflows in the Meridian repository.
 
-**Last Updated:** 2026-02-13
-**Total Workflows:** 17 (consolidated from 25 original files)
+**Last Updated:** 2026-03-20
+**Scope:** Core workflow summary (see `.github/workflows/README.md` for the full current inventory)
 **Authoritative Reference:** [`.github/workflows/README.md`](../../.github/workflows/README.md)
 
 ---
 
-## Workflow Inventory
+## Core Workflow Inventory
 
 ### Build & Release (5 workflows)
 
@@ -50,7 +50,7 @@ This document provides a quick reference for all GitHub Actions workflows in the
 
 ## Consolidation History
 
-Workflows were consolidated from 25 to 17 files on 2026-02-05:
+The workflow surface has continued to evolve after the 2026-02-05 consolidation pass, so this document intentionally summarizes the core lanes rather than maintaining an exact file count.
 
 | Consolidated Workflow | Replaced |
 |----------------------|----------|

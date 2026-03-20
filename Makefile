@@ -18,7 +18,7 @@
         publish clean check-deps watch watch-build \
         setup-config setup-dev lint format-check benchmark bench-quick bench-filter \
         pre-pr pre-pr-full \
-        docs verify-adrs verify-contracts gen-context \
+        docs verify-adrs verify-contracts verify-tooling-metadata gen-context \
         gen-interfaces gen-structure gen-providers gen-workflows update-claude-md docs-all \
         doctor doctor-ci doctor-quick doctor-fix diagnose diagnose-build \
         verify-setup \
@@ -100,7 +100,7 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'run|build|test|clean|bench|lint|watch|setup-dev|format' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Documentation:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docs|verify-adr|verify-contract|gen-context|gen-interface|gen-structure|gen-provider|gen-workflow|update-claude' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docs|verify-adr|verify-contract|verify-tooling-metadata|gen-context|gen-interface|gen-structure|gen-provider|gen-workflow|update-claude' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Publishing:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'publish' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -568,10 +568,13 @@ history: ## Show build history summary
 # Desktop App
 # =============================================================================
 
+verify-tooling-metadata: ## Validate Makefile/package/dependabot path references
+	@python3 build/scripts/validate-tooling-metadata.py
+
 icons: ## Generate desktop app icons from SVG
 	@echo "$(BLUE)Generating desktop app icons...$(NC)"
 	@npm ci --silent
-	@node build/node/generate-icons.mjs
+	@npm run generate-icons
 	@echo "$(GREEN)Icons generated$(NC)"
 
 desktop: icons ## Build WPF desktop app (Windows only)

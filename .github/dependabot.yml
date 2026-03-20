@@ -161,31 +161,6 @@ updates:
           - "minor"
           - "patch"
 
-  # Root npm tooling
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "UTC"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps(npm)"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "npm"
-    reviewers:
-      - "rodoHasArrived"
-    groups:
-      root-tooling:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-
   # Benchmark project
   - package-ecosystem: "nuget"
     directory: "/benchmarks/Meridian.Benchmarks"
@@ -215,7 +190,7 @@ updates:
 
   # Tools
   - package-ecosystem: "nuget"
-    directory: "/tools/DocGenerator"
+    directory: "/build/dotnet/DocGenerator"
     schedule:
       interval: "monthly"
       day: "monday"

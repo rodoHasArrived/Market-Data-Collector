@@ -29,13 +29,13 @@ public sealed class DataQualityApiClient : DataQualityServiceBase, IDataQualityA
         => await GetAsync<List<QualityGapResponse>>(
             UiApiRoutes.WithQuery(UiApiRoutes.QualityGaps, $"count={count}"),
             ct)
-           ?? Array.Empty<QualityGapResponse>();
+           ?? new List<QualityGapResponse>();
 
     public async Task<IReadOnlyList<QualityAnomalyResponse>> GetAnomaliesAsync(int count, CancellationToken ct = default)
         => await GetAsync<List<QualityAnomalyResponse>>(
             UiApiRoutes.WithQuery(UiApiRoutes.QualityAnomalies, $"count={count}"),
             ct)
-           ?? Array.Empty<QualityAnomalyResponse>();
+           ?? new List<QualityAnomalyResponse>();
 
     public Task<QualityLatencyStatisticsResponse?> GetLatencyStatisticsAsync(CancellationToken ct = default)
         => GetAsync<QualityLatencyStatisticsResponse>(UiApiRoutes.QualityLatencyStatistics, ct);
