@@ -9,16 +9,16 @@ The easiest way to build and install the Desktop App:
 
 ```powershell
 # Build, trust certificate, and install in one command
-.\scripts\install\install.ps1 -Mode Desktop
+.\build\scripts\install\install.ps1 -Mode Desktop
 
 # Build for ARM64 devices (Surface Pro X, etc.)
-.\scripts\install\install.ps1 -Mode Desktop -Architecture ARM64
+.\build\scripts\install\install.ps1 -Mode Desktop -Architecture ARM64
 
 # Auto-install .NET SDK 9.0 and other prerequisites
-.\scripts\install\install.ps1 -Mode Desktop -AutoInstallPrereqs
+.\build\scripts\install\install.ps1 -Mode Desktop -AutoInstallPrereqs
 
 # Build only (no installation)
-.\scripts\install\install.ps1 -Mode Desktop -SkipInstall
+.\build\scripts\install\install.ps1 -Mode Desktop -SkipInstall
 ```
 
 ## Build MSIX Packages
@@ -32,7 +32,7 @@ make desktop-publish
 **PowerShell install script:**
 
 ```powershell
-.\scripts\install\install.ps1 -Mode Desktop
+.\build\scripts\install\install.ps1 -Mode Desktop
 ```
 
 Both commands output MSIX packages under:
@@ -61,13 +61,13 @@ The install script supports several options for Desktop mode:
 To uninstall the Desktop App:
 
 ```powershell
-.\scripts\install\install.ps1 -Mode UninstallDesktop
+.\build\scripts\install\install.ps1 -Mode UninstallDesktop
 ```
 
 Or use the interactive menu:
 
 ```powershell
-.\scripts\install\install.ps1
+.\build\scripts\install\install.ps1
 # Select option 7) Uninstall Desktop App
 ```
 

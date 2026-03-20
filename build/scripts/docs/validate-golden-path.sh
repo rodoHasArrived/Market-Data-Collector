@@ -7,7 +7,7 @@ cd "$repo_root"
 readonly unix_installer="build/scripts/install/install.sh"
 readonly windows_installer="build/scripts/install/install.ps1"
 
-readonly doc_files=(
+readonly required_reference_files=(
   "README.md"
   "docs/HELP.md"
 )
@@ -41,11 +41,19 @@ check_absent() {
   fi
 }
 
+check_tree_absent() {
+  local root="$1"
+  local text="$2"
+  if rg -n -F --glob '*.md' "$text" "$root" >/dev/null; then
+    fail "Found stale reference '$text' under $root"
+  fi
+}
+
 check_file_exists "$unix_installer"
 check_file_exists "$windows_installer"
 check_executable "$unix_installer"
 
-for file in "${doc_files[@]}"; do
+for file in "${required_reference_files[@]}"; do
   check_contains "$file" "./$unix_installer"
   check_contains "$file" ".\\build\\scripts\\install\\install.ps1"
   check_absent "$file" "./scripts/install/install.sh"
@@ -53,5 +61,7 @@ for file in "${doc_files[@]}"; do
 done
 
 check_contains "Makefile" "./$unix_installer"
+check_tree_absent "." "./scripts/install/install.sh"
+check_tree_absent "." ".\\scripts\\install\\install.ps1"
 
 echo "Golden Path installer references are valid."
