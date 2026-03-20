@@ -4,7 +4,8 @@
       xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       Title="Backtest"
       Loaded="OnPageLoaded"
-      Unloaded="OnPageUnloaded">
+      Unloaded="OnPageUnloaded"
+      AutomationProperties.Name="Backtest">
 
     <Page.Resources>
         <Style TargetType="TextBlock" x:Key="LabelStyle">

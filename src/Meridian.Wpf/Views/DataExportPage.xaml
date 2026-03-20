@@ -5,7 +5,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
-      Loaded="OnPageLoaded">
+      Loaded="OnPageLoaded"
+      AutomationProperties.Name="Data Export">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1100">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">

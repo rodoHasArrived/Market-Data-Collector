@@ -5,7 +5,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
-      Loaded="OnPageLoaded">
+      Loaded="OnPageLoaded"
+      AutomationProperties.Name="Storage">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">

@@ -6,7 +6,8 @@
       xmlns:converters="clr-namespace:Meridian.Wpf.Converters"
       mc:Ignorable="d"
       d:DesignHeight="800" d:DesignWidth="1200"
-      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      AutomationProperties.Name="Data Quality">
 
     <Page.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />

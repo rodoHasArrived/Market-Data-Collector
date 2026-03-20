@@ -5,7 +5,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
-      Loaded="OnPageLoaded">
+      Loaded="OnPageLoaded"
+      AutomationProperties.Name="Activity Log">
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>

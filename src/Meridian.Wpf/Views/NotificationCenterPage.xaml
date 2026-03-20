@@ -7,7 +7,8 @@
       d:DesignHeight="900" d:DesignWidth="1200"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
       Loaded="OnPageLoaded"
-      Unloaded="OnPageUnloaded">
+      Unloaded="OnPageUnloaded"
+      AutomationProperties.Name="Notification Center">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">

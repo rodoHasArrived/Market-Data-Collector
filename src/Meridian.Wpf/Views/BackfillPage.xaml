@@ -8,7 +8,8 @@
       d:DesignHeight="900" d:DesignWidth="1400"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
       Loaded="OnPageLoaded"
-      Unloaded="OnPageUnloaded">
+      Unloaded="OnPageUnloaded"
+      AutomationProperties.Name="Backfill">
 
     <Page.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />

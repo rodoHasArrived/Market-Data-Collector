@@ -1,1 +1,1 @@
-// Types moved to MarketDataCollector.Ledger project.
+// Types moved to Meridian.Ledger project.

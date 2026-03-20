@@ -14,7 +14,7 @@ namespace Meridian.Storage.Services;
 /// </para>
 /// </summary>
 /// <typeparam name="T">Type of events to buffer.</typeparam>
-public class EventBuffer<T> : IDisposable where T : class
+public sealed class EventBuffer<T> : IDisposable where T : class
 {
     /// <summary>Lock protecting <see cref="_active"/> and <see cref="_standby"/>.</summary>
     protected readonly object _lock = new();
