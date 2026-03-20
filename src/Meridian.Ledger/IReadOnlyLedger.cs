@@ -11,8 +11,14 @@ public interface IReadOnlyLedger
     /// <summary>All journal entries in chronological posting order.</summary>
     IReadOnlyList<JournalEntry> Journal { get; }
 
+    /// <summary>All accounts that have been posted to.</summary>
+    IReadOnlyCollection<LedgerAccount> Accounts { get; }
+
     /// <summary>Returns all individual ledger lines posted to <paramref name="account"/>.</summary>
     IReadOnlyList<LedgerEntry> GetEntries(LedgerAccount account);
+
+    /// <summary>Returns all ledger lines posted to <paramref name="account"/> within the supplied time range.</summary>
+    IReadOnlyList<LedgerEntry> GetEntries(LedgerAccount account, DateTimeOffset? from, DateTimeOffset? to);
 
     /// <summary>
     /// Returns the net balance for <paramref name="account"/> using normal-balance rules.
@@ -21,8 +27,26 @@ public interface IReadOnlyLedger
     /// </summary>
     decimal GetBalance(LedgerAccount account);
 
+    /// <summary>Returns the balance for <paramref name="account"/> as of <paramref name="timestamp"/>.</summary>
+    decimal GetBalanceAsOf(LedgerAccount account, DateTimeOffset timestamp);
+
+    /// <summary>Returns whether the ledger contains postings for <paramref name="account"/>.</summary>
+    bool HasAccount(LedgerAccount account);
+
+    /// <summary>Returns journal entries matching the supplied range and optional description filter.</summary>
+    IReadOnlyList<JournalEntry> GetJournalEntries(DateTimeOffset? from = null, DateTimeOffset? to = null, string? descriptionContains = null);
+
+    /// <summary>Returns a summary for a single account.</summary>
+    LedgerAccountSummary GetAccountSummary(LedgerAccount account);
+
+    /// <summary>Returns summaries for all posted accounts, optionally filtered by type.</summary>
+    IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null);
+
     /// <summary>
     /// Returns a trial balance mapping every account that has been posted to its net balance.
     /// </summary>
     IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance();
+
+    /// <summary>Returns the trial balance as of <paramref name="timestamp"/>.</summary>
+    IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp);
 }

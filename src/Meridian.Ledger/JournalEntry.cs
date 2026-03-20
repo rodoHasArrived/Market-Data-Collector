@@ -24,7 +24,8 @@ public sealed record JournalEntry
     /// </summary>
     /// <exception cref="LedgerValidationException">
     /// Thrown when <paramref name="description"/> is null or whitespace,
-    /// or when <paramref name="lines"/> is null or empty.
+    /// when <paramref name="lines"/> is null or empty,
+    /// or when any line metadata is inconsistent with the journal entry.
     /// </exception>
     public JournalEntry(
         Guid journalEntryId,
@@ -39,6 +40,33 @@ public sealed record JournalEntry
 
         if (lines.Count == 0)
             throw new LedgerValidationException("A journal entry must have at least one line.");
+
+        var seenEntryIds = new HashSet<Guid>();
+        foreach (var line in lines)
+        {
+            ArgumentNullException.ThrowIfNull(line);
+
+            if (line.JournalEntryId != journalEntryId)
+            {
+                throw new LedgerValidationException(
+                    $"Ledger entry '{line.EntryId}' references journal entry '{line.JournalEntryId}' but expected '{journalEntryId}'.");
+            }
+
+            if (line.Timestamp != timestamp)
+            {
+                throw new LedgerValidationException(
+                    $"Ledger entry '{line.EntryId}' timestamp '{line.Timestamp:O}' does not match journal timestamp '{timestamp:O}'.");
+            }
+
+            if (!string.Equals(line.Description, description, StringComparison.Ordinal))
+            {
+                throw new LedgerValidationException(
+                    $"Ledger entry '{line.EntryId}' description must match the journal description.");
+            }
+
+            if (!seenEntryIds.Add(line.EntryId))
+                throw new LedgerValidationException($"Ledger entry '{line.EntryId}' is duplicated within the journal entry.");
+        }
 
         JournalEntryId = journalEntryId;
         Timestamp = timestamp;

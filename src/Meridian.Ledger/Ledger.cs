@@ -3,7 +3,7 @@ namespace Meridian.Ledger;
 /// <summary>
 /// Double-entry accounting ledger.
 /// Holds all <see cref="JournalEntry"/> records posted during a run and provides
-/// account-balance queries and a trial-balance summary.
+/// account-balance queries, filtered journal views, and trial-balance summaries.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -21,35 +21,39 @@ namespace Meridian.Ledger;
 public sealed class Ledger : IReadOnlyLedger
 {
     private readonly List<JournalEntry> _journal = [];
+    private readonly HashSet<Guid> _journalEntryIds = [];
+    private readonly HashSet<Guid> _ledgerEntryIds = [];
+    private readonly Dictionary<LedgerAccount, AccountTotals> _accountTotals = [];
 
     /// <summary>All journal entries in chronological posting order.</summary>
     public IReadOnlyList<JournalEntry> Journal => _journal;
+
+    /// <summary>All accounts that have been posted to, in first-seen order.</summary>
+    public IReadOnlyCollection<LedgerAccount> Accounts => _accountTotals.Keys.ToList();
 
     /// <summary>
     /// Posts a <see cref="JournalEntry"/> to the ledger.
     /// </summary>
     /// <param name="entry">The journal entry to post.</param>
-    /// <exception cref="ArgumentException">Thrown when the entry is not balanced.</exception>
+    /// <exception cref="LedgerValidationException">Thrown when the entry fails validation.</exception>
     public void Post(JournalEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        if (string.IsNullOrWhiteSpace(entry.Description))
-            throw new LedgerValidationException("Journal entry description must not be null or whitespace.");
-
-        if (entry.Lines is null || entry.Lines.Count == 0)
-            throw new LedgerValidationException("Journal entry must have at least one line.");
-
-        if (!entry.IsBalanced)
-        {
-            var totalDebit = entry.Lines.Sum(l => l.Debit);
-            var totalCredit = entry.Lines.Sum(l => l.Credit);
-            throw new LedgerValidationException(
-                $"Journal entry '{entry.JournalEntryId}' is not balanced " +
-                $"(debits={totalDebit:F4}, credits={totalCredit:F4}).");
-        }
+        ValidateJournalEntry(entry);
 
         _journal.Add(entry);
+        _journalEntryIds.Add(entry.JournalEntryId);
+
+        foreach (var line in entry.Lines)
+        {
+            _ledgerEntryIds.Add(line.EntryId);
+
+            if (!_accountTotals.TryGetValue(line.Account, out var totals))
+                totals = AccountTotals.Empty;
+
+            _accountTotals[line.Account] = totals.Add(line.Debit, line.Credit, entry.Timestamp);
+        }
     }
 
     /// <summary>Returns all individual ledger lines posted to <paramref name="account"/>.</summary>
@@ -63,6 +67,21 @@ public sealed class Ledger : IReadOnlyLedger
     }
 
     /// <summary>
+    /// Returns all individual ledger lines posted to <paramref name="account"/> within the supplied time range.
+    /// </summary>
+    public IReadOnlyList<LedgerEntry> GetEntries(LedgerAccount account, DateTimeOffset? from, DateTimeOffset? to)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        EnsureValidRange(from, to);
+
+        return _journal
+            .Where(j => IsWithinRange(j.Timestamp, from, to))
+            .SelectMany(j => j.Lines)
+            .Where(l => l.Account == account)
+            .ToList();
+    }
+
+    /// <summary>
     /// Returns the net balance for <paramref name="account"/> using normal-balance rules.
     /// Assets and expenses carry debit-normal balances (debits − credits).
     /// Liabilities, equity, and revenues carry credit-normal balances (credits − debits).
@@ -70,48 +89,154 @@ public sealed class Ledger : IReadOnlyLedger
     public decimal GetBalance(LedgerAccount account)
     {
         ArgumentNullException.ThrowIfNull(account);
-        var entries = GetEntries(account);
-        var debits = entries.Sum(l => l.Debit);
-        var credits = entries.Sum(l => l.Credit);
-        return account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
-            ? debits - credits
-            : credits - debits;
+
+        return _accountTotals.TryGetValue(account, out var totals)
+            ? CalculateNetBalance(account, totals.Debits, totals.Credits)
+            : 0m;
+    }
+
+    /// <summary>
+    /// Returns the balance for <paramref name="account"/> considering only postings on or before <paramref name="timestamp"/>.
+    /// </summary>
+    public decimal GetBalanceAsOf(LedgerAccount account, DateTimeOffset timestamp)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+
+        var debits = 0m;
+        var credits = 0m;
+
+        foreach (var journalEntry in _journal)
+        {
+            if (journalEntry.Timestamp > timestamp)
+                continue;
+
+            foreach (var line in journalEntry.Lines)
+            {
+                if (line.Account != account)
+                    continue;
+
+                debits += line.Debit;
+                credits += line.Credit;
+            }
+        }
+
+        return CalculateNetBalance(account, debits, credits);
+    }
+
+    /// <summary>
+    /// Returns journal entries matching the supplied range and optional description filter.
+    /// </summary>
+    public IReadOnlyList<JournalEntry> GetJournalEntries(
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
+        string? descriptionContains = null)
+    {
+        EnsureValidRange(from, to);
+
+        IEnumerable<JournalEntry> query = _journal;
+
+        if (from is not null || to is not null)
+            query = query.Where(entry => IsWithinRange(entry.Timestamp, from, to));
+
+        if (!string.IsNullOrWhiteSpace(descriptionContains))
+        {
+            query = query.Where(entry => entry.Description.Contains(descriptionContains, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return query.ToList();
+    }
+
+    /// <summary>
+    /// Returns whether the ledger contains postings for <paramref name="account"/>.
+    /// </summary>
+    public bool HasAccount(LedgerAccount account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        return _accountTotals.ContainsKey(account);
+    }
+
+    /// <summary>
+    /// Returns a summarized view of a posted account, including totals and posting metadata.
+    /// Accounts with no activity return a zero-valued summary.
+    /// </summary>
+    public LedgerAccountSummary GetAccountSummary(LedgerAccount account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+
+        if (!_accountTotals.TryGetValue(account, out var totals))
+            return LedgerAccountSummary.Empty(account);
+
+        return new LedgerAccountSummary(
+            account,
+            CalculateNetBalance(account, totals.Debits, totals.Credits),
+            totals.Debits,
+            totals.Credits,
+            totals.EntryCount,
+            totals.FirstPostedAt,
+            totals.LastPostedAt);
+    }
+
+    /// <summary>
+    /// Returns account summaries for every posted account, optionally filtered by account type.
+    /// </summary>
+    public IReadOnlyList<LedgerAccountSummary> SummarizeAccounts(LedgerAccountType? accountType = null)
+    {
+        return _accountTotals
+            .Where(pair => accountType is null || pair.Key.AccountType == accountType)
+            .Select(pair => new LedgerAccountSummary(
+                pair.Key,
+                CalculateNetBalance(pair.Key, pair.Value.Debits, pair.Value.Credits),
+                pair.Value.Debits,
+                pair.Value.Credits,
+                pair.Value.EntryCount,
+                pair.Value.FirstPostedAt,
+                pair.Value.LastPostedAt))
+            .OrderBy(summary => summary.Account.AccountType)
+            .ThenBy(summary => summary.Account.Name, StringComparer.Ordinal)
+            .ThenBy(summary => summary.Account.Symbol, StringComparer.Ordinal)
+            .ToList();
     }
 
     /// <summary>
     /// Returns a trial balance mapping every account that has been posted to its net balance.
     /// If accounting is correct the sum of asset and expense balances equals the sum of liability,
     /// equity, and revenue balances (the accounting equation holds).
-    /// Computed in a single pass over the journal to avoid O(A×N) scans.
     /// </summary>
     public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalance()
     {
-        // Aggregate debits and credits per account in one pass.
-        var aggregates = new Dictionary<LedgerAccount, (decimal Debits, decimal Credits)>();
-
-        foreach (var journalEntry in _journal)
+        var result = new Dictionary<LedgerAccount, decimal>(_accountTotals.Count);
+        foreach (var (account, totals) in _accountTotals)
         {
-            foreach (var line in journalEntry.Lines)
-            {
-                if (!aggregates.TryGetValue(line.Account, out var totals))
-                    totals = (0m, 0m);
-
-                aggregates[line.Account] = (totals.Debits + line.Debit, totals.Credits + line.Credit);
-            }
-        }
-
-        var result = new Dictionary<LedgerAccount, decimal>(aggregates.Count);
-        foreach (var (account, (debits, credits)) in aggregates)
-        {
-            result[account] = account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
-                ? debits - credits
-                : credits - debits;
+            result[account] = CalculateNetBalance(account, totals.Debits, totals.Credits);
         }
 
         return result;
     }
 
-    // ── Internal factory helpers ─────────────────────────────────────────────
+    /// <summary>
+    /// Returns a trial balance as of the supplied timestamp.
+    /// </summary>
+    public IReadOnlyDictionary<LedgerAccount, decimal> TrialBalanceAsOf(DateTimeOffset timestamp)
+    {
+        var result = new Dictionary<LedgerAccount, decimal>();
+
+        foreach (var journalEntry in _journal)
+        {
+            if (journalEntry.Timestamp > timestamp)
+                continue;
+
+            foreach (var line in journalEntry.Lines)
+            {
+                result.TryGetValue(line.Account, out var currentBalance);
+                var delta = line.Account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
+                    ? line.Debit - line.Credit
+                    : line.Credit - line.Debit;
+                result[line.Account] = currentBalance + delta;
+            }
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Creates a balanced <see cref="JournalEntry"/> from a list of (account, debit, credit) tuples
@@ -138,5 +263,81 @@ public sealed class Ledger : IReadOnlyLedger
             .ToList();
 
         Post(new JournalEntry(journalId, timestamp, description, entries));
+    }
+
+    private void ValidateJournalEntry(JournalEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Description))
+            throw new LedgerValidationException("Journal entry description must not be null or whitespace.");
+
+        if (entry.Lines is null || entry.Lines.Count == 0)
+            throw new LedgerValidationException("Journal entry must have at least one line.");
+
+        if (_journalEntryIds.Contains(entry.JournalEntryId))
+            throw new LedgerValidationException($"Journal entry '{entry.JournalEntryId}' has already been posted.");
+
+        if (!entry.IsBalanced)
+        {
+            var totalDebit = entry.Lines.Sum(l => l.Debit);
+            var totalCredit = entry.Lines.Sum(l => l.Credit);
+            throw new LedgerValidationException(
+                $"Journal entry '{entry.JournalEntryId}' is not balanced " +
+                $"(debits={totalDebit:F4}, credits={totalCredit:F4}).");
+        }
+
+        foreach (var line in entry.Lines)
+        {
+            if (line.JournalEntryId != entry.JournalEntryId)
+            {
+                throw new LedgerValidationException(
+                    $"Ledger entry '{line.EntryId}' references journal entry '{line.JournalEntryId}' but was posted under '{entry.JournalEntryId}'.");
+            }
+
+            if (line.Timestamp != entry.Timestamp)
+            {
+                throw new LedgerValidationException(
+                    $"Ledger entry '{line.EntryId}' timestamp '{line.Timestamp:O}' does not match journal timestamp '{entry.Timestamp:O}'.");
+            }
+
+            if (!string.Equals(line.Description, entry.Description, StringComparison.Ordinal))
+            {
+                throw new LedgerValidationException(
+                    $"Ledger entry '{line.EntryId}' description must match journal entry description.");
+            }
+
+            if (_ledgerEntryIds.Contains(line.EntryId))
+                throw new LedgerValidationException($"Ledger entry '{line.EntryId}' has already been posted.");
+        }
+    }
+
+    private static decimal CalculateNetBalance(LedgerAccount account, decimal debits, decimal credits)
+        => account.AccountType is LedgerAccountType.Asset or LedgerAccountType.Expense
+            ? debits - credits
+            : credits - debits;
+
+    private static bool IsWithinRange(DateTimeOffset timestamp, DateTimeOffset? from, DateTimeOffset? to)
+        => (!from.HasValue || timestamp >= from.Value) && (!to.HasValue || timestamp <= to.Value);
+
+    private static void EnsureValidRange(DateTimeOffset? from, DateTimeOffset? to)
+    {
+        if (from is not null && to is not null && from > to)
+            throw new ArgumentException("The start of the range must be less than or equal to the end of the range.");
+    }
+
+    private readonly record struct AccountTotals(
+        decimal Debits,
+        decimal Credits,
+        int EntryCount,
+        DateTimeOffset? FirstPostedAt,
+        DateTimeOffset? LastPostedAt)
+    {
+        public static AccountTotals Empty => new(0m, 0m, 0, null, null);
+
+        public AccountTotals Add(decimal debit, decimal credit, DateTimeOffset timestamp)
+        {
+            var firstPostedAt = FirstPostedAt is null || timestamp < FirstPostedAt ? timestamp : FirstPostedAt;
+            var lastPostedAt = LastPostedAt is null || timestamp > LastPostedAt ? timestamp : LastPostedAt;
+            return new AccountTotals(Debits + debit, Credits + credit, EntryCount + 1, firstPostedAt, lastPostedAt);
+        }
     }
 }
