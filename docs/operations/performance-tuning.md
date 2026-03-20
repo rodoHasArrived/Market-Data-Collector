@@ -1,6 +1,6 @@
 # Performance Tuning Guide
 
-This guide covers the key configuration parameters that affect Market Data Collector's throughput, latency, memory usage, and storage efficiency.
+This guide covers the key configuration parameters that affect Meridian's throughput, latency, memory usage, and storage efficiency.
 
 ---
 

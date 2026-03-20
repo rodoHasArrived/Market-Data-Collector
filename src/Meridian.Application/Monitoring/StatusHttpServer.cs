@@ -419,7 +419,7 @@ setInterval(refresh,2000);refresh();
             return false;
         }
 
-        var headerToken = request.Headers["X-MDC-Status-Token"];
+        var headerToken = request.Headers["X-Meridian-Status-Token"];
         if (string.IsNullOrWhiteSpace(headerToken))
         {
             var authHeader = request.Headers["Authorization"];

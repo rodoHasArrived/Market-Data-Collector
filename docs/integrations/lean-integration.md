@@ -180,10 +180,10 @@ var dataProvider = new MeridianDataProvider("./data");
 
 ```bash
 # Linux/Mac
-ln -s /path/to/Meridian/data /path/to/Lean/Data/marketdatacollector
+ln -s /path/to/Meridian/data /path/to/Lean/Data/meridian
 
 # Windows (as Administrator)
-mklink /D C:\Lean\Data\marketdatacollector C:\Meridian\data
+mklink /D C:\Lean\Data\meridian C:\Meridian\data
 ```
 
 ## Custom Data Types

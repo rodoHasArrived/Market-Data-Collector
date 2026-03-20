@@ -387,7 +387,7 @@ Meridian/src/Meridian/Application/Config/Credentials/CredentialResolver.cs
 
 ### Overview
 
-This update adds essential NuGet dependencies to the Market Data Collector project and provides comprehensive documentation on open-source codebases that can help improve the project.
+This update adds essential NuGet dependencies to the Meridian project and provides comprehensive documentation on open-source codebases that can help improve the project.
 
 ## Changes Made
 

@@ -2,7 +2,7 @@
 !theme plain
 skinparam backgroundColor white
 
-title Market Data Collector - Event Processing Timing Diagram
+title Meridian - Event Processing Timing Diagram
 
 ' ==================== PARTICIPANTS ====================
 clock "System Clock" as Clock

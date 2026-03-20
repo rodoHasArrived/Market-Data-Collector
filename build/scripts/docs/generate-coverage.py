@@ -2,7 +2,7 @@
 """
 Documentation Coverage Report Generator
 
-Analyzes the Market Data Collector codebase to determine how well
+Analyzes the Meridian codebase to determine how well
 source-level constructs (public types, API endpoints, configuration
 keys, provider implementations, and ADR references) are reflected in
 the project documentation.

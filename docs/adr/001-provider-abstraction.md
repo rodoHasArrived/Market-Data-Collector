@@ -6,7 +6,7 @@
 
 ## Context
 
-The Market Data Collector needs to support multiple data providers (Interactive Brokers, Alpaca, NYSE, etc.) for both real-time streaming and historical data retrieval. Each provider has different:
+The Meridian needs to support multiple data providers (Interactive Brokers, Alpaca, NYSE, etc.) for both real-time streaming and historical data retrieval. Each provider has different:
 
 - API protocols (REST, WebSocket, proprietary)
 - Authentication mechanisms

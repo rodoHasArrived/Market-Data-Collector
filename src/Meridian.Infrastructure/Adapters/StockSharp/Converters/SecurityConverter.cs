@@ -14,9 +14,9 @@ public static class SecurityConverter
 {
 #if STOCKSHARP
     /// <summary>
-    /// Create a StockSharp Security from MDC SymbolConfig.
+    /// Create a StockSharp Security from Meridian SymbolConfig.
     /// </summary>
-    /// <param name="cfg">MDC symbol configuration.</param>
+    /// <param name="cfg">Meridian symbol configuration.</param>
     /// <returns>StockSharp Security object configured for subscription.</returns>
     public static Security ToSecurity(SymbolConfig cfg)
     {
@@ -36,9 +36,9 @@ public static class SecurityConverter
     }
 
     /// <summary>
-    /// Create a StockSharp SecurityId from MDC SymbolConfig.
+    /// Create a StockSharp SecurityId from Meridian SymbolConfig.
     /// </summary>
-    /// <param name="cfg">MDC symbol configuration.</param>
+    /// <param name="cfg">Meridian symbol configuration.</param>
     /// <returns>StockSharp SecurityId for message-level operations.</returns>
     public static SecurityId ToSecurityId(SymbolConfig cfg)
     {
@@ -110,7 +110,7 @@ public static class SecurityConverter
     }
 
     /// <summary>
-    /// Map MDC security type string to StockSharp SecurityTypes enum.
+    /// Map Meridian security type string to StockSharp SecurityTypes enum.
     /// </summary>
     private static SecurityTypes? MapSecurityType(string securityType)
     {

@@ -104,7 +104,7 @@ Add this scrape configuration to `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: 'marketdatacollector'
+  - job_name: 'meridian'
     static_configs:
       - targets: ['localhost:8080']
     metrics_path: '/metrics'
@@ -177,16 +177,16 @@ powershell -ExecutionPolicy Bypass -File .\STOP_COLLECTOR.ps1
 
 ### systemd (Linux service)
 Unit file included at:
-`deploy/systemd/marketdatacollector.service`
+`deploy/systemd/meridian.service`
 
 Typical install (example):
 ```bash
-sudo mkdir -p /opt/marketdatacollector
-sudo rsync -a ./ /opt/marketdatacollector/
-sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+sudo mkdir -p /opt/meridian
+sudo rsync -a ./ /opt/meridian/
+sudo cp deploy/systemd/meridian.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now marketdatacollector
-sudo journalctl -u marketdatacollector -f
+sudo systemctl enable --now meridian
+sudo journalctl -u meridian -f
 ```
 
 ---

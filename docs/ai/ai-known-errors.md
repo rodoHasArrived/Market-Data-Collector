@@ -67,7 +67,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `grep -rn '<Grid.*Padding=' src/Meridian.Wpf --include="*.xaml"`
   - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707017569/job/62600607213
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21707017569/job/62600607213
 - **Status**: fixed
 
 ### AI-20260205-nu1008-central-package-management
@@ -84,7 +84,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet restore Meridian.sln /p:EnableWindowsTargeting=true`
   - `dotnet build Meridian.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
   - `grep -r 'PackageReference Include=".*" Version=' --include="*.csproj" --include="*.fsproj" src/ | grep -v '<!--'` (should return no results)
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707148084/job/62601061503
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21707148084/job/62601061503
 - **Status**: fixed
 
 ### AI-20260206-provider-sdk-cross-file-type-resolution
@@ -131,7 +131,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/Meridian.Ui.Services/Meridian.Ui.Services.csproj -c Release`
   - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
   - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21851485930/job/63058846153
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21851485930/job/63058846153
 - **Status**: fixed (commit cec548e)
 
 ### AI-20260212-codecov-directory-mismatch
@@ -148,7 +148,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -A10 "dotnet test" .github/workflows/pr-checks.yml | grep "results-directory"`
   - `grep -A3 "codecov-action" .github/workflows/pr-checks.yml | grep -E "(directory|files)"`
   - `dotnet test Meridian.sln --collect:"XPlat Code Coverage" --results-directory ./test-results && ls -la ./test-results/**/coverage.cobertura.xml`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21938525658/job/63358083776#step:5:1
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21938525658/job/63358083776#step:5:1
 - **Status**: fixed (commit ad97ee2)
 
 ### AI-20260212-conditional-job-dependency
@@ -165,7 +165,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `grep -A5 "needs:" .github/workflows/*.yml | grep -B5 "if:"`
   - `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/desktop-builds.yml'))"`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21958711610/job/63429967664
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21958711610/job/63429967664
 - **Status**: fixed (commit 4f6088f)
 
 ---
@@ -186,7 +186,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj`
   - `grep -r "using Meridian.Wpf.Services;" src/Meridian.Wpf/Views/`
   - `grep -r "using UiServices" src/Meridian.Wpf/Services/`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21959216554/job/63431802067
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21959216554/job/63431802067
 - **Status**: fixed (commit 5ea62c8)
 
 ### AI-20260213-nullable-value-property-misuse
@@ -230,9 +230,9 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/Meridian.Wpf/Meridian.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows`
   - `grep -n 'out T? value' src/Meridian.Ui.Services/Collections/CircularBuffer.cs` (should return no matches after fix)
 - **Source issues**: 
-  - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21988186038/job/63527798918#step:5:1 (original)
-  - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21996212289/job/63556782046 (variant)
-  - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21998525615/job/63564824033#step:5:1 (regression)
+  - https://github.com/rodoHasArrived/Meridian/actions/runs/21988186038/job/63527798918#step:5:1 (original)
+  - https://github.com/rodoHasArrived/Meridian/actions/runs/21996212289/job/63556782046 (variant)
+  - https://github.com/rodoHasArrived/Meridian/actions/runs/21998525615/job/63564824033#step:5:1 (regression)
 - **Status**: fixed structurally (commit 49b2916 - changed API to eliminate nullable generic out parameter)
 - **Note**: This issue regressed multiple times (1e2ea1d, 5756479, 1802ea9, bf67ed5, e920c34) when using workarounds. The structural fix eliminates the problem at the API design level.
 
@@ -251,7 +251,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `CI=true python3 build/python/cli/buildctl.py build --configuration Release` (should pass preflight even without config file)
   - `python3 -c "import os; os.environ['CI']='true'; from pathlib import Path; import sys; sys.path.insert(0,'build/python'); from diagnostics.preflight import run_preflight; print(run_preflight(Path('.')))"` (should return (True, []))
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22014850305/job/63614949528#step:5:1
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/22014850305/job/63614949528#step:5:1
 - **Status**: fixed (commit 55d2827)
 - **Fixed in**: build/python/diagnostics/preflight.py - Added CI detection to skip config check when CI=true or GITHUB_ACTIONS=true
 
@@ -298,7 +298,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `grep -r "run: |" .github/workflows/*.yml | grep -v "shell:"` (should return no multi-line bash commands without shell specification)
   - `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/reusable-dotnet-build.yml'))"`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22047221887/job/63698175553
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/22047221887/job/63698175553
 - **Status**: fixed
 - **Fixed in**: `.github/workflows/reusable-dotnet-build.yml` line 121 — added `shell: bash` to the Build step
 
@@ -332,7 +332,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true 2>&1 | grep -E "error CS0266|Error\(s\)"`
   - `dotnet test tests/Meridian.Tests -c Release /p:EnableWindowsTargeting=true --filter "Domain"`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22709535738/job/65984383245#step:6:1
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/22709535738/job/65984383245#step:6:1
 - **Status**: fixed
 - **Fixed in**: `src/Meridian.Domain/Collectors/TradeDataCollector.cs` line 381 — added `(ushort)` cast: `state.TradeCount = (ushort)Math.Max(0, state.TradeCount - 1);`. Also `src/Meridian.Application/Results/ErrorCode.cs` — changed backing from `byte` to `int` since error codes use values up to 8005, which exceeds `byte.MaxValue` (255).
 
@@ -349,7 +349,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `echo "PCG-PA" | grep -E '^[A-Z0-9.^=-]+$' && echo "OK" || echo "FAIL"`
   - `printf 'PCG-PA\nPCG-PB\nBRK.A\n^GSPC\n=SPX' | grep -Ev '^[A-Z0-9.^=-]+$' | wc -l` (should return 0)
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21857738217/job/64242040198 (original, Feb 10) and https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22083541882/job/64238547291 (recurrence, Feb 20)
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/21857738217/job/64242040198 (original, Feb 10) and https://github.com/rodoHasArrived/Meridian/actions/runs/22083541882/job/64238547291 (recurrence, Feb 20)
 - **Status**: fixed
 - **Fixed in**: `.github/workflows/ticker-data-collection.yml` line 97 — changed `grep -qEv '^[A-Z0-9.\-^=]+$'` to `grep -Ev '^[A-Z0-9.^=-]+$'` (hyphen moved to end of character class); also improved to capture and display the invalid symbols before rejecting
 
@@ -367,7 +367,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true`
   - `grep -E ': byte' src/Meridian.Application/Results/ErrorCode.cs` (should return no results — backing type must be int)
   - `grep -E 'ErrorCode\.' src/ -r --include="*.cs" | grep -v '//\|\.cs:' | head -5`
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22710880501/job/65983564475#step:6:1
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/22710880501/job/65983564475#step:6:1
 - **Status**: fixed
 - **Fixed in**: `src/Meridian.Application/Results/ErrorCode.cs` — changed `: byte` to `: int`; `src/Meridian.Domain/Collectors/TradeDataCollector.cs` — added `(ushort)` cast on `Math.Max(0, TradeCount - 1)`; `tests/…/MarketDataClientFactoryTests.cs` — changed `(DataSourceKind)999` to `(DataSourceKind)200` (999 > 255); `tests/…/OptionContractSpecTests.cs` — removed `[InlineData(-1)]` (ushort cannot be negative); `tests/…/CanonicalizationGoldenFixtureTests.cs` — added `(byte)` cast for `canonicalizationVersion` comparison
 
@@ -386,7 +386,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/Meridian.Backtesting/Meridian.Backtesting.csproj -c Release /p:EnableWindowsTargeting=true`
   - `dotnet test tests/Meridian.Backtesting.Tests/Meridian.Backtesting.Tests.csproj -c Release /p:EnableWindowsTargeting=true`
   - `grep "Contracts.Domain.Events" src/Meridian.Backtesting/GlobalUsings.cs` (should return no results after fix)
-- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/23176103636, #2005
+- **Source issue**: https://github.com/rodoHasArrived/Meridian/actions/runs/23176103636, #2005
 - **Status**: fixed
 - **Fixed in**: `src/Meridian.Backtesting/GlobalUsings.cs` — removed `global using Meridian.Contracts.Domain.Events;`; also added `[assembly: InternalsVisibleTo("Meridian.Backtesting.Tests")]` following the pattern in `Application/GlobalUsings.cs`
 

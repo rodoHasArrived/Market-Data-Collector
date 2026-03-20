@@ -48,7 +48,7 @@ public sealed class SloDefinitionRegistry
             MeasurementWindow = TimeSpan.FromMinutes(5),
             ErrorBudgetPercent = 0.1,
             ErrorBudgetWindow = TimeSpan.FromDays(30),
-            AlertRuleName = "MdcHighProviderLatency",
+            AlertRuleName = "MeridianHighProviderLatency",
             RunbookSection = "docs/operations/operator-runbook.md#high-latency",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-ing-001"
         });
@@ -66,7 +66,7 @@ public sealed class SloDefinitionRegistry
             MeasurementWindow = TimeSpan.FromHours(24),
             ErrorBudgetPercent = 0.1,
             ErrorBudgetWindow = TimeSpan.FromDays(30),
-            AlertRuleName = "MdcHighDropRate",
+            AlertRuleName = "MeridianHighDropRate",
             RunbookSection = "docs/operations/operator-runbook.md#high-drop-rate",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-ing-002"
         });
@@ -85,7 +85,7 @@ public sealed class SloDefinitionRegistry
             MeasurementWindow = TimeSpan.FromHours(24),
             ErrorBudgetPercent = 5.0,
             ErrorBudgetWindow = TimeSpan.FromDays(30),
-            AlertRuleName = "MdcLowDataQuality",
+            AlertRuleName = "MeridianLowDataQuality",
             RunbookSection = "docs/operations/operator-runbook.md#low-data-quality",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-dc-001"
         });
@@ -101,7 +101,7 @@ public sealed class SloDefinitionRegistry
             CriticalThreshold = 600.0, // 10 minutes
             Unit = "seconds",
             MeasurementWindow = TimeSpan.FromHours(1),
-            AlertRuleName = "MdcNoEventsPublished",
+            AlertRuleName = "MeridianNoEventsPublished",
             RunbookSection = "docs/operations/operator-runbook.md#no-events",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-dc-002"
         });
@@ -120,7 +120,7 @@ public sealed class SloDefinitionRegistry
             MeasurementWindow = TimeSpan.FromDays(30),
             ErrorBudgetPercent = 0.1,
             ErrorBudgetWindow = TimeSpan.FromDays(30),
-            AlertRuleName = "MdcDown",
+            AlertRuleName = "MeridianDown",
             RunbookSection = "docs/operations/operator-runbook.md#application-down",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-av-001"
         });
@@ -137,7 +137,7 @@ public sealed class SloDefinitionRegistry
             CriticalThreshold = 300.0, // 5 minutes
             Unit = "seconds",
             MeasurementWindow = TimeSpan.FromMinutes(5),
-            AlertRuleName = "MdcDataFreshnessViolation",
+            AlertRuleName = "MeridianDataFreshnessViolation",
             RunbookSection = "docs/operations/operator-runbook.md#freshness-sla-violation",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-df-001"
         });
@@ -154,7 +154,7 @@ public sealed class SloDefinitionRegistry
             CriticalThreshold = 1.0,
             Unit = "count",
             MeasurementWindow = TimeSpan.FromMinutes(5),
-            AlertRuleName = "MdcStorageWriteErrors",
+            AlertRuleName = "MeridianStorageWriteErrors",
             RunbookSection = "docs/operations/operator-runbook.md#storage-write-errors",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-st-001"
         });
@@ -171,7 +171,7 @@ public sealed class SloDefinitionRegistry
             CriticalThreshold = 0.99, // 99%
             Unit = "ratio",
             MeasurementWindow = TimeSpan.FromDays(30),
-            AlertRuleName = "MdcProviderDisconnected",
+            AlertRuleName = "MeridianProviderDisconnected",
             RunbookSection = "docs/operations/operator-runbook.md#provider-disconnected",
             SloDocSection = "docs/operations/service-level-objectives.md#slo-pc-001"
         });

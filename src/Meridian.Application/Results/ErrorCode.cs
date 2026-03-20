@@ -1,7 +1,7 @@
 namespace Meridian.Application.ResultTypes;
 
 /// <summary>
-/// Standardized error codes for the Market Data Collector system.
+/// Standardized error codes for the Meridian system.
 /// Error codes are grouped by category using numeric ranges for easy filtering and categorization.
 /// </summary>
 public enum ErrorCode : int

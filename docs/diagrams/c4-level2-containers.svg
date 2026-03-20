@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 1383.59)">
 <title>C4_Containers</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-1383.59 2275,-1383.59 2275,36 -36,36"/>
-<text text-anchor="middle" x="1119.5" y="-1333.99" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Container Diagram (C4 Level 2)</text>
+<text text-anchor="middle" x="1119.5" y="-1333.99" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Container Diagram (C4 Level 2)</text>
 <text text-anchor="middle" x="1119.5" y="-1320.99" font-family="Helvetica,sans-Serif" font-size="12.00">v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_external</title>
@@ -19,7 +19,7 @@
 <g id="clust2" class="cluster">
 <title>cluster_mdc</title>
 <path fill="#f0f8ff" stroke="#438dd5" d="M695,-458.81C695,-458.81 2031,-458.81 2031,-458.81 2037,-458.81 2043,-464.81 2043,-470.81 2043,-470.81 2043,-1189.38 2043,-1189.38 2043,-1195.38 2037,-1201.38 2031,-1201.38 2031,-1201.38 695,-1201.38 695,-1201.38 689,-1201.38 683,-1195.38 683,-1189.38 683,-1189.38 683,-470.81 683,-470.81 683,-464.81 689,-458.81 695,-458.81"/>
-<text text-anchor="middle" x="1363" y="-1187.78" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector System Boundary</text>
+<text text-anchor="middle" x="1363" y="-1187.78" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian System Boundary</text>
 </g>
 <g id="clust3" class="cluster">
 <title>cluster_presentation</title>
@@ -152,7 +152,7 @@
 <g id="node16" class="node">
 <title>CORE</title>
 <path fill="#438dd5" stroke="black" d="M931,-722.38C931,-722.38 703,-722.38 703,-722.38 697,-722.38 691,-716.38 691,-710.38 691,-710.38 691,-648.38 691,-648.38 691,-642.38 697,-636.38 703,-636.38 703,-636.38 931,-636.38 931,-636.38 937,-636.38 943,-642.38 943,-648.38 943,-648.38 943,-710.38 943,-710.38 943,-716.38 937,-722.38 931,-722.38"/>
-<text text-anchor="middle" x="817" y="-710.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Market Data Collector Core</text>
+<text text-anchor="middle" x="817" y="-710.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Meridian Core</text>
 <text text-anchor="middle" x="817" y="-699.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[.NET 9 Console App | C# 13]</text>
 <text text-anchor="middle" x="817" y="-676.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Event pipeline with 100K bounded channel</text>
 <text text-anchor="middle" x="817" y="-665.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Collectors: Trade, Quote, OrderBook</text>

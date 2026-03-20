@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document summarizes the analysis and implementation progress of high-value improvements for Market Data Collector desktop platform development. WPF is the sole desktop client (UWP has been fully removed).
+This document summarizes the analysis and implementation progress of high-value improvements for Meridian desktop platform development. WPF is the sole desktop client (UWP has been fully removed).
 
 ## Current State Assessment
 

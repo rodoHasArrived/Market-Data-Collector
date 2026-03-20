@@ -8,7 +8,7 @@ public sealed class AuditTools(RepoPathService repo, ILogger<AuditTools> logger)
     private const int TimeoutMs = 60_000;
 
     [McpServerTool(Name = "run_code_audit")]
-    [Description("Run the MDC code convention auditor. Detects missing CancellationToken, string interpolation in loggers, direct HttpClient construction, blocking async, and more. Returns findings as Markdown.")]
+    [Description("Run the Meridian code convention auditor. Detects missing CancellationToken, string interpolation in loggers, direct HttpClient construction, blocking async, and more. Returns findings as Markdown.")]
     public async Task<string> RunCodeAuditAsync(
         [Description("Optional file glob to scope the audit, e.g. 'src/Meridian.Infrastructure/**'")] string? pathFilter = null,
         CancellationToken ct = default)
@@ -25,7 +25,7 @@ public sealed class AuditTools(RepoPathService repo, ILogger<AuditTools> logger)
         await RunAuditCommandAsync("audit-providers", "Provider Compliance Audit", ct);
 
     [McpServerTool(Name = "run_test_audit")]
-    [Description("Identify MDC classes that lack corresponding test files. Returns a prioritized list of coverage gaps.")]
+    [Description("Identify Meridian classes that lack corresponding test files. Returns a prioritized list of coverage gaps.")]
     public async Task<string> RunTestAuditAsync(CancellationToken ct = default) =>
         await RunAuditCommandAsync("audit-tests", "Test Coverage Audit", ct);
 
@@ -35,7 +35,7 @@ public sealed class AuditTools(RepoPathService repo, ILogger<AuditTools> logger)
         await RunAuditCommandAsync("diff-summary", "Uncommitted Changes Summary", ct);
 
     [McpServerTool(Name = "run_full_audit")]
-    [Description("Run the full MDC repository audit (code, docs, tests, config, providers). Returns a consolidated findings report.")]
+    [Description("Run the full Meridian repository audit (code, docs, tests, config, providers). Returns a consolidated findings report.")]
     public async Task<string> RunFullAuditAsync(CancellationToken ct = default) =>
         await RunAuditCommandAsync("audit", "Full Repository Audit", ct);
 

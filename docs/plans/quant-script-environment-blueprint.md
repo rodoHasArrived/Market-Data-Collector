@@ -93,7 +93,7 @@
 
 **Decision:** Roslyn in-process scripting via `Microsoft.CodeAnalysis.CSharp.Scripting`
 **Alternatives Considered:** Separate process with stdin/stdout; Lua/Python embedded interpreter
-**Rationale:** In-process gives scripts direct access to MDC types without serialization; `CancellationToken` handles runaway scripts; already have `Microsoft.CodeAnalysis.CSharp` in CPM
+**Rationale:** In-process gives scripts direct access to Meridian types without serialization; `CancellationToken` handles runaway scripts; already have `Microsoft.CodeAnalysis.CSharp` in CPM
 **Consequences:** A buggy script can corrupt process state; mitigated by timeout + CT + documented restrictions in `QuantScriptOptions.EnableUnsafeScripts`
 
 **Decision:** `DataProxy` exposes a synchronous API (`.Prices(...)`) over an async `IQuantDataContext`
@@ -103,7 +103,7 @@
 
 **Decision:** `PlotQueue` backed by `Channel<PlotRequest>` (unbounded)
 **Alternatives Considered:** `IObservable<PlotRequest>`; callback delegate
-**Rationale:** Matches MDC's bounded-channel pattern (ADR-013); unbounded because a script producing 1000 charts is a user error, not a production throughput concern
+**Rationale:** Matches Meridian's bounded-channel pattern (ADR-013); unbounded because a script producing 1000 charts is a user error, not a production throughput concern
 **Consequences:** Memory spike if a script enqueues thousands of plots; document 100-plot soft limit in `QuantScriptOptions`
 
 **Decision:** `BacktestProxy` is a fluent builder that wraps `IBacktestStrategy` via an anonymous inline adapter
@@ -673,7 +673,7 @@ public QuantDataContext(
 
 **Responsibilities:**
 - Compiles `.csx` source via `CSharpScript.Create<object>(source, options, globalsType: typeof(QuantScriptGlobals))`
-- Builds `ScriptOptions` with references to all MDC assemblies needed by scripts
+- Builds `ScriptOptions` with references to all Meridian assemblies needed by scripts
 - Caches compiled `Script<object>` by `SHA256(source)` to avoid recompilation on identical re-runs
 - Extracts `[ScriptParam]` metadata via Roslyn `SyntaxTree` — walks `LocalDeclarationStatementSyntax` nodes looking for `ScriptParamAttribute` on trivia/comments pattern OR uses a convention: variables declared at top level with a `// [Param]` comment (simplified v1 approach — see Open Questions)
 - Produces `IReadOnlyList<ScriptDiagnostic>` from `Diagnostic[]`

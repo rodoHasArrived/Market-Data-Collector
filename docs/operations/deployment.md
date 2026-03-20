@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers the three primary deployment methods for Market Data Collector: Docker, systemd, and standalone.
+This guide covers the three primary deployment methods for Meridian: Docker, systemd, and standalone.
 
 ---
 
@@ -16,8 +16,8 @@ This guide covers the three primary deployment methods for Market Data Collector
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
-cd Market-Data-Collector
+git clone https://github.com/rodoHasArrived/Meridian.git
+cd Meridian
 
 # 2. Create configuration
 cp config/appsettings.sample.json config/appsettings.json
@@ -35,7 +35,7 @@ curl http://localhost:8080/healthz
 The Dockerfile uses a multi-stage build. Build context must be the repository root:
 
 ```bash
-docker build -t marketdatacollector:latest -f deploy/docker/Dockerfile .
+docker build -t meridian:latest -f deploy/docker/Dockerfile .
 ```
 
 ### Running Modes
@@ -45,7 +45,7 @@ docker build -t marketdatacollector:latest -f deploy/docker/Dockerfile .
 docker run -d -p 8080:8080 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/config/appsettings.json:/app/appsettings.json:ro \
-  --name mdc marketdatacollector:latest
+  --name meridian meridian:latest
 ```
 
 **Headless mode:**
@@ -53,7 +53,7 @@ docker run -d -p 8080:8080 \
 docker run -d \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/config/appsettings.json:/app/appsettings.json:ro \
-  --name mdc marketdatacollector:latest \
+  --name meridian meridian:latest \
   --mode headless --watch-config
 ```
 
@@ -61,7 +61,7 @@ docker run -d \
 ```bash
 docker run --rm \
   -v $(pwd)/data:/app/data \
-  marketdatacollector:latest \
+  meridian:latest \
   --backfill --backfill-symbols AAPL,MSFT --backfill-from 2024-01-01
 ```
 
@@ -75,7 +75,7 @@ docker run -d -p 8080:8080 \
   -e ALPACA__SECRETKEY=your-secret-key \
   -e MDC_API_KEY=your-api-key \
   -v $(pwd)/data:/app/data \
-  marketdatacollector:latest
+  meridian:latest
 ```
 
 ### Docker Compose with Monitoring
@@ -87,7 +87,7 @@ docker compose -f deploy/docker/docker-compose.yml --profile monitoring up -d
 ```
 
 This starts:
-- **MDC** at `http://localhost:8080` (dashboard + API)
+- **Meridian** at `http://localhost:8080` (dashboard + API)
 - **Prometheus** at `http://localhost:9090` (metrics)
 - **Grafana** at `http://localhost:3000` (dashboards, default: admin/admin)
 
@@ -104,7 +104,7 @@ This starts:
 The container includes a built-in health check that polls `/health` every 30 seconds. Docker will mark the container as unhealthy after 3 consecutive failures.
 
 ```bash
-docker inspect --format='{{.State.Health.Status}}' mdc
+docker inspect --format='{{.State.Health.Status}}' meridian
 ```
 
 ---
@@ -121,50 +121,50 @@ docker inspect --format='{{.State.Health.Status}}' mdc
 
 ```bash
 # 1. Create service account
-sudo useradd -r -s /bin/false -d /opt/marketdatacollector mdc
+sudo useradd -r -s /bin/false -d /opt/meridian meridian
 
 # 2. Deploy application
-sudo mkdir -p /opt/marketdatacollector
-sudo chown mdc:mdc /opt/marketdatacollector
-# Clone or copy the application to /opt/marketdatacollector
+sudo mkdir -p /opt/meridian
+sudo chown meridian:meridian /opt/meridian
+# Clone or copy the application to /opt/meridian
 
 # 3. Create data directories
-sudo -u mdc mkdir -p /opt/marketdatacollector/{data,logs,run}
+sudo -u meridian mkdir -p /opt/meridian/{data,logs,run}
 
 # 4. Create environment file for credentials
-sudo cp /dev/null /opt/marketdatacollector/.env
-sudo chmod 600 /opt/marketdatacollector/.env
-sudo chown mdc:mdc /opt/marketdatacollector/.env
+sudo cp /dev/null /opt/meridian/.env
+sudo chmod 600 /opt/meridian/.env
+sudo chown meridian:meridian /opt/meridian/.env
 # Edit .env with credentials:
 #   ALPACA__KEYID=your-key-id
 #   ALPACA__SECRETKEY=your-secret-key
 
 # 5. Install service
-sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+sudo cp deploy/systemd/meridian.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable marketdatacollector
+sudo systemctl enable meridian
 
 # 6. Start
-sudo systemctl start marketdatacollector
+sudo systemctl start meridian
 ```
 
 ### Service Management
 
 ```bash
 # Status
-sudo systemctl status marketdatacollector
+sudo systemctl status meridian
 
 # Logs (follow)
-sudo journalctl -u marketdatacollector -f
+sudo journalctl -u meridian -f
 
 # Logs (last hour)
-sudo journalctl -u marketdatacollector --since "1 hour ago"
+sudo journalctl -u meridian --since "1 hour ago"
 
 # Restart
-sudo systemctl restart marketdatacollector
+sudo systemctl restart meridian
 
 # Stop
-sudo systemctl stop marketdatacollector
+sudo systemctl stop meridian
 ```
 
 ### Security Hardening
@@ -187,7 +187,7 @@ The systemd unit includes these security directives:
 When using IB as the data provider, the service preflight checks verify IB Gateway connectivity:
 
 ```bash
-# Set in /opt/marketdatacollector/.env:
+# Set in /opt/meridian/.env:
 USE_IBAPI=true
 IB_HOST=127.0.0.1
 IB_PORT=7497
@@ -252,11 +252,11 @@ Pre-built alert rules are in `deploy/monitoring/alert-rules.yml`. Key alerts:
 
 | Alert | Severity | Condition |
 |-------|----------|-----------|
-| MdcDown | Critical | Instance unreachable for 1m |
-| MdcHighDropRate | Warning | >10 drops/sec for 5m |
-| MdcPipelineBackpressure | Warning | Queue >90% for 2m |
-| MdcProviderDisconnected | Warning | Provider down for 2m |
-| MdcStorageWriteErrors | Critical | Any write errors for 5m |
+| MeridianDown | Critical | Instance unreachable for 1m |
+| MeridianHighDropRate | Warning | >10 drops/sec for 5m |
+| MeridianPipelineBackpressure | Warning | Queue >90% for 2m |
+| MeridianProviderDisconnected | Warning | Provider down for 2m |
+| MeridianStorageWriteErrors | Critical | Any write errors for 5m |
 
 ### Grafana
 

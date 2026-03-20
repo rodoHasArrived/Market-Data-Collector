@@ -21,7 +21,7 @@ public static partial class HtmlTemplateGenerator
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
-  <title>MDC Terminal &ndash; Sign In</title>
+  <title>Meridian Terminal &ndash; Sign In</title>
   <style>
 {GetStyles()}
 
@@ -144,8 +144,8 @@ public static partial class HtmlTemplateGenerator
       <div class=""login-logo"">
         <div class=""logo-icon"">MD</div>
         <div>
-          <div class=""logo-text"">MDC Terminal</div>
-          <div class=""logo-sub"">Market Data Collector</div>
+          <div class=""logo-text"">Meridian Terminal</div>
+          <div class=""logo-sub"">Meridian</div>
         </div>
       </div>
 

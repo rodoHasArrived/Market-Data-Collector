@@ -7,7 +7,7 @@
 ## Context
 
 The platform has grown beyond market data collection to include a backtesting engine
-(`MarketDataCollector.Backtesting`) and will expand further to support live and
+(`Meridian.Backtesting`) and will expand further to support live and
 simulated order execution. Without a canonical execution contract, each broker
 integration would grow its own bespoke order-submission API, making it impossible for
 strategy code to remain broker-agnostic or to promote a strategy from paper trading to
@@ -33,20 +33,20 @@ Introduce two new interfaces that form the **Strategy Execution Contract**:
    strategy with a unified view of the current feed, portfolio state, and order
    gateway without exposing any broker-specific type.
 
-These interfaces live in `src/MarketDataCollector.Execution/Interfaces/` and are
+These interfaces live in `src/Meridian.Execution/Interfaces/` and are
 referenced directly by the strategy layer via a project reference to
-`MarketDataCollector.Execution`.
+`Meridian.Execution`.
 
 ## Implementation Links
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Order gateway interface | `src/MarketDataCollector.Execution/Interfaces/IOrderGateway.cs` | Broker-agnostic order submission |
-| Execution context interface | `src/MarketDataCollector.Execution/Interfaces/IExecutionContext.cs` | Unified live-strategy context |
-| Live feed adapter interface | `src/MarketDataCollector.Execution/Interfaces/ILiveFeedAdapter.cs` | Live market data surface for strategies |
-| Order models | `src/MarketDataCollector.Execution/Models/` | `OrderRequest`, `OrderAcknowledgement`, `OrderStatusUpdate` |
-| Paper trading gateway | `src/MarketDataCollector.Execution/Adapters/PaperTradingGateway.cs` | Simulated execution over live MDC feed |
-| Order lifecycle manager | `src/MarketDataCollector.Execution/Services/OrderLifecycleManager.cs` | Tracks in-flight orders and state transitions |
+| Order gateway interface | `src/Meridian.Execution/Interfaces/IOrderGateway.cs` | Broker-agnostic order submission |
+| Execution context interface | `src/Meridian.Execution/Interfaces/IExecutionContext.cs` | Unified live-strategy context |
+| Live feed adapter interface | `src/Meridian.Execution/Interfaces/ILiveFeedAdapter.cs` | Live market data surface for strategies |
+| Order models | `src/Meridian.Execution/Models/` | `OrderRequest`, `OrderAcknowledgement`, `OrderStatusUpdate` |
+| Paper trading gateway | `src/Meridian.Execution/Adapters/PaperTradingGateway.cs` | Simulated execution over live Meridian feed |
+| Order lifecycle manager | `src/Meridian.Execution/Services/OrderLifecycleManager.cs` | Tracks in-flight orders and state transitions |
 
 ## Rationale
 
@@ -151,7 +151,7 @@ public interface IOrderGateway : IAsyncDisposable
 
 - `[ImplementsAdr("ADR-015")]` attribute on all `IOrderGateway` implementations
 - `ExecutionMode.Paper` must be the default; `ExecutionMode.Live` requires explicit opt-in
-- No strategy assembly may reference `MarketDataCollector.Execution` concrete types directly
+- No strategy assembly may reference `Meridian.Execution` concrete types directly
 
 ## References
 
@@ -159,7 +159,7 @@ public interface IOrderGateway : IAsyncDisposable
   pattern applied to the execution layer
 - [ADR-004: Async Streaming Patterns](004-async-streaming-patterns.md) — `IAsyncEnumerable` for order update streams
 - [ADR-016: Platform Architecture Migration Mandate](016-platform-architecture-migration.md)
-- `src/MarketDataCollector.Execution/` — Implementation project
+- `src/Meridian.Execution/` — Implementation project
 
 ---
 

@@ -3,7 +3,7 @@
 **Last Updated:** 2026-02-02
 **Version:** 1.0.0
 
-This document outlines feature refinements and development roadmap for the Market Data Collector UWP Desktop Application.
+This document outlines feature refinements and development roadmap for the Meridian UWP Desktop Application.
 
 ## Recent Updates (February 2026)
 
@@ -94,7 +94,7 @@ Applied CLAUDE.md guidelines requiring all classes to be `sealed` unless designe
   - Splash screens (620x300 to 1240x600 with scale variants)
   - Wide and large tiles for Windows Start menu
   - StoreLogo variants for Windows Store distribution
-- **Design**: Blue gradient background with green chart line and "MDC" watermark
+- **Design**: Blue gradient background with green chart line and "Meridian" watermark
 
 #### Desktop App CI/CD Pipeline
 - **GitHub Actions Workflow**: Full build pipeline for Windows desktop application
@@ -131,7 +131,7 @@ Applied CLAUDE.md guidelines requiring all classes to be `sealed` unless designe
 
 > **Primary Mission: Data Collection & Archival**
 >
-> The Market Data Collector is designed as a **collection and archival system first**. Analysis of collected data is performed externally using specialized tools (Python, R, QuantConnect Lean, databases, etc.). This mission guides our feature priorities:
+> The Meridian is designed as a **collection and archival system first**. Analysis of collected data is performed externally using specialized tools (Python, R, QuantConnect Lean, databases, etc.). This mission guides our feature priorities:
 >
 > - **Reliable Collection**: Gap-free, fault-tolerant data capture
 > - **Robust Archival**: Long-term storage with integrity verification

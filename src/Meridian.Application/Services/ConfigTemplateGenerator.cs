@@ -250,7 +250,7 @@ public sealed class ConfigTemplateGenerator
     {
         var config = new
         {
-            DataRoot = "/var/lib/mdc/data",
+            DataRoot = "/var/lib/meridian/data",
             Compress = true,
             DataSource = "Alpaca",
             Alpaca = new

@@ -3,13 +3,13 @@
 **Last Updated:** 2026-02-17
 **Version:** 1.6.2
 
-This document provides a comprehensive guide for backfilling historical market data using the Market Data Collector.
+This document provides a comprehensive guide for backfilling historical market data using the Meridian.
 
 ---
 
 ## Overview
 
-Historical backfill is the process of retrieving past market data to fill gaps in your data archive. The Market Data Collector supports 8 core historical data providers through a composite fallback strategy, with optional IB support depending on build/runtime setup.
+Historical backfill is the process of retrieving past market data to fill gaps in your data archive. The Meridian supports 8 core historical data providers through a composite fallback strategy, with optional IB support depending on build/runtime setup.
 
 ### Key Features
 

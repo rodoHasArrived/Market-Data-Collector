@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: market-data-collector
-  namespace: market-data-collector
+  name: meridian
+  namespace: meridian
   labels:
-    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/name: meridian
     app.kubernetes.io/component: collector
 spec:
   replicas: 1
@@ -14,18 +14,18 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/name: market-data-collector
+      app.kubernetes.io/name: meridian
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: market-data-collector
+        app.kubernetes.io/name: meridian
         app.kubernetes.io/component: collector
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
-      serviceAccountName: mdc-sa
+      serviceAccountName: meridian-sa
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -33,8 +33,8 @@ spec:
         fsGroup: 1000
       terminationGracePeriodSeconds: 30
       containers:
-        - name: market-data-collector
-          image: ghcr.io/rodohasarrived/market-data-collector:latest
+        - name: meridian
+          image: ghcr.io/rodohasarrived/meridian:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -42,9 +42,9 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: mdc-config
+                name: meridian-config
             - secretRef:
-                name: mdc-secrets
+                name: meridian-secrets
           args: ["--ui", "--http-port", "8080", "--watch-config"]
           livenessProbe:
             httpGet:
@@ -87,8 +87,8 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: mdc-data
+            claimName: meridian-data
         - name: config
           configMap:
-            name: mdc-appsettings
+            name: meridian-appsettings
             optional: true

@@ -1,7 +1,7 @@
 @startuml Activity Diagram - Historical Backfill Process
 !theme plain
 
-title Market Data Collector - Historical Backfill Process Flow
+title Meridian - Historical Backfill Process Flow
 
 start
 

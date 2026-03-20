@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-16
 **Scope:** Full codebase audit across 6 specialized lenses
-**Reviewer:** AI Code Review (mdc-code-review skill)
+**Reviewer:** AI Code Review (meridian-code-review skill)
 
 ---
 

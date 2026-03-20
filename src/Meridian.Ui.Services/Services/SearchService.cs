@@ -277,7 +277,7 @@ public sealed class SearchService
     {
         var helpTopics = new[]
         {
-            ("Getting Started", "How to set up and start using Market Data Collector", "\uE897", "help:getting-started",
+            ("Getting Started", "How to set up and start using Meridian", "\uE897", "help:getting-started",
                 new[] { "setup", "start", "begin", "introduction", "tutorial" }),
             ("Provider Setup", "How to configure data providers", "\uE703", "help:providers",
                 new[] { "api", "key", "credentials", "connect", "configure" }),

@@ -1,6 +1,6 @@
 # Security Documentation
 
-Security-related documentation for the Market Data Collector.
+Security-related documentation for the Meridian.
 
 ## Documents
 

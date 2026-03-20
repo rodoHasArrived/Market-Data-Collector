@@ -1,8 +1,8 @@
-# Market Data Collector – System Architecture
+# Meridian – System Architecture
 
 ## Overview
 
-The Market Data Collector is a modular, event-driven system for capturing, validating,
+The Meridian is a modular, event-driven system for capturing, validating,
 and persisting high-fidelity market microstructure data from multiple data providers
 including Interactive Brokers (IB), Alpaca, NYSE Direct, and extensible provider plugins.
 

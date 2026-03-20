@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 2098.71)">
 <title>OnboardingFlow</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-2098.71 1423,-2098.71 1423,36 -36,36"/>
-<text text-anchor="middle" x="693.5" y="-2049.11" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Onboarding &amp; Diagnostics Flow</text>
+<text text-anchor="middle" x="693.5" y="-2049.11" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Onboarding &amp; Diagnostics Flow</text>
 <text text-anchor="middle" x="693.5" y="-2036.11" font-family="Helvetica,sans-Serif" font-size="12.00">User Journey from Installation to Operation | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_firstrun</title>
@@ -63,7 +63,7 @@
 <title>FIRST_RUN</title>
 <path fill="#fbd38d" stroke="black" d="M530,-1896.5C530,-1896.5 408,-1896.5 408,-1896.5 402,-1896.5 396,-1890.5 396,-1884.5 396,-1884.5 396,-1855.5 396,-1855.5 396,-1849.5 402,-1843.5 408,-1843.5 408,-1843.5 530,-1843.5 530,-1843.5 536,-1843.5 542,-1849.5 542,-1855.5 542,-1855.5 542,-1884.5 542,-1884.5 542,-1890.5 536,-1896.5 530,-1896.5"/>
 <text text-anchor="middle" x="469" y="-1884.5" font-family="Helvetica,sans-Serif" font-size="10.00">FirstRunDetector</text>
-<text text-anchor="middle" x="469" y="-1861.5" font-family="Helvetica,sans-Serif" font-size="10.00">Check for .mdc&#45;initialized</text>
+<text text-anchor="middle" x="469" y="-1861.5" font-family="Helvetica,sans-Serif" font-size="10.00">Check for .meridian&#45;initialized</text>
 <text text-anchor="middle" x="469" y="-1850.5" font-family="Helvetica,sans-Serif" font-size="10.00">Check for appsettings.json</text>
 </g>
 <!-- START&#45;&gt;FIRST_RUN -->
@@ -418,7 +418,7 @@
 <path fill="#9ae6b4" stroke="black" d="M875.5,-694.5C875.5,-694.5 774.5,-694.5 774.5,-694.5 768.5,-694.5 762.5,-688.5 762.5,-682.5 762.5,-682.5 762.5,-642.5 762.5,-642.5 762.5,-636.5 768.5,-630.5 774.5,-630.5 774.5,-630.5 875.5,-630.5 875.5,-630.5 881.5,-630.5 887.5,-636.5 887.5,-642.5 887.5,-642.5 887.5,-682.5 887.5,-682.5 887.5,-688.5 881.5,-694.5 875.5,-694.5"/>
 <text text-anchor="middle" x="825" y="-682.5" font-family="Helvetica,sans-Serif" font-size="10.00">&#45;&#45;error&#45;codes</text>
 <text text-anchor="middle" x="825" y="-659.5" font-family="Helvetica,sans-Serif" font-size="10.00">24 error codes</text>
-<text text-anchor="middle" x="825" y="-648.5" font-family="Helvetica,sans-Serif" font-size="10.00">MDC&#45;XXX&#45;NNN format</text>
+<text text-anchor="middle" x="825" y="-648.5" font-family="Helvetica,sans-Serif" font-size="10.00">Meridian&#45;XXX&#45;NNN format</text>
 <text text-anchor="middle" x="825" y="-637.5" font-family="Helvetica,sans-Serif" font-size="10.00">Troubleshooting tips</text>
 </g>
 <!-- ERROR_FMT -->
@@ -499,7 +499,7 @@
 <title>ERROR_DISPLAY</title>
 <path fill="#fecaca" stroke="black" d="M872.5,-436C872.5,-436 775.5,-436 775.5,-436 769.5,-436 763.5,-430 763.5,-424 763.5,-424 763.5,-350 763.5,-350 763.5,-344 769.5,-338 775.5,-338 775.5,-338 872.5,-338 872.5,-338 878.5,-338 884.5,-344 884.5,-350 884.5,-350 884.5,-424 884.5,-424 884.5,-430 878.5,-436 872.5,-436"/>
 <text text-anchor="middle" x="824" y="-424" font-family="Helvetica,sans-Serif" font-size="10.00">User&#45;Friendly Error</text>
-<text text-anchor="middle" x="824" y="-401" font-family="Helvetica,sans-Serif" font-size="10.00">[MDC&#45;CFG&#45;001]</text>
+<text text-anchor="middle" x="824" y="-401" font-family="Helvetica,sans-Serif" font-size="10.00">[Meridian&#45;CFG&#45;001]</text>
 <text text-anchor="middle" x="824" y="-390" font-family="Helvetica,sans-Serif" font-size="10.00">Missing configuration</text>
 <text text-anchor="middle" x="824" y="-367" font-family="Helvetica,sans-Serif" font-size="10.00">Suggestions:</text>
 <text text-anchor="middle" x="824" y="-356" font-family="Helvetica,sans-Serif" font-size="10.00">1. Run &#45;&#45;wizard</text>

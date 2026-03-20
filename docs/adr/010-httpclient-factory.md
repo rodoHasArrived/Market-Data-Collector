@@ -6,7 +6,7 @@
 
 ## Context
 
-The Market Data Collector makes numerous HTTP calls to external APIs:
+The Meridian makes numerous HTTP calls to external APIs:
 - 10+ historical data providers (Alpaca, Polygon, Tiingo, Yahoo Finance, etc.)
 - 5+ streaming providers with REST endpoints for authentication
 - 4+ symbol search providers

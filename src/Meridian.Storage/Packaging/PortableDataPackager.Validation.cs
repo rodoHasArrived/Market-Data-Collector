@@ -87,7 +87,7 @@ public sealed partial class PortableDataPackager
         var result = new ExtractionResult();
         var validationErrors = new List<ValidationError>();
         var extractionRoot = Path.GetFullPath(destinationDirectory);
-        var stagingRoot = Path.Combine(extractionRoot, $".mdc-import-{Guid.NewGuid():N}");
+        var stagingRoot = Path.Combine(extractionRoot, $".meridian-import-{Guid.NewGuid():N}");
 
         if (format == PackageFormat.Zip)
         {

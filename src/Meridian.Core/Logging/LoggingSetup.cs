@@ -82,7 +82,7 @@ public static class LoggingSetup
     /// <param name="dataRoot">Root directory for log files.</param>
     public static void Initialize(IConfiguration? configuration = null, string dataRoot = "data")
     {
-        var logPath = Path.Combine(dataRoot, "_logs", "mdc-.log");
+        var logPath = Path.Combine(dataRoot, "_logs", "meridian-.log");
 
         // Create the level switch for runtime control (QW-53)
         _levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);

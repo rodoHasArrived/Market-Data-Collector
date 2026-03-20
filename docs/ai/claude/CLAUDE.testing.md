@@ -1,6 +1,6 @@
 # CLAUDE.testing.md - Testing Guide
 
-This document provides guidance for AI assistants working with tests in Market Data Collector.
+This document provides guidance for AI assistants working with tests in Meridian.
 
 ---
 

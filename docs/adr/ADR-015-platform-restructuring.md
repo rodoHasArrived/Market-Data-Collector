@@ -1,4 +1,4 @@
-# ADR-015: Platform Restructuring — MarketDataCollector → Meridian
+# ADR-015: Platform Restructuring — Meridian → Meridian
 
 ## Status
 Accepted
@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-The MarketDataCollector project has outgrown its original name and scope. What started as a market data collection tool now encompasses:
+The Meridian project has outgrown its original name and scope. What started as a market data collection tool now encompasses:
 
 - Real-time streaming from 90+ data providers
 - Historical backfill from 10+ providers
@@ -19,14 +19,14 @@ The MarketDataCollector project has outgrown its original name and scope. What s
 - F# domain models with C# interop
 - QuantConnect Lean Engine integration
 
-The platform needs to expand further to include **live strategy execution** (order management, execution gateways, risk management). The name "MarketDataCollector" no longer represents the system's capabilities.
+The platform needs to expand further to include **live strategy execution** (order management, execution gateways, risk management). The name "Meridian" no longer represents the system's capabilities.
 
 ## Decision
 
-### 1. Rename: `MarketDataCollector` → `Meridian`
+### 1. Rename: `Meridian` → `Meridian`
 
 **Why "Meridian":**
-- Concise (8 chars) — shorter than `MarketDataCollector` (19 chars)
+- Concise (8 chars) — shorter than `Meridian` (19 chars)
 - Evokes navigation, direction, and precision — fitting for a quantitative trading platform
 - Unique enough to avoid namespace collisions
 - Works well as a namespace prefix: `Meridian.Core`, `Meridian.Execution`, etc.
@@ -35,23 +35,23 @@ The platform needs to expand further to include **live strategy execution** (ord
 
 | Old Project | New Project | Notes |
 |-------------|-------------|-------|
-| `MarketDataCollector` | `Meridian` | Entry point / CLI / web host |
-| `MarketDataCollector.Application` | `Meridian.Application` | Commands, pipeline, monitoring |
-| `MarketDataCollector.Domain` | `Meridian.Domain` | Collectors, event publishers |
-| `MarketDataCollector.Core` | `Meridian.Core` | Config, exceptions, logging |
-| `MarketDataCollector.Contracts` | `Meridian.Contracts` | API models, domain types, interfaces |
-| `MarketDataCollector.Infrastructure` | `Meridian.Infrastructure` | Provider adapters |
-| `MarketDataCollector.Storage` | `Meridian.Storage` | WAL, sinks, archival |
-| `MarketDataCollector.ProviderSdk` | `Meridian.ProviderSdk` | Provider contracts |
-| `MarketDataCollector.FSharp` | `Meridian.FSharp` | F# domain models |
-| `MarketDataCollector.Backtesting` | `Meridian.Backtesting` | Backtest engine |
-| `MarketDataCollector.Backtesting.Sdk` | `Meridian.Backtesting.Sdk` | Strategy SDK |
-| `MarketDataCollector.Ui` | `Meridian.Ui` | Web UI entry point |
-| `MarketDataCollector.Ui.Shared` | `Meridian.Ui.Shared` | Shared endpoints |
-| `MarketDataCollector.Ui.Services` | `Meridian.Ui.Services` | Desktop UI services |
-| `MarketDataCollector.Wpf` | `Meridian.Wpf` | WPF desktop app |
-| `MarketDataCollector.McpServer` | `Meridian.McpServer` | MCP server |
-| `MarketDataCollector.Mcp` | `Meridian.Mcp` | Legacy MCP |
+| `Meridian` | `Meridian` | Entry point / CLI / web host |
+| `Meridian.Application` | `Meridian.Application` | Commands, pipeline, monitoring |
+| `Meridian.Domain` | `Meridian.Domain` | Collectors, event publishers |
+| `Meridian.Core` | `Meridian.Core` | Config, exceptions, logging |
+| `Meridian.Contracts` | `Meridian.Contracts` | API models, domain types, interfaces |
+| `Meridian.Infrastructure` | `Meridian.Infrastructure` | Provider adapters |
+| `Meridian.Storage` | `Meridian.Storage` | WAL, sinks, archival |
+| `Meridian.ProviderSdk` | `Meridian.ProviderSdk` | Provider contracts |
+| `Meridian.FSharp` | `Meridian.FSharp` | F# domain models |
+| `Meridian.Backtesting` | `Meridian.Backtesting` | Backtest engine |
+| `Meridian.Backtesting.Sdk` | `Meridian.Backtesting.Sdk` | Strategy SDK |
+| `Meridian.Ui` | `Meridian.Ui` | Web UI entry point |
+| `Meridian.Ui.Shared` | `Meridian.Ui.Shared` | Shared endpoints |
+| `Meridian.Ui.Services` | `Meridian.Ui.Services` | Desktop UI services |
+| `Meridian.Wpf` | `Meridian.Wpf` | WPF desktop app |
+| `Meridian.McpServer` | `Meridian.McpServer` | MCP server |
+| `Meridian.Mcp` | `Meridian.Mcp` | Legacy MCP |
 | *(new)* | `Meridian.Execution` | Order management, execution gateway |
 | *(new)* | `Meridian.Execution.Sdk` | Execution contracts |
 | *(new)* | `Meridian.Risk` | Risk management |

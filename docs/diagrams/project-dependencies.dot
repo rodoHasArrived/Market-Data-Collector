@@ -1,4 +1,4 @@
-// Project Dependency Diagram - Market Data Collector
+// Project Dependency Diagram - Meridian
 // Generated from actual .csproj and .fsproj ProjectReference entries
 // Render with: dot -Tsvg project-dependencies.dot -o project-dependencies.svg
 
@@ -7,7 +7,7 @@ digraph ProjectDependencies {
     rankdir=TB;
     fontname="Segoe UI, Helvetica, Arial, sans-serif";
     fontsize=14;
-    label="Market Data Collector - Project Dependencies";
+    label="Meridian - Project Dependencies";
     labelloc=t;
     labeljust=c;
     compound=true;

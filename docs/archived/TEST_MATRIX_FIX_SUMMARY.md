@@ -1,6 +1,6 @@
 # Test Matrix CI Failure Fix - Summary
 
-**Issue Reference:** https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22070589299/job/63773827732
+**Issue Reference:** https://github.com/rodoHasArrived/Meridian/actions/runs/22070589299/job/63773827732
 
 ## Problem
 

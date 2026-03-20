@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 1020.02)">
 <title>ProviderArchitecture</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-1020.02 2595.22,-1020.02 2595.22,36 -36,36"/>
-<text text-anchor="middle" x="1279.61" y="-970.42" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Provider Architecture</text>
+<text text-anchor="middle" x="1279.61" y="-970.42" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Provider Architecture</text>
 <text text-anchor="middle" x="1279.61" y="-957.42" font-family="Helvetica,sans-Serif" font-size="12.00">Unified Data Source Abstraction | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_interfaces</title>

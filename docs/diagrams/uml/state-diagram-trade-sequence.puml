@@ -1,7 +1,7 @@
 @startuml State Diagram - Trade Sequence Validation States
 !theme plain
 
-title Market Data Collector - Trade Sequence Validation State Machine
+title Meridian - Trade Sequence Validation State Machine
 
 state "Trade Sequence State (Per Symbol)" as TradeSeq {
 

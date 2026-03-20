@@ -76,13 +76,13 @@ Or use the interactive menu:
 To generate an AppInstaller alongside the MSIX package, provide the AppInstaller URI:
 
 ```powershell
-$env:MDC_APPINSTALLER_URI = "https://example.com/market-data-collector/Meridian.appinstaller"
+$env:MDC_APPINSTALLER_URI = "https://example.com/meridian/Meridian.appinstaller"
 ```
 
 For `make`:
 
 ```powershell
-set APPINSTALLER_URI=https://example.com/market-data-collector/Meridian.appinstaller
+set APPINSTALLER_URI=https://example.com/meridian/Meridian.appinstaller
 make desktop-publish
 ```
 

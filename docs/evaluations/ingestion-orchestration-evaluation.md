@@ -1,6 +1,6 @@
 # Ingestion Orchestration Evaluation
 
-## Market Data Collector — Scheduler & Backfill Control Assessment
+## Meridian — Scheduler & Backfill Control Assessment
 
 **Date:** 2026-02-12
 **Status:** Evaluation Complete — All P0/P1 Recommendations Implemented
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This document evaluates ingestion orchestration capabilities for the Market Data Collector, with emphasis on scheduling, backfill execution, resumability, idempotency, and operational controls.
+This document evaluates ingestion orchestration capabilities for the Meridian, with emphasis on scheduling, backfill execution, resumability, idempotency, and operational controls.
 
 **Original Finding (2026-02-12):** The architecture had strong building blocks (provider abstraction, background services, and storage durability patterns), but orchestration maturity was uneven. The highest-value next step was a unified job model treating realtime collection and historical backfills as first-class managed workloads.
 

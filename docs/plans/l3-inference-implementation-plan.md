@@ -1024,7 +1024,7 @@ profile pass) → POV (stateful, requires trade-count injection per simulation s
 
 ### 18.9 Simulation Reproducibility Manifest (Phase 1.5 — effort S)
 
-Add a `sim-manifest.json` output alongside every simulation run, recording the exact MDC
+Add a `sim-manifest.json` output alongside every simulation run, recording the exact Meridian
 version, Git hash, calibration parameter hash, model config hash, and SHA-256 of the input
 data (via the existing `StorageChecksumService` at
 `src/Meridian.Storage/Services/StorageChecksumService.cs`):
@@ -1041,7 +1041,7 @@ data (via the existing `StorageChecksumService` at
   "inferenceConfigHash": "sha256:b2c9...a14e",
   "calibrationParamsHash": "sha256:d9f1...7c03",
   "inputDataHash": "sha256:f3a8...2b91",
-  "citationKey": "mdc:AAPL:2026-01:a7f3"
+  "citationKey": "meridian:AAPL:2026-01:a7f3"
 }
 ```
 
@@ -1062,7 +1062,7 @@ can process. This enables a two-phase workflow:
 
 CLI: `--backtest-from-simulation --sim-results ./results/aapl-jan --strategy ./my-strategy.dll`.
 The bridge maps `inferredQueueAheadAtFill` and `confidenceScore` to optional metadata fields in
-`FillEvent` — additive, not breaking for existing strategies that ignore them. This makes MDC the
+`FillEvent` — additive, not breaking for existing strategies that ignore them. This makes Meridian the
 natural answer to "where do I get realistic execution simulations *and* portfolio P&L in a single
 tool" — a gap no open-source competitor currently fills.
 
@@ -1086,5 +1086,5 @@ Output `reconciliation-report.json` includes per-order fill-time and price delta
 `cancelRefillPriorAlpha` for AAPL from 0.50 to 0.35") that auto-feeds `--calibrate-queue-model`.
 A `ReconciliationPage` in the WPF app shows a scatter plot of `(model fill time, actual fill time)`
 per order, with outliers highlighted and linked to the recalibration command. Initial support
-targets Interactive Brokers Flex Query CSV format, since IB is already an MDC streaming provider.
+targets Interactive Brokers Flex Query CSV format, since IB is already an Meridian streaming provider.
 Additional broker formats can be contributed via a thin `IBrokerFillReader` interface.

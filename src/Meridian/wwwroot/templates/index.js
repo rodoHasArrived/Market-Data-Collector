@@ -1,4 +1,4 @@
-// Market Data Collector Dashboard JavaScript
+// Meridian Dashboard JavaScript
 let currentDataSource = 'IB';
 let cachedSymbols = [];
 let backfillProviders = [];

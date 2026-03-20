@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Kustomize Configuration
+# Meridian - Kustomize Configuration
 # =============================================================================
 #
 # Deploy with:
@@ -12,10 +12,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: market-data-collector
+namespace: meridian
 
 commonLabels:
-  app.kubernetes.io/part-of: mdc
+  app.kubernetes.io/part-of: meridian
   app.kubernetes.io/managed-by: kustomize
 
 resources:

@@ -10,7 +10,7 @@
 
 The Meridian codebase has 773+ source files, ~4,135 tests, 13 main projects, and 32 CI/CD workflows. While 94.3% of core improvement items are complete, this audit identified:
 
-- **2 broken projects** using legacy `MarketDataCollector.*` namespace with invalid references
+- **2 broken projects** using legacy `Meridian.*` namespace with invalid references
 - **3 recurring namespace collision patterns** causing CS0104 build ambiguity
 - **9 unused event handlers** suppressed via `#pragma warning disable`
 - **52 WPF pages** with some placeholder-only implementations
@@ -26,33 +26,33 @@ The roadmap is organized into 5 phases, ordered by impact. Phases 1-2 address st
 
 > Fix issues that cause build failures, namespace confusion, or block development.
 
-### 1.1 Migrate MarketDataCollector.* Projects to Meridian.* (L) ✅ Complete
+### 1.1 Migrate Meridian.* Projects to Meridian.* (L) ✅ Complete
 
 **Status:** Completed — the execution/strategies projects, namespaces, project references, and solution entries now use the `Meridian.*` naming throughout source.
 
-**Problem:** `src/MarketDataCollector.Execution/` and `src/MarketDataCollector.Strategies/` reference non-existent projects (`MarketDataCollector.Contracts`, `MarketDataCollector.Core`, `MarketDataCollector.ProviderSdk`, `MarketDataCollector.Backtesting.Sdk`). 22 source files still use the old namespace prefix. These projects cannot build.
+**Problem:** `src/Meridian.Execution/` and `src/Meridian.Strategies/` reference non-existent projects (`Meridian.Contracts`, `Meridian.Core`, `Meridian.ProviderSdk`, `Meridian.Backtesting.Sdk`). 22 source files still use the old namespace prefix. These projects cannot build.
 
 **Tasks:**
-1. Rename `MarketDataCollector.Execution/` -> `Meridian.Execution/`
-2. Rename `MarketDataCollector.Strategies/` -> `Meridian.Strategies/`
+1. Rename `Meridian.Execution/` -> `Meridian.Execution/`
+2. Rename `Meridian.Strategies/` -> `Meridian.Strategies/`
 3. Rename `.csproj` files to match new project names
 4. Update all ProjectReferences to point to `Meridian.Contracts`, `Meridian.Core`, `Meridian.ProviderSdk`, `Meridian.Backtesting.Sdk`
-5. Replace `namespace MarketDataCollector.*` with `namespace Meridian.*` in all 22 source files
+5. Replace `namespace Meridian.*` with `namespace Meridian.*` in all 22 source files
 6. Update `GlobalUsings.cs` in both projects
 7. Update `Meridian.sln` entries
 8. Verify no other projects reference the old names
 
 **Files:**
-- `src/MarketDataCollector.Execution/MarketDataCollector.Execution.csproj`
-- `src/MarketDataCollector.Strategies/MarketDataCollector.Strategies.csproj`
-- `src/MarketDataCollector.Execution/**/*.cs` (all source files)
-- `src/MarketDataCollector.Strategies/**/*.cs` (all source files)
+- `src/Meridian.Execution/Meridian.Execution.csproj`
+- `src/Meridian.Strategies/Meridian.Strategies.csproj`
+- `src/Meridian.Execution/**/*.cs` (all source files)
+- `src/Meridian.Strategies/**/*.cs` (all source files)
 - `Meridian.sln`
 
 **Verify:**
 ```bash
 dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true
-grep -r "MarketDataCollector" src/ --include="*.cs" --include="*.csproj" | grep -v "//\|archived"
+grep -r "Meridian" src/ --include="*.cs" --include="*.csproj" | grep -v "//\|archived"
 ```
 
 **Effort:** Large — namespace migration touches many files, requires careful verification.
@@ -354,7 +354,7 @@ After Phases 1-4, update:
 
 ```
 Phase 1 ─── Critical Fixes (do first)
-  ├── 1.1 Migrate MarketDataCollector.* projects
+  ├── 1.1 Migrate Meridian.* projects
   └── 1.2 Resolve duplicate type names
            │
 Phase 2 ─── Feature Completion (after Phase 1 builds clean)
@@ -403,7 +403,7 @@ make ai-audit
 python3 build/scripts/ai-repo-updater.py diff-summary
 
 # Verify no legacy namespaces
-grep -r "MarketDataCollector" src/ --include="*.cs" --include="*.csproj" | wc -l  # should be 0
+grep -r "Meridian" src/ --include="*.cs" --include="*.csproj" | wc -l  # should be 0
 
 # Verify no CS0104 ambiguities
 dotnet build Meridian.sln -c Release /p:EnableWindowsTargeting=true 2>&1 | grep CS0104  # should be empty

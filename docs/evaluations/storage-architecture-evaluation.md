@@ -1,6 +1,6 @@
 # Storage Architecture Evaluation
 
-## Market Data Collector — Data Persistence Assessment
+## Meridian — Data Persistence Assessment
 
 **Date:** 2026-03-15
 **Status:** Evaluation Complete (Revised)
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This document evaluates the storage architecture of the Market Data Collector system, including file formats, organization strategies, compression, tiered storage, the Write-Ahead Log (WAL) implementation, export system, quota enforcement, data lineage, and catalog management. The evaluation assesses current design decisions against alternatives and identifies remaining optimization opportunities.
+This document evaluates the storage architecture of the Meridian system, including file formats, organization strategies, compression, tiered storage, the Write-Ahead Log (WAL) implementation, export system, quota enforcement, data lineage, and catalog management. The evaluation assesses current design decisions against alternatives and identifies remaining optimization opportunities.
 
 **Key Finding:** The storage architecture has matured significantly since the initial evaluation. The core JSONL + Parquet dual-format approach remains well-designed for archival-first market data collection. Major additions since the last review include a comprehensive export pipeline (7 formats), granular quota enforcement with dynamic rebalancing, data lineage tracking, a lifecycle policy engine, a catalog sync system, expanded compression profiles, attribute-based sink plugin discovery, cross-platform file permission management, and retention compliance reporting. Several recommendations from the prior evaluation—parallel tier migration, retention policy automation, data validation pipelines, and native LZ4/ZSTD compression—have been implemented.
 
@@ -745,7 +745,7 @@ my-package_20260103_120000.zip
 
 ### Verdict
 
-The file-based approach remains appropriate for Market Data Collector because:
+The file-based approach remains appropriate for Meridian because:
 
 1. **Primary use case is archival** - Write-heavy, read-occasional
 2. **Portability matters** - Data sharing via packages and 7 export formats

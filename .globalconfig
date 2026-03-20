@@ -1,7 +1,7 @@
 is_global = true
 
 # ============================================================================
-# Market Data Collector - Global Analyzer Configuration
+# Meridian - Global Analyzer Configuration
 # ============================================================================
 # This file configures Roslyn analyzers and code style rules globally.
 # It works alongside Directory.Build.props which handles MSBuild warnings.

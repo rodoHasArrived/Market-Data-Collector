@@ -1,7 +1,7 @@
 @startuml State Diagram - Provider Connection States
 !theme plain
 
-title Market Data Collector - Provider Connection State Machine
+title Meridian - Provider Connection State Machine
 
 state "Provider Connection Lifecycle" as ProviderLC {
 

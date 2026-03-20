@@ -70,7 +70,7 @@ def _build_path_lists(root: Path) -> tuple[list[Path], list[Path], list[Path]]:
         root / ".github" / "copilot-instructions.md",
         root / ".github" / "agents" / "code-review-agent.md",
         root / ".github" / "agents" / "documentation-agent.md",
-        root / ".claude" / "skills" / "mdc-code-review" / "SKILL.md",
+        root / ".claude" / "skills" / "meridian-code-review" / "SKILL.md",
     ]
     instruction_files: list[Path] = [
         root / ".github" / "instructions" / "csharp.instructions.md",
@@ -79,10 +79,10 @@ def _build_path_lists(root: Path) -> tuple[list[Path], list[Path], list[Path]]:
         root / ".github" / "instructions" / "docs.instructions.md",
     ]
     skill_resource_paths: list[Path] = [
-        root / ".claude" / "skills" / "mdc-code-review" / "references" / "architecture.md",
-        root / ".claude" / "skills" / "mdc-code-review" / "references" / "schemas.md",
-        root / ".claude" / "skills" / "mdc-code-review" / "agents" / "grader.md",
-        root / ".claude" / "skills" / "mdc-code-review" / "evals" / "evals.json",
+        root / ".claude" / "skills" / "meridian-code-review" / "references" / "architecture.md",
+        root / ".claude" / "skills" / "meridian-code-review" / "references" / "schemas.md",
+        root / ".claude" / "skills" / "meridian-code-review" / "agents" / "grader.md",
+        root / ".claude" / "skills" / "meridian-code-review" / "evals" / "evals.json",
     ]
     return ai_doc_paths, instruction_files, skill_resource_paths
 

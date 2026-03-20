@@ -1,6 +1,6 @@
 # Architectural Decision Records (ADRs)
 
-This directory contains Architectural Decision Records documenting significant technical decisions made in the Market Data Collector project.
+This directory contains Architectural Decision Records documenting significant technical decisions made in the Meridian project.
 
 ## What is an ADR?
 

@@ -1,10 +1,10 @@
-# Market Data Collector - Data Dictionary
+# Meridian - Data Dictionary
 
 **Version:** 2.0.0
 **Generated:** 2026-02-22
 **Schema Version:** 1
 
-This document provides comprehensive data dictionaries for all event types in the Market Data Collector system, including field descriptions, data types, valid ranges, and exchange-specific codes.
+This document provides comprehensive data dictionaries for all event types in the Meridian system, including field descriptions, data types, valid ranges, and exchange-specific codes.
 
 ---
 
@@ -1011,4 +1011,4 @@ See `docs/ai/claude/CLAUDE.fsharp.md` for F# domain model details.
 
 ---
 
-*Generated for Market Data Collector v1.0.0 (repository snapshot)*
+*Generated for Meridian v1.0.0 (repository snapshot)*

@@ -132,7 +132,7 @@ public sealed class ConfigurationWizard
     public async Task<WizardResult> RunQuickstartAsync(CancellationToken ct = default)
     {
         PrintLine("=".PadRight(60, '='));
-        PrintLine("  Market Data Collector - Quickstart");
+        PrintLine("  Meridian - Quickstart");
         PrintLine("=".PadRight(60, '='));
         PrintLine();
 
@@ -221,7 +221,7 @@ public sealed class ConfigurationWizard
     private void PrintHeader()
     {
         PrintLine("=".PadRight(60, '='));
-        PrintLine("  Market Data Collector - Configuration Wizard");
+        PrintLine("  Meridian - Configuration Wizard");
         PrintLine("=".PadRight(60, '='));
         PrintLine();
     }

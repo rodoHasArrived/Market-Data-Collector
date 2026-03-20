@@ -1,9 +1,9 @@
-@startuml Use Case Diagram - Market Data Collector
+@startuml Use Case Diagram - Meridian
 !theme plain
 skinparam actorStyle awesome
 skinparam packageStyle rectangle
 
-title Market Data Collector - Use Case Diagram
+title Meridian - Use Case Diagram
 
 ' ==================== ACTORS ====================
 actor "CLI User" as CliUser
@@ -22,7 +22,7 @@ actor "Message Broker\n(RabbitMQ)" as MessageBroker <<system>>
 actor "Kubernetes" as K8s <<system>>
 
 ' ==================== SYSTEM BOUNDARY ====================
-rectangle "Market Data Collector System" {
+rectangle "Meridian System" {
 
     ' --- Core Use Cases ---
     package "Real-Time Data Collection" {

@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Makefile
+# Meridian - Makefile
 # =============================================================================
 #
 # Common development and deployment tasks
@@ -45,7 +45,7 @@ DESKTOP_PROJECT := $(WPF_PROJECT)
 TEST_PROJECT := tests/Meridian.Tests/Meridian.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/Meridian.Benchmarks/Meridian.Benchmarks.csproj
 DOCGEN_PROJECT := build/dotnet/DocGenerator/DocGenerator.csproj
-DOCKER_IMAGE := marketdatacollector:latest
+DOCKER_IMAGE := meridian:latest
 HTTP_PORT ?= 8080
 BUILDCTL := python3 build/python/cli/buildctl.py
 BUILD_VERBOSITY ?= normal
@@ -87,7 +87,7 @@ NC := \033[0m # No Color
 help: ## Show this help message
 	@echo ""
 	@echo "╔══════════════════════════════════════════════════════════════════════╗"
-	@echo "║              Market Data Collector - Make Commands                   ║"
+	@echo "║              Meridian - Make Commands                   ║"
 	@echo "╚══════════════════════════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "$(BLUE)Installation:$(NC)"
@@ -124,7 +124,7 @@ help: ## Show this help message
 
 quickstart: ## Zero-to-running setup for new contributors
 	@echo ""
-	@echo "$(BLUE)Market Data Collector - Quick Start$(NC)"
+	@echo "$(BLUE)Meridian - Quick Start$(NC)"
 	@echo "======================================"
 	@echo ""
 	@echo "$(BLUE)[1/5] Checking .NET 9 SDK...$(NC)"
@@ -387,7 +387,7 @@ app-metrics: ## Get Prometheus metrics from running app
 	@curl -s http://localhost:$(HTTP_PORT)/metrics
 
 version: ## Show version information
-	@echo "Market Data Collector v1.6.2"
+	@echo "Meridian v1.6.2"
 	@dotnet --version 2>/dev/null && echo ".NET SDK: $$(dotnet --version)" || echo ".NET SDK: Not installed"
 	@docker --version 2>/dev/null || echo "Docker: Not installed"
 
@@ -721,7 +721,7 @@ ai-docs-archive-execute: ## Actually archive stale docs (moves files)
 # =============================================================================
 
 SKILLS_CLI := python3 .claude/skills/skills_provider.py
-SKILL      ?= mdc-code-review
+SKILL      ?= meridian-code-review
 SCRIPT     ?=
 RESOURCE   ?=
 CHAIN      ?=
@@ -734,15 +734,15 @@ skill-list: ## List all registered skills and their descriptions
 	@echo "$(BLUE)Registered skills:$(NC)"
 	@$(SKILLS_CLI) list
 
-skill-resources: ## List resources for SKILL (default: mdc-code-review)
+skill-resources: ## List resources for SKILL (default: meridian-code-review)
 	@echo "$(BLUE)Resources for '$(SKILL)':$(NC)"
 	@$(SKILLS_CLI) list-resources $(SKILL)
 
-skill-scripts: ## List scripts for SKILL (default: mdc-code-review)
+skill-scripts: ## List scripts for SKILL (default: meridian-code-review)
 	@echo "$(BLUE)Scripts for '$(SKILL)':$(NC)"
 	@$(SKILLS_CLI) list-scripts $(SKILL)
 
-skill-chains: ## List predefined chains for SKILL (default: mdc-code-review)
+skill-chains: ## List predefined chains for SKILL (default: meridian-code-review)
 	@echo "$(BLUE)Chains for '$(SKILL)':$(NC)"
 	@$(SKILLS_CLI) list-chains $(SKILL)
 
@@ -758,18 +758,18 @@ skill-chain: ## Run scripts in sequence  (SKILL=… SCRIPTS="validate-skill run-
 skill-run-chain: ## Run a named chain  (SKILL=… CHAIN=full-check)
 	@$(SKILLS_CLI) run-chain $(SKILL) $(CHAIN)
 
-skill-validate: ## Validate the mdc-code-review skill definition
-	@echo "$(BLUE)Validating mdc-code-review skill...$(NC)"
-	@$(SKILLS_CLI) run-script mdc-code-review validate-skill
+skill-validate: ## Validate the meridian-code-review skill definition
+	@echo "$(BLUE)Validating meridian-code-review skill...$(NC)"
+	@$(SKILLS_CLI) run-script meridian-code-review validate-skill
 
 skill-run-eval: ## Run the eval suite  (RUNS=3 to set runs_per_query)
 	@echo "$(BLUE)Running eval suite (runs_per_query=$(RUNS))...$(NC)"
-	@$(SKILLS_CLI) run-script mdc-code-review run-eval --param runs_per_query=$(RUNS)
+	@$(SKILLS_CLI) run-script meridian-code-review run-eval --param runs_per_query=$(RUNS)
 
 skill-benchmark: ## Aggregate benchmark results  (WORKSPACE=<dir> required)
 	@[ -n "$(WORKSPACE)" ] || { echo "$(YELLOW)ERROR: WORKSPACE is required. Usage: make skill-benchmark WORKSPACE=<dir>$(NC)"; exit 1; }
 	@echo "$(BLUE)Aggregating benchmark results from '$(WORKSPACE)'...$(NC)"
-	@$(SKILLS_CLI) run-script mdc-code-review aggregate-benchmark \
+	@$(SKILLS_CLI) run-script meridian-code-review aggregate-benchmark \
 		--param workspace=$(WORKSPACE)
 
 skill-discover: ## Discover all SKILL.md definitions in the repository

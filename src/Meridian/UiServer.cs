@@ -67,9 +67,9 @@ public sealed class UiServer : IAsyncDisposable
         {
             options.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Market Data Collector API",
+                Title = "Meridian API",
                 Version = "v1",
-                Description = "REST API for the Market Data Collector system. Provides endpoints for real-time data streaming, " +
+                Description = "REST API for the Meridian system. Provides endpoints for real-time data streaming, " +
                               "historical backfill, storage management, provider configuration, and data quality monitoring.",
                 Contact = new OpenApiContact
                 {
@@ -143,9 +143,9 @@ public sealed class UiServer : IAsyncDisposable
         _app.UseSwagger();
         _app.UseSwaggerUI(options =>
         {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Market Data Collector API v1");
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Meridian API v1");
             options.RoutePrefix = "swagger";
-            options.DocumentTitle = "Market Data Collector - API Documentation";
+            options.DocumentTitle = "Meridian - API Documentation";
         });
 
         ConfigureRoutes();

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: market-data-collector
+  name: meridian
   labels:
-    app.kubernetes.io/name: market-data-collector
-    app.kubernetes.io/part-of: mdc
+    app.kubernetes.io/name: meridian
+    app.kubernetes.io/part-of: meridian

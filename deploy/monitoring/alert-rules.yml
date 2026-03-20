@@ -1,5 +1,5 @@
 # =============================================================================
-# Prometheus Alert Rules for Market Data Collector
+# Prometheus Alert Rules for Meridian
 # =============================================================================
 # Add to prometheus.yml under rule_files:
 #   rule_files:
@@ -15,29 +15,29 @@ groups:
   - name: mdc_health
     rules:
       # Application is down or unreachable
-      - alert: MdcDown
-        expr: up{job="marketdatacollector"} == 0
+      - alert: MeridianDown
+        expr: up{job="meridian"} == 0
         for: 1m
         labels:
           severity: critical
           incident_priority: P1
         annotations:
-          summary: "Market Data Collector is down"
-          description: "The MDC instance has been unreachable for more than 1 minute."
+          summary: "Meridian is down"
+          description: "The Meridian instance has been unreachable for more than 1 minute."
           runbook_url: "docs/operations/operator-runbook.md#application-down"
           probable_causes: "Process crashed, host unreachable, port blocked, OOM killed"
-          immediate_mitigation: "1. Check process status (systemctl status marketdatacollector). 2. Check system logs (journalctl -u marketdatacollector). 3. Restart service if crashed. 4. Check disk space and memory."
+          immediate_mitigation: "1. Check process status (systemctl status meridian). 2. Check system logs (journalctl -u meridian). 3. Restart service if crashed. 4. Check disk space and memory."
           rollback_criteria: "Health endpoint returns 200 within 30 seconds of restart"
 
       # Health endpoint returning unhealthy
-      - alert: MdcUnhealthy
+      - alert: MeridianUnhealthy
         expr: mdc_health_status == 0
         for: 2m
         labels:
           severity: warning
           incident_priority: P2
         annotations:
-          summary: "Market Data Collector reports unhealthy"
+          summary: "Meridian reports unhealthy"
           description: "The health endpoint has been returning unhealthy for 2 minutes."
           runbook_url: "docs/operations/operator-runbook.md#unhealthy-status"
           probable_causes: "Provider disconnected, storage write failures, pipeline backpressure, dependency timeout"
@@ -46,7 +46,7 @@ groups:
   - name: mdc_pipeline
     rules:
       # Pipeline drop rate exceeds threshold
-      - alert: MdcHighDropRate
+      - alert: MeridianHighDropRate
         expr: rate(mdc_pipeline_events_dropped_total[5m]) > 10
         for: 5m
         labels:
@@ -60,7 +60,7 @@ groups:
           immediate_mitigation: "1. Check /api/backpressure for queue utilization. 2. Monitor disk I/O latency. 3. Consider reducing symbol subscriptions. 4. Check EventPipeline channel capacity."
 
       # Pipeline queue near capacity
-      - alert: MdcPipelineBackpressure
+      - alert: MeridianPipelineBackpressure
         expr: mdc_pipeline_queue_utilization > 0.9
         for: 2m
         labels:
@@ -74,7 +74,7 @@ groups:
           immediate_mitigation: "1. Check storage write latency metrics. 2. Verify disk health. 3. Consider pausing non-critical subscriptions."
 
       # No events published in 5 minutes during market hours
-      - alert: MdcNoEventsPublished
+      - alert: MeridianNoEventsPublished
         expr: rate(mdc_pipeline_events_published_total[5m]) == 0
         for: 10m
         labels:
@@ -90,7 +90,7 @@ groups:
   - name: mdc_providers
     rules:
       # Provider disconnected
-      - alert: MdcProviderDisconnected
+      - alert: MeridianProviderDisconnected
         expr: mdc_provider_connected == 0
         for: 2m
         labels:
@@ -104,7 +104,7 @@ groups:
           immediate_mitigation: "1. Check provider status page. 2. Verify API credentials. 3. Check rate limit counters. 4. Trigger manual reconnect or failover."
 
       # High provider latency
-      - alert: MdcHighProviderLatency
+      - alert: MeridianHighProviderLatency
         expr: mdc_provider_latency_seconds{quantile="0.99"} > 5
         for: 5m
         labels:
@@ -120,7 +120,7 @@ groups:
   - name: mdc_storage
     rules:
       # Storage write errors
-      - alert: MdcStorageWriteErrors
+      - alert: MeridianStorageWriteErrors
         expr: rate(mdc_storage_write_errors_total[5m]) > 0
         for: 5m
         labels:
@@ -135,7 +135,7 @@ groups:
           rollback_criteria: "Write error rate drops to 0 for 5 consecutive minutes"
 
       # Data quality score below threshold
-      - alert: MdcLowDataQuality
+      - alert: MeridianLowDataQuality
         expr: mdc_data_quality_score < 0.8
         for: 15m
         labels:
@@ -151,7 +151,7 @@ groups:
   - name: mdc_sla
     rules:
       # Data freshness SLA violation
-      - alert: MdcDataFreshnessViolation
+      - alert: MeridianDataFreshnessViolation
         expr: mdc_data_freshness_age_seconds > 300
         for: 5m
         labels:
@@ -166,7 +166,7 @@ groups:
           rollback_criteria: "Freshness age drops below configured threshold for the symbol"
 
       # Overall SLA compliance dropping
-      - alert: MdcSlaComplianceLow
+      - alert: MeridianSlaComplianceLow
         expr: mdc_sla_compliance_ratio < 0.95
         for: 30m
         labels:

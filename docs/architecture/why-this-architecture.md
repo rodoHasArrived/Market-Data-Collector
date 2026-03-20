@@ -1,7 +1,7 @@
 # Why This Architecture (Non-Engineer Explainer)
 
 ## What this program does
-Market Data Collector captures **live** and **historical** market microstructure data, validates it for quality, and stores it in audit-friendly formats so it can be replayed, analyzed, or fed into research tools.
+Meridian captures **live** and **historical** market microstructure data, validates it for quality, and stores it in audit-friendly formats so it can be replayed, analyzed, or fed into research tools.
 
 It collects:
 - **Trades:** tick-by-tick prints with sequence checks and quality validation
@@ -94,7 +94,7 @@ We evaluated a microservices decomposition ([ADR-003](../adr/003-microservices-d
 
 - **Deployment simplicity**: A single process is easier to deploy, configure, and debug for research teams.
 - **Latency**: In-process event routing via bounded channels avoids network serialization overhead.
-- **Operational cost**: Microservices demand service mesh, distributed tracing, and container orchestration — overhead that doesn't justify the scale of a market data collector.
+- **Operational cost**: Microservices demand service mesh, distributed tracing, and container orchestration — overhead that doesn't justify the scale of a meridian.
 - **Shared state**: Collectors, pipeline, and storage share event models directly; splitting them would require contract duplication and version management.
 
 The monolith supports optional UI projects (web dashboard, WPF desktop) as separate entry points that compose the same library assemblies.

@@ -1,6 +1,6 @@
 # Documentation Automation Guide
 
-> User guide for the documentation automation system in Market Data Collector.
+> User guide for the documentation automation system in Meridian.
 
 ## Overview
 

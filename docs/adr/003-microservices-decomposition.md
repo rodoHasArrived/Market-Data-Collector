@@ -6,7 +6,7 @@
 
 ## Context
 
-As the Market Data Collector grew in complexity with multiple data providers, storage tiers, and processing pipelines, the team evaluated whether to decompose the monolithic architecture into microservices.
+As the Meridian grew in complexity with multiple data providers, storage tiers, and processing pipelines, the team evaluated whether to decompose the monolithic architecture into microservices.
 
 The proposed decomposition would create separate services for:
 1. Data ingestion (per provider)

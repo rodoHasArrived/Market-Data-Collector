@@ -12,7 +12,7 @@
     <Version>1.0.0</Version>
     <Authors>Meridian Team</Authors>
     <Description>Cross-platform market data collection system for real-time data ingestion</Description>
-    <Product>Market Data Collector</Product>
+    <Product>Meridian</Product>
     <Copyright>Copyright © 2024 Meridian Team</Copyright>
 
     <!-- Single-file publishing -->

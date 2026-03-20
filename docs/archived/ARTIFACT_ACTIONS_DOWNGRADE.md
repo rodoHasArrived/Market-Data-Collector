@@ -10,7 +10,7 @@ The workflow runs were failing with the following artifacts:
 - `actions/upload-artifact@v6.0.0`
 - `actions/download-artifact@v7.0.0`
 
-**Reference:** [GitHub Actions Run #21701929016](https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21701929016/job/62584107815#step:5:1)
+**Reference:** [GitHub Actions Run #21701929016](https://github.com/rodoHasArrived/Meridian/actions/runs/21701929016/job/62584107815#step:5:1)
 
 ## Root Cause
 

@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This analysis identified **significant duplicate code patterns** across the Market Data Collector codebase, primarily in:
+This analysis identified **significant duplicate code patterns** across the Meridian codebase, primarily in:
 1. **Domain Models** - 12+ duplicate models between `Domain/` and `Contracts/`
 2. **HTTP Client Configuration** - Nearly identical implementations in main project and UWP
 3. **Provider Implementations** - Repeated patterns across 8+ backfill and 5+ streaming providers

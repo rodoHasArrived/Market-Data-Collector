@@ -6,7 +6,7 @@
 
 > Auto-generated on 2026-03-18 20:00:44 UTC
 
-This document lists all data providers available in the Market Data Collector.
+This document lists all data providers available in the Meridian.
 
 ## Real-Time Streaming Providers
 

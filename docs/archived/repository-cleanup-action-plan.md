@@ -5,7 +5,7 @@
 **Status:** Phases 1-6 Complete
 **Related:** ROADMAP.md Phase 6, Phase 8
 
-This document provides a detailed, actionable plan for cleaning up the Market Data Collector repository, removing technical debt, and establishing sustainable organization patterns.
+This document provides a detailed, actionable plan for cleaning up the Meridian repository, removing technical debt, and establishing sustainable organization patterns.
 
 ---
 
@@ -481,7 +481,7 @@ Organize scattered documentation into clear, navigable structure.
 **File:** `docs/README.md`
 
 ```markdown
-# Market Data Collector Documentation
+# Meridian Documentation
 
 ## Quick Links
 - [Getting Started](../getting-started/README.md)

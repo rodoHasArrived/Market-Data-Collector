@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document proposes a comprehensive reorganization of the Market Data Collector repository structure to improve discoverability, conceptual clarity, onboarding speed, and long-term maintainability.
+This document proposes a comprehensive reorganization of the Meridian repository structure to improve discoverability, conceptual clarity, onboarding speed, and long-term maintainability.
 
 **Key Constraint:** All source code remains byte-for-byte identical. Only folder structures, file locations, and naming are modified.
 
@@ -62,7 +62,7 @@ The existing repository structure communicates a **layered architecture** (Appli
 ### Root Level (No Changes)
 
 ```
-Market-Data-Collector/
+Meridian/
 ├── .claude/                          # (unchanged)
 ├── .github/                          # (reorganized internally)
 ├── benchmarks/                       # (unchanged)

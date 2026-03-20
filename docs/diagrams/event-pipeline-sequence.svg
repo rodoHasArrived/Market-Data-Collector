@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 974)">
 <title>EventPipelineSequence</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-974 2250,-974 2250,36 -36,36"/>
-<text text-anchor="middle" x="1107" y="-924.4" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Event Pipeline Sequence</text>
+<text text-anchor="middle" x="1107" y="-924.4" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Event Pipeline Sequence</text>
 <text text-anchor="middle" x="1107" y="-911.4" font-family="Helvetica,sans-Serif" font-size="12.00">Async Producer&#45;Consumer Pattern | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_source</title>

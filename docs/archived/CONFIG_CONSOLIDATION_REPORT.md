@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Successfully audited and consolidated configuration files in the Market Data Collector repository. Removed duplicate diagnostic suppressions and enhanced documentation for all configuration files. **No files were deleted** as all existing configs serve distinct purposes, but redundant configuration entries were eliminated.
+Successfully audited and consolidated configuration files in the Meridian repository. Removed duplicate diagnostic suppressions and enhanced documentation for all configuration files. **No files were deleted** as all existing configs serve distinct purposes, but redundant configuration entries were eliminated.
 
 ---
 
@@ -129,7 +129,7 @@ dotnet_diagnostic.CS1587.severity = none
 is_global = true
 
 # ============================================================================
-# Market Data Collector - Global Analyzer Configuration
+# Meridian - Global Analyzer Configuration
 # ============================================================================
 # This file configures Roslyn analyzers and code style rules globally.
 # It works alongside Directory.Build.props which handles MSBuild warnings.
@@ -149,7 +149,7 @@ is_global = true
 ```xml
 <!--
   ============================================================================
-  Market Data Collector - MSBuild Properties
+  Meridian - MSBuild Properties
   ============================================================================
   This file defines shared MSBuild properties for all projects in the solution.
   Automatically imported by all .csproj files.
@@ -173,7 +173,7 @@ is_global = true
 ```xml
 <!--
   ============================================================================
-  Market Data Collector - Central Package Version Management
+  Meridian - Central Package Version Management
   ============================================================================
   All package versions are defined here to ensure consistency across the solution.
   Individual projects reference packages WITHOUT version numbers.
@@ -202,7 +202,7 @@ is_global = true
 ```xml
 <!--
   ============================================================================
-  Market Data Collector - Build Notifications MSBuild Targets
+  Meridian - Build Notifications MSBuild Targets
   ============================================================================
   PROJECT-SPECIFIC: This file is imported ONLY by Meridian.Uwp.csproj
                     to provide enhanced build feedback for the Windows Desktop app.

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mdc-data
-  namespace: market-data-collector
+  name: meridian-data
+  namespace: meridian
   labels:
-    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/name: meridian
     app.kubernetes.io/component: storage
 spec:
   accessModes:

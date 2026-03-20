@@ -316,7 +316,7 @@ public abstract class SchemaServiceBase : ISchemaService
     protected static string ExportAsMarkdown(DataDictionary dictionary)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("# Market Data Collector - Data Dictionary");
+        sb.AppendLine("# Meridian - Data Dictionary");
         sb.AppendLine();
         sb.AppendLine($"**Version:** {dictionary.Version}");
         sb.AppendLine($"**Generated:** {dictionary.GeneratedAt:yyyy-MM-dd HH:mm:ss} UTC");

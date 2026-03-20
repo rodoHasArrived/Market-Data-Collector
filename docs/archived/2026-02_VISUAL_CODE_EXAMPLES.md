@@ -1,6 +1,6 @@
 # Visual Code Examples - UI Improvements
 
-This document shows the actual code changes and visual effects added to the Market Data Collector UI.
+This document shows the actual code changes and visual effects added to the Meridian UI.
 
 ## 1. Provider Card Animations
 

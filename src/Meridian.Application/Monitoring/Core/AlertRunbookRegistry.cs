@@ -38,10 +38,10 @@ public sealed class AlertRunbookRegistry
         // Health alerts
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcDown",
+            AlertName = "MeridianDown",
             Severity = "critical",
             IncidentPriority = "P1",
-            Summary = "Market Data Collector is down",
+            Summary = "Meridian is down",
             RunbookUrl = "docs/operations/operator-runbook.md#application-down",
             SloId = "SLO-AV-001",
             ProbableCauses = new[]
@@ -53,8 +53,8 @@ public sealed class AlertRunbookRegistry
             },
             ImmediateActions = new[]
             {
-                "Check process status: systemctl status marketdatacollector",
-                "Check system logs: journalctl -u marketdatacollector",
+                "Check process status: systemctl status meridian",
+                "Check system logs: journalctl -u meridian",
                 "Restart service if crashed",
                 "Check disk space and memory usage"
             },
@@ -63,10 +63,10 @@ public sealed class AlertRunbookRegistry
 
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcUnhealthy",
+            AlertName = "MeridianUnhealthy",
             Severity = "warning",
             IncidentPriority = "P2",
-            Summary = "Market Data Collector reports unhealthy",
+            Summary = "Meridian reports unhealthy",
             RunbookUrl = "docs/operations/operator-runbook.md#unhealthy-status",
             ProbableCauses = new[]
             {
@@ -86,7 +86,7 @@ public sealed class AlertRunbookRegistry
         // Pipeline alerts
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcHighDropRate",
+            AlertName = "MeridianHighDropRate",
             Severity = "warning",
             IncidentPriority = "P2",
             Summary = "High pipeline event drop rate",
@@ -109,7 +109,7 @@ public sealed class AlertRunbookRegistry
 
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcPipelineBackpressure",
+            AlertName = "MeridianPipelineBackpressure",
             Severity = "warning",
             IncidentPriority = "P2",
             Summary = "Pipeline queue near capacity",
@@ -130,7 +130,7 @@ public sealed class AlertRunbookRegistry
 
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcNoEventsPublished",
+            AlertName = "MeridianNoEventsPublished",
             Severity = "warning",
             IncidentPriority = "P2",
             Summary = "No events published in 10 minutes",
@@ -154,7 +154,7 @@ public sealed class AlertRunbookRegistry
         // Provider alerts
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcProviderDisconnected",
+            AlertName = "MeridianProviderDisconnected",
             Severity = "warning",
             IncidentPriority = "P2",
             Summary = "Data provider disconnected",
@@ -178,7 +178,7 @@ public sealed class AlertRunbookRegistry
 
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcHighProviderLatency",
+            AlertName = "MeridianHighProviderLatency",
             Severity = "warning",
             IncidentPriority = "P3",
             Summary = "High latency on data provider",
@@ -202,7 +202,7 @@ public sealed class AlertRunbookRegistry
         // Storage alerts
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcStorageWriteErrors",
+            AlertName = "MeridianStorageWriteErrors",
             Severity = "critical",
             IncidentPriority = "P1",
             Summary = "Storage write errors detected",
@@ -228,7 +228,7 @@ public sealed class AlertRunbookRegistry
 
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcLowDataQuality",
+            AlertName = "MeridianLowDataQuality",
             Severity = "warning",
             IncidentPriority = "P3",
             Summary = "Low data quality score",
@@ -252,7 +252,7 @@ public sealed class AlertRunbookRegistry
         // SLA alerts
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcDataFreshnessViolation",
+            AlertName = "MeridianDataFreshnessViolation",
             Severity = "critical",
             IncidentPriority = "P1",
             Summary = "Data freshness SLA violation",
@@ -276,7 +276,7 @@ public sealed class AlertRunbookRegistry
 
         Register(new AlertRunbookEntry
         {
-            AlertName = "MdcSlaComplianceLow",
+            AlertName = "MeridianSlaComplianceLow",
             Severity = "warning",
             IncidentPriority = "P2",
             Summary = "SLA compliance below 95%",

@@ -267,7 +267,7 @@ public sealed class OnboardingTourService
         _tours["welcome"] = new TourDefinition
         {
             Id = "welcome",
-            Title = "Welcome to Market Data Collector",
+            Title = "Welcome to Meridian",
             Description = "Learn the basics of the application in a quick overview.",
             Category = TourCategory.GettingStarted,
             TriggerPage = "Dashboard",
@@ -276,7 +276,7 @@ public sealed class OnboardingTourService
                 new()
                 {
                     Title = "Welcome!",
-                    Content = "Market Data Collector captures real-time and historical market data from multiple providers. Let's take a quick tour of the key features.",
+                    Content = "Meridian captures real-time and historical market data from multiple providers. Let's take a quick tour of the key features.",
                     TargetElement = null,
                     Placement = TooltipPlacement.Center
                 },
@@ -316,7 +316,7 @@ public sealed class OnboardingTourService
                 new()
                 {
                     Title = "Choose a Provider",
-                    Content = "Market Data Collector supports multiple data providers including Alpaca, Polygon, Interactive Brokers, and StockSharp. Select a provider to configure.",
+                    Content = "Meridian supports multiple data providers including Alpaca, Polygon, Interactive Brokers, and StockSharp. Select a provider to configure.",
                     TargetElement = "ProviderList",
                     Placement = TooltipPlacement.Right
                 },

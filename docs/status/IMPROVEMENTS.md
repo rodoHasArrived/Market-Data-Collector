@@ -1,4 +1,4 @@
-# Market Data Collector - Improvement Tracking
+# Meridian - Improvement Tracking
 
 **Version:** 1.7.0
 **Last Updated:** 2026-03-20
@@ -939,7 +939,7 @@ No clear contract for what each validates or when it runs.
 **Solution Implemented (Partial):**
 - `TracedEventMetrics` decorator wraps `IEventMetrics` with `System.Diagnostics.Metrics` counters and histograms
 - Pipeline meter (`Meridian.Pipeline`) exports published/dropped/trade/depth/quote/integrity/historical counters via OTLP
-- Latency histogram (`mdc.pipeline.latency`) tracks event processing time in milliseconds
+- Latency histogram (`meridian.pipeline.latency`) tracks event processing time in milliseconds
 - `OpenTelemetrySetup` updated to register pipeline meter alongside existing application meters
 - `CompositionOptions.EnableOpenTelemetry` flag gates decorator registration in DI
 - `MarketDataTracing` extended with `StartBatchConsumeActivity`, `StartBackfillActivity`, `StartWalRecoveryActivity`

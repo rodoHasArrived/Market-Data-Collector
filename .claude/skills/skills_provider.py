@@ -2,8 +2,8 @@
 
 Creates a :class:`SkillsProvider` that exposes portable, progressive-disclosure skill packages and code-defined companions:
 
-1. ``mdc-code-review`` — Code review and architecture compliance, available
-   both as a file-based skill (discovered from the ``mdc-code-review/``
+1. ``meridian-code-review`` — Code review and architecture compliance, available
+   both as a file-based skill (discovered from the ``meridian-code-review/``
    directory) and as a code-defined skill.  When both exist the file-based
    version takes precedence; the code-defined definition acts as a fallback
    and hosts **dynamic resources** and **in-process scripts**.
@@ -13,9 +13,9 @@ Creates a :class:`SkillsProvider` that exposes portable, progressive-disclosure 
    Purely code-defined with scripts that delegate to
    ``build/scripts/docs/ai-docs-maintenance.py``.
 
-3. ``mdc-blueprint`` — Blueprint Mode for translating a single prioritized
+3. ``meridian-blueprint`` — Blueprint Mode for translating a single prioritized
    idea into a complete, code-ready technical design document.  Available
-   both as a file-based skill (discovered from the ``mdc-blueprint/``
+   both as a file-based skill (discovered from the ``meridian-blueprint/``
    directory) and as a code-defined skill with a dynamic git-context
    resource and a validate-skill script.
 
@@ -24,24 +24,24 @@ Usage (from a custom agent or MCP server)::
     from .claude.skills.skills_provider import skills_provider
 
     # Load the skill instructions
-    instructions = skills_provider.load_skill("mdc-code-review")
+    instructions = skills_provider.load_skill("meridian-code-review")
 
     # Read a static resource
-    arch = skills_provider.read_skill_resource("mdc-code-review", "architecture")
+    arch = skills_provider.read_skill_resource("meridian-code-review", "architecture")
 
     # Read a dynamic resource (re-evaluated on every call)
-    stats = skills_provider.read_skill_resource("mdc-code-review", "project-stats")
+    stats = skills_provider.read_skill_resource("meridian-code-review", "project-stats")
 
     # Execute a code-defined script
-    result = skills_provider.run_skill_script("mdc-code-review", "validate-skill")
+    result = skills_provider.run_skill_script("meridian-code-review", "validate-skill")
 
     # AI docs maintenance
     report = skills_provider.run_skill_script("ai-docs-maintain", "run-full")
 
     # Blueprint Mode
-    blueprint_instructions = skills_provider.load_skill("mdc-blueprint")
-    patterns = skills_provider.read_skill_resource("mdc-blueprint", "blueprint-patterns")
-    pipeline = skills_provider.read_skill_resource("mdc-blueprint", "pipeline-position")
+    blueprint_instructions = skills_provider.load_skill("meridian-blueprint")
+    patterns = skills_provider.read_skill_resource("meridian-blueprint", "blueprint-patterns")
+    pipeline = skills_provider.read_skill_resource("meridian-blueprint", "pipeline-position")
 """
 
 from __future__ import annotations
@@ -154,7 +154,7 @@ except ImportError as exc:
 # ---------------------------------------------------------------------------
 
 _SKILLS_DIR = Path(__file__).parent
-_SKILL_DIR = _SKILLS_DIR / "mdc-code-review"
+_SKILL_DIR = _SKILLS_DIR / "meridian-code-review"
 _REFS_DIR = _SKILL_DIR / "references"
 _REPO_ROOT = _SKILLS_DIR.parent.parent
 
@@ -172,7 +172,7 @@ def _read(path: Path) -> str:
 # ---------------------------------------------------------------------------
 
 mdc_code_review_skill = Skill(
-    name="mdc-code-review",
+    name="meridian-code-review",
     description=dedent("""\
         Code review and architecture compliance skill for the Meridian
         project — a .NET 9 / C# 13 market data system with WPF desktop app, F# 8.0
@@ -509,14 +509,14 @@ def git_context() -> Any:
 @mdc_code_review_skill.script(
     name="validate-skill",
     description=(
-        "Validate the mdc-code-review SKILL.md frontmatter and directory "
+        "Validate the meridian-code-review SKILL.md frontmatter and directory "
         "structure. Returns 'OK' on success or a failure message."
     ),
 )
 def validate_skill_script() -> str:
     """Validate the skill definition via quick_validate.py."""
     # Import the validation helper from the skill's scripts package.
-    # We add the mdc-code-review directory to sys.path so that the
+    # We add the meridian-code-review directory to sys.path so that the
     # ``from scripts.quick_validate import …`` import inside package_skill.py
     # keeps working too.
     _scripts_parent = str(_SKILL_DIR)
@@ -572,7 +572,7 @@ def run_eval_script(description: str = "", runs_per_query: int = 3) -> str:
             cmd,
             capture_output=True,
             text=True,
-            cwd=str(_SKILL_DIR),  # scripts/ is a package relative to mdc-code-review/
+            cwd=str(_SKILL_DIR),  # scripts/ is a package relative to meridian-code-review/
             timeout=300,
         )
         output = result.stdout.strip()
@@ -591,10 +591,10 @@ def run_eval_script(description: str = "", runs_per_query: int = 3) -> str:
         "Aggregate grading results from a workspace directory into "
         "benchmark.json and benchmark.md summary files. "
         "Requires ``workspace`` (path to the benchmark directory) and an "
-        "optional ``skill_name`` override (default: mdc-code-review)."
+        "optional ``skill_name`` override (default: meridian-code-review)."
     ),
 )
-def aggregate_benchmark_script(workspace: str, skill_name: str = "mdc-code-review") -> str:
+def aggregate_benchmark_script(workspace: str, skill_name: str = "meridian-code-review") -> str:
     """Execute aggregate_benchmark.py for a given workspace directory."""
     cmd = [
         sys.executable,
@@ -686,11 +686,11 @@ def _skill_script_runner(
 # Skills provider
 # ---------------------------------------------------------------------------
 
-_BLUEPRINT_SKILL_DIR = _SKILLS_DIR / "mdc-blueprint"
+_BLUEPRINT_SKILL_DIR = _SKILLS_DIR / "meridian-blueprint"
 _BLUEPRINT_REFS_DIR = _BLUEPRINT_SKILL_DIR / "references"
 
 mdc_blueprint_skill = Skill(
-    name="mdc-blueprint",
+    name="meridian-blueprint",
     description=(
         "Blueprint Mode skill for the Meridian project. "
         "Translates a single prioritized idea into a complete, code-ready technical "
@@ -740,8 +740,8 @@ mdc_blueprint_skill = Skill(
 @mdc_blueprint_skill.resource(
     name="blueprint-git-context",
     description=(
-        "Current git branch, the latest commit touching .claude/skills/mdc-blueprint/ "
-        "or .github/agents/mdc-blueprint-agent.md, and any pending changes to those "
+        "Current git branch, the latest commit touching .claude/skills/meridian-blueprint/ "
+        "or .github/agents/meridian-blueprint-agent.md, and any pending changes to those "
         "paths. Refreshed on every read."
     ),
 )
@@ -768,17 +768,17 @@ def blueprint_git_context() -> Any:
         "-1",
         "--pretty=format:%h %s (%cr)",
         "--",
-        ".claude/skills/mdc-blueprint/",
-        ".github/agents/mdc-blueprint-agent.md",
-        ".claude/agents/mdc-blueprint.md",
+        ".claude/skills/meridian-blueprint/",
+        ".github/agents/meridian-blueprint-agent.md",
+        ".claude/agents/meridian-blueprint.md",
     )
     pending = _git(
         "diff",
         "--name-only",
         "--",
-        ".claude/skills/mdc-blueprint/",
-        ".github/agents/mdc-blueprint-agent.md",
-        ".claude/agents/mdc-blueprint.md",
+        ".claude/skills/meridian-blueprint/",
+        ".github/agents/meridian-blueprint-agent.md",
+        ".claude/agents/meridian-blueprint.md",
     )
 
     lines = [
@@ -796,7 +796,7 @@ def blueprint_git_context() -> Any:
 @mdc_blueprint_skill.script(
     name="validate-skill",
     description=(
-        "Validate the mdc-blueprint SKILL.md frontmatter and directory structure. "
+        "Validate the meridian-blueprint SKILL.md frontmatter and directory structure. "
         "Returns 'OK' on success or a failure message."
     ),
 )
@@ -816,7 +816,7 @@ def blueprint_validate_skill_script() -> str:
     if missing_refs:
         return f"FAIL: Missing reference files: {', '.join(missing_refs)}"
 
-    return "OK: mdc-blueprint SKILL.md exists, has frontmatter, and all reference files present"
+    return "OK: meridian-blueprint SKILL.md exists, has frontmatter, and all reference files present"
 
 
 skills_provider = SkillsProvider(
@@ -922,7 +922,7 @@ def _timed_call(
 
 #: Named chains per skill: { skill_name: { chain_name: [script_name, …] } }
 _SKILL_CHAINS: dict[str, dict[str, list[str]]] = {
-    "mdc-code-review": {
+    "meridian-code-review": {
         "validate-and-eval": ["validate-skill", "run-eval"],
         "full-check": ["validate-skill", "run-eval", "aggregate-benchmark"],
     },
@@ -937,9 +937,9 @@ _SKILL_CHAINS: dict[str, dict[str, list[str]]] = {
 #: :func:`run_skill_chain` to look up the right function without going through
 #: the SkillsProvider API.
 _SCRIPT_REGISTRY: dict[tuple[str, str], Any] = {
-    ("mdc-code-review", "validate-skill"): validate_skill_script,
-    ("mdc-code-review", "run-eval"): run_eval_script,
-    ("mdc-code-review", "aggregate-benchmark"): aggregate_benchmark_script,
+    ("meridian-code-review", "validate-skill"): validate_skill_script,
+    ("meridian-code-review", "run-eval"): run_eval_script,
+    ("meridian-code-review", "aggregate-benchmark"): aggregate_benchmark_script,
     ("ai-docs-maintain", "run-freshness"): run_freshness_script,
     ("ai-docs-maintain", "run-drift"): run_drift_script,
     ("ai-docs-maintain", "run-full"): run_full_script,
@@ -948,8 +948,8 @@ _SCRIPT_REGISTRY: dict[tuple[str, str], Any] = {
 
 #: Resource callables keyed by (skill_name, resource_name).
 _RESOURCE_REGISTRY: dict[tuple[str, str], Any] = {
-    ("mdc-code-review", "project-stats"): project_stats,
-    ("mdc-code-review", "git-context"): git_context,
+    ("meridian-code-review", "project-stats"): project_stats,
+    ("meridian-code-review", "git-context"): git_context,
     ("ai-docs-maintain", "doc-health-summary"): doc_health_summary,
 }
 
@@ -977,8 +977,8 @@ def _scripts_from_registry() -> dict[str, list[str]]:
 #: The skill name that "owns" the static (file-based) resources listed below.
 #: Centralised here so that :func:`_resources_from_registries` and
 #: :meth:`SkillsProviderCli._cmd_read_resource` share a single constant rather
-#: than duplicating the literal string ``"mdc-code-review"``.
-_STATIC_RESOURCE_SKILL: str = "mdc-code-review"
+#: than duplicating the literal string ``"meridian-code-review"``.
+_STATIC_RESOURCE_SKILL: str = "meridian-code-review"
 
 #: Static resource → file path.  This is the single source of truth for
 #: file-backed resources; :func:`_resources_from_registries` reads its keys to
@@ -1138,8 +1138,8 @@ class SkillsProviderCli:
 
         python3 .claude/skills/skills_provider.py --help
         python3 .claude/skills/skills_provider.py list
-        python3 .claude/skills/skills_provider.py run-script mdc-code-review validate-skill
-        python3 .claude/skills/skills_provider.py chain mdc-code-review validate-skill run-eval
+        python3 .claude/skills/skills_provider.py run-script meridian-code-review validate-skill
+        python3 .claude/skills/skills_provider.py chain meridian-code-review validate-skill run-eval
         python3 .claude/skills/skills_provider.py run-chain ai-docs-maintain full-health-check
     """
 
@@ -1148,7 +1148,7 @@ class SkillsProviderCli:
     # ------------------------------------------------------------------
 
     _SKILL_DESCRIPTIONS: dict[str, str] = {
-        "mdc-code-review": (
+        "meridian-code-review": (
             "Code review and architecture compliance for the Meridian project."
         ),
         "ai-docs-maintain": (
@@ -1192,7 +1192,7 @@ class SkillsProviderCli:
 
         # list-resources
         lr = sub.add_parser("list-resources", help="List resources available for a skill")
-        lr.add_argument("skill", help="Skill name (e.g. mdc-code-review)")
+        lr.add_argument("skill", help="Skill name (e.g. meridian-code-review)")
 
         # list-scripts
         ls = sub.add_parser("list-scripts", help="List scripts available for a skill")

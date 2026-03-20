@@ -312,7 +312,7 @@ public sealed class AnalysisExportWizardService
     {
         var sb = new StringBuilder();
         sb.AppendLine("\"\"\"");
-        sb.AppendLine("Auto-generated data loader for Market Data Collector export");
+        sb.AppendLine("Auto-generated data loader for Meridian export");
         sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"Profile: {profile.Name}");
         sb.AppendLine("\"\"\"");
@@ -368,7 +368,7 @@ public sealed class AnalysisExportWizardService
     private string GenerateRLoader(ExportProfile profile, string exportPath, string[] symbols)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("# Auto-generated data loader for Market Data Collector export");
+        sb.AppendLine("# Auto-generated data loader for Meridian export");
         sb.AppendLine($"# Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"# Profile: {profile.Name}");
         sb.AppendLine();
@@ -402,7 +402,7 @@ public sealed class AnalysisExportWizardService
     private string GenerateSqlLoader(ExportProfile profile, string exportPath)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("-- Auto-generated SQL loader for Market Data Collector export");
+        sb.AppendLine("-- Auto-generated SQL loader for Meridian export");
         sb.AppendLine($"-- Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"-- Profile: {profile.Name}");
         sb.AppendLine();

@@ -1,6 +1,6 @@
 # UI Improvements Summary
 
-This document summarizes the visual and UX improvements made to the Market Data Collector web dashboard.
+This document summarizes the visual and UX improvements made to the Meridian web dashboard.
 
 ## Overview
 
@@ -314,4 +314,4 @@ Potential additions for further improvement:
 
 ## Conclusion
 
-These UI improvements transform the Market Data Collector dashboard from a functional interface into a polished, modern application with professional-grade visual feedback and user interactions. The changes maintain the existing architecture while significantly enhancing the user experience through thoughtful animations, visual hierarchy, and interactive elements.
+These UI improvements transform the Meridian dashboard from a functional interface into a polished, modern application with professional-grade visual feedback and user interactions. The changes maintain the existing architecture while significantly enhancing the user experience through thoughtful animations, visual hierarchy, and interactive elements.

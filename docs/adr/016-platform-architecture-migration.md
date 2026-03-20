@@ -8,7 +8,7 @@
 
 The project has evolved from a focused market data collection tool into a broader
 algorithmic trading platform encompassing data collection, backtesting, live execution,
-and strategy lifecycle management. The original naming (`MarketDataCollector.*`) and
+and strategy lifecycle management. The original naming (`Meridian.*`) and
 the original dependency graph (documented in the shared project context) only captured
 one pillar of what is now a four-pillar platform.
 
@@ -24,7 +24,7 @@ The platform is divided into **four named pillars** plus shared cross-cutting la
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          UI Layer                                        │
-│         (MarketDataCollector.Wpf, .Ui, .Ui.Services, .Ui.Shared)        │
+│         (Meridian.Wpf, .Ui, .Ui.Services, .Ui.Shared)        │
 └─────┬───────────────┬──────────────────┬────────────────────────────────┘
       │               │                  │
       ▼               ▼                  ▼
@@ -52,12 +52,12 @@ The platform is divided into **four named pillars** plus shared cross-cutting la
 
 | Pillar | Projects | Responsibility |
 |--------|----------|----------------|
-| **Data Collection** | `MarketDataCollector`, `.Application`, `.Domain`, `.Infrastructure`, `.Storage`, `.ProviderSdk` | Streaming ingestion, historical backfill, storage, data quality monitoring |
-| **Backtesting** | `MarketDataCollector.Backtesting`, `.Backtesting.Sdk` | Historical replay, fill simulation, portfolio tracking, strategy metrics |
-| **Execution** | `MarketDataCollector.Execution` | Live and simulated order routing, broker adapters, `IOrderGateway` |
-| **Strategies** | `MarketDataCollector.Strategies` | Strategy lifecycle management, run archive, promotion workflow |
-| **Shared Foundation** | `MarketDataCollector.Contracts`, `.Core`, `.FSharp` | Cross-cutting types, configuration, F# domain models |
-| **UI** | `MarketDataCollector.Wpf`, `.Ui`, `.Ui.Services`, `.Ui.Shared` | Desktop and web surfaces |
+| **Data Collection** | `Meridian`, `.Application`, `.Domain`, `.Infrastructure`, `.Storage`, `.ProviderSdk` | Streaming ingestion, historical backfill, storage, data quality monitoring |
+| **Backtesting** | `Meridian.Backtesting`, `.Backtesting.Sdk` | Historical replay, fill simulation, portfolio tracking, strategy metrics |
+| **Execution** | `Meridian.Execution` | Live and simulated order routing, broker adapters, `IOrderGateway` |
+| **Strategies** | `Meridian.Strategies` | Strategy lifecycle management, run archive, promotion workflow |
+| **Shared Foundation** | `Meridian.Contracts`, `.Core`, `.FSharp` | Cross-cutting types, configuration, F# domain models |
+| **UI** | `Meridian.Wpf`, `.Ui`, `.Ui.Services`, `.Ui.Shared` | Desktop and web surfaces |
 
 ### Allowed Dependencies (per-pillar)
 
@@ -79,25 +79,25 @@ UI                 ←  depends on all pillars via service layer (Ui.Services ac
 | `Strategies.*` | Any concrete `Execution.*` type | Strategies depend only on `IOrderGateway` / `IExecutionContext` interfaces |
 | `Data Collection` | `Strategies.*` or `Execution.*` | Data layer is infrastructure; it must not be strategy-aware |
 | `Shared Foundation` | Any pillar | Contracts/Core are leaves — no upstream pillar dependencies |
-| Any pillar | `MarketDataCollector.Wpf` | WPF is a UI host, not a library |
+| Any pillar | `Meridian.Wpf` | WPF is a UI host, not a library |
 | `Ui.Services` / `Ui.Shared` | WPF host types | Reverse dependency (pre-existing rule, reaffirmed) |
 
 ## Implementation Links
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Execution project | `src/MarketDataCollector.Execution/` | New pillar — order gateway and broker adapters |
-| Strategies project | `src/MarketDataCollector.Strategies/` | New pillar — strategy lifecycle and run archive |
-| Solution file | `MarketDataCollector.sln` | Solution folders mirror the four pillars |
-| IOrderGateway | `src/MarketDataCollector.Execution/Interfaces/IOrderGateway.cs` | ADR-015 canonical interface |
-| IStrategyLifecycle | `src/MarketDataCollector.Strategies/Interfaces/IStrategyLifecycle.cs` | Strategy lifecycle contract |
-| StrategyRunStore | `src/MarketDataCollector.Strategies/Storage/StrategyRunStore.cs` | Run archive and history |
+| Execution project | `src/Meridian.Execution/` | New pillar — order gateway and broker adapters |
+| Strategies project | `src/Meridian.Strategies/` | New pillar — strategy lifecycle and run archive |
+| Solution file | `Meridian.sln` | Solution folders mirror the four pillars |
+| IOrderGateway | `src/Meridian.Execution/Interfaces/IOrderGateway.cs` | ADR-015 canonical interface |
+| IStrategyLifecycle | `src/Meridian.Strategies/Interfaces/IStrategyLifecycle.cs` | Strategy lifecycle contract |
+| StrategyRunStore | `src/Meridian.Strategies/Storage/StrategyRunStore.cs` | Run archive and history |
 
 ## Rationale
 
 ### Naming Stability
 
-The `MarketDataCollector.*` assembly prefix is retained for all projects during the
+The `Meridian.*` assembly prefix is retained for all projects during the
 current version to avoid breaking CI/CD pipelines, NuGet references, and
 `[InternalsVisibleTo]` attributes across 27 workflows. Pillar boundaries are expressed
 through solution folders and enforced via dependency rules — not through namespace
@@ -167,14 +167,14 @@ later.
 
 ### Neutral
 
-- `MarketDataCollector.*` prefix is retained — existing ADRs, CI badges, and
+- `Meridian.*` prefix is retained — existing ADRs, CI badges, and
   documentation references remain valid
 
 ## Compliance
 
 ### Solution Organisation
 
-The `MarketDataCollector.sln` solution currently organises all source projects under a
+The `Meridian.sln` solution currently organises all source projects under a
 single `src` solution folder, which mirrors the existing project layout. Pillar
 isolation is enforced through project reference rules (see Allowed/Forbidden dependency
 graph above), not through separate Visual Studio solution folders. This keeps the

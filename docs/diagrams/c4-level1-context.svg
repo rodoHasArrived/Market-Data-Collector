@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 581.43)">
 <title>C4_Context</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-581.43 2894,-581.43 2894,36 -36,36"/>
-<text text-anchor="middle" x="1429" y="-531.83" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; System Context (C4 Level 1)</text>
+<text text-anchor="middle" x="1429" y="-531.83" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; System Context (C4 Level 1)</text>
 <text text-anchor="middle" x="1429" y="-518.83" font-family="Helvetica,sans-Serif" font-size="12.00">v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_actors</title>
@@ -49,11 +49,11 @@
 <text text-anchor="middle" x="333" y="-395.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">monitors health,</text>
 <text text-anchor="middle" x="333" y="-383.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">manages backfill</text>
 </g>
-<!-- MDC -->
+<!-- Meridian -->
 <g id="node4" class="node">
-<title>MDC</title>
+<title>Meridian</title>
 <path fill="#438dd5" stroke="black" d="M1239,-303.88C1239,-303.88 975,-303.88 975,-303.88 969,-303.88 963,-297.88 963,-291.88 963,-291.88 963,-197.88 963,-197.88 963,-191.88 969,-185.88 975,-185.88 975,-185.88 1239,-185.88 1239,-185.88 1245,-185.88 1251,-191.88 1251,-197.88 1251,-197.88 1251,-291.88 1251,-291.88 1251,-297.88 1245,-303.88 1239,-303.88"/>
-<text text-anchor="middle" x="1107" y="-291.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Market Data Collector</text>
+<text text-anchor="middle" x="1107" y="-291.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Meridian</text>
 <text text-anchor="middle" x="1107" y="-279.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">[Software System]</text>
 <text text-anchor="middle" x="1107" y="-254.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">.NET 9.0 | C# 13 | F# 8</text>
 <text text-anchor="middle" x="1107" y="-229.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Collects, validates, stores, and exports</text>
@@ -61,9 +61,9 @@
 <text text-anchor="middle" x="1107" y="-205.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">from multiple providers with</text>
 <text text-anchor="middle" x="1107" y="-193.07" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">archival&#45;first persistence</text>
 </g>
-<!-- Operator&#45;&gt;MDC -->
+<!-- Operator&#45;&gt;Meridian -->
 <g id="edge1" class="edge">
-<title>Operator&#45;&gt;MDC</title>
+<title>Operator&#45;&gt;Meridian</title>
 <path fill="none" stroke="#4a5568" d="M401.98,-377.41C401.98,-328.83 401.98,-253 401.98,-253 401.98,-253 952.63,-253 952.63,-253"/>
 <polygon fill="#4a5568" stroke="#4a5568" points="952.63,-256.5 962.63,-253 952.63,-249.5 952.63,-256.5"/>
 <text text-anchor="middle" x="770.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">Configures via</text>
@@ -79,9 +79,9 @@
 <text text-anchor="middle" x="523" y="-395.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">runs backtests,</text>
 <text text-anchor="middle" x="523" y="-383.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">builds strategies</text>
 </g>
-<!-- Quant&#45;&gt;MDC -->
+<!-- Quant&#45;&gt;Meridian -->
 <g id="edge2" class="edge">
-<title>Quant&#45;&gt;MDC</title>
+<title>Quant&#45;&gt;Meridian</title>
 <path fill="none" stroke="#4a5568" d="M568.31,-371C688.22,-371 1004.67,-371 1004.67,-371 1004.67,-371 1004.67,-313.88 1004.67,-313.88"/>
 <polygon fill="#4a5568" stroke="#4a5568" points="1008.17,-313.88 1004.67,-303.88 1001.17,-313.88 1008.17,-313.88"/>
 <text text-anchor="middle" x="855" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">Exports data</text>
@@ -122,9 +122,9 @@
 <text text-anchor="middle" x="457" y="-48.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Algorithmic Trading Engine</text>
 <text text-anchor="middle" x="457" y="-36.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Backtesting + Live</text>
 </g>
-<!-- MDC&#45;&gt;LEAN -->
+<!-- Meridian&#45;&gt;LEAN -->
 <g id="edge16" class="edge">
-<title>MDC&#45;&gt;LEAN</title>
+<title>Meridian&#45;&gt;LEAN</title>
 <path fill="none" stroke="#805ad5" d="M962.94,-236C781.33,-236 492.57,-236 492.57,-236 492.57,-236 492.57,-107.94 492.57,-107.94"/>
 <polygon fill="#805ad5" stroke="#805ad5" points="496.07,-107.94 492.57,-97.94 489.07,-107.94 496.07,-107.94"/>
 <text text-anchor="middle" x="525.5" y="-160.68" font-family="Helvetica,sans-Serif" font-size="9.00">Exports Lean</text>
@@ -139,9 +139,9 @@
 <text text-anchor="middle" x="617" y="-48.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Pandas, NumPy</text>
 <text text-anchor="middle" x="617" y="-36.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Data Science</text>
 </g>
-<!-- MDC&#45;&gt;PYTHON -->
+<!-- Meridian&#45;&gt;PYTHON -->
 <g id="edge17" class="edge">
-<title>MDC&#45;&gt;PYTHON</title>
+<title>Meridian&#45;&gt;PYTHON</title>
 <path fill="none" stroke="#805ad5" d="M962.79,-219C828.95,-219 650.25,-219 650.25,-219 650.25,-219 650.25,-107.96 650.25,-107.96"/>
 <polygon fill="#805ad5" stroke="#805ad5" points="653.75,-107.96 650.25,-97.96 646.75,-107.96 653.75,-107.96"/>
 <text text-anchor="middle" x="653.5" y="-160.68" font-family="Helvetica,sans-Serif" font-size="9.00">Exports Parquet</text>
@@ -156,9 +156,9 @@
 <text text-anchor="middle" x="773" y="-48.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Time&#45;Series Analytics</text>
 <text text-anchor="middle" x="773" y="-36.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">SQL Queries</text>
 </g>
-<!-- MDC&#45;&gt;PGSQL -->
+<!-- Meridian&#45;&gt;PGSQL -->
 <g id="edge18" class="edge">
-<title>MDC&#45;&gt;PGSQL</title>
+<title>Meridian&#45;&gt;PGSQL</title>
 <path fill="none" stroke="#805ad5" d="M962.83,-202C891.09,-202 819.5,-202 819.5,-202 819.5,-202 819.5,-108.05 819.5,-108.05"/>
 <polygon fill="#805ad5" stroke="#805ad5" points="823,-108.05 819.5,-98.05 816,-108.05 823,-108.05"/>
 <text text-anchor="middle" x="848" y="-160.68" font-family="Helvetica,sans-Serif" font-size="9.00">Exports CSV</text>
@@ -174,17 +174,17 @@
 <text text-anchor="middle" x="1134" y="-48.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">JSONL (Hot) + Parquet (Archive)</text>
 <text text-anchor="middle" x="1134" y="-36.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Local/Cloud/S3</text>
 </g>
-<!-- MDC&#45;&gt;DISK -->
+<!-- Meridian&#45;&gt;DISK -->
 <g id="edge14" class="edge">
-<title>MDC&#45;&gt;DISK</title>
+<title>Meridian&#45;&gt;DISK</title>
 <path fill="none" stroke="#c53030" d="M1134,-185.72C1134,-185.72 1134,-121.04 1134,-121.04"/>
 <polygon fill="#c53030" stroke="#c53030" points="1137.5,-121.04 1134,-111.04 1130.5,-121.04 1137.5,-121.04"/>
 <text text-anchor="middle" x="1158.5" y="-160.68" font-family="Helvetica,sans-Serif" font-size="9.00">Persists events</text>
 <text text-anchor="middle" x="1158.5" y="-150.68" font-family="Helvetica,sans-Serif" font-size="9.00">WAL + JSONL</text>
 </g>
-<!-- MDC&#45;&gt;PROM -->
+<!-- Meridian&#45;&gt;PROM -->
 <g id="edge19" class="edge">
-<title>MDC&#45;&gt;PROM</title>
+<title>Meridian&#45;&gt;PROM</title>
 <path fill="none" stroke="#c53030" d="M990.75,-185.72C990.75,-185.72 990.75,-108.17 990.75,-108.17"/>
 <polygon fill="#c53030" stroke="#c53030" points="994.25,-108.17 990.75,-98.17 987.25,-108.17 994.25,-108.17"/>
 <text text-anchor="middle" x="1011" y="-160.68" font-family="Helvetica,sans-Serif" font-size="9.00">Exposes /metrics</text>
@@ -199,9 +199,9 @@
 <text text-anchor="middle" x="1311" y="-48.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Message Bus</text>
 <text text-anchor="middle" x="1311" y="-36.14" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Distributed Events</text>
 </g>
-<!-- MDC&#45;&gt;MQ -->
+<!-- Meridian&#45;&gt;MQ -->
 <g id="edge15" class="edge">
-<title>MDC&#45;&gt;MQ</title>
+<title>Meridian&#45;&gt;MQ</title>
 <path fill="none" stroke="#c53030" d="M1240,-185.83C1240,-132.72 1240,-63 1240,-63 1240,-63 1240.9,-63 1240.9,-63"/>
 <polygon fill="#c53030" stroke="#c53030" points="1238.99,-66.5 1248.99,-63 1238.99,-59.5 1238.99,-66.5"/>
 <text text-anchor="middle" x="1318.5" y="-160.68" font-family="Helvetica,sans-Serif" font-size="9.00">Publishes</text>
@@ -216,9 +216,9 @@
 <text text-anchor="middle" x="867" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">TWS/Gateway API</text>
 <text text-anchor="middle" x="867" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Trades, Quotes, L2 Depth</text>
 </g>
-<!-- IB&#45;&gt;MDC -->
+<!-- IB&#45;&gt;Meridian -->
 <g id="edge4" class="edge">
-<title>IB&#45;&gt;MDC</title>
+<title>IB&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2b6cb0" d="M922.17,-382.61C922.17,-344.06 922.17,-287 922.17,-287 922.17,-287 952.73,-287 952.73,-287"/>
 <polygon fill="#2b6cb0" stroke="#2b6cb0" points="952.73,-290.5 962.73,-287 952.73,-283.5 952.73,-290.5"/>
 <text text-anchor="middle" x="1037.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">WebSocket</text>
@@ -233,9 +233,9 @@
 <text text-anchor="middle" x="1025" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">WebSocket + REST</text>
 <text text-anchor="middle" x="1025" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">IEX/SIP Feeds</text>
 </g>
-<!-- ALP&#45;&gt;MDC -->
+<!-- ALP&#45;&gt;Meridian -->
 <g id="edge5" class="edge">
-<title>ALP&#45;&gt;MDC</title>
+<title>ALP&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2b6cb0" d="M1045.33,-382.29C1045.33,-382.29 1045.33,-314.12 1045.33,-314.12"/>
 <polygon fill="#2b6cb0" stroke="#2b6cb0" points="1048.83,-314.12 1045.33,-304.12 1041.83,-314.12 1048.83,-314.12"/>
 <text text-anchor="middle" x="1123.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">WebSocket</text>
@@ -250,9 +250,9 @@
 <text text-anchor="middle" x="1172" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Exchange&#45;Direct Feed</text>
 <text text-anchor="middle" x="1172" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">US Equities</text>
 </g>
-<!-- NYSE&#45;&gt;MDC -->
+<!-- NYSE&#45;&gt;Meridian -->
 <g id="edge6" class="edge">
-<title>NYSE&#45;&gt;MDC</title>
+<title>NYSE&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2b6cb0" d="M1172,-382.29C1172,-382.29 1172,-314.12 1172,-314.12"/>
 <polygon fill="#2b6cb0" stroke="#2b6cb0" points="1175.5,-314.12 1172,-304.12 1168.5,-314.12 1175.5,-314.12"/>
 <text text-anchor="middle" x="1206" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">Exchange feed</text>
@@ -267,9 +267,9 @@
 <text text-anchor="middle" x="1327" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">WebSocket Streaming</text>
 <text text-anchor="middle" x="1327" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Trades, Quotes</text>
 </g>
-<!-- POL_STREAM&#45;&gt;MDC -->
+<!-- POL_STREAM&#45;&gt;Meridian -->
 <g id="edge7" class="edge">
-<title>POL_STREAM&#45;&gt;MDC</title>
+<title>POL_STREAM&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2b6cb0" d="M1258.23,-417C1250.59,-417 1245.5,-417 1245.5,-417 1245.5,-417 1245.5,-314.11 1245.5,-314.11"/>
 <polygon fill="#2b6cb0" stroke="#2b6cb0" points="1249,-314.11 1245.5,-304.11 1242,-314.11 1249,-314.11"/>
 <text text-anchor="middle" x="1320.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">WebSocket</text>
@@ -284,9 +284,9 @@
 <text text-anchor="middle" x="697" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Multi&#45;Exchange Adapter</text>
 <text text-anchor="middle" x="697" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Global Markets</text>
 </g>
-<!-- SS&#45;&gt;MDC -->
+<!-- SS&#45;&gt;Meridian -->
 <g id="edge8" class="edge">
-<title>SS&#45;&gt;MDC</title>
+<title>SS&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2b6cb0" d="M733,-382.65C733,-339.16 733,-270 733,-270 733,-270 952.94,-270 952.94,-270"/>
 <polygon fill="#2b6cb0" stroke="#2b6cb0" points="952.94,-273.5 962.94,-270 952.94,-266.5 952.94,-273.5"/>
 <text text-anchor="middle" x="942" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">Multi&#45;exchange</text>
@@ -301,9 +301,9 @@
 <text text-anchor="middle" x="1668" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">50K+ Global Securities</text>
 <text text-anchor="middle" x="1668" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Free OHLCV</text>
 </g>
-<!-- YF&#45;&gt;MDC -->
+<!-- YF&#45;&gt;Meridian -->
 <g id="edge9" class="edge">
-<title>YF&#45;&gt;MDC</title>
+<title>YF&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2c7a7b" d="M1668,-382.4C1668,-337.21 1668,-264 1668,-264 1668,-264 1261.11,-264 1261.11,-264"/>
 <polygon fill="#2c7a7b" stroke="#2c7a7b" points="1261.11,-260.5 1251.11,-264 1261.11,-267.5 1261.11,-260.5"/>
 <text text-anchor="middle" x="1616" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">REST</text>
@@ -318,9 +318,9 @@
 <text text-anchor="middle" x="1816" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Dividend&#45;Adjusted</text>
 <text text-anchor="middle" x="1816" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Fundamentals</text>
 </g>
-<!-- TI&#45;&gt;MDC -->
+<!-- TI&#45;&gt;Meridian -->
 <g id="edge10" class="edge">
-<title>TI&#45;&gt;MDC</title>
+<title>TI&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2c7a7b" d="M1816,-382.53C1816,-332 1816,-244 1816,-244 1816,-244 1261.33,-244 1261.33,-244"/>
 <polygon fill="#2c7a7b" stroke="#2c7a7b" points="1261.33,-240.5 1251.33,-244 1261.33,-247.5 1261.33,-240.5"/>
 <text text-anchor="middle" x="1774.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">REST</text>
@@ -335,9 +335,9 @@
 <text text-anchor="middle" x="1950" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Historical + News</text>
 <text text-anchor="middle" x="1950" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Fundamentals</text>
 </g>
-<!-- FH&#45;&gt;MDC -->
+<!-- FH&#45;&gt;Meridian -->
 <g id="edge11" class="edge">
-<title>FH&#45;&gt;MDC</title>
+<title>FH&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2c7a7b" d="M1950,-382.35C1950,-326.98 1950,-225 1950,-225 1950,-225 1261.44,-225 1261.44,-225"/>
 <polygon fill="#2c7a7b" stroke="#2c7a7b" points="1261.44,-221.5 1251.44,-225 1261.44,-228.5 1261.44,-221.5"/>
 <text text-anchor="middle" x="1920.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">REST</text>
@@ -352,9 +352,9 @@
 <text text-anchor="middle" x="2084" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Historical Bars</text>
 <text text-anchor="middle" x="2084" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Minute/Day</text>
 </g>
-<!-- POL&#45;&gt;MDC -->
+<!-- POL&#45;&gt;Meridian -->
 <g id="edge12" class="edge">
-<title>POL&#45;&gt;MDC</title>
+<title>POL&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2c7a7b" d="M2084,-382.59C2084,-322.48 2084,-205 2084,-205 2084,-205 1261.16,-205 1261.16,-205"/>
 <polygon fill="#2c7a7b" stroke="#2c7a7b" points="1261.16,-201.5 1251.16,-205 1261.16,-208.5 1261.16,-201.5"/>
 <text text-anchor="middle" x="2049.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">REST</text>
@@ -369,9 +369,9 @@
 <text text-anchor="middle" x="1499" y="-401.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">Nasdaq, Alpha Vantage</text>
 <text text-anchor="middle" x="1499" y="-389.85" font-family="Helvetica,sans-Serif" font-size="11.00" fill="white">IB, StockSharp, EOD Data</text>
 </g>
-<!-- STOOQ&#45;&gt;MDC -->
+<!-- STOOQ&#45;&gt;Meridian -->
 <g id="edge13" class="edge">
-<title>STOOQ&#45;&gt;MDC</title>
+<title>STOOQ&#45;&gt;Meridian</title>
 <path fill="none" stroke="#2c7a7b" d="M1499,-382.51C1499,-343.06 1499,-284 1499,-284 1499,-284 1261.02,-284 1261.02,-284"/>
 <polygon fill="#2c7a7b" stroke="#2c7a7b" points="1261.02,-280.5 1251.02,-284 1261.02,-287.5 1261.02,-280.5"/>
 <text text-anchor="middle" x="1455.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">REST</text>

@@ -1,6 +1,6 @@
 # Getting Started
 
-Quick start guide for the Market Data Collector. For comprehensive documentation, see [HELP.md](../HELP.md).
+Quick start guide for the Meridian. For comprehensive documentation, see [HELP.md](../HELP.md).
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ Quick start guide for the Market Data Collector. For comprehensive documentation
 ```bash
 # Clone and build
 git clone <repository-url>
-cd Market-Data-Collector
+cd Meridian
 dotnet build
 
 # Run the interactive wizard

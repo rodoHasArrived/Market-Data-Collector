@@ -1,6 +1,6 @@
-# Market Data Collector - User Guide
+# Meridian - User Guide
 
-Welcome to the Market Data Collector! This tool helps you **build your own market data archive** by connecting to financial data providers, capturing market data in real-time, and storing everything locally for research, backtesting, and algorithmic trading.
+Welcome to the Meridian! This tool helps you **build your own market data archive** by connecting to financial data providers, capturing market data in real-time, and storing everything locally for research, backtesting, and algorithmic trading.
 
 **Why use this tool?**
 - **Own your data** — Everything is stored locally in JSONL/Parquet files, not locked in a vendor's cloud
@@ -158,7 +158,7 @@ Run the collector in production mode:
 
 ## Auto-Configuration
 
-Market Data Collector includes user-friendly auto-configuration features to help new users get started quickly.
+Meridian includes user-friendly auto-configuration features to help new users get started quickly.
 
 ### Configuration Wizard
 
@@ -326,8 +326,8 @@ make doctor
 
 ```bash
 # Clone the repository
-git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
-cd Market-Data-Collector
+git clone https://github.com/rodoHasArrived/Meridian.git
+cd Meridian
 
 # Build in Release mode
 dotnet build -c Release
@@ -632,7 +632,7 @@ export NYSE__APIKEY=your-api-key
 
 ## Multi-Provider Support
 
-Market Data Collector supports connecting to multiple data providers simultaneously for enhanced data quality and reliability.
+Meridian supports connecting to multiple data providers simultaneously for enhanced data quality and reliability.
 
 ### Simultaneous Connections
 
@@ -1031,7 +1031,7 @@ Remove the symbol object from the `Symbols` array
 
 ## Archival-First Storage
 
-Market Data Collector includes an archival-first storage pipeline designed for crash-safe, long-term data preservation.
+Meridian includes an archival-first storage pipeline designed for crash-safe, long-term data preservation.
 
 ### Write-Ahead Logging (WAL)
 
@@ -1165,7 +1165,7 @@ Generate analysis-focused quality reports with each export:
 
 ## QuantConnect Lean Integration
 
-Market Data Collector integrates with the QuantConnect Lean Engine for backtesting and algorithmic trading.
+Meridian integrates with the QuantConnect Lean Engine for backtesting and algorithmic trading.
 
 ### Setup
 
@@ -1214,7 +1214,7 @@ See [docs/integrations/lean-integration.md](integrations/lean-integration.md) fo
 
 ## Offline Storage & Archival
 
-Market Data Collector includes tools for managing archived data offline.
+Meridian includes tools for managing archived data offline.
 
 ### Portable Data Packager
 
@@ -1392,7 +1392,7 @@ The dashboard shows toast notifications for:
 
 ## Windows Desktop App
 
-The WPF desktop application provides a native Windows experience for configuring and monitoring Market Data Collector.
+The WPF desktop application provides a native Windows experience for configuring and monitoring Meridian.
 
 ### Starting the Desktop App
 
@@ -2181,7 +2181,7 @@ docker-compose up -d
 1. **Check the logs**: Most issues are logged with detailed error messages
 2. **Run diagnostics**: `make doctor` for comprehensive system check
 3. **Review documentation**: Comprehensive docs cover most scenarios
-4. **GitHub Issues**: Report bugs or request features at https://github.com/your-org/Market-Data-Collector/issues
+4. **GitHub Issues**: Report bugs or request features at https://github.com/your-org/Meridian/issues
 
 ### Best Practices
 

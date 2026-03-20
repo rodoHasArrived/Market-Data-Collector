@@ -10,7 +10,7 @@
     <Version>1.0.0</Version>
     <Authors>Meridian Team</Authors>
     <Description>Shared UI endpoint handlers, services, and templates for Meridian web and desktop hosts</Description>
-    <Product>Market Data Collector UI Shared</Product>
+    <Product>Meridian UI Shared</Product>
     <Copyright>Copyright 2024 Meridian Team</Copyright>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>

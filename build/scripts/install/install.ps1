@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Market Data Collector - Installation Script for Windows
+    Meridian - Installation Script for Windows
 
 .DESCRIPTION
-    This script automates the installation and setup of Market Data Collector on Windows.
+    This script automates the installation and setup of Meridian on Windows.
     Features enhanced debugging output, progress tracking, and Windows toast notifications.
 
 .PARAMETER Mode
@@ -340,7 +340,7 @@ function Install-MsixPackage {
             Write-Host "    Status:  $($installedApp.Status)" -ForegroundColor Gray
             Write-Host ""
             Write-Host "  The app is now available in your Start Menu." -ForegroundColor White
-            Write-Host "  Search for 'Market Data Collector' to launch it." -ForegroundColor Gray
+            Write-Host "  Search for 'Meridian' to launch it." -ForegroundColor Gray
         }
         return $true
     }
@@ -404,12 +404,12 @@ function Uninstall-DesktopApp {
 
 function Show-Header {
     if ($useNotificationModule) {
-        Show-BuildHeader -Title "Market Data Collector - Installation Script" -Subtitle "Version 1.3.0 - Enhanced Windows Desktop Edition"
+        Show-BuildHeader -Title "Meridian - Installation Script" -Subtitle "Version 1.3.0 - Enhanced Windows Desktop Edition"
     }
     else {
         Write-Host ""
         Write-Host "======================================================================" -ForegroundColor Cyan
-        Write-Host "           Market Data Collector - Installation Script                " -ForegroundColor Cyan
+        Write-Host "           Meridian - Installation Script                " -ForegroundColor Cyan
         Write-Host "                         Version 1.3.0                                " -ForegroundColor Cyan
         Write-Host "======================================================================" -ForegroundColor Cyan
         Write-Host ""
@@ -610,7 +610,7 @@ function Install-Docker {
     try {
         # Build image
         Write-Info "Building Docker image..."
-        docker build -f $DockerFile -t marketdatacollector:latest $RepoRoot
+        docker build -f $DockerFile -t meridian:latest $RepoRoot
 
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to build Docker image"
@@ -1150,7 +1150,7 @@ function Install-Desktop {
             Write-Host "  Status:       " -ForegroundColor White -NoNewline
             Write-Host "INSTALLED - Available in Start Menu" -ForegroundColor Green
             Write-Host ""
-            Write-Host "  Launch:       Search for 'Market Data Collector' in Start Menu" -ForegroundColor Gray
+            Write-Host "  Launch:       Search for 'Meridian' in Start Menu" -ForegroundColor Gray
         }
         else {
             Write-Host "  To install manually:" -ForegroundColor Yellow
@@ -1209,7 +1209,7 @@ function Uninstall-Docker {
 
         # Remove image
         Write-Info "Removing Docker image..."
-        docker rmi marketdatacollector:latest 2>$null
+        docker rmi meridian:latest 2>$null
 
         Write-Success "Uninstallation complete"
         Write-Warning "Data directory (.\data) was preserved. Remove manually if needed."

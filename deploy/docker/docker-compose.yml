@@ -1,5 +1,5 @@
 # =============================================================================
-# Market Data Collector - Docker Compose Configuration
+# Meridian - Docker Compose Configuration
 # =============================================================================
 #
 # Quick Start:
@@ -13,14 +13,14 @@
 
 services:
   # ---------------------------------------------------------------------------
-  # Market Data Collector - Main Application
+  # Meridian - Main Application
   # ---------------------------------------------------------------------------
-  marketdatacollector:
+  meridian:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
-    image: marketdatacollector:latest
-    container_name: mdc
+    image: meridian:latest
+    container_name: meridian
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -44,7 +44,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - mdc-network
+      - meridian-network
     logging:
       driver: "json-file"
       options:
@@ -56,7 +56,7 @@ services:
   # ---------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:latest
-    container_name: mdc-prometheus
+    container_name: meridian-prometheus
     profiles:
       - monitoring
     restart: unless-stopped
@@ -73,16 +73,16 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--storage.tsdb.retention.time=15d'
     networks:
-      - mdc-network
+      - meridian-network
     depends_on:
-      - marketdatacollector
+      - meridian
 
   # ---------------------------------------------------------------------------
   # Grafana - Metrics Visualization (Optional)
   # ---------------------------------------------------------------------------
   grafana:
     image: grafana/grafana:latest
-    container_name: mdc-grafana
+    container_name: meridian-grafana
     profiles:
       - monitoring
     restart: unless-stopped
@@ -96,12 +96,12 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     networks:
-      - mdc-network
+      - meridian-network
     depends_on:
       - prometheus
 
 networks:
-  mdc-network:
+  meridian-network:
     driver: bridge
 
 volumes:
@@ -121,7 +121,7 @@ volumes:
 #   # Or: make docker-monitoring
 #
 # View logs:
-#   docker compose -f deploy/docker/docker-compose.yml logs -f marketdatacollector
+#   docker compose -f deploy/docker/docker-compose.yml logs -f meridian
 #
 # Stop all services:
 #   docker compose -f deploy/docker/docker-compose.yml down

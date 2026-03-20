@@ -16,7 +16,7 @@ namespace Meridian.Ui.Shared.Endpoints;
 /// </summary>
 public static class ExportEndpoints
 {
-    private static readonly string ExportBaseDir = Path.Combine(Path.GetTempPath(), "mdc-exports");
+    private static readonly string ExportBaseDir = Path.Combine(Path.GetTempPath(), "meridian-exports");
     private static readonly TimeSpan ExportMaxAge = TimeSpan.FromHours(24);
 
     public static void MapExportEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
@@ -36,7 +36,7 @@ public static class ExportEndpoints
 
             var outputDir = Path.Combine(
                 Path.GetTempPath(),
-                "mdc-exports",
+                "meridian-exports",
                 $"{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}");
 
             var exportRequest = new ExportRequest
@@ -129,7 +129,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "quality-" + DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
+            var outputDir = Path.Combine(Path.GetTempPath(), "meridian-exports", "quality-" + DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
 
             var exportRequest = new ExportRequest
             {
@@ -171,7 +171,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "orderflow-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
+            var outputDir = Path.Combine(Path.GetTempPath(), "meridian-exports", "orderflow-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
 
             var formatProfile = (req?.Format ?? "parquet") switch
             {
@@ -219,7 +219,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "integrity-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
+            var outputDir = Path.Combine(Path.GetTempPath(), "meridian-exports", "integrity-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
 
             var exportRequest = new ExportRequest
             {
@@ -257,7 +257,7 @@ public static class ExportEndpoints
                 return Results.Json(new { error = "Export service not available" }, jsonOptions, statusCode: 503);
             }
 
-            var outputDir = Path.Combine(Path.GetTempPath(), "mdc-exports", "research-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
+            var outputDir = Path.Combine(Path.GetTempPath(), "meridian-exports", "research-" + DateTime.UtcNow.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture));
 
             var exportRequest = new ExportRequest
             {

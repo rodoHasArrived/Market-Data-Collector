@@ -1,6 +1,6 @@
 # Operational Readiness Evaluation
 
-## Market Data Collector — Deployment, Observability, and Incident Response Assessment
+## Meridian — Deployment, Observability, and Incident Response Assessment
 
 **Date:** 2026-02-12
 **Status:** Evaluation Complete — Recommendations Substantially Adopted

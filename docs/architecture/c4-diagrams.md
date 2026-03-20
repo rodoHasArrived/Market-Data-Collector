@@ -40,7 +40,7 @@ flowchart LR
     OPR[Operator]:::person
     UI[Web Dashboard\nASP.NET]:::container
     WPF[Desktop App\nWPF]:::container
-    COL[Market Data Collector\nService]:::system
+    COL[Meridian\nService]:::system
     DISK[(Local Storage\nJSONL / Parquet)]:::store
 
     OPR --> UI
@@ -67,7 +67,7 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 
 ```mermaid
 flowchart TB
-    subgraph C[Market Data Collector (Process)]
+    subgraph C[Meridian (Process)]
         APP[Application Layer\nComposition/ConfigWatcher/StatusWriter/BackfillService/Scheduling]:::container
         DOM[Domain Layer\nCollectors + Models]:::container
         PIPE[Event Pipeline\nEventPipeline/DualPathEventPipeline/IngestionJobService]:::container

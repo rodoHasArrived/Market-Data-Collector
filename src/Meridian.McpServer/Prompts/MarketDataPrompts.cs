@@ -4,7 +4,7 @@ using ModelContextProtocol.Server;
 namespace Meridian.McpServer.Prompts;
 
 /// <summary>
-/// MCP prompt templates for common Market Data Collector workflows.
+/// MCP prompt templates for common Meridian workflows.
 /// These guide an LLM through multi-step operations such as configuring a provider
 /// or setting up a historical data backfill.
 /// </summary>
@@ -76,13 +76,13 @@ public sealed class MarketDataPrompts
     /// </summary>
     [McpServerPrompt, Description(
         "Generate a step-by-step guide for configuring a new data provider " +
-        "in the Market Data Collector.")]
+        "in the Meridian.")]
     public static IEnumerable<ChatMessage> ProviderConfiguration(
         [Description("Provider identifier (e.g. \"alpaca\", \"polygon\", \"tiingo\").")]
         string provider = "alpaca")
     {
         yield return new ChatMessage(ChatRole.User,
-            $"How do I configure the {provider} provider in Market Data Collector?");
+            $"How do I configure the {provider} provider in Meridian?");
 
         yield return new ChatMessage(ChatRole.Assistant, $"""
             Here is how to configure the **{provider}** provider:

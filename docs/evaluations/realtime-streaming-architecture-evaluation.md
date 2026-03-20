@@ -1,6 +1,6 @@
 # Real-Time Streaming Architecture Evaluation
 
-## Market Data Collector — Data Pipeline Assessment
+## Meridian — Data Pipeline Assessment
 
 **Date:** 2026-03-11
 **Status:** Re-evaluation Complete (supersedes 2026-02-22 assessment)
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document re-evaluates the real-time streaming architecture of the Market Data Collector system. Since the prior assessment (2026-02-22), several significant new capabilities have been added, notably end-to-end event validation, persistent deduplication, and a comprehensive data quality monitoring subsystem.
+This document re-evaluates the real-time streaming architecture of the Meridian system. Since the prior assessment (2026-02-22), several significant new capabilities have been added, notably end-to-end event validation, persistent deduplication, and a comprehensive data quality monitoring subsystem.
 
 **Key changes since last review:**
 
@@ -899,7 +899,7 @@ A centralized monitoring infrastructure layer was added to provide structured al
 |--------|-----------|--------|-------------------|
 | SLO-ING-001 | Ingestion | P95 latency ≤ 2 s | 5 s |
 | SLO-ING-002 | Ingestion | Drop rate ≤ 0.1 % | — |
-| SLO-AV-001 | Availability | — (via MdcDown alert) | — |
+| SLO-AV-001 | Availability | — (via MeridianDown alert) | — |
 
 Each SLO entry links to the relevant Prometheus metric, alert rule, and runbook section.
 

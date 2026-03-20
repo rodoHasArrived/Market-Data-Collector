@@ -42,7 +42,7 @@ public sealed class StartupSummary
         // Health matrix header
         sb.AppendLine();
         sb.AppendLine("╔══════════════════════════════════════════╗");
-        sb.AppendLine("║  Market Data Collector v1.6.2            ║");
+        sb.AppendLine("║  Meridian v1.6.2            ║");
         sb.AppendLine($"║  Mode: {mode,-33}║");
         sb.AppendLine("╠══════════════════════════════════════════╣");
 

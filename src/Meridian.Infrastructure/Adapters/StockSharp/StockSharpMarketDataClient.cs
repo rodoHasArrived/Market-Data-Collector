@@ -1222,7 +1222,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
-    /// Get or create a StockSharp Security from MDC SymbolConfig.
+    /// Get or create a StockSharp Security from Meridian SymbolConfig.
     /// </summary>
     private Security GetOrCreateSecurity(SymbolConfig cfg)
     {

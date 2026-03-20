@@ -46,19 +46,19 @@ These files lack a Markdown heading, making them harder to navigate:
 
 These files are not linked from any other Markdown file in the repository:
 
-- `.claude/agents/mdc-blueprint.md`
-- `.claude/agents/mdc-cleanup.md`
-- `.claude/agents/mdc-docs.md`
-- `.claude/skills/mdc-blueprint/references/blueprint-patterns.md`
-- `.claude/skills/mdc-blueprint/references/pipeline-position.md`
-- `.claude/skills/mdc-brainstorm/SKILL.md`
-- `.claude/skills/mdc-brainstorm/references/competitive-landscape.md`
-- `.claude/skills/mdc-brainstorm/references/idea-dimensions.md`
-- `.claude/skills/mdc-code-review/agents/grader.md`
-- `.claude/skills/mdc-code-review/references/architecture.md`
-- `.claude/skills/mdc-code-review/references/schemas.md`
-- `.claude/skills/mdc-provider-builder/SKILL.md`
-- `.claude/skills/mdc-test-writer/SKILL.md`
+- `.claude/agents/meridian-blueprint.md`
+- `.claude/agents/meridian-cleanup.md`
+- `.claude/agents/meridian-docs.md`
+- `.claude/skills/meridian-blueprint/references/blueprint-patterns.md`
+- `.claude/skills/meridian-blueprint/references/pipeline-position.md`
+- `.claude/skills/meridian-brainstorm/SKILL.md`
+- `.claude/skills/meridian-brainstorm/references/competitive-landscape.md`
+- `.claude/skills/meridian-brainstorm/references/idea-dimensions.md`
+- `.claude/skills/meridian-code-review/agents/grader.md`
+- `.claude/skills/meridian-code-review/references/architecture.md`
+- `.claude/skills/meridian-code-review/references/schemas.md`
+- `.claude/skills/meridian-provider-builder/SKILL.md`
+- `.claude/skills/meridian-test-writer/SKILL.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
 - `.github/agents/cleanup-specialist.agent.md`
 - `.github/pull_request_template_desktop.md`

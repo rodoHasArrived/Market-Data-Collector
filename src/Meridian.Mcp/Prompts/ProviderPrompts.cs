@@ -4,7 +4,7 @@ namespace Meridian.Mcp.Prompts;
 public sealed class ProviderPrompts(RepoPathService repo)
 {
     [McpServerPrompt(Name = "implement_provider")]
-    [Description("Full context prompt for implementing a new MDC provider. Includes the template, required ADRs, base classes, and implementation checklist.")]
+    [Description("Full context prompt for implementing a new Meridian provider. Includes the template, required ADRs, base classes, and implementation checklist.")]
     public string ImplementProvider(
         [Description("Provider display name, e.g. 'Kraken' or 'Binance'")] string providerName,
         [Description("Provider type: streaming | historical | symbol-search")] string providerType,

@@ -8,7 +8,7 @@
 
 ## Purpose
 
-This directory contains setup guides, comparison tables, and usage instructions for the data providers supported by Market Data Collector.
+This directory contains setup guides, comparison tables, and usage instructions for the data providers supported by Meridian.
 
 ---
 

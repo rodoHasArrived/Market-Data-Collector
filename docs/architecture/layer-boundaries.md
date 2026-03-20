@@ -36,7 +36,7 @@ Meridian (Host/Exe)   →  Application (+ transitive)
           Meridian.Ui                  Meridian.Wpf
             →  Ui.Shared                            →  Ui.Services, Contracts
                          ↑
-          MarketDataCollector.McpServer
+          Meridian.McpServer
             →  Application, Core, Storage, Contracts
 ```
 

@@ -1,5 +1,5 @@
 {
-  "name": "Market Data Collector",
+  "name": "Meridian",
   "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
 
   "features": {

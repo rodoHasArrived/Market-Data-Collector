@@ -14,7 +14,7 @@ namespace Meridian.Execution.Adapters;
 /// limit orders), making this the safe default for strategy validation before live promotion.
 /// Implements ADR-015.
 /// </summary>
-[ImplementsAdr("ADR-015", "Simulated IOrderGateway over live MDC feed — no real orders")]
+[ImplementsAdr("ADR-015", "Simulated IOrderGateway over live Meridian feed — no real orders")]
 public sealed class PaperTradingGateway : IOrderGateway
 {
     // Notional fill price used for market orders in this scaffold.

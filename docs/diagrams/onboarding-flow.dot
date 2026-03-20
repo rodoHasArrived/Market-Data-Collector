@@ -1,5 +1,5 @@
 // Onboarding & Diagnostics Flow Diagram
-// Market Data Collector v1.6.1
+// Meridian v1.6.1
 // Last Updated: 2026-02-21
 //
 // This diagram shows the user journey from first-run through setup to operational,
@@ -16,7 +16,7 @@ digraph OnboardingFlow {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Onboarding & Diagnostics Flow\nUser Journey from Installation to Operation | v1.6.1";
+  label="Meridian - Onboarding & Diagnostics Flow\nUser Journey from Installation to Operation | v1.6.1";
 
   // Entry Point
   START [shape=oval, fillcolor="#38a169", fontcolor="white",
@@ -30,7 +30,7 @@ digraph OnboardingFlow {
     bgcolor="#fffaf0";
 
     FIRST_RUN [fillcolor="#fbd38d",
-               label="FirstRunDetector\n\nCheck for .mdc-initialized\nCheck for appsettings.json"];
+               label="FirstRunDetector\n\nCheck for .meridian-initialized\nCheck for appsettings.json"];
 
     WELCOME [fillcolor="#fbd38d",
              label="Welcome Message\n\nDisplay ASCII banner\nShow getting started options"];
@@ -110,7 +110,7 @@ digraph OnboardingFlow {
                  label="--show-config\n\nDisplay current config\nMasked credentials"];
 
     ERROR_CODES [fillcolor="#9ae6b4",
-                 label="--error-codes\n\n24 error codes\nMDC-XXX-NNN format\nTroubleshooting tips"];
+                 label="--error-codes\n\n24 error codes\nMERIDIAN-XXX-NNN format\nTroubleshooting tips"];
 
     HELP [fillcolor="#9ae6b4",
           label="--help\n\nAll available flags\nUsage examples"];
@@ -145,7 +145,7 @@ digraph OnboardingFlow {
                label="FriendlyErrorFormatter\n\nParse exception\nAssign error code\nGenerate suggestions"];
 
     ERROR_DISPLAY [fillcolor="#fecaca",
-                   label="User-Friendly Error\n\n[MDC-CFG-001]\nMissing configuration\n\nSuggestions:\n1. Run --wizard\n2. Check env vars"];
+                   label="User-Friendly Error\n\n[Meridian-CFG-001]\nMissing configuration\n\nSuggestions:\n1. Run --wizard\n2. Check env vars"];
   }
 
   // Flow edges

@@ -1,4 +1,4 @@
-# Market Data Collector - Project Roadmap
+# Meridian - Project Roadmap
 
 **Version:** 1.7.0
 **Last Updated:** 2026-03-20

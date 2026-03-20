@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: market-data-collector
-  namespace: market-data-collector
+  name: meridian
+  namespace: meridian
   labels:
-    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/name: meridian
     app.kubernetes.io/component: collector
 spec:
   type: ClusterIP
@@ -14,4 +14,4 @@ spec:
       targetPort: http
       protocol: TCP
   selector:
-    app.kubernetes.io/name: market-data-collector
+    app.kubernetes.io/name: meridian

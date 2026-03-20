@@ -218,7 +218,7 @@ Meridian/
 │   │   ├── alert-rules.yml
 │   │   └── prometheus.yml
 │   └── systemd/
-│       └── marketdatacollector.service
+│       └── meridian.service
 ├── docs/  # Documentation
 │   ├── adr/
 │   │   ├── 001-provider-abstraction.md

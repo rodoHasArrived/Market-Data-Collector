@@ -1,5 +1,5 @@
 # =============================================================================
-# Prometheus Configuration for Market Data Collector
+# Prometheus Configuration for Meridian
 # =============================================================================
 
 global:
@@ -10,10 +10,10 @@ rule_files:
   - /etc/prometheus/alert-rules.yml
 
 scrape_configs:
-  # Market Data Collector metrics
-  - job_name: 'marketdatacollector'
+  # Meridian metrics
+  - job_name: 'meridian'
     static_configs:
-      - targets: ['marketdatacollector:8080']
+      - targets: ['meridian:8080']
     metrics_path: /metrics
     scheme: http
 

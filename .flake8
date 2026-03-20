@@ -16,7 +16,7 @@ exclude =
     tests/*/bin,
     tests/*/obj,
     node_modules,
-    .claude/skills/mdc-code-review/eval-viewer,
+    .claude/skills/meridian-code-review/eval-viewer,
     .claude/skills/skills_provider.py
 per-file-ignores =
     build/python/cli/buildctl.py:E402

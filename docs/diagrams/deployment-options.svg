@@ -9,7 +9,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(36 779.5)">
 <title>DeploymentOptions</title>
 <polygon fill="white" stroke="transparent" points="-36,36 -36,-779.5 6246,-779.5 6246,36 -36,36"/>
-<text text-anchor="middle" x="3105" y="-729.9" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Deployment Options</text>
+<text text-anchor="middle" x="3105" y="-729.9" font-family="Helvetica,sans-Serif" font-size="12.00">Meridian &#45; Deployment Options</text>
 <text text-anchor="middle" x="3105" y="-716.9" font-family="Helvetica,sans-Serif" font-size="12.00">From Development to Production | v1.6.1</text>
 <g id="clust1" class="cluster">
 <title>cluster_standalone</title>
@@ -168,7 +168,7 @@
 <g id="node8" class="node">
 <title>DC_COLLECTOR</title>
 <path fill="#bfdbfe" stroke="black" d="M1901,-93.5C1901,-93.5 1829,-93.5 1829,-93.5 1823,-93.5 1817,-87.5 1817,-81.5 1817,-81.5 1817,-41.5 1817,-41.5 1817,-35.5 1823,-29.5 1829,-29.5 1829,-29.5 1901,-29.5 1901,-29.5 1907,-29.5 1913,-35.5 1913,-41.5 1913,-41.5 1913,-81.5 1913,-81.5 1913,-87.5 1907,-93.5 1901,-93.5"/>
-<text text-anchor="middle" x="1865" y="-81.5" font-family="Helvetica,sans-Serif" font-size="10.00">mdc&#45;collector</text>
+<text text-anchor="middle" x="1865" y="-81.5" font-family="Helvetica,sans-Serif" font-size="10.00">meridian&#45;collector</text>
 <text text-anchor="middle" x="1865" y="-70.5" font-family="Helvetica,sans-Serif" font-size="10.00">[Container]</text>
 <text text-anchor="middle" x="1865" y="-47.5" font-family="Helvetica,sans-Serif" font-size="10.00">Core application</text>
 <text text-anchor="middle" x="1865" y="-36.5" font-family="Helvetica,sans-Serif" font-size="10.00">Port: 8080</text>
@@ -232,7 +232,7 @@
 <polyline fill="none" stroke="black" points="1048,-87.5 1042,-87.5 "/>
 <text text-anchor="middle" x="948" y="-81.5" font-family="Helvetica,sans-Serif" font-size="10.00">Run Commands:</text>
 <text text-anchor="middle" x="948" y="-58.5" font-family="Helvetica,sans-Serif" font-size="10.00">docker&#45;compose up &#45;d</text>
-<text text-anchor="middle" x="948" y="-47.5" font-family="Helvetica,sans-Serif" font-size="10.00">docker&#45;compose logs &#45;f mdc&#45;collector</text>
+<text text-anchor="middle" x="948" y="-47.5" font-family="Helvetica,sans-Serif" font-size="10.00">docker&#45;compose logs &#45;f meridian&#45;collector</text>
 <text text-anchor="middle" x="948" y="-36.5" font-family="Helvetica,sans-Serif" font-size="10.00">docker&#45;compose down</text>
 </g>
 <!-- DOCKER_MICRO -->
@@ -319,10 +319,10 @@
 <title>K8S_DEPLOY</title>
 <path fill="#fecaca" stroke="black" d="M4347,-99C4347,-99 4213,-99 4213,-99 4207,-99 4201,-93 4201,-87 4201,-87 4201,-36 4201,-36 4201,-30 4207,-24 4213,-24 4213,-24 4347,-24 4347,-24 4353,-24 4359,-30 4359,-36 4359,-36 4359,-87 4359,-87 4359,-93 4353,-99 4347,-99"/>
 <text text-anchor="middle" x="4280" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00">Deployments</text>
-<text text-anchor="middle" x="4280" y="-64" font-family="Helvetica,sans-Serif" font-size="10.00">• mdc&#45;gateway (3 replicas)</text>
-<text text-anchor="middle" x="4280" y="-53" font-family="Helvetica,sans-Serif" font-size="10.00">• mdc&#45;trade (5 replicas)</text>
-<text text-anchor="middle" x="4280" y="-42" font-family="Helvetica,sans-Serif" font-size="10.00">• mdc&#45;quote (5 replicas)</text>
-<text text-anchor="middle" x="4280" y="-31" font-family="Helvetica,sans-Serif" font-size="10.00">• mdc&#45;orderbook (3 replicas)</text>
+<text text-anchor="middle" x="4280" y="-64" font-family="Helvetica,sans-Serif" font-size="10.00">• meridian&#45;gateway (3 replicas)</text>
+<text text-anchor="middle" x="4280" y="-53" font-family="Helvetica,sans-Serif" font-size="10.00">• meridian&#45;trade (5 replicas)</text>
+<text text-anchor="middle" x="4280" y="-42" font-family="Helvetica,sans-Serif" font-size="10.00">• meridian&#45;quote (5 replicas)</text>
+<text text-anchor="middle" x="4280" y="-31" font-family="Helvetica,sans-Serif" font-size="10.00">• meridian&#45;orderbook (3 replicas)</text>
 </g>
 <!-- K8S_SVC -->
 <g id="node26" class="node">
@@ -382,8 +382,8 @@
 <polyline fill="none" stroke="black" points="3293.5,-87.5 3287.5,-87.5 "/>
 <text text-anchor="middle" x="3174" y="-81.5" font-family="Helvetica,sans-Serif" font-size="10.00">Deploy Commands:</text>
 <text text-anchor="middle" x="3174" y="-58.5" font-family="Helvetica,sans-Serif" font-size="10.00">kubectl apply &#45;f deploy/k8s/</text>
-<text text-anchor="middle" x="3174" y="-47.5" font-family="Helvetica,sans-Serif" font-size="10.00">helm install mdc ./charts/mdc</text>
-<text text-anchor="middle" x="3174" y="-36.5" font-family="Helvetica,sans-Serif" font-size="10.00">kubectl scale deploy mdc&#45;trade &#45;&#45;replicas=10</text>
+<text text-anchor="middle" x="3174" y="-47.5" font-family="Helvetica,sans-Serif" font-size="10.00">helm install meridian ./charts/meridian</text>
+<text text-anchor="middle" x="3174" y="-36.5" font-family="Helvetica,sans-Serif" font-size="10.00">kubectl scale deploy meridian&#45;trade &#45;&#45;replicas=10</text>
 </g>
 <!-- CLOUD -->
 <g id="node32" class="node">
@@ -462,8 +462,8 @@
 <title>SVC_SYSTEMD</title>
 <path fill="#edf2f7" stroke="black" d="M6174,-88C6174,-88 6084,-88 6084,-88 6078,-88 6072,-82 6072,-76 6072,-76 6072,-47 6072,-47 6072,-41 6078,-35 6084,-35 6084,-35 6174,-35 6174,-35 6180,-35 6186,-41 6186,-47 6186,-47 6186,-76 6186,-76 6186,-82 6180,-88 6174,-88"/>
 <text text-anchor="middle" x="6129" y="-76" font-family="Helvetica,sans-Serif" font-size="10.00">systemd (Linux)</text>
-<text text-anchor="middle" x="6129" y="-53" font-family="Helvetica,sans-Serif" font-size="10.00">mdc.service</text>
-<text text-anchor="middle" x="6129" y="-42" font-family="Helvetica,sans-Serif" font-size="10.00">systemctl start mdc</text>
+<text text-anchor="middle" x="6129" y="-53" font-family="Helvetica,sans-Serif" font-size="10.00">meridian.service</text>
+<text text-anchor="middle" x="6129" y="-42" font-family="Helvetica,sans-Serif" font-size="10.00">systemctl start meridian</text>
 </g>
 <!-- SVC_WIN -->
 <g id="node42" class="node">
@@ -492,7 +492,7 @@
 <polyline fill="none" stroke="black" points="5632,-88 5632,-82 "/>
 <polyline fill="none" stroke="black" points="5638,-82 5632,-82 "/>
 <text text-anchor="middle" x="5554" y="-76" font-family="Helvetica,sans-Serif" font-size="10.00">Files:</text>
-<text text-anchor="middle" x="5554" y="-53" font-family="Helvetica,sans-Serif" font-size="10.00">deploy/systemd/mdc.service</text>
+<text text-anchor="middle" x="5554" y="-53" font-family="Helvetica,sans-Serif" font-size="10.00">deploy/systemd/meridian.service</text>
 <text text-anchor="middle" x="5554" y="-42" font-family="Helvetica,sans-Serif" font-size="10.00">scripts/install/install&#45;service.sh</text>
 </g>
 <!-- PRESETUP -->

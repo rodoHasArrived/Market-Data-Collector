@@ -5,7 +5,7 @@ using Meridian.McpServer.Tools;
 using ModelContextProtocol.Server;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Market Data Collector — MCP Server
+// Meridian — MCP Server
 //
 // Exposes market data capabilities as Model Context Protocol (MCP) tools,
 // resources, and prompts so that LLMs can query providers, run backfills,
@@ -43,7 +43,7 @@ try
             outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
             standardErrorFromLevel: Serilog.Events.LogEventLevel.Verbose));
 
-    // Register all Market Data Collector services using the McpServer preset,
+    // Register all Meridian services using the McpServer preset,
     // which enables providers + backfill but skips the streaming pipeline and
     // collector (not needed for a query-oriented MCP server).
     builder.Services.AddMarketDataServices(CompositionOptions.McpServer with

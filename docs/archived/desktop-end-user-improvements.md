@@ -1,6 +1,6 @@
 # Desktop End-User Improvement Opportunities
 
-## Market Data Collector — Desktop UX Assessment
+## Meridian — Desktop UX Assessment
 
 **Date:** 2026-03-12 (Updated)
 **Status:** Archived — superseded by active desktop evaluations and implementation guides
@@ -12,7 +12,7 @@
 
 ## Executive Summary
 
-This evaluation assesses the desktop end-user experience for Market Data Collector's WPF Windows application. The assessment covers user workflows, trust indicators, operational visibility, onboarding effectiveness, and productivity features across 51 desktop pages and 111 shared services.
+This evaluation assesses the desktop end-user experience for Meridian's WPF Windows application. The assessment covers user workflows, trust indicators, operational visibility, onboarding effectiveness, and productivity features across 51 desktop pages and 111 shared services.
 
 **Key Finding:** The desktop application provides a comprehensive feature surface (Dashboard, Backfill, Data Quality, Storage Management, Provider Health, etc.) with all key productivity services now fully implemented and wired. The remaining primary gaps are in live backend connectivity for a subset of pages, data quality explainability, and export workflow hardening.
 
@@ -1210,7 +1210,7 @@ Sample Output (first 5 rows):
   "manifest": {
     "version": "1.0",
     "created_at": "2024-01-15T10:30:00Z",
-    "created_by": "Market Data Collector v1.6.1",
+    "created_by": "Meridian v1.6.1",
     "export_id": "exp-2024-001",
     "preset": "QuantConnect Lean Format"
   },
@@ -2508,7 +2508,7 @@ Month 3: Data Quality Explainability + Export Hardening
 ### User Satisfaction Surveys
 
 **Monthly NPS Survey (5 questions, <1 min):**
-1. How likely are you to recommend Market Data Collector? (0-10)
+1. How likely are you to recommend Meridian? (0-10)
 2. Do you trust the data displayed in the dashboard? (Yes/No/Sometimes)
 3. How confident are you in recovering from failures? (1-5 scale)
 4. How easy is it to discover new features? (1-5 scale)
@@ -2528,7 +2528,7 @@ Month 3: Data Quality Explainability + Export Hardening
 
 ### Industry Standards Comparison
 
-| Feature | Market Data Collector | Bloomberg Terminal | Refinitiv Eikon | TradingView | Custom Build |
+| Feature | Meridian | Bloomberg Terminal | Refinitiv Eikon | TradingView | Custom Build |
 |---------|----------------------|-------------------|----------------|-------------|--------------|
 | **Live data integration** | ⚠ Partial (Dashboard live, other pages pending) | ★★★★★ Full | ★★★★★ Full | ★★★★★ Full | Varies |
 | **Resumable jobs** | ★★★☆☆ Service ready, needs UI | ★★★★★ Full | ★★★★☆ Good | ★★★☆☆ Limited | Rare |
@@ -3050,7 +3050,7 @@ The WPF desktop application has a comprehensive feature surface with 51 pages an
 
 ## O. Conclusion
 
-The Market Data Collector WPF desktop application has a **strong and growing foundation** with 51 pages, 111 services (81 shared + 30 WPF-specific), 1,251 tests across 71 test files, and comprehensive monitoring infrastructure. Since the initial assessment, all major productivity service wiring has been completed: Command Palette (Ctrl+K) is live, Onboarding Tours are triggered from `MainWindow`, Workspace session state is restored on startup and saved on shutdown, the Dashboard has a full MVVM `DashboardViewModel` with live polling and stale indicators, and `AlertService` is fully implemented with smart suppression and playbooks. The primary remaining gap is **live backend connectivity for the remaining pages** (Symbols, Backfill, Activity Feed) and the **P2 data quality / export UI work**.
+The Meridian WPF desktop application has a **strong and growing foundation** with 51 pages, 111 services (81 shared + 30 WPF-specific), 1,251 tests across 71 test files, and comprehensive monitoring infrastructure. Since the initial assessment, all major productivity service wiring has been completed: Command Palette (Ctrl+K) is live, Onboarding Tours are triggered from `MainWindow`, Workspace session state is restored on startup and saved on shutdown, the Dashboard has a full MVVM `DashboardViewModel` with live polling and stale indicators, and `AlertService` is fully implemented with smart suppression and playbooks. The primary remaining gap is **live backend connectivity for the remaining pages** (Symbols, Backfill, Activity Feed) and the **P2 data quality / export UI work**.
 
 ### Priority Ranking (Updated)
 

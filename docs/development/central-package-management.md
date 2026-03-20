@@ -143,7 +143,7 @@ If this returns any results (except commented lines), those projects need to be 
 
 **Solution**: Removed all `Version` attributes from PackageReference items in the project file. The versions were already correctly defined in `Directory.Packages.props`.
 
-**Reference**: [GitHub Actions Run 21609937328](https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21609937328/job/62276086336)
+**Reference**: [GitHub Actions Run 21609937328](https://github.com/rodoHasArrived/Meridian/actions/runs/21609937328/job/62276086336)
 
 ## Related Documentation
 

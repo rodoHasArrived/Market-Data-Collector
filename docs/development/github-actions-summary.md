@@ -1,6 +1,6 @@
 # GitHub Actions Workflows - Summary
 
-This document provides a quick reference for all GitHub Actions workflows in the Market Data Collector repository.
+This document provides a quick reference for all GitHub Actions workflows in the Meridian repository.
 
 **Last Updated:** 2026-02-13
 **Total Workflows:** 17 (consolidated from 25 original files)

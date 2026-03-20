@@ -1,5 +1,5 @@
 // CLI Commands Reference Diagram
-// Market Data Collector v1.6.1
+// Meridian v1.6.1
 // Last Updated: 2026-02-21
 //
 // This diagram shows all available CLI commands and flags,
@@ -16,11 +16,11 @@ digraph CLICommands {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - CLI Commands Reference\nAll Available Flags and Options | v1.6.1";
+  label="Meridian - CLI Commands Reference\nAll Available Flags and Options | v1.6.1";
 
   // Entry Point
-  MDC [shape=box, fillcolor="#438dd5", fontcolor="white", width=3,
-       label="dotnet run --project src/Meridian\n\nMarket Data Collector CLI\n.NET 9.0 | Cross-Platform"];
+  Meridian [shape=box, fillcolor="#438dd5", fontcolor="white", width=3,
+       label="dotnet run --project src/Meridian\n\nMeridian CLI\n.NET 9.0 | Cross-Platform"];
 
   // Setup Commands
   subgraph cluster_setup {
@@ -99,7 +99,7 @@ digraph CLICommands {
                  label="--show-config\n\nDisplay current config\nMask sensitive values\nShow effective settings"];
 
     ERROR_CODES [fillcolor="#fbd38d",
-                 label="--error-codes\n\nList all error codes\nMDC-XXX-NNN format\nTroubleshooting tips"];
+                 label="--error-codes\n\nList all error codes\nMERIDIAN-XXX-NNN format\nTroubleshooting tips"];
 
     HELP [fillcolor="#fbd38d",
           label="--help\n\nShow all commands\nUsage examples\nVersion info"];
@@ -180,35 +180,35 @@ digraph CLICommands {
   }
 
   // Connections
-  MDC -> WIZARD [color="#805ad5"];
-  MDC -> AUTO_CONFIG [color="#805ad5"];
-  MDC -> GEN_CONFIG [color="#805ad5"];
-  MDC -> DETECT [color="#805ad5"];
+  Meridian -> WIZARD [color="#805ad5"];
+  Meridian -> AUTO_CONFIG [color="#805ad5"];
+  Meridian -> GEN_CONFIG [color="#805ad5"];
+  Meridian -> DETECT [color="#805ad5"];
 
-  MDC -> VAL_CREDS [color="#2b6cb0"];
-  MDC -> TEST_CONN [color="#2b6cb0"];
-  MDC -> QUICK_CHECK [color="#2b6cb0"];
-  MDC -> VAL_CONFIG [color="#2b6cb0"];
-  MDC -> DRY_RUN [color="#2b6cb0"];
-  MDC -> SELFTEST [color="#2b6cb0"];
+  Meridian -> VAL_CREDS [color="#2b6cb0"];
+  Meridian -> TEST_CONN [color="#2b6cb0"];
+  Meridian -> QUICK_CHECK [color="#2b6cb0"];
+  Meridian -> VAL_CONFIG [color="#2b6cb0"];
+  Meridian -> DRY_RUN [color="#2b6cb0"];
+  Meridian -> SELFTEST [color="#2b6cb0"];
 
-  MDC -> UI_MODE [color="#38a169"];
-  MDC -> BACKFILL [color="#38a169"];
+  Meridian -> UI_MODE [color="#38a169"];
+  Meridian -> BACKFILL [color="#38a169"];
   UI_MODE -> HTTP_PORT [style=dashed];
   BACKFILL -> BACKFILL_OPTS [style=dashed];
 
-  MDC -> SHOW_CONFIG [color="#ed8936"];
-  MDC -> ERROR_CODES [color="#ed8936"];
-  MDC -> HELP [color="#ed8936"];
-  MDC -> VERSION [color="#ed8936"];
+  Meridian -> SHOW_CONFIG [color="#ed8936"];
+  Meridian -> ERROR_CODES [color="#ed8936"];
+  Meridian -> HELP [color="#ed8936"];
+  Meridian -> VERSION [color="#ed8936"];
 
-  MDC -> SYM_LIST [color="#2c7a7b"];
-  MDC -> SYM_ADD [color="#2c7a7b"];
+  Meridian -> SYM_LIST [color="#2c7a7b"];
+  Meridian -> SYM_ADD [color="#2c7a7b"];
   SYM_ADD -> SYM_REMOVE [style=dashed];
   SYM_ADD -> SYM_STATUS [style=dashed];
 
-  MDC -> PKG_CREATE [color="#805ad5"];
-  MDC -> PKG_IMPORT [color="#805ad5"];
+  Meridian -> PKG_CREATE [color="#805ad5"];
+  Meridian -> PKG_IMPORT [color="#805ad5"];
   PKG_CREATE -> PKG_LIST [style=dashed];
   PKG_CREATE -> PKG_VALIDATE [style=dashed];
 

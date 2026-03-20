@@ -2,7 +2,7 @@
 
 **Version:** 3.1 | **Last Updated:** 2026-03-14
 
-This document describes the provider management architecture used by Market Data Collector. It covers provider contracts, discovery, lifecycle management, failover, health monitoring, degradation scoring, and data quality operations.
+This document describes the provider management architecture used by Meridian. It covers provider contracts, discovery, lifecycle management, failover, health monitoring, degradation scoring, and data quality operations.
 
 See also:
 

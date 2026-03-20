@@ -171,7 +171,7 @@ public static class TooltipContent
             new OnboardingTip
             {
                 Id = "dashboard_welcome",
-                Title = "Welcome to Market Data Collector",
+                Title = "Welcome to Meridian",
                 Content = "This dashboard shows your real-time data collection status. Start by configuring a data provider.",
                 TargetElement = "CollectorStatusBadge",
                 Order = 1

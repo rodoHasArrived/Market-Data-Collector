@@ -8,7 +8,7 @@
 > - [docs/development/github-actions-summary.md](../development/github-actions-summary.md) - Quick reference
 > - [docs/ai/claude/CLAUDE.actions.md](../ai/claude/CLAUDE.actions.md) - AI assistant CI/CD guide
 
-This document summarizes the initial GitHub workflow improvements added to the Market Data Collector repository (2026-01-08). Many filenames below have since been renamed or consolidated.
+This document summarizes the initial GitHub workflow improvements added to the Meridian repository (2026-01-08). Many filenames below have since been renamed or consolidated.
 
 ## Overview
 

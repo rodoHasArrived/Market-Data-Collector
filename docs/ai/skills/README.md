@@ -69,9 +69,9 @@ static package content.
 
 ## Available Skill Packages
 
-### `mdc-blueprint`
+### `meridian-blueprint`
 
-**Location:** [`.claude/skills/mdc-blueprint/`](../../../.claude/skills/mdc-blueprint/)
+**Location:** [`.claude/skills/meridian-blueprint/`](../../../.claude/skills/meridian-blueprint/)
 **Purpose:** Turn one prioritized idea into a code-ready technical blueprint for Meridian.
 **When it triggers:** design-doc requests, architecture spikes, interface planning, or roadmap-to-implementation handoffs.
 **On-demand resources:**
@@ -80,9 +80,9 @@ static package content.
 - `references/pipeline-position.md` — pipeline-stage and handoff guidance
 - `../_shared/project-context.md` — canonical project statistics, paths, and ADR anchors
 
-### `mdc-code-review`
+### `meridian-code-review`
 
-**Location:** [`.claude/skills/mdc-code-review/`](../../../.claude/skills/mdc-code-review/)
+**Location:** [`.claude/skills/meridian-code-review/`](../../../.claude/skills/meridian-code-review/)
 **Purpose:** Apply Meridian's 7-lens architecture and code quality review framework.
 **When it triggers:** code review, refactoring, architecture audit, MVVM cleanup, provider compliance, or performance review tasks.
 **On-demand resources and scripts:**
@@ -93,9 +93,9 @@ static package content.
 - `scripts/run_eval.py`, `scripts/aggregate_benchmark.py`, `scripts/package_skill.py` — deterministic review helpers
 - Dynamic resources via the provider: `project-stats`, `git-context`
 
-### `mdc-brainstorm`
+### `meridian-brainstorm`
 
-**Location:** [`.claude/skills/mdc-brainstorm/`](../../../.claude/skills/mdc-brainstorm/)
+**Location:** [`.claude/skills/meridian-brainstorm/`](../../../.claude/skills/meridian-brainstorm/)
 **Purpose:** Generate high-value, implementable ideas that extend Meridian coherently.
 **When it triggers:** feature ideation, user-pain brainstorming, architecture brainstorms, or technical-debt ideation.
 **On-demand resources:**
@@ -104,25 +104,25 @@ static package content.
 - `references/competitive-landscape.md` — external framing and differentiation context
 - `brainstorm-history.jsonl` — optional local continuity ledger when the host permits writes
 
-### `mdc-provider-builder`
+### `meridian-provider-builder`
 
-**Location:** [`.claude/skills/mdc-provider-builder/`](../../../.claude/skills/mdc-provider-builder/)
+**Location:** [`.claude/skills/meridian-provider-builder/`](../../../.claude/skills/meridian-provider-builder/)
 **Purpose:** Scaffold Meridian data providers with the right ADR, DI, and resilience patterns.
 **When it triggers:** new exchange/provider work, historical providers, streaming adapters, or symbol search implementations.
 **On-demand resources:**
 
 - `references/provider-patterns.md` — provider skeletons, options, DI wiring, and test scaffolds
-- Companion skills referenced as needed: `mdc-code-review`, `mdc-test-writer`
+- Companion skills referenced as needed: `meridian-code-review`, `meridian-test-writer`
 
-### `mdc-test-writer`
+### `meridian-test-writer`
 
-**Location:** [`.claude/skills/mdc-test-writer/`](../../../.claude/skills/mdc-test-writer/)
+**Location:** [`.claude/skills/meridian-test-writer/`](../../../.claude/skills/meridian-test-writer/)
 **Purpose:** Produce idiomatic Meridian xUnit tests with the right async, mocking, and cleanup patterns.
 **When it triggers:** new tests, test-gap remediation, or code-review follow-up for missing coverage.
 **On-demand resources:**
 
 - `references/test-patterns.md` — component-specific test scaffolds and decision trees
-- Companion skill referenced as needed: `mdc-code-review`
+- Companion skill referenced as needed: `meridian-code-review`
 
 ### `ai-docs-maintain` (code-defined)
 

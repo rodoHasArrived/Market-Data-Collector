@@ -182,7 +182,7 @@ public static class ErrorMessages
     public static (string Title, string Message, string Remedy) FromException(Exception ex, string operation) =>
         ("Operation Failed",
          $"Failed to {operation}: {ex.Message}",
-         "Check the logs for more details. If the problem persists, please report it at github.com/rodoHasArrived/Market-Data-Collector/issues");
+         "Check the logs for more details. If the problem persists, please report it at github.com/rodoHasArrived/Meridian/issues");
 
     #endregion
 

@@ -1,7 +1,7 @@
 <Project>
   <!--
     ============================================================================
-    Market Data Collector - Central Package Version Management
+    Meridian - Central Package Version Management
     ============================================================================
     All package versions are defined here to ensure consistency across the solution.
     Individual projects reference packages WITHOUT version numbers.

@@ -40,9 +40,9 @@ public static class UiEndpoints
         {
             c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
             {
-                Title = "Market Data Collector API",
+                Title = "Meridian API",
                 Version = "v1",
-                Description = "REST API for the Market Data Collector system"
+                Description = "REST API for the Meridian system"
             });
         });
 
@@ -59,7 +59,7 @@ public static class UiEndpoints
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Market Data Collector API v1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Meridian API v1"));
         }
 
         app.MapAllUiEndpoints();

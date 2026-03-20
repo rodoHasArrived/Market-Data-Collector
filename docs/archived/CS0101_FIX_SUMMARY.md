@@ -1,8 +1,8 @@
 # CS0101 Duplicate Type Definitions Fix Summary
 
-**GitHub Actions Run:** [22014857277](https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22014857277/job/63614965400)  
-**Workflow:** Desktop Builds  
-**Date:** 2026-02-14  
+**GitHub Actions Run:** [22014857277](https://github.com/rodoHasArrived/Meridian/actions/runs/22014857277/job/63614965400)
+**Workflow:** Desktop Builds
+**Date:** 2026-02-14
 **Status:** ✅ RESOLVED
 
 ## Problem
@@ -160,7 +160,7 @@ All 17 previously duplicated types now have exactly 1 definition:
    - Remove the original definitions from service files
    - Use semantic renaming for types with different purposes
    - Document the canonical location for each type
-   
+
 2. **Build Verification:** Always build after refactoring, even for "simple" moves
 
 3. **Type Disambiguation:** When two types have the same name but different semantics, rename one with a more descriptive name rather than forcing them into different namespaces

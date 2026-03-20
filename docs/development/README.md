@@ -8,7 +8,7 @@
 
 ## Purpose
 
-This directory contains guides for developers contributing to or extending the Market Data Collector. It covers project conventions, tooling, CI/CD, testing, and how to add new capabilities.
+This directory contains guides for developers contributing to or extending the Meridian. It covers project conventions, tooling, CI/CD, testing, and how to add new capabilities.
 
 ---
 

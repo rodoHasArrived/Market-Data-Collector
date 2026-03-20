@@ -9,7 +9,7 @@
 
 This document translates the seven improvement candidates identified in the assembly-performance
 evaluation into a **viability-assessed, phase-ordered implementation roadmap**. Each candidate is
-scored against the MDC codebase's actual risk profile, and all code locations are pinned to the
+scored against the Meridian codebase's actual risk profile, and all code locations are pinned to the
 production files they touch.
 
 ---
@@ -150,7 +150,7 @@ copy per call with an in-place partition using integer symbol IDs. This is purel
 **Viability:** ⚠️ Profile-First — High Risk
 
 The evaluation requires profiling to confirm `AnomalyDetector` is CPU-bound before investing in
-`Vector<double>` horizontal-add patterns. In most MDC deployments the monitoring thread is
+`Vector<double>` horizontal-add patterns. In most Meridian deployments the monitoring thread is
 background-priority and the anomaly window is per-symbol, making this path unlikely to be hot
 enough to justify SIMD complexity. If profiling shows otherwise, the `Vector<double>` approach
 in the evaluation is a valid next step.

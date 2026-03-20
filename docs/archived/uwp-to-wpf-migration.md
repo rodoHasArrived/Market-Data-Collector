@@ -3,7 +3,7 @@
 > **Migration Complete**: The UWP project has been fully removed from the codebase. WPF is the sole desktop client.
 > This document is retained as a historical reference for the migration rationale and technical decisions.
 
-This document outlines the migration from UWP/WinUI 3 to WPF (.NET 9) for the Market Data Collector desktop application.
+This document outlines the migration from UWP/WinUI 3 to WPF (.NET 9) for the Meridian desktop application.
 
 ## Executive Summary
 

@@ -12,7 +12,7 @@ public static partial class HtmlTemplateGenerator
 <head>
   <meta charset=""utf-8"" />
   <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
-  <title>MDC Terminal</title>
+  <title>Meridian Terminal</title>
   <style>
 {GetStyles()}
   </style>
@@ -22,7 +22,7 @@ public static partial class HtmlTemplateGenerator
   <div class=""top-bar"">
     <div class=""logo"">
       <div class=""logo-icon"">MD</div>
-      <span class=""logo-text"">MDC Terminal</span>
+      <span class=""logo-text"">Meridian Terminal</span>
       <span class=""logo-version"">v2.0</span>
     </div>
 

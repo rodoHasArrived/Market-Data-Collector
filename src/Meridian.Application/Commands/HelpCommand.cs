@@ -348,7 +348,7 @@ DETECTION:
     {
         Console.WriteLine(@"
 ╔══════════════════════════════════════════════════════════════════════╗
-║                    Market Data Collector v1.0                        ║
+║                    Meridian v1.0                        ║
 ║          Real-time and historical market data collection             ║
 ╚══════════════════════════════════════════════════════════════════════╝
 

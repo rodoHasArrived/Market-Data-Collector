@@ -32,7 +32,7 @@ This document provides a checklist for testing the newly created GitHub Actions 
 ### 3. Docker Build and Push
 - [ ] Verify workflow runs on PR (build only)
 - [ ] After merge, check GitHub Container Registry for new image
-- [ ] Pull the image: `docker pull ghcr.io/rodohasarrived/market-data-collector:latest`
+- [ ] Pull the image: `docker pull ghcr.io/rodohasarrived/meridian:latest`
 - [ ] Run the container and verify it works
 - [ ] Check image tags are created correctly
 

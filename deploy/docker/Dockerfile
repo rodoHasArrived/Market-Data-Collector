@@ -1,10 +1,10 @@
 # =============================================================================
-# Market Data Collector - Production Docker Image
+# Meridian - Production Docker Image
 # =============================================================================
 # Multi-stage build for optimized production deployment
 #
-# Build:   docker build -t marketdatacollector:latest .
-# Run:     docker run -p 8080:8080 -v ./data:/app/data marketdatacollector:latest
+# Build:   docker build -t meridian:latest .
+# Run:     docker run -p 8080:8080 -v ./data:/app/data meridian:latest
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -63,8 +63,8 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Create non-root user for security
-RUN addgroup -g 1000 mdc && \
-    adduser -u 1000 -G mdc -s /bin/sh -D mdc
+RUN addgroup -g 1000 meridian && \
+    adduser -u 1000 -G meridian -s /bin/sh -D meridian
 
 WORKDIR /app
 
@@ -76,10 +76,10 @@ COPY config/appsettings.sample.json ./appsettings.sample.json
 
 # Create data directory with proper permissions
 RUN mkdir -p /app/data /app/logs && \
-    chown -R mdc:mdc /app
+    chown -R meridian:meridian /app
 
 # Switch to non-root user
-USER mdc
+USER meridian
 
 # Environment variables
 ENV ASPNETCORE_URLS=http://+:8080
@@ -103,23 +103,23 @@ CMD ["--ui", "--http-port", "8080", "--watch-config"]
 # =============================================================================
 #
 # Build the image:
-#   docker build -t marketdatacollector:latest .
+#   docker build -t meridian:latest .
 #
 # Run web dashboard:
 #   docker run -d -p 8080:8080 \
 #     -v $(pwd)/data:/app/data \
 #     -v $(pwd)/appsettings.json:/app/appsettings.json:ro \
-#     --name mdc marketdatacollector:latest
+#     --name meridian meridian:latest
 #
 # Run with custom port:
 #   docker run -d -p 9000:8080 \
 #     -e ASPNETCORE_URLS=http://+:8080 \
-#     marketdatacollector:latest
+#     meridian:latest
 #
 # Run backfill:
 #   docker run --rm \
 #     -v $(pwd)/data:/app/data \
-#     marketdatacollector:latest \
+#     meridian:latest \
 #     --backfill --backfill-symbols AAPL,MSFT --backfill-from 2024-01-01
 #
 # Run with Alpaca credentials:
@@ -127,9 +127,9 @@ CMD ["--ui", "--http-port", "8080", "--watch-config"]
 #     -e ALPACA__KEYID=your-key-id \
 #     -e ALPACA__SECRETKEY=your-secret-key \
 #     -v $(pwd)/data:/app/data \
-#     marketdatacollector:latest
+#     meridian:latest
 #
 # View logs:
-#   docker logs -f mdc
+#   docker logs -f meridian
 #
 # =============================================================================

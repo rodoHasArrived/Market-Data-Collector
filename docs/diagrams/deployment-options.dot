@@ -1,5 +1,5 @@
 // Deployment Options Diagram
-// Market Data Collector v1.6.1
+// Meridian v1.6.1
 // Last Updated: 2026-02-21
 //
 // This diagram shows the different deployment options available,
@@ -16,7 +16,7 @@ digraph DeploymentOptions {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Deployment Options\nFrom Development to Production | v1.6.1";
+  label="Meridian - Deployment Options\nFrom Development to Production | v1.6.1";
 
   // Option 1: Standalone Console
   subgraph cluster_standalone {
@@ -64,7 +64,7 @@ digraph DeploymentOptions {
       color="#1e40af";
 
       DC_COLLECTOR [shape=box, fillcolor="#bfdbfe",
-                    label="mdc-collector\n[Container]\n\nCore application\nPort: 8080"];
+                    label="meridian-collector\n[Container]\n\nCore application\nPort: 8080"];
       DC_RABBIT [shape=box, fillcolor="#bfdbfe",
                  label="rabbitmq\n[Container]\n\nMessage broker\nPort: 5672, 15672"];
       DC_PROM [shape=box, fillcolor="#bfdbfe",
@@ -80,7 +80,7 @@ digraph DeploymentOptions {
                 label="Best For:\n\n• Team development\n• CI/CD testing\n• Staging environment\n• Reproducible builds"];
 
     DOCKER_CMD [shape=note, fillcolor="#dbeafe",
-                label="Run Commands:\n\ndocker-compose up -d\ndocker-compose logs -f mdc-collector\ndocker-compose down"];
+                label="Run Commands:\n\ndocker-compose up -d\ndocker-compose logs -f meridian-collector\ndocker-compose down"];
   }
 
   // Option 3: Docker Microservices
@@ -134,7 +134,7 @@ digraph DeploymentOptions {
       color="#991b1b";
 
       K8S_DEPLOY [shape=box, fillcolor="#fecaca",
-                  label="Deployments\n\n• mdc-gateway (3 replicas)\n• mdc-trade (5 replicas)\n• mdc-quote (5 replicas)\n• mdc-orderbook (3 replicas)"];
+                  label="Deployments\n\n• meridian-gateway (3 replicas)\n• meridian-trade (5 replicas)\n• meridian-quote (5 replicas)\n• meridian-orderbook (3 replicas)"];
       K8S_SVC [shape=box, fillcolor="#fecaca",
                label="Services\n\n• ClusterIP (internal)\n• LoadBalancer (gateway)\n• NodePort (debug)"];
       K8S_CONFIG [shape=box, fillcolor="#fecaca",
@@ -150,7 +150,7 @@ digraph DeploymentOptions {
              label="Best For:\n\n• Enterprise scale\n• Multi-region\n• High availability\n• Auto-healing"];
 
     K8S_CMD [shape=note, fillcolor="#fecaca",
-             label="Deploy Commands:\n\nkubectl apply -f deploy/k8s/\nhelm install mdc ./charts/mdc\nkubectl scale deploy mdc-trade --replicas=10"];
+             label="Deploy Commands:\n\nkubectl apply -f deploy/k8s/\nhelm install meridian ./charts/meridian\nkubectl scale deploy meridian-trade --replicas=10"];
   }
 
   // Option 5: Cloud Managed
@@ -215,7 +215,7 @@ digraph DeploymentOptions {
       color="#4a5568";
 
       SVC_SYSTEMD [shape=box, fillcolor="#edf2f7",
-                   label="systemd (Linux)\n\nmdc.service\nsystemctl start mdc"];
+                   label="systemd (Linux)\n\nmdc.service\nsystemctl start meridian"];
       SVC_WIN [shape=box, fillcolor="#edf2f7",
                label="Windows Service\n\nsc.exe / NSSM\nAuto-restart"];
     }
@@ -224,7 +224,7 @@ digraph DeploymentOptions {
                  label="Best For:\n\n• Bare metal servers\n• VMs without containers\n• Legacy infrastructure\n• Simple operations"];
 
     SERVICE_FILES [shape=note, fillcolor="#edf2f7",
-                   label="Files:\n\ndeploy/systemd/mdc.service\nscripts/install/install-service.sh"];
+                   label="Files:\n\ndeploy/systemd/meridian.service\nscripts/install/install-service.sh"];
   }
 
   // Pre-Deployment Setup (NEW)

@@ -91,7 +91,7 @@
 
 ```
 ╔══════════════════════════════════════╗
-║  Market Data Collector v1.6.2       ║
+║  Meridian v1.6.2       ║
 ║  Mode: Web | Port: 8080            ║
 ╠══════════════════════════════════════╣
 ║  Providers:                         ║
@@ -543,7 +543,7 @@ The data is already available from `/api/status` and `/api/providers/status`. Th
 
 **Status (2026-03-15):** `Program.cs` calls `FriendlyErrorFormatter.Format()` and `FriendlyErrorFormatter.DisplayError()` in the top-level catch handler. `EndpointHelpers.cs` uses the formatter for API error responses.
 
-**Problem:** `FriendlyErrorFormatter` exists with 30+ classified error codes (MDC-CFG-001, MDC-AUTH-002, etc.) and includes suggested actions and doc links. However, it's not integrated into all error paths -- many errors still surface as raw exceptions or generic HTTP status codes. Users report spending 30+ minutes debugging simple credential issues.
+**Problem:** `FriendlyErrorFormatter` exists with 30+ classified error codes (Meridian-CFG-001, Meridian-AUTH-002, etc.) and includes suggested actions and doc links. However, it's not integrated into all error paths -- many errors still surface as raw exceptions or generic HTTP status codes. Users report spending 30+ minutes debugging simple credential issues.
 
 **Improvement:** Integrate `FriendlyErrorFormatter` into:
 1. CLI startup errors (wrap the top-level try/catch in `Program.cs`)
@@ -554,7 +554,7 @@ Example before: `"System.Net.Http.HttpRequestException: Response status code doe
 
 Example after:
 ```
-MDC-AUTH-002: Authentication failed for Alpaca provider
+Meridian-AUTH-002: Authentication failed for Alpaca provider
   → Check that ALPACA__KEYID and ALPACA__SECRETKEY environment variables are set
   → Verify your API key is active at https://app.alpaca.markets/
   → Run: dotnet run -- --validate-credentials

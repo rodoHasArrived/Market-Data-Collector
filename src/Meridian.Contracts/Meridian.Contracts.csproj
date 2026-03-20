@@ -6,7 +6,7 @@
     <AssemblyName>Meridian.Contracts</AssemblyName>
     <RootNamespace>Meridian.Contracts</RootNamespace>
     <Version>1.0.0</Version>
-    <Description>Shared contracts, DTOs, domain models, and configuration for Market Data Collector. This library provides the canonical data structures used across Core, WPF, and web applications.</Description>
+    <Description>Shared contracts, DTOs, domain models, and configuration for Meridian. This library provides the canonical data structures used across Core, WPF, and web applications.</Description>
     <Authors>Meridian Team</Authors>
     <PackageTags>market-data;contracts;dto;domain-models</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

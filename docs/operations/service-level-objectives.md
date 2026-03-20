@@ -1,6 +1,6 @@
 # Service Level Objectives (SLOs)
 
-This document defines the Service Level Objectives for each subsystem of the Market Data Collector. SLOs provide measurable targets for reliability, performance, and data quality, enabling consistent alert calibration and incident severity mapping.
+This document defines the Service Level Objectives for each subsystem of the Meridian. SLOs provide measurable targets for reliability, performance, and data quality, enabling consistent alert calibration and incident severity mapping.
 
 ---
 
@@ -86,7 +86,7 @@ This document defines the Service Level Objectives for each subsystem of the Mar
 
 | Attribute | Value |
 |-----------|-------|
-| **Metric** | `up{job="marketdatacollector"}` |
+| **Metric** | `up{job="meridian"}` |
 | **Target** | 99.9% uptime during market hours (9:30 AM - 4:00 PM ET, Mon-Fri) |
 | **Critical Threshold** | Any unplanned downtime > 1 minute during market hours |
 | **Error Budget** | 26 minutes per month (~99.9%) |
@@ -224,7 +224,7 @@ mdc_pipeline_queue_utilization
 
 # Health and availability
 mdc_health_status
-up{job="marketdatacollector"}
+up{job="meridian"}
 
 # Data quality
 mdc_data_quality_score

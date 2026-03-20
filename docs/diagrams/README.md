@@ -4,7 +4,7 @@
 **Owner:** Core Team  
 **Reviewed:** 2026-03-15
 
-This folder contains architecture diagrams for the Market Data Collector system, updated to reflect the current monolithic runtime, UI options, and provider list. It is the single home for all visual assets:
+This folder contains architecture diagrams for the Meridian system, updated to reflect the current monolithic runtime, UI options, and provider list. It is the single home for all visual assets:
 
 - **Graphviz DOT diagrams** — C4 context/container/component, data flow, provider and storage architecture (files in this directory)
 - **UML diagrams** — Sequence, state, activity, timing, and communication diagrams in [`uml/`](uml/README.md)
@@ -36,7 +36,7 @@ This folder contains architecture diagrams for the Market Data Collector system,
 
 ### C4 Level 1: System Context
 
-Shows the Market Data Collector in context with:
+Shows the Meridian in context with:
 
 - **Users**: Operators, Quants/Analysts, and DevOps
 - **Streaming Providers**: IB, Alpaca, NYSE Direct, Polygon, StockSharp
@@ -155,7 +155,7 @@ Shows the user journey from first-run to operational:
    - `--test-connectivity` - Network diagnostics
    - `--quick-check` - Fast health check
    - `--dry-run` - Full test without data collection
-5. **Error Handling** - FriendlyErrorFormatter with 24 error codes (MDC-XXX-NNN)
+5. **Error Handling** - FriendlyErrorFormatter with 24 error codes (Meridian-XXX-NNN)
 
 ### CLI Commands Reference
 

@@ -191,7 +191,7 @@ public sealed class AlertRunbookRegistryTests
     {
         var registry = AlertRunbookRegistry.Instance;
 
-        var entry = registry.GetByAlertName("MdcDown");
+        var entry = registry.GetByAlertName("MeridianDown");
 
         entry.Should().NotBeNull();
         entry!.Severity.Should().Be("critical");
@@ -222,7 +222,7 @@ public sealed class AlertRunbookRegistryTests
     {
         var registry = AlertRunbookRegistry.Instance;
 
-        var url = registry.GetRunbookUrl("MdcStorageWriteErrors");
+        var url = registry.GetRunbookUrl("MeridianStorageWriteErrors");
 
         url.Should().NotBeNull();
         url.Should().Contain("storage-write-errors");
@@ -277,7 +277,7 @@ public sealed class AlertRunbookRegistryTests
         var alert = MonitoringAlert.Critical(
             "test",
             AlertCategory.Connection,
-            "MdcDown",
+            "MeridianDown",
             "Service is unreachable");
 
         var enriched = registry.EnrichWithRunbook(alert);

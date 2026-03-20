@@ -1,7 +1,7 @@
 @startuml State Diagram - Order Book Stream States
 !theme plain
 
-title Market Data Collector - Order Book Stream State Machine
+title Meridian - Order Book Stream State Machine
 
 state "Order Book Per-Symbol State" as OrderBook {
 

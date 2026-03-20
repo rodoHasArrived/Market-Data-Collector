@@ -60,7 +60,7 @@ done
 mkdir -p "$RESULTS_DIR"
 
 echo "============================================"
-echo " Market Data Collector - Bottleneck Benchmarks"
+echo " Meridian - Bottleneck Benchmarks"
 echo " $(date)"
 echo "============================================"
 echo ""

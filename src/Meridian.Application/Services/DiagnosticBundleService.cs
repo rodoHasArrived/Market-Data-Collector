@@ -333,7 +333,7 @@ public sealed class DiagnosticBundleService
             .Select(e => $"{e.Key}={SanitizeEnvValue(e.Key, e.Value)}");
 
         var content = $"""
-            === ENVIRONMENT VARIABLES (MDC/DOTNET related) ===
+            === ENVIRONMENT VARIABLES (Meridian/DOTNET related) ===
             {string.Join(Environment.NewLine, envVars)}
             """;
 

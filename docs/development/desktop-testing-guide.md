@@ -1,6 +1,6 @@
 # Desktop Development Testing Guide
 
-This guide helps contributors set up and test the WPF desktop application for Market Data Collector.
+This guide helps contributors set up and test the WPF desktop application for Meridian.
 
 ## Quick Commands Reference
 

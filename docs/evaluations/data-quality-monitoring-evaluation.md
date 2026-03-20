@@ -1,6 +1,6 @@
 # Data Quality Monitoring Evaluation
 
-## Market Data Collector — Quality Assurance Assessment
+## Meridian — Quality Assurance Assessment
 
 **Date:** 2026-02-03
 **Status:** Evaluation Complete
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document evaluates the data quality monitoring architecture of the Market Data Collector system. The assessment covers completeness tracking, gap detection, anomaly detection, latency monitoring, cross-provider validation, and SLA enforcement.
+This document evaluates the data quality monitoring architecture of the Meridian system. The assessment covers completeness tracking, gap detection, anomaly detection, latency monitoring, cross-provider validation, and SLA enforcement.
 
 **Key Finding:** The data quality monitoring implementation is comprehensive and well-designed, covering the critical dimensions of market data quality. The 12+ specialized services provide excellent coverage. The primary improvement opportunities are in automated remediation and machine learning-based anomaly detection.
 
@@ -517,7 +517,7 @@ For each time window (e.g., 1 minute):
 
 ### Industry Standards Comparison
 
-| Feature | Market Data Collector | Bloomberg | Refinitiv | Custom Build |
+| Feature | Meridian | Bloomberg | Refinitiv | Custom Build |
 |---------|----------------------|-----------|-----------|--------------|
 | Completeness tracking | ★★★★☆ | ★★★★★ | ★★★★★ | Varies |
 | Gap detection | ★★★★☆ | ★★★★★ | ★★★★☆ | Varies |

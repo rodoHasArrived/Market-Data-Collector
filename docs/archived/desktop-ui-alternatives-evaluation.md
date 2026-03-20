@@ -1,6 +1,6 @@
 # Desktop UI Alternatives Evaluation
 
-## Market Data Collector — UX Architecture Assessment
+## Meridian — UX Architecture Assessment
 
 **Date:** 2026-01-31
 **Status:** Evaluation Complete
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This document evaluates alternative approaches to the current native Windows desktop application (WinUI 3 / UWP-style XAML) used by the Market Data Collector system. The evaluation prioritizes the needs of finance professionals—market analysts, traders, portfolio/risk professionals—who value **correctness, predictability, and efficiency** over visual experimentation.
+This document evaluates alternative approaches to the current native Windows desktop application (WinUI 3 / UWP-style XAML) used by the Meridian system. The evaluation prioritizes the needs of finance professionals—market analysts, traders, portfolio/risk professionals—who value **correctness, predictability, and efficiency** over visual experimentation.
 
 **Key Finding:** The current WinUI 3 implementation is fundamentally sound. Investment should focus on strengthening the real-time data pipeline (replacing HTTP polling with WebSocket streaming) rather than framework migration.
 
@@ -508,7 +508,7 @@ MAUI Blazor Hybrid is compelling for organizations wanting one codebase across d
 - Effort: ~16-24+ weeks
 
 **Bottom Line:**
-Qt offers unmatched native performance and cross-platform capability but at significant cost in development complexity and licensing. Justified only for organizations with extreme performance requirements or existing Qt investment. Overkill for most market data collector scenarios.
+Qt offers unmatched native performance and cross-platform capability but at significant cost in development complexity and licensing. Justified only for organizations with extreme performance requirements or existing Qt investment. Overkill for most meridian scenarios.
 
 ---
 
@@ -740,7 +740,7 @@ Hybrid approach is pragmatic for gradual modernization or mixed requirements. Ke
 
 ## Final Recommendation
 
-For the Market Data Collector application serving finance professionals:
+For the Meridian application serving finance professionals:
 
 ### Primary Path: Retain and Strengthen WinUI 3
 

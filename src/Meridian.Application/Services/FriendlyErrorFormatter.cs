@@ -15,25 +15,25 @@ public static class FriendlyErrorFormatter
     {
         // Configuration errors
         ["CONFIG_NOT_FOUND"] = new ErrorInfo(
-            Code: "MDC-CFG-001",
+            Code: "Meridian-CFG-001",
             Title: "Configuration file not found",
             Suggestion: "Run 'Meridian --wizard' to create a configuration file, or copy appsettings.sample.json to appsettings.json",
             DocsLink: "docs/guides/getting-started.md"
         ),
         ["CONFIG_INVALID_JSON"] = new ErrorInfo(
-            Code: "MDC-CFG-002",
+            Code: "Meridian-CFG-002",
             Title: "Invalid JSON in configuration file",
             Suggestion: "Check for syntax errors such as trailing commas, missing quotes, or unescaped characters. Use a JSON validator.",
             DocsLink: "docs/guides/configuration.md"
         ),
         ["CONFIG_VALIDATION_FAILED"] = new ErrorInfo(
-            Code: "MDC-CFG-003",
+            Code: "Meridian-CFG-003",
             Title: "Configuration validation failed",
             Suggestion: "Run 'Meridian --validate-config' for detailed validation errors",
             DocsLink: "docs/guides/configuration.md"
         ),
         ["CONFIG_MISSING_CREDENTIALS"] = new ErrorInfo(
-            Code: "MDC-CFG-004",
+            Code: "Meridian-CFG-004",
             Title: "Missing API credentials",
             Suggestion: "Set the required environment variables (e.g., ALPACA_KEY_ID, ALPACA_SECRET_KEY) or configure them in appsettings.json",
             DocsLink: "docs/guides/credentials.md"
@@ -41,19 +41,19 @@ public static class FriendlyErrorFormatter
 
         // Connection errors
         ["CONN_TIMEOUT"] = new ErrorInfo(
-            Code: "MDC-CON-001",
+            Code: "Meridian-CON-001",
             Title: "Connection timeout",
             Suggestion: "Check your internet connection and firewall settings. The provider may be experiencing issues.",
             DocsLink: "docs/troubleshooting.md"
         ),
         ["CONN_REFUSED"] = new ErrorInfo(
-            Code: "MDC-CON-002",
+            Code: "Meridian-CON-002",
             Title: "Connection refused",
             Suggestion: "Ensure the service is running and accepting connections on the specified host/port",
             DocsLink: "docs/troubleshooting.md"
         ),
         ["CONN_SSL_ERROR"] = new ErrorInfo(
-            Code: "MDC-CON-003",
+            Code: "Meridian-CON-003",
             Title: "SSL/TLS error",
             Suggestion: "Check your system's SSL certificates are up to date. Try updating your .NET runtime.",
             DocsLink: "docs/troubleshooting.md"
@@ -61,19 +61,19 @@ public static class FriendlyErrorFormatter
 
         // Authentication errors
         ["AUTH_INVALID_KEY"] = new ErrorInfo(
-            Code: "MDC-AUTH-001",
+            Code: "Meridian-AUTH-001",
             Title: "Invalid API key",
             Suggestion: "Verify your API key is correct. Check for extra whitespace or copy/paste errors.",
             DocsLink: "docs/guides/credentials.md"
         ),
         ["AUTH_EXPIRED"] = new ErrorInfo(
-            Code: "MDC-AUTH-002",
+            Code: "Meridian-AUTH-002",
             Title: "API key expired",
             Suggestion: "Generate a new API key from the provider's dashboard",
             DocsLink: "docs/guides/credentials.md"
         ),
         ["AUTH_INSUFFICIENT_PERMISSIONS"] = new ErrorInfo(
-            Code: "MDC-AUTH-003",
+            Code: "Meridian-AUTH-003",
             Title: "Insufficient permissions",
             Suggestion: "Your API key may not have the required permissions. Check your account settings with the provider.",
             DocsLink: null
@@ -81,13 +81,13 @@ public static class FriendlyErrorFormatter
 
         // Rate limit errors
         ["RATE_LIMIT_EXCEEDED"] = new ErrorInfo(
-            Code: "MDC-RATE-001",
+            Code: "Meridian-RATE-001",
             Title: "Rate limit exceeded",
             Suggestion: "Wait before retrying. Consider reducing request frequency or upgrading your API plan.",
             DocsLink: "docs/providers/rate-limits.md"
         ),
         ["RATE_LIMIT_QUOTA"] = new ErrorInfo(
-            Code: "MDC-RATE-002",
+            Code: "Meridian-RATE-002",
             Title: "Daily/monthly quota exceeded",
             Suggestion: "Your usage quota has been reached. Wait for the reset period or upgrade your plan.",
             DocsLink: null
@@ -95,19 +95,19 @@ public static class FriendlyErrorFormatter
 
         // Data errors
         ["DATA_SYMBOL_NOT_FOUND"] = new ErrorInfo(
-            Code: "MDC-DATA-001",
+            Code: "Meridian-DATA-001",
             Title: "Symbol not found",
             Suggestion: "Verify the symbol is correct. Check if it's supported by the provider.",
             DocsLink: "docs/guides/symbols.md"
         ),
         ["DATA_NO_DATA_AVAILABLE"] = new ErrorInfo(
-            Code: "MDC-DATA-002",
+            Code: "Meridian-DATA-002",
             Title: "No data available",
             Suggestion: "The requested data may not exist for this time period or symbol. Try a different date range.",
             DocsLink: null
         ),
         ["DATA_PARSE_ERROR"] = new ErrorInfo(
-            Code: "MDC-DATA-003",
+            Code: "Meridian-DATA-003",
             Title: "Data parsing error",
             Suggestion: "The provider returned unexpected data format. This may be a temporary issue - try again.",
             DocsLink: null
@@ -115,19 +115,19 @@ public static class FriendlyErrorFormatter
 
         // Storage errors
         ["STORAGE_PERMISSION_DENIED"] = new ErrorInfo(
-            Code: "MDC-STOR-001",
+            Code: "Meridian-STOR-001",
             Title: "Storage permission denied",
             Suggestion: "Check that the application has write permission to the data directory",
             DocsLink: "docs/troubleshooting.md"
         ),
         ["STORAGE_DISK_FULL"] = new ErrorInfo(
-            Code: "MDC-STOR-002",
+            Code: "Meridian-STOR-002",
             Title: "Disk space exhausted",
             Suggestion: "Free up disk space, enable compression, or configure a storage limit",
             DocsLink: "docs/guides/storage.md"
         ),
         ["STORAGE_FILE_LOCKED"] = new ErrorInfo(
-            Code: "MDC-STOR-003",
+            Code: "Meridian-STOR-003",
             Title: "File is locked by another process",
             Suggestion: "Close any other applications that may be accessing the data files",
             DocsLink: null
@@ -135,13 +135,13 @@ public static class FriendlyErrorFormatter
 
         // Provider-specific errors
         ["IB_GATEWAY_NOT_RUNNING"] = new ErrorInfo(
-            Code: "MDC-IB-001",
+            Code: "Meridian-IB-001",
             Title: "IB Gateway/TWS not running",
             Suggestion: "Start Interactive Brokers TWS or IB Gateway and enable API connections in the settings",
             DocsLink: "docs/providers/interactive-brokers.md"
         ),
         ["ALPACA_MARKET_CLOSED"] = new ErrorInfo(
-            Code: "MDC-ALP-001",
+            Code: "Meridian-ALP-001",
             Title: "Market is closed",
             Suggestion: "Real-time data is only available during market hours. Use historical data for off-hours.",
             DocsLink: null
@@ -155,7 +155,7 @@ public static class FriendlyErrorFormatter
     {
         var errorKey = ClassifyException(exception);
         var info = ErrorInfos.GetValueOrDefault(errorKey) ?? new ErrorInfo(
-            Code: "MDC-GEN-001",
+            Code: "Meridian-GEN-001",
             Title: "An error occurred",
             Suggestion: "Check the logs for more details",
             DocsLink: "docs/troubleshooting.md"
@@ -177,7 +177,7 @@ public static class FriendlyErrorFormatter
     public static FormattedError Format(string errorKey, string? additionalMessage = null)
     {
         var info = ErrorInfos.GetValueOrDefault(errorKey) ?? new ErrorInfo(
-            Code: "MDC-GEN-001",
+            Code: "Meridian-GEN-001",
             Title: errorKey,
             Suggestion: null,
             DocsLink: null

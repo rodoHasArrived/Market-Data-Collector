@@ -257,7 +257,7 @@ def generate_badges(root: Path) -> list[BadgeInfo]:
         label="build",
         value="passing",
         color="brightgreen",
-        url="https://github.com/rodoHasArrived/Market-Data-Collector/workflows/test-matrix/badge.svg"
+        url="https://github.com/rodoHasArrived/Meridian/workflows/test-matrix/badge.svg"
     ))
 
     # License badge

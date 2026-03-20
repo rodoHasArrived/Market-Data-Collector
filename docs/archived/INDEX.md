@@ -235,7 +235,7 @@ ls -lh docs/archived/
 cat docs/archived/DUPLICATE_CODE_ANALYSIS.md
 ```
 
-Or browse on GitHub: https://github.com/rodoHasArrived/Market-Data-Collector/tree/main/docs/archived
+Or browse on GitHub: https://github.com/rodoHasArrived/Meridian/tree/main/docs/archived
 
 ---
 
@@ -282,7 +282,7 @@ If an archived document becomes relevant again:
 
 ## Historical Context
 
-The Market Data Collector project has evolved significantly since its inception:
+The Meridian project has evolved significantly since its inception:
 
 - **Early Phase:** Focus on basic data collection
 - **Growth Phase:** Added multiple providers, desktop apps
@@ -298,7 +298,7 @@ These archived documents chronicle this evolution and provide insight into archi
 If you have questions about archived documents or need historical context:
 
 1. Check this index for pointers to current docs
-2. Open a [GitHub Discussion](https://github.com/rodoHasArrived/Market-Data-Collector/discussions)
+2. Open a [GitHub Discussion](https://github.com/rodoHasArrived/Meridian/discussions)
 3. Reference the specific archived document in your question
 
 ---

@@ -1,6 +1,6 @@
 # Windows Desktop Historical Provider Configurability Assessment
 
-## Market Data Collector — Structure Review & Improvement Plan
+## Meridian — Structure Review & Improvement Plan
 
 **Date:** 2026-02-13  
 **Status:** Proposed  

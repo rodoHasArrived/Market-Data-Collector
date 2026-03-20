@@ -4,7 +4,7 @@
 
 ## 📋 Overview
 
-This PR significantly enhances the Market Data Collector web dashboard with modern UI/UX improvements, smooth animations, and better user feedback mechanisms. All changes maintain backward compatibility while transforming the interface into a polished, professional application.
+This PR significantly enhances the Meridian web dashboard with modern UI/UX improvements, smooth animations, and better user feedback mechanisms. All changes maintain backward compatibility while transforming the interface into a polished, professional application.
 
 ## 📊 Statistics
 
@@ -243,7 +243,7 @@ Toast:     0 8px 16px rgba(0,0,0,0.2)
 
 ## 🎉 Result
 
-The Market Data Collector dashboard has been transformed from a functional interface into a **polished, professional application** with:
+The Meridian dashboard has been transformed from a functional interface into a **polished, professional application** with:
 
 - ✨ Modern design language
 - 💫 Smooth, purposeful animations
@@ -285,7 +285,7 @@ Potential additions identified for future work:
 
 ## 🙏 Acknowledgments
 
-These improvements follow modern web design best practices and accessibility standards while respecting the existing architecture and design language of the Market Data Collector application.
+These improvements follow modern web design best practices and accessibility standards while respecting the existing architecture and design language of the Meridian application.
 
 ---
 

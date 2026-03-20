@@ -2,7 +2,7 @@
 
 ## 🎉 What Was Added
 
-Your Market Data Collector repository now has **professional-grade CI/CD automation** with 21 GitHub Actions workflows, automated dependency management, and comprehensive issue/PR templates.
+Your Meridian repository now has **professional-grade CI/CD automation** with 21 GitHub Actions workflows, automated dependency management, and comprehensive issue/PR templates.
 
 ## 📦 Complete List of Additions
 

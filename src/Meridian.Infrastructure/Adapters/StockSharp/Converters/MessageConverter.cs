@@ -10,7 +10,7 @@ namespace Meridian.Infrastructure.Adapters.StockSharp.Converters;
 
 /// <summary>
 /// Converts StockSharp messages to Meridian domain models.
-/// This converter bridges S# message types to MDC's immutable domain records.
+/// This converter bridges S# message types to Meridian's immutable domain records.
 /// </summary>
 public static class MessageConverter
 {
@@ -30,7 +30,7 @@ public static class MessageConverter
 
 #if STOCKSHARP
     /// <summary>
-    /// Convert StockSharp ExecutionMessage (trade tick) to MDC Trade.
+    /// Convert StockSharp ExecutionMessage (trade tick) to Meridian Trade.
     /// </summary>
     /// <param name="msg">StockSharp execution message containing trade data.</param>
     /// <param name="symbol">Symbol identifier for the security.</param>
@@ -50,7 +50,7 @@ public static class MessageConverter
     }
 
     /// <summary>
-    /// Convert StockSharp QuoteChangeMessage to MDC LOBSnapshot.
+    /// Convert StockSharp QuoteChangeMessage to Meridian LOBSnapshot.
     /// </summary>
     /// <param name="msg">StockSharp quote change message with bid/ask arrays.</param>
     /// <param name="symbol">Symbol identifier for the security.</param>
@@ -114,7 +114,7 @@ public static class MessageConverter
     }
 
     /// <summary>
-    /// Convert StockSharp Level1ChangeMessage to MDC BboQuotePayload.
+    /// Convert StockSharp Level1ChangeMessage to Meridian BboQuotePayload.
     /// </summary>
     /// <param name="msg">StockSharp Level1 message with best bid/offer data.</param>
     /// <param name="symbol">Symbol identifier for the security.</param>
@@ -150,7 +150,7 @@ public static class MessageConverter
     }
 
     /// <summary>
-    /// Convert StockSharp TimeFrameCandleMessage to MDC HistoricalBar.
+    /// Convert StockSharp TimeFrameCandleMessage to Meridian HistoricalBar.
     /// </summary>
     /// <param name="msg">StockSharp candle message with OHLCV data.</param>
     /// <param name="symbol">Symbol identifier for the security.</param>
@@ -171,7 +171,7 @@ public static class MessageConverter
     }
 
     /// <summary>
-    /// Convert S# Sides enum to MDC AggressorSide enum.
+    /// Convert S# Sides enum to Meridian AggressorSide enum.
     /// </summary>
     private static AggressorSide ConvertSide(Sides? side) => side switch
     {
