@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Meridian.Storage.Archival;
+using System.Text;
 using Xunit;
 
 namespace Meridian.Tests.Storage;
@@ -219,6 +220,28 @@ public sealed class WriteAheadLogFuzzTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task InitializeAsync_LegacyBomPrefixedHeader_StillRecoversValidRecords()
+    {
+        // Arrange
+        const int validCount = 3;
+        await WriteValidRecordsAsync(validCount);
+        await PrefixLatestWalHeaderWithBomAsync();
+
+        // Act
+        await using var wal = new WriteAheadLog(_walDir, new WalOptions
+        {
+            SyncMode = WalSyncMode.NoSync,
+            CorruptionMode = WalCorruptionMode.Skip
+        });
+        await wal.InitializeAsync();
+
+        // Assert
+        wal.LastRecoveryEventCount.Should().Be(validCount,
+            "legacy WAL files written with a UTF-8 BOM should still be recoverable");
+        wal.CorruptedRecordCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task RepairAsync_MultipleCorruptedRecords_CountsAllCorruptedRecords()
     {
         // Arrange — write 3 valid records then append 5 garbage lines
@@ -302,6 +325,29 @@ public sealed class WriteAheadLogFuzzTests : IAsyncDisposable
         var garbage = Enumerable.Range(0, garbageLines)
             .Select(i => $"GARBAGE-{i}|not-a-timestamp|bad-type|bad-checksum|{{invalid json}}");
         await File.AppendAllLinesAsync(walFile, garbage);
+    }
+
+    private async Task WriteValidRecordsAsync(int validRecords)
+    {
+        await using var seed = new WriteAheadLog(_walDir, new WalOptions { SyncMode = WalSyncMode.NoSync });
+        await seed.InitializeAsync();
+        for (int i = 0; i < validRecords; i++)
+            await seed.AppendAsync(new { Index = i, Symbol = "QQQ" }, "trade");
+        await seed.FlushAsync();
+    }
+
+    private async Task PrefixLatestWalHeaderWithBomAsync()
+    {
+        var walFile = Directory.GetFiles(_walDir, "*.wal")
+            .OrderBy(f => f)
+            .Last();
+
+        var bytes = await File.ReadAllBytesAsync(walFile);
+        var bom = Encoding.UTF8.GetPreamble();
+        var rewritten = new byte[bom.Length + bytes.Length];
+        Buffer.BlockCopy(bom, 0, rewritten, 0, bom.Length);
+        Buffer.BlockCopy(bytes, 0, rewritten, bom.Length, bytes.Length);
+        await File.WriteAllBytesAsync(walFile, rewritten);
     }
 
     /// <summary>
