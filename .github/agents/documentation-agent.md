@@ -154,6 +154,7 @@ Meridian/
 │   │   ├── pr-checks.yml
 │   │   ├── prompt-generation.yml
 │   │   ├── python-package-conda.yml
+│   │   ├── readme-tree.yml
 │   │   ├── README.md
 │   │   ├── release.yml
 │   │   ├── repo-health.yml
@@ -275,6 +276,7 @@ Meridian/
 ├── config/  # Configuration files
 │   ├── appsettings.json
 │   ├── appsettings.sample.json
+│   ├── appsettings.schema.json
 │   ├── condition-codes.json
 │   └── venue-mapping.json
 ├── deploy/  # Deployment configurations
@@ -573,6 +575,7 @@ Meridian/
 │   │   ├── CHANGELOG.md
 │   │   ├── EVALUATIONS_AND_AUDITS.md
 │   │   ├── FEATURE_INVENTORY.md
+│   │   ├── FULL_IMPLEMENTATION_TODO_2026_03_20.md
 │   │   ├── health-dashboard.md
 │   │   ├── IMPROVEMENTS.md
 │   │   ├── production-status.md
@@ -663,6 +666,7 @@ Meridian/
 │   │   │   │   ...
 │   │   │   ├── AppConfigJsonOptions.cs
 │   │   │   ├── ConfigDtoMapper.cs
+│   │   │   ├── ConfigJsonSchemaGenerator.cs
 │   │   │   ├── ConfigurationPipeline.cs
 │   │   │   ├── ConfigValidationHelper.cs
 │   │   │   ├── ConfigValidatorCli.cs

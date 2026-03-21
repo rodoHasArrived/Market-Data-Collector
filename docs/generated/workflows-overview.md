@@ -4,7 +4,7 @@
 
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-03-20 18:36:19 UTC
+> Auto-generated on 2026-03-21 00:25:27 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -35,6 +35,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Prompt Generation | `prompt-generation.yml` | manual |
 | Pull Request Checks | `pr-checks.yml` | PR, manual |
 | Python Package using Conda | `python-package-conda.yml` | unknown |
+| README Tree Sync | `readme-tree.yml` | push, manual |
 | Release Management | `release.yml` | manual |
 | Repo Health | `repo-health.yml` | PR, manual, scheduled |
 | Reusable .NET Build | `reusable-dotnet-build.yml` | unknown |
@@ -67,7 +68,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 33
+- **Total workflows:** 34
 
 ---
 
