@@ -208,19 +208,26 @@ type CreditRating =
         | BB -> "BB" | B -> "B" | CCC -> "CCC" | CC -> "CC"
         | D -> "D" | Unrated -> "NR"
 
-    static member Parse(s: string) =
+    /// Returns <c>Some rating</c> when the string is a recognised rating code, or <c>None</c>.
+    /// Accepted codes: AAA AA A BBB BB B CCC CC D and NR/UNRATED.
+    static member TryParse(s: string) : CreditRating option =
         match s.Trim().ToUpperInvariant() with
-        | "AAA" -> CreditRating.AAA
-        | "AA"  -> CreditRating.AA
-        | "A"   -> CreditRating.A
-        | "BBB" -> CreditRating.BBB
-        | "BB"  -> CreditRating.BB
-        | "B"   -> CreditRating.B
-        | "CCC" -> CreditRating.CCC
-        | "CC"  -> CreditRating.CC
-        | "D"   -> CreditRating.D
-        | "NR" | "UNRATED" -> CreditRating.Unrated
-        | other -> failwithf "Unknown credit rating: '%s'" other
+        | "AAA" -> Some CreditRating.AAA
+        | "AA"  -> Some CreditRating.AA
+        | "A"   -> Some CreditRating.A
+        | "BBB" -> Some CreditRating.BBB
+        | "BB"  -> Some CreditRating.BB
+        | "B"   -> Some CreditRating.B
+        | "CCC" -> Some CreditRating.CCC
+        | "CC"  -> Some CreditRating.CC
+        | "D"   -> Some CreditRating.D
+        | "NR" | "UNRATED" -> Some CreditRating.Unrated
+        | _     -> None
+
+    static member Parse(s: string) =
+        match CreditRating.TryParse(s) with
+        | Some r -> r
+        | None   -> failwithf "Unknown credit rating: '%s'" s
 
 // ── Covenant types ─────────────────────────────────────────────────────────────
 
@@ -547,6 +554,27 @@ module LoanAggregate =
     /// Result of handling a command: either a list of events or a domain error.
     type CommandResult = Result<LoanEvent list, string>
 
+    /// Validates fields that must hold for any DirectLendingTerms,
+    /// whether on initial creation, restructuring, or amendment.
+    /// Returns <c>Some errorMessage</c> when a constraint is violated; <c>None</c> when valid.
+    let private validateTermsFields (terms: DirectLendingTerms) : string option =
+        if terms.CommitmentAmount <= 0m then
+            Some "CommitmentAmount must be positive."
+        elif terms.MaturityDate <= terms.OriginationDate then
+            Some "Maturity date must be after origination date."
+        elif terms.PaymentFrequencyMonths <= 0 then
+            Some "PaymentFrequencyMonths must be positive."
+        else
+            match terms.PurchasePrice with
+            | Some p when p <= 0m -> Some "PurchasePrice must be positive."
+            | _ ->
+                match terms.AmortizationType with
+                | AmortizationType.TargetBalance balloon when balloon < 0m ->
+                    Some "TargetBalance balloon must be non-negative."
+                | AmortizationType.StepUp(initialPrincipal, _) when initialPrincipal < 0m ->
+                    Some "StepUp initialPrincipal must be non-negative."
+                | _ -> None
+
     /// Compute the initial unamortized discount and premium from the purchase price
     /// recorded in loan terms, relative to the commitment amount at origination.
     let private initialDiscountPremium (terms: DirectLendingTerms) : decimal * decimal =
@@ -676,14 +704,9 @@ module LoanAggregate =
         match state with
         | Some _ -> Error "Loan already exists."
         | None ->
-            if terms.CommitmentAmount <= 0m then
-                Error "CommitmentAmount must be positive."
-            elif terms.MaturityDate <= terms.OriginationDate then
-                Error "MaturityDate must be after OriginationDate."
-            else
-                match terms.PurchasePrice with
-                | Some p when p <= 0m -> Error "PurchasePrice must be positive."
-                | _ -> Ok [ LoanEvent.LoanCreated(header, terms) ]
+            match validateTermsFields terms with
+            | Some err -> Error err
+            | None -> Ok [ LoanEvent.LoanCreated(header, terms) ]
 
     /// Handle a CommitLoan command.
     [<CompiledName("HandleCommitLoan")>]
@@ -746,12 +769,14 @@ module LoanAggregate =
         | None -> Error "Loan does not exist."
         | Some s when s.Status = LoanStatus.Closed ->
             Error "Cannot restructure a closed loan."
-        | Some s when newTerms.CommitmentAmount <= 0m ->
-            Error "Restructured CommitmentAmount must be positive."
-        | Some s when newTerms.MaturityDate < date ->
-            Error "Restructured maturity date cannot be before the restructuring effective date."
         | Some _ ->
-            Ok [ LoanEvent.LoanRestructured(restructuringType, newTerms, date) ]
+            match validateTermsFields newTerms with
+            | Some err -> Error err
+            | None ->
+                if newTerms.MaturityDate < date then
+                    Error "Restructured maturity date cannot be before the restructuring effective date."
+                else
+                    Ok [ LoanEvent.LoanRestructured(restructuringType, newTerms, date) ]
 
     /// Handle a ForgivePrincipal command.
     [<CompiledName("HandleForgivePrincipal")>]
@@ -814,7 +839,10 @@ module LoanAggregate =
             match state with
             | None -> Error "Loan does not exist."
             | Some s when s.Status = LoanStatus.Closed -> Error "Cannot amend terms of a closed loan."
-            | Some _ -> Ok [ LoanEvent.TermsAmended newTerms ]
+            | Some _ ->
+                match validateTermsFields newTerms with
+                | Some err -> Error err
+                | None -> Ok [ LoanEvent.TermsAmended newTerms ]
         | LoanCommand.CloseLoan date ->
             handleClose state date
         | LoanCommand.RestructureLoan(restructuringType, newTerms, date) ->
@@ -832,6 +860,7 @@ module LoanAggregate =
         | LoanCommand.AmortizeDiscount(amount, date) ->
             match state with
             | None -> Error "Loan does not exist."
+            | Some s when s.Status = LoanStatus.Closed -> Error "Cannot amortise discount on a closed loan."
             | Some s when amount <= 0m -> Error "Amortisation amount must be positive."
             | Some s when amount > s.UnamortizedDiscount ->
                 Error $"Discount amortisation of {amount} exceeds unamortized discount of {s.UnamortizedDiscount}."
@@ -839,6 +868,7 @@ module LoanAggregate =
         | LoanCommand.AmortizePremium(amount, date) ->
             match state with
             | None -> Error "Loan does not exist."
+            | Some s when s.Status = LoanStatus.Closed -> Error "Cannot amortise premium on a closed loan."
             | Some s when amount <= 0m -> Error "Amortisation amount must be positive."
             | Some s when amount > s.UnamortizedPremium ->
                 Error $"Premium amortisation of {amount} exceeds unamortized premium of {s.UnamortizedPremium}."

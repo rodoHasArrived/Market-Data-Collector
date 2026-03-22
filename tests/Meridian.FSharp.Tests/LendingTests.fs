@@ -171,7 +171,7 @@ let ``HandleCreate rejects maturity before origination`` () =
     let terms = { sampleTerms () with MaturityDate = DateOnly(2024, 1, 1) }
     let result = LoanAggregate.handleCreate None header terms
     match result with
-    | Error msg -> msg |> should equal "MaturityDate must be after OriginationDate."
+    | Error msg -> msg |> should equal "Maturity date must be after origination date."
     | Ok _ -> failwith "Expected error"
 
 [<Fact>]
@@ -556,7 +556,8 @@ let ``HandleRestructureLoan rejects closed loan`` () =
 [<Fact>]
 let ``HandleRestructureLoan rejects maturity before restructuring date`` () =
     let state = createLoan ()
-    let badTerms = { sampleTerms () with MaturityDate = DateOnly(2025, 1, 1) }
+    // MaturityDate is after origination (passes validateTermsFields) but before the restructuring date
+    let badTerms = { sampleTerms () with MaturityDate = DateOnly(2025, 6, 1) }
     let result =
         LoanAggregate.handleRestructure state RestructuringType.MaturityExtension badTerms (DateOnly(2026, 1, 1))
     match result with
@@ -1367,3 +1368,148 @@ let ``PaymentSchedule StepUp with zero step behaves like StraightLine`` () =
     schedule |> should haveLength 4
     schedule |> List.take 3 |> List.iter (fun p -> p.PrincipalDue |> should equal 250_000m)
     (List.last schedule).RemainingPrincipalAfter |> should equal 0m
+
+// ── Robustness test helpers ───────────────────────────────────────────────────
+
+let private makeActiveState () : LoanState =
+    [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+      LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+      LoanEvent.DrawdownExecuted(5_000_000m, Currency.USD, DateOnly(2025, 1, 15)) ]
+    |> LoanAggregate.rebuild
+    |> Option.get
+
+let private makeClosedState () : LoanState =
+    [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+      LoanEvent.LoanClosed(DateOnly(2028, 1, 15)) ]
+    |> LoanAggregate.rebuild
+    |> Option.get
+
+// ── Robustness: validateTermsFields via handleCreate ─────────────────────────
+
+[<Fact>]
+let ``handleCreate rejects zero PaymentFrequencyMonths`` () =
+    let terms = { sampleTerms () with PaymentFrequencyMonths = 0 }
+    match LoanAggregate.handleCreate None (sampleHeader ()) terms with
+    | Error msg -> msg |> should equal "PaymentFrequencyMonths must be positive."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``handleCreate rejects negative PaymentFrequencyMonths`` () =
+    let terms = { sampleTerms () with PaymentFrequencyMonths = -3 }
+    match LoanAggregate.handleCreate None (sampleHeader ()) terms with
+    | Error msg -> msg |> should equal "PaymentFrequencyMonths must be positive."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``handleCreate rejects negative TargetBalance balloon`` () =
+    let terms = { sampleTerms () with AmortizationType = AmortizationType.TargetBalance -1m }
+    match LoanAggregate.handleCreate None (sampleHeader ()) terms with
+    | Error msg -> msg |> should equal "TargetBalance balloon must be non-negative."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``handleCreate accepts zero TargetBalance balloon`` () =
+    let terms = { sampleTerms () with AmortizationType = AmortizationType.TargetBalance 0m }
+    match LoanAggregate.handleCreate None (sampleHeader ()) terms with
+    | Ok _ -> ()
+    | Error msg -> failwith $"Expected Ok but got: {msg}"
+
+[<Fact>]
+let ``handleCreate rejects negative StepUp initialPrincipal`` () =
+    let terms = { sampleTerms () with AmortizationType = AmortizationType.StepUp(-1m, 10_000m) }
+    match LoanAggregate.handleCreate None (sampleHeader ()) terms with
+    | Error msg -> msg |> should equal "StepUp initialPrincipal must be non-negative."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``handleCreate accepts zero StepUp initialPrincipal`` () =
+    let terms = { sampleTerms () with AmortizationType = AmortizationType.StepUp(0m, 10_000m) }
+    match LoanAggregate.handleCreate None (sampleHeader ()) terms with
+    | Ok _ -> ()
+    | Error msg -> failwith $"Expected Ok but got: {msg}"
+
+// ── Robustness: validateTermsFields via AmendTerms ────────────────────────────
+
+[<Fact>]
+let ``AmendTerms rejects zero CommitmentAmount`` () =
+    let state = Some (makeActiveState ())
+    let terms = { sampleTerms () with CommitmentAmount = 0m }
+    match LoanAggregate.handle state (LoanCommand.AmendTerms terms) with
+    | Error msg -> msg |> should equal "CommitmentAmount must be positive."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``AmendTerms rejects zero PaymentFrequencyMonths`` () =
+    let state = Some (makeActiveState ())
+    let terms = { sampleTerms () with PaymentFrequencyMonths = 0 }
+    match LoanAggregate.handle state (LoanCommand.AmendTerms terms) with
+    | Error msg -> msg |> should equal "PaymentFrequencyMonths must be positive."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``AmendTerms accepts valid terms`` () =
+    let state = Some (makeActiveState ())
+    let terms = { sampleTerms () with CommitmentAmount = 2_000_000m }
+    match LoanAggregate.handle state (LoanCommand.AmendTerms terms) with
+    | Ok _ -> ()
+    | Error msg -> failwith $"Expected Ok but got: {msg}"
+
+// ── Robustness: validateTermsFields via handleRestructure ────────────────────
+
+[<Fact>]
+let ``handleRestructure rejects zero PaymentFrequencyMonths`` () =
+    let state = Some (makeActiveState ())
+    let terms = { sampleTerms () with PaymentFrequencyMonths = 0 }
+    match LoanAggregate.handle state (LoanCommand.RestructureLoan(RestructuringType.MaturityExtension, terms, DateOnly(2025, 6, 1))) with
+    | Error msg -> msg |> should equal "PaymentFrequencyMonths must be positive."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``handleRestructure rejects negative TargetBalance balloon`` () =
+    let state = Some (makeActiveState ())
+    let terms = { sampleTerms () with AmortizationType = AmortizationType.TargetBalance -500m }
+    match LoanAggregate.handle state (LoanCommand.RestructureLoan(RestructuringType.MaturityExtension, terms, DateOnly(2025, 6, 1))) with
+    | Error msg -> msg |> should equal "TargetBalance balloon must be non-negative."
+    | Ok _ -> failwith "Expected an error"
+
+// ── Robustness: closed-loan guard for AmortizeDiscount/AmortizePremium ────────
+
+[<Fact>]
+let ``AmortizeDiscount rejects closed loan`` () =
+    let state = Some (makeClosedState ())
+    match LoanAggregate.handle state (LoanCommand.AmortizeDiscount(500m, DateOnly(2028, 1, 1))) with
+    | Error msg -> msg |> should equal "Cannot amortise discount on a closed loan."
+    | Ok _ -> failwith "Expected an error"
+
+[<Fact>]
+let ``AmortizePremium rejects closed loan`` () =
+    let state = Some (makeClosedState ())
+    match LoanAggregate.handle state (LoanCommand.AmortizePremium(500m, DateOnly(2028, 1, 1))) with
+    | Error msg -> msg |> should equal "Cannot amortise premium on a closed loan."
+    | Ok _ -> failwith "Expected an error"
+
+// ── Robustness: CreditRating.TryParse ────────────────────────────────────────
+
+[<Fact>]
+let ``CreditRating.TryParse returns Some for all valid codes`` () =
+    let validCodes = [ "AAA"; "AA"; "A"; "BBB"; "BB"; "B"; "CCC"; "CC"; "D"; "NR"; "UNRATED" ]
+    validCodes |> List.iter (fun s ->
+        match CreditRating.TryParse(s) with
+        | Some _ -> ()
+        | None -> failwith $"Expected Some for code '{s}'")
+
+[<Fact>]
+let ``CreditRating.TryParse is case-insensitive`` () =
+    CreditRating.TryParse("bbb") |> should equal (Some CreditRating.BBB)
+    CreditRating.TryParse("aaa") |> should equal (Some CreditRating.AAA)
+
+[<Fact>]
+let ``CreditRating.TryParse returns None for unknown codes`` () =
+    CreditRating.TryParse("ZZZ") |> should equal None
+    CreditRating.TryParse("") |> should equal None
+    CreditRating.TryParse("BBB+") |> should equal None
+
+[<Fact>]
+let ``CreditRating.Parse still throws for unknown code`` () =
+    (fun () -> CreditRating.Parse("ZZZ") |> ignore)
+    |> should throw typeof<Exception>
