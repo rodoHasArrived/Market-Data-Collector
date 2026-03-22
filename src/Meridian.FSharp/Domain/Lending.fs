@@ -159,6 +159,116 @@ type RestructuringType =
     /// Comprehensive restructuring combining multiple modifications.
     | Full
 
+// ── Credit rating ─────────────────────────────────────────────────────────────
+
+/// Simplified credit rating scale aligned with major agency conventions.
+/// Covers investment grade (BBB and above) through distressed (CCC/CC/D) and unrated.
+[<RequireQualifiedAccess>]
+type CreditRating =
+    /// Highest quality, minimal credit risk.
+    | AAA
+    /// Very high quality, very low credit risk.
+    | AA
+    /// High quality, low credit risk.
+    | A
+    /// Medium quality, moderate credit risk (lowest investment grade).
+    | BBB
+    /// Speculative grade, significant credit risk.
+    | BB
+    /// Speculative grade, high credit risk.
+    | B
+    /// Substantial credit risk; vulnerable to non-payment.
+    | CCC
+    /// Very high credit risk; default is probable.
+    | CC
+    /// In default or has breached an imputed promise.
+    | D
+    /// No credit rating has been assigned.
+    | Unrated
+
+    /// Returns true when the rating is investment grade (BBB and above).
+    member this.IsInvestmentGrade =
+        match this with
+        | AAA | AA | A | BBB -> true
+        | _ -> false
+
+    override this.ToString() =
+        match this with
+        | AAA -> "AAA" | AA -> "AA" | A -> "A" | BBB -> "BBB"
+        | BB -> "BB" | B -> "B" | CCC -> "CCC" | CC -> "CC"
+        | D -> "D" | Unrated -> "NR"
+
+    static member Parse(s: string) =
+        match s.Trim().ToUpperInvariant() with
+        | "AAA" -> CreditRating.AAA
+        | "AA"  -> CreditRating.AA
+        | "A"   -> CreditRating.A
+        | "BBB" -> CreditRating.BBB
+        | "BB"  -> CreditRating.BB
+        | "B"   -> CreditRating.B
+        | "CCC" -> CreditRating.CCC
+        | "CC"  -> CreditRating.CC
+        | "D"   -> CreditRating.D
+        | "NR" | "UNRATED" -> CreditRating.Unrated
+        | other -> failwithf "Unknown credit rating: '%s'" other
+
+// ── Covenant types ─────────────────────────────────────────────────────────────
+
+/// Classifies the financial metric that a covenant tests against a threshold.
+[<RequireQualifiedAccess>]
+type CovenantType =
+    /// Debt service coverage ratio: cash flow / debt service ≥ threshold.
+    | DebtServiceCoverageRatio
+    /// Interest coverage ratio: EBITDA / interest expense ≥ threshold.
+    | InterestCoverageRatio
+    /// Leverage ratio: total debt / EBITDA ≤ threshold.
+    | LeverageRatio
+    /// Loan-to-value: outstanding loan / collateral value ≤ threshold.
+    | LoanToValue
+    /// Current ratio: current assets / current liabilities ≥ threshold.
+    | CurrentRatio
+    /// Tangible net worth must remain above the threshold.
+    | TangibleNetWorth
+    /// Custom covenant with a user-defined description.
+    | Custom of description: string
+
+/// How frequently the covenant must be tested and reported.
+[<RequireQualifiedAccess>]
+type CovenantFrequency =
+    | Monthly
+    | Quarterly
+    | SemiAnnual
+    | Annual
+
+/// Compliance status of a covenant as of the most recent test.
+[<RequireQualifiedAccess>]
+type CovenantStatus =
+    /// Covenant is active and borrower is in compliance.
+    | Active
+    /// Borrower has failed the most recent covenant test.
+    | Breached
+    /// Lender has formally waived the covenant breach for a specified period.
+    | Waived
+
+/// A financial covenant that the borrower must satisfy at each test date.
+[<CLIMutable>]
+type Covenant = {
+    /// Unique identifier for this covenant.
+    CovenantId: Guid
+    /// Financial metric this covenant tests.
+    CovenantType: CovenantType
+    /// Human-readable description of the covenant obligation.
+    Description: string
+    /// Threshold value the borrower must meet (interpretation depends on CovenantType).
+    ThresholdValue: decimal
+    /// How frequently the covenant must be tested.
+    Frequency: CovenantFrequency
+    /// Current compliance status.
+    Status: CovenantStatus
+    /// Date of the most recent covenant test, if any.
+    LastTestDate: DateOnly option
+}
+
 // ── Collateral types ──────────────────────────────────────────────────────────
 
 /// Classifies the type of asset pledged as security for a loan.
@@ -263,6 +373,10 @@ type LoanState = {
     UnamortizedPremium: decimal
     /// Collateral items currently pledged against the loan.
     Collateral: Collateral list
+    /// Structured financial covenants currently attached to the loan.
+    ActiveCovenants: Covenant list
+    /// Most recently assigned credit rating and the entity that assigned it.
+    CreditRating: CreditRating option
     /// Monotonically increasing version counter (one per event applied).
     Version: int64
 }
@@ -332,6 +446,18 @@ type LoanEvent =
     | LoanPlacedInWorkout of date: DateOnly
     /// The remaining outstanding balance was written off as a credit loss.
     | LoanWrittenOff of amount: decimal * date: DateOnly
+    // ── Credit rating ────────────────────────────────────────────────────────
+    /// A credit rating was assigned or updated by a named rater (e.g. internal credit team or rating agency).
+    | LoanRiskRated of rating: CreditRating * rater: string * date: DateOnly
+    // ── Covenants ────────────────────────────────────────────────────────────
+    /// A new financial covenant was added to the loan.
+    | CovenantAdded of covenant: Covenant * date: DateOnly
+    /// A covenant test was failed; records the actual value observed.
+    | CovenantBreached of covenantId: Guid * actualValue: decimal * testDate: DateOnly
+    /// The lender waived a covenant breach, optionally until a specified date.
+    | CovenantWaived of covenantId: Guid * waivedUntil: DateOnly option * date: DateOnly
+    /// A covenant's threshold was amended (typically during a restructuring or waiver negotiation).
+    | CovenantAmended of covenantId: Guid * newThreshold: decimal * date: DateOnly
 
 // ── Command catalog ────────────────────────────────────────────────────────────
 
@@ -389,6 +515,16 @@ type LoanCommand =
     | PlaceInWorkout of date: DateOnly
     /// Write off the outstanding balance (or a portion) as a credit loss.
     | WriteOffLoan of amount: decimal * date: DateOnly
+    /// Assign or update the credit rating on the loan.
+    | AssignCreditRating of rating: CreditRating * rater: string * date: DateOnly
+    /// Add a structured financial covenant to the loan.
+    | AddCovenant of covenant: Covenant * date: DateOnly
+    /// Report a covenant breach with the observed value at the test date.
+    | ReportCovenantBreach of covenantId: Guid * actualValue: decimal * testDate: DateOnly
+    /// Grant a formal waiver for a breached covenant, optionally with an expiry date.
+    | GrantCovenantWaiver of covenantId: Guid * waivedUntil: DateOnly option * date: DateOnly
+    /// Amend the threshold on an existing covenant.
+    | AmendCovenant of covenantId: Guid * newThreshold: decimal * date: DateOnly
 
 // ── Aggregate: pure state-transition logic ────────────────────────────────────
 
@@ -428,6 +564,8 @@ module LoanAggregate =
               UnamortizedDiscount = discount
               UnamortizedPremium = premium
               Collateral = []
+              ActiveCovenants = []
+              CreditRating = None
               Version = 1L }
         | None, _ ->
             failwith "Cannot apply event to an uninitialized loan (LoanCreated must be first)."
@@ -492,6 +630,28 @@ module LoanAggregate =
             bumpVersion { s with Status = LoanStatus.Workout }
         | Some s, LoanEvent.LoanWrittenOff(amount, _) ->
             bumpVersion { s with OutstandingPrincipal = max 0m (s.OutstandingPrincipal - amount) }
+        // ── Credit rating ──────────────────────────────────────────────────
+        | Some s, LoanEvent.LoanRiskRated(rating, _, _) ->
+            bumpVersion { s with CreditRating = Some rating }
+        // ── Covenants ──────────────────────────────────────────────────────
+        | Some s, LoanEvent.CovenantAdded(covenant, _) ->
+            bumpVersion { s with ActiveCovenants = covenant :: s.ActiveCovenants }
+        | Some s, LoanEvent.CovenantBreached(covenantId, _, testDate) ->
+            let updated = s.ActiveCovenants |> List.map (fun c ->
+                if c.CovenantId = covenantId
+                then { c with Status = CovenantStatus.Breached; LastTestDate = Some testDate }
+                else c)
+            bumpVersion { s with ActiveCovenants = updated }
+        | Some s, LoanEvent.CovenantWaived(covenantId, _, _) ->
+            let updated = s.ActiveCovenants |> List.map (fun c ->
+                if c.CovenantId = covenantId then { c with Status = CovenantStatus.Waived } else c)
+            bumpVersion { s with ActiveCovenants = updated }
+        | Some s, LoanEvent.CovenantAmended(covenantId, newThreshold, _) ->
+            let updated = s.ActiveCovenants |> List.map (fun c ->
+                if c.CovenantId = covenantId
+                then { c with ThresholdValue = newThreshold; Status = CovenantStatus.Active }
+                else c)
+            bumpVersion { s with ActiveCovenants = updated }
 
     /// Rebuild aggregate state from a sequence of events.
     [<CompiledName("Rebuild")>]
@@ -724,6 +884,39 @@ module LoanAggregate =
             | Some s when amount > s.OutstandingPrincipal ->
                 Error $"Write-off of {amount} exceeds outstanding principal of {s.OutstandingPrincipal}."
             | Some _ -> Ok [ LoanEvent.LoanWrittenOff(amount, date) ]
+        | LoanCommand.AssignCreditRating(rating, rater, date) ->
+            match state with
+            | None -> Error "Loan does not exist."
+            | Some s when s.Status = LoanStatus.Closed -> Error "Cannot rate a closed loan."
+            | Some s when String.IsNullOrWhiteSpace(rater) -> Error "Rater must be provided."
+            | Some _ -> Ok [ LoanEvent.LoanRiskRated(rating, rater, date) ]
+        | LoanCommand.AddCovenant(covenant, date) ->
+            match state with
+            | None -> Error "Loan does not exist."
+            | Some s when s.Status = LoanStatus.Closed -> Error "Cannot add a covenant to a closed loan."
+            | Some s when covenant.ThresholdValue <= 0m -> Error "Covenant threshold must be positive."
+            | Some s when s.ActiveCovenants |> List.exists (fun c -> c.CovenantId = covenant.CovenantId) ->
+                Error "A covenant with this ID already exists."
+            | Some _ -> Ok [ LoanEvent.CovenantAdded(covenant, date) ]
+        | LoanCommand.ReportCovenantBreach(covenantId, actualValue, testDate) ->
+            match state with
+            | None -> Error "Loan does not exist."
+            | Some s when not (s.ActiveCovenants |> List.exists (fun c -> c.CovenantId = covenantId)) ->
+                Error "Covenant not found."
+            | Some _ -> Ok [ LoanEvent.CovenantBreached(covenantId, actualValue, testDate) ]
+        | LoanCommand.GrantCovenantWaiver(covenantId, waivedUntil, date) ->
+            match state with
+            | None -> Error "Loan does not exist."
+            | Some s when not (s.ActiveCovenants |> List.exists (fun c -> c.CovenantId = covenantId)) ->
+                Error "Covenant not found."
+            | Some _ -> Ok [ LoanEvent.CovenantWaived(covenantId, waivedUntil, date) ]
+        | LoanCommand.AmendCovenant(covenantId, newThreshold, date) ->
+            match state with
+            | None -> Error "Loan does not exist."
+            | Some s when newThreshold <= 0m -> Error "Covenant threshold must be positive."
+            | Some s when not (s.ActiveCovenants |> List.exists (fun c -> c.CovenantId = covenantId)) ->
+                Error "Covenant not found."
+            | Some _ -> Ok [ LoanEvent.CovenantAmended(covenantId, newThreshold, date) ]
 
 // ── Domain service helpers (pure, no I/O) ─────────────────────────────────────
 
@@ -773,3 +966,235 @@ module LoanService =
     [<CompiledName("IsEconomicallyActive")>]
     let isEconomicallyActive (state: LoanState) : bool =
         state.Status <> LoanStatus.Closed && state.OutstandingPrincipal > 0m
+
+// ── Accrual period ────────────────────────────────────────────────────────────
+
+/// A single interest or fee accrual period with pre-computed day count metrics.
+[<CLIMutable>]
+type AccrualPeriod = {
+    /// Inclusive start of the accrual period.
+    PeriodStart: DateOnly
+    /// Exclusive end of the accrual period.
+    PeriodEnd: DateOnly
+    /// Actual number of calendar days between PeriodStart and PeriodEnd.
+    DaysInPeriod: int
+    /// Year fraction computed using the loan's day count convention.
+    AccrualFactor: decimal
+}
+
+// ── Interest calculator ───────────────────────────────────────────────────────
+
+/// Pure functions for estimating interest and fee accruals on a loan aggregate.
+/// All computations are deterministic and produce estimates — actual cash amounts
+/// are recorded via <see cref="LoanEvent.InterestAccrued"/> and
+/// <see cref="LoanEvent.CommitmentFeeAccrued"/> events.
+module InterestCalculator =
+
+    /// Constructs an <see cref="AccrualPeriod"/> for the given date range,
+    /// using the supplied day count convention.
+    [<CompiledName("MakeAccrualPeriod")>]
+    let makeAccrualPeriod (convention: DayCountConvention) (periodStart: DateOnly) (periodEnd: DateOnly) : AccrualPeriod =
+        let days =
+            (periodEnd.ToDateTime(TimeOnly.MinValue) - periodStart.ToDateTime(TimeOnly.MinValue)).Days
+        { PeriodStart  = periodStart
+          PeriodEnd    = periodEnd
+          DaysInPeriod = days
+          AccrualFactor = DayCount.accrualFactor convention periodStart periodEnd }
+
+    /// Estimates interest accrued on the current outstanding principal for [periodStart, periodEnd).
+    /// Uses the fixed <c>InterestRate</c> when present; falls back to <c>SpreadBps / 10 000</c>
+    /// for floating-rate loans. Returns 0 when no rate is configured or principal is zero.
+    [<CompiledName("EstimateInterest")>]
+    let estimateInterest (state: LoanState) (periodStart: DateOnly) (periodEnd: DateOnly) : decimal =
+        if state.OutstandingPrincipal = 0m then 0m
+        else
+            let factor = DayCount.accrualFactor state.Terms.DayCountConvention periodStart periodEnd
+            let annualRate =
+                match state.Terms.InterestRate with
+                | Some r -> r
+                | None ->
+                    match state.Terms.SpreadBps with
+                    | Some bps -> bps / 10_000m
+                    | None -> 0m
+            state.OutstandingPrincipal * annualRate * factor
+
+    /// Estimates the commitment fee on the undrawn balance for [periodStart, periodEnd).
+    /// Returns 0 when no <c>CommitmentFeeRate</c> is set or the facility is fully drawn.
+    [<CompiledName("EstimateCommitmentFee")>]
+    let estimateCommitmentFee (state: LoanState) (periodStart: DateOnly) (periodEnd: DateOnly) : decimal =
+        match state.Terms.CommitmentFeeRate with
+        | None -> 0m
+        | Some rate ->
+            let undrawn = max 0m (state.Terms.CommitmentAmount - state.OutstandingPrincipal)
+            if undrawn = 0m then 0m
+            else
+                let factor = DayCount.accrualFactor state.Terms.DayCountConvention periodStart periodEnd
+                undrawn * rate * factor
+
+    /// Estimates total all-in yield on the outstanding principal for [periodStart, periodEnd)
+    /// as interest accrual + prorated discount amortisation − prorated premium amortisation.
+    /// Discount/premium are amortised straight-line over the remaining loan term.
+    [<CompiledName("EstimateAllInYield")>]
+    let estimateAllInYield (state: LoanState) (periodStart: DateOnly) (periodEnd: DateOnly) : decimal =
+        let interest = estimateInterest state periodStart periodEnd
+        let factor = DayCount.accrualFactor state.Terms.DayCountConvention periodStart periodEnd
+        let totalTerm =
+            DayCount.accrualFactor
+                state.Terms.DayCountConvention
+                state.Terms.OriginationDate
+                state.Terms.MaturityDate
+        let discountIncome =
+            if totalTerm = 0m then 0m
+            else state.UnamortizedDiscount * factor / totalTerm
+        let premiumExpense =
+            if totalTerm = 0m then 0m
+            else state.UnamortizedPremium * factor / totalTerm
+        interest + discountIncome - premiumExpense
+
+// ── Payment schedule ──────────────────────────────────────────────────────────
+
+/// A single entry in a forward-looking payment schedule.
+[<CLIMutable>]
+type ScheduledPayment = {
+    /// Ordinal payment number, 1-based.
+    PaymentNumber: int
+    /// Expected cash payment due date.
+    DueDate: DateOnly
+    /// Scheduled principal repayment for this period.
+    PrincipalDue: decimal
+    /// Estimated interest for this period (based on scheduled outstanding balance).
+    EstimatedInterest: decimal
+    /// Total estimated cash due: PrincipalDue + EstimatedInterest.
+    TotalDue: decimal
+    /// Expected outstanding principal immediately after this payment.
+    RemainingPrincipalAfter: decimal
+}
+
+/// Generates a forward-looking payment schedule for a direct lending loan.
+/// Amounts are estimates; actual accruals depend on realised rates and drawdowns.
+module PaymentSchedule =
+
+    // Raise a decimal to a decimal power via double arithmetic.
+    // Precision loss is acceptable here: the schedule is an estimate used for
+    // planning purposes, not a legally binding cash flow.
+    let private dpow (b: decimal) (e: decimal) : decimal =
+        decimal (Math.Pow(float b, float e))
+
+    /// Returns the number of minor-unit decimal places for a given currency.
+    let private currencyDecimalPlaces (currency: Currency) : int =
+        match currency with
+        | Currency.JPY -> 0  // JPY has no minor units
+        | _ -> 2
+
+    /// Builds the sequence of due dates starting after <paramref name="fromDate"/>
+    /// and up to (and including) the maturity date.
+    let private dueDates (terms: DirectLendingTerms) (fromDate: DateOnly) : (int * DateOnly) list =
+        Seq.initInfinite (fun i -> i + 1)
+        |> Seq.map (fun n -> (n, terms.OriginationDate.AddMonths(n * terms.PaymentFrequencyMonths)))
+        |> Seq.skipWhile (fun (_, d) -> d <= fromDate)
+        |> Seq.takeWhile (fun (_, d) -> d <= terms.MaturityDate)
+        |> Seq.toList
+
+    /// Returns the annual interest rate from the loan's terms.
+    /// Fixed rate takes priority; floating-rate falls back to spread / 10 000.
+    /// Returns 0 when neither is configured.
+    let private annualRate (terms: DirectLendingTerms) : decimal =
+        match terms.InterestRate with
+        | Some r -> r
+        | None ->
+            match terms.SpreadBps with
+            | Some bps -> bps / 10_000m
+            | None -> 0m
+
+    /// Generates a payment schedule from <paramref name="fromDate"/> to loan maturity
+    /// using the loan's amortisation type and day count convention.
+    ///
+    /// Returns an empty list when:
+    /// - the loan is closed or <paramref name="fromDate"/> is at or past maturity;
+    /// - no future payment dates exist; or
+    /// - <c>AmortizationType.Custom</c> is used (schedule is externally negotiated).
+    [<CompiledName("Generate")>]
+    let generate (state: LoanState) (fromDate: DateOnly) : ScheduledPayment list =
+        let terms = state.Terms
+        let isCustom =
+            match terms.AmortizationType with
+            | AmortizationType.Custom _ -> true
+            | _ -> false
+        if state.Status = LoanStatus.Closed
+           || fromDate >= terms.MaturityDate
+           || isCustom then []
+        else
+            let periods = dueDates terms fromDate
+            let n = periods.Length
+            if n = 0 then []
+            else
+                let rate = annualRate terms
+                let decimals = currencyDecimalPlaces state.Header.BaseCurrency
+                let indexedPeriods = periods |> List.mapi (fun i x -> (i, x))
+                let prevDate (i: int) =
+                    if i = 0 then fromDate else snd periods.[i - 1]
+                match terms.AmortizationType with
+                | AmortizationType.BulletMaturity ->
+                    let principal = state.OutstandingPrincipal
+                    periods |> List.mapi (fun i (_, dueDate) ->
+                        let pd = prevDate i
+                        let isLast = i = n - 1
+                        let principalDue = if isLast then principal else 0m
+                        let factor = DayCount.accrualFactor terms.DayCountConvention pd dueDate
+                        let interest = principal * rate * factor
+                        let remaining = principal - principalDue
+                        { PaymentNumber = i + 1; DueDate = dueDate
+                          PrincipalDue = principalDue; EstimatedInterest = interest
+                          TotalDue = principalDue + interest; RemainingPrincipalAfter = remaining })
+
+                | AmortizationType.StraightLine ->
+                    let principalPerPeriod = state.OutstandingPrincipal / decimal n
+                    let (payments, _) =
+                        indexedPeriods
+                        |> List.mapFold (fun remaining (i, (_, dueDate)) ->
+                            let pd = prevDate i
+                            // Last payment clears residual to absorb accumulated rounding error
+                            let principalDue =
+                                if i = n - 1 then remaining
+                                else Math.Round(principalPerPeriod, decimals)
+                            let factor = DayCount.accrualFactor terms.DayCountConvention pd dueDate
+                            let interest = remaining * rate * factor
+                            let newRemaining = max 0m (remaining - principalDue)
+                            let payment =
+                                { PaymentNumber = i + 1; DueDate = dueDate
+                                  PrincipalDue = principalDue; EstimatedInterest = interest
+                                  TotalDue = principalDue + interest; RemainingPrincipalAfter = newRemaining }
+                            (payment, newRemaining)
+                        ) state.OutstandingPrincipal
+                    payments
+
+                | AmortizationType.Annuity ->
+                    // PMT formula: P × r / (1 − (1 + r)^−n)
+                    // Per-period rate is approximated as annual rate / (periods per year).
+                    // Double-precision conversion is intentional: the schedule is an estimate.
+                    let periodsPerYear = 12m / decimal terms.PaymentFrequencyMonths
+                    let perPeriodRate = rate / periodsPerYear
+                    let pv = state.OutstandingPrincipal
+                    let nd = decimal n
+                    let constantPayment =
+                        if perPeriodRate = 0m then pv / nd
+                        else pv * perPeriodRate / (1m - dpow (1m + perPeriodRate) (-nd))
+                    let (payments, _) =
+                        indexedPeriods
+                        |> List.mapFold (fun remaining (i, (_, dueDate)) ->
+                            let pd = prevDate i
+                            let factor = DayCount.accrualFactor terms.DayCountConvention pd dueDate
+                            let interest = remaining * rate * factor
+                            let principalDue =
+                                if i = n - 1 then remaining
+                                else max 0m (min remaining (constantPayment - interest))
+                            let newRemaining = max 0m (remaining - principalDue)
+                            let payment =
+                                { PaymentNumber = i + 1; DueDate = dueDate
+                                  PrincipalDue = principalDue; EstimatedInterest = interest
+                                  TotalDue = principalDue + interest; RemainingPrincipalAfter = newRemaining }
+                            (payment, newRemaining)
+                        ) state.OutstandingPrincipal
+                    payments
+
+                | AmortizationType.Custom _ -> []

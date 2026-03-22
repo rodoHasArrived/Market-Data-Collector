@@ -939,3 +939,323 @@ let ``LoanService.isEconomicallyActive returns true for drawn active loan`` () =
           LoanEvent.DrawdownExecuted(5_000_000m, Currency.USD, DateOnly(2025, 2, 1)) ]
         |> LoanAggregate.rebuild
     LoanService.isEconomicallyActive state.Value |> should equal true
+
+// ── CreditRating ──────────────────────────────────────────────────────────────
+
+[<Fact>]
+let ``CreditRating.ToString returns expected notation`` () =
+    CreditRating.AAA.ToString()  |> should equal "AAA"
+    CreditRating.BBB.ToString()  |> should equal "BBB"
+    CreditRating.D.ToString()    |> should equal "D"
+    CreditRating.Unrated.ToString() |> should equal "NR"
+
+[<Fact>]
+let ``CreditRating.Parse round-trips all values`` () =
+    [ "AAA"; "AA"; "A"; "BBB"; "BB"; "B"; "CCC"; "CC"; "D"; "NR" ]
+    |> List.iter (fun s -> CreditRating.Parse(s).ToString() |> should equal s)
+
+[<Fact>]
+let ``CreditRating.IsInvestmentGrade is true for BBB and above`` () =
+    [ CreditRating.AAA; CreditRating.AA; CreditRating.A; CreditRating.BBB ]
+    |> List.iter (fun r -> r.IsInvestmentGrade |> should equal true)
+
+[<Fact>]
+let ``CreditRating.IsInvestmentGrade is false for BB and below`` () =
+    [ CreditRating.BB; CreditRating.B; CreditRating.CCC; CreditRating.CC; CreditRating.D; CreditRating.Unrated ]
+    |> List.iter (fun r -> r.IsInvestmentGrade |> should equal false)
+
+[<Fact>]
+let ``AssignCreditRating stores rating on state`` () =
+    let state = createLoan ()
+    let result = LoanAggregate.handle state (LoanCommand.AssignCreditRating(CreditRating.BB, "InternalCredit", DateOnly(2025, 3, 1)))
+    match result with
+    | Ok events ->
+        let newState = applyEvents state events
+        newState.Value.CreditRating |> should equal (Some CreditRating.BB)
+    | Error msg -> failwith $"Unexpected error: {msg}"
+
+[<Fact>]
+let ``AssignCreditRating rejects empty rater`` () =
+    let state = createLoan ()
+    let result = LoanAggregate.handle state (LoanCommand.AssignCreditRating(CreditRating.A, "   ", DateOnly(2025, 3, 1)))
+    match result with
+    | Error msg -> msg |> should equal "Rater must be provided."
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``AssignCreditRating rejects closed loan`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanClosed(DateOnly(2028, 1, 15)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.AssignCreditRating(CreditRating.D, "Internal", DateOnly(2028, 2, 1)))
+    match result with
+    | Error msg -> msg |> should equal "Cannot rate a closed loan."
+    | Ok _ -> failwith "Expected error"
+
+// ── Covenants ─────────────────────────────────────────────────────────────────
+
+let private sampleCovenant () : Covenant =
+    { CovenantId      = Guid.NewGuid()
+      CovenantType    = CovenantType.InterestCoverageRatio
+      Description     = "EBITDA / interest >= 2.0x"
+      ThresholdValue  = 2.0m
+      Frequency       = CovenantFrequency.Quarterly
+      Status          = CovenantStatus.Active
+      LastTestDate    = None }
+
+[<Fact>]
+let ``AddCovenant appends covenant and status is Active`` () =
+    let state = createLoan ()
+    let cov = sampleCovenant ()
+    let result = LoanAggregate.handle state (LoanCommand.AddCovenant(cov, DateOnly(2025, 3, 1)))
+    match result with
+    | Ok events ->
+        let newState = applyEvents state events
+        newState.Value.ActiveCovenants |> should haveLength 1
+        newState.Value.ActiveCovenants.[0].Status |> should equal CovenantStatus.Active
+    | Error msg -> failwith $"Unexpected error: {msg}"
+
+[<Fact>]
+let ``AddCovenant rejects duplicate covenant id`` () =
+    let cov = sampleCovenant ()
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.CovenantAdded(cov, DateOnly(2025, 3, 1)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.AddCovenant(cov, DateOnly(2025, 4, 1)))
+    match result with
+    | Error msg -> msg |> should equal "A covenant with this ID already exists."
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``AddCovenant rejects non-positive threshold`` () =
+    let state = createLoan ()
+    let badCov = { sampleCovenant () with ThresholdValue = 0m }
+    let result = LoanAggregate.handle state (LoanCommand.AddCovenant(badCov, DateOnly(2025, 3, 1)))
+    match result with
+    | Error msg -> msg |> should equal "Covenant threshold must be positive."
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``ReportCovenantBreach marks covenant as Breached and records test date`` () =
+    let cov = sampleCovenant ()
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.CovenantAdded(cov, DateOnly(2025, 3, 1)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.ReportCovenantBreach(cov.CovenantId, 1.2m, DateOnly(2025, 6, 30)))
+    match result with
+    | Ok events ->
+        let newState = applyEvents state events
+        let c = newState.Value.ActiveCovenants.[0]
+        c.Status         |> should equal CovenantStatus.Breached
+        c.LastTestDate   |> should equal (Some (DateOnly(2025, 6, 30)))
+    | Error msg -> failwith $"Unexpected error: {msg}"
+
+[<Fact>]
+let ``ReportCovenantBreach rejects unknown covenant`` () =
+    let state = createLoan ()
+    let result = LoanAggregate.handle state (LoanCommand.ReportCovenantBreach(Guid.NewGuid(), 1.0m, DateOnly(2025, 6, 30)))
+    match result with
+    | Error msg -> msg |> should equal "Covenant not found."
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``GrantCovenantWaiver marks covenant as Waived`` () =
+    let cov = sampleCovenant ()
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.CovenantAdded(cov, DateOnly(2025, 3, 1))
+          LoanEvent.CovenantBreached(cov.CovenantId, 1.2m, DateOnly(2025, 6, 30)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.GrantCovenantWaiver(cov.CovenantId, None, DateOnly(2025, 7, 15)))
+    match result with
+    | Ok events ->
+        let newState = applyEvents state events
+        newState.Value.ActiveCovenants.[0].Status |> should equal CovenantStatus.Waived
+    | Error msg -> failwith $"Unexpected error: {msg}"
+
+[<Fact>]
+let ``AmendCovenant updates threshold and resets status to Active`` () =
+    let cov = sampleCovenant ()
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.CovenantAdded(cov, DateOnly(2025, 3, 1))
+          LoanEvent.CovenantBreached(cov.CovenantId, 1.2m, DateOnly(2025, 6, 30)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.AmendCovenant(cov.CovenantId, 1.5m, DateOnly(2025, 8, 1)))
+    match result with
+    | Ok events ->
+        let newState = applyEvents state events
+        let c = newState.Value.ActiveCovenants.[0]
+        c.ThresholdValue |> should equal 1.5m
+        c.Status         |> should equal CovenantStatus.Active
+    | Error msg -> failwith $"Unexpected error: {msg}"
+
+[<Fact>]
+let ``AmendCovenant rejects non-positive threshold`` () =
+    let cov = sampleCovenant ()
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.CovenantAdded(cov, DateOnly(2025, 3, 1)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.AmendCovenant(cov.CovenantId, -1m, DateOnly(2025, 8, 1)))
+    match result with
+    | Error msg -> msg |> should equal "Covenant threshold must be positive."
+    | Ok _ -> failwith "Expected error"
+
+// ── InterestCalculator ────────────────────────────────────────────────────────
+
+[<Fact>]
+let ``makeAccrualPeriod computes correct days and factor for Actual360`` () =
+    let period = InterestCalculator.makeAccrualPeriod DayCountConvention.Actual360 (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1))
+    period.DaysInPeriod |> should equal 90
+    period.AccrualFactor |> should equal (90m / 360m)
+
+[<Fact>]
+let ``estimateInterest uses fixed rate and day count convention`` () =
+    let terms = { sampleTerms () with InterestRate = Some 0.08m; DayCountConvention = DayCountConvention.Actual360 }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(10_000_000m, Currency.USD, DateOnly(2025, 1, 1)) ]
+        |> LoanAggregate.rebuild
+    // 90 days / 360 * 8% * 10M = 20,000
+    let interest = InterestCalculator.estimateInterest state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1))
+    interest |> should equal (10_000_000m * 0.08m * (90m / 360m))
+
+[<Fact>]
+let ``estimateInterest falls back to spread when no fixed rate`` () =
+    let terms = { sampleTerms () with InterestRate = None; SpreadBps = Some 450m; DayCountConvention = DayCountConvention.Actual360 }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(10_000_000m, Currency.USD, DateOnly(2025, 1, 1)) ]
+        |> LoanAggregate.rebuild
+    let interest = InterestCalculator.estimateInterest state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1))
+    // 90/360 * (450/10000) * 10M
+    interest |> should equal (10_000_000m * (450m / 10_000m) * (90m / 360m))
+
+[<Fact>]
+let ``estimateInterest returns zero when principal is zero`` () =
+    let state = createLoan ()
+    InterestCalculator.estimateInterest state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1)) |> should equal 0m
+
+[<Fact>]
+let ``estimateCommitmentFee uses undrawn balance and fee rate`` () =
+    let terms = { sampleTerms () with CommitmentFeeRate = Some 0.005m; DayCountConvention = DayCountConvention.Actual360 }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(4_000_000m, Currency.USD, DateOnly(2025, 1, 1)) ]
+        |> LoanAggregate.rebuild
+    // Undrawn = 6_000_000; 90 days / 360 * 0.5% * 6M = 7_500
+    let fee = InterestCalculator.estimateCommitmentFee state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1))
+    fee |> should equal (6_000_000m * 0.005m * (90m / 360m))
+
+[<Fact>]
+let ``estimateCommitmentFee returns zero when no fee rate configured`` () =
+    let terms = { sampleTerms () with CommitmentFeeRate = None }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms) ]
+        |> LoanAggregate.rebuild
+    InterestCalculator.estimateCommitmentFee state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1)) |> should equal 0m
+
+[<Fact>]
+let ``estimateAllInYield includes discount amortisation`` () =
+    let terms = { sampleTerms () with InterestRate = Some 0.08m; PurchasePrice = Some 0.95m; DayCountConvention = DayCountConvention.Actual360 }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.DrawdownExecuted(10_000_000m, Currency.USD, DateOnly(2025, 1, 1)) ]
+        |> LoanAggregate.rebuild
+    // AllInYield > plain interest due to discount amortisation
+    let plain = InterestCalculator.estimateInterest state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1))
+    let allIn = InterestCalculator.estimateAllInYield state.Value (DateOnly(2025, 1, 1)) (DateOnly(2025, 4, 1))
+    allIn |> should be (greaterThan plain)
+
+// ── PaymentSchedule ────────────────────────────────────────────────────────────
+
+let private drawnState (drawn: decimal) (terms: DirectLendingTerms) : LoanState option =
+    [ LoanEvent.LoanCreated(sampleHeader (), terms)
+      LoanEvent.LoanCommitted(terms.CommitmentAmount, Currency.USD)
+      LoanEvent.DrawdownExecuted(drawn, Currency.USD, terms.OriginationDate) ]
+    |> LoanAggregate.rebuild
+
+[<Fact>]
+let ``PaymentSchedule.generate returns empty list for Closed loan`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanClosed(DateOnly(2028, 1, 15)) ]
+        |> LoanAggregate.rebuild
+    PaymentSchedule.generate state.Value (DateOnly(2025, 1, 1)) |> should haveLength 0
+
+[<Fact>]
+let ``PaymentSchedule.generate Bullet has zero principal until final payment`` () =
+    let terms = { sampleTerms () with
+                    OriginationDate = DateOnly(2025, 1, 1)
+                    MaturityDate    = DateOnly(2026, 1, 1)
+                    PaymentFrequencyMonths = 3
+                    AmortizationType = AmortizationType.BulletMaturity
+                    InterestRate = Some 0.08m
+                    CommitmentAmount = 1_000_000m }
+    let state = drawnState 1_000_000m terms
+    let schedule = PaymentSchedule.generate state.Value (DateOnly(2025, 1, 1))
+    schedule |> should haveLength 4
+    schedule |> List.take 3 |> List.iter (fun p -> p.PrincipalDue |> should equal 0m)
+    (List.last schedule).PrincipalDue |> should equal 1_000_000m
+    (List.last schedule).RemainingPrincipalAfter |> should equal 0m
+
+[<Fact>]
+let ``PaymentSchedule.generate StraightLine has equal principal slices`` () =
+    let terms = { sampleTerms () with
+                    OriginationDate = DateOnly(2025, 1, 1)
+                    MaturityDate    = DateOnly(2026, 1, 1)
+                    PaymentFrequencyMonths = 3
+                    AmortizationType = AmortizationType.StraightLine
+                    InterestRate = Some 0.08m
+                    CommitmentAmount = 1_000_000m }
+    let state = drawnState 1_000_000m terms
+    let schedule = PaymentSchedule.generate state.Value (DateOnly(2025, 1, 1))
+    schedule |> should haveLength 4
+    (List.last schedule).RemainingPrincipalAfter |> should equal 0m
+    // Each of the first three payments has principal 250_000 (1M / 4)
+    schedule |> List.take 3 |> List.iter (fun p -> p.PrincipalDue |> should equal 250_000m)
+
+[<Fact>]
+let ``PaymentSchedule.generate Annuity has constant total payment`` () =
+    let terms = { sampleTerms () with
+                    OriginationDate = DateOnly(2025, 1, 1)
+                    MaturityDate    = DateOnly(2026, 1, 1)
+                    PaymentFrequencyMonths = 3
+                    AmortizationType = AmortizationType.Annuity
+                    InterestRate = Some 0.08m
+                    CommitmentAmount = 1_000_000m }
+    let state = drawnState 1_000_000m terms
+    let schedule = PaymentSchedule.generate state.Value (DateOnly(2025, 1, 1))
+    schedule |> should haveLength 4
+    (List.last schedule).RemainingPrincipalAfter |> should equal 0m
+    // All but the final period should have approximately the same total payment
+    let totals = schedule |> List.take 3 |> List.map (fun p -> p.TotalDue)
+    let avg = List.average totals
+    totals |> List.iter (fun t -> abs (t - avg) |> should be (lessThan 0.02m))
+
+[<Fact>]
+let ``PaymentSchedule.generate Custom returns empty list`` () =
+    let terms = { sampleTerms () with AmortizationType = AmortizationType.Custom "negotiated" }
+    let state = drawnState 1_000_000m terms
+    PaymentSchedule.generate state.Value (DateOnly(2025, 1, 1)) |> should haveLength 0
+
+[<Fact>]
+let ``PaymentSchedule.generate respects fromDate and skips past payments`` () =
+    let terms = { sampleTerms () with
+                    OriginationDate = DateOnly(2025, 1, 1)
+                    MaturityDate    = DateOnly(2026, 1, 1)
+                    PaymentFrequencyMonths = 3
+                    AmortizationType = AmortizationType.BulletMaturity
+                    InterestRate = Some 0.08m
+                    CommitmentAmount = 1_000_000m }
+    let state = drawnState 1_000_000m terms
+    // Advance fromDate past the first two payment dates
+    let schedule = PaymentSchedule.generate state.Value (DateOnly(2025, 7, 1))
+    schedule |> should haveLength 2
