@@ -31,6 +31,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Meridian.Benchmarks", "benc
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Meridian.FSharp", "src\Meridian.FSharp\Meridian.FSharp.fsproj", "{F5555555-A666-B777-C888-D99999999999}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Meridian.Lending.Cli", "src\Meridian.Lending.Cli\Meridian.Lending.Cli.fsproj", "{LC000001-BB11-BC22-BD33-BE4444444444}"
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Meridian.FSharp.Tests", "tests\Meridian.FSharp.Tests\Meridian.FSharp.Tests.fsproj", "{F6666666-A777-B888-C999-DAAAAAAAAA00}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Meridian.Domain", "src\Meridian.Domain\Meridian.Domain.csproj", "{DA111111-DB22-DC33-DD44-DE5555555555}"

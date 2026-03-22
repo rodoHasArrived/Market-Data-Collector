@@ -39,7 +39,7 @@ public sealed class ConfigJsonSchemaGeneratorTests
         backfillSchema["anyOf"]!.AsArray()
             .Select(static node => node!.AsObject())
             .Should()
-            .Contain(node => node["type"]?.GetValue<string>() == "null");
+            .Contain(node => node["type"] != null && node["type"]!.GetValue<string>() == "null");
     }
 
     [Fact]

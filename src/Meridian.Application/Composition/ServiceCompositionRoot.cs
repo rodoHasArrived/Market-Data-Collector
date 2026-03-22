@@ -40,6 +40,7 @@ public static class ServiceCompositionRoot
         new CollectorFeatureRegistration(),
         new CanonicalizationFeatureRegistration(),
         new HttpClientFeatureRegistration(),
+        new LendingFeatureRegistration(),
     ];
 
     /// <summary>
@@ -106,6 +107,10 @@ public static class ServiceCompositionRoot
 
         if (options.EnableHttpClientFactory)
             services.RegisterFeature<HttpClientFeatureRegistration>(options);
+
+        // Lending domain — pure F# aggregate, no infrastructure dependencies
+        if (options.EnableLendingServices)
+            services.RegisterFeature<LendingFeatureRegistration>(options);
 
         return services;
     }
@@ -299,4 +304,10 @@ public sealed record CompositionOptions
     /// Whether to enable OpenTelemetry tracing and metrics instrumentation.
     /// </summary>
     public bool EnableOpenTelemetry { get; init; }
+
+    /// <summary>
+    /// Whether to register the direct-lending domain service (<see cref="Lending.ILendingService"/>).
+    /// Enabled by default.
+    /// </summary>
+    public bool EnableLendingServices { get; init; } = true;
 }

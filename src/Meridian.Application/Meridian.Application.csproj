@@ -81,4 +81,9 @@
     <ProjectReference Include="..\Meridian.ProviderSdk\Meridian.ProviderSdk.csproj" />
     <ProjectReference Include="..\Meridian.FSharp\Meridian.FSharp.fsproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Required to consume F# discriminated union and option types from C# -->
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
 </Project>
