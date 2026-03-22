@@ -1122,6 +1122,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── assembly-performance-roadmap.md
 │   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
+│   │   ├── ledger
 │   │   ├── quant-script-environment-blueprint.md
 │   │   ├── readability-refactor-baseline.md
 │   │   ├── readability-refactor-roadmap.md
@@ -2721,7 +2722,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   └── xunit.runner.json
 └── tree.bak
 
-317 directories, 1828 files
+317 directories, 1829 files
 ```
 <!-- readme-tree end -->
 
