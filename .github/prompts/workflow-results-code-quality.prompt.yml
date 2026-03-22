@@ -1,15 +1,15 @@
-name: Workflow Results - code-quality
-description: Address issues found in the code-quality workflow run
+name: Workflow Results - {workflow_name}
+description: Address issues found in the {workflow_name} workflow run
 # Auto-generated prompt from workflow run analysis
-# Generated: 2026-03-20
-# Source: https://github.com/rodoHasArrived/Meridian/actions/runs/23334219330
-# Run conclusion: unknown
+# Generated: {now}
+# Source: {run_url}
+# Run conclusion: {run_conclusion}
 # Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |
       You are a senior .NET developer analyzing CI/CD workflow results for the Meridian project.
-      The `code-quality` workflow has completed with status: **unknown**.
+      The `{workflow_name}` workflow has completed with status: **{run_conclusion}**.
 
       ## Project Context
       Meridian is a .NET 9.0 C#/F# market data collection system.
@@ -18,8 +18,8 @@ messages:
       - 14 main projects, 105 test files
 
       ## Findings from Workflow Run
-      No specific patterns detected.
-
+{findings_text}
+{test_section}{code_section}
       ## Resolution Guidelines
       1. Prioritize failures by severity (errors > warnings)
       2. Check docs/ai/ai-known-errors.md for recurring patterns
@@ -29,12 +29,12 @@ messages:
 
   - role: user
     content: |
-      The `code-quality` CI workflow needs attention. Analyze the results and help fix the issues.
+      The `{workflow_name}` CI workflow needs attention. Analyze the results and help fix the issues.
 
-      Workflow run: https://github.com/rodoHasArrived/Meridian/actions/runs/23334219330
+      Workflow run: {run_url}
 
       Additional context:
-      {{additional_context}}
+      {{{{additional_context}}}}
 
       Please provide:
       1. Summary of all issues found
