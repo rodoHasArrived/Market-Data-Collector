@@ -24,6 +24,8 @@ let private sampleTerms () : DirectLendingTerms =
       SpreadBps = Some 350m
       PaymentFrequencyMonths = 3
       AmortizationType = AmortizationType.BulletMaturity
+      DayCountConvention = DayCountConvention.Actual360
+      PurchasePrice = None
       CovenantsJson = None }
 
 let private createLoan () =
@@ -49,6 +51,88 @@ let ``Currency.Parse round-trips known codes`` () =
 [<Fact>]
 let ``Currency.Parse wraps unknown code in Other`` () =
     Currency.Parse "SGD" |> should equal (Currency.Other "SGD")
+
+// ── Day count convention tests ────────────────────────────────────────────────
+
+[<Fact>]
+let ``Actual360 accrual factor is days divided by 360`` () =
+    let start = DateOnly(2025, 1, 1)
+    let end_ = DateOnly(2025, 4, 1)  // 90 days
+    let factor = DayCount.accrualFactor DayCountConvention.Actual360 start end_
+    factor |> should equal (90m / 360m)
+
+[<Fact>]
+let ``Actual365Fixed accrual factor is days divided by 365`` () =
+    let start = DateOnly(2025, 1, 1)
+    let end_ = DateOnly(2025, 4, 1)  // 90 days
+    let factor = DayCount.accrualFactor DayCountConvention.Actual365Fixed start end_
+    factor |> should equal (90m / 365m)
+
+[<Fact>]
+let ``Thirty360 full year factor is 1`` () =
+    // 30/360: 2025-01-01 to 2026-01-01 should equal 360/360 = 1
+    let start = DateOnly(2025, 1, 1)
+    let end_ = DateOnly(2026, 1, 1)
+    let factor = DayCount.accrualFactor DayCountConvention.Thirty360 start end_
+    factor |> should equal 1m
+
+[<Fact>]
+let ``Thirty360 one month factor equals 30 divided by 360`` () =
+    // 2025-01-01 to 2025-02-01 = 30 days in 30/360 = 30/360
+    let start = DateOnly(2025, 1, 1)
+    let end_ = DateOnly(2025, 2, 1)
+    let factor = DayCount.accrualFactor DayCountConvention.Thirty360 start end_
+    factor |> should equal (30m / 360m)
+
+[<Fact>]
+let ``Thirty360 end-of-month 30 31 adjusted correctly`` () =
+    // 30/360: Jan 30 to Feb 28 — d1=30, d2=28 → (28-30)= -2, so 28 days
+    let start = DateOnly(2025, 1, 30)
+    let end_  = DateOnly(2025, 2, 28)
+    let factor = DayCount.accrualFactor DayCountConvention.Thirty360 start end_
+    factor |> should equal (28m / 360m)
+
+[<Fact>]
+let ``Thirty360 day 31 to day 31 adjusts both to 30`` () =
+    // Jan 31 to Mar 31: d1=30, d2=30 (since d1>=30), so days = 0*360 + 2*30 + 0 = 60
+    let start = DateOnly(2025, 1, 31)
+    let end_  = DateOnly(2025, 3, 31)
+    let factor = DayCount.accrualFactor DayCountConvention.Thirty360 start end_
+    factor |> should equal (60m / 360m)
+
+[<Fact>]
+let ``ActualActualISDA full non-leap year factor is 1`` () =
+    let start = DateOnly(2025, 1, 1)
+    let end_ = DateOnly(2026, 1, 1)
+    let factor = DayCount.accrualFactor DayCountConvention.ActualActualISDA start end_
+    factor |> should equal 1m
+
+[<Fact>]
+let ``ActualActualISDA full leap year factor is 1`` () =
+    let start = DateOnly(2024, 1, 1)
+    let end_ = DateOnly(2025, 1, 1)
+    let factor = DayCount.accrualFactor DayCountConvention.ActualActualISDA start end_
+    factor |> should equal 1m
+
+[<Fact>]
+let ``ActualActualISDA splits period at year boundary`` () =
+    // 2024-07-01 to 2025-07-01: 184 days in 2024 (leap, /366) + 181 days in 2025 (/365)
+    let start = DateOnly(2024, 7, 1)
+    let end_ = DateOnly(2025, 7, 1)
+    let factor = DayCount.accrualFactor DayCountConvention.ActualActualISDA start end_
+    let expected = 184m / 366m + 181m / 365m
+    factor |> should (equalWithin 0.000001m) expected
+
+[<Fact>]
+let ``DayCount accrualFactor returns zero when end equals start`` () =
+    let d = DateOnly(2025, 6, 1)
+    DayCount.accrualFactor DayCountConvention.Actual360 d d |> should equal 0m
+
+[<Fact>]
+let ``DayCount accrualFactor returns zero when end is before start`` () =
+    let start = DateOnly(2025, 6, 1)
+    let end_  = DateOnly(2025, 1, 1)
+    DayCount.accrualFactor DayCountConvention.Actual360 start end_ |> should equal 0m
 
 // ── LoanCreated ───────────────────────────────────────────────────────────────
 
@@ -93,6 +177,15 @@ let ``HandleCreate rejects duplicate create`` () =
     | Error msg -> msg |> should equal "Loan already exists."
     | Ok _ -> failwith "Expected error"
 
+[<Fact>]
+let ``HandleCreate rejects non-positive purchase price`` () =
+    let header = sampleHeader ()
+    let terms = { sampleTerms () with PurchasePrice = Some 0m }
+    let result = LoanAggregate.handleCreate None header terms
+    match result with
+    | Error msg -> msg |> should equal "PurchasePrice must be positive."
+    | Ok _ -> failwith "Expected error"
+
 // ── Evolve / Rebuild ──────────────────────────────────────────────────────────
 
 [<Fact>]
@@ -102,6 +195,8 @@ let ``Rebuild produces correct initial state from LoanCreated`` () =
     let s = state.Value
     s.Status |> should equal LoanStatus.Pending
     s.OutstandingPrincipal |> should equal 0m
+    s.UnamortizedDiscount |> should equal 0m
+    s.UnamortizedPremium |> should equal 0m
     s.Version |> should equal 1L
 
 [<Fact>]
@@ -340,3 +435,192 @@ let ``AmendTerms replaces loan terms and bumps version`` () =
         newState.Value.Terms.CommitmentAmount |> should equal 20_000_000m
         newState.Value.Terms.SpreadBps |> should equal (Some 400m)
     | Error msg -> failwith $"Unexpected error: {msg}"
+
+// ── Purchase discount / premium ───────────────────────────────────────────────
+
+[<Fact>]
+let ``LoanCreated at discount initialises UnamortizedDiscount`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 0.95m }  // 5% discount
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms) ]
+        |> LoanAggregate.rebuild
+    // Discount = (1 - 0.95) * 10_000_000 = 500_000
+    state.Value.UnamortizedDiscount |> should equal 500_000m
+    state.Value.UnamortizedPremium |> should equal 0m
+
+[<Fact>]
+let ``LoanCreated at premium initialises UnamortizedPremium`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 1.02m }  // 2% premium
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms) ]
+        |> LoanAggregate.rebuild
+    // Premium = (1.02 - 1) * 10_000_000 = 200_000
+    state.Value.UnamortizedPremium |> should equal 200_000m
+    state.Value.UnamortizedDiscount |> should equal 0m
+
+[<Fact>]
+let ``LoanCreated at par has zero discount and premium`` () =
+    let state = createLoan ()  // PurchasePrice = None → par
+    state.Value.UnamortizedDiscount |> should equal 0m
+    state.Value.UnamortizedPremium |> should equal 0m
+
+[<Fact>]
+let ``DiscountAmortized reduces unamortized discount`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 0.95m }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(10_000_000m, Currency.USD, DateOnly(2025, 2, 1))
+          LoanEvent.DiscountAmortized(125_000m, DateOnly(2025, 4, 1))
+          LoanEvent.DiscountAmortized(125_000m, DateOnly(2025, 7, 1)) ]
+        |> LoanAggregate.rebuild
+    state.Value.UnamortizedDiscount |> should equal 250_000m
+
+[<Fact>]
+let ``PremiumAmortized reduces unamortized premium`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 1.02m }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(10_000_000m, Currency.USD, DateOnly(2025, 2, 1))
+          LoanEvent.PremiumAmortized(50_000m, DateOnly(2025, 4, 1))
+          LoanEvent.PremiumAmortized(50_000m, DateOnly(2025, 7, 1)) ]
+        |> LoanAggregate.rebuild
+    state.Value.UnamortizedPremium |> should equal 100_000m
+
+[<Fact>]
+let ``AmortizeDiscount command rejects amount exceeding unamortized balance`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 0.95m }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.AmortizeDiscount(600_000m, DateOnly(2025, 4, 1)))
+    match result with
+    | Error msg -> msg |> should haveSubstring "unamortized discount"
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``AmortizePremium command rejects amount exceeding unamortized balance`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 1.02m }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.AmortizePremium(300_000m, DateOnly(2025, 4, 1)))
+    match result with
+    | Error msg -> msg |> should haveSubstring "unamortized premium"
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``Unamortized discount cannot go below zero on over-amortisation`` () =
+    let terms = { sampleTerms () with PurchasePrice = Some 0.95m }
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), terms)
+          LoanEvent.DiscountAmortized(600_000m, DateOnly(2025, 4, 1)) ]  // exceeds 500k — state clamps at 0
+        |> LoanAggregate.rebuild
+    state.Value.UnamortizedDiscount |> should equal 0m
+
+// ── Loan restructuring ─────────────────────────────────────────────────────────
+
+[<Fact>]
+let ``LoanRestructured replaces terms and preserves outstanding principal`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(8_000_000m, Currency.USD, DateOnly(2025, 2, 1)) ]
+        |> LoanAggregate.rebuild
+    let extendedTerms = { sampleTerms () with MaturityDate = DateOnly(2030, 1, 15) }
+    let newState =
+        LoanAggregate.evolve state
+            (LoanEvent.LoanRestructured(RestructuringType.MaturityExtension, extendedTerms, DateOnly(2026, 6, 1)))
+    newState.Terms.MaturityDate |> should equal (DateOnly(2030, 1, 15))
+    newState.OutstandingPrincipal |> should equal 8_000_000m
+
+[<Fact>]
+let ``HandleRestructureLoan rejects closed loan`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanClosed(DateOnly(2028, 1, 15)) ]
+        |> LoanAggregate.rebuild
+    let result =
+        LoanAggregate.handleRestructure state RestructuringType.MaturityExtension (sampleTerms ()) (DateOnly(2028, 2, 1))
+    match result with
+    | Error msg -> msg |> should equal "Cannot restructure a closed loan."
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``HandleRestructureLoan rejects maturity before restructuring date`` () =
+    let state = createLoan ()
+    let badTerms = { sampleTerms () with MaturityDate = DateOnly(2025, 1, 1) }
+    let result =
+        LoanAggregate.handleRestructure state RestructuringType.MaturityExtension badTerms (DateOnly(2026, 1, 1))
+    match result with
+    | Error msg -> msg |> should haveSubstring "maturity date"
+    | Ok _ -> failwith "Expected error"
+
+// ── Principal forgiveness ──────────────────────────────────────────────────────
+
+[<Fact>]
+let ``PrincipalForgiven reduces outstanding principal without cash inflow`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(5_000_000m, Currency.USD, DateOnly(2025, 2, 1))
+          LoanEvent.PrincipalForgiven(1_000_000m, DateOnly(2026, 1, 1)) ]
+        |> LoanAggregate.rebuild
+    state.Value.OutstandingPrincipal |> should equal 4_000_000m
+
+[<Fact>]
+let ``HandleForgivePrincipal rejects amount exceeding outstanding`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(2_000_000m, Currency.USD, DateOnly(2025, 2, 1)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.ForgivePrincipal(3_000_000m, DateOnly(2026, 1, 1)))
+    match result with
+    | Error msg -> msg |> should haveSubstring "outstanding principal"
+    | Ok _ -> failwith "Expected error"
+
+// ── PIK interest capitalisation ────────────────────────────────────────────────
+
+[<Fact>]
+let ``PikInterestCapitalized moves accrued interest to outstanding principal`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(5_000_000m, Currency.USD, DateOnly(2025, 2, 1))
+          LoanEvent.InterestAccrued(50_000m, DateOnly(2025, 4, 30))
+          LoanEvent.PikInterestCapitalized(30_000m, DateOnly(2025, 5, 1)) ]
+        |> LoanAggregate.rebuild
+    state.Value.AccruedInterestUnpaid |> should equal 20_000m
+    state.Value.OutstandingPrincipal |> should equal 5_030_000m
+
+[<Fact>]
+let ``HandleCapitalizePikInterest rejects amount exceeding accrued interest`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(5_000_000m, Currency.USD, DateOnly(2025, 2, 1))
+          LoanEvent.InterestAccrued(10_000m, DateOnly(2025, 4, 30)) ]
+        |> LoanAggregate.rebuild
+    let result = LoanAggregate.handle state (LoanCommand.CapitalizePikInterest(20_000m, DateOnly(2025, 5, 1)))
+    match result with
+    | Error msg -> msg |> should haveSubstring "accrued interest"
+    | Ok _ -> failwith "Expected error"
+
+[<Fact>]
+let ``Full PIK loan lifecycle: drawdown then PIK capitalisation then close`` () =
+    let state =
+        [ LoanEvent.LoanCreated(sampleHeader (), sampleTerms ())
+          LoanEvent.LoanCommitted(10_000_000m, Currency.USD)
+          LoanEvent.DrawdownExecuted(4_000_000m, Currency.USD, DateOnly(2025, 2, 1))
+          LoanEvent.InterestAccrued(40_000m, DateOnly(2025, 4, 30))
+          LoanEvent.PikInterestCapitalized(40_000m, DateOnly(2025, 5, 1))  // capitalise all accrued interest
+          LoanEvent.PrincipalRepaid(4_040_000m, DateOnly(2028, 1, 14))     // repay inflated principal
+          LoanEvent.LoanClosed(DateOnly(2028, 1, 15)) ]
+        |> LoanAggregate.rebuild
+    state.Value.Status |> should equal LoanStatus.Closed
+    state.Value.OutstandingPrincipal |> should equal 0m
+    state.Value.AccruedInterestUnpaid |> should equal 0m
