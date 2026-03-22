@@ -109,6 +109,14 @@
     <PackageVersion Include="ZstdSharp.Port" Version="0.8.7" />
   </ItemGroup>
 
+  <ItemGroup Label="Direct Lending — PostgreSQL Event Store">
+    <!-- Npgsql: PostgreSQL driver for .NET — used by Meridian.Lending event store -->
+    <PackageVersion Include="Npgsql" Version="9.0.4" />
+    <!-- FsPickler: MBrace/Nessos F# serialization library — handles F# DU serialization for event log -->
+    <PackageVersion Include="FsPickler" Version="5.3.2" />
+    <PackageVersion Include="FsPickler.Json" Version="5.3.2" />
+  </ItemGroup>
+
   <ItemGroup Label="QuantConnect Lean">
     <PackageVersion Include="QuantConnect.Lean" Version="2.5.17414" />
     <PackageVersion Include="QuantConnect.Lean.Engine" Version="2.5.17414" />
