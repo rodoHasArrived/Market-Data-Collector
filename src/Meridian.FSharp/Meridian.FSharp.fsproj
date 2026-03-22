@@ -18,6 +18,7 @@
     <Compile Include="Domain/Sides.fs" />
     <Compile Include="Domain/Integrity.fs" />
     <Compile Include="Domain/MarketEvents.fs" />
+    <Compile Include="Domain/Lending.fs" />
 
     <!-- Validation layer: depends on Domain -->
     <Compile Include="Validation/ValidationTypes.fs" />
