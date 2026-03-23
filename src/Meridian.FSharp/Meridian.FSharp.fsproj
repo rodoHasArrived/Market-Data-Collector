@@ -19,6 +19,8 @@
     <Compile Include="Domain/Integrity.fs" />
     <Compile Include="Domain/MarketEvents.fs" />
     <Compile Include="Domain/Instruments.fs" />
+    <Compile Include="Domain/MeasuredData.fs" />
+    <Compile Include="Domain/DerivedData.fs" />
 
     <!-- Validation layer: depends on Domain -->
     <Compile Include="Validation/ValidationTypes.fs" />
