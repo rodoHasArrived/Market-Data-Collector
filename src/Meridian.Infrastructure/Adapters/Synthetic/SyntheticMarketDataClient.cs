@@ -250,19 +250,24 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
             cts.Cancel();
         }
 
-        if (workers.Count > 0)
+        try
         {
-            var activeWorkers = workers.Values.ToArray();
-            await Task.WhenAll(activeWorkers).WaitAsync(ct).ConfigureAwait(false);
+            if (workers.Count > 0)
+            {
+                var activeWorkers = workers.Values.ToArray();
+                await Task.WhenAll(activeWorkers).WaitAsync(ct).ConfigureAwait(false);
+            }
         }
-
-        foreach (var (_, cts) in subscriptions)
+        finally
         {
-            cts.Dispose();
-        }
+            foreach (var (_, cts) in subscriptions)
+            {
+                cts.Dispose();
+            }
 
-        subscriptions.Clear();
-        workers.Clear();
+            subscriptions.Clear();
+            workers.Clear();
+        }
     }
 
     private static async Task DelayAsync(TimeSpan delay, CancellationToken ct)
