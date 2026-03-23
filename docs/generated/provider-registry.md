@@ -4,7 +4,7 @@
 
 # Provider Registry
 
-> Auto-generated on 2026-03-18 20:00:44 UTC
+> Auto-generated on 2026-03-23 04:00:02 UTC
 
 This document lists all data providers available in the Meridian.
 
