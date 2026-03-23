@@ -21,6 +21,7 @@
     <Compile Include="Domain/Instruments.fs" />
     <Compile Include="Domain/MeasuredData.fs" />
     <Compile Include="Domain/DerivedData.fs" />
+    <Compile Include="Domain/Accounts.fs" />
 
     <!-- Validation layer: depends on Domain -->
     <Compile Include="Validation/ValidationTypes.fs" />

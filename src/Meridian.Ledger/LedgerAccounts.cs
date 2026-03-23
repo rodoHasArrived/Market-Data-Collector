@@ -98,6 +98,50 @@ public static class LedgerAccounts
         return new("Securities", LedgerAccountType.Asset, normalizedSymbol, NormalizeOptionalAccountId(financialAccountId));
     }
 
+    // ── Options-specific accounts ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Liability account for a short option obligation on a specific instrument.
+    /// When an option is written (sold), the premium received is credited here — NOT to revenue.
+    /// Revenue is only recognised when the obligation is extinguished (buyback / expiry / assignment).
+    /// Account code: 2100.{instrumentId}
+    /// </summary>
+    public static LedgerAccount ShortOptionObligation(string instrumentId, string? financialAccountId = null) =>
+        new("Short Option Obligation", LedgerAccountType.Liability,
+            NormalizeSymbol(instrumentId), NormalizeOptionalAccountId(financialAccountId));
+
+    /// <summary>
+    /// Realised profit-and-loss account for options positions.
+    /// Credited when a short option obligation is extinguished at a profit;
+    /// debited when extinguished at a loss.
+    /// Account code: 4100.{instrumentId}
+    /// </summary>
+    public static LedgerAccount OptionsRealisedPnl(string instrumentId, string? financialAccountId = null) =>
+        new("Options Realised P&amp;L", LedgerAccountType.Revenue,
+            NormalizeSymbol(instrumentId), NormalizeOptionalAccountId(financialAccountId));
+
+    /// <summary>
+    /// Expense account for implied borrowing cost via a box spread on the given underlying.
+    /// Debited when the implied box spread rate exceeds the risk-free rate (you are paying
+    /// more than the market rate to borrow).
+    /// Account code: 6200.{underlyingId}
+    /// </summary>
+    public static LedgerAccount SyntheticBorrowingExpense(string underlyingId, string? financialAccountId = null) =>
+        new("Synthetic Borrowing Expense", LedgerAccountType.Expense,
+            NormalizeSymbol(underlyingId), NormalizeOptionalAccountId(financialAccountId));
+
+    /// <summary>
+    /// Revenue account for implied lending income via a box spread on the given underlying.
+    /// Credited when the implied box spread rate is below the margin rate (the box is cheaper
+    /// than margin borrowing — you are effectively lending at above-market rates by holding the box).
+    /// Account code: 4200.{underlyingId}
+    /// </summary>
+    public static LedgerAccount SyntheticLendingIncome(string underlyingId, string? financialAccountId = null) =>
+        new("Synthetic Lending Income", LedgerAccountType.Revenue,
+            NormalizeSymbol(underlyingId), NormalizeOptionalAccountId(financialAccountId));
+
+    // ── Equity long/short ─────────────────────────────────────────────────────
+
     /// <summary>
     /// Returns the liability account representing the obligation to return borrowed shares for
     /// a short position in <paramref name="symbol"/>.
