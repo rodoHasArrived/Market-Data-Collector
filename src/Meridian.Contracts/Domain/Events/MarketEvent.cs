@@ -17,7 +17,12 @@ public sealed record MarketEventDto(
     MarketEventTier Tier = MarketEventTier.Raw,
     string? CanonicalSymbol = null,
     byte CanonicalizationVersion = 0,
-    string? CanonicalVenue = null
+    string? CanonicalVenue = null,
+    string? ActivityTraceId = null,
+    string? ActivitySpanId = null,
+    byte ActivityTraceFlags = 0,
+    string? ActivityTraceState = null,
+    bool? ActivityIsRemote = null
 )
 {
     /// <summary>

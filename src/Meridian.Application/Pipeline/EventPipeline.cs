@@ -382,6 +382,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
                         continue;
                     }
 
+                    using var replayStorageActivity = MarketDataTracing.StartStorageActivity(_sink.GetType().Name, evt.EffectiveSymbol, evt.GetOriginatingActivityContext());
+                    MarketDataTracing.TagMarketEvent(replayStorageActivity, evt);
                     await _sink.AppendAsync(evt, ct).ConfigureAwait(false);
                     maxRecoveredSequence = Math.Max(maxRecoveredSequence, walRecord.Sequence);
                     recovered++;
@@ -460,12 +462,14 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
             // Channel is at capacity — the item will be silently discarded by the
             // bounded channel. Still call TryWrite so the channel can apply its
             // policy, but track the event as dropped.
-            _channel.Writer.TryWrite(evt);
-            RecordDrop(in evt);
+            var tracedEvent = evt.WithOriginatingActivityContext();
+            _channel.Writer.TryWrite(tracedEvent);
+            RecordDrop(in tracedEvent);
             return false;
         }
 
-        var written = _channel.Writer.TryWrite(evt);
+        var tracedEvent = evt.WithOriginatingActivityContext();
+        var written = _channel.Writer.TryWrite(tracedEvent);
 
         if (written)
         {
@@ -510,7 +514,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
         }
         else
         {
-            RecordDrop(in evt);
+            RecordDrop(in tracedEvent);
         }
 
         return written;
@@ -570,7 +574,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
     /// </summary>
     public async ValueTask PublishAsync(MarketEvent evt, CancellationToken ct = default)
     {
-        await _channel.Writer.WriteAsync(evt, ct).ConfigureAwait(false);
+        var tracedEvent = evt.WithOriginatingActivityContext();
+        await _channel.Writer.WriteAsync(tracedEvent, ct).ConfigureAwait(false);
         Interlocked.Increment(ref _publishedCount);
         if (_metricsEnabled)
         {
@@ -707,6 +712,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
                     for (var i = 0; i < batchBuffer.Count; i++)
                     {
                         var evt = batchBuffer[i];
+                        using var processActivity = MarketDataTracing.StartProcessActivity(
+                            GetEventTypeName(evt.Type),
+                            evt.EffectiveSymbol,
+                            evt.GetOriginatingActivityContext());
+                        MarketDataTracing.TagMarketEvent(processActivity, evt);
 
                         // Deduplication check (when a dedup ledger is configured)
                         if (_dedupLedger != null)
@@ -739,6 +749,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IBackpressureSignal, 
                             maxWalSequence = Math.Max(maxWalSequence, walRecord.Sequence);
                         }
 
+                        using var storageActivity = MarketDataTracing.StartStorageActivity(_sink.GetType().Name, evt.EffectiveSymbol);
+                        MarketDataTracing.TagMarketEvent(storageActivity, evt);
                         await _sink.AppendAsync(evt, _cts.Token).ConfigureAwait(false);
                     }
 

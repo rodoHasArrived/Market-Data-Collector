@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading;
 using Meridian.Application.Logging;
+using Meridian.Application.Tracing;
 using Meridian.Domain.Events;
 using Meridian.Storage.Interfaces;
 using Serilog;
@@ -62,6 +63,8 @@ public sealed class ArchivalStorageService : IStorageSink
     /// <inheritdoc/>
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
+        evt = evt.WithOriginatingActivityContext();
+
         // Write to WAL first
         var walRecord = await _wal.AppendAsync(evt, evt.Type.ToString(), ct);
 
@@ -110,6 +113,8 @@ public sealed class ArchivalStorageService : IStorageSink
             // Write to primary storage
             foreach (var pending in eventsToFlush.OrderBy(e => e.WalSequence))
             {
+                using var storageActivity = MarketDataTracing.StartStorageActivity(_primaryStorage.GetType().Name, pending.Event.EffectiveSymbol, pending.Event.GetOriginatingActivityContext());
+                MarketDataTracing.TagMarketEvent(storageActivity, pending.Event);
                 await _primaryStorage.AppendAsync(pending.Event, ct);
             }
 
