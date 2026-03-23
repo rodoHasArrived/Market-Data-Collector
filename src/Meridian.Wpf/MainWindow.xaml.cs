@@ -671,13 +671,13 @@ public partial class MainWindow : Window
             // during the session by the individual pages via UpdatePageFilterState().
             var existing = _workspaceService.GetLastSessionState();
 
-            var session = new Ui.Services.SessionState
+            var session = new SessionState
             {
                 ActivePageTag = currentPage ?? "Dashboard",
                 ActiveWorkspaceId = activeWorkspace?.Id,
                 ActiveFilters = existing?.ActiveFilters ?? new System.Collections.Generic.Dictionary<string, string>(),
-                OpenPages = existing?.OpenPages ?? new System.Collections.Generic.List<Ui.Services.WorkspacePage>(),
-                WindowBounds = new Ui.Services.WindowBounds
+                OpenPages = existing?.OpenPages ?? new System.Collections.Generic.List<WorkspacePage>(),
+                WindowBounds = new WindowBounds
                 {
                     X = RestoreBounds.Left,
                     Y = RestoreBounds.Top,

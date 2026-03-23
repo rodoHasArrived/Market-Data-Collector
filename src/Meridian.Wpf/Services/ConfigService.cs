@@ -187,7 +187,7 @@ public sealed class ConfigService : ConfigServiceBase
     {
         var (previousJson, newJson) = await base.SetBackfillProviderOptionsAsync(providerId, options);
 
-        Ui.Services.BackfillProviderConfigService.Instance.RecordAuditEntry(
+        BackfillProviderConfigService.Instance.RecordAuditEntry(
             NormalizeProviderId(providerId),
             "update",
             previousJson,
@@ -205,12 +205,12 @@ public sealed class ConfigService : ConfigServiceBase
         }
 
         var normalizedId = NormalizeProviderId(providerId);
-        var defaultOptions = await Ui.Services.BackfillProviderConfigService.Instance
+        var defaultOptions = await BackfillProviderConfigService.Instance
             .GetDefaultOptionsAsync(normalizedId);
 
         var previousJson = await base.ResetBackfillProviderOptionsAsync(providerId, defaultOptions);
 
-        Ui.Services.BackfillProviderConfigService.Instance.RecordAuditEntry(
+        BackfillProviderConfigService.Instance.RecordAuditEntry(
             normalizedId,
             "reset",
             previousJson,
