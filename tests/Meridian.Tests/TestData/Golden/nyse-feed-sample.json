@@ -1,0 +1,52 @@
+{
+  "description": "NYSE golden sample dataset for cross-layer test coverage.",
+  "provider": "NYSE",
+  "messages": [
+    {
+      "type": "trade",
+      "symbol": "AAPL",
+      "price": 185.50,
+      "size": 100,
+      "timestamp": "2026-03-10T14:30:00Z",
+      "exchange": "NYSE",
+      "sequence": 101,
+      "conditions": "@",
+      "side": "buy"
+    },
+    {
+      "type": "quote",
+      "symbol": "AAPL",
+      "bidPrice": 185.49,
+      "bidSize": 400,
+      "askPrice": 185.51,
+      "askSize": 350,
+      "timestamp": "2026-03-10T14:30:00.125Z",
+      "bidExchange": "NYSE",
+      "askExchange": "ARCA",
+      "sequence": 102
+    },
+    {
+      "type": "depth",
+      "symbol": "AAPL",
+      "operation": "update",
+      "side": "bid",
+      "level": 0,
+      "price": 185.49,
+      "size": 1200,
+      "timestamp": "2026-03-10T14:30:00.180Z",
+      "marketMaker": "GSCO",
+      "sequence": 103
+    },
+    {
+      "type": "trade",
+      "symbol": "MSFT",
+      "price": 410.12,
+      "size": 75,
+      "timestamp": "2026-03-10T14:31:00Z",
+      "exchange": "NYSE",
+      "sequence": 104,
+      "conditions": "T",
+      "side": "sell"
+    }
+  ]
+}
