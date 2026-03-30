@@ -37,7 +37,8 @@ Use the synthetic provider when you want:
 - realistic historical bars with split and dividend adjustments;
 - historical trades, quotes, and auction prints for provider/backtest testing;
 - real-time synthetic trade, BBO, and level-2 order book events without live credentials;
-- symbol/reference metadata for offline development flows.
+- symbol/reference metadata for offline development flows;
+- lightweight runtime diagnostics from `SyntheticMarketDataClient.GetDiagnostics()` so tests and local tooling can verify active subscriptions and published event counts.
 
 Enable it by either:
 

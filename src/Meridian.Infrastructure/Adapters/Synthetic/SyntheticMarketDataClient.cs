@@ -18,7 +18,12 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
     private readonly IMarketEventPublisher _publisher;
     private readonly ConcurrentDictionary<int, CancellationTokenSource> _tradeSubscriptions = new();
     private readonly ConcurrentDictionary<int, CancellationTokenSource> _depthSubscriptions = new();
+    private readonly ConcurrentDictionary<int, Task> _tradeWorkers = new();
+    private readonly ConcurrentDictionary<int, Task> _depthWorkers = new();
     private int _nextSubscriptionId;
+    private long _tradeEventsPublished;
+    private long _quoteEventsPublished;
+    private long _depthSnapshotsPublished;
     private volatile bool _connected;
 
     public SyntheticMarketDataClient(IMarketEventPublisher publisher, SyntheticMarketDataConfig? config = null)
@@ -45,6 +50,9 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
     public string Name => ProviderId;
     public string DisplayName => ProviderDisplayName;
     public int Priority => ProviderPriority;
+    public bool IsConnected => _connected;
+    public int ActiveTradeSubscriptionCount => _tradeWorkers.Count;
+    public int ActiveDepthSubscriptionCount => _depthWorkers.Count;
 
     public Task ConnectAsync(CancellationToken ct = default)
     {
@@ -52,42 +60,31 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
         return Task.CompletedTask;
     }
 
-    public Task DisconnectAsync(CancellationToken ct = default)
+    public async Task DisconnectAsync(CancellationToken ct = default)
     {
         _connected = false;
-        CancelSubscriptions(_tradeSubscriptions);
-        CancelSubscriptions(_depthSubscriptions);
-        return Task.CompletedTask;
+        await CancelSubscriptionsAsync(_tradeSubscriptions, _tradeWorkers, ct).ConfigureAwait(false);
+        await CancelSubscriptionsAsync(_depthSubscriptions, _depthWorkers, ct).ConfigureAwait(false);
     }
 
     public int SubscribeMarketDepth(SymbolConfig cfg)
     {
-        var id = Interlocked.Increment(ref _nextSubscriptionId);
-        var cts = new CancellationTokenSource();
-        _depthSubscriptions[id] = cts;
-        _ = Task.Run(() => PublishDepthAsync(cfg, cts.Token), cts.Token);
-        return id;
+        return StartSubscription(cfg, _depthSubscriptions, _depthWorkers, PublishDepthAsync);
     }
 
     public void UnsubscribeMarketDepth(int subscriptionId)
     {
-        if (_depthSubscriptions.TryRemove(subscriptionId, out var cts))
-            cts.Cancel();
+        CancelSubscription(subscriptionId, _depthSubscriptions, _depthWorkers);
     }
 
     public int SubscribeTrades(SymbolConfig cfg)
     {
-        var id = Interlocked.Increment(ref _nextSubscriptionId);
-        var cts = new CancellationTokenSource();
-        _tradeSubscriptions[id] = cts;
-        _ = Task.Run(() => PublishTradesAsync(cfg, cts.Token), cts.Token);
-        return id;
+        return StartSubscription(cfg, _tradeSubscriptions, _tradeWorkers, PublishTradesAsync);
     }
 
     public void UnsubscribeTrades(int subscriptionId)
     {
-        if (_tradeSubscriptions.TryRemove(subscriptionId, out var cts))
-            cts.Cancel();
+        CancelSubscription(subscriptionId, _tradeSubscriptions, _tradeWorkers);
     }
 
     public Task<bool> IsAvailableAsync(CancellationToken ct = default) => Task.FromResult(_config.Enabled);
@@ -103,6 +100,17 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
         await DisconnectAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
+
+    public SyntheticMarketDataDiagnostics GetDiagnostics()
+        => new(
+            IsConnected,
+            ActiveTradeSubscriptionCount,
+            ActiveDepthSubscriptionCount,
+            Interlocked.Read(ref _tradeEventsPublished),
+            Interlocked.Read(ref _quoteEventsPublished),
+            Interlocked.Read(ref _depthSnapshotsPublished),
+            _config.EventsPerSecond,
+            _config.DefaultDepthLevels);
 
     private async Task PublishTradesAsync(SymbolConfig cfg, CancellationToken ct)
     {
@@ -126,7 +134,7 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
                 StreamId: $"synthetic-{profile.Symbol}",
                 Venue: profile.Exchange);
 
-            _publisher.TryPublish(MarketEvent.Trade(now, profile.Symbol, trade, source: ProviderId));
+            PublishEvent(MarketEvent.Trade(now, profile.Symbol, trade, source: ProviderId));
             await DelayAsync(delay, ct).ConfigureAwait(false);
         }
     }
@@ -184,17 +192,82 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
                 StreamId: quote.StreamId,
                 Venue: profile.Exchange);
 
-            _publisher.TryPublish(MarketEvent.BboQuote(now, profile.Symbol, quote, source: ProviderId));
-            _publisher.TryPublish(MarketEvent.L2Snapshot(now, profile.Symbol, snapshot, source: ProviderId));
+            PublishEvent(MarketEvent.BboQuote(now, profile.Symbol, quote, source: ProviderId));
+            PublishEvent(MarketEvent.L2Snapshot(now, profile.Symbol, snapshot, source: ProviderId));
             await DelayAsync(delay, ct).ConfigureAwait(false);
         }
     }
 
-    private static void CancelSubscriptions(ConcurrentDictionary<int, CancellationTokenSource> subscriptions)
+    private int StartSubscription(
+        SymbolConfig cfg,
+        ConcurrentDictionary<int, CancellationTokenSource> subscriptions,
+        ConcurrentDictionary<int, Task> workers,
+        Func<SymbolConfig, CancellationToken, Task> workerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(cfg);
+
+        var id = Interlocked.Increment(ref _nextSubscriptionId);
+        var cts = new CancellationTokenSource();
+        subscriptions[id] = cts;
+
+        var worker = Task.Factory
+            .StartNew(() => workerFactory(cfg, cts.Token), cts.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default)
+            .Unwrap();
+
+        workers[id] = worker;
+        _ = worker.ContinueWith(
+            _ => CompleteSubscription(id, subscriptions, workers),
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+
+        return id;
+    }
+
+    private static void CancelSubscription(
+        int subscriptionId,
+        ConcurrentDictionary<int, CancellationTokenSource> subscriptions,
+        ConcurrentDictionary<int, Task> workers)
+    {
+        if (subscriptions.TryGetValue(subscriptionId, out var cts))
+        {
+            cts.Cancel();
+
+            if (!workers.ContainsKey(subscriptionId) && subscriptions.TryRemove(subscriptionId, out var completedCts))
+            {
+                completedCts.Dispose();
+            }
+        }
+    }
+
+    private static async Task CancelSubscriptionsAsync(
+        ConcurrentDictionary<int, CancellationTokenSource> subscriptions,
+        ConcurrentDictionary<int, Task> workers,
+        CancellationToken ct)
     {
         foreach (var (_, cts) in subscriptions)
+        {
             cts.Cancel();
-        subscriptions.Clear();
+        }
+
+        try
+        {
+            if (workers.Count > 0)
+            {
+                var activeWorkers = workers.Values.ToArray();
+                await Task.WhenAll(activeWorkers).WaitAsync(ct).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            foreach (var (_, cts) in subscriptions)
+            {
+                cts.Dispose();
+            }
+
+            subscriptions.Clear();
+            workers.Clear();
+        }
     }
 
     private static async Task DelayAsync(TimeSpan delay, CancellationToken ct)
@@ -206,6 +279,40 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private void PublishEvent(in MarketEvent evt)
+    {
+        if (!_publisher.TryPublish(evt))
+        {
+            return;
+        }
+
+        switch (evt.Type)
+        {
+            case MarketEventType.Trade:
+                Interlocked.Increment(ref _tradeEventsPublished);
+                break;
+            case MarketEventType.BboQuote:
+                Interlocked.Increment(ref _quoteEventsPublished);
+                break;
+            case MarketEventType.L2Snapshot:
+                Interlocked.Increment(ref _depthSnapshotsPublished);
+                break;
+        }
+    }
+
+    private static void CompleteSubscription(
+        int subscriptionId,
+        ConcurrentDictionary<int, CancellationTokenSource> subscriptions,
+        ConcurrentDictionary<int, Task> workers)
+    {
+        if (subscriptions.TryRemove(subscriptionId, out var cts))
+        {
+            cts.Dispose();
+        }
+
+        workers.TryRemove(subscriptionId, out _);
     }
 
     private static decimal ComputeAnchor(SyntheticSymbolProfile profile, DateTimeOffset timestamp, long seq)
@@ -234,4 +341,14 @@ public sealed class SyntheticMarketDataClient : IMarketDataClient, ISymbolSearch
     }
 
     private static decimal Round4(decimal value) => Math.Round(value, 4, MidpointRounding.AwayFromZero);
+
+    public sealed record SyntheticMarketDataDiagnostics(
+        bool IsConnected,
+        int ActiveTradeSubscriptions,
+        int ActiveDepthSubscriptions,
+        long TradesPublished,
+        long QuotesPublished,
+        long DepthSnapshotsPublished,
+        int ConfiguredEventsPerSecond,
+        int DefaultDepthLevels);
 }

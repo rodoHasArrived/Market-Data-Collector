@@ -547,6 +547,7 @@ Meridian/
 │   │   ├── assembly-performance-roadmap.md
 │   │   ├── codebase-audit-cleanup-roadmap.md
 │   │   ├── l3-inference-implementation-plan.md
+│   │   ├── ledger
 │   │   ├── quant-script-environment-blueprint.md
 │   │   ├── readability-refactor-baseline.md
 │   │   ├── readability-refactor-roadmap.md
@@ -861,6 +862,8 @@ Meridian/
 │   │   ├── Credentials/
 │   │   │   ├── CredentialModels.cs
 │   │   │   └── ISecretProvider.cs
+│   │   ├── DerivedData/
+│   │   │   └── IDerivedComputationEngine.cs
 │   │   ├── Domain/
 │   │   │   ├── Enums/
 │   │   │   │   ...
@@ -879,14 +882,26 @@ Meridian/
 │   │   │   ├── AnalysisExportModels.cs
 │   │   │   ├── ExportPreset.cs
 │   │   │   └── StandardPresets.cs
+│   │   ├── Ledger/
+│   │   │   ├── IChartOfAccounts.cs
+│   │   │   └── ILedgerWriter.cs
 │   │   ├── Manifest/
 │   │   │   └── DataManifest.cs
+│   │   ├── MeasuredData/
+│   │   │   └── IMeasuredObservationStore.cs
 │   │   ├── Pipeline/
 │   │   │   ├── IngestionJob.cs
 │   │   │   └── PipelinePolicyConstants.cs
 │   │   ├── Schema/
 │   │   │   ├── EventSchema.cs
 │   │   │   └── ISchemaUpcaster.cs
+│   │   ├── SecurityMaster/
+│   │   │   ├── CorporateAction.cs
+│   │   │   ├── ExternalId.cs
+│   │   │   ├── InstrumentId.cs
+│   │   │   ├── InstrumentKind.cs
+│   │   │   ├── InstrumentRecord.cs
+│   │   │   └── ISecurityMasterService.cs
 │   │   ├── Session/
 │   │   │   └── CollectionSession.cs
 │   │   ├── Store/
@@ -1003,8 +1018,12 @@ Meridian/
 │   │   ├── Canonicalization/
 │   │   │   └── MappingRules.fs
 │   │   ├── Domain/
+│   │   │   ├── Accounts.fs
+│   │   │   ├── DerivedData.fs
+│   │   │   ├── Instruments.fs
 │   │   │   ├── Integrity.fs
 │   │   │   ├── MarketEvents.fs
+│   │   │   ├── MeasuredData.fs
 │   │   │   └── Sides.fs
 │   │   ├── Generated/
 │   │   │   └── Meridian.FSharp.Interop.g.cs
@@ -1065,6 +1084,10 @@ Meridian/
 │   │   │   ├── WebSocketConnectionConfig.cs
 │   │   │   ├── WebSocketConnectionManager.cs
 │   │   │   └── WebSocketResiliencePolicy.cs
+│   │   ├── SecurityMaster/
+│   │   │   ├── SecurityMasterJsonContext.cs
+│   │   │   ├── SecurityMasterService.cs
+│   │   │   └── SecurityMasterServiceExtensions.cs
 │   │   ├── Shared/
 │   │   │   ├── ISymbolStateStore.cs
 │   │   │   ├── SubscriptionManager.cs
@@ -1078,6 +1101,7 @@ Meridian/
 │   │   ├── Meridian.Infrastructure.csproj
 │   │   └── NoOpMarketDataClient.cs
 │   ├── Meridian.Ledger/
+│   │   ├── ChartOfAccountsService.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── IReadOnlyLedger.cs
 │   │   ├── JournalEntry.cs
@@ -1092,6 +1116,7 @@ Meridian/
 │   │   ├── LedgerQuery.cs
 │   │   ├── LedgerSnapshot.cs
 │   │   ├── LedgerValidationException.cs
+│   │   ├── LedgerWriter.cs
 │   │   └── Meridian.Ledger.csproj
 │   ├── Meridian.Mcp/
 │   │   ├── Prompts/
@@ -1615,6 +1640,7 @@ Meridian/
 │   │   ├── CalculationTests.fs
 │   │   ├── CanonicalizationTests.fs
 │   │   ├── DomainTests.fs
+│   │   ├── InstrumentsTests.fs
 │   │   ├── Meridian.FSharp.Tests.fsproj
 │   │   ├── PipelineTests.fs
 │   │   └── ValidationTests.fs
@@ -1662,6 +1688,8 @@ Meridian/
 │   │   │   ├── Providers/
 │   │   │   │   ...
 │   │   │   ├── Resilience/
+│   │   │   │   ...
+│   │   │   ├── SecurityMaster/
 │   │   │   │   ...
 │   │   │   └── Shared/
 │   │   │       ...

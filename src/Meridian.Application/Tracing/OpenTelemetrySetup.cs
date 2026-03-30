@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Meridian.Application.Logging;
+using Meridian.Domain.Events;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -205,11 +206,11 @@ public static class MarketDataTracing
     /// <summary>
     /// Start a trace for processing a market event.
     /// </summary>
-    public static Activity? StartProcessActivity(string eventType, string symbol)
+    public static Activity? StartProcessActivity(string eventType, string symbol, ActivityContext? parentContext = null)
     {
-        var activity = Source.StartActivity(
-            $"ProcessMarketEvent.{eventType}",
-            ActivityKind.Internal);
+        var activity = parentContext.HasValue
+            ? Source.StartActivity($"ProcessMarketEvent.{eventType}", ActivityKind.Internal, parentContext.Value)
+            : Source.StartActivity($"ProcessMarketEvent.{eventType}", ActivityKind.Internal);
 
         activity?.SetTag("event.type", eventType);
         activity?.SetTag("market.symbol", symbol);
@@ -221,17 +222,40 @@ public static class MarketDataTracing
     /// <summary>
     /// Start a trace for storing a market event.
     /// </summary>
-    public static Activity? StartStorageActivity(string storageType, string symbol)
+    public static Activity? StartStorageActivity(string storageType, string symbol, ActivityContext? parentContext = null)
     {
-        var activity = Source.StartActivity(
-            $"StoreMarketEvent.{storageType}",
-            ActivityKind.Producer);
+        var activity = parentContext.HasValue
+            ? Source.StartActivity($"StoreMarketEvent.{storageType}", ActivityKind.Producer, parentContext.Value)
+            : Source.StartActivity($"StoreMarketEvent.{storageType}", ActivityKind.Producer);
 
         activity?.SetTag("storage.type", storageType);
         activity?.SetTag("market.symbol", symbol);
         activity?.SetTag("operation.type", "store");
 
         return activity;
+    }
+
+    /// <summary>
+    /// Adds market-event tags, including its originating trace identifiers when available.
+    /// </summary>
+    public static void TagMarketEvent(Activity? activity, MarketEvent evt)
+    {
+        if (activity == null)
+            return;
+
+        activity.SetTag("market.event.type", evt.Type.ToString());
+        activity.SetTag("market.event.sequence", evt.Sequence);
+        activity.SetTag("market.event.source", evt.Source);
+
+        if (evt.HasOriginatingActivityContext)
+        {
+            activity.SetTag("market.event.origin.trace_id", evt.ActivityTraceId);
+            activity.SetTag("market.event.origin.span_id", evt.ActivitySpanId);
+            activity.SetTag("market.event.origin.trace_flags", evt.ActivityTraceFlags);
+
+            if (!string.IsNullOrWhiteSpace(evt.ActivityTraceState))
+                activity.SetTag("market.event.origin.trace_state", evt.ActivityTraceState);
+        }
     }
 
     /// <summary>

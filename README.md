@@ -1506,6 +1506,8 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── Credentials
 │   │   │   ├── CredentialModels.cs
 │   │   │   └── ISecretProvider.cs
+│   │   ├── DerivedData
+│   │   │   └── IDerivedComputationEngine.cs
 │   │   ├── Domain
 │   │   │   ├── CanonicalSymbol.cs
 │   │   │   ├── Enums
@@ -1565,8 +1567,13 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   │   ├── AnalysisExportModels.cs
 │   │   │   ├── ExportPreset.cs
 │   │   │   └── StandardPresets.cs
+│   │   ├── Ledger
+│   │   │   ├── IChartOfAccounts.cs
+│   │   │   └── ILedgerWriter.cs
 │   │   ├── Manifest
 │   │   │   └── DataManifest.cs
+│   │   ├── MeasuredData
+│   │   │   └── IMeasuredObservationStore.cs
 │   │   ├── Meridian.Contracts.csproj
 │   │   ├── Pipeline
 │   │   │   ├── IngestionJob.cs
@@ -1574,6 +1581,13 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── Schema
 │   │   │   ├── EventSchema.cs
 │   │   │   └── ISchemaUpcaster.cs
+│   │   ├── SecurityMaster
+│   │   │   ├── CorporateAction.cs
+│   │   │   ├── ExternalId.cs
+│   │   │   ├── ISecurityMasterService.cs
+│   │   │   ├── InstrumentId.cs
+│   │   │   ├── InstrumentKind.cs
+│   │   │   └── InstrumentRecord.cs
 │   │   ├── Session
 │   │   │   └── CollectionSession.cs
 │   │   └── Store
@@ -1704,8 +1718,12 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── Canonicalization
 │   │   │   └── MappingRules.fs
 │   │   ├── Domain
+│   │   │   ├── Accounts.fs
+│   │   │   ├── DerivedData.fs
+│   │   │   ├── Instruments.fs
 │   │   │   ├── Integrity.fs
 │   │   │   ├── MarketEvents.fs
+│   │   │   ├── MeasuredData.fs
 │   │   │   └── Sides.fs
 │   │   ├── Generated
 │   │   │   └── Meridian.FSharp.Interop.g.cs
@@ -1827,6 +1845,10 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   │   ├── WebSocketConnectionConfig.cs
 │   │   │   ├── WebSocketConnectionManager.cs
 │   │   │   └── WebSocketResiliencePolicy.cs
+│   │   ├── SecurityMaster
+│   │   │   ├── SecurityMasterJsonContext.cs
+│   │   │   ├── SecurityMasterService.cs
+│   │   │   └── SecurityMasterServiceExtensions.cs
 │   │   ├── Shared
 │   │   │   ├── ISymbolStateStore.cs
 │   │   │   ├── SubscriptionManager.cs
@@ -1837,6 +1859,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │       ├── JsonElementExtensions.cs
 │   │       └── SymbolNormalization.cs
 │   ├── Meridian.Ledger
+│   │   ├── ChartOfAccountsService.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── IReadOnlyLedger.cs
 │   │   ├── JournalEntry.cs
@@ -1851,6 +1874,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── LedgerQuery.cs
 │   │   ├── LedgerSnapshot.cs
 │   │   ├── LedgerValidationException.cs
+│   │   ├── LedgerWriter.cs
 │   │   └── Meridian.Ledger.csproj
 │   ├── Meridian.Mcp
 │   │   ├── GlobalUsings.cs
@@ -2381,6 +2405,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── CalculationTests.fs
 │   │   ├── CanonicalizationTests.fs
 │   │   ├── DomainTests.fs
+│   │   ├── InstrumentsTests.fs
 │   │   ├── Meridian.FSharp.Tests.fsproj
 │   │   ├── PipelineTests.fs
 │   │   └── ValidationTests.fs
@@ -2461,6 +2486,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   │   │   ├── DualPathEventPipelineTests.cs
 │   │   │   │   ├── EventPipelineMetricsTests.cs
 │   │   │   │   ├── EventPipelineTests.cs
+│   │   │   │   ├── EventPipelineTracingTests.cs
 │   │   │   │   ├── FSharpEventValidatorTests.cs
 │   │   │   │   ├── GoldenMasterPipelineReplayTests.cs
 │   │   │   │   ├── HotPathBatchSerializerTests.cs
@@ -2541,6 +2567,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   │   │   ├── IBSimulationClientContractTests.cs
 │   │   │   │   ├── IBSimulationClientTests.cs
 │   │   │   │   ├── MarketDataClientContractTests.cs
+│   │   │   │   ├── NYSEDatasetCoverageTests.cs
 │   │   │   │   ├── NYSEMessageParsingTests.cs
 │   │   │   │   ├── PolygonMarketDataClientTests.cs
 │   │   │   │   ├── PolygonMessageParsingTests.cs
@@ -2553,6 +2580,8 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   │   ├── Resilience
 │   │   │   │   ├── WebSocketConnectionManagerTests.cs
 │   │   │   │   └── WebSocketResiliencePolicyTests.cs
+│   │   │   ├── SecurityMaster
+│   │   │   │   └── SecurityMasterServiceTests.cs
 │   │   │   └── Shared
 │   │   │       ├── SymbolNormalizationTests.cs
 │   │   │       └── TempDirectoryFixture.cs
@@ -2628,7 +2657,8 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   │   ├── TestCollections.cs
 │   │   ├── TestData
 │   │   │   └── Golden
-│   │   │       └── alpaca-quote-pipeline.json
+│   │   │       ├── alpaca-quote-pipeline.json
+│   │   │       └── nyse-feed-sample.json
 │   │   └── TestHelpers
 │   │       ├── PolygonStubClient.cs
 │   │       └── TestMarketEventPublisher.cs
@@ -2722,7 +2752,7 @@ This section is auto-updated by the `readme-tree.yml` workflow on pushes to `mai
 │   └── xunit.runner.json
 └── tree.bak
 
-317 directories, 1829 files
+323 directories, 1853 files
 ```
 <!-- readme-tree end -->
 

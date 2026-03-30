@@ -1,59 +1,26 @@
 {
-  "generated_at": "2026-03-20T18:06:22.061080+00:00",
-  "workflow": "test-matrix.yml",
-  "run_id": 23355774906,
-  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23355774906",
+  "generated_at": "2026-03-22T02:01:08.318798+00:00",
+  "workflow": "code-quality.yml",
+  "run_id": 23393451767,
+  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23393451767",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Meridian",
   "failed_jobs": [
-    "Test (macOS)",
-    "Test (Linux)",
-    "Test (Windows)"
+    "Code Quality Checks"
   ],
-  "findings_by_category": {
-    "build": 5,
-    "test": 2
-  },
-  "total_error_codes": 1,
-  "total_failed_tests": 2,
+  "findings_by_category": {},
+  "total_error_codes": 0,
+  "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
     {
-      "file": "fix-build-errors.prompt.yml",
-      "category": "build",
-      "action": "update",
-      "findings_count": 5,
-      "error_codes": [
-        "CS0019"
-      ],
-      "failed_tests": []
-    },
-    {
-      "file": "fix-test-failures.prompt.yml",
-      "category": "test",
-      "action": "update",
-      "findings_count": 2,
-      "error_codes": [
-        "CS0019"
-      ],
-      "failed_tests": [
-        "2026-03-20T18:03:12.8387944Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [54 ms]",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords"
-      ]
-    },
-    {
-      "file": "workflow-results-test-matrix.prompt.yml",
+      "file": "workflow-results-code-quality.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 7,
-      "error_codes": [
-        "CS0019"
-      ],
-      "failed_tests": [
-        "2026-03-20T18:03:12.8387944Z   Failed Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords [54 ms]",
-        "Meridian.Tests.Storage.WriteAheadLogFuzzTests.RepairAsync_TruncatedLastRecord_RewritesFileWithOnlyValidRecords"
-      ]
+      "findings_count": 0,
+      "error_codes": [],
+      "failed_tests": []
     }
   ],
-  "total_generated": 3
+  "total_generated": 1
 }

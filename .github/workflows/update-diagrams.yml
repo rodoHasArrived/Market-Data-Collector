@@ -1,19 +1,18 @@
 # Consolidated diagram artifact workflow
 # Replaces and combines:
-#   - update-diagrams.yml (Graphviz/DOT → SVG)
+#   - update-diagrams.yml (Graphviz/DOT → SVG/PNG)
 #   - update-uml-diagrams.yml (PlantUML → PNG)
 
 name: Update Diagram Artifacts
-# Replaces and combines:
-#   - update-uml-diagrams.yml (Regenerate PNG diagrams from PlantUML sources)
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'docs/diagrams/*.dot'
-      - 'docs/diagrams/uml/*.puml'
+      - 'docs/diagrams/**/*.dot'
+      - 'docs/diagrams/**/*.gv'
+      - 'docs/diagrams/uml/**/*.puml'
       - 'src/Meridian.Wpf/App.xaml.cs'
       - 'src/Meridian.Wpf/MainWindow.xaml.cs'
       - 'src/Meridian.Wpf/Services/NavigationService.cs'
@@ -33,7 +32,7 @@ concurrency:
 
 jobs:
   regenerate-diagrams:
-    name: Regenerate SVG diagrams
+    name: Regenerate diagram artifacts (DOT + PlantUML)
     runs-on: ubuntu-latest
 
     steps:
@@ -48,53 +47,17 @@ jobs:
           node-version: '20'
           cache: npm
 
-      - name: Install diagram tooling
+      - name: Install Node dependencies
         run: npm ci
 
-      - name: Generate auto-updated UI diagram sources
-        run: npm run generate-diagrams
-
-      - name: Install Graphviz
-        run: sudo apt-get update && sudo apt-get install -y graphviz
-
-      - name: Regenerate all diagram artifacts
+      - name: Install Graphviz + Java
         run: |
-          set -euo pipefail
-
-          shopt -s nullglob
-          dot_files=(docs/diagrams/*.dot)
-
-          if [ ${#dot_files[@]} -eq 0 ]; then
-            echo "No DOT files found in docs/diagrams"
-            exit 0
-          fi
-
-          for file in "${dot_files[@]}"; do
-            base="${file%.dot}"
-            dot -Tsvg "$file" -o "${base}.svg"
-            echo "Generated ${base}.svg"
-          done
-
-      - name: Commit regenerated diagrams
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'docs(diagrams): regenerate SVG from DOT sources'
-          file_pattern: docs/diagrams/*.dot docs/diagrams/*.svg
-
-  regenerate-uml-diagrams:
-    name: Regenerate PNG diagrams from PlantUML sources
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          sudo apt-get update
+          sudo apt-get install -y graphviz default-jre-headless wget
 
       - name: Install PlantUML
         run: |
-          sudo apt-get update
-          sudo apt-get install -y default-jre-headless wget
+          set -euo pipefail
           PLANTUML_VERSION="1.2024.8"
           wget -q "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" \
             -O /usr/local/share/plantuml.jar
@@ -103,25 +66,45 @@ jobs:
           sudo chmod +x /usr/local/bin/plantuml
           plantuml -version
 
+      - name: Generate auto-updated UI diagram sources
+        run: npm run generate-diagrams
+
+      - name: Regenerate DOT artifacts (SVG + PNG)
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+
+          dot_files=(docs/diagrams/**/*.dot docs/diagrams/**/*.gv)
+
+          if [ ${#dot_files[@]} -eq 0 ]; then
+            echo "No DOT/GV files found under docs/diagrams"
+          else
+            for file in "${dot_files[@]}"; do
+              base="${file%.*}"
+              dot -Tsvg "$file" -o "${base}.svg"
+              dot -Tpng "$file" -o "${base}.png"
+              echo "Generated ${base}.svg and ${base}.png"
+            done
+          fi
+
       - name: Regenerate UML PNG artifacts
         run: |
           set -euo pipefail
+          shopt -s globstar nullglob
 
-          shopt -s nullglob
-          puml_files=(docs/diagrams/uml/*.puml)
+          puml_files=(docs/diagrams/uml/**/*.puml)
 
           if [ ${#puml_files[@]} -eq 0 ]; then
             echo "No PlantUML files found in docs/diagrams/uml"
-            exit 0
+          else
+            for file in "${puml_files[@]}"; do
+              echo "Rendering ${file}"
+              plantuml -tpng "$file"
+            done
           fi
 
-          for file in "${puml_files[@]}"; do
-            echo "Rendering ${file}"
-            plantuml -tpng "$file"
-          done
-
-      - name: Commit regenerated UML diagrams
+      - name: Commit regenerated diagrams
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'docs(uml): regenerate PNG diagrams from PlantUML sources'
-          file_pattern: docs/diagrams/uml/*.png
+          commit_message: 'docs(diagrams): regenerate DOT/UML artifacts'
+          file_pattern: docs/diagrams/**/*.dot docs/diagrams/**/*.gv docs/diagrams/**/*.svg docs/diagrams/**/*.png docs/diagrams/uml/**/*.puml

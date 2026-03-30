@@ -69,6 +69,62 @@ public sealed class SyntheticMarketDataProviderTests
         publisher.Events.OfType<MarketEvent>().Where(e => e.Payload is LOBSnapshot).Should().OnlyContain(e => ((LOBSnapshot)e.Payload).Bids.Count == 5);
     }
 
+    [Fact]
+    public async Task StreamingClient_GetDiagnostics_ReportsConnectionSubscriptionsAndPublishedCounts()
+    {
+        var publisher = new RecordingPublisher();
+        var client = new SyntheticMarketDataClient(
+            publisher,
+            new SyntheticMarketDataConfig(Enabled: true, EventsPerSecond: 25, DefaultDepthLevels: 7));
+
+        client.GetDiagnostics().IsConnected.Should().BeFalse();
+        await client.ConnectAsync();
+
+        var tradeSub = client.SubscribeTrades(new SymbolConfig("MSFT", SubscribeTrades: true, SubscribeDepth: false));
+        var depthSub = client.SubscribeMarketDepth(new SymbolConfig("MSFT", SubscribeTrades: false, SubscribeDepth: true, DepthLevels: 4));
+
+        await Task.Delay(250);
+
+        var diagnostics = client.GetDiagnostics();
+        diagnostics.IsConnected.Should().BeTrue();
+        diagnostics.ActiveTradeSubscriptions.Should().Be(1);
+        diagnostics.ActiveDepthSubscriptions.Should().Be(1);
+        diagnostics.TradesPublished.Should().BeGreaterThan(0);
+        diagnostics.QuotesPublished.Should().BeGreaterThan(0);
+        diagnostics.DepthSnapshotsPublished.Should().BeGreaterThan(0);
+        diagnostics.ConfiguredEventsPerSecond.Should().Be(25);
+        diagnostics.DefaultDepthLevels.Should().Be(7);
+
+        client.UnsubscribeTrades(tradeSub);
+        client.UnsubscribeMarketDepth(depthSub);
+        await client.DisconnectAsync();
+    }
+
+    [Fact]
+    public async Task StreamingClient_DisconnectAsync_CleansUpBackgroundSubscriptions()
+    {
+        var publisher = new RecordingPublisher();
+        var client = new SyntheticMarketDataClient(publisher, new SyntheticMarketDataConfig(Enabled: true, EventsPerSecond: 30));
+        await client.ConnectAsync();
+
+        client.SubscribeTrades(new SymbolConfig("QQQ", SubscribeTrades: true, SubscribeDepth: false));
+        client.SubscribeMarketDepth(new SymbolConfig("QQQ", SubscribeTrades: false, SubscribeDepth: true, DepthLevels: 3));
+
+        await Task.Delay(150);
+        await client.DisconnectAsync();
+
+        client.IsConnected.Should().BeFalse();
+        client.ActiveTradeSubscriptionCount.Should().Be(0);
+        client.ActiveDepthSubscriptionCount.Should().Be(0);
+
+        var diagnostics = client.GetDiagnostics();
+        diagnostics.ActiveTradeSubscriptions.Should().Be(0);
+        diagnostics.ActiveDepthSubscriptions.Should().Be(0);
+        diagnostics.TradesPublished.Should().BeGreaterThan(0);
+        diagnostics.QuotesPublished.Should().BeGreaterThan(0);
+        diagnostics.DepthSnapshotsPublished.Should().BeGreaterThan(0);
+    }
+
     private sealed class RecordingPublisher : IMarketEventPublisher
     {
         public ConcurrentBag<MarketEvent> Events { get; } = new();

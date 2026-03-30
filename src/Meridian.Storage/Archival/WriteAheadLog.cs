@@ -52,6 +52,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     // WAL file header constants
     private const string WalMagic = "MDCWAL01";
     private const int WalVersion = 1;
+    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     public WriteAheadLog(string walDirectory, WalOptions? options = null)
     {
@@ -416,7 +417,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
             bufferSize: 64 * 1024,
             FileOptions.WriteThrough | FileOptions.Asynchronous);
 
-        _currentWriter = new StreamWriter(_currentWalFile, Encoding.UTF8, bufferSize: 32 * 1024);
+        _currentWriter = new StreamWriter(_currentWalFile, Utf8NoBom, bufferSize: 32 * 1024);
 
         // Write header
         await _currentWriter.WriteLineAsync($"{WalMagic}|{WalVersion}|{now:O}").ConfigureAwait(false);
@@ -541,7 +542,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
         // Skip header
         var header = await reader.ReadLineAsync();
-        if (header == null || !header.StartsWith(WalMagic))
+        if (!IsValidWalHeader(header))
         {
             _log.Warning("Invalid WAL header in {File}", walFile);
             yield break;
@@ -746,7 +747,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
             // Read and validate header
             var header = await reader.ReadLineAsync();
-            if (header == null || !header.StartsWith(WalMagic))
+            if (!IsValidWalHeader(header))
             {
                 _log.Warning("Skipping WAL file with invalid header during repair: {File}", walFile);
                 continue;
@@ -804,7 +805,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
                 await using var outStream = new FileStream(
                     tempPath, FileMode.Create, FileAccess.Write, FileShare.None,
                     bufferSize: 64 * 1024, FileOptions.WriteThrough | FileOptions.Asynchronous);
-                await using var writer = new StreamWriter(outStream, Encoding.UTF8, bufferSize: 32 * 1024);
+                await using var writer = new StreamWriter(outStream, Utf8NoBom, bufferSize: 32 * 1024);
 
                 // Write header
                 await writer.WriteLineAsync($"{WalMagic}|{WalVersion}|{DateTime.UtcNow:O}");
@@ -874,6 +875,16 @@ public sealed class WriteAheadLog : IAsyncDisposable
             _writeLock.Release();
             _writeLock.Dispose();
         }
+    }
+
+    private static bool IsValidWalHeader(string? header)
+    {
+        if (string.IsNullOrEmpty(header))
+        {
+            return false;
+        }
+
+        return header.TrimStart('\uFEFF').StartsWith(WalMagic, StringComparison.Ordinal);
     }
 }
 

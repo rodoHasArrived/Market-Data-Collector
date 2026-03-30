@@ -21,7 +21,12 @@ public sealed record MarketEvent(
     // Canonicalization fields
     string? CanonicalSymbol = null,
     byte CanonicalizationVersion = 0,
-    string? CanonicalVenue = null
+    string? CanonicalVenue = null,
+    string? ActivityTraceId = null,
+    string? ActivitySpanId = null,
+    byte ActivityTraceFlags = 0,
+    string? ActivityTraceState = null,
+    bool? ActivityIsRemote = null
 )
 {
     public static MarketEvent Trade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")
@@ -135,6 +140,65 @@ public sealed record MarketEvent(
     /// to ensure consistent behavior regardless of canonicalization state.
     /// </summary>
     public string EffectiveSymbol => CanonicalSymbol ?? Symbol;
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the event carries the W3C trace/span identifiers
+    /// for the activity that originated it.
+    /// </summary>
+    public bool HasOriginatingActivityContext =>
+        !string.IsNullOrWhiteSpace(ActivityTraceId) &&
+        !string.IsNullOrWhiteSpace(ActivitySpanId);
+
+    /// <summary>
+    /// Stamps the event with the current activity context when tracing is active.
+    /// Existing context is preserved so replayed or forwarded events keep their origin.
+    /// </summary>
+    public MarketEvent WithOriginatingActivityContext(Activity? activity = null)
+    {
+        if (HasOriginatingActivityContext)
+            return this;
+
+        activity ??= Activity.Current;
+        if (activity is null)
+            return this;
+
+        var context = activity.Context;
+        if (context.TraceId == default || context.SpanId == default)
+            return this;
+
+        return this with
+        {
+            ActivityTraceId = context.TraceId.ToHexString(),
+            ActivitySpanId = context.SpanId.ToHexString(),
+            ActivityTraceFlags = (byte)context.TraceFlags,
+            ActivityTraceState = activity.TraceStateString,
+            ActivityIsRemote = context.IsRemote
+        };
+    }
+
+    /// <summary>
+    /// Reconstructs the originating <see cref="ActivityContext"/> when trace identifiers were captured.
+    /// Returns <see langword="null"/> when no valid context is available.
+    /// </summary>
+    public ActivityContext? GetOriginatingActivityContext()
+    {
+        if (!HasOriginatingActivityContext)
+            return null;
+
+        try
+        {
+            return new ActivityContext(
+                ActivityTraceId.CreateFromString(ActivityTraceId!.AsSpan()),
+                ActivitySpanId.CreateFromString(ActivitySpanId!.AsSpan()),
+                (ActivityTraceFlags)ActivityTraceFlags,
+                ActivityTraceState,
+                ActivityIsRemote ?? false);
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// Computes the estimated end-to-end latency in milliseconds using monotonic clock,

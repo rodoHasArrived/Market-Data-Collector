@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Meridian.Contracts.Api;
+using Meridian.Ui.Services;
 using WpfServices = Meridian.Wpf.Services;
 
 namespace Meridian.Wpf.Views;
@@ -30,7 +31,7 @@ public partial class OptionsPage : Page
         // Attempt to resolve the API client from the service locator
         try
         {
-            _apiClient = Ui.Services.ApiClientService.Instance?.UiApi;
+            _apiClient = ApiClientService.Instance.UiApi;
         }
         catch
         {
