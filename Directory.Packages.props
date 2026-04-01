@@ -111,7 +111,7 @@
 
   <ItemGroup Label="Direct Lending — PostgreSQL Event Store">
     <!-- Npgsql: PostgreSQL driver for .NET — used by Meridian.Lending event store -->
-    <PackageVersion Include="Npgsql" Version="9.0.4" />
+    <PackageVersion Include="Npgsql" Version="10.0.2" />
     <!-- FsPickler: MBrace/Nessos F# serialization library — handles F# DU serialization for event log -->
     <PackageVersion Include="FsPickler" Version="5.3.2" />
     <PackageVersion Include="FsPickler.Json" Version="5.3.2" />
