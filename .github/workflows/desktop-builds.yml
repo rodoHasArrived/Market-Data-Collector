@@ -192,6 +192,113 @@ jobs:
           retention-days: 30
 
   # ═══════════════════════════════════════════════════════════════════════
+  # Take WPF Desktop Screenshots
+  # ═══════════════════════════════════════════════════════════════════════
+
+  wpf-screenshots:
+    name: WPF - Take Desktop Screenshots
+    needs: wpf-build
+    runs-on: windows-latest
+    timeout-minutes: 10
+    if: |
+      github.event.inputs.build_target == 'wpf' ||
+      github.event.inputs.build_target == '' ||
+      github.event.inputs.build_target == null
+
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+      MDC_FIXTURE_MODE: '1'
+      MDC_AUTH_MODE: 'optional'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache-suffix: 'wpf'
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.3
+        with:
+          name: wpf-build-output
+          path: src/Meridian.Wpf/bin/${{ env.BUILD_CONFIG }}/
+
+      - name: Verify fixture mode environment variable
+        shell: pwsh
+        run: |
+          Write-Host "MDC_FIXTURE_MODE is set to: '$env:MDC_FIXTURE_MODE'"
+          if ($env:MDC_FIXTURE_MODE -ne '1') {
+            Write-Error "MDC_FIXTURE_MODE must be '1' for fixture testing"
+            exit 1
+          }
+          Write-Host "MDC_AUTH_MODE is set to: '$env:MDC_AUTH_MODE'"
+          Write-Host "Environment variables verified successfully."
+
+      - name: Create screenshots output directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path "screenshots" | Out-Null
+
+      - name: Launch WPF app in fixture mode and capture screenshots
+        shell: pwsh
+        run: |
+          Write-Host "Starting WPF application in fixture mode (MDC_FIXTURE_MODE=$env:MDC_FIXTURE_MODE)..."
+
+          $stdoutFile = "wpf-stdout.txt"
+          $stderrFile = "wpf-stderr.txt"
+
+          $process = Start-Process dotnet -ArgumentList @(
+            "run",
+            "--project", "${{ env.WPF_PROJECT }}",
+            "--configuration", "${{ env.BUILD_CONFIG }}",
+            "--no-build",
+            "--", "--fixture"
+          ) -PassThru -WindowStyle Normal `
+            -RedirectStandardOutput $stdoutFile `
+            -RedirectStandardError $stderrFile
+
+          Write-Host "WPF process started (PID: $($process.Id)). Waiting for UI to render..."
+          Start-Sleep -Seconds 15
+
+          # Verify the process is still running before capturing a screenshot
+          if ($process.HasExited) {
+            Write-Host "::error::WPF process exited unexpectedly (exit code: $($process.ExitCode))"
+            if (Test-Path $stderrFile) { Get-Content $stderrFile | Write-Host }
+            exit 1
+          }
+          Write-Host "Process still running — proceeding with screenshot capture."
+
+          # Capture full-screen screenshot using .NET drawing APIs
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+
+          $screen   = [System.Windows.Forms.Screen]::PrimaryScreen
+          $bitmap   = New-Object System.Drawing.Bitmap($screen.Bounds.Width, $screen.Bounds.Height)
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          $graphics.CopyFromScreen($screen.Bounds.Location, [System.Drawing.Point]::Empty, $screen.Bounds.Size)
+          $bitmap.Save("screenshots\wpf-fixture-mode.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          $graphics.Dispose()
+          $bitmap.Dispose()
+          Write-Host "Screenshot saved to screenshots\wpf-fixture-mode.png"
+
+          # Stop the process
+          if (-not $process.HasExited) {
+            Stop-Process -Id $process.Id -Force
+            Write-Host "WPF process stopped."
+          }
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wpf-desktop-screenshots
+          path: screenshots/
+          retention-days: 14
+
+  # ═══════════════════════════════════════════════════════════════════════
   # WPF Smoke Test (from wpf-commands.yml)
   # ═══════════════════════════════════════════════════════════════════════
 
@@ -297,7 +404,7 @@ jobs:
 
   cleanup:
     name: Cleanup Intermediate Artifacts
-    needs: [wpf-build, wpf-publish, wpf-smoke-test]
+    needs: [wpf-build, wpf-publish, wpf-smoke-test, wpf-screenshots]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
