@@ -1,26 +1,55 @@
 {
-  "generated_at": "2026-03-22T02:01:08.318798+00:00",
-  "workflow": "code-quality.yml",
-  "run_id": 23393451767,
-  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23393451767",
+  "generated_at": "2026-04-03T08:23:49.434756+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 23939619922,
+  "run_url": "https://github.com/rodoHasArrived/Meridian/actions/runs/23939619922",
   "run_conclusion": "unknown",
   "repository": "rodoHasArrived/Meridian",
   "failed_jobs": [
-    "Code Quality Checks"
+    "Test (Windows)",
+    "Test (Linux)",
+    "Test (macOS)"
   ],
-  "findings_by_category": {},
-  "total_error_codes": 0,
+  "findings_by_category": {
+    "build": 10,
+    "code-quality": 10
+  },
+  "total_error_codes": 3,
   "total_failed_tests": 0,
   "existing_prompts": 16,
   "generated_prompts": [
     {
-      "file": "workflow-results-code-quality.prompt.yml",
+      "file": "fix-build-errors.prompt.yml",
+      "category": "build",
+      "action": "update",
+      "findings_count": 10,
+      "error_codes": [
+        "CS0219",
+        "CS1061",
+        "CS8602"
+      ],
+      "failed_tests": []
+    },
+    {
+      "file": "fix-code-quality.prompt.yml",
+      "category": "code-quality",
+      "action": "update",
+      "findings_count": 10,
+      "error_codes": [],
+      "failed_tests": []
+    },
+    {
+      "file": "workflow-results-test-matrix.prompt.yml",
       "category": "summary",
       "action": "update",
-      "findings_count": 0,
-      "error_codes": [],
+      "findings_count": 20,
+      "error_codes": [
+        "CS0219",
+        "CS1061",
+        "CS8602"
+      ],
       "failed_tests": []
     }
   ],
-  "total_generated": 1
+  "total_generated": 3
 }
