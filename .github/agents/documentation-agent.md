@@ -300,6 +300,14 @@ Meridian/
 │   │   │       ...
 │   │   ├── alert-rules.yml
 │   │   └── prometheus.yml
+│   ├── sql/
+│   │   └── lending/
+│   │       ├── V1__loan_contract_events.sql
+│   │       ├── V2__loan_positions.sql
+│   │       ├── V3__loan_servicing_events.sql
+│   │       ├── V4__outbox.sql
+│   │       ├── V5__accounting.sql
+│   │       └── V6__timescale_analytics.sql
 │   └── systemd/
 │       └── meridian.service
 ├── docs/  # Documentation
@@ -689,6 +697,16 @@ Meridian/
 │   │   │   └── HtmlTemplates.cs
 │   │   ├── Indicators/
 │   │   │   └── TechnicalIndicatorService.cs
+│   │   ├── Lending/
+│   │   │   ├── ILendingService.cs
+│   │   │   ├── ILoanQueryService.cs
+│   │   │   ├── InMemoryLendingService.cs
+│   │   │   ├── InMemoryLoanQueryService.cs
+│   │   │   ├── LendingServiceExtensions.cs
+│   │   │   ├── LendingStorageOptions.cs
+│   │   │   ├── LoanSummaryDto.cs
+│   │   │   ├── PostgresLendingService.cs
+│   │   │   └── PostgresLoanQueryService.cs
 │   │   ├── Monitoring/
 │   │   │   ├── Core/
 │   │   │   │   ...
@@ -1022,6 +1040,7 @@ Meridian/
 │   │   │   ├── DerivedData.fs
 │   │   │   ├── Instruments.fs
 │   │   │   ├── Integrity.fs
+│   │   │   ├── Lending.fs
 │   │   │   ├── MarketEvents.fs
 │   │   │   ├── MeasuredData.fs
 │   │   │   └── Sides.fs
@@ -1118,6 +1137,30 @@ Meridian/
 │   │   ├── LedgerValidationException.cs
 │   │   ├── LedgerWriter.cs
 │   │   └── Meridian.Ledger.csproj
+│   ├── Meridian.Lending/
+│   │   ├── Accounting/
+│   │   │   └── LoanAccountingProjector.fs
+│   │   ├── Analytics/
+│   │   │   └── BenchmarkFixingTypes.fs
+│   │   ├── EventStore/
+│   │   │   ├── ILoanEventStore.fs
+│   │   │   ├── InMemoryLoanEventStore.fs
+│   │   │   └── PostgresLoanEventStore.fs
+│   │   ├── Outbox/
+│   │   │   ├── InMemoryOutboxStore.fs
+│   │   │   ├── IOutboxStore.fs
+│   │   │   └── PostgresOutboxStore.fs
+│   │   ├── Projections/
+│   │   │   ├── LoanProjection.fs
+│   │   │   └── PostgresLoanPositionProjector.fs
+│   │   ├── LoanContractAggregate.fs
+│   │   ├── LoanContractRepository.fs
+│   │   ├── LoanServicingAggregate.fs
+│   │   ├── LoanServicingRepository.fs
+│   │   └── Meridian.Lending.fsproj
+│   ├── Meridian.Lending.Cli/
+│   │   ├── Meridian.Lending.Cli.fsproj
+│   │   └── Program.fs
 │   ├── Meridian.Mcp/
 │   │   ├── Prompts/
 │   │   │   ├── CodeReviewPrompts.cs
@@ -1641,6 +1684,8 @@ Meridian/
 │   │   ├── CanonicalizationTests.fs
 │   │   ├── DomainTests.fs
 │   │   ├── InstrumentsTests.fs
+│   │   ├── LendingTests.fs
+│   │   ├── LoanProjectionTests.fs
 │   │   ├── Meridian.FSharp.Tests.fsproj
 │   │   ├── PipelineTests.fs
 │   │   └── ValidationTests.fs
@@ -1665,6 +1710,8 @@ Meridian/
 │   │   │   ├── Credentials/
 │   │   │   │   ...
 │   │   │   ├── Indicators/
+│   │   │   │   ...
+│   │   │   ├── Lending/
 │   │   │   │   ...
 │   │   │   ├── Monitoring/
 │   │   │   │   ...
